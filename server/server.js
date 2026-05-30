@@ -1,0 +1,28 @@
+﻿import express from "express"
+import cookieParser from "cookie-parser"
+import ConnectDb from "./utils/ConnectDb.js"
+import 'dotenv/config'
+import userRoutes from "./routes/user.routes.js"
+import courseRoutes from "./routes/course.routes.js"
+import cors from "cors"
+
+const app = express()
+const PORT = process.env.PORT || 3000
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173"
+
+app.use(express.json())
+app.use(cookieParser())
+app.use(cors({ origin: CLIENT_URL, credentials: true }))
+
+app.get("/", (req, res) => {
+  res.json({ message: "API is running" })
+})
+
+app.use("/api/users", userRoutes)
+app.use("/api/courses", courseRoutes)
+
+ConnectDb()
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`)
+})
