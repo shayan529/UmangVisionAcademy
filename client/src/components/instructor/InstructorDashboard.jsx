@@ -163,12 +163,12 @@ export default function InstructorDashboard() {
           style={{
             fontSize: 20,
             fontWeight: 800,
-            color: "#a78bfa",
+            color: "#f1f5f9",
             padding: "0 10px",
             marginBottom: 28,
           }}
         >
-          Learn<span style={{ color: "#f1f5f9" }}>Sphere</span>
+          Skill<span style={{ color: "#a78bfa" }}>Sphere</span>
         </div>
 
         {/* User pill */}

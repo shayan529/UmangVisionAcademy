@@ -1,5 +1,6 @@
 import InstructorApplication from "../models/InstructorApplication.model.js";
 import User from "../models/user.model.js";
+import imagekit from "../utils/imageKit.js";
 
 // POST /instructor-applications
 export const submitApplication = async (req, res) => {
@@ -7,19 +8,40 @@ export const submitApplication = async (req, res) => {
     const existing = await InstructorApplication.findOne({
       user: req.user._id,
     });
-    if (existing)
-      return res.status(400).json({ message: "Application already submitted" });
+
+    if (existing) {
+      return res.status(400).json({
+        message: "Application already submitted",
+      });
+    }
+
+    let resumeUrl = null;
+    let resumeFileId = null;
+
+    if (req.file) {
+      const uploadedFile = await imagekit.upload({
+        file: req.file.buffer,
+        fileName: `${Date.now()}-${req.file.originalname}`,
+        folder: "/instructor-resumes",
+      });
+
+      resumeUrl = uploadedFile.url;
+      resumeFileId = uploadedFile.fileId;
+    }
 
     const application = await InstructorApplication.create({
       user: req.user._id,
       ...req.body,
-      resumeUrl: req.file?.path ?? null, // ← cloudinary url
-      resumePublicId: req.file?.filename ?? null, // ← cloudinary public_id
+      resumeUrl,
+      resumeFileId,
     });
 
     res.status(201).json(application);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err);
+    res.status(500).json({
+      message: err.message,
+    });
   }
 };
 

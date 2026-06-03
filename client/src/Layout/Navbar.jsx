@@ -114,8 +114,8 @@ const Navbar = () => {
                   className="whitespace-nowrap bg-gradient-to-r from-indigo-400 to-indigo-500 hover:scale-105 transition duration-300 text-black font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20"
                 >
                   {isInstructorDashboard
-                    ? "Student Dashboard"
-                    : "Instructor Dashboard"}
+                    ? "Go to Student Dashboard"
+                    : "Go to Instructor Dashboard"}
                 </Link>
               ) : (
                 <Link
@@ -228,8 +228,8 @@ const Navbar = () => {
                     className="flex-1 text-center text-xs font-semibold py-2 px-2 rounded-lg bg-gradient-to-r from-indigo-400 to-indigo-500 text-black shadow-md transition"
                   >
                     {isInstructorDashboard
-                      ? "Student Dashboard"
-                      : "Instructor Dashboard"}
+                      ? "Go to Student Dashboard"
+                      : "Go to Instructor Dashboard"}
                   </Link>
                 ) : (
                   <Link

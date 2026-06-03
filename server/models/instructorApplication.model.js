@@ -13,7 +13,7 @@ const instructorApplicationSchema = new mongoose.Schema(
     bio: { type: String, required: true },
     contentLink: { type: String },
     resumeUrl: { type: String }, // ← added
-    resumePublicId: { type: String }, // ← for cloudinary deletion later
+    resumeFileId: { type: String }, // ← for cloudinary deletion later
     reviewNote: { type: String, default: null },
     status: {
       type: String,

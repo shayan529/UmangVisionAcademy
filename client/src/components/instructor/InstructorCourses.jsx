@@ -204,13 +204,13 @@ const InstructorCourses = ({ showToast, onNewCourse }) => {
                   >
                     Edit
                   </Btn>
-                  <Btn
+                  {/* <Btn
                     variant="ghost"
                     style={{ fontSize: 11, padding: "4px 10px" }}
                     onClick={() => showToast("Opening analytics…")}
                   >
                     Stats
-                  </Btn>
+                  </Btn> */}
                   <Btn
                     variant="ghost"
                     style={{

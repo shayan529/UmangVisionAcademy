@@ -144,16 +144,6 @@ export const initialSettings = [
     desc: "Reminder 1 hour before each session",
     on: true,
   },
-  {
-    label: "Weekly digest",
-    desc: "Summary of student progress",
-    on: false,
-  },
-  {
-    label: "Auto-approve reviews",
-    desc: "Publish reviews without moderation",
-    on: false,
-  },
 ];
 
 export const aiReplies = [
