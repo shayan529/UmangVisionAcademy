@@ -3,6 +3,7 @@ import {
   RegisterUser,
   LoginUser,
   LogoutUser,
+  getCurrentUser,
   getUsers,
   getUserById,
   updateUser,
@@ -14,11 +15,13 @@ const router = express.Router()
 
 router.get("/", protect, adminOnly, getUsers);
 
-router.post("/register",RegisterUser);
+router.post("/register", RegisterUser);
 
 router.post("/login", LoginUser);
 
 router.post("/logout", LogoutUser);
+
+router.get("/me", protect, getCurrentUser);
 
 router.get("/:id", protect, selfOrAdmin, getUserById);
 

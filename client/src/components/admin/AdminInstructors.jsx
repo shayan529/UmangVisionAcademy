@@ -47,7 +47,7 @@ const AdminInstructors = ({
   const ql = q.toLowerCase();
   const filtI = enrichedInstructors.filter(
     (i) =>
-      i.name?.toLowerCase().includes(ql) || i.email?.toLowerCase().includes(ql)
+      i.name?.toLowerCase().includes(ql) || i.email?.toLowerCase().includes(ql),
   );
 
   return (
@@ -103,10 +103,11 @@ const AdminInstructors = ({
                 {/* Badges row */}
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
-                    {inst.mc?.length || 0} course{(inst.mc?.length !== 1) ? "s" : ""}
+                    {inst.mc?.length || 0} course
+                    {inst.mc?.length !== 1 ? "s" : ""}
                   </span>
                   <span className="text-[9px] font-bold uppercase tracking-wider bg-sky-500/10 border border-sky-500/20 text-sky-400 px-2 py-0.5 rounded-full">
-                    {inst.stu || 0} student{(inst.stu !== 1) ? "s" : ""}
+                    {inst.stu || 0} student{inst.stu !== 1 ? "s" : ""}
                   </span>
                   <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full flex items-center gap-0.5">
                     ★ {inst.avg || "—"}
@@ -117,9 +118,15 @@ const AdminInstructors = ({
                 {inst.mc && inst.mc.length > 0 && (
                   <div className="border-t border-slate-800/60 pt-3 flex flex-col gap-1.5">
                     {inst.mc.slice(0, 2).map((c) => (
-                      <div key={c._id} className="flex items-center justify-between gap-4 text-[10px] text-slate-400">
+                      <div
+                        key={c._id}
+                        className="flex items-center justify-between gap-4 text-[10px] text-slate-400"
+                      >
                         <span className="truncate flex items-center gap-1.5 font-medium">
-                          <BookOpen size={10} className="text-slate-600 shrink-0" />
+                          <BookOpen
+                            size={10}
+                            className="text-slate-600 shrink-0"
+                          />
                           {c.title || "Untitled Course"}
                         </span>
                         <span className="shrink-0 font-semibold text-emerald-500">
@@ -139,21 +146,12 @@ const AdminInstructors = ({
 
             {/* Right section: revenue totals and delete */}
             <div className="flex md:flex-col items-center md:items-end justify-between md:justify-start gap-4 shrink-0 w-full md:w-auto border-t md:border-t-0 border-slate-800/60 pt-4 md:pt-0">
-              <div className="text-left md:text-right">
-                <p className="text-xl font-extrabold text-emerald-400 leading-none">
-                  {fmt(inst.rev)}
-                </p>
-                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-1">
-                  total revenue
-                </p>
-              </div>
-
               {/* Remove button */}
               <button
                 onClick={() => {
                   if (
                     window.confirm(
-                      `Are you sure you want to remove instructor "${inst.name}"?`
+                      `Are you sure you want to remove instructor "${inst.name}"?`,
                     )
                   ) {
                     deleteUser(inst._id);

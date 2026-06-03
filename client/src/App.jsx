@@ -1,93 +1,201 @@
-import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom"
-import { useEffect } from "react"
-import Navbar from "./Layout/Navbar"
-import Footer from "./Layout/Footer"
-import Home from "./pages/Home"
-import Courses from "./components/Courses"
-import Community from "./components/Community"
-import Instructors from "./components/Instructors"
-import BecomeInstructor from "./components/BecomeInstructor"
-import BecomeInstructorApplication from "./components/BecomeInstructorApplication"
-import Login from "./components/Login"
-import Signup from "./components/Signup"
-import  { DashboardHome } from "./components/student/StudentDashboard"
-import AITutor from "./components/student/AITutor"
-import MyCoursesSection from "./components/student/MyCoursesSection"
-import CommunitySection from "./components/student/CommunitySection"
-import CertificatesSection from "./components/student/CertificatesSection"
-import SettingsSection from "./components/student/SettingsSection"
-import InstructorDashboard from "./components/instructor/InstructorDashboard"
-import Plans from "./components/Plans"
-import Contact from "./pages/Contact"
-import HelpCenter from "./pages/HelpCenter"
-import Faq from "./pages/Faq"
-import AdminDashboard from "./components/admin/AdminDashboard"
-import CartPage from "./pages/CartPage"
-import InstructorDetails from "./pages/InstructorDetails"
-import StudentDashboard from "./components/student/StudentDashboard"
-import LeaderBoard from "./components/student/LeaderBoard"
+import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { loadCurrentUser } from "./redux/slices/authSlice";
+
+import Navbar from "./Layout/Navbar";
+import Footer from "./Layout/Footer";
+
+import Home from "./pages/Home";
+import Contact from "./pages/Contact";
+import HelpCenter from "./pages/HelpCenter";
+import Faq from "./pages/Faq";
+import CartPage from "./pages/CartPage";
+import InstructorDetails from "./pages/InstructorDetails";
+import NotFound from "./pages/NotFound";
+
+import Courses from "./components/common/Courses";
+import Community from "./components/common/Community";
+import Instructors from "./components/common/Instructors";
+import BecomeInstructor from "./components/common/BecomeInstructor";
+import BecomeInstructorApplication from "./components/common/BecomeInstructorApplication";
+import Login from "./components/common/Login";
+import Signup from "./components/common/Signup";
+import Plans from "./components/common/Plans";
+
+import ProtectedRoute from "./components/common/ProtectedRoute";
+
+/* Student Dashboard */
+import StudentDashboard, {
+  DashboardHome,
+} from "./components/student/StudentDashboard";
+import MyCoursesSection from "./components/student/MyCoursesSection";
+import AITutor from "./components/student/AITutor";
+import CommunitySection from "./components/student/CommunitySection";
+import CertificatesSection from "./components/student/CertificatesSection";
+import SettingsSection from "./components/student/SettingsSection";
+import LeaderBoard from "./components/student/LeaderBoard";
+import StudentNotifications from "./components/student/StudentNotifications";
+
+/* Instructor Dashboard */
+import InstructorDashboard from "./components/instructor/InstructorDashboard";
+import InstructorHome from "./components/instructor/InstructorHome";
+import InstructorCourses from "./components/instructor/InstructorCourses";
+import InstructorStudents from "./components/instructor/InstructorStudents";
+import InstructorSessions from "./components/instructor/InstructorSessions";
+import InstructorAnalytics from "./components/instructor/InstructorAnalytics";
+import InstructorAI from "./components/instructor/InstructorAI";
+import InstructorNotifications from "./components/instructor/InstructorNotifications";
+import InstructorSettings from "./components/instructor/InstructorSettings";
+
+/* Admin Dashboard */
+import AdminDashboard from "./components/admin/AdminDashboard";
+import AdminOverview from "./components/admin/AdminOverview";
+import AdminStudents from "./components/admin/AdminStudents";
+import AdminInstructors from "./components/admin/AdminInstructors";
+import AdminApplications from "./components/admin/AdminApplications";
+import AdminCourses from "./components/admin/AdminCourses";
+import AdminLeaderboard from "./components/admin/AdminLeaderboard";
+import InstructorApplicationStatus from "./components/common/InstructorApplicationStatus";
+import PrivacyPolicy from "./components/common/PrivacyPolicy";
+import TermsOfService from "./components/common/TermsOfService";
 
 const ScrollToTop = () => {
-  const { pathname } = useLocation()
-
+  const { pathname } = useLocation();
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname])
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
 
-  return null
-}
-
-const Layout = () => {
-  const user = typeof window !== "undefined" ? localStorage.getItem("user") : null
-
-  return (
-    <div className="bg-slate-950 text-slate-100 min-h-screen">
-      <Navbar />
-      <Outlet />
-      <Footer />
-    </div>
-  )
-}
+const Layout = () => (
+  <div className="bg-slate-950 text-slate-100 min-h-screen">
+    <Navbar />
+    <Outlet />
+    <Footer />
+  </div>
+);
 
 function App() {
-  return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route index element={<><ScrollToTop /><Home /></>} />
-        <Route path="login" element={<><ScrollToTop /><Login /></>} />
-        <Route path="signup" element={<><ScrollToTop /><Signup /></>} />
-        <Route path="courses" element={<><ScrollToTop /><Courses /></>} />
-       
-        <Route path="community" element={<><ScrollToTop /><Community /></>} />
-        <Route path="become-instructor" element={<><ScrollToTop /><BecomeInstructor /></>} />
-        <Route path="become-instructor/apply" element={<><ScrollToTop /><BecomeInstructorApplication /></>} />
-        <Route path="student-dashboard" element={<StudentDashboard />}>
-          <Route index element={<><ScrollToTop /><DashboardHome /></>} />
-          <Route path="courses" element={<><ScrollToTop /><Courses /></>} />
-          <Route path="my-courses" element={<><ScrollToTop /><MyCoursesSection /></>} />
-          <Route path="ai-tutor" element={<><ScrollToTop /><AITutor /></>} />
-          <Route path="community" element={<><ScrollToTop /><CommunitySection /></>} />
-          <Route path="certificates" element={<><ScrollToTop /><CertificatesSection /></>} />
-          <Route path="settings" element={<><ScrollToTop /><SettingsSection /></>} />
-          <Route path="leaderboard" element={<><ScrollToTop /><LeaderBoard /></>} />
-        </Route>
-        <Route path="admin-dashboard" element={<><ScrollToTop /><AdminDashboard /></>} />
-        <Route path="plans" element={<><ScrollToTop /><Plans /></>} />
-        <Route path="contact" element={<><ScrollToTop /><Contact /></>} />
-        <Route path="ai-tutor" element={<Navigate to="/student-dashboard/ai-tutor" replace />} />
-        <Route path="instructor-dashboard" element={<><ScrollToTop /><InstructorDashboard /></>} />
-        <Route path="my-courses" element={<Navigate to="/student-dashboard/my-courses" replace />} />
-        <Route path="certificates" element={<Navigate to="/student-dashboard/certificates" replace />} />
-       
-        <Route path="help-center" element={<><ScrollToTop /><HelpCenter /></>} /> 
-        <Route path="faq" element={<><ScrollToTop /><Faq/></>} />
-        <Route path="/cart" element={<><ScrollToTop /><CartPage /></>} />
-        <Route path="/instructor-details" element={<><ScrollToTop /><InstructorDetails /></>} />
-        <Route path="*" element={<><ScrollToTop /><Home /></>} />
+  const dispatch = useDispatch();
 
-      </Route>
-    </Routes>
-  )
+  useEffect(() => {
+    dispatch(loadCurrentUser());
+  }, [dispatch]);
+
+  return (
+    <>
+      <ScrollToTop />
+      <Routes>
+        <Route element={<Layout />}>
+          {/* ── Public ── */}
+          <Route index element={<Home />} />
+          <Route path="login" element={<Login />} />
+          <Route path="signup" element={<Signup />} />
+          <Route path="courses" element={<Courses />} />
+          <Route path="community" element={<Community />} />
+          <Route path="instructors" element={<Instructors />} />
+          <Route path="become-instructor" element={<BecomeInstructor />} />
+          <Route path="privacy" element={<PrivacyPolicy />} />
+          <Route path="terms" element={<TermsOfService />} />
+          <Route
+            path="become-instructor/apply"
+            element={<BecomeInstructorApplication />}
+          />
+          <Route
+            path="instructor-application/status"
+            element={<InstructorApplicationStatus />}
+          />
+          <Route path="plans" element={<Plans />} />
+          <Route path="contact" element={<Contact />} />
+          <Route path="help-center" element={<HelpCenter />} />
+          <Route path="faq" element={<Faq />} />
+          <Route path="cart" element={<CartPage />} />
+          <Route path="instructor-details" element={<InstructorDetails />} />
+
+          {/* ========================= */}
+          {/* STUDENT DASHBOARD         */}
+          {/* ========================= */}
+          <Route
+            path="student-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["student"]}>
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<DashboardHome />} />
+            <Route path="courses" element={<Courses />} />
+            <Route path="my-courses" element={<MyCoursesSection />} />
+            <Route path="ai-tutor" element={<AITutor />} />
+            <Route path="community" element={<CommunitySection />} />
+            <Route path="certificates" element={<CertificatesSection />} />
+            <Route path="settings" element={<SettingsSection />} />
+            <Route path="leaderboard" element={<LeaderBoard />} />
+            <Route path="notifications" element={<StudentNotifications />} />
+          </Route>
+
+          {/* ========================= */}
+          {/* INSTRUCTOR DASHBOARD      */}
+          {/* ========================= */}
+          <Route
+            path="instructor-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["instructor"]}>
+                <InstructorDashboard />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<InstructorHome />} />
+            <Route path="courses" element={<InstructorCourses />} />
+            <Route path="students" element={<InstructorStudents />} />
+            <Route path="sessions" element={<InstructorSessions />} />
+            <Route path="analytics" element={<InstructorAnalytics />} />
+
+            <Route path="ai" element={<InstructorAI />} />
+            <Route path="notifications" element={<InstructorNotifications />} />
+            <Route path="settings" element={<InstructorSettings />} />
+          </Route>
+
+          {/* ========================= */}
+          {/* ADMIN DASHBOARD           */}
+          {/* ========================= */}
+          <Route
+            path="admin-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<AdminOverview />} />
+            <Route path="students" element={<AdminStudents />} />
+            <Route path="instructors" element={<AdminInstructors />} />
+            <Route path="applications" element={<AdminApplications />} />
+            <Route path="courses" element={<AdminCourses />} />
+            <Route path="leaderboard" element={<AdminLeaderboard />} />
+          </Route>
+
+          {/* ── Legacy redirects ── */}
+          <Route
+            path="ai-tutor"
+            element={<Navigate to="/student-dashboard/ai-tutor" replace />}
+          />
+          <Route
+            path="my-courses"
+            element={<Navigate to="/student-dashboard/my-courses" replace />}
+          />
+          <Route
+            path="certificates"
+            element={<Navigate to="/student-dashboard/certificates" replace />}
+          />
+
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </>
+  );
 }
 
-export default App
+export default App;

@@ -1,11 +1,29 @@
 import React, { useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
-import { useApp } from "../../context/AppContext";
+import {
+  Link,
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import Sidebar from "./Sidebar";
+import { useSelector } from "react-redux";
+
+// ── Section title map (matches student nav routes) ────────────────────────────
+const sectionTitles = {
+  "/student-dashboard": "Dashboard",
+  "/student-dashboard/courses": "Courses",
+  "/student-dashboard/my-courses": "My Courses",
+  "/student-dashboard/ai-tutor": "AI Tutor",
+  "/student-dashboard/community": "Community",
+  "/student-dashboard/certificates": "Certificates",
+  "/student-dashboard/settings": "Settings",
+  "/student-dashboard/leaderboard": "Leaderboard",
+};
 
 // ── DashboardHome (Overview page) ─────────────────────────────────────────────
 export const DashboardHome = () => {
-  const { user } = useApp();
+  const { user } = useSelector((state) => state.auth);
   const username = user?.email ? user.email.split("@")[0] : "there";
 
   return (
@@ -21,7 +39,14 @@ export const DashboardHome = () => {
         }}
       >
         <div>
-          <p style={{ color: "#818cf8", fontWeight: 500, fontSize: 14, marginBottom: 6 }}>
+          <p
+            style={{
+              color: "#818cf8",
+              fontWeight: 500,
+              fontSize: 14,
+              marginBottom: 6,
+            }}
+          >
             Welcome Back, {username} 👋
           </p>
           <h1
@@ -47,24 +72,27 @@ export const DashboardHome = () => {
             AI-powered study tools — all from one place.
           </p>
         </div>
-        <Link to="my-courses" style={{ color: "inherit", textDecoration: "none" }}>
-        <button
-          style={{
-            background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
-            color: "#fff",
-            border: "none",
-            borderRadius: 14,
-            padding: "12px 24px",
-            fontWeight: 700,
-            fontSize: 14,
-            cursor: "pointer",
-            boxShadow: "0 8px 24px rgba(124,58,237,0.35)",
-            whiteSpace: "nowrap",
-          }}
+        <Link
+          to="my-courses"
+          style={{ color: "inherit", textDecoration: "none" }}
         >
+          <button
+            style={{
+              background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+              color: "#fff",
+              border: "none",
+              borderRadius: 14,
+              padding: "12px 24px",
+              fontWeight: 700,
+              fontSize: 14,
+              cursor: "pointer",
+              boxShadow: "0 8px 24px rgba(124,58,237,0.35)",
+              whiteSpace: "nowrap",
+            }}
+          >
             Continue Learning →
-        </button>
-          </Link>
+          </button>
+        </Link>
       </section>
 
       {/* Stat cards */}
@@ -171,19 +199,29 @@ export const DashboardHome = () => {
 
 // ── Main Dashboard layout ──────────────────────────────────────────────────────
 const StudentDashboard = () => {
-  const { user } = useApp();
+  const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Unread notifications count — adjust this to pull from your real notifications state/context
+  const unreadCount = 3;
+
+  // Derive current section title from pathname
+  // Match exact path first, then fall back to closest prefix
+  const pageTitle =
+    sectionTitles[pathname] ??
+    Object.entries(sectionTitles)
+      .filter(
+        ([path]) => pathname.startsWith(path) && path !== "/student-dashboard",
+      )
+      .sort((a, b) => b[0].length - a[0].length)[0]?.[1] ??
+    "Dashboard";
+
   return (
     <div className="min-h-screen bg-[#0b1120] text-[#f1f5f9] md:flex">
-
-      {/*
-        ── Mobile backdrop ──────────────────────────────────────────────────────
-        Renders as a semi-transparent full-screen overlay behind the sidebar
-        whenever mobileOpen is true. Clicking it closes the sidebar.
-        Hidden on md+ screens via "md:hidden".
-      */}
+      {/* ── Mobile backdrop ── */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm md:hidden"
@@ -199,28 +237,19 @@ const StudentDashboard = () => {
         setMobileOpen={setMobileOpen}
       />
 
-      {/* Right Side */}
+      {/* Right side */}
       <div className="flex-1 min-w-0 flex flex-col">
         <main
           className="flex-1 px-4 py-4 md:px-7 md:py-6"
-          /*
-            Clicking anywhere in the main content area while the mobile menu
-            is open will also close it. The check prevents unnecessary state
-            updates when the sidebar is already closed.
-          */
-          onClick={() => { if (mobileOpen) setMobileOpen(false); }}
+          onClick={() => {
+            if (mobileOpen) setMobileOpen(false);
+          }}
         >
-          {/*
-            ── Mobile top bar ─────────────────────────────────────────────────
-            The "Menu" button is the ONLY way to open the sidebar on mobile.
-            The collapse/expand toggle that lives inside Sidebar is hidden on
-            mobile (handle that in Sidebar.jsx — see note below).
-          */}
+          {/* ── Mobile top bar ── */}
           <div className="flex items-center justify-between gap-4 pb-4 md:hidden">
+            {/* Menu button */}
             <button
               onClick={(e) => {
-                // Stop propagation so the main onClick above doesn't
-                // immediately close the sidebar we just opened.
                 e.stopPropagation();
                 setMobileOpen(true);
               }}
@@ -228,7 +257,13 @@ const StudentDashboard = () => {
             >
               Menu
             </button>
-            <h2 className="text-lg font-semibold text-white">Student Dashboard</h2>
+
+            {/* Dynamic section title — centered */}
+            <h2 className="text-lg font-semibold text-white flex-1 text-center truncate">
+              {pageTitle}
+            </h2>
+
+            {/* Notification badge */}
           </div>
 
           <div className="rounded-3xl border border-slate-800 bg-white/5 p-5 md:p-7 min-h-full">

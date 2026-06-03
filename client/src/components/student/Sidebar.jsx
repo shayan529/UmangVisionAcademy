@@ -1,6 +1,5 @@
 import { NavLink } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { useApp } from "../../context/AppContext";
 import { useState } from "react";
 import { Icon } from "lucide-react";
 
@@ -12,17 +11,34 @@ const Sidebar = ({
   setMobileOpen,
 }) => {
   const navItems = [
-    { label: "Overview", to: "/student-dashboard", end: true, icon: "overview" },
+    {
+      label: "Overview",
+      to: "/student-dashboard",
+      end: true,
+      icon: "overview",
+    },
 
-    { label: "My Courses", to: "/student-dashboard/my-courses", icon: "myCourses" },
+    {
+      label: "My Courses",
+      to: "/student-dashboard/my-courses",
+      icon: "myCourses",
+    },
     { label: "AI Tutor", to: "/student-dashboard/ai-tutor", icon: "ai" },
-    { label: "Community", to: "/student-dashboard/community", icon: "community" },
+    {
+      label: "Community",
+      to: "/student-dashboard/community",
+      icon: "community",
+    },
     {
       label: "Certificates",
       to: "/student-dashboard/certificates",
       icon: "certificates",
     },
-    { label: "Leaderboard", to: "/student-dashboard/leaderboard", icon: "leaderboard" },
+    {
+      label: "Leaderboard",
+      to: "/student-dashboard/leaderboard",
+      icon: "leaderboard",
+    },
     { label: "Settings", to: "/student-dashboard/settings", icon: "settings" },
   ];
 
@@ -53,32 +69,30 @@ const Sidebar = ({
       "M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11",
     settings:
       "M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z",
-    leaderboard: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
+    leaderboard:
+      "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
     logout: "M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9",
   };
 
-  const storedUser =
-    typeof window !== "undefined" && localStorage.getItem("user")
-      ? JSON.parse(localStorage.getItem("user"))
-      : null;
-  const activeUser = user || storedUser;
+  const activeUser = user;
   const initials = activeUser?.email ? activeUser.email[0].toUpperCase() : "S";
   const username = activeUser?.name
     ? activeUser.name
     : activeUser?.email
       ? activeUser.email.split("@")[0]
       : "Student";
-  const roleLabel = activeUser?.role
-    ? `${activeUser.role.charAt(0).toUpperCase()}${activeUser.role.slice(1)}`
+
+  const roleLabel = activeUser?.roles?.length
+    ? `${activeUser.roles[0].charAt(0).toUpperCase()}${activeUser.roles[0].slice(1)}`
     : "Student";
 
   const sidebarClass = `bg-[#0b1120] border-r border-slate-800 flex flex-col transition-all duration-300 z-40 ${
-  collapsed ? "w-[68px] min-w-[68px]" : "w-[220px] min-w-[220px]"
-} ${
-  mobileOpen
-    ? "fixed top-[72px] left-0 h-[calc(100vh-72px)] shadow-2xl md:relative md:top-0 md:h-auto md:shadow-none"
-    : "hidden md:flex"
-}`;
+    collapsed ? "w-[68px] min-w-[68px]" : "w-[220px] min-w-[220px]"
+  } ${
+    mobileOpen
+      ? "fixed top-[72px] left-0 h-[calc(100vh-72px)] shadow-2xl md:relative md:top-0 md:h-auto md:shadow-none"
+      : "hidden md:flex"
+  }`;
   return (
     <aside className={sidebarClass}>
       <div className="flex items-center justify-between mb-5 px-1">
@@ -125,7 +139,6 @@ const Sidebar = ({
             <div className="truncate text-sm font-semibold text-white">
               {username}
             </div>
-            <div className="text-[11px] text-slate-400">{roleLabel}</div>
           </div>
         )}
       </div>

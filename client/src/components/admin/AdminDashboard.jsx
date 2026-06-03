@@ -1,7 +1,11 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchUsers,
+  deleteUser as deleteUserThunk,
+} from "../../redux/slices/usersSlice";
+import { fetchCourses } from "../../redux/slices/courseSlice";
 
-// Modular Admin sub-components
 import AdminSidebar from "./AdminSidebar";
 import AdminOverview from "./AdminOverview";
 import AdminLeaderboard from "./AdminLeaderboard";
@@ -10,106 +14,50 @@ import AdminInstructors from "./AdminInstructors";
 import AdminCourses from "./AdminCourses";
 import AdminApplications from "./AdminApplications";
 
-const API = "http://localhost:3000/api";
-
 export default function AdminDashboard() {
-  const [students, setStudents] = useState([]);
-  const [instructors, setInstructors] = useState([]);
-  const [applications, setApplications] = useState([]);
-  const [courses, setCourses] = useState([]);
+  const dispatch = useDispatch();
+
+  const { users = [] } = useSelector((state) => state.users);
+  const { courses = [] } = useSelector((state) => state.courses);
+
+  const students = users.filter((u) => u.roles?.includes("student"));
+  const instructors = users.filter((u) => u.roles?.includes("instructor"));
+
   const [tab, setTab] = useState("overview");
   const [q, setQ] = useState("");
   const [sortBy, setSortBy] = useState("revenue");
   const [sortDir, setSortDir] = useState("desc");
-  const [sideOpen, setSideOpen] = useState(false); // mobile drawer
-  const [sideCollapsed, setSideCollapsed] = useState(false); // desktop collapse
+  const [sideOpen, setSideOpen] = useState(false);
+  const [sideCollapsed, setSideCollapsed] = useState(false);
 
   useEffect(() => {
-    init();
-  }, []);
+    dispatch(fetchUsers());
+    dispatch(fetchCourses());
+  }, [dispatch]);
 
-  // Clear search query whenever tab changes for a better UX
   useEffect(() => {
     setQ("");
   }, [tab]);
 
-  const init = async () => {
-    await Promise.all([fetchUsers(), fetchApplications(), fetchCourses()]);
-  };
+  const deleteUser = (id) => dispatch(deleteUserThunk(id));
 
-  const fetchUsers = async () => {
-    try {
-      const { data } = await axios.get(`${API}/users`);
-      setStudents(data.filter((u) => u.role === "student"));
-      setInstructors(data.filter((u) => u.role === "instructor"));
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const fetchApplications = async () => {
-    try {
-      const { data } = await axios.get(`${API}/instructor-applications`);
-      setApplications(data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const fetchCourses = async () => {
-    try {
-      const { data } = await axios.get(`${API}/courses`);
-      setCourses(data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const deleteUser = async (id) => {
-    try {
-      await axios.delete(`${API}/users/${id}`);
-      fetchUsers();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const approveInstructor = async (id) => {
-    try {
-      await axios.put(`${API}/instructor-applications/${id}/approve`);
-      fetchApplications();
-      fetchUsers();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const rejectInstructor = async (id) => {
-    try {
-      await axios.delete(`${API}/instructor-applications/${id}`);
-      fetchApplications();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  /* ── Derived calculations ────────────────────────────── */
+  /* ── Derived calculations ── */
   const totalRevenue = courses.reduce(
     (s, c) => s + (c.price || 0) * (c.students?.length || 0),
-    0
+    0,
   );
   const totalEnrollments = courses.reduce(
     (s, c) => s + (c.students?.length || 0),
-    0
+    0,
   );
 
   const enriched = instructors.map((inst) => {
     const mc = courses.filter(
-      (c) => c.instructor?._id === inst._id || c.instructor === inst._id
+      (c) => c.instructor?._id === inst._id || c.instructor === inst._id,
     );
     const rev = mc.reduce(
       (s, c) => s + (c.price || 0) * (c.students?.length || 0),
-      0
+      0,
     );
     const stu = mc.reduce((s, c) => s + (c.students?.length || 0), 0);
     const avg = mc.length
@@ -127,7 +75,7 @@ export default function AdminDashboard() {
     return 0;
   });
 
-  /* ── Tab Router Content switcher ─────────────────────── */
+  /* ── Tab content ── */
   const renderTabContent = () => {
     switch (tab) {
       case "overview":
@@ -136,7 +84,6 @@ export default function AdminDashboard() {
             students={students}
             instructors={instructors}
             courses={courses}
-            applicationsCount={applications.length}
             totalRevenue={totalRevenue}
             totalEnrollments={totalEnrollments}
             sortedInstructors={sortedInstructors}
@@ -173,7 +120,8 @@ export default function AdminDashboard() {
         );
       case "courses":
         return <AdminCourses courses={courses} q={q} setQ={setQ} />;
-
+      case "applications":
+        return <AdminApplications />;
       default:
         return null;
     }
@@ -181,7 +129,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-[#0b1120] text-[#f1f5f9] md:flex">
-      {/* Mobile backdrop */}
       {sideOpen && (
         <div
           className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm md:hidden"
@@ -189,18 +136,15 @@ export default function AdminDashboard() {
         />
       )}
 
-      {/* Admin Sidebar */}
       <AdminSidebar
         tab={tab}
         setTab={setTab}
-        applicationsCount={applications.length}
         collapsed={sideCollapsed}
         setCollapsed={setSideCollapsed}
         mobileOpen={sideOpen}
         setMobileOpen={setSideOpen}
       />
 
-      {/* Right Content Column */}
       <div className="flex-1 min-w-0 flex flex-col">
         <main
           className="flex-1 px-4 py-4 md:px-7 md:py-6"
@@ -208,7 +152,7 @@ export default function AdminDashboard() {
             if (sideOpen) setSideOpen(false);
           }}
         >
-          {/* Mobile Top Bar */}
+          {/* Mobile top bar */}
           <div className="flex items-center justify-between gap-4 pb-4 md:hidden">
             <button
               onClick={(e) => {
@@ -224,7 +168,6 @@ export default function AdminDashboard() {
             </h2>
           </div>
 
-          {/* Content Card Container */}
           <div className="rounded-3xl border border-slate-800 bg-white/5 p-5 md:p-7 min-h-full">
             {renderTabContent()}
           </div>

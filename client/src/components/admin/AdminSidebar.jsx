@@ -8,10 +8,11 @@ import {
   Trophy,
   ChevronLeft,
   Settings,
-  LogOut
+  LogOut,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useApp } from "../../context/AppContext";
+import { useDispatch } from "react-redux";
+import { logoutUser } from "../../redux/slices/authSlice";
 
 const AdminSidebar = ({
   tab,
@@ -22,27 +23,21 @@ const AdminSidebar = ({
   mobileOpen,
   setMobileOpen,
 }) => {
-  const { logout } = useApp();
   const navigate = useNavigate();
-
+  const dispatch = useDispatch();
   const navItems = [
     { id: "overview", label: "Overview", icon: BarChart2 },
     { id: "leaderboard", label: "Leaderboard", icon: Trophy },
     { id: "students", label: "Students", icon: Users },
     { id: "instructors", label: "Instructors", icon: GraduationCap },
     { id: "courses", label: "Courses", icon: BookOpen },
-    // {
-    //   id: "applications",
-    //   label: "Applications",
-    //   icon: CheckCircle,
-    //   badge: applicationsCount,
-    // },
+    {
+      id: "applications",
+      label: "Applications",
+      icon: CheckCircle,
+      badge: applicationsCount,
+    },
   ];
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
 
   const sidebarClass = `bg-[#0b1120] border-r border-slate-800 flex flex-col transition-all duration-300 z-40 ${
     collapsed ? "w-[68px] min-w-[68px]" : "w-[220px] min-w-[220px]"
@@ -140,7 +135,9 @@ const AdminSidebar = ({
             >
               <Icon size={16} className="shrink-0" />
               {!collapsed && (
-                <span className="text-xs font-semibold flex-1">{item.label}</span>
+                <span className="text-xs font-semibold flex-1">
+                  {item.label}
+                </span>
               )}
               {!collapsed && item.badge > 0 && (
                 <span className="bg-red-500 text-white rounded-full text-[9px] font-bold px-2 py-0.5 min-w-[18px] text-center">
@@ -151,20 +148,6 @@ const AdminSidebar = ({
           );
         })}
       </nav>
-
-      {/* Sidebar Footer */}
-      <div className="p-3 border-t border-slate-800 flex flex-col gap-1">
-        <button
-          onClick={handleLogout}
-          className={`flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium w-full transition duration-150 ${
-            collapsed ? "justify-center text-red-400 hover:bg-red-950/20" : "text-slate-500 hover:text-red-400 hover:bg-red-950/10"
-          }`}
-          title={collapsed ? "Logout" : undefined}
-        >
-          <LogOut size={16} />
-          {!collapsed && <span>Logout</span>}
-        </button>
-      </div>
     </aside>
   );
 };

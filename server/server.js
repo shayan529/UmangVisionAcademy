@@ -1,28 +1,34 @@
-﻿import express from "express"
-import cookieParser from "cookie-parser"
-import ConnectDb from "./utils/ConnectDb.js"
-import 'dotenv/config'
-import userRoutes from "./routes/user.routes.js"
-import courseRoutes from "./routes/course.routes.js"
-import cors from "cors"
+﻿import express from "express";
+import cookieParser from "cookie-parser";
+import ConnectDb from "./utils/ConnectDb.js";
+import "dotenv/config";
+import userRoutes from "./routes/user.routes.js";
+import courseRoutes from "./routes/course.routes.js";
+import instructorApplicationRoutes from "./routes/instructorApplication.routes.js";
+import sessionRoutes from "./routes/session.routes.js";
+import studentRoutes from "./routes/student.routes.js";
+import cors from "cors";
 
-const app = express()
-const PORT = process.env.PORT || 3000
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173"
+const app = express();
+const PORT = process.env.PORT || 3000;
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
-app.use(express.json())
-app.use(cookieParser())
-app.use(cors({ origin: CLIENT_URL, credentials: true }))
+app.use(express.json());
+app.use(cookieParser());
+app.use(cors({ origin: CLIENT_URL, credentials: true }));
 
 app.get("/", (req, res) => {
-  res.json({ message: "API is running" })
-})
+  res.json({ message: "API is running" });
+});
 
-app.use("/api/users", userRoutes)
-app.use("/api/courses", courseRoutes)
+app.use("/api/users", userRoutes);
+app.use("/api/courses", courseRoutes);
+app.use("/api/instructor-applications", instructorApplicationRoutes);
+app.use("/api/sessions", sessionRoutes);
+app.use("/api/students", studentRoutes);
 
-ConnectDb()
+ConnectDb();
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`)
-})
+  console.log(`Server is running on port ${PORT}`);
+});

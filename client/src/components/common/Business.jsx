@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import Navbar from "../Layout/Navbar"
+import Navbar from "../../Layout/Navbar"
 
 const features = [
   {

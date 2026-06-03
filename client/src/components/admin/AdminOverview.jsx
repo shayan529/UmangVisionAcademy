@@ -41,9 +41,12 @@ const Av = ({ name = "?", size = 32 }) => (
 
 /* ─── Rank badge ──────────────────────────────────────── */
 const Rank = ({ r }) => {
-  if (r === 1) return <Trophy size={15} className="text-amber-500 fill-amber-500" />;
-  if (r === 2) return <Medal size={15} className="text-slate-400 fill-slate-400" />;
-  if (r === 3) return <Award size={15} className="text-amber-700 fill-amber-700" />;
+  if (r === 1)
+    return <Trophy size={15} className="text-amber-500 fill-amber-500" />;
+  if (r === 2)
+    return <Medal size={15} className="text-slate-400 fill-slate-400" />;
+  if (r === 3)
+    return <Award size={15} className="text-amber-700 fill-amber-700" />;
   return (
     <span className="text-xs font-bold text-slate-500 min-w-[16px] text-center">
       #{r}
@@ -54,7 +57,9 @@ const Rank = ({ r }) => {
 /* ─── Stat Card ───────────────────────────────────────── */
 const StatCard = ({ value, label, accentColorClass }) => (
   <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 shadow-sm">
-    <p className={`text-2xl md:text-3xl font-extrabold ${accentColorClass} leading-none`}>
+    <p
+      className={`text-2xl md:text-3xl font-extrabold ${accentColorClass} leading-none`}
+    >
       {value}
     </p>
     <p className="text-xs text-slate-400 mt-2 font-medium">{label}</p>
@@ -64,7 +69,9 @@ const StatCard = ({ value, label, accentColorClass }) => (
 /* ─── Goal Card ───────────────────────────────────────── */
 const GoalCard = ({ tag, tagColorClass, title, desc }) => (
   <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 shadow-sm">
-    <p className={`text-[10px] font-bold tracking-widest uppercase ${tagColorClass} mb-2`}>
+    <p
+      className={`text-[10px] font-bold tracking-widest uppercase ${tagColorClass} mb-2`}
+    >
       {tag}
     </p>
     <h3 className="text-base font-extrabold text-white mb-2 leading-tight">
@@ -78,7 +85,6 @@ const AdminOverview = ({
   students = [],
   instructors = [],
   courses = [],
-  applicationsCount = 0,
   totalRevenue = 0,
   totalEnrollments = 0,
   sortedInstructors = [],
@@ -91,7 +97,7 @@ const AdminOverview = ({
       <div className="relative overflow-hidden bg-slate-900/60 border border-indigo-900/30 rounded-2xl p-6 md:p-8 flex flex-wrap md:flex-nowrap items-center justify-between gap-6 shadow-md shadow-indigo-950/10">
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl" />
         <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-24 h-24 bg-violet-500/10 rounded-full blur-xl" />
-        
+
         <div className="relative z-10">
           <p className="text-xs text-indigo-400 font-bold tracking-wider uppercase mb-2">
             SkillSphere Administration Workspace
@@ -100,7 +106,9 @@ const AdminOverview = ({
             Welcome Back, Admin 👋
           </h1>
           <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
-            Monitor learning activities, approve new instructor applications, view courses catalog, and manage enrollment metrics across your entire platform.
+            Monitor learning activities, approve new instructor applications,
+            view courses catalog, and manage enrollment metrics across your
+            entire platform.
           </p>
         </div>
         <div className="relative z-10 shrink-0">
@@ -127,11 +135,6 @@ const AdminOverview = ({
           label="Active Instructors"
           accentColorClass="text-pink-400"
         />
-        <StatCard
-          value={fmt(totalRevenue)}
-          label="Total Revenue"
-          accentColorClass="text-amber-500"
-        />
       </div>
 
       {/* Goal Cards Grid */}
@@ -146,9 +149,7 @@ const AdminOverview = ({
           tag="Pending Actions"
           tagColorClass="text-cyan-400"
           title="Review Registrations"
-          desc={`${applicationsCount} pending instructor application${
-            applicationsCount !== 1 ? "s require" : " requires"
-          } admin credentials validation.`}
+          desc="Monitor signups and transition new instructors organically as they register."
         />
         <GoalCard
           tag="Catalog Size"
@@ -235,7 +236,10 @@ const AdminOverview = ({
                   </span>
                   {c.rating && (
                     <div className="flex items-center gap-0.5 mt-0.5">
-                      <Star size={8} className="text-amber-500 fill-amber-500" />
+                      <Star
+                        size={8}
+                        className="text-amber-500 fill-amber-500"
+                      />
                       <span className="text-[9px] font-bold text-slate-500">
                         {c.rating}
                       </span>

@@ -7,13 +7,14 @@ import {
   updateCourse,
   deleteCourse,
 } from "../controllers/course.controller.js";
+import { protect } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-router.get("/", getCourses); // LIST:   GET    /courses
-router.get("/:id", getCourseById); // GET:    GET    /courses/:id
-router.post("/", createCourse); // CREATE: POST   /courses
-router.put("/:id", updateCourse); // UPDATE: PUT    /courses/:id
-router.delete("/:id", deleteCourse); // DELETE: DELETE /courses/:id
+router.get("/", protect, getCourses); // LIST:   GET    /courses
+router.get("/:id", protect, getCourseById); // GET:    GET    /courses/:id
+router.post("/", protect, createCourse); // CREATE: POST   /courses
+router.put("/:id", protect, updateCourse); // UPDATE: PUT    /courses/:id
+router.delete("/:id", protect, deleteCourse); // DELETE: DELETE /courses/:id
 
 export default router;

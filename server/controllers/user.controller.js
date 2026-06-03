@@ -1,4 +1,4 @@
-﻿import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken"
 import User from "./../models/user.model.js"
 import bcrypt from "bcryptjs"
 
@@ -14,7 +14,7 @@ const createToken = (userId) => {
 const setTokenCookie = (res, token) => {
   res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" ? true : false,
     sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     maxAge: 1000 * 60 * 60 * 24 * 7,
   })
@@ -23,19 +23,19 @@ const setTokenCookie = (res, token) => {
 export const RegisterUser = async (req, res) => {
   const { name, email, password, role } = req.body
   try {
-    if (!name || !email || !password|| !role) {
-      return res.status(400).json({ message: "Name, email, password and role are required" })
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Name, email, and password are required" })
     }
-    if(!["student", "instructor"].includes(role)) {
-      return res.status(400).json({ message: "Invalid role" })
-    }
+
+    const allowedRoles = ["student", "instructor"]
+    const normalizedRole = allowedRoles.includes(role) ? role : "student"
 
     const existingUser = await User.findOne({ email })
     if (existingUser) {
       return res.status(400).json({ message: "Email already in use" })
     }
 
-    const user = await User.create({ name, email, password ,role})
+    const user = await User.create({ name, email, password, role: normalizedRole })
     const token = createToken(user._id)
     setTokenCookie(res, token)
 
@@ -89,6 +89,13 @@ export const getUsers = async (req, res) => {
   }
 }
 
+export const getCurrentUser = async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Not authenticated" })
+  }
+  res.json(req.user)
+}
+
 export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select("-password").populate("enrolledCourses", "title summary").populate("teachingCourses", "title summary")
@@ -125,7 +132,7 @@ export const deleteUser = async (req, res) => {
 export const LogoutUser = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" ? true : false,
     sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
   })
   res.json({ message: "Logged out successfully" })

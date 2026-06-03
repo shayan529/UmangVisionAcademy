@@ -23,14 +23,6 @@ export const fetchUserById = createAsyncThunk("users/fetchUserById", async (id, 
 export const updateUser = createAsyncThunk("users/updateUser", async ({ id, payload }, { rejectWithValue }) => {
   try {
     const { data } = await api.put(API_ENDPOINTS.USERS.UPDATE(id), payload)
-    // Update localStorage if it's the current user
-    const user = localStorage.getItem("user")
-    if (user) {
-      const userData = JSON.parse(user)
-      if (userData._id === id) {
-        localStorage.setItem("user", JSON.stringify(data))
-      }
-    }
     return data
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || error.message)
@@ -40,14 +32,6 @@ export const updateUser = createAsyncThunk("users/updateUser", async ({ id, payl
 export const deleteUser = createAsyncThunk("users/deleteUser", async (id, { rejectWithValue }) => {
   try {
     const { data } = await api.delete(API_ENDPOINTS.USERS.DELETE(id))
-    // Clear localStorage if it's the current user
-    const user = localStorage.getItem("user")
-    if (user) {
-      const userData = JSON.parse(user)
-      if (userData._id === id) {
-        localStorage.removeItem("user")
-      }
-    }
     return data
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || error.message)
@@ -128,7 +112,9 @@ const usersSlice = createSlice({
       .addCase(deleteUser.fulfilled, (state, action) => {
         state.loading = false
         state.users = state.users.filter((u) => u._id !== action.meta.arg)
-        state.currentUser = null
+        if (state.currentUser?._id === action.meta.arg) {
+          state.currentUser = null
+        }
       })
       .addCase(deleteUser.rejected, (state, action) => {
         state.loading = false
