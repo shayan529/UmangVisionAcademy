@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 const PrivacyPolicy = () => {
   return (
@@ -45,8 +45,9 @@ const PrivacyPolicy = () => {
               4. Cookies
             </h2>
             <p>
-              SkillSphere may use cookies and similar technologies to enhance
-              user experience, analyze traffic, and improve functionality.
+              Umang Vision Academy may use cookies and similar technologies to
+              enhance user experience, analyze traffic, and improve
+              functionality.
             </p>
           </section>
 
@@ -75,8 +76,9 @@ const PrivacyPolicy = () => {
               7. Children's Privacy
             </h2>
             <p>
-              SkillSphere is not intended for children under 13 years of age. We
-              do not knowingly collect personal information from children.
+              Umang Vision Academy is not intended for children under 13 years
+              of age. We do not knowingly collect personal information from
+              children.
             </p>
           </section>
 
@@ -96,7 +98,7 @@ const PrivacyPolicy = () => {
             </h2>
             <p>
               For privacy-related questions, contact us at
-              privacy@skillsphere.com.
+              privacy@umangvisionacademy.com.
             </p>
           </section>
         </div>

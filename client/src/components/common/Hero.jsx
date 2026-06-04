@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   return (
@@ -27,11 +27,11 @@ const Hero = () => {
               </h1>
 
               <p className="max-w-2xl text-slate-200 text-lg md:text-md leading-8">
-                Welcome to SkillSphere, your complete AI-powered learning
-                platform designed for students from Classes 1 to 12. Learn with
-                expert instructors, interactive courses, AI tutors, live
-                classes, quizzes, assignments, and personalized learning paths
-                that help every student achieve academic excellence.
+                Welcome to Umang Vision Academy, your complete AI-powered
+                learning platform designed for students from Classes 1 to 12.
+                Learn with expert instructors, interactive courses, AI tutors,
+                live classes, quizzes, assignments, and personalized learning
+                paths that help every student achieve academic excellence.
               </p>
             </div>
 

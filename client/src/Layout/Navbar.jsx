@@ -1,7 +1,7 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { logoutUser } from "../redux/slices/authSlice";
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { logoutUser } from '../redux/slices/authSlice';
 
 const Navbar = () => {
   const { user, loading } = useSelector((state) => state.auth);
@@ -10,19 +10,19 @@ const Navbar = () => {
   const { pathname } = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const isInstructorDashboard = pathname.startsWith("/instructor-dashboard");
+  const isInstructorDashboard = pathname.startsWith('/instructor-dashboard');
 
   const role = user?.roles;
-  const hasInstructorRole = role?.includes("instructor");
-  const hasStudentRole = role?.includes("student");
-  const hasAdminRole = role?.includes("admin");
+  const hasInstructorRole = role?.includes('instructor');
+  const hasStudentRole = role?.includes('student');
+  const hasAdminRole = role?.includes('admin');
   const isMultiRole = hasInstructorRole && hasStudentRole && !hasAdminRole;
 
   const dashboardPath = hasAdminRole
-    ? "/admin-dashboard"
+    ? '/admin-dashboard'
     : hasInstructorRole
-      ? "/instructor-dashboard"
-      : "/student-dashboard";
+      ? '/instructor-dashboard'
+      : '/student-dashboard';
 
   const closeMobile = () => setMobileMenuOpen(false);
 
@@ -35,12 +35,9 @@ const Navbar = () => {
             S
           </div>
           <div>
-            <h1 className="text-xl md:text-3xl font-extrabold text-white tracking-wide">
-              Skill<span className="text-indigo-400">Sphere</span>
+            <h1 className="text-xl md:text-2xl font-extrabold text-white tracking-wide">
+              Umang Vision<span className="text-indigo-400"> Academy</span>
             </h1>
-            <p className="text-[10px] md:text-[11px] text-slate-400 -mt-1">
-              AI Powered Learning
-            </p>
           </div>
         </Link>
 
@@ -108,14 +105,14 @@ const Navbar = () => {
                 <Link
                   to={
                     isInstructorDashboard
-                      ? "/student-dashboard"
-                      : "/instructor-dashboard"
+                      ? '/student-dashboard'
+                      : '/instructor-dashboard'
                   }
                   className="whitespace-nowrap bg-gradient-to-r from-indigo-400 to-indigo-500 hover:scale-105 transition duration-300 text-black font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20"
                 >
                   {isInstructorDashboard
-                    ? "Go to Student Dashboard"
-                    : "Go to Instructor Dashboard"}
+                    ? 'Go to Student Dashboard'
+                    : 'Go to Instructor Dashboard'}
                 </Link>
               ) : (
                 <Link
@@ -128,7 +125,7 @@ const Navbar = () => {
               <button
                 onClick={() => {
                   dispatch(logoutUser());
-                  navigate("/");
+                  navigate('/');
                 }}
                 className="whitespace-nowrap bg-gradient-to-r from-red-500 to-rose-500 hover:scale-105 transition duration-300 text-black font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-rose-500/20"
               >
@@ -144,22 +141,22 @@ const Navbar = () => {
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           className="md:hidden ml-3 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white hover:bg-white/5 transition text-lg"
         >
-          {mobileMenuOpen ? "✕" : "☰"}
+          {mobileMenuOpen ? '✕' : '☰'}
         </button>
       </div>
 
       {/* ── Mobile menu ── */}
       <div
-        className={`md:hidden border-t border-white/10 overflow-hidden transition-all duration-300 ${mobileMenuOpen ? "max-h-screen" : "max-h-0"}`}
+        className={`md:hidden border-t border-white/10 overflow-hidden transition-all duration-300 ${mobileMenuOpen ? 'max-h-screen' : 'max-h-0'}`}
       >
         <div className="px-4 pt-3 pb-4 space-y-1">
           {/* Nav links — compact text rows */}
           {[
-            { to: "/courses", label: "Courses" },
+            { to: '/courses', label: 'Courses' },
             // { to: "/community", label: "Community" },
-            { to: "/plans", label: "Plans" },
+            { to: '/plans', label: 'Plans' },
             ...(!hasInstructorRole && !hasAdminRole
-              ? [{ to: "/become-instructor", label: "Become Instructor" }]
+              ? [{ to: '/become-instructor', label: 'Become Instructor' }]
               : []),
           ].map(({ to, label }) => (
             <Link
@@ -221,15 +218,15 @@ const Navbar = () => {
                   <Link
                     to={
                       isInstructorDashboard
-                        ? "/student-dashboard"
-                        : "/instructor-dashboard"
+                        ? '/student-dashboard'
+                        : '/instructor-dashboard'
                     }
                     onClick={closeMobile}
                     className="flex-1 text-center text-xs font-semibold py-2 px-2 rounded-lg bg-gradient-to-r from-indigo-400 to-indigo-500 text-black shadow-md transition"
                   >
                     {isInstructorDashboard
-                      ? "Go to Student Dashboard"
-                      : "Go to Instructor Dashboard"}
+                      ? 'Go to Student Dashboard'
+                      : 'Go to Instructor Dashboard'}
                   </Link>
                 ) : (
                   <Link
@@ -244,7 +241,7 @@ const Navbar = () => {
                   onClick={() => {
                     closeMobile();
                     dispatch(logoutUser());
-                    navigate("/");
+                    navigate('/');
                   }}
                   className="flex-1 text-xs font-semibold py-2 px-2 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-black shadow-md transition"
                 >

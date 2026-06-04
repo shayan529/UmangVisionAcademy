@@ -1,11 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
     <footer className="px-6 md:px-10 py-16 border-t border-slate-800 bg-slate-950">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
         <div className="space-y-4">
-          <h2 className="text-3xl font-bold text-indigo-400">SkillSphere</h2>
+          <h2 className="text-3xl font-bold text-indigo-400">
+            Umang Vision Academy
+          </h2>
         </div>
 
         <div>
@@ -16,9 +18,9 @@ const Footer = () => {
               Courses
             </Link>
 
-            {/* <Link to="/community" className="block hover:text-white transition">
-              Community
-            </Link> */}
+            <Link to="/about-us" className="block hover:text-white transition">
+              About Us
+            </Link>
           </div>
         </div>
 

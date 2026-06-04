@@ -1,23 +1,23 @@
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { fetchMyApplication } from "../../redux/slices/applicationsSlice";
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { fetchMyApplication } from '../../redux/slices/applicationsSlice';
 
 const steps = [
   {
-    title: "Apply",
+    title: 'Apply',
     description:
-      "Submit your bio, expertise and sample content so we can learn about your teaching style.",
+      'Submit your bio, expertise and sample content so we can learn about your teaching style.',
   },
   {
-    title: "Start Uploading",
+    title: 'Start Uploading',
     description:
-      "Start creating your first course and content, and get feedback from Students.",
+      'Start creating your first course and content, and get feedback from Students.',
   },
   {
-    title: "Start Teaching",
+    title: 'Start Teaching',
     description:
-      "Launch your first course, reach students, and start your journey as an instructor.",
+      'Launch your first course, reach students, and start your journey as an instructor.',
   },
 ];
 
@@ -33,24 +33,24 @@ const BecomeInstructor = () => {
 
   // Already an instructor — no need to be here
   useEffect(() => {
-    if (user?.roles?.includes("instructor"))
-      navigate("/instructor-dashboard", { replace: true });
+    if (user?.roles?.includes('instructor'))
+      navigate('/instructor-dashboard', { replace: true });
   }, [user, navigate]);
 
   const handleBecomeInstructor = () => {
-    if (!isAuthenticated) return navigate("/login");
-    if (myApplication) return navigate("/instructor-application/status");
-    navigate("/become-instructor/apply");
+    if (!isAuthenticated) return navigate('/login');
+    if (myApplication) return navigate('/instructor-application/status');
+    navigate('/become-instructor/apply');
   };
 
   const buttonLabel = loading
-    ? "Checking..."
+    ? 'Checking...'
     : myApplication
-      ? "View Application Status →"
-      : "Become an Instructor";
+      ? 'View Application Status →'
+      : 'Become an Instructor';
 
   useEffect(() => {
-    console.log("Application:", myApplication);
+    console.log('Application:', myApplication);
   }, [myApplication]);
 
   return (
@@ -59,7 +59,7 @@ const BecomeInstructor = () => {
         <div className="grid gap-12 lg:grid-cols-[1.2fr_0.8fr] items-center">
           <div className="space-y-8">
             <span className="inline-flex rounded-full bg-indigo-500/10 text-indigo-300 px-4 py-2 text-sm font-semibold tracking-wide">
-              Teach on SkillSphere
+              Teach on Umang Vision Academy
             </span>
 
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white">

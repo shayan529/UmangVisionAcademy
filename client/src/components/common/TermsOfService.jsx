@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 const TermsOfService = () => {
   return (
@@ -12,9 +12,9 @@ const TermsOfService = () => {
               1. Acceptance of Terms
             </h2>
             <p>
-              By accessing or using SkillSphere, you agree to comply with and be
-              bound by these Terms of Service. If you do not agree, please
-              discontinue use of the platform.
+              By accessing or using Umang Vision Academy, you agree to comply
+              with and be bound by these Terms of Service. If you do not agree,
+              please discontinue use of the platform.
             </p>
           </section>
 
@@ -78,8 +78,8 @@ const TermsOfService = () => {
               7. Account Termination
             </h2>
             <p>
-              SkillSphere reserves the right to suspend or terminate accounts
-              that violate these Terms of Service.
+              Umang Vision Academy reserves the right to suspend or terminate
+              accounts that violate these Terms of Service.
             </p>
           </section>
 
@@ -99,7 +99,7 @@ const TermsOfService = () => {
             </h2>
             <p>
               For questions regarding these Terms, contact us at
-              support@skillsphere.com.
+              support@umangvisionacademy.com.
             </p>
           </section>
         </div>
