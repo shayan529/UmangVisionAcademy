@@ -5,6 +5,7 @@ import courseReducer from "./slices/courseSlice";
 import applicationsReducer from "./slices/applicationsSlice";
 import sessionReducer from "./slices/sessionSlice";
 import studentReducer from "./slices/studentSlice";
+import cartReducer from "./slices/cartSlice";
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     applications: applicationsReducer,
     sessions: sessionReducer,
     students: studentReducer,
+    cart: cartReducer,
   },
 });
 

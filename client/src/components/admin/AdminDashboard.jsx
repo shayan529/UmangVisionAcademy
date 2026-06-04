@@ -4,7 +4,7 @@ import {
   fetchUsers,
   deleteUser as deleteUserThunk,
 } from "../../redux/slices/usersSlice";
-import { fetchCourses } from "../../redux/slices/courseSlice";
+import { fetchAllCoursesAdmin } from "../../redux/slices/courseSlice";
 
 import AdminSidebar from "./AdminSidebar";
 import AdminOverview from "./AdminOverview";
@@ -17,12 +17,25 @@ import AdminApplications from "./AdminApplications";
 export default function AdminDashboard() {
   const dispatch = useDispatch();
 
-  const { users = [] } = useSelector((state) => state.users);
-  const { courses = [] } = useSelector((state) => state.courses);
+  // ── Selectors ──────────────────────────────────────────────────────────────
+  // usersSlice
+  const {
+    users = [],
+    loading: usersLoading,
+    error: usersError,
+  } = useSelector((state) => state.users);
+
+  // courseSlice stores the array under state.courses.courses (not state.courses)
+  const {
+    courses = [],
+    loading: coursesLoading,
+    error: coursesError,
+  } = useSelector((state) => state.courses);
 
   const students = users.filter((u) => u.roles?.includes("student"));
   const instructors = users.filter((u) => u.roles?.includes("instructor"));
 
+  // ── UI state ───────────────────────────────────────────────────────────────
   const [tab, setTab] = useState("overview");
   const [q, setQ] = useState("");
   const [sortBy, setSortBy] = useState("revenue");
@@ -30,18 +43,20 @@ export default function AdminDashboard() {
   const [sideOpen, setSideOpen] = useState(false);
   const [sideCollapsed, setSideCollapsed] = useState(false);
 
+  // ── Fetch on mount ─────────────────────────────────────────────────────────
   useEffect(() => {
     dispatch(fetchUsers());
-    dispatch(fetchCourses());
+    dispatch(fetchAllCoursesAdmin());
   }, [dispatch]);
 
+  // Reset search when switching tabs
   useEffect(() => {
     setQ("");
   }, [tab]);
 
   const deleteUser = (id) => dispatch(deleteUserThunk(id));
 
-  /* ── Derived calculations ── */
+  // ── Derived stats ──────────────────────────────────────────────────────────
   const totalRevenue = courses.reduce(
     (s, c) => s + (c.price || 0) * (c.students?.length || 0),
     0,
@@ -75,8 +90,34 @@ export default function AdminDashboard() {
     return 0;
   });
 
-  /* ── Tab content ── */
+  // Global loading — show spinner on first load when both slices are empty
+  const isInitialLoad =
+    (usersLoading && users.length === 0) ||
+    (coursesLoading && courses.length === 0);
+
+  const globalError = usersError || coursesError;
+
+  // ── Tab renderer ───────────────────────────────────────────────────────────
   const renderTabContent = () => {
+    if (isInitialLoad) return <DashboardSkeleton />;
+
+    if (globalError)
+      return (
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <div className="text-4xl">⚠️</div>
+          <p className="text-red-400 font-semibold text-sm">{globalError}</p>
+          <button
+            onClick={() => {
+              dispatch(fetchUsers());
+              dispatch(fetchAllCoursesAdmin());
+            }}
+            className="rounded-xl border border-red-500/20 bg-red-500/10 px-5 py-2.5 text-sm text-red-300 hover:bg-red-500/20 transition"
+          >
+            Retry
+          </button>
+        </div>
+      );
+
     switch (tab) {
       case "overview":
         return (
@@ -87,6 +128,7 @@ export default function AdminDashboard() {
             totalRevenue={totalRevenue}
             totalEnrollments={totalEnrollments}
             sortedInstructors={sortedInstructors}
+            loading={coursesLoading || usersLoading}
           />
         );
       case "leaderboard":
@@ -97,6 +139,7 @@ export default function AdminDashboard() {
             setSortBy={setSortBy}
             sortDir={sortDir}
             setSortDir={setSortDir}
+            loading={usersLoading || coursesLoading}
           />
         );
       case "students":
@@ -107,6 +150,7 @@ export default function AdminDashboard() {
             q={q}
             setQ={setQ}
             deleteUser={deleteUser}
+            loading={usersLoading}
           />
         );
       case "instructors":
@@ -116,10 +160,20 @@ export default function AdminDashboard() {
             q={q}
             setQ={setQ}
             deleteUser={deleteUser}
+            loading={usersLoading || coursesLoading}
           />
         );
       case "courses":
-        return <AdminCourses courses={courses} q={q} setQ={setQ} />;
+        return (
+          <AdminCourses
+            courses={courses}
+            q={q}
+            setQ={setQ}
+            loading={coursesLoading}
+            error={coursesError}
+            onRetry={() => dispatch(fetchAllCoursesAdmin())}
+          />
+        );
       case "applications":
         return <AdminApplications />;
       default:
@@ -166,12 +220,39 @@ export default function AdminDashboard() {
             <h2 className="text-sm font-bold text-white uppercase tracking-wider bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-1">
               Admin: {tab}
             </h2>
+
+            {/* Live refetch indicator */}
+            {(coursesLoading || usersLoading) && !isInitialLoad && (
+              <span className="text-[10px] text-indigo-400 font-semibold animate-pulse">
+                Syncing…
+              </span>
+            )}
           </div>
 
           <div className="rounded-3xl border border-slate-800 bg-white/5 p-5 md:p-7 min-h-full">
             {renderTabContent()}
           </div>
         </main>
+      </div>
+    </div>
+  );
+}
+
+// ── Full-page skeleton shown on initial load ──────────────────────────────────
+function DashboardSkeleton() {
+  return (
+    <div className="flex flex-col gap-6 animate-pulse">
+      {/* Stat cards row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-24 rounded-2xl bg-slate-800/60" />
+        ))}
+      </div>
+      {/* Table rows */}
+      <div className="flex flex-col gap-3">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="h-14 rounded-2xl bg-slate-800/40" />
+        ))}
       </div>
     </div>
   );

@@ -12,11 +12,22 @@ import { Card, SectionHeader, Btn } from "./InstructorUi";
 const InstructorSessions = ({ showToast }) => {
   const dispatch = useDispatch();
   const { sessions, loading, success, error } = useSelector((s) => s.sessions);
-  const [form, setForm] = useState({ title: "", date: "", time: "" });
+  const [form, setForm] = useState({ title: "", date: "", time: "", url: "" });
 
   useEffect(() => {
     dispatch(fetchSessions());
   }, [dispatch]);
+
+  const inputStyle = {
+    width: "100%",
+    padding: "10px 12px",
+    background: "#1e293b",
+    border: "1px solid #334155",
+    borderRadius: 10,
+    color: "#f8fafc",
+    fontSize: 14,
+    outline: "none",
+  };
 
   // ── Toast on success / error ──────────────────────────────────────────
   useEffect(() => {
@@ -33,21 +44,53 @@ const InstructorSessions = ({ showToast }) => {
     }
   }, [error, dispatch, showToast]);
 
-  // ── Handlers ──────────────────────────────────────────────────────────
-  const schedule = () => {
-    if (!form.title.trim()) {
-      showToast("Enter a session title");
+  const copySessionLink = async (url) => {
+    if (!url) {
+      showToast("No session URL available");
       return;
     }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast("Session link copied");
+    } catch (error) {
+      showToast("Failed to copy link");
+    }
+  };
+
+  // ── Handlers ──────────────────────────────────────────────────────────
+  const schedule = () => {
+    if (
+      !form.title.trim() ||
+      !form.url.trim() ||
+      !form.date.trim() ||
+      !form.time.trim()
+    ) {
+      showToast("Enter all session details");
+      return;
+    }
+
+    if (form.url && !/^https?:\/\/.+/i.test(form.url)) {
+      showToast("Enter a valid URL starting with http:// or https://");
+      return;
+    }
+
     dispatch(
       createSession({
         title: form.title,
-        date: form.date || "TBD",
-        time: form.time || "TBD",
+        date: form.date,
+        time: form.time,
         status: "upcoming",
+        url: form.url,
       }),
     );
-    setForm({ title: "", date: "", time: "" });
+
+    setForm({
+      title: "",
+      date: "",
+      time: "",
+      url: "",
+    });
   };
 
   const remove = (id) => dispatch(deleteSession(id));
@@ -57,52 +100,106 @@ const InstructorSessions = ({ showToast }) => {
       {/* Schedule form */}
       <Card style={{ marginBottom: 16 }}>
         <SectionHeader title="Schedule New Session" />
+
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
+            gridTemplateColumns: "repeat(2, 1fr)",
             gap: 12,
-            marginBottom: 14,
+            marginBottom: 16,
           }}
         >
-          {[
-            {
-              label: "Title",
-              field: "title",
-              type: "text",
-              placeholder: "Session title",
-            },
-            { label: "Date", field: "date", type: "date", placeholder: "" },
-            { label: "Time", field: "time", type: "time", placeholder: "" },
-          ].map(({ label, field, type, placeholder }) => (
-            <div key={field}>
-              <div style={{ fontSize: 11, color: "#64748b", marginBottom: 5 }}>
-                {label}
-              </div>
-              <input
-                type={type}
-                placeholder={placeholder}
-                value={form[field]}
-                onChange={(e) => setForm({ ...form, [field]: e.target.value })}
-                style={{
-                  width: "100%",
-                  padding: "9px 12px",
-                  background: "#1e293b",
-                  border: "1px solid #334155",
-                  borderRadius: 10,
-                  color: "#f1f5f9",
-                  fontSize: 13,
-                  outline: "none",
-                }}
-              />
-            </div>
-          ))}
+          {/* Title */}
+          <div>
+            <label
+              style={{
+                display: "block",
+                marginBottom: 6,
+                fontSize: 12,
+                color: "#94a3b8",
+              }}
+            >
+              Session Title
+            </label>
+            <input
+              type="text"
+              placeholder="Enter session title"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              style={inputStyle}
+              required
+            />
+          </div>
+
+          {/* Date */}
+          <div>
+            <label
+              style={{
+                display: "block",
+                marginBottom: 6,
+                fontSize: 12,
+                color: "#94a3b8",
+              }}
+            >
+              Date
+            </label>
+            <input
+              type="date"
+              required
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
+              style={inputStyle}
+            />
+          </div>
+
+          {/* Time */}
+          <div>
+            <label
+              style={{
+                display: "block",
+                marginBottom: 6,
+                fontSize: 12,
+                color: "#94a3b8",
+              }}
+            >
+              Time
+            </label>
+            <input
+              required
+              type="time"
+              value={form.time}
+              onChange={(e) => setForm({ ...form, time: e.target.value })}
+              style={inputStyle}
+            />
+          </div>
+
+          {/* URL */}
+          <div>
+            <label
+              style={{
+                display: "block",
+                marginBottom: 6,
+                fontSize: 12,
+                color: "#94a3b8",
+              }}
+            >
+              Meeting URL
+            </label>
+            <input
+              required
+              type="url"
+              placeholder="https://meet.google.com/..."
+              value={form.url}
+              onChange={(e) => setForm({ ...form, url: e.target.value })}
+              style={inputStyle}
+            />
+          </div>
         </div>
+
         <Btn variant="primary" onClick={schedule} disabled={loading}>
-          {loading ? "Scheduling…" : "📅 Schedule Session"}
+          {loading ? "Scheduling..." : "📅 Schedule Session"}
         </Btn>
       </Card>
-
       {/* Session list */}
       <Card>
         <SectionHeader title="All Sessions" />
@@ -156,7 +253,11 @@ const InstructorSessions = ({ showToast }) => {
               />
               <div style={{ flex: 1 }}>
                 <div
-                  style={{ fontSize: 14, fontWeight: 600, color: "#f1f5f9" }}
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: "#f1f5f9",
+                  }}
                 >
                   {s.title}
                 </div>
@@ -166,23 +267,29 @@ const InstructorSessions = ({ showToast }) => {
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                {s.status === "live" ? (
-                  <Btn
-                    variant="success"
-                    style={{ fontSize: 12 }}
-                    onClick={() => showToast("Joining session…")}
-                  >
-                    Join Live
-                  </Btn>
-                ) : (
-                  <Btn
-                    variant="ghost"
-                    style={{ fontSize: 12 }}
-                    onClick={() => showToast("Session link copied")}
-                  >
-                    Copy Link
-                  </Btn>
-                )}
+                <Btn
+                  variant="success"
+                  style={{ fontSize: 12 }}
+                  onClick={() => {
+                    if (!s.url) {
+                      showToast("No session URL available");
+                      return;
+                    }
+
+                    window.open(s.url, "_blank");
+                  }}
+                >
+                  Join
+                </Btn>
+
+                <Btn
+                  variant="ghost"
+                  style={{ fontSize: 12 }}
+                  onClick={() => copySessionLink(s.url)}
+                >
+                  Copy
+                </Btn>
+
                 <Btn
                   variant="danger"
                   style={{ fontSize: 12, padding: "8px 10px" }}

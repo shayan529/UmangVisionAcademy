@@ -29,7 +29,7 @@ export const getSessionById = async (req, res) => {
 // POST /sessions
 export const createSession = async (req, res) => {
   try {
-    const { title, date, time, status, course } = req.body;
+    const { title, date, time, status, course, url } = req.body;
     if (!title?.trim()) {
       return res.status(400).json({ message: "Session title is required" });
     }
@@ -40,6 +40,7 @@ export const createSession = async (req, res) => {
       status: status || "upcoming",
       course: course || null,
       instructor: req.user._id,
+      url: url || null,
     });
     res.status(201).json(session);
   } catch (error) {

@@ -1,19 +1,46 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
 import api, { API_ENDPOINTS } from "../../config/api.js";
 
-// ── Thunks ──────────────────────────────────────────────────────────────────
+// ── Thunks ────────────────────────────────────────────────────────────────────
 
 export const fetchCourses = createAsyncThunk(
   "courses/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await api.get(API_ENDPOINTS.COURSES.LIST);
-      // Handle: plain array, { courses: [] }, { data: [] }
       const raw = Array.isArray(data)
         ? data
         : (data.courses ?? data.data ?? []);
-      // Filter out any null/undefined items so .map(c => c._id) never crashes
+      return raw.filter(Boolean);
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  },
+);
+
+export const fetchPublishedCourses = createAsyncThunk(
+  "courses/fetchPublished",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get(API_ENDPOINTS.COURSES.PUBLIC);
+      const raw = Array.isArray(data)
+        ? data
+        : (data.courses ?? data.data ?? []);
+      return raw.filter(Boolean);
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  },
+);
+
+export const fetchEnrolledCourses = createAsyncThunk(
+  "courses/fetchEnrolled",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get(API_ENDPOINTS.COURSES.ENROLLED); // e.g. "/courses/enrolled"
+      const raw = Array.isArray(data)
+        ? data
+        : (data.courses ?? data.data ?? []);
       return raw.filter(Boolean);
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
@@ -27,6 +54,21 @@ export const fetchCourseById = createAsyncThunk(
     try {
       const { data } = await api.get(API_ENDPOINTS.COURSES.GET(id));
       return data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  },
+);
+
+export const fetchAllCoursesAdmin = createAsyncThunk(
+  "courses/fetchAllAdmin",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get("/courses/admin/all");
+      const raw = Array.isArray(data)
+        ? data
+        : (data.courses ?? data.data ?? []);
+      return raw.filter(Boolean);
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -72,18 +114,20 @@ export const deleteCourse = createAsyncThunk(
   },
 );
 
-// ── Initial State ────────────────────────────────────────────────────────────
+// ── Initial state ─────────────────────────────────────────────────────────────
 
 const initialState = {
-  courses: [], // all courses list
-  selectedCourse: null, // single course detail
+  courses: [], // all published courses
+  enrolled: [], // courses the current student is enrolled in
+  selectedCourse: null,
   loading: false,
-  detailLoading: false, // separate loader for getCourseById
+  enrolledLoading: false,
+  detailLoading: false,
   error: null,
-  success: null, // e.g. "Course created successfully"
+  success: null,
 };
 
-// ── Slice ────────────────────────────────────────────────────────────────────
+// ── Slice ─────────────────────────────────────────────────────────────────────
 
 const courseSlice = createSlice({
   name: "courses",
@@ -98,11 +142,23 @@ const courseSlice = createSlice({
     clearSelectedCourse: (state) => {
       state.selectedCourse = null;
     },
+
+    /**
+     * Call this when a student completes a lesson to optimistically update
+     * progress in the UI without a full refetch.
+     * Payload: { courseId: string, progress: number (0-100) }
+     */
+    updateEnrolledProgress: (state, { payload }) => {
+      const course = state.enrolled.find(
+        (c) => c._id === payload.courseId || c.id === payload.courseId,
+      );
+      if (course) course.progress = payload.progress;
+    },
   },
   extraReducers: (builder) => {
     builder
 
-      // ── fetchCourses ──
+      // ── fetchCourses ──────────────────────────────────────────────────────
       .addCase(fetchCourses.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -116,7 +172,54 @@ const courseSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ── fetchCourseById ──
+      .addCase(fetchAllCoursesAdmin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllCoursesAdmin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.courses = action.payload; // reuses same courses array
+      })
+      .addCase(fetchAllCoursesAdmin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(fetchPublishedCourses.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPublishedCourses.fulfilled, (state, action) => {
+        state.loading = false;
+        state.courses = action.payload;
+      })
+      .addCase(fetchPublishedCourses.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // ── fetchEnrolledCourses ──────────────────────────────────────────────
+      .addCase(fetchEnrolledCourses.pending, (state) => {
+        state.enrolledLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchEnrolledCourses.fulfilled, (state, action) => {
+        state.enrolledLoading = false;
+        // Normalise: guarantee every enrolled course has a progress field
+        state.enrolled = action.payload.map((c) => ({
+          ...c,
+          progress: c.progress ?? 0,
+          completedLessons: c.completedLessons ?? 0,
+          lastWatched: c.lastWatched ?? null,
+          nextLesson: c.nextLesson ?? null,
+        }));
+      })
+      .addCase(fetchEnrolledCourses.rejected, (state, action) => {
+        state.enrolledLoading = false;
+        state.error = action.payload;
+      })
+
+      // ── fetchCourseById ───────────────────────────────────────────────────
       .addCase(fetchCourseById.pending, (state) => {
         state.detailLoading = true;
         state.error = null;
@@ -131,7 +234,7 @@ const courseSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ── createCourse ──
+      // ── createCourse ──────────────────────────────────────────────────────
       .addCase(createCourse.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -139,9 +242,7 @@ const courseSlice = createSlice({
       })
       .addCase(createCourse.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload?._id) {
-          state.courses.unshift(action.payload);
-        }
+        if (action.payload?._id) state.courses.unshift(action.payload);
         state.success = "Course created successfully";
       })
       .addCase(createCourse.rejected, (state, action) => {
@@ -149,7 +250,7 @@ const courseSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ── updateCourse ──
+      // ── updateCourse ──────────────────────────────────────────────────────
       .addCase(updateCourse.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -157,16 +258,14 @@ const courseSlice = createSlice({
       })
       .addCase(updateCourse.fulfilled, (state, action) => {
         state.loading = false;
-        // Unwrap if needed
         const updated = action.payload?._id
           ? action.payload
           : (action.payload?.course ?? action.payload);
         state.courses = state.courses.map((c) =>
           c._id === updated._id ? updated : c,
         );
-        if (state.selectedCourse?._id === updated._id) {
+        if (state.selectedCourse?._id === updated._id)
           state.selectedCourse = updated;
-        }
         state.success = "Course updated successfully";
       })
       .addCase(updateCourse.rejected, (state, action) => {
@@ -174,7 +273,7 @@ const courseSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ── deleteCourse ──
+      // ── deleteCourse ──────────────────────────────────────────────────────
       .addCase(deleteCourse.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -183,9 +282,9 @@ const courseSlice = createSlice({
       .addCase(deleteCourse.fulfilled, (state, action) => {
         state.loading = false;
         state.courses = state.courses.filter((c) => c._id !== action.payload);
-        if (state.selectedCourse?._id === action.payload) {
+        state.enrolled = state.enrolled.filter((c) => c._id !== action.payload);
+        if (state.selectedCourse?._id === action.payload)
           state.selectedCourse = null;
-        }
         state.success = "Course deleted successfully";
       })
       .addCase(deleteCourse.rejected, (state, action) => {
@@ -195,9 +294,11 @@ const courseSlice = createSlice({
   },
 });
 
-// ── Actions ──────────────────────────────────────────────────────────────────
-
-export const { clearCourseError, clearCourseSuccess, clearSelectedCourse } =
-  courseSlice.actions;
+export const {
+  clearCourseError,
+  clearCourseSuccess,
+  clearSelectedCourse,
+  updateEnrolledProgress,
+} = courseSlice.actions;
 
 export default courseSlice.reducer;

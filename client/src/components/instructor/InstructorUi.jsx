@@ -153,172 +153,212 @@ export const AddCourseModal = ({
 
   const inputStyle = {
     width: "100%",
-    padding: "9px 12px",
+    padding: "10px 12px",
     background: "#1e293b",
     border: "1px solid #334155",
     borderRadius: 10,
     color: "#f1f5f9",
-    fontSize: 13,
+    fontSize: 14,
     outline: "none",
     boxSizing: "border-box",
   };
 
   const labelStyle = {
-    fontSize: 11,
-    color: "#64748b",
-    marginBottom: 5,
     display: "block",
+    marginBottom: 6,
+    fontSize: 12,
+    color: "#94a3b8",
   };
-
-  const textFields = [
-    {
-      label: "Course Title *",
-      field: "title",
-      type: "text",
-      placeholder: "e.g. React for Beginners",
-    },
-    {
-      label: "Summary *",
-      field: "summary",
-      type: "text",
-      placeholder: "Short description of the course",
-    },
-    {
-      label: "Category",
-      field: "category",
-      type: "text",
-      placeholder: "e.g. Web Development",
-    },
-    {
-      label: "Price ($)",
-      field: "price",
-      type: "number",
-      placeholder: "0 for free",
-    },
-  ];
 
   return (
     <div
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 100,
-        background: "rgba(2,8,23,0.8)",
-        backdropFilter: "blur(4px)",
+        background: "rgba(0,0,0,0.7)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "0 16px",
+        zIndex: 9999,
+        padding: "16px",
       }}
     >
       <div
         style={{
-          background: "#0b1120",
-          border: "1px solid #1e293b",
+          width: "700px",
+          maxWidth: "95%",
+          maxHeight: "90vh",
+          overflowY: "auto",
+          background: "#0f172a",
+          border: "1px solid #334155",
           borderRadius: 16,
-          padding: 28,
-          width: "100%",
-          maxWidth: 480,
+          padding: 24,
         }}
       >
-        {/* Header */}
-        <div
+        <h2
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 22,
+            color: "#f8fafc",
+            fontSize: 20,
+            fontWeight: 600,
+            marginBottom: 20,
           }}
         >
-          <div style={{ fontSize: 16, fontWeight: 700, color: "#f1f5f9" }}>
-            Add New Course
+          Create New Course
+        </h2>
+
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
+        >
+          {/* Subject → maps to title */}
+          <div>
+            <label style={labelStyle}>Subject *</label>
+            <input
+              type="text"
+              placeholder="e.g. Mathematics"
+              value={courseForm.subject || ""}
+              onChange={(e) =>
+                setCourseForm({ ...courseForm, subject: e.target.value })
+              }
+              style={inputStyle}
+            />
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#64748b",
-              fontSize: 20,
-              cursor: "pointer",
-              lineHeight: 1,
-            }}
-          >
-            ✕
-          </button>
+
+          {/* Class → maps to category */}
+          <div>
+            <label style={labelStyle}>Class *</label>
+            <select
+              value={courseForm.className || ""}
+              onChange={(e) =>
+                setCourseForm({ ...courseForm, className: e.target.value })
+              }
+              style={inputStyle}
+            >
+              <option value="">Select Class</option>
+              {[...Array(12)].map((_, i) => (
+                <option key={i + 1} value={`Class ${i + 1}`}>
+                  Class {i + 1}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Text fields */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 14,
-            marginBottom: 14,
-          }}
-        >
-          {textFields.map(({ label, field, type, placeholder }) => (
-            <div key={field}>
-              <label style={labelStyle}>{label}</label>
-              <input
-                type={type}
-                placeholder={placeholder}
-                value={courseForm[field]}
-                onChange={(e) =>
-                  setCourseForm({ ...courseForm, [field]: e.target.value })
-                }
-                style={inputStyle}
-              />
-            </div>
-          ))}
+        {/* Description → maps to summary */}
+        <div style={{ marginTop: 16 }}>
+          <label style={labelStyle}>
+            Description *{" "}
+            <span style={{ color: "#64748b", fontWeight: 400 }}>
+              (shown as course summary)
+            </span>
+          </label>
+          <textarea
+            rows={3}
+            placeholder="Brief description of the subject"
+            value={courseForm.description || ""}
+            onChange={(e) =>
+              setCourseForm({ ...courseForm, description: e.target.value })
+            }
+            style={{ ...inputStyle, resize: "vertical" }}
+          />
         </div>
 
-        {/* Level + Status selects */}
+        {/* Content → maps to description (full course content) */}
+        <div style={{ marginTop: 16 }}>
+          <label style={labelStyle}>
+            Course Content{" "}
+            <span style={{ color: "#64748b", fontWeight: 400 }}>
+              (full details, chapters, etc.)
+            </span>
+          </label>
+          <textarea
+            rows={5}
+            placeholder={`Chapter 1: Algebra\nChapter 2: Linear Equations\nChapter 3: Geometry`}
+            value={courseForm.content || ""}
+            onChange={(e) =>
+              setCourseForm({ ...courseForm, content: e.target.value })
+            }
+            style={{ ...inputStyle, resize: "vertical" }}
+          />
+        </div>
+
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
-            gap: 12,
-            marginBottom: 22,
+            gap: 16,
+            marginTop: 16,
           }}
         >
+          {/* Thumbnail URL */}
           <div>
-            <label style={labelStyle}>Level</label>
-            <select
-              value={courseForm.level}
+            <label style={labelStyle}>Thumbnail URL</label>
+            <input
+              type="text"
+              placeholder="https://ik.imagekit.io/..."
+              value={courseForm.thumbnailUrl || ""}
               onChange={(e) =>
-                setCourseForm({ ...courseForm, level: e.target.value })
+                setCourseForm({ ...courseForm, thumbnailUrl: e.target.value })
               }
-              style={{ ...inputStyle, cursor: "pointer" }}
-            >
-              <option value="Beginner">Beginner</option>
-              <option value="Intermediate">Intermediate</option>
-              <option value="Advanced">Advanced</option>
-            </select>
+              style={inputStyle}
+            />
           </div>
+
+          {/* Demo Video URL (ImageKit) */}
           <div>
-            <label style={labelStyle}>Status</label>
-            <select
-              value={courseForm.status}
+            <label style={labelStyle}>
+              Demo Video URL{" "}
+              <span style={{ color: "#64748b", fontWeight: 400 }}>
+                (ImageKit)
+              </span>
+            </label>
+            <input
+              type="text"
+              placeholder="https://ik.imagekit.io/.../demo.mp4"
+              value={courseForm.demoVideoUrl || ""}
               onChange={(e) =>
-                setCourseForm({ ...courseForm, status: e.target.value })
+                setCourseForm({ ...courseForm, demoVideoUrl: e.target.value })
               }
-              style={{ ...inputStyle, cursor: "pointer" }}
-            >
-              <option value="published">Published</option>
-              <option value="draft">Draft</option>
-            </select>
+              style={inputStyle}
+            />
           </div>
         </div>
 
-        {/* Actions */}
-        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-          <Btn variant="ghost" onClick={onClose}>
+        {/* Buttons */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 12,
+            marginTop: 24,
+          }}
+        >
+          <button
+            onClick={onClose}
+            style={{
+              padding: "10px 16px",
+              borderRadius: 10,
+              border: "1px solid #475569",
+              background: "transparent",
+              color: "#cbd5e1",
+              cursor: "pointer",
+            }}
+          >
             Cancel
-          </Btn>
-          <Btn variant="primary" onClick={onAdd}>
+          </button>
+          <button
+            onClick={onAdd}
+            style={{
+              padding: "10px 20px",
+              borderRadius: 10,
+              border: "none",
+              background: "#7c3aed",
+              color: "#fff",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
             Create Course
-          </Btn>
+          </button>
         </div>
       </div>
     </div>

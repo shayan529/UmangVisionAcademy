@@ -52,12 +52,12 @@ const Navbar = () => {
           >
             Courses
           </Link>
-          <Link
+          {/* <Link
             to="/community"
             className="hover:text-indigo-300 transition duration-300"
           >
             Community
-          </Link>
+          </Link> */}
           <Link
             to="/plans"
             className="hover:text-indigo-300 transition duration-300"
@@ -156,7 +156,7 @@ const Navbar = () => {
           {/* Nav links — compact text rows */}
           {[
             { to: "/courses", label: "Courses" },
-            { to: "/community", label: "Community" },
+            // { to: "/community", label: "Community" },
             { to: "/plans", label: "Plans" },
             ...(!hasInstructorRole && !hasAdminRole
               ? [{ to: "/become-instructor", label: "Become Instructor" }]

@@ -16,9 +16,9 @@ const Footer = () => {
               Courses
             </Link>
 
-            <Link to="/community" className="block hover:text-white transition">
+            {/* <Link to="/community" className="block hover:text-white transition">
               Community
-            </Link>
+            </Link> */}
           </div>
         </div>
 

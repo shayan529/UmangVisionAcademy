@@ -37,8 +37,8 @@ const Sidebar = ({
       icon: FaRobot,
     },
     {
-      label: "Community",
-      to: "/student-dashboard/community",
+      label: "Sessions",
+      to: "/student-dashboard/sessions",
       icon: FaUsers,
     },
     {

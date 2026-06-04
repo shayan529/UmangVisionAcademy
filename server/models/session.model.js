@@ -30,6 +30,11 @@ const sessionSchema = new mongoose.Schema(
       ref: "Course",
       default: null,
     },
+    url: {
+      type: String,
+      required: true,
+      trim: true,
+    },
   },
   { timestamps: true },
 );

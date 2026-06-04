@@ -59,7 +59,9 @@ import AdminLeaderboard from "./components/admin/AdminLeaderboard";
 import InstructorApplicationStatus from "./components/common/InstructorApplicationStatus";
 import PrivacyPolicy from "./components/common/PrivacyPolicy";
 import TermsOfService from "./components/common/TermsOfService";
-
+import StudentSessions from "./components/student/StudentSessions";
+import CourseDemo from "./components/course/CourseDemo";
+import CourseDemoTest from "./components/course/CourseDemoTest";
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -98,6 +100,8 @@ function App() {
           <Route path="become-instructor" element={<BecomeInstructor />} />
           <Route path="privacy" element={<PrivacyPolicy />} />
           <Route path="terms" element={<TermsOfService />} />
+          <Route path="/courses/:id/demo" element={<CourseDemo />} />
+          <Route path="/courses/demo" element={<CourseDemoTest />} />
           <Route
             path="become-instructor/apply"
             element={<BecomeInstructorApplication />}
@@ -132,6 +136,7 @@ function App() {
             <Route path="certificates" element={<CertificatesSection />} />
             <Route path="settings" element={<SettingsSection />} />
             <Route path="leaderboard" element={<LeaderBoard />} />
+            <Route path="sessions" element={<StudentSessions />} />
             <Route path="notifications" element={<StudentNotifications />} />
           </Route>
 

@@ -1,15 +1,13 @@
-import React, { useState } from "react";
-import {
-  Link,
-  NavLink,
-  Outlet,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  fetchStudents,
+  fetchStudentActivity,
+} from "../../redux/slices/studentSlice";
 
-// ── Section title map (matches student nav routes) ────────────────────────────
+// ── Section title map ─────────────────────────────────────────────────────────
 const sectionTitles = {
   "/student-dashboard": "Dashboard",
   "/student-dashboard/courses": "Courses",
@@ -21,195 +19,652 @@ const sectionTitles = {
   "/student-dashboard/leaderboard": "Leaderboard",
 };
 
-// ── DashboardHome (Overview page) ─────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const getOverallProgress = (courses = []) => {
+  if (!courses.length) return 0;
+  const total = courses.reduce((sum, c) => sum + (c.progress ?? 0), 0);
+  return Math.round(total / courses.length);
+};
+
+const getLeaderboardRank = (students = [], currentUserId) => {
+  if (!students.length || !currentUserId) return null;
+  const sorted = [...students].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  const rank = sorted.findIndex(
+    (s) => s._id === currentUserId || s.id === currentUserId,
+  );
+  return rank === -1 ? null : rank + 1;
+};
+
+const formatActivityTime = (dateStr) => {
+  if (!dateStr) return "";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+};
+
+// ── Activity type → icon/color map ───────────────────────────────────────────
+const activityMeta = {
+  quiz: { icon: "📝", color: "#818cf8", label: "Quiz" },
+  lesson: { icon: "📖", color: "#22d3ee", label: "Lesson" },
+  course: { icon: "🎓", color: "#f472b6", label: "Course" },
+  login: { icon: "🔑", color: "#34d399", label: "Login" },
+  default: { icon: "⚡", color: "#fb923c", label: "Activity" },
+};
+
+const getActivityMeta = (type = "") =>
+  activityMeta[type.toLowerCase()] ?? activityMeta.default;
+
+// ── Skeleton loader ───────────────────────────────────────────────────────────
+const Skeleton = ({ w = "100%", h = 18, radius = 8, style = {} }) => (
+  <div
+    style={{
+      width: w,
+      height: h,
+      borderRadius: radius,
+      background: "linear-gradient(90deg,#1e293b 25%,#263348 50%,#1e293b 75%)",
+      backgroundSize: "200% 100%",
+      animation: "shimmer 1.4s infinite",
+      ...style,
+    }}
+  />
+);
+
+// ── DashboardHome ─────────────────────────────────────────────────────────────
 export const DashboardHome = () => {
-  const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const { user } = useSelector((s) => s.auth);
+
+  // ── Redux state ──
+  const {
+    students,
+    activity,
+    loading: studentsLoading,
+    activityLoading,
+  } = useSelector((s) => s.students);
+
+  // Enrolled courses: try common slice names
+  const enrolledCourses = useSelector(
+    (s) => s.courses?.enrolled ?? s.myCourses?.courses ?? [],
+  );
+  const coursesLoading = useSelector(
+    (s) => s.courses?.enrolledLoading ?? s.myCourses?.loading ?? false,
+  );
+
+  // Fetch on mount
+  useEffect(() => {
+    dispatch(fetchStudents());
+    dispatch(fetchStudentActivity());
+  }, [dispatch]);
+
   const username = user?.email ? user.email.split("@")[0] : "there";
+  const userId = user?._id ?? user?.id;
+
+  const overallProgress = getOverallProgress(enrolledCourses);
+  const rank = getLeaderboardRank(students, userId);
+  const recentActivity = [...(activity ?? [])].slice(0, 5);
+
+  // ── Next incomplete course ──
+  const nextCourse = enrolledCourses.find((c) => (c.progress ?? 0) < 100);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-      {/* Hero row */}
-      <section
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 16,
-        }}
-      >
-        <div>
-          <p
-            style={{
-              color: "#818cf8",
-              fontWeight: 500,
-              fontSize: 14,
-              marginBottom: 6,
-            }}
-          >
-            Welcome Back, {username} 👋
-          </p>
-          <h1
-            style={{
-              fontSize: "clamp(28px, 4vw, 42px)",
-              fontWeight: 800,
-              color: "#f1f5f9",
-              lineHeight: 1.2,
-            }}
-          >
-            Student Dashboard
-          </h1>
-          <p
-            style={{
-              color: "#64748b",
-              marginTop: 10,
-              maxWidth: 500,
-              lineHeight: 1.7,
-              fontSize: 14,
-            }}
-          >
-            Track your learning progress, jump into your courses, and access
-            AI-powered study tools — all from one place.
-          </p>
-        </div>
-        <Link
-          to="my-courses"
-          style={{ color: "inherit", textDecoration: "none" }}
+    <>
+      {/* Shimmer keyframe injected once */}
+      <style>{`
+        @keyframes shimmer {
+          0%   { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(14px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .dash-section { animation: fadeUp 0.35s ease both; }
+        .dash-section:nth-child(2) { animation-delay: 0.05s; }
+        .dash-section:nth-child(3) { animation-delay: 0.1s; }
+        .dash-section:nth-child(4) { animation-delay: 0.15s; }
+        .activity-row:hover { background: #1e293b !important; }
+        .progress-bar-fill { transition: width 0.9s cubic-bezier(.4,0,.2,1); }
+      `}</style>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+        {/* ── Hero ── */}
+        <section
+          className="dash-section"
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 16,
+          }}
         >
-          <button
-            style={{
-              background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
-              color: "#fff",
-              border: "none",
-              borderRadius: 14,
-              padding: "12px 24px",
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: "pointer",
-              boxShadow: "0 8px 24px rgba(124,58,237,0.35)",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Continue Learning →
-          </button>
-        </Link>
-      </section>
-
-      {/* Stat cards */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 14,
-        }}
-      >
-        {[
-          { value: "12", label: "Enrolled Courses", color: "#818cf8" },
-          { value: "85%", label: "Overall Progress", color: "#22d3ee" },
-          { value: "#8", label: "Leaderboard Rank", color: "#f472b6" },
-        ].map((card) => (
-          <div
-            key={card.label}
-            style={{
-              background: "#111827",
-              border: "1px solid #1e293b",
-              borderRadius: 18,
-              padding: "22px 24px",
-            }}
-          >
-            <div style={{ fontSize: 34, fontWeight: 800, color: card.color }}>
-              {card.value}
-            </div>
-            <div style={{ color: "#64748b", marginTop: 6, fontSize: 13 }}>
-              {card.label}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Goal cards */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 14,
-        }}
-      >
-        {[
-          {
-            tag: "NEXT GOAL",
-            tagColor: "#818cf8",
-            title: "Finish your AI course",
-            desc: "Complete the machine learning module and unlock mentor feedback.",
-          },
-          {
-            tag: "WEEKLY GOAL",
-            tagColor: "#22d3ee",
-            title: "Keep your streak alive",
-            desc: "Attend at least one live session and review your latest quiz analytics.",
-          },
-          {
-            tag: "COMMUNITY",
-            tagColor: "#f472b6",
-            title: "Join the next live event",
-            desc: "Jump into mentorship, Q&A, and group study sessions from the dashboard.",
-          },
-        ].map((card) => (
-          <div
-            key={card.tag}
-            style={{
-              background: "#111827",
-              border: "1px solid #1e293b",
-              borderRadius: 18,
-              padding: "22px 24px",
-            }}
-          >
+          <div>
             <p
               style={{
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.12em",
-                color: card.tagColor,
-                marginBottom: 10,
-                textTransform: "uppercase",
+                color: "#818cf8",
+                fontWeight: 500,
+                fontSize: 14,
+                marginBottom: 6,
               }}
             >
-              {card.tag}
+              Welcome Back, {username} 👋
             </p>
-            <h3
+            <h1
               style={{
-                fontSize: 20,
+                fontSize: "clamp(28px,4vw,42px)",
                 fontWeight: 800,
                 color: "#f1f5f9",
-                marginBottom: 10,
-                lineHeight: 1.3,
+                lineHeight: 1.2,
               }}
             >
-              {card.title}
-            </h3>
-            <p style={{ color: "#64748b", fontSize: 13, lineHeight: 1.7 }}>
-              {card.desc}
+              Student Dashboard
+            </h1>
+            <p
+              style={{
+                color: "#64748b",
+                marginTop: 10,
+                maxWidth: 500,
+                lineHeight: 1.7,
+                fontSize: 14,
+              }}
+            >
+              Track your learning progress, jump into your courses, and access
+              AI‑powered study tools — all from one place.
             </p>
           </div>
-        ))}
+          <Link
+            to="my-courses"
+            style={{ color: "inherit", textDecoration: "none" }}
+          >
+            <button
+              style={{
+                background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 14,
+                padding: "12px 24px",
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: "pointer",
+                boxShadow: "0 8px 24px rgba(124,58,237,.35)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Continue Learning →
+            </button>
+          </Link>
+        </section>
+
+        {/* ── Stat cards ── */}
+        <div
+          className="dash-section"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
+            gap: 14,
+          }}
+        >
+          {/* Enrolled */}
+          <StatCard
+            loading={coursesLoading}
+            value={enrolledCourses.length || "—"}
+            label="Enrolled Courses"
+            color="#818cf8"
+          />
+          {/* Progress */}
+          <StatCard
+            loading={coursesLoading}
+            value={enrolledCourses.length ? `${overallProgress}%` : "—"}
+            label="Overall Progress"
+            color="#22d3ee"
+            extra={
+              enrolledCourses.length > 0 && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    height: 4,
+                    borderRadius: 4,
+                    background: "#1e293b",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    className="progress-bar-fill"
+                    style={{
+                      height: "100%",
+                      width: `${overallProgress}%`,
+                      background: "linear-gradient(90deg,#22d3ee,#818cf8)",
+                      borderRadius: 4,
+                    }}
+                  />
+                </div>
+              )
+            }
+          />
+          {/* Rank */}
+          <StatCard
+            loading={studentsLoading}
+            value={rank ? `#${rank}` : "—"}
+            label="Leaderboard Rank"
+            color="#f472b6"
+          />
+        </div>
+
+        {/* ── Goal cards + Activity ── */}
+        <div
+          className="dash-section"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))",
+            gap: 14,
+          }}
+        >
+          {/* Goal cards */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {/* Dynamic next course goal */}
+            <GoalCard
+              tag="NEXT GOAL"
+              tagColor="#818cf8"
+              loading={coursesLoading}
+              title={
+                nextCourse
+                  ? (nextCourse.title ?? nextCourse.name ?? "Your next course")
+                  : "All courses complete 🎉"
+              }
+              desc={
+                nextCourse
+                  ? `${nextCourse.progress ?? 0}% complete — keep going to unlock mentor feedback.`
+                  : "Enroll in a new course to keep levelling up."
+              }
+            />
+            <GoalCard
+              tag="WEEKLY GOAL"
+              tagColor="#22d3ee"
+              title="Keep your streak alive"
+              desc="Attend at least one live session and review your latest quiz analytics."
+            />
+            <GoalCard
+              tag="COMMUNITY"
+              tagColor="#f472b6"
+              title="Join the next live event"
+              desc="Jump into mentorship, Q&A, and group study sessions from the dashboard."
+            />
+          </div>
+
+          {/* Recent Activity feed */}
+          <div
+            style={{
+              background: "#111827",
+              border: "1px solid #1e293b",
+              borderRadius: 18,
+              padding: "22px 24px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9" }}>
+                Recent Activity
+              </h3>
+              <Link
+                to="my-courses"
+                style={{
+                  fontSize: 12,
+                  color: "#818cf8",
+                  textDecoration: "none",
+                  fontWeight: 600,
+                }}
+              >
+                View all →
+              </Link>
+            </div>
+
+            {activityLoading ? (
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 12 }}
+              >
+                {[...Array(4)].map((_, i) => (
+                  <div
+                    key={i}
+                    style={{ display: "flex", gap: 12, alignItems: "center" }}
+                  >
+                    <Skeleton w={36} h={36} radius={10} />
+                    <div
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 6,
+                      }}
+                    >
+                      <Skeleton w="70%" h={13} />
+                      <Skeleton w="40%" h={11} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : recentActivity.length === 0 ? (
+              <div
+                style={{
+                  color: "#475569",
+                  fontSize: 13,
+                  textAlign: "center",
+                  paddingTop: 24,
+                }}
+              >
+                No recent activity yet.
+                <br />
+                Start a course to see your progress here.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {recentActivity.map((item, i) => {
+                  const meta = getActivityMeta(item.type);
+                  return (
+                    <div
+                      key={item._id ?? item.id ?? i}
+                      className="activity-row"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "8px 10px",
+                        borderRadius: 10,
+                        transition: "background .15s",
+                        cursor: "default",
+                      }}
+                    >
+                      {/* Icon bubble */}
+                      <div
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 10,
+                          background: `${meta.color}18`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 16,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {meta.icon}
+                      </div>
+                      {/* Text */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: "#e2e8f0",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {item.title ??
+                            item.description ??
+                            item.action ??
+                            meta.label}
+                        </p>
+                        {item.courseName && (
+                          <p
+                            style={{
+                              fontSize: 11,
+                              color: "#64748b",
+                              marginTop: 2,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {item.courseName}
+                          </p>
+                        )}
+                      </div>
+                      {/* Time */}
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: "#475569",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {formatActivityTime(
+                          item.createdAt ?? item.timestamp ?? item.date,
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Course progress strip ── */}
+        {(coursesLoading || enrolledCourses.length > 0) && (
+          <section className="dash-section">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 14,
+              }}
+            >
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9" }}>
+                Course Progress
+              </h3>
+              <Link
+                to="my-courses"
+                style={{
+                  fontSize: 12,
+                  color: "#818cf8",
+                  textDecoration: "none",
+                  fontWeight: 600,
+                }}
+              >
+                See all →
+              </Link>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))",
+                gap: 12,
+              }}
+            >
+              {coursesLoading
+                ? [...Array(3)].map((_, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        background: "#111827",
+                        border: "1px solid #1e293b",
+                        borderRadius: 14,
+                        padding: "16px 18px",
+                      }}
+                    >
+                      <Skeleton w="65%" h={13} style={{ marginBottom: 10 }} />
+                      <Skeleton w="100%" h={6} radius={4} />
+                    </div>
+                  ))
+                : enrolledCourses
+                    .slice(0, 6)
+                    .map((course, i) => (
+                      <CourseProgressCard
+                        key={course._id ?? course.id ?? i}
+                        course={course}
+                      />
+                    ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </>
+  );
+};
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+const StatCard = ({ loading, value, label, color, extra }) => (
+  <div
+    style={{
+      background: "#111827",
+      border: "1px solid #1e293b",
+      borderRadius: 18,
+      padding: "22px 24px",
+    }}
+  >
+    {loading ? (
+      <>
+        <Skeleton w="50%" h={34} radius={8} />
+        <Skeleton w="70%" h={12} radius={6} style={{ marginTop: 10 }} />
+      </>
+    ) : (
+      <>
+        <div style={{ fontSize: 34, fontWeight: 800, color }}>{value}</div>
+        <div style={{ color: "#64748b", marginTop: 6, fontSize: 13 }}>
+          {label}
+        </div>
+        {extra}
+      </>
+    )}
+  </div>
+);
+
+const GoalCard = ({ tag, tagColor, title, desc, loading }) => (
+  <div
+    style={{
+      background: "#111827",
+      border: "1px solid #1e293b",
+      borderRadius: 18,
+      padding: "20px 22px",
+    }}
+  >
+    <p
+      style={{
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.12em",
+        color: tagColor,
+        marginBottom: 8,
+        textTransform: "uppercase",
+      }}
+    >
+      {tag}
+    </p>
+    {loading ? (
+      <>
+        <Skeleton w="80%" h={18} style={{ marginBottom: 10 }} />
+        <Skeleton w="100%" h={12} />
+        <Skeleton w="60%" h={12} style={{ marginTop: 4 }} />
+      </>
+    ) : (
+      <>
+        <h3
+          style={{
+            fontSize: 17,
+            fontWeight: 800,
+            color: "#f1f5f9",
+            marginBottom: 8,
+            lineHeight: 1.3,
+          }}
+        >
+          {title}
+        </h3>
+        <p style={{ color: "#64748b", fontSize: 13, lineHeight: 1.7 }}>
+          {desc}
+        </p>
+      </>
+    )}
+  </div>
+);
+
+const CourseProgressCard = ({ course }) => {
+  const progress = course.progress ?? 0;
+  const title = course.title ?? course.name ?? "Untitled Course";
+  const accent =
+    progress === 100 ? "#34d399" : progress > 50 ? "#22d3ee" : "#818cf8";
+
+  return (
+    <div
+      style={{
+        background: "#111827",
+        border: "1px solid #1e293b",
+        borderRadius: 14,
+        padding: "16px 18px",
+      }}
+    >
+      <p
+        style={{
+          fontSize: 13,
+          fontWeight: 600,
+          color: "#e2e8f0",
+          marginBottom: 10,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {title}
+      </p>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div
+          style={{
+            flex: 1,
+            height: 6,
+            borderRadius: 4,
+            background: "#1e293b",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            className="progress-bar-fill"
+            style={{
+              height: "100%",
+              width: `${progress}%`,
+              background: `linear-gradient(90deg,${accent},${accent}99)`,
+              borderRadius: 4,
+            }}
+          />
+        </div>
+        <span
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: accent,
+            flexShrink: 0,
+          }}
+        >
+          {progress}%
+        </span>
       </div>
     </div>
   );
 };
 
-// ── Main Dashboard layout ──────────────────────────────────────────────────────
+// ── Main layout ───────────────────────────────────────────────────────────────
 const StudentDashboard = () => {
-  const { user } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
+  const { user } = useSelector((s) => s.auth);
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Unread notifications count — adjust this to pull from your real notifications state/context
-  const unreadCount = 3;
+  const unreadCount = useSelector(
+    (s) => s.notifications?.unread ?? s.notifications?.unreadCount ?? 0,
+  );
 
-  // Derive current section title from pathname
-  // Match exact path first, then fall back to closest prefix
   const pageTitle =
     sectionTitles[pathname] ??
     Object.entries(sectionTitles)
@@ -221,7 +676,6 @@ const StudentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#0b1120] text-[#f1f5f9] md:flex">
-      {/* ── Mobile backdrop ── */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm md:hidden"
@@ -237,7 +691,6 @@ const StudentDashboard = () => {
         setMobileOpen={setMobileOpen}
       />
 
-      {/* Right side */}
       <div className="flex-1 min-w-0 flex flex-col">
         <main
           className="flex-1 px-4 py-4 md:px-7 md:py-6"
@@ -245,9 +698,8 @@ const StudentDashboard = () => {
             if (mobileOpen) setMobileOpen(false);
           }}
         >
-          {/* ── Mobile top bar ── */}
+          {/* Mobile top bar */}
           <div className="flex items-center justify-between gap-4 pb-4 md:hidden">
-            {/* Menu button */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -257,13 +709,24 @@ const StudentDashboard = () => {
             >
               Menu
             </button>
-
-            {/* Dynamic section title — centered */}
             <h2 className="text-lg font-semibold text-white flex-1 text-center truncate">
               {pageTitle}
             </h2>
-
-            {/* Notification badge */}
+            {unreadCount > 0 && (
+              <span
+                style={{
+                  background: "#7c3aed",
+                  color: "#fff",
+                  borderRadius: 99,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: "2px 8px",
+                  flexShrink: 0,
+                }}
+              >
+                {unreadCount}
+              </span>
+            )}
           </div>
 
           <div className="rounded-3xl border border-slate-800 bg-white/5 p-5 md:p-7 min-h-full">

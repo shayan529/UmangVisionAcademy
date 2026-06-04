@@ -23,6 +23,9 @@ export const API_ENDPOINTS = {
   // Course endpoints
   COURSES: {
     LIST: "/courses",
+    PUBLIC: "/courses/public", // GET — all published courses
+    ENROLLED: "/courses/enrolled", // GET  — courses student is enrolled in
+    ENROLL: "/courses/enroll", // POST — enroll in one or more courses
     GET: (id) => `/courses/${id}`,
     CREATE: "/courses",
     UPDATE: (id) => `/courses/${id}`,

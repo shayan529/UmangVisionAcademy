@@ -14,9 +14,7 @@ import InstructorNotifications from "./InstructorNotifications";
 import InstructorSettings from "./InstructorSettings";
 import { createCourse } from "../../redux/slices/courseSlice";
 
-// Data
 import {
-  courseData,
   initialSessions,
   initialNotifs,
   initialSettings,
@@ -24,6 +22,16 @@ import {
   sectionTitles,
 } from "./InstructorData";
 import { useDispatch, useSelector } from "react-redux";
+
+// ── Empty form state ──────────────────────────────────────────────────────────
+const EMPTY_FORM = {
+  subject: "", // → title
+  className: "", // → category
+  description: "", // → summary
+  content: "", // → description (full body)
+  thumbnailUrl: "",
+  demoVideoUrl: "", // → demoVideoUrl (new)
+};
 
 // ─── Main shell ───────────────────────────────────────────────────────────────
 export default function InstructorDashboard() {
@@ -34,16 +42,10 @@ export default function InstructorDashboard() {
   const [toastMsg, setToastMsg] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [courseForm, setCourseForm] = useState({
-    title: "",
-    summary: "",
-    category: "General",
-    level: "Beginner",
-    price: "",
-    status: "published",
-  });
+  const [courseForm, setCourseForm] = useState(EMPTY_FORM);
 
   const dispatch = useDispatch();
+  const { courses } = useSelector((s) => s.courses);
 
   const unread = notifs.filter((n) => !n.read).length;
 
@@ -52,40 +54,44 @@ export default function InstructorDashboard() {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 2500);
   };
-  const { courses } = useSelector((s) => s.courses);
 
   const openModal = () => setShowModal(true);
   const closeModal = () => {
     setShowModal(false);
-    setCourseForm({
-      title: "",
-      summary: "",
-      category: "General",
-      level: "Beginner",
-      price: "",
-      status: "published",
-    });
+    setCourseForm(EMPTY_FORM);
   };
 
+  // ── addCourse: maps form fields → backend schema fields ───────────────────
   const addCourse = () => {
-    if (!courseForm.title.trim()) {
-      showToast("Enter a course title");
+    // Validation
+    if (!courseForm.subject.trim()) {
+      showToast("Enter a subject");
       return;
     }
-    if (!courseForm.summary?.trim()) {
-      showToast("Enter a course summary");
+    if (!courseForm.className) {
+      showToast("Select a class");
       return;
     }
+    if (!courseForm.description?.trim()) {
+      showToast("Enter a description");
+      return;
+    }
+
     dispatch(
       createCourse({
-        title: courseForm.title,
-        summary: courseForm.summary,
-        category: courseForm.category || "General",
-        level: courseForm.level || "Beginner",
-        price: Number(courseForm.price) || 0,
-        published: courseForm.status === "published",
+        title: courseForm.subject.trim(), // subject  → title
+        summary: courseForm.description.trim(), // description → summary
+        description: courseForm.content?.trim() || "", // content  → description
+        category: courseForm.className, // className → category
+        level: "Beginner", // default; extend later
+        price: 0, // default; extend later
+        thumbnailUrl: courseForm.thumbnailUrl?.trim() || "",
+        demoVideoUrl: courseForm.demoVideoUrl?.trim() || "", // ← new
+        published: false, // always draft on create
       }),
     );
+
+    showToast("Course created!");
     closeModal();
   };
 
@@ -94,39 +100,40 @@ export default function InstructorDashboard() {
     setSidebarOpen(false);
   };
 
+  // ── Export CSV ────────────────────────────────────────────────────────────
+  const handleExport = () => {
+    if (!courses.length) {
+      showToast("No courses to export");
+      return;
+    }
+    const rows = [
+      ["Title", "Status", "Students", "Revenue ($)", "Rating"],
+      ...courses.map((c) => [
+        `"${c.title}"`,
+        c.status,
+        c.enrolledCount ?? 0,
+        c.revenue ?? 0,
+        c.ratingAverage ?? 0,
+      ]),
+    ];
+    const csv = rows.map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `courses-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("Report downloaded");
+  };
+
   // ── Section router ─────────────────────────────────────────────────────────
   const renderSection = () => {
     switch (activeSection) {
-      // ── Change 1: pass onNavigate to InstructorHome ──
       case "dashboard":
         return (
           <InstructorHome showToast={showToast} onNavigate={handleNavClick} />
         );
-
-        // ── Change 2: replace the Export button with a real download ──
-        const handleExport = () => {
-          // Build a simple CSV from courses in Redux state
-          const { courses } = store.getState().courses; // or pass via props
-          const rows = [
-            ["Title", "Status", "Students", "Revenue", "Rating"],
-            ...courses.map((c) => [
-              c.title,
-              c.status,
-              c.enrolledCount ?? 0,
-              c.revenue ?? 0,
-              c.ratingAverage ?? 0,
-            ]),
-          ];
-          const csv = rows.map((r) => r.join(",")).join("\n");
-          const blob = new Blob([csv], { type: "text/csv" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `courses-report-${new Date().toISOString().slice(0, 10)}.csv`;
-          a.click();
-          URL.revokeObjectURL(url);
-          showToast("Report downloaded");
-        };
       case "courses":
         return (
           <InstructorCourses showToast={showToast} onNewCourse={openModal} />
@@ -139,7 +146,6 @@ export default function InstructorDashboard() {
         return <InstructorAnalytics />;
       case "ai":
         return <InstructorAI showToast={showToast} />;
-
       case "settings":
         return (
           <InstructorSettings
@@ -153,12 +159,11 @@ export default function InstructorDashboard() {
     }
   };
 
-  // ── Sidebar content (shared between desktop & mobile drawer) ──────────────
+  // ── Sidebar content ────────────────────────────────────────────────────────
   const SidebarContent = () => {
     const { user } = useSelector((state) => state.auth);
     return (
       <>
-        {/* Logo */}
         <div
           style={{
             fontSize: 20,
@@ -171,7 +176,6 @@ export default function InstructorDashboard() {
           Skill<span style={{ color: "#a78bfa" }}>Sphere</span>
         </div>
 
-        {/* User pill */}
         <div
           style={{
             display: "flex",
@@ -197,7 +201,7 @@ export default function InstructorDashboard() {
               flexShrink: 0,
             }}
           >
-            {user?.name?.charAt(0) || "SC"}
+            {user?.name?.charAt(0) || "I"}
           </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
@@ -206,7 +210,6 @@ export default function InstructorDashboard() {
           </div>
         </div>
 
-        {/* Nav items */}
         <nav style={{ flex: 1, overflowY: "auto" }}>
           {navItems.map(({ id, label }) => (
             <button
@@ -256,11 +259,10 @@ export default function InstructorDashboard() {
   return (
     <>
       <style>{`
-        .instr-sidebar   { display: flex; }
-        .instr-mob-bar   { display: none; }
-        .instr-desk-bar  { display: flex; }
-        .instr-drawer    { display: flex; }
-
+        .instr-sidebar  { display: flex; }
+        .instr-mob-bar  { display: none; }
+        .instr-desk-bar { display: flex; }
+        .instr-drawer   { display: flex; }
         @media (max-width: 767px) {
           .instr-sidebar  { display: none !important; }
           .instr-mob-bar  { display: flex !important; }
@@ -277,7 +279,7 @@ export default function InstructorDashboard() {
           fontFamily: "'Inter','Segoe UI',sans-serif",
         }}
       >
-        {/* ── Desktop sidebar ── */}
+        {/* Desktop sidebar */}
         <aside
           className="instr-sidebar"
           style={{
@@ -295,7 +297,7 @@ export default function InstructorDashboard() {
           <SidebarContent />
         </aside>
 
-        {/* ── Mobile: backdrop ── */}
+        {/* Mobile backdrop */}
         {sidebarOpen && (
           <div
             onClick={() => setSidebarOpen(false)}
@@ -309,7 +311,7 @@ export default function InstructorDashboard() {
           />
         )}
 
-        {/* ── Mobile: slide-in drawer ── */}
+        {/* Mobile drawer */}
         <aside
           className="instr-drawer"
           style={{
@@ -327,7 +329,6 @@ export default function InstructorDashboard() {
             transition: "transform 0.28s cubic-bezier(.4,0,.2,1)",
           }}
         >
-          {/* Close button */}
           <button
             onClick={() => setSidebarOpen(false)}
             style={{
@@ -347,7 +348,7 @@ export default function InstructorDashboard() {
           <SidebarContent />
         </aside>
 
-        {/* ── Main content ── */}
+        {/* Main content */}
         <div
           style={{
             flex: 1,
@@ -387,39 +388,10 @@ export default function InstructorDashboard() {
             >
               ☰ Menu
             </button>
-
             <div style={{ fontSize: 16, fontWeight: 800, color: "#f1f5f9" }}>
               {sectionTitles[activeSection]}
             </div>
-
-            {/* Notification badge or spacer */}
-            {/* <div
-              style={{
-                minWidth: 48,
-                display: "flex",
-                justifyContent: "flex-end",
-              }}
-            >
-              {unread > 0 ? (
-                <button
-                  onClick={() => handleNavClick("notifications")}
-                  style={{
-                    background: "#7c3aed",
-                    color: "#fff",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    padding: "5px 9px",
-                    borderRadius: 10,
-                    border: "none",
-                    cursor: "pointer",
-                  }}
-                >
-                  🔔 {unread}
-                </button>
-              ) : (
-                <span style={{ width: 48 }} />
-              )}
-            </div> */}
+            <span style={{ width: 48 }} />
           </div>
 
           {/* Desktop top bar */}
@@ -443,31 +415,7 @@ export default function InstructorDashboard() {
               <Btn
                 variant="ghost"
                 style={{ fontSize: 12 }}
-                onClick={() => {
-                  if (!courses.length) {
-                    showToast("No courses to export");
-                    return;
-                  }
-                  const rows = [
-                    ["Title", "Status", "Students", "Revenue ($)", "Rating"],
-                    ...courses.map((c) => [
-                      `"${c.title}"`,
-                      c.status,
-                      c.enrolledCount ?? 0,
-                      c.revenue ?? 0,
-                      c.ratingAverage ?? 0,
-                    ]),
-                  ];
-                  const csv = rows.map((r) => r.join(",")).join("\n");
-                  const blob = new Blob([csv], { type: "text/csv" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `courses-${new Date().toISOString().slice(0, 10)}.csv`;
-                  a.click();
-                  URL.revokeObjectURL(url);
-                  showToast("Report downloaded");
-                }}
+                onClick={handleExport}
               >
                 📥 Export
               </Btn>
@@ -498,7 +446,6 @@ export default function InstructorDashboard() {
           </div>
         </div>
 
-        {/* Add course modal */}
         <AddCourseModal
           visible={showModal}
           onClose={closeModal}
