@@ -6,17 +6,16 @@ import { Toaster } from "react-hot-toast";
 import { BrowserRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import store from "./redux/store.js";
-
+import "./i18n/index.js";
 createRoot(document.getElementById("root")).render(
-
-    <Provider store={store}>
-      <BrowserRouter>
-        <App />
-        <Toaster
-          containerStyle={{
-            top: 70,
-          }}
-        />
-      </BrowserRouter>
-    </Provider>
+  <Provider store={store}>
+    <BrowserRouter>
+      <App />
+      <Toaster
+        containerStyle={{
+          top: 70,
+        }}
+      />
+    </BrowserRouter>
+  </Provider>,
 );

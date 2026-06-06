@@ -1,7 +1,10 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { logoutUser } from '../redux/slices/authSlice';
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { logoutUser } from "../redux/slices/authSlice";
+import { ChevronDown } from "lucide-react";
+import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 const Navbar = () => {
   const { user, loading } = useSelector((state) => state.auth);
@@ -9,22 +12,44 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [boardOpen, setBoardOpen] = useState(false);
 
-  const isInstructorDashboard = pathname.startsWith('/instructor-dashboard');
+  const isInstructorDashboard = pathname.startsWith("/instructor-dashboard");
 
   const role = user?.roles;
-  const hasInstructorRole = role?.includes('instructor');
-  const hasStudentRole = role?.includes('student');
-  const hasAdminRole = role?.includes('admin');
+  const hasInstructorRole = role?.includes("instructor");
+  const hasStudentRole = role?.includes("student");
+  const hasAdminRole = role?.includes("admin");
   const isMultiRole = hasInstructorRole && hasStudentRole && !hasAdminRole;
 
   const dashboardPath = hasAdminRole
-    ? '/admin-dashboard'
+    ? "/admin-dashboard"
     : hasInstructorRole
-      ? '/instructor-dashboard'
-      : '/student-dashboard';
+      ? "/instructor-dashboard"
+      : "/student-dashboard";
+
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setBoardOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const closeMobile = () => setMobileMenuOpen(false);
+
+  const LanguageToggle = () => {
+    const { i18n } = useTranslation();
+    const isHindi = i18n.language === "hi";
+  };
 
   return (
     <nav className="w-full sticky top-0 z-50 bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10">
@@ -32,7 +57,7 @@ const Navbar = () => {
         {/* ── Logo ── */}
         <Link to="/" className="flex items-center gap-3 shrink-0">
           <div className="w-9 h-9 md:w-11 md:h-11 rounded-2xl bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-black font-bold text-lg md:text-xl shadow-lg shadow-indigo-500/30">
-            S
+            <img src="/Logo.png" alt="Logo" className="" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-extrabold text-white tracking-wide">
@@ -42,7 +67,7 @@ const Navbar = () => {
         </Link>
 
         {/* ── Desktop nav links ── */}
-        <div className="hidden md:flex items-center gap-8 text-[15px] font-medium text-gray-300 mx-8">
+        <div className="hidden md:flex justify-center flex-1 items-center gap-8 text-[15px] font-medium text-gray-300 mx-8">
           <Link
             to="/courses"
             className="hover:text-indigo-300 transition duration-300"
@@ -61,6 +86,75 @@ const Navbar = () => {
           >
             Plans
           </Link>
+          <button
+            onClick={() => i18n.changeLanguage(isHindi ? "en" : "hi")}
+            style={{
+              padding: "6px 14px",
+              borderRadius: 20,
+              border: "1px solid #334155",
+              background: "transparent",
+              color: "#94a3b8",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            {isHindi ? "EN" : "हिंदी"}
+          </button>
+          <Link
+            to="/question-bank"
+            className="hover:text-indigo-300 transition duration-300"
+          >
+            Question Bank
+          </Link>
+          <Link
+            to="/blogs"
+            className="hover:text-indigo-300 transition duration-300"
+          >
+            Blogs
+          </Link>
+          <div ref={dropdownRef} className="relative">
+            <button
+              onClick={() => setBoardOpen((prev) => !prev)}
+              className="flex items-center gap-1 hover:text-indigo-300 transition"
+            >
+              Board
+              <ChevronDown
+                size={16}
+                className={`transition-transform ${
+                  boardOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {boardOpen && (
+              <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
+                <Link
+                  to="/boards/cbse"
+                  onClick={() => setBoardOpen(false)}
+                  className="block px-4 py-3 hover:bg-slate-800"
+                >
+                  CBSE
+                </Link>
+
+                <Link
+                  to="/boards/mp-board"
+                  onClick={() => setBoardOpen(false)}
+                  className="block px-4 py-3 hover:bg-slate-800"
+                >
+                  MP Board
+                </Link>
+
+                <Link
+                  to="/boards/icse"
+                  onClick={() => setBoardOpen(false)}
+                  className="block px-4 py-3 hover:bg-slate-800"
+                >
+                  ICSE
+                </Link>
+              </div>
+            )}
+          </div>
           {!hasInstructorRole && !hasAdminRole && (
             <Link
               to="/become-instructor"
@@ -105,14 +199,14 @@ const Navbar = () => {
                 <Link
                   to={
                     isInstructorDashboard
-                      ? '/student-dashboard'
-                      : '/instructor-dashboard'
+                      ? "/student-dashboard"
+                      : "/instructor-dashboard"
                   }
                   className="whitespace-nowrap bg-gradient-to-r from-indigo-400 to-indigo-500 hover:scale-105 transition duration-300 text-black font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20"
                 >
                   {isInstructorDashboard
-                    ? 'Go to Student Dashboard'
-                    : 'Go to Instructor Dashboard'}
+                    ? "Go to Student Dashboard"
+                    : "Go to Instructor Dashboard"}
                 </Link>
               ) : (
                 <Link
@@ -125,7 +219,7 @@ const Navbar = () => {
               <button
                 onClick={() => {
                   dispatch(logoutUser());
-                  navigate('/');
+                  navigate("/");
                 }}
                 className="whitespace-nowrap bg-gradient-to-r from-red-500 to-rose-500 hover:scale-105 transition duration-300 text-black font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-rose-500/20"
               >
@@ -141,23 +235,25 @@ const Navbar = () => {
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           className="md:hidden ml-3 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white hover:bg-white/5 transition text-lg"
         >
-          {mobileMenuOpen ? '✕' : '☰'}
+          {mobileMenuOpen ? "✕" : "☰"}
         </button>
       </div>
 
       {/* ── Mobile menu ── */}
       <div
-        className={`md:hidden border-t border-white/10 overflow-hidden transition-all duration-300 ${mobileMenuOpen ? 'max-h-screen' : 'max-h-0'}`}
+        className={`md:hidden border-t border-white/10 overflow-hidden transition-all duration-300 ${mobileMenuOpen ? "max-h-screen" : "max-h-0"}`}
       >
         <div className="px-4 pt-3 pb-4 space-y-1">
           {/* Nav links — compact text rows */}
           {[
-            { to: '/courses', label: 'Courses' },
+            { to: "/courses", label: "Courses" },
             // { to: "/community", label: "Community" },
-            { to: '/plans', label: 'Plans' },
+            { to: "/plans", label: "Plans" },
             ...(!hasInstructorRole && !hasAdminRole
-              ? [{ to: '/become-instructor', label: 'Become Instructor' }]
+              ? [{ to: "/become-instructor", label: "Become Instructor" }]
               : []),
+            { to: "/question-bank", label: "Question Bank" },
+            { to: "/blogs", label: "Blogs" },
           ].map(({ to, label }) => (
             <Link
               key={to}
@@ -218,15 +314,15 @@ const Navbar = () => {
                   <Link
                     to={
                       isInstructorDashboard
-                        ? '/student-dashboard'
-                        : '/instructor-dashboard'
+                        ? "/student-dashboard"
+                        : "/instructor-dashboard"
                     }
                     onClick={closeMobile}
                     className="flex-1 text-center text-xs font-semibold py-2 px-2 rounded-lg bg-gradient-to-r from-indigo-400 to-indigo-500 text-black shadow-md transition"
                   >
                     {isInstructorDashboard
-                      ? 'Go to Student Dashboard'
-                      : 'Go to Instructor Dashboard'}
+                      ? "Go to Student Dashboard"
+                      : "Go to Instructor Dashboard"}
                   </Link>
                 ) : (
                   <Link
@@ -241,7 +337,7 @@ const Navbar = () => {
                   onClick={() => {
                     closeMobile();
                     dispatch(logoutUser());
-                    navigate('/');
+                    navigate("/");
                   }}
                   className="flex-1 text-xs font-semibold py-2 px-2 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-black shadow-md transition"
                 >

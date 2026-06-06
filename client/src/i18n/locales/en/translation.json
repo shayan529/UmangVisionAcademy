@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "courses": "Courses",
+    "plans": "Plans",
+    "blogs": "Blogs",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "home": {
+    "hero_title": "Discover. Prepare. Succeed.",
+    "hero_sub": "Premier AI coaching for CLAT, CAT, CUET and more.",
+    "get_started": "Get Started"
+  },
+  "courses": {
+    "title": "Courses",
+    "select_class": "Select Class",
+    "select_subject": "Select Subject",
+    "select_board": "Select Board",
+    "no_courses": "No Courses Found",
+    "free": "Free"
+  },
+  "demo": {
+    "add_to_cart": "Add to Cart",
+    "added": "✓ Added to Cart",
+    "go_to_cart": "Go to Cart →",
+    "enroll_now": "Enroll Now",
+    "login": "Log in",
+    "lifetime": "One-time payment · Lifetime access",
+    "certificate": "Certificate of completion",
+    "lifetime_access": "Lifetime access",
+    "about": "About this course",
+    "curriculum": "Course Curriculum",
+    "preview": "🎬 Course Preview"
+  },
+  "auth": {
+    "signup": "Create Account",
+    "login": "Sign In",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "name": "Full Name",
+    "phone": "Phone Number"
+  }
+}

@@ -10,6 +10,7 @@ import {
   Brain,
   CheckCircle,
   ArrowRight,
+  Map,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -22,10 +23,10 @@ const InstructorDetails = () => {
         "Generate income by selling your courses to thousands of students worldwide.",
     },
     {
-      icon: Globe,
-      title: "Global Reach",
+      icon: Map,
+      title: "Nationwide Presence",
       description:
-        "Teach students from across the world and build your personal brand.",
+        "Teach students across India and establish yourself as a trusted educator.",
     },
     {
       icon: Award,

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../../config/api.js";
 
@@ -8,6 +8,10 @@ const useCourseDemo = (id) => {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const location = useLocation();
+
+  const backPath = location.state?.from ?? "/";
 
   useEffect(() => {
     if (!id) return;
@@ -245,7 +249,9 @@ export default function CourseDemo() {
 
   const handleEnrollClick = () => {
     if (!user) {
-      navigate("/login", { state: { from: `/courses/${id}/demo` } });
+      navigate("/login", {
+        state: { from: `/courses/${id}/demo`, replace: true },
+      });
       return;
     }
     // Import addToCart lazily to avoid circular deps
@@ -273,60 +279,6 @@ export default function CourseDemo() {
           fontFamily: "'Inter','Segoe UI',sans-serif",
         }}
       >
-        {/* ── Nav bar ── */}
-        <nav
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "16px 28px",
-            borderBottom: "1px solid #1e293b",
-            background: "#0b1120",
-            position: "sticky",
-            top: 0,
-            zIndex: 20,
-          }}
-        >
-          <button
-            onClick={() => navigate(-1)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#94a3b8",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            ← Back
-          </button>
-          <span style={{ fontSize: 18, fontWeight: 800, color: "#f1f5f9" }}>
-            Skill<span style={{ color: "#a78bfa" }}>Sphere</span>
-          </span>
-          <div style={{ display: "flex", gap: 10 }}>
-            {!user && (
-              <button
-                onClick={() => navigate("/login")}
-                style={{
-                  padding: "8px 18px",
-                  borderRadius: 10,
-                  border: "1px solid #334155",
-                  background: "transparent",
-                  color: "#94a3b8",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Log in
-              </button>
-            )}
-          </div>
-        </nav>
-
         {/* ── Error state ── */}
         {error && (
           <div
@@ -358,6 +310,25 @@ export default function CourseDemo() {
           </div>
         )}
 
+        {/* ── Back button ── */}
+        <div style={{ padding: "16px 24px" }}>
+          <button
+            onClick={() => navigate("/")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#94a3b8",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            ← Back to Home
+          </button>
+        </div>
         {/* ── Main content ── */}
         {!error && (
           <div

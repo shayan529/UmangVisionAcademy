@@ -37,6 +37,7 @@ const courseSchema = new Schema(
     durationHours: { type: Number, default: 0, min: 0 },
     reviewCount: { type: Number, default: 0, min: 0 },
     ratingAverage: { type: Number, default: 0, min: 0, max: 5 },
+    board: { type: String, trim: true, default: "" },
   },
   { timestamps: true },
 );

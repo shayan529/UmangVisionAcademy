@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 // UI primitives & modal
-import { Toast, AddCourseModal, Btn } from "./InstructorUi";
+import { Toast, Btn } from "./InstructorUi";
 
 // Section components
 import InstructorHome from "./InstructorHome";
@@ -164,7 +164,7 @@ export default function InstructorDashboard() {
     const { user } = useSelector((state) => state.auth);
     return (
       <>
-        <div
+        {/* <div
           style={{
             fontSize: 20,
             fontWeight: 800,
@@ -174,7 +174,7 @@ export default function InstructorDashboard() {
           }}
         >
           Skill<span style={{ color: "#a78bfa" }}>Sphere</span>
-        </div>
+        </div> */}
 
         <div
           style={{
@@ -419,15 +419,7 @@ export default function InstructorDashboard() {
               >
                 📥 Export
               </Btn>
-              {["dashboard", "courses"].includes(activeSection) && (
-                <Btn
-                  variant="primary"
-                  style={{ fontSize: 12 }}
-                  onClick={openModal}
-                >
-                  + New Course
-                </Btn>
-              )}
+
               {activeSection === "sessions" && (
                 <Btn
                   variant="primary"
@@ -445,14 +437,6 @@ export default function InstructorDashboard() {
             {renderSection()}
           </div>
         </div>
-
-        <AddCourseModal
-          visible={showModal}
-          onClose={closeModal}
-          courseForm={courseForm}
-          setCourseForm={setCourseForm}
-          onAdd={addCourse}
-        />
 
         <Toast msg={toastMsg} />
       </div>

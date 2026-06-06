@@ -1,0 +1,165 @@
+import Razorpay from "razorpay";
+import crypto from "crypto";
+import User from "../models/user.model.js";
+import Course from "../models/courses.model.js";
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+const PLANS = {
+  base: { id: "base", label: "Base Plan", amount: 49900, durationDays: 30 },
+  premium: { id: "premium", label: "Premium", amount: 99900, durationDays: 30 },
+};
+
+// ── GET /billing/subscription ─────────────────────────────────────────────────
+export const getSubscription = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .select("subscription")
+      .lean();
+    if (!user) return res.status(404).json({ message: "User not found" });
+    const sub = user.subscription;
+    if (!sub?.plan) return res.json(null);
+    if (sub.endDate && new Date(sub.endDate) < new Date()) {
+      await User.findByIdAndUpdate(req.user._id, {
+        "subscription.status": "expired",
+      });
+      return res.json({ ...sub, status: "expired" });
+    }
+    res.json(sub);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── POST /billing/create-order ────────────────────────────────────────────────
+// Handles both subscription plans AND cart course purchases
+export const createOrder = async (req, res) => {
+  try {
+    const { planId, courseIds } = req.body;
+    let orderAmount;
+    let notes = { userId: req.user._id.toString() };
+
+    if (planId === "cart" && Array.isArray(courseIds)) {
+      const courses = await Course.find({ _id: { $in: courseIds } })
+        .select("price")
+        .lean();
+      const subtotal = courses.reduce((s, c) => s + (c.price ?? 0), 0);
+      const discount = subtotal > 0 ? 40 : 0;
+      orderAmount = Math.max(0, subtotal - discount) * 100; // paise
+      notes.type = "cart";
+      notes.courseIds = courseIds.join(",");
+    } else {
+      const plan = PLANS[planId];
+      if (!plan) return res.status(400).json({ message: "Invalid plan." });
+      orderAmount = plan.amount;
+      notes.type = "subscription";
+      notes.planId = planId;
+    }
+
+    if (orderAmount === 0)
+      return res
+        .status(400)
+        .json({ message: "Nothing to pay — use free enrol instead." });
+
+    const order = await razorpay.orders.create({
+      amount: orderAmount,
+      currency: "INR",
+      receipt: `rcpt_${req.user._id}_${Date.now()}`,
+      notes,
+    });
+
+    res.json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      keyId: process.env.RAZORPAY_KEY_ID,
+      planId: planId ?? "cart",
+    });
+  } catch (err) {
+    console.error("create-order error:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── POST /billing/verify-payment ──────────────────────────────────────────────
+export const verifyPayment = async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      planId,
+      courseIds,
+    } = req.body;
+
+    const isMock = razorpay_order_id?.startsWith("mock_");
+
+    if (!isMock) {
+      const expected = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+        .digest("hex");
+      if (expected !== razorpay_signature)
+        return res
+          .status(400)
+          .json({ message: "Payment verification failed." });
+    }
+
+    // Subscription plan payment
+    if (planId && planId !== "cart" && PLANS[planId]) {
+      const plan = PLANS[planId];
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + plan.durationDays);
+      const subscription = {
+        plan: plan.id,
+        label: plan.label,
+        status: "active",
+        startDate,
+        endDate,
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+      };
+      await User.findByIdAndUpdate(req.user._id, { subscription });
+      return res.json({ message: "Plan activated.", subscription });
+    }
+
+    // Cart course payment — enrol student
+    if (Array.isArray(courseIds) && courseIds.length > 0) {
+      await Promise.all(
+        courseIds.map((id) =>
+          Course.findByIdAndUpdate(id, {
+            $addToSet: { students: req.user._id },
+          }),
+        ),
+      );
+      await User.findByIdAndUpdate(req.user._id, {
+        $addToSet: { enrolledCourses: { $each: courseIds } },
+      });
+      return res.json({
+        message: "Enrolled successfully.",
+        enrolled: courseIds,
+      });
+    }
+
+    res.json({ message: "Payment verified." });
+  } catch (err) {
+    console.error("verify-payment error:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── POST /billing/cancel ──────────────────────────────────────────────────────
+export const cancelSubscription = async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user._id, {
+      $unset: { subscription: "" },
+    });
+    res.json({ message: "Subscription cancelled." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

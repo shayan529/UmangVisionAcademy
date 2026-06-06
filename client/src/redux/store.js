@@ -6,6 +6,7 @@ import applicationsReducer from "./slices/applicationsSlice";
 import sessionReducer from "./slices/sessionSlice";
 import studentReducer from "./slices/studentSlice";
 import cartReducer from "./slices/cartSlice";
+import billingReducer from "./slices/billingSlice";
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     sessions: sessionReducer,
     students: studentReducer,
     cart: cartReducer,
+    billing: billingReducer,
   },
 });
 

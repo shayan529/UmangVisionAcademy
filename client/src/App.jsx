@@ -1,67 +1,71 @@
-import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { loadCurrentUser } from './redux/slices/authSlice';
+import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { loadCurrentUser } from "./redux/slices/authSlice";
 
-import Navbar from './Layout/Navbar';
-import Footer from './Layout/Footer';
+import Navbar from "./Layout/Navbar";
+import Footer from "./Layout/Footer";
 
-import Home from './pages/Home';
-import Contact from './pages/Contact';
-import HelpCenter from './pages/HelpCenter';
-import Faq from './pages/Faq';
-import CartPage from './pages/CartPage';
-import InstructorDetails from './pages/InstructorDetails';
-import NotFound from './pages/NotFound';
+import Home from "./pages/Home";
+import Contact from "./pages/Contact";
+import HelpCenter from "./pages/HelpCenter";
+import Faq from "./pages/Faq";
+import CartPage from "./pages/CartPage";
+import InstructorDetails from "./pages/InstructorDetails";
+import NotFound from "./pages/NotFound";
+import BillingPage from "./pages/BillingPage";
 
-import Courses from './components/common/Courses';
-import Community from './components/common/Community';
-import Instructors from './components/common/Instructors';
-import BecomeInstructor from './components/common/BecomeInstructor';
-import BecomeInstructorApplication from './components/common/BecomeInstructorApplication';
-import Login from './components/common/Login';
-import Signup from './components/common/Signup';
-import Plans from './components/common/Plans';
+import Courses from "./components/common/Courses";
+import Community from "./components/common/Community";
+import Instructors from "./components/common/Instructors";
+import BecomeInstructor from "./components/common/BecomeInstructor";
+import BecomeInstructorApplication from "./components/common/BecomeInstructorApplication";
+import Login from "./components/common/Login";
+import Signup from "./components/common/Signup";
+import Plans from "./components/common/Plans";
 
-import ProtectedRoute from './components/common/ProtectedRoute';
+import ProtectedRoute from "./components/common/ProtectedRoute";
 
 /* Student Dashboard */
 import StudentDashboard, {
   DashboardHome,
-} from './components/student/StudentDashboard';
-import MyCoursesSection from './components/student/MyCoursesSection';
-import AITutor from './components/student/AITutor';
-import CommunitySection from './components/student/CommunitySection';
-import CertificatesSection from './components/student/CertificatesSection';
-import SettingsSection from './components/student/SettingsSection';
-import LeaderBoard from './components/student/LeaderBoard';
-import StudentNotifications from './components/student/StudentNotifications';
+} from "./components/student/StudentDashboard";
+import MyCoursesSection from "./components/student/MyCoursesSection";
+import AITutor from "./components/student/AITutor";
+import CommunitySection from "./components/student/CommunitySection";
+import CertificatesSection from "./components/student/CertificatesSection";
+import SettingsSection from "./components/student/SettingsSection";
+import LeaderBoard from "./components/student/LeaderBoard";
+import StudentNotifications from "./components/student/StudentNotifications";
 
 /* Instructor Dashboard */
-import InstructorDashboard from './components/instructor/InstructorDashboard';
-import InstructorHome from './components/instructor/InstructorHome';
-import InstructorCourses from './components/instructor/InstructorCourses';
-import InstructorStudents from './components/instructor/InstructorStudents';
-import InstructorSessions from './components/instructor/InstructorSessions';
-import InstructorAnalytics from './components/instructor/InstructorAnalytics';
-import InstructorAI from './components/instructor/InstructorAI';
-import InstructorNotifications from './components/instructor/InstructorNotifications';
-import InstructorSettings from './components/instructor/InstructorSettings';
+import InstructorDashboard from "./components/instructor/InstructorDashboard";
+import InstructorHome from "./components/instructor/InstructorHome";
+import InstructorCourses from "./components/instructor/InstructorCourses";
+import InstructorStudents from "./components/instructor/InstructorStudents";
+import InstructorSessions from "./components/instructor/InstructorSessions";
+import InstructorAnalytics from "./components/instructor/InstructorAnalytics";
+import InstructorAI from "./components/instructor/InstructorAI";
+import InstructorNotifications from "./components/instructor/InstructorNotifications";
+import InstructorSettings from "./components/instructor/InstructorSettings";
 
 /* Admin Dashboard */
-import AdminDashboard from './components/admin/AdminDashboard';
-import AdminOverview from './components/admin/AdminOverview';
-import AdminStudents from './components/admin/AdminStudents';
-import AdminInstructors from './components/admin/AdminInstructors';
-import AdminApplications from './components/admin/AdminApplications';
-import AdminCourses from './components/admin/AdminCourses';
-import AdminLeaderboard from './components/admin/AdminLeaderboard';
-import InstructorApplicationStatus from './components/common/InstructorApplicationStatus';
-import PrivacyPolicy from './components/common/PrivacyPolicy';
-import TermsOfService from './components/common/TermsOfService';
-import StudentSessions from './components/student/StudentSessions';
-import CourseDemo from './components/course/CourseDemo';
-import AboutUs from './pages/AboutUs';
+import AdminDashboard from "./components/admin/AdminDashboard";
+import AdminOverview from "./components/admin/AdminOverview";
+import AdminStudents from "./components/admin/AdminStudents";
+import AdminInstructors from "./components/admin/AdminInstructors";
+import AdminApplications from "./components/admin/AdminApplications";
+import AdminCourses from "./components/admin/AdminCourses";
+import AdminLeaderboard from "./components/admin/AdminLeaderboard";
+import InstructorApplicationStatus from "./components/common/InstructorApplicationStatus";
+import PrivacyPolicy from "./components/common/PrivacyPolicy";
+import TermsOfService from "./components/common/TermsOfService";
+import StudentSessions from "./components/student/StudentSessions";
+import CourseDemo from "./components/course/CourseDemo";
+import AboutUs from "./pages/AboutUs";
+import QuestionBank from "./components/common/QuestionBank";
+import Blogs from "./components/common/Blogs";
+import BoardCourses from "./components/Boards/BoardCourses";
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -102,6 +106,11 @@ function App() {
           <Route path="terms" element={<TermsOfService />} />
           <Route path="about-us" element={<AboutUs />} />
           <Route path="/courses/:id/demo" element={<CourseDemo />} />
+          <Route path="/question-bank" element={<QuestionBank />} />
+          <Route path="/billing" element={<BillingPage />} />
+          <Route path="/blogs" element={<Blogs />} />
+
+          <Route path="/boards/:board" element={<BoardCourses />} />
 
           <Route
             path="become-instructor/apply"
@@ -124,7 +133,7 @@ function App() {
           <Route
             path="student-dashboard"
             element={
-              <ProtectedRoute allowedRoles={['student']}>
+              <ProtectedRoute allowedRoles={["student"]}>
                 <StudentDashboard />
               </ProtectedRoute>
             }
@@ -147,7 +156,7 @@ function App() {
           <Route
             path="instructor-dashboard"
             element={
-              <ProtectedRoute allowedRoles={['instructor']}>
+              <ProtectedRoute allowedRoles={["instructor"]}>
                 <InstructorDashboard />
               </ProtectedRoute>
             }
@@ -169,7 +178,7 @@ function App() {
           <Route
             path="admin-dashboard"
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminDashboard />
               </ProtectedRoute>
             }

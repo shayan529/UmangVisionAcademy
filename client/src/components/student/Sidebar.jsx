@@ -81,7 +81,7 @@ ${mobileOpen ? "fixed top-0 left-0 h-screen shadow-2xl" : "hidden md:flex"}
 `;
   return (
     <aside className={sidebarClass}>
-      <div
+      {/* <div
         className={`font-extrabold text-[20px] text-white mb-7 ${
           collapsed ? "text-center" : "px-2"
         }`}
@@ -91,7 +91,7 @@ ${mobileOpen ? "fixed top-0 left-0 h-screen shadow-2xl" : "hidden md:flex"}
             Skill<span className="text-[#a78bfa]">Sphere</span>
           </>
         )}
-      </div>
+      </div> */}
 
       <div
         className={`flex items-center gap-3 p-3 mb-6 rounded-xl bg-[#1e293b] ${

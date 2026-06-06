@@ -34,6 +34,7 @@ export const createCourse = async (req, res) => {
       thumbnailUrl,
       demoVideoUrl,
       tags,
+      board,
       published,
     } = req.body;
 
@@ -54,6 +55,7 @@ export const createCourse = async (req, res) => {
       tags: Array.isArray(tags) ? tags : [],
       published: published ?? false,
       instructor: req.user._id,
+      board: board,
       students: [],
     });
 
@@ -107,6 +109,7 @@ export const getCourseByIdPublic = async (req, res) => {
       price: course.price,
       thumbnailUrl: course.thumbnailUrl,
       demoVideoUrl: course.demoVideoUrl,
+      board: course.board,
       instructor: course.instructor,
       tags: course.tags,
       durationHours: course.durationHours,
@@ -230,6 +233,7 @@ export const updateCourse = async (req, res) => {
       demoVideoUrl,
       tags,
       published,
+      board,
     } = req.body;
 
     const allowedUpdates = {
@@ -243,6 +247,7 @@ export const updateCourse = async (req, res) => {
       ...(demoVideoUrl !== undefined && { demoVideoUrl }),
       ...(tags !== undefined && { tags: Array.isArray(tags) ? tags : [] }),
       ...(published !== undefined && { published }),
+      ...(board !== undefined && { board }),
     };
 
     const course = await Course.findOneAndUpdate(

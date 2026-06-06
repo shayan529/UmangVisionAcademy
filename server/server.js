@@ -8,6 +8,8 @@ import instructorApplicationRoutes from "./routes/instructorApplication.routes.j
 import sessionRoutes from "./routes/session.routes.js";
 import studentRoutes from "./routes/student.routes.js";
 import cors from "cors";
+import billingRoutes from "./routes/billing.route.js";
+import uploadRoutes from "./routes/upload.routes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +28,8 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/instructor-applications", instructorApplicationRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/students", studentRoutes);
+app.use("/api/billing", billingRoutes);
+app.use("/api/upload", uploadRoutes);
 
 ConnectDb();
 

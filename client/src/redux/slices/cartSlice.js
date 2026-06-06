@@ -3,10 +3,6 @@ import api, { API_ENDPOINTS } from "../../config/api.js";
 
 // ── Thunks ────────────────────────────────────────────────────────────────────
 
-/**
- * Fetch all published courses available to add to cart.
- * Reuses the existing courses list endpoint.
- */
 export const fetchAvailableCourses = createAsyncThunk(
   "cart/fetchAvailable",
   async (_, { rejectWithValue }) => {
@@ -22,11 +18,6 @@ export const fetchAvailableCourses = createAsyncThunk(
   },
 );
 
-/**
- * Enroll the current student in all courses currently in the cart.
- * POST /courses/enroll  — body: { courseIds: string[] }
- * Returns: { enrolled: string[], alreadyEnrolled: string[] }
- */
 export const checkoutAndEnroll = createAsyncThunk(
   "cart/checkoutAndEnroll",
   async (courseIds, { rejectWithValue }) => {

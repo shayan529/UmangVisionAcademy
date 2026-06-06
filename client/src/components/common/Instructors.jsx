@@ -3,12 +3,6 @@ import InstructorDashboard from "../instructor/InstructorDashboard";
 
 const benefits = [
   {
-    title: "Build Your Community",
-    desc: "Create private subscriber communities and engage with students.",
-    icon: "🌍",
-  },
-
-  {
     title: "AI Teaching Tools",
     desc: "Use AI tools for quizzes, summaries, captions and student support.",
     icon: "🤖",
@@ -24,12 +18,6 @@ const benefits = [
     title: "Analytics Dashboard",
     desc: "Track course sales, student engagement and performance analytics.",
     icon: "📊",
-  },
-
-  {
-    title: "Certificates",
-    desc: "Provide certificates and achievements to your students.",
-    icon: "🏆",
   },
 ];
 

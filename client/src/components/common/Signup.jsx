@@ -1,43 +1,43 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { register, clearError } from '../../redux/slices/authSlice';
-import { toast } from 'react-hot-toast';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { register, clearError } from "../../redux/slices/authSlice";
+import { toast } from "react-hot-toast";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 const indianCitiesByState = {
-  'Andhra Pradesh': ['Visakhapatnam', 'Vijayawada', 'Guntur', 'Tirupati'],
-  'Arunachal Pradesh': ['Itanagar', 'Tawang', 'Naharlagun'],
-  Assam: ['Guwahati', 'Dibrugarh', 'Jorhat', 'Silchar'],
-  Bihar: ['Patna', 'Gaya', 'Bhagalpur', 'Muzaffarpur'],
-  Chhattisgarh: ['Raipur', 'Bhilai', 'Korba', 'Durg'],
-  Goa: ['Panaji', 'Margao', 'Vasco da Gama'],
-  Gujarat: ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot'],
-  Haryana: ['Gurugram', 'Faridabad', 'Panipat', 'Karnal'],
-  'Himachal Pradesh': ['Shimla', 'Dharamshala', 'Manali'],
-  Jharkhand: ['Ranchi', 'Jamshedpur', 'Dhanbad'],
-  Karnataka: ['Bengaluru', 'Mysuru', 'Mangalore', 'Hubli'],
-  Kerala: ['Thiruvananthapuram', 'Kochi', 'Kozhikode', 'Kollam'],
-  'Madhya Pradesh': ['Bhopal', 'Indore', 'Gwalior', 'Jabalpur'],
-  Maharashtra: ['Mumbai', 'Pune', 'Nagpur', 'Nashik'],
-  Manipur: ['Imphal', 'Churachandpur'],
-  Meghalaya: ['Shillong', 'Tura'],
-  Mizoram: ['Aizawl', 'Lunglei'],
-  Nagaland: ['Kohima', 'Dimapur'],
-  Odisha: ['Bhubaneswar', 'Cuttack', 'Rourkela'],
-  Punjab: ['Chandigarh', 'Amritsar', 'Ludhiana', 'Jalandhar'],
-  Rajasthan: ['Jaipur', 'Jodhpur', 'Udaipur', 'Kota'],
-  Sikkim: ['Gangtok', 'Namchi'],
-  'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli'],
-  Telangana: ['Hyderabad', 'Warangal', 'Nizamabad'],
-  Tripura: ['Agartala', 'Udaipur'],
-  'Uttar Pradesh': ['Lucknow', 'Kanpur', 'Varanasi', 'Agra'],
-  Uttarakhand: ['Dehradun', 'Haridwar', 'Nainital'],
-  'West Bengal': ['Kolkata', 'Howrah', 'Durgapur', 'Siliguri'],
-  Delhi: ['New Delhi', 'Dwarka', 'Rohini'],
-  'Jammu & Kashmir': ['Srinagar', 'Jammu'],
-  Ladakh: ['Leh', 'Kargil'],
-  Puducherry: ['Puducherry', 'Karaikal'],
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati"],
+  "Arunachal Pradesh": ["Itanagar", "Tawang", "Naharlagun"],
+  Assam: ["Guwahati", "Dibrugarh", "Jorhat", "Silchar"],
+  Bihar: ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur"],
+  Chhattisgarh: ["Raipur", "Bhilai", "Korba", "Durg"],
+  Goa: ["Panaji", "Margao", "Vasco da Gama"],
+  Gujarat: ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
+  Haryana: ["Gurugram", "Faridabad", "Panipat", "Karnal"],
+  "Himachal Pradesh": ["Shimla", "Dharamshala", "Manali"],
+  Jharkhand: ["Ranchi", "Jamshedpur", "Dhanbad"],
+  Karnataka: ["Bengaluru", "Mysuru", "Mangalore", "Hubli"],
+  Kerala: ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam"],
+  "Madhya Pradesh": ["Bhopal", "Indore", "Gwalior", "Jabalpur"],
+  Maharashtra: ["Mumbai", "Pune", "Nagpur", "Nashik"],
+  Manipur: ["Imphal", "Churachandpur"],
+  Meghalaya: ["Shillong", "Tura"],
+  Mizoram: ["Aizawl", "Lunglei"],
+  Nagaland: ["Kohima", "Dimapur"],
+  Odisha: ["Bhubaneswar", "Cuttack", "Rourkela"],
+  Punjab: ["Chandigarh", "Amritsar", "Ludhiana", "Jalandhar"],
+  Rajasthan: ["Jaipur", "Jodhpur", "Udaipur", "Kota"],
+  Sikkim: ["Gangtok", "Namchi"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli"],
+  Telangana: ["Hyderabad", "Warangal", "Nizamabad"],
+  Tripura: ["Agartala", "Udaipur"],
+  "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra"],
+  Uttarakhand: ["Dehradun", "Haridwar", "Nainital"],
+  "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Siliguri"],
+  Delhi: ["New Delhi", "Dwarka", "Rohini"],
+  "Jammu & Kashmir": ["Srinagar", "Jammu"],
+  Ladakh: ["Leh", "Kargil"],
+  Puducherry: ["Puducherry", "Karaikal"],
 };
 
 /* ── Animated particle canvas ── */
@@ -45,14 +45,14 @@ const ParticleCanvas = () => {
   const canvasRef = useRef(null);
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     let animId;
     const resize = () => {
       canvas.width = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
     };
     resize();
-    window.addEventListener('resize', resize);
+    window.addEventListener("resize", resize);
 
     const NODES = Array.from({ length: 55 }, () => ({
       x: Math.random() * 1400,
@@ -97,7 +97,7 @@ const ParticleCanvas = () => {
     draw();
     return () => {
       cancelAnimationFrame(animId);
-      window.removeEventListener('resize', resize);
+      window.removeEventListener("resize", resize);
     };
   }, []);
   return (
@@ -116,17 +116,17 @@ const Signup = () => {
   const { loading, error } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phoneNumber: '',
-    city: '',
-    state: '',
-    password: '',
-    confirmPassword: '',
+    name: "",
+    email: "",
+    phoneNumber: "",
+    city: "",
+    state: "",
+    password: "",
+    confirmPassword: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [focused, setFocused] = useState('');
+  const [focused, setFocused] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Show redux errors as toasts
@@ -142,7 +142,7 @@ const Signup = () => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-      city: name === 'state' ? '' : prev.city,
+      ...(name === "state" && { city: "" }),
     }));
   };
 
@@ -153,11 +153,11 @@ const Signup = () => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match.');
+      toast.error("Passwords do not match.");
       return;
     }
     if (!agreedToTerms) {
-      toast.error('Please agree to the Terms & Conditions.');
+      toast.error("Please agree to the Terms & Conditions.");
       return;
     }
 
@@ -166,17 +166,21 @@ const Signup = () => {
     const result = await dispatch(register(payload));
 
     if (register.fulfilled.match(result)) {
-      toast('Account created! Welcome aboard 🎉', { icon: '👋' });
+      toast("Account created! Welcome aboard 🎉", { icon: "👋" });
       const user = result.payload;
-      navigate('/student-dashboard');
+      navigate("/student-dashboard");
     }
   };
 
   const inputCls = (name) =>
-    `w-full bg-white/5 border rounded-2xl px-5 py-3.5 text-white text-sm outline-none transition-all duration-300 placeholder-slate-500 ${
+    `w-full border rounded-2xl px-5 py-3.5 text-white text-sm outline-none transition-all duration-300 placeholder-slate-500 ${
+      name === "state" || name === "city"
+        ? "bg-[#1e293b]" // solid bg for selects so options are visible
+        : "bg-white/5" // translucent for text inputs
+    } ${
       focused === name
-        ? 'border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]'
-        : 'border-white/10 hover:border-white/20'
+        ? "border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]"
+        : "border-white/10 hover:border-white/20"
     }`;
 
   return (
@@ -233,32 +237,32 @@ const Signup = () => {
           className="orb1 absolute -top-32 -left-20 w-[520px] h-[520px] rounded-full"
           style={{
             background:
-              'radial-gradient(circle,rgba(56,189,248,.22) 0%,transparent 70%)',
+              "radial-gradient(circle,rgba(56,189,248,.22) 0%,transparent 70%)",
           }}
         />
         <div
           className="orb2 absolute -bottom-36 -right-24 w-[620px] h-[620px] rounded-full"
           style={{
             background:
-              'radial-gradient(circle,rgba(99,102,241,.18) 0%,transparent 70%)',
+              "radial-gradient(circle,rgba(99,102,241,.18) 0%,transparent 70%)",
           }}
         />
         <div
           className="orb3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full"
           style={{
             background:
-              'radial-gradient(circle,rgba(14,165,233,.06) 0%,transparent 70%)',
+              "radial-gradient(circle,rgba(14,165,233,.06) 0%,transparent 70%)",
           }}
         />
 
         {/* Orbit rings */}
         <div
           className="ring1 absolute top-[8%] right-[4%] w-[350px] h-[350px] rounded-full opacity-[0.07]"
-          style={{ border: '1px solid rgba(147,210,255,.9)' }}
+          style={{ border: "1px solid rgba(147,210,255,.9)" }}
         />
         <div
           className="ring2 absolute top-[5%] right-[2%] w-[420px] h-[420px] rounded-full opacity-[0.04]"
-          style={{ border: '1px dashed rgba(147,210,255,.9)' }}
+          style={{ border: "1px dashed rgba(147,210,255,.9)" }}
         />
 
         {/* Grid */}
@@ -286,26 +290,26 @@ const Signup = () => {
 
         {/* Stars */}
         {[
-          { t: '7%', l: '10%', d: '2.8s', del: '0s' },
-          { t: '14%', l: '73%', d: '3.5s', del: '.7s' },
-          { t: '32%', l: '4%', d: '4s', del: '1.2s' },
-          { t: '54%', l: '90%', d: '3.1s', del: '.3s' },
-          { t: '72%', l: '18%', d: '2.5s', del: '1.8s' },
-          { t: '83%', l: '58%', d: '3.8s', del: '.9s' },
-          { t: '46%', l: '48%', d: '5s', del: '2.1s' },
-          { t: '22%', l: '38%', d: '2.2s', del: '.4s' },
+          { t: "7%", l: "10%", d: "2.8s", del: "0s" },
+          { t: "14%", l: "73%", d: "3.5s", del: ".7s" },
+          { t: "32%", l: "4%", d: "4s", del: "1.2s" },
+          { t: "54%", l: "90%", d: "3.1s", del: ".3s" },
+          { t: "72%", l: "18%", d: "2.5s", del: "1.8s" },
+          { t: "83%", l: "58%", d: "3.8s", del: ".9s" },
+          { t: "46%", l: "48%", d: "5s", del: "2.1s" },
+          { t: "22%", l: "38%", d: "2.2s", del: ".4s" },
         ].map((s, i) => (
           <div
             key={i}
             className="star absolute w-1 h-1 rounded-full bg-white"
-            style={{ top: s.t, left: s.l, '--d': s.d, '--del': s.del }}
+            style={{ top: s.t, left: s.l, "--d": s.d, "--del": s.del }}
           />
         ))}
 
         {/* Floating shapes */}
         <div
           className="floaty absolute top-[20%] left-[7%] w-14 h-14 opacity-[.15]"
-          style={{ animationDelay: '1s' }}
+          style={{ animationDelay: "1s" }}
         >
           <svg viewBox="0 0 56 56">
             <polygon
@@ -318,7 +322,7 @@ const Signup = () => {
         </div>
         <div
           className="floaty absolute bottom-[20%] right-[9%] w-10 h-10 opacity-[.12]"
-          style={{ animationDelay: '3s' }}
+          style={{ animationDelay: "3s" }}
         >
           <svg viewBox="0 0 40 40">
             <rect
@@ -335,7 +339,7 @@ const Signup = () => {
         </div>
         <div
           className="floaty absolute top-[62%] left-[2%] w-8 h-8 opacity-[.18]"
-          style={{ animationDelay: '2s' }}
+          style={{ animationDelay: "2s" }}
         >
           <svg viewBox="0 0 32 32">
             <circle
@@ -356,21 +360,21 @@ const Signup = () => {
           {/* Left hero */}
           <div
             className="hidden lg:flex flex-col flex-1 gap-8 su"
-            style={{ animationDelay: '.2s' }}
+            style={{ animationDelay: ".2s" }}
           >
             <div className="floaty relative">
               <div
                 className="absolute inset-0 rounded-full blur-3xl opacity-20"
                 style={{
-                  background: 'radial-gradient(circle,#38bdf8,transparent 70%)',
+                  background: "radial-gradient(circle,#38bdf8,transparent 70%)",
                 }}
               />
               <svg viewBox="0 0 300 320" className="w-72 h-72 drop-shadow-2xl">
                 {[
-                  { x: 30, y: 20, f: '#38bdf8', r: 20 },
-                  { x: 200, y: 10, f: '#6366f1', r: 45 },
-                  { x: 250, y: 50, f: '#0ea5e9', r: -15 },
-                  { x: 10, y: 150, f: '#818cf8', r: 30 },
+                  { x: 30, y: 20, f: "#38bdf8", r: 20 },
+                  { x: 200, y: 10, f: "#6366f1", r: 45 },
+                  { x: 250, y: 50, f: "#0ea5e9", r: -15 },
+                  { x: 10, y: 150, f: "#818cf8", r: 30 },
                 ].map((c, i) => (
                   <rect
                     key={i}
@@ -487,9 +491,9 @@ const Signup = () => {
               </p>
               <div className="mt-7 flex items-center gap-7">
                 {[
-                  ['50K+', 'Students'],
-                  ['200+', 'Courses'],
-                  ['98%', 'Pass Rate'],
+                  ["50K+", "Students"],
+                  ["200+", "Courses"],
+                  ["98%", "Pass Rate"],
                 ].map(([n, l]) => (
                   <div key={l}>
                     <p className="df text-xl font-black text-white">{n}</p>
@@ -503,13 +507,13 @@ const Signup = () => {
           {/* Right card */}
           <div
             className="w-full max-w-md su"
-            style={{ animationDelay: '.35s' }}
+            style={{ animationDelay: ".35s" }}
           >
             <div
               className="h-[2px] w-full rounded-t-full mb-[-2px] relative z-10"
               style={{
                 background:
-                  'linear-gradient(90deg,transparent,#38bdf8,#6366f1,transparent)',
+                  "linear-gradient(90deg,transparent,#38bdf8,#6366f1,transparent)",
               }}
             />
 
@@ -517,8 +521,8 @@ const Signup = () => {
               className="card-glow rounded-3xl p-9"
               style={{
                 background:
-                  'linear-gradient(160deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%)',
-                backdropFilter: 'blur(24px)',
+                  "linear-gradient(160deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%)",
+                backdropFilter: "blur(24px)",
               }}
             >
               <div className="text-center mb-7">
@@ -541,11 +545,11 @@ const Signup = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    onFocus={() => setFocused('name')}
-                    onBlur={() => setFocused('')}
+                    onFocus={() => setFocused("name")}
+                    onBlur={() => setFocused("")}
                     placeholder="John Doe"
                     required
-                    className={inputCls('name')}
+                    className={inputCls("name")}
                   />
                 </div>
 
@@ -559,11 +563,11 @@ const Signup = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    onFocus={() => setFocused('email')}
-                    onBlur={() => setFocused('')}
+                    onFocus={() => setFocused("email")}
+                    onBlur={() => setFocused("")}
                     placeholder="you@example.com"
                     required
-                    className={inputCls('email')}
+                    className={inputCls("email")}
                   />
                 </div>
 
@@ -577,11 +581,11 @@ const Signup = () => {
                     name="phoneNumber"
                     value={formData.phoneNumber}
                     onChange={handleChange}
-                    onFocus={() => setFocused('phoneNumber')}
-                    onBlur={() => setFocused('')}
+                    onFocus={() => setFocused("phoneNumber")}
+                    onBlur={() => setFocused("")}
                     placeholder="+91 98765 43210"
                     required
-                    className={inputCls('phoneNumber')}
+                    className={inputCls("phoneNumber")}
                   />
                 </div>
 
@@ -595,10 +599,10 @@ const Signup = () => {
                       name="state"
                       value={formData.state}
                       onChange={handleChange}
-                      onFocus={() => setFocused('state')}
-                      onBlur={() => setFocused('')}
+                      onFocus={() => setFocused("state")}
+                      onBlur={() => setFocused("")}
                       required
-                      className={inputCls('state') + ' text-black '}
+                      className={inputCls("state")}
                     >
                       <option value="" disabled>
                         Select state
@@ -620,22 +624,20 @@ const Signup = () => {
                       name="city"
                       value={formData.city}
                       onChange={handleChange}
-                      onFocus={() => setFocused('city')}
-                      onBlur={() => setFocused('')}
+                      onFocus={() => setFocused("city")}
+                      onBlur={() => setFocused("")}
                       required
-                      disabled={!formData.state}
                       className={
-                        inputCls('city') +
-                        ' text-black bg-white' +
+                        inputCls("city") +
                         (!formData.state
-                          ? ' bg-slate-900 cursor-not-allowed opacity-80'
-                          : '')
+                          ? " cursor-not-allowed opacity-50"
+                          : "")
                       }
                     >
                       <option value="" disabled>
                         {formData.state
-                          ? 'Select city'
-                          : 'Choose a state first'}
+                          ? "Select city"
+                          : "Choose a state first"}
                       </option>
                       {cityOptions.map((city) => (
                         <option key={city} value={city}>
@@ -653,15 +655,15 @@ const Signup = () => {
                   </label>
                   <div className="relative">
                     <input
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      onFocus={() => setFocused('password')}
-                      onBlur={() => setFocused('')}
+                      onFocus={() => setFocused("password")}
+                      onBlur={() => setFocused("")}
                       placeholder="••••••••••"
                       required
-                      className={inputCls('password') + ' pr-12'}
+                      className={inputCls("password") + " pr-12"}
                     />
                     <button
                       type="button"
@@ -684,15 +686,15 @@ const Signup = () => {
                   </label>
                   <div className="relative">
                     <input
-                      type={showConfirm ? 'text' : 'password'}
+                      type={showConfirm ? "text" : "password"}
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      onFocus={() => setFocused('confirmPassword')}
-                      onBlur={() => setFocused('')}
+                      onFocus={() => setFocused("confirmPassword")}
+                      onBlur={() => setFocused("")}
                       placeholder="••••••••••"
                       required
-                      className={inputCls('confirmPassword') + ' pr-12'}
+                      className={inputCls("confirmPassword") + " pr-12"}
                     />
                     <button
                       type="button"
@@ -721,11 +723,11 @@ const Signup = () => {
                     htmlFor="terms"
                     className="text-slate-400 text-sm cursor-pointer leading-relaxed"
                   >
-                    I agree to the{' '}
+                    I agree to the{" "}
                     <span className="text-cyan-400 hover:text-cyan-300 transition-colors">
                       <Link to="/terms">Terms of Service</Link>
-                    </span>{' '}
-                    &amp;{' '}
+                    </span>{" "}
+                    &amp;{" "}
                     <span className="text-cyan-400 hover:text-cyan-300 transition-colors">
                       <Link to="/privacy">Privacy Policy</Link>
                     </span>
@@ -778,40 +780,8 @@ const Signup = () => {
                 </button>
               </form>
 
-              {/* Divider */}
-              <div className="flex items-center gap-3 my-5">
-                <div className="flex-1 h-px bg-white/10" />
-                <span className="text-slate-600 text-xs font-medium px-1">
-                  OR
-                </span>
-                <div className="flex-1 h-px bg-white/10" />
-              </div>
-
-              {/* Google */}
-              <button className="w-full flex items-center justify-center gap-3 bg-white/[0.04] border border-white/10 hover:bg-white/[0.08] hover:border-white/20 transition-all py-3.5 rounded-2xl text-slate-300 font-semibold text-sm">
-                <svg viewBox="0 0 24 24" className="w-5 h-5">
-                  <path
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    fill="#4285F4"
-                  />
-                  <path
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    fill="#34A853"
-                  />
-                  <path
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                    fill="#FBBC05"
-                  />
-                  <path
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                    fill="#EA4335"
-                  />
-                </svg>
-                Continue with Google
-              </button>
-
               <p className="text-center text-slate-500 text-sm mt-6">
-                Already have an account?{' '}
+                Already have an account?{" "}
                 <Link
                   to="/login"
                   className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors"
