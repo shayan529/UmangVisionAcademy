@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
 
 const CourseCard = ({ course }) => {
   return (
@@ -35,16 +35,26 @@ const CourseCard = ({ course }) => {
         <div className="flex items-center justify-between mt-6">
           <h2 className="text-2xl font-bold text-slate-900">{course.price}</h2>
 
-          <Link to={`/courses/demo`}>
-            <button className="bg-cyan-800 hover:bg-cyan-600 transition text-white px-4 py-2 text-sm rounded-xl cursor-pointer">
-              View Demo
-            </button>
-          </Link>
-          <Link to={"/cart"}>
-            <button className="bg-indigo-600 hover:bg-indigo-700 transition text-white px-4 py-2 rounded-xl cursor-pointer">
-              Enroll
-            </button>
-          </Link>
+          {course.enrolled ? (
+            <Link to={`/courses/${course._id}`}>
+              <button className="w-full bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition text-white px-4 py-2 text-sm rounded-xl cursor-pointer font-bold">
+                Continue →
+              </button>
+            </Link>
+          ) : (
+            <>
+              <Link to={`/courses/${course._id}/demo`} className="flex-1">
+                <button className="w-full bg-cyan-800 hover:bg-cyan-600 transition text-white px-4 py-2 text-sm rounded-xl cursor-pointer">
+                  View Demo
+                </button>
+              </Link>
+              <Link to={'/cart'} className="flex-1">
+                <button className="w-full bg-indigo-600 hover:bg-indigo-700 transition text-white px-4 py-2 rounded-xl cursor-pointer">
+                  Enroll
+                </button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>

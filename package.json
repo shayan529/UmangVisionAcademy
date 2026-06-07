@@ -12,5 +12,9 @@
   "type": "module",
   "devDependencies": {
     "concurrently": "^10.0.0"
+  },
+  "dependencies": {
+    "git": "^0.1.5",
+    "git-filter-repo": "^0.0.30"
   }
 }

@@ -1,12 +1,13 @@
-import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "./slices/authSlice";
-import usersReducer from "./slices/usersSlice";
-import courseReducer from "./slices/courseSlice";
-import applicationsReducer from "./slices/applicationsSlice";
-import sessionReducer from "./slices/sessionSlice";
-import studentReducer from "./slices/studentSlice";
-import cartReducer from "./slices/cartSlice";
-import billingReducer from "./slices/billingSlice";
+import { configureStore } from '@reduxjs/toolkit';
+import authReducer from './slices/authSlice';
+import usersReducer from './slices/usersSlice';
+import courseReducer from './slices/courseSlice';
+import applicationsReducer from './slices/applicationsSlice';
+import sessionReducer from './slices/sessionSlice';
+import studentReducer from './slices/studentSlice';
+import cartReducer from './slices/cartSlice';
+import billingReducer from './slices/billingSlice';
+import aiTutorReducer from './slices/aiTutorSlice';
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     students: studentReducer,
     cart: cartReducer,
     billing: billingReducer,
+    aiTutor: aiTutorReducer,
   },
 });
 

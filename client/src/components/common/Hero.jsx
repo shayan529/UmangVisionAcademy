@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Hero = () => {
+  const { t } = useTranslation();
+
   return (
     <section className="relative overflow-hidden min-h-screen text-white">
       {/* BACKGROUND */}
@@ -14,24 +17,20 @@ const Hero = () => {
             {/* TAG */}
             <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-sm shadow-lg shadow-slate-950/20">
               <span className="h-2 w-2 rounded-full bg-emerald-300" />
-              AI Powered Online Learning
+              {t('hero.tag')}
             </div>
 
             {/* HEADING */}
             <div className="space-y-6">
               <h1 className="text-5xl md:text-6xl xl:text-7xl font-black tracking-tight leading-tight">
-                Empowering Students
+                {t('hero.headingLine1')}
                 <span className="block text-emerald-300">
-                  From Class 1 to 12
+                  {t('hero.headingLine2')}
                 </span>
               </h1>
 
               <p className="max-w-2xl text-slate-200 text-lg md:text-md leading-8">
-                Welcome to Umang Vision Academy, your complete AI-powered
-                learning platform designed for students from Classes 1 to 12.
-                Learn with expert instructors, interactive courses, AI tutors,
-                live classes, quizzes, assignments, and personalized learning
-                paths that help every student achieve academic excellence.
+                {t('hero.text')}
               </p>
             </div>
 
@@ -39,13 +38,13 @@ const Hero = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/my-courses" className="w-full sm:w-auto">
                 <button className="w-full sm:w-auto inline-flex cursor-pointer items-center justify-center rounded-full bg-emerald-300 px-8 py-4 text-slate-950 font-semibold shadow-2xl shadow-emerald-300/25 transition duration-300 hover:scale-[1.02] hover:bg-emerald-200">
-                  Start Learning
+                  {t('hero.startLearning')}
                 </button>
               </Link>
 
               <Link to="/courses" className="w-full sm:w-auto">
                 <button className="w-full sm:w-auto inline-flex cursor-pointer items-center justify-center rounded-full border border-white/20 bg-white/10 px-8 py-4 text-white font-semibold backdrop-blur-sm transition duration-300 hover:border-emerald-300 hover:text-emerald-300">
-                  Explore Courses
+                  {t('hero.exploreCourses')}
                 </button>
               </Link>
             </div>
@@ -55,17 +54,23 @@ const Hero = () => {
           <div className="grid w-full xl:w-[300px] gap-4">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
               <p className="text-3xl font-bold">200K+</p>
-              <p className="mt-1 text-sm text-slate-400">Students Worldwide</p>
+              <p className="mt-1 text-sm text-slate-400">
+                {t('hero.studentsWorldwide')}
+              </p>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
               <p className="text-3xl font-bold">10K+</p>
-              <p className="mt-1 text-sm text-slate-400">Online Courses</p>
+              <p className="mt-1 text-sm text-slate-400">
+                {t('hero.onlineCourses')}
+              </p>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
               <p className="text-3xl font-bold">500+</p>
-              <p className="mt-1 text-sm text-slate-400">Expert Instructors</p>
+              <p className="mt-1 text-sm text-slate-400">
+                {t('hero.expertInstructors')}
+              </p>
             </div>
           </div>
         </div>

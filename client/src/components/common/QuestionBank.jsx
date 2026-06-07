@@ -1,73 +1,78 @@
-import React, { useState } from "react";
-import { Search, FileText, Download } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import React, { useState } from 'react';
+import { Search, FileText, Download } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 const mockData = [
   {
-    class: "Class 9",
+    board: 'MP Board',
+    class: 'Class 9',
     subjects: [
       {
-        name: "Mathematics",
+        name: 'Mathematics',
         papers: [2025, 2024, 2023, 2022, 2021],
       },
       {
-        name: "Science",
+        name: 'Science',
         papers: [2025, 2024, 2023, 2022, 2021],
       },
     ],
   },
   {
-    class: "Class 10",
+    board: 'CBSE',
+    class: 'Class 10',
     subjects: [
       {
-        name: "Mathematics",
+        name: 'Mathematics',
         papers: [2025, 2024, 2023, 2022, 2021],
       },
       {
-        name: "Science",
+        name: 'Science',
         papers: [2025, 2024, 2023, 2022, 2021],
       },
       {
-        name: "English",
+        name: 'English',
         papers: [2025, 2024, 2023, 2022, 2021],
       },
     ],
   },
   {
-    class: "Class 11",
+    board: 'ICSE',
+    class: 'Class 11',
     subjects: [
       {
-        name: "Physics",
+        name: 'Physics',
         papers: [2025, 2024, 2023, 2022, 2021],
       },
       {
-        name: "Chemistry",
+        name: 'Chemistry',
         papers: [2025, 2024, 2023, 2022, 2021],
       },
       {
-        name: "Mathematics",
+        name: 'Mathematics',
         papers: [2025, 2024, 2023, 2022, 2021],
       },
     ],
   },
   {
-    class: "Class 12",
+    board: 'MP Board',
+    class: 'Class 12',
     subjects: [
       {
-        name: "Physics",
+        name: 'Physics',
         papers: [2025, 2024, 2023, 2022, 2021],
       },
       {
-        name: "Chemistry",
+        name: 'Chemistry',
         papers: [2025, 2024, 2023, 2022, 2021],
       },
       {
-        name: "Mathematics",
+        name: 'Mathematics',
         papers: [2025, 2024, 2023, 2022, 2021],
       },
       {
-        name: "Biology",
+        name: 'Biology',
         papers: [2025, 2024, 2023, 2022, 2021],
       },
     ],
@@ -75,17 +80,20 @@ const mockData = [
 ];
 
 const QuestionBank = () => {
-  const [selectedClass, setSelectedClass] = useState("All");
-  const [searchTerm, setSearchTerm] = useState("");
+  const { t } = useTranslation();
+  const [selectedBoard, setSelectedBoard] = useState('All');
+  const [selectedClass, setSelectedClass] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const filteredData = mockData.filter((item) => {
-    const classMatch = selectedClass === "All" || item.class === selectedClass;
+    const boardMatch = selectedBoard === 'All' || item.board === selectedBoard;
+    const classMatch = selectedClass === 'All' || item.class === selectedClass;
 
     const subjectMatch = item.subjects.some((subject) =>
-      subject.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      subject.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    return classMatch && (searchTerm ? subjectMatch : true);
+    return boardMatch && classMatch && (searchTerm ? subjectMatch : true);
   });
 
   const navigate = useNavigate();
@@ -93,8 +101,8 @@ const QuestionBank = () => {
 
   const handlePaperAccess = (year, subject, action) => {
     if (!user) {
-      navigate("/login", {
-        state: { from: "/question-bank" },
+      navigate('/login', {
+        state: { from: '/question-bank' },
       });
       return;
     }
@@ -103,61 +111,104 @@ const QuestionBank = () => {
     console.log(`${action}: ${subject} ${year}`);
   };
 
+  const boardOptions = [
+    { value: 'All', label: t('questionBank.boardOptions.all') },
+    { value: 'MP Board', label: t('questionBank.boardOptions.mpBoard') },
+    { value: 'CBSE', label: t('questionBank.boardOptions.cbse') },
+    { value: 'ICSE', label: t('questionBank.boardOptions.icse') },
+  ];
+
+  const classOptions = [
+    { value: 'All', label: t('questionBank.classOptions.all') },
+    { value: 'Class 9', label: t('questionBank.classOptions.class9') },
+    { value: 'Class 10', label: t('questionBank.classOptions.class10') },
+    { value: 'Class 11', label: t('questionBank.classOptions.class11') },
+    { value: 'Class 12', label: t('questionBank.classOptions.class12') },
+  ];
+
   return (
     <div className="min-h-screen bg-slate-950 text-white px-6 md:px-12 py-10">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-4xl font-bold mb-3">
-            Previous Year Question Bank
-          </h1>
-          <p className="text-slate-400">
-            Access previous 5 years question papers by class and subject.
-          </p>
+          <h1 className="text-4xl font-bold mb-3">{t('questionBank.title')}</h1>
+          <p className="text-slate-400">{t('questionBank.description')}</p>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-10">
-          <div className="relative flex-1">
-            <Search
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-            />
+        <div className="grid gap-4 mb-10 md:grid-cols-[minmax(0,1fr)_230px_230px]">
+          <div className="flex flex-col">
+            <label className="mb-2 text-sm text-slate-400">
+              {t('questionBank.subjectLabel')}
+            </label>
+            <div className="relative w-full">
+              <Search
+                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              />
 
-            <input
-              type="text"
-              placeholder="Search subject..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-cyan-500"
-            />
+              <input
+                type="text"
+                placeholder={t('questionBank.searchPlaceholder')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-cyan-500"
+              />
+            </div>
           </div>
 
-          <select
-            value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-            className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3"
-          >
-            <option>All</option>
-            <option>Class 9</option>
-            <option>Class 10</option>
-            <option>Class 11</option>
-            <option>Class 12</option>
-          </select>
+          <div className="flex flex-col">
+            <label className="mb-2 text-sm text-slate-400">
+              {t('questionBank.boardLabel')}
+            </label>
+            <select
+              value={selectedBoard}
+              onChange={(e) => setSelectedBoard(e.target.value)}
+              className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3"
+            >
+              {boardOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col">
+            <label className="mb-2 text-sm text-slate-400">
+              {t('questionBank.classLabel')}
+            </label>
+            <select
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3"
+            >
+              {classOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Content */}
         <div className="space-y-10">
           {filteredData.map((classData) => (
-            <div key={classData.class}>
-              <h2 className="text-2xl font-semibold mb-5">{classData.class}</h2>
+            <div key={`${classData.board}-${classData.class}`}>
+              <div className="mb-3 flex flex-wrap items-center gap-3">
+                <h2 className="text-2xl font-semibold">{classData.class}</h2>
+                <span className="rounded-full bg-cyan-600/15 text-cyan-200 px-3 py-1 text-sm">
+                  {classData.board}
+                </span>
+              </div>
 
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {classData.subjects
                   .filter((subject) =>
                     subject.name
                       .toLowerCase()
-                      .includes(searchTerm.toLowerCase()),
+                      .includes(searchTerm.toLowerCase())
                   )
                   .map((subject) => (
                     <div
@@ -177,19 +228,21 @@ const QuestionBank = () => {
                             key={year}
                             className="flex items-center justify-between bg-slate-800/50 rounded-lg p-3"
                           >
-                            <span>{year} Question Paper</span>
+                            <span>
+                              {year} {t('questionBank.questionPaper')}
+                            </span>
 
                             <div className="flex gap-2">
                               <button
                                 onClick={() =>
-                                  handlePaperAccess(year, subject.name, "view")
+                                  handlePaperAccess(year, subject.name, 'view')
                                 }
                                 className="px-3 py-1 text-sm rounded-lg bg-cyan-600 hover:bg-cyan-500 transition"
                               >
-                                View
+                                {t('questionBank.view')}
                               </button>
 
-                              <button
+                              {/* <button
                                 onClick={() =>
                                   handlePaperAccess(
                                     year,
@@ -200,7 +253,7 @@ const QuestionBank = () => {
                                 className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
                               >
                                 <Download size={16} />
-                              </button>
+                              </button> */}
                             </div>
                           </div>
                         ))}

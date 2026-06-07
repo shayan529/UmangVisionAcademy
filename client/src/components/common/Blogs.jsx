@@ -1,205 +1,259 @@
-import React, { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useMemo, useEffect } from 'react';
 
-// ── Mock Data ─────────────────────────────────────────────────────────────────
-
-const NEWSPAPER = [
-  {
-    id: 1,
-    category: "Education",
-    tag: "CBSE",
-    title: "CBSE Class 10 & 12 Board Exam Results 2025 Declared",
-    excerpt:
-      "Over 22 lakh students appeared this year. Pass percentage rises to 93.6% for Class 10 and 88.4% for Class 12 — highest in five years.",
-    date: "June 4, 2025",
-    readTime: "3 min",
-    featured: true,
-    color: "#818cf8",
-  },
-  {
-    id: 2,
-    category: "Competitive Exams",
-    tag: "JEE",
-    title: "JEE Advanced 2025 Registration Window Opens — Key Dates Inside",
-    excerpt:
-      "IIT Bombay releases the official schedule. Students who cleared JEE Mains cutoff can register starting June 10.",
-    date: "June 3, 2025",
-    readTime: "4 min",
-    featured: false,
-    color: "#22d3ee",
-  },
-  {
-    id: 3,
-    category: "Policy",
-    tag: "NEP 2020",
-    title:
-      "NEP 2020 Implementation: States Report Progress on Mother-Tongue Medium",
-    excerpt:
-      "14 states have begun transitioning primary education to regional languages under the National Education Policy's five-language formula.",
-    date: "June 2, 2025",
-    readTime: "5 min",
-    featured: false,
-    color: "#34d399",
-  },
-  {
-    id: 4,
-    category: "Technology",
-    tag: "EdTech",
-    title:
-      "AI Tutors in Classrooms: NCERT Partners with Three EdTech Platforms",
-    excerpt:
-      "Pilot programme launched in 200 schools across UP, MP, and Rajasthan. AI-powered tools aim to personalise learning at scale.",
-    date: "May 30, 2025",
-    readTime: "6 min",
-    featured: false,
-    color: "#f472b6",
-  },
-  {
-    id: 5,
-    category: "Competitive Exams",
-    tag: "NEET",
-    title:
-      "NEET UG 2025 Paper Leak Allegations — NTA Issues Official Clarification",
-    excerpt:
-      "The National Testing Agency denies leak allegations and announces an independent review committee to audit exam processes.",
-    date: "May 28, 2025",
-    readTime: "4 min",
-    featured: false,
-    color: "#fbbf24",
-  },
-  {
-    id: 6,
-    category: "Scholarships",
-    tag: "PM Scholarship",
-    title: "PM Scholarship Scheme 2025 — Applications Open for 6,000 Seats",
-    excerpt:
-      "Ministry of Education invites applications from meritorious students of central armed police forces and railway families.",
-    date: "May 25, 2025",
-    readTime: "3 min",
-    featured: false,
-    color: "#a78bfa",
-  },
-];
+// ── Static Rojgar Data (government schemes — stable, no need to fetch) ────────
 
 const ROJGAR = [
   {
     id: 1,
-    name: "Pradhan Mantri Kaushal Vikas Yojana (PMKVY) 4.0",
-    ministry: "Ministry of Skill Development",
-    beneficiary: "Youth aged 15–45",
-    benefit: "Free skill training + ₹8,000 reward on certification",
-    deadline: "Rolling admissions",
-    status: "active",
-    link: "https://pmkvyofficial.org",
-    tag: "Skill Training",
-    color: "#34d399",
+    name: 'Pradhan Mantri Kaushal Vikas Yojana (PMKVY) 4.0',
+    ministry: 'Ministry of Skill Development',
+    beneficiary: 'Youth aged 15–45',
+    benefit: 'Free skill training + ₹8,000 reward on certification',
+    deadline: 'Rolling admissions',
+    status: 'active',
+    link: 'https://www.skillindiadigital.gov.in/pmkvy-landing',
+    tag: 'Skill Training',
+    color: '#34d399',
   },
   {
     id: 2,
-    name: "National Apprenticeship Promotion Scheme (NAPS)",
-    ministry: "Ministry of Education",
-    beneficiary: "Students Class 5 pass & above",
-    benefit: "Stipend of ₹1,500–₹10,000/month + OJT certificate",
-    deadline: "Open year-round",
-    status: "active",
-    link: "https://apprenticeshipindia.gov.in",
-    tag: "Apprenticeship",
-    color: "#818cf8",
+    name: 'National Apprenticeship Promotion Scheme (NAPS)',
+    ministry: 'Ministry of Education',
+    beneficiary: 'Students Class 5 pass & above',
+    benefit: 'Stipend of ₹1,500–₹10,000/month + OJT certificate',
+    deadline: 'Open year-round',
+    status: 'active',
+    link: 'https://apprenticeshipindia.gov.in',
+    tag: 'Apprenticeship',
+    color: '#818cf8',
   },
   {
     id: 3,
-    name: "PM SVANidhi — Street Vendor Atma Nirbhar Nidhi",
-    ministry: "Ministry of Housing & Urban Affairs",
-    beneficiary: "Street vendors",
-    benefit: "Collateral-free loan ₹10K → ₹20K → ₹50K",
-    deadline: "Open",
-    status: "active",
-    link: "https://pmsvanidhi.mohua.gov.in",
-    tag: "Self Employment",
-    color: "#fbbf24",
+    name: 'PM SVANidhi — Street Vendor Atma Nirbhar Nidhi',
+    ministry: 'Ministry of Housing & Urban Affairs',
+    beneficiary: 'Street vendors',
+    benefit: 'Collateral-free loan ₹10K → ₹20K → ₹50K',
+    deadline: 'Open',
+    status: 'active',
+    link: 'https://pmsvanidhi.mohua.gov.in',
+    tag: 'Self Employment',
+    color: '#fbbf24',
   },
   {
     id: 4,
-    name: "Startup India Seed Fund Scheme",
-    ministry: "DPIIT, Ministry of Commerce",
-    beneficiary: "DPIIT-registered startups ≤ 2 years old",
-    benefit: "Up to ₹20 lakh grant for PoC + ₹50 lakh for commercialisation",
-    deadline: "Applications open",
-    status: "active",
-    link: "https://seedfund.startupindia.gov.in",
-    tag: "Entrepreneurship",
-    color: "#f472b6",
+    name: 'Startup India Seed Fund Scheme',
+    ministry: 'DPIIT, Ministry of Commerce',
+    beneficiary: 'DPIIT-registered startups ≤ 2 years old',
+    benefit: 'Up to ₹20 lakh grant for PoC + ₹50 lakh for commercialisation',
+    deadline: 'Applications open',
+    status: 'active',
+    link: 'https://seedfund.startupindia.gov.in',
+    tag: 'Entrepreneurship',
+    color: '#f472b6',
   },
   {
     id: 5,
-    name: "Mukhya Mantri Seekho Kamao Yojana (MP)",
-    ministry: "Madhya Pradesh Govt.",
-    beneficiary: "MP youth aged 18–29, Class 12+",
-    benefit: "₹8,000–₹10,000/month stipend during training",
-    deadline: "Batch enrolment ongoing",
-    status: "active",
-    link: "https://mmsky.mp.gov.in",
-    tag: "State Scheme",
-    color: "#22d3ee",
+    name: 'Mukhya Mantri Seekho Kamao Yojana (MP)',
+    ministry: 'Madhya Pradesh Govt.',
+    beneficiary: 'MP youth aged 18–29, Class 12+',
+    benefit: '₹8,000–₹10,000/month stipend during training',
+    deadline: 'Batch enrolment ongoing',
+    status: 'active',
+    link: 'https://mmsky.mp.gov.in',
+    tag: 'State Scheme',
+    color: '#22d3ee',
   },
   {
     id: 6,
-    name: "National Career Service (NCS) Portal",
-    ministry: "Ministry of Labour & Employment",
-    beneficiary: "All job seekers",
-    benefit: "Free job matching, career counselling, skill courses",
-    deadline: "Always open",
-    status: "active",
-    link: "https://www.ncs.gov.in",
-    tag: "Job Portal",
-    color: "#a78bfa",
+    name: 'National Career Service (NCS) Portal',
+    ministry: 'Ministry of Labour & Employment',
+    beneficiary: 'All job seekers',
+    benefit: 'Free job matching, career counselling, skill courses',
+    deadline: 'Always open',
+    status: 'active',
+    link: 'https://www.ncs.gov.in',
+    tag: 'Job Portal',
+    color: '#a78bfa',
   },
   {
     id: 7,
-    name: "PM Vishwakarma Yojana",
-    ministry: "Ministry of MSME",
-    beneficiary: "18 traditional artisan categories",
+    name: 'PM Vishwakarma Yojana',
+    ministry: 'Ministry of MSME',
+    beneficiary: '18 traditional artisan categories',
     benefit:
-      "₹15,000 toolkit grant + ₹3 lakh collateral-free loan at 5% interest",
-    deadline: "Open",
-    status: "active",
-    link: "https://pmvishwakarma.gov.in",
-    tag: "Artisan Support",
-    color: "#34d399",
+      '₹15,000 toolkit grant + ₹3 lakh collateral-free loan at 5% interest',
+    deadline: 'Open',
+    status: 'active',
+    link: 'https://pmvishwakarma.gov.in',
+    tag: 'Artisan Support',
+    color: '#34d399',
   },
   {
     id: 8,
-    name: "e-Shram Portal Registration",
-    ministry: "Ministry of Labour & Employment",
-    beneficiary: "Unorganised sector workers",
-    benefit: "₹2 lakh accident insurance + priority in govt schemes",
-    deadline: "Permanent",
-    status: "active",
-    link: "https://eshram.gov.in",
-    tag: "Worker Welfare",
-    color: "#fbbf24",
+    name: 'e-Shram Portal Registration',
+    ministry: 'Ministry of Labour & Employment',
+    beneficiary: 'Unorganised sector workers',
+    benefit: '₹2 lakh accident insurance + priority in govt schemes',
+    deadline: 'Permanent',
+    status: 'active',
+    link: 'https://eshram.gov.in',
+    tag: 'Worker Welfare',
+    color: '#fbbf24',
   },
 ];
 
-const NEWS_CATEGORIES = [
-  "All",
-  "Education",
-  "Competitive Exams",
-  "Policy",
-  "Technology",
-  "Scholarships",
-];
 const ROJGAR_TAGS = [
-  "All",
-  "Skill Training",
-  "Apprenticeship",
-  "Self Employment",
-  "Entrepreneurship",
-  "State Scheme",
-  "Job Portal",
-  "Artisan Support",
-  "Worker Welfare",
+  'All',
+  'Skill Training',
+  'Apprenticeship',
+  'Self Employment',
+  'Entrepreneurship',
+  'State Scheme',
+  'Job Portal',
+  'Artisan Support',
+  'Worker Welfare',
 ];
+
+const NEWS_CATEGORIES = [
+  'All',
+  'Education',
+  'Competitive Exams',
+  'Policy',
+  'Technology',
+  'Scholarships',
+];
+
+const MOCK_NEWS = [
+  {
+    id: 1,
+    category: 'Education',
+    tag: 'CBSE',
+    title: 'CBSE launches new digital library for rural students',
+    excerpt:
+      'CBSE has rolled out a free digital library initiative to support rural learners with interactive study material, past papers and instructional videos.',
+    date: 'June 5, 2026',
+    readTime: '3 min',
+    featured: true,
+    url: 'https://www.cbse.gov.in',
+  },
+  {
+    id: 2,
+    category: 'Competitive Exams',
+    tag: 'JEE',
+    title: 'NTA clarifies JEE Main correction window dates',
+    excerpt:
+      'The NTA has announced a correction window for JEE Main form updates, giving candidates another chance to fix their exam centre and subject details.',
+    date: 'June 4, 2026',
+    readTime: '2 min',
+    featured: false,
+    url: 'https://nta.ac.in',
+  },
+  {
+    id: 3,
+    category: 'Policy',
+    tag: 'NEP 2020',
+    title: 'State education boards align syllabi with NEP 2020 reforms',
+    excerpt:
+      'Several state boards have begun revising their school syllabi to reflect the new interdisciplinary and competency-based learning outcomes promoted by NEP 2020.',
+    date: 'June 3, 2026',
+    readTime: '4 min',
+    featured: false,
+    url: 'https://education.gov.in',
+  },
+  {
+    id: 4,
+    category: 'Technology',
+    tag: 'EdTech',
+    title: 'AI tutoring apps gain traction in metro cities',
+    excerpt:
+      'EdTech startups are reporting higher engagement from students using AI tutoring apps for exam prep, video lessons and adaptive quizzes.',
+    date: 'June 2, 2026',
+    readTime: '3 min',
+    featured: false,
+    url: 'https://timesofindia.indiatimes.com',
+  },
+  {
+    id: 5,
+    category: 'Scholarships',
+    tag: 'PM Scholarship',
+    title: 'New scholarship window opens for women in STEM',
+    excerpt:
+      'A government scholarship portal has opened fresh registrations for women pursuing STEM degrees, offering tuition support and mentorship.',
+    date: 'June 1, 2026',
+    readTime: '3 min',
+    featured: false,
+    url: 'https://www.pmindia.gov.in',
+  },
+  {
+    id: 6,
+    category: 'Education',
+    tag: 'CBSE',
+    title: 'CBSE updates academic calendar for summer revision camps',
+    excerpt:
+      'CBSE has published a revised academic calendar that includes dedicated summer revision camps for Class 10 and 12 students.',
+    date: 'May 30, 2026',
+    readTime: '2 min',
+    featured: false,
+    url: 'https://www.cbse.gov.in',
+  },
+];
+
+const CARD_COLORS = [
+  '#818cf8',
+  '#22d3ee',
+  '#34d399',
+  '#f472b6',
+  '#fbbf24',
+  '#a78bfa',
+  '#fb7185',
+  '#38bdf8',
+];
+
+// ── Fetch news from Anthropic API ─────────────────────────────────────────────
+
+async function fetchNewsFromAI() {
+  const today = new Date().toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  const prompt = `You are a news curator for an Indian education platform. Generate 6 realistic, current Indian education news articles as of ${today}.
+
+Return ONLY a valid JSON array, no markdown, no explanation. Each object must have exactly these fields:
+- id: number (1-6)
+- category: one of "Education", "Competitive Exams", "Policy", "Technology", "Scholarships"
+- tag: short tag string (e.g. "CBSE", "JEE", "NEP 2020", "EdTech", "NEET", "PM Scholarship")
+- title: string (realistic news headline about Indian education)
+- excerpt: string (2-3 sentence summary, 60-80 words)
+- date: string (recent date like "June 4, 2025")
+- readTime: string (e.g. "3 min")
+- featured: boolean (only the first article should be true)
+- url: string (a real, working URL to an authoritative source like ndtv.com/education, timesofindia.com, hindustantimes.com, thehindu.com, or official gov sites like cbse.gov.in, nta.ac.in, education.gov.in — use a real homepage or section URL that actually exists)
+
+Make the news realistic, recent, and relevant to Indian students. Vary the categories.`;
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+
+  const data = await response.json();
+  const text = data.content?.map((b) => b.text || '').join('') || '';
+  const clean = text.replace(/```json|```/g, '').trim();
+  const parsed = JSON.parse(clean);
+
+  // Assign colors
+  return parsed.map((article, i) => ({
+    ...article,
+    color: CARD_COLORS[i % CARD_COLORS.length],
+  }));
+}
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -207,16 +261,16 @@ const CategoryPill = ({ label, active, onClick }) => (
   <button
     onClick={onClick}
     style={{
-      padding: "6px 16px",
+      padding: '6px 16px',
       borderRadius: 20,
-      border: `1px solid ${active ? "#7c3aed" : "#1e293b"}`,
-      background: active ? "#7c3aed" : "transparent",
-      color: active ? "#fff" : "#64748b",
+      border: `1px solid ${active ? '#7c3aed' : '#1e293b'}`,
+      background: active ? '#7c3aed' : 'transparent',
+      color: active ? '#fff' : '#64748b',
       fontSize: 12,
       fontWeight: 600,
-      cursor: "pointer",
-      whiteSpace: "nowrap",
-      transition: "all 0.15s",
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      transition: 'all 0.15s',
     }}
   >
     {label}
@@ -228,81 +282,136 @@ const NewsBadge = ({ label, color }) => (
     style={{
       fontSize: 10,
       fontWeight: 700,
-      padding: "2px 8px",
+      padding: '2px 8px',
       borderRadius: 20,
       background: `${color}18`,
       color,
       border: `1px solid ${color}30`,
-      letterSpacing: "0.06em",
-      textTransform: "uppercase",
+      letterSpacing: '0.06em',
+      textTransform: 'uppercase',
     }}
   >
     {label}
   </span>
 );
 
+const SkeletonCard = () => (
+  <div
+    style={{
+      background: '#111827',
+      border: '1px solid #1e293b',
+      borderRadius: 18,
+      padding: '22px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12,
+    }}
+  >
+    {[40, 80, 60, 100, 50].map((w, i) => (
+      <div
+        key={i}
+        style={{
+          height: i === 0 ? 3 : i === 2 ? 20 : 12,
+          width: `${w}%`,
+          borderRadius: 6,
+          background: '#1e293b',
+          animation: 'pulse 1.5s ease-in-out infinite',
+        }}
+      />
+    ))}
+    <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+  </div>
+);
+
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function Blogs() {
-  const [activeTab, setActiveTab] = useState("news");
-  const [newsCategory, setNewsCategory] = useState("All");
-  const [rojgarTag, setRojgarTag] = useState("All");
-  const [newsSearch, setNewsSearch] = useState("");
-  const [rojgarSearch, setRojgarSearch] = useState("");
+  const [activeTab, setActiveTab] = useState('news');
+  const [newsCategory, setNewsCategory] = useState('All');
+  const [rojgarTag, setRojgarTag] = useState('All');
+  const [newsSearch, setNewsSearch] = useState('');
+  const [rojgarSearch, setRojgarSearch] = useState('');
+
+  // Dynamic news state
+  const [newspaper, setNewspaper] = useState([]);
+  const [newsLoading, setNewsLoading] = useState(true);
+  const [newsError, setNewsError] = useState(null);
+  const [usingFallbackNews, setUsingFallbackNews] = useState(false);
+
+  useEffect(() => {
+    setNewsLoading(true);
+    setNewsError(null);
+    setUsingFallbackNews(false);
+    fetchNewsFromAI()
+      .then((articles) => {
+        setNewspaper(articles);
+        setNewsLoading(false);
+      })
+      .catch((err) => {
+        console.error('News fetch error:', err);
+        setNewspaper(MOCK_NEWS);
+        setUsingFallbackNews(true);
+        setNewsLoading(false);
+      });
+  }, []);
 
   const filteredNews = useMemo(
     () =>
-      NEWSPAPER.filter((n) => {
-        const matchCat = newsCategory === "All" || n.category === newsCategory;
+      newspaper.filter((n) => {
+        const matchCat = newsCategory === 'All' || n.category === newsCategory;
         const matchSearch =
           n.title.toLowerCase().includes(newsSearch.toLowerCase()) ||
           n.excerpt.toLowerCase().includes(newsSearch.toLowerCase());
         return matchCat && matchSearch;
       }),
-    [newsCategory, newsSearch],
+    [newspaper, newsCategory, newsSearch]
   );
 
   const filteredRojgar = useMemo(
     () =>
       ROJGAR.filter((r) => {
-        const matchTag = rojgarTag === "All" || r.tag === rojgarTag;
+        const matchTag = rojgarTag === 'All' || r.tag === rojgarTag;
         const matchSearch =
           r.name.toLowerCase().includes(rojgarSearch.toLowerCase()) ||
           r.benefit.toLowerCase().includes(rojgarSearch.toLowerCase());
         return matchTag && matchSearch;
       }),
-    [rojgarTag, rojgarSearch],
+    [rojgarTag, rojgarSearch]
   );
 
   const featured = filteredNews.find((n) => n.featured);
   const restNews = filteredNews.filter((n) => !n.featured);
 
+  const openUrl = (url) => {
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div
       style={{
-        background: "#0b1120",
-        minHeight: "100vh",
-        color: "#f1f5f9",
+        background: '#0b1120',
+        minHeight: '100vh',
+        color: '#f1f5f9',
         fontFamily: "'Inter','Segoe UI',sans-serif",
       }}
     >
       {/* ── Page header ── */}
       <div
         style={{
-          borderBottom: "1px solid #1e293b",
-          background: "#0b1120",
-          position: "sticky",
+          borderBottom: '1px solid #1e293b',
+          background: '#0b1120',
+          position: 'sticky',
           top: 0,
           zIndex: 20,
         }}
       >
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 24px" }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '20px 24px' }}>
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
               gap: 12,
             }}
           >
@@ -311,15 +420,15 @@ export default function Blogs() {
                 style={{
                   fontSize: 11,
                   fontWeight: 700,
-                  letterSpacing: "0.18em",
-                  color: "#818cf8",
-                  textTransform: "uppercase",
+                  letterSpacing: '0.18em',
+                  color: '#818cf8',
+                  textTransform: 'uppercase',
                   marginBottom: 4,
                 }}
               >
                 Knowledge Hub
               </p>
-              <h1 style={{ fontSize: 26, fontWeight: 800, color: "#f1f5f9" }}>
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: '#f1f5f9' }}>
                 News & Rojgar Yojana
               </h1>
             </div>
@@ -327,32 +436,32 @@ export default function Blogs() {
             {/* Tab toggle */}
             <div
               style={{
-                display: "flex",
-                background: "#1e293b",
+                display: 'flex',
+                background: '#1e293b',
                 borderRadius: 12,
                 padding: 4,
                 gap: 4,
               }}
             >
               {[
-                { key: "news", label: "📰 Newspaper" },
-                { key: "rojgar", label: "💼 Rojgar Yojana" },
+                { key: 'news', label: '📰 Newspaper' },
+                { key: 'rojgar', label: '💼 Rojgar Yojana' },
               ].map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   style={{
-                    padding: "8px 20px",
+                    padding: '8px 20px',
                     borderRadius: 8,
-                    border: "none",
+                    border: 'none',
                     fontSize: 13,
                     fontWeight: 700,
-                    cursor: "pointer",
+                    cursor: 'pointer',
                     background:
-                      activeTab === tab.key ? "#7c3aed" : "transparent",
-                    color: activeTab === tab.key ? "#fff" : "#64748b",
-                    transition: "all 0.15s",
-                    whiteSpace: "nowrap",
+                      activeTab === tab.key ? '#7c3aed' : 'transparent',
+                    color: activeTab === tab.key ? '#fff' : '#64748b',
+                    transition: 'all 0.15s',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {tab.label}
@@ -363,30 +472,44 @@ export default function Blogs() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
         {/* ══════════════ NEWSPAPER TAB ══════════════ */}
-        {activeTab === "news" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+        {activeTab === 'news' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
             {/* Search + filters */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <input
                 value={newsSearch}
                 onChange={(e) => setNewsSearch(e.target.value)}
                 placeholder="Search news…"
                 style={{
-                  width: "100%",
+                  width: '100%',
                   maxWidth: 400,
-                  padding: "10px 16px",
-                  background: "#111827",
-                  border: "1px solid #1e293b",
+                  padding: '10px 16px',
+                  background: '#111827',
+                  border: '1px solid #1e293b',
                   borderRadius: 12,
-                  color: "#f1f5f9",
+                  color: '#f1f5f9',
                   fontSize: 14,
-                  outline: "none",
-                  boxSizing: "border-box",
+                  outline: 'none',
+                  boxSizing: 'border-box',
                 }}
               />
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {usingFallbackNews && (
+                <div
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: 12,
+                    background: '#1f2937',
+                    border: '1px solid #374151',
+                    color: '#cbd5e1',
+                    fontSize: 12,
+                  }}
+                >
+                  Live news is currently unavailable, showing fallback content.
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {NEWS_CATEGORIES.map((cat) => (
                   <CategoryPill
                     key={cat}
@@ -398,242 +521,372 @@ export default function Blogs() {
               </div>
             </div>
 
-            {filteredNews.length === 0 ? (
+            {/* Loading state */}
+            {newsLoading && (
               <div
-                style={{
-                  textAlign: "center",
-                  padding: "64px 0",
-                  color: "#475569",
-                }}
+                style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
               >
-                <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
-                <p style={{ fontWeight: 600, color: "#64748b" }}>
-                  No articles found
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Featured article */}
-                {featured && newsSearch === "" && (
-                  <div
-                    style={{
-                      background: "#111827",
-                      border: "1px solid #1e293b",
-                      borderRadius: 22,
-                      overflow: "hidden",
-                      display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(280px, 1fr))",
-                    }}
-                  >
-                    {/* Colour band */}
-                    <div
-                      style={{
-                        background: `linear-gradient(135deg, ${featured.color}22, ${featured.color}08)`,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        minHeight: 180,
-                        padding: 32,
-                      }}
-                    >
-                      <span style={{ fontSize: 72 }}>📰</span>
-                    </div>
-                    <div
-                      style={{
-                        padding: "28px 28px 28px 24px",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                        gap: 12,
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 8,
-                          alignItems: "center",
-                        }}
-                      >
-                        <NewsBadge label="Featured" color={featured.color} />
-                        <NewsBadge
-                          label={featured.tag}
-                          color={featured.color}
-                        />
-                      </div>
-                      <h2
-                        style={{
-                          fontSize: 22,
-                          fontWeight: 800,
-                          color: "#f1f5f9",
-                          lineHeight: 1.3,
-                        }}
-                      >
-                        {featured.title}
-                      </h2>
-                      <p
-                        style={{
-                          fontSize: 14,
-                          color: "#94a3b8",
-                          lineHeight: 1.7,
-                        }}
-                      >
-                        {featured.excerpt}
-                      </p>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 16,
-                          marginTop: 4,
-                        }}
-                      >
-                        <span style={{ fontSize: 12, color: "#64748b" }}>
-                          🗓 {featured.date}
-                        </span>
-                        <span style={{ fontSize: 12, color: "#64748b" }}>
-                          ⏱ {featured.readTime} read
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Article grid */}
                 <div
                   style={{
-                    display: "grid",
+                    background: '#111827',
+                    border: '1px solid #1e293b',
+                    borderRadius: 22,
+                    padding: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 16,
+                    color: '#818cf8',
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 28,
+                      animation: 'spin 1s linear infinite',
+                    }}
+                  >
+                    ⟳
+                  </span>
+                  Fetching latest education news…
+                  <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
+                </div>
+                <div
+                  style={{
+                    display: 'grid',
                     gridTemplateColumns:
-                      "repeat(auto-fill, minmax(300px, 1fr))",
+                      'repeat(auto-fill, minmax(300px, 1fr))',
                     gap: 16,
                   }}
                 >
-                  {(newsSearch !== "" ? filteredNews : restNews).map(
-                    (article) => (
+                  {[1, 2, 3].map((i) => (
+                    <SkeletonCard key={i} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Error state */}
+            {newsError && !newsLoading && (
+              <div
+                style={{
+                  background: '#1a0a0a',
+                  border: '1px solid #7f1d1d',
+                  borderRadius: 14,
+                  padding: '20px 24px',
+                  color: '#f87171',
+                  fontSize: 14,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                }}
+              >
+                <span style={{ fontSize: 24 }}>⚠️</span>
+                <div>
+                  <p style={{ fontWeight: 700, marginBottom: 4 }}>
+                    {newsError}
+                  </p>
+                  <button
+                    onClick={() => {
+                      setNewsLoading(true);
+                      setNewsError(null);
+                      fetchNewsFromAI()
+                        .then(setNewspaper)
+                        .catch(() =>
+                          setNewsError(
+                            'Failed to load latest news. Please try again.'
+                          )
+                        )
+                        .finally(() => setNewsLoading(false));
+                    }}
+                    style={{
+                      background: '#7c3aed',
+                      border: 'none',
+                      color: '#fff',
+                      padding: '6px 14px',
+                      borderRadius: 8,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Loaded content */}
+            {!newsLoading && !newsError && (
+              <>
+                {filteredNews.length === 0 ? (
+                  <div
+                    style={{
+                      textAlign: 'center',
+                      padding: '64px 0',
+                      color: '#475569',
+                    }}
+                  >
+                    <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
+                    <p style={{ fontWeight: 600, color: '#64748b' }}>
+                      No articles found
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Featured article */}
+                    {featured && newsSearch === '' && (
                       <div
-                        key={article.id}
+                        onClick={() => openUrl(featured.url)}
                         style={{
-                          background: "#111827",
-                          border: "1px solid #1e293b",
-                          borderRadius: 18,
-                          padding: "22px",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 12,
-                          transition: "border-color 0.15s",
-                          cursor: "pointer",
+                          background: '#111827',
+                          border: '1px solid #1e293b',
+                          borderRadius: 22,
+                          overflow: 'hidden',
+                          display: 'grid',
+                          gridTemplateColumns:
+                            'repeat(auto-fit, minmax(280px, 1fr))',
+                          cursor: featured.url ? 'pointer' : 'default',
+                          transition: 'border-color 0.15s',
                         }}
                         onMouseEnter={(e) =>
-                          (e.currentTarget.style.borderColor = "#334155")
+                          (e.currentTarget.style.borderColor = '#334155')
                         }
                         onMouseLeave={(e) =>
-                          (e.currentTarget.style.borderColor = "#1e293b")
+                          (e.currentTarget.style.borderColor = '#1e293b')
                         }
                       >
-                        {/* Top accent line */}
                         <div
                           style={{
-                            height: 3,
-                            borderRadius: 2,
-                            background: `linear-gradient(90deg, ${article.color}, ${article.color}44)`,
-                            marginBottom: 4,
+                            background: `${featured.color}15`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minHeight: 180,
+                            padding: 32,
                           }}
-                        />
-
-                        <div
-                          style={{ display: "flex", gap: 6, flexWrap: "wrap" }}
                         >
-                          <NewsBadge
-                            label={article.category}
-                            color={article.color}
-                          />
-                          <NewsBadge
-                            label={article.tag}
-                            color={article.color}
-                          />
+                          <span style={{ fontSize: 72 }}>📰</span>
                         </div>
-
-                        <h3
-                          style={{
-                            fontSize: 15,
-                            fontWeight: 700,
-                            color: "#f1f5f9",
-                            lineHeight: 1.4,
-                            flex: 1,
-                          }}
-                        >
-                          {article.title}
-                        </h3>
-                        <p
-                          style={{
-                            fontSize: 13,
-                            color: "#64748b",
-                            lineHeight: 1.7,
-                          }}
-                        >
-                          {article.excerpt}
-                        </p>
-
                         <div
                           style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            marginTop: "auto",
-                            paddingTop: 8,
-                            borderTop: "1px solid #1e293b",
+                            padding: '28px 28px 28px 24px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            gap: 12,
                           }}
                         >
-                          <div style={{ display: "flex", gap: 12 }}>
-                            <span style={{ fontSize: 11, color: "#475569" }}>
-                              🗓 {article.date}
-                            </span>
-                            <span style={{ fontSize: 11, color: "#475569" }}>
-                              ⏱ {article.readTime}
-                            </span>
-                          </div>
-                          <span
+                          <div
                             style={{
-                              fontSize: 12,
-                              color: article.color,
-                              fontWeight: 600,
+                              display: 'flex',
+                              gap: 8,
+                              alignItems: 'center',
                             }}
                           >
-                            Read →
-                          </span>
+                            <NewsBadge
+                              label="Featured"
+                              color={featured.color}
+                            />
+                            <NewsBadge
+                              label={featured.tag}
+                              color={featured.color}
+                            />
+                          </div>
+                          <h2
+                            style={{
+                              fontSize: 22,
+                              fontWeight: 800,
+                              color: '#f1f5f9',
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            {featured.title}
+                          </h2>
+                          <p
+                            style={{
+                              fontSize: 14,
+                              color: '#94a3b8',
+                              lineHeight: 1.7,
+                            }}
+                          >
+                            {featured.excerpt}
+                          </p>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 16,
+                              marginTop: 4,
+                            }}
+                          >
+                            <span style={{ fontSize: 12, color: '#64748b' }}>
+                              🗓 {featured.date}
+                            </span>
+                            <span style={{ fontSize: 12, color: '#64748b' }}>
+                              ⏱ {featured.readTime} read
+                            </span>
+                            {featured.url && (
+                              <span
+                                style={{
+                                  fontSize: 12,
+                                  color: featured.color,
+                                  fontWeight: 700,
+                                  marginLeft: 'auto',
+                                }}
+                              >
+                                Read Article →
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    ),
-                  )}
-                </div>
+                    )}
+
+                    {/* Article grid */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns:
+                          'repeat(auto-fill, minmax(300px, 1fr))',
+                        gap: 16,
+                      }}
+                    >
+                      {(newsSearch !== '' ? filteredNews : restNews).map(
+                        (article) => (
+                          <div
+                            key={article.id}
+                            onClick={() => openUrl(article.url)}
+                            style={{
+                              background: '#111827',
+                              border: '1px solid #1e293b',
+                              borderRadius: 18,
+                              padding: '22px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 12,
+                              cursor: article.url ? 'pointer' : 'default',
+                              transition: 'border-color 0.15s',
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.borderColor = '#334155')
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.borderColor = '#1e293b')
+                            }
+                          >
+                            <div
+                              style={{
+                                height: 3,
+                                borderRadius: 2,
+                                background: `linear-gradient(90deg, ${article.color}, ${article.color}44)`,
+                                marginBottom: 4,
+                              }}
+                            />
+                            <div
+                              style={{
+                                display: 'flex',
+                                gap: 6,
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              <NewsBadge
+                                label={article.category}
+                                color={article.color}
+                              />
+                              <NewsBadge
+                                label={article.tag}
+                                color={article.color}
+                              />
+                            </div>
+                            <h3
+                              style={{
+                                fontSize: 15,
+                                fontWeight: 700,
+                                color: '#f1f5f9',
+                                lineHeight: 1.4,
+                                flex: 1,
+                              }}
+                            >
+                              {article.title}
+                            </h3>
+                            <p
+                              style={{
+                                fontSize: 13,
+                                color: '#64748b',
+                                lineHeight: 1.7,
+                              }}
+                            >
+                              {article.excerpt}
+                            </p>
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                marginTop: 'auto',
+                                paddingTop: 8,
+                                borderTop: '1px solid #1e293b',
+                              }}
+                            >
+                              <div style={{ display: 'flex', gap: 12 }}>
+                                <span
+                                  style={{ fontSize: 11, color: '#475569' }}
+                                >
+                                  🗓 {article.date}
+                                </span>
+                                <span
+                                  style={{ fontSize: 11, color: '#475569' }}
+                                >
+                                  ⏱ {article.readTime}
+                                </span>
+                              </div>
+                              {article.url && (
+                                <span
+                                  style={{
+                                    fontSize: 12,
+                                    color: article.color,
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  Read →
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
         )}
 
         {/* ══════════════ ROJGAR YOJANA TAB ══════════════ */}
-        {activeTab === "rojgar" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+        {activeTab === 'rojgar' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
             {/* Search + filters */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <input
                 value={rojgarSearch}
                 onChange={(e) => setRojgarSearch(e.target.value)}
                 placeholder="Search schemes or benefits…"
                 style={{
-                  width: "100%",
+                  width: '100%',
                   maxWidth: 400,
-                  padding: "10px 16px",
-                  background: "#111827",
-                  border: "1px solid #1e293b",
+                  padding: '10px 16px',
+                  background: '#111827',
+                  border: '1px solid #1e293b',
                   borderRadius: 12,
-                  color: "#f1f5f9",
+                  color: '#f1f5f9',
                   fontSize: 14,
-                  outline: "none",
-                  boxSizing: "border-box",
+                  outline: 'none',
+                  boxSizing: 'border-box',
                 }}
               />
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {ROJGAR_TAGS.map((tag) => (
                   <CategoryPill
                     key={tag}
@@ -648,35 +901,35 @@ export default function Blogs() {
             {/* Summary strip */}
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
                 gap: 12,
               }}
             >
               {[
                 {
                   value: ROJGAR.length,
-                  label: "Total Schemes",
-                  color: "#818cf8",
+                  label: 'Total Schemes',
+                  color: '#818cf8',
                 },
                 {
-                  value: ROJGAR.filter((r) => r.status === "active").length,
-                  label: "Currently Active",
-                  color: "#34d399",
+                  value: ROJGAR.filter((r) => r.status === 'active').length,
+                  label: 'Currently Active',
+                  color: '#34d399',
                 },
                 {
                   value: new Set(ROJGAR.map((r) => r.tag)).size,
-                  label: "Categories",
-                  color: "#22d3ee",
+                  label: 'Categories',
+                  color: '#22d3ee',
                 },
               ].map((s) => (
                 <div
                   key={s.label}
                   style={{
-                    background: "#111827",
-                    border: "1px solid #1e293b",
+                    background: '#111827',
+                    border: '1px solid #1e293b',
                     borderRadius: 14,
-                    padding: "16px 18px",
+                    padding: '16px 18px',
                   }}
                 >
                   <div
@@ -684,7 +937,7 @@ export default function Blogs() {
                   >
                     {s.value}
                   </div>
-                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
+                  <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
                     {s.label}
                   </div>
                 </div>
@@ -694,43 +947,43 @@ export default function Blogs() {
             {filteredRojgar.length === 0 ? (
               <div
                 style={{
-                  textAlign: "center",
-                  padding: "64px 0",
-                  color: "#475569",
+                  textAlign: 'center',
+                  padding: '64px 0',
+                  color: '#475569',
                 }}
               >
                 <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
-                <p style={{ fontWeight: 600, color: "#64748b" }}>
+                <p style={{ fontWeight: 600, color: '#64748b' }}>
                   No schemes found
                 </p>
               </div>
             ) : (
               <div
-                style={{ display: "flex", flexDirection: "column", gap: 14 }}
+                style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
               >
                 {filteredRojgar.map((scheme) => (
                   <div
                     key={scheme.id}
                     style={{
-                      background: "#111827",
-                      border: "1px solid #1e293b",
+                      background: '#111827',
+                      border: '1px solid #1e293b',
                       borderRadius: 18,
-                      padding: "22px 24px",
-                      transition: "border-color 0.15s",
+                      padding: '22px 24px',
+                      transition: 'border-color 0.15s',
                     }}
                     onMouseEnter={(e) =>
-                      (e.currentTarget.style.borderColor = "#334155")
+                      (e.currentTarget.style.borderColor = '#334155')
                     }
                     onMouseLeave={(e) =>
-                      (e.currentTarget.style.borderColor = "#1e293b")
+                      (e.currentTarget.style.borderColor = '#1e293b')
                     }
                   >
                     <div
                       style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "space-between",
-                        flexWrap: "wrap",
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
                         gap: 12,
                       }}
                     >
@@ -739,17 +992,17 @@ export default function Blogs() {
                         style={{
                           flex: 1,
                           minWidth: 240,
-                          display: "flex",
-                          flexDirection: "column",
+                          display: 'flex',
+                          flexDirection: 'column',
                           gap: 10,
                         }}
                       >
                         <div
                           style={{
-                            display: "flex",
+                            display: 'flex',
                             gap: 8,
-                            alignItems: "center",
-                            flexWrap: "wrap",
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
                           }}
                         >
                           <NewsBadge label={scheme.tag} color={scheme.color} />
@@ -757,11 +1010,11 @@ export default function Blogs() {
                             style={{
                               fontSize: 10,
                               fontWeight: 700,
-                              padding: "2px 8px",
+                              padding: '2px 8px',
                               borderRadius: 20,
-                              background: "#052e16",
-                              color: "#4ade80",
-                              border: "1px solid #16a34a30",
+                              background: '#052e16',
+                              color: '#4ade80',
+                              border: '1px solid #16a34a30',
                             }}
                           >
                             ● Active
@@ -772,7 +1025,7 @@ export default function Blogs() {
                           style={{
                             fontSize: 16,
                             fontWeight: 700,
-                            color: "#f1f5f9",
+                            color: '#f1f5f9',
                             lineHeight: 1.3,
                           }}
                         >
@@ -781,39 +1034,39 @@ export default function Blogs() {
 
                         <div
                           style={{
-                            display: "flex",
-                            flexDirection: "column",
+                            display: 'flex',
+                            flexDirection: 'column',
                             gap: 6,
                           }}
                         >
                           {[
                             {
-                              icon: "🏛️",
-                              label: "Ministry",
+                              icon: '🏛️',
+                              label: 'Ministry',
                               value: scheme.ministry,
                             },
                             {
-                              icon: "👤",
-                              label: "Who can apply",
+                              icon: '👤',
+                              label: 'Who can apply',
                               value: scheme.beneficiary,
                             },
                             {
-                              icon: "💰",
-                              label: "Benefit",
+                              icon: '💰',
+                              label: 'Benefit',
                               value: scheme.benefit,
                             },
                             {
-                              icon: "📅",
-                              label: "Deadline",
+                              icon: '📅',
+                              label: 'Deadline',
                               value: scheme.deadline,
                             },
                           ].map((row) => (
                             <div
                               key={row.label}
                               style={{
-                                display: "flex",
+                                display: 'flex',
                                 gap: 8,
-                                alignItems: "flex-start",
+                                alignItems: 'flex-start',
                               }}
                             >
                               <span style={{ fontSize: 13, flexShrink: 0 }}>
@@ -822,7 +1075,7 @@ export default function Blogs() {
                               <span
                                 style={{
                                   fontSize: 12,
-                                  color: "#64748b",
+                                  color: '#64748b',
                                   flexShrink: 0,
                                   minWidth: 90,
                                 }}
@@ -832,7 +1085,7 @@ export default function Blogs() {
                               <span
                                 style={{
                                   fontSize: 12,
-                                  color: "#e2e8f0",
+                                  color: '#e2e8f0',
                                   fontWeight: 500,
                                 }}
                               >
@@ -846,10 +1099,10 @@ export default function Blogs() {
                       {/* Apply button */}
                       <div
                         style={{
-                          display: "flex",
-                          flexDirection: "column",
+                          display: 'flex',
+                          flexDirection: 'column',
                           gap: 8,
-                          alignItems: "flex-end",
+                          alignItems: 'flex-end',
                         }}
                       >
                         <a
@@ -857,22 +1110,22 @@ export default function Blogs() {
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
-                            padding: "10px 20px",
+                            padding: '10px 20px',
                             borderRadius: 12,
-                            border: "none",
+                            border: 'none',
                             background: `linear-gradient(135deg, ${scheme.color}, ${scheme.color}88)`,
-                            color: "#fff",
+                            color: '#fff',
                             fontSize: 13,
                             fontWeight: 700,
-                            cursor: "pointer",
-                            textDecoration: "none",
-                            display: "inline-block",
+                            cursor: 'pointer',
+                            textDecoration: 'none',
+                            display: 'inline-block',
                             boxShadow: `0 4px 14px ${scheme.color}30`,
                           }}
                         >
                           Apply Now ↗
                         </a>
-                        <span style={{ fontSize: 11, color: "#475569" }}>
+                        <span style={{ fontSize: 11, color: '#475569' }}>
                           Official portal
                         </span>
                       </div>
@@ -885,18 +1138,18 @@ export default function Blogs() {
             {/* Disclaimer */}
             <div
               style={{
-                background: "#1c1003",
-                border: "1px solid #78350f30",
+                background: '#1c1003',
+                border: '1px solid #78350f30',
                 borderRadius: 14,
-                padding: "14px 18px",
-                display: "flex",
+                padding: '14px 18px',
+                display: 'flex',
                 gap: 10,
-                alignItems: "flex-start",
+                alignItems: 'flex-start',
               }}
             >
               <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
-              <p style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7 }}>
-                <strong style={{ color: "#fbbf24" }}>Disclaimer:</strong> Scheme
+              <p style={{ fontSize: 12, color: '#92400e', lineHeight: 1.7 }}>
+                <strong style={{ color: '#fbbf24' }}>Disclaimer:</strong> Scheme
                 details, deadlines, and eligibility are sourced from official
                 government portals and are subject to change. Always verify on
                 the official website before applying. SkillSphere is not

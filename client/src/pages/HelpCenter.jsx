@@ -1,45 +1,41 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const faqs = [
   {
-    question: "How do I enroll in a course?",
-    answer:
-      "You can enroll in any course by opening the course page and clicking the Enroll button.",
+    questionKey: 'helpCenter.faqs.enroll.question',
+    answerKey: 'helpCenter.faqs.enroll.answer',
   },
 
   {
-    question: "How do I reset my password?",
-    answer:
-      "Go to the login page and click on Forgot Password to receive a reset email.",
+    questionKey: 'helpCenter.faqs.resetPassword.question',
+    answerKey: 'helpCenter.faqs.resetPassword.answer',
   },
 
   {
-    question: "Can I get certificates after completing courses?",
-    answer:
-      "Yes, certificates are available for eligible courses after successful completion.",
+    questionKey: 'helpCenter.faqs.certificates.question',
+    answerKey: 'helpCenter.faqs.certificates.answer',
   },
 
   {
-    question: "How does the AI Tutor work?",
-    answer:
-      "The AI Tutor helps students through AI chat, voice assistance, doubt solving, and quiz generation.",
+    questionKey: 'helpCenter.faqs.aiTutor.question',
+    answerKey: 'helpCenter.faqs.aiTutor.answer',
   },
 
   {
-    question: "How do instructor communities work?",
-    answer:
-      "Subscribed students can access private instructor communities for mentorship and discussions.",
+    questionKey: 'helpCenter.faqs.communities.question',
+    answerKey: 'helpCenter.faqs.communities.answer',
   },
 
   {
-    question: "Can businesses train employees on the platform?",
-    answer:
-      "Yes, the Business Plan allows organizations to manage employee training and analytics.",
+    questionKey: 'helpCenter.faqs.business.question',
+    answerKey: 'helpCenter.faqs.business.answer',
   },
 ];
 
 const HelpCenter = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(null);
 
   return (
@@ -49,16 +45,19 @@ const HelpCenter = () => {
       <section className="px-6 md:px-10 py-20">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto">
-            <p className="text-indigo-400 font-semibold mb-4">HELP CENTER</p>
+            <p className="text-indigo-400 font-semibold mb-4">
+              {t('helpCenter.tag')}
+            </p>
 
             <h1 className="text-5xl md:text-6xl font-bold leading-tight">
-              How Can We <span className="text-indigo-400">Help You?</span>
+              {t('helpCenter.headline')}{' '}
+              <span className="text-indigo-400">
+                {t('helpCenter.highlight')}
+              </span>
             </h1>
 
             <p className="text-slate-400 mt-6 text-lg leading-relaxed">
-              Find answers to common questions, learn how the platform works,
-              and get support for courses, subscriptions, AI tools, instructors,
-              and more.
+              {t('helpCenter.description')}
             </p>
           </div>
 
@@ -68,12 +67,12 @@ const HelpCenter = () => {
             <div className="bg-white/5 border border-white/10 rounded-3xl p-3 flex items-center">
               <input
                 type="text"
-                placeholder="Search help articles..."
+                placeholder={t('helpCenter.searchPlaceholder')}
                 className="w-full bg-transparent outline-none px-4 py-3 text-white placeholder:text-slate-500"
               />
 
               <button className="bg-gradient-to-r from-indigo-400 to-indigo-600 px-6 py-3 rounded-2xl text-black font-semibold">
-                Search
+                {t('helpCenter.searchButton')}
               </button>
             </div>
           </div>
@@ -84,33 +83,36 @@ const HelpCenter = () => {
             <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
               <div className="text-4xl">🎓</div>
 
-              <h3 className="text-2xl font-bold mt-5">Course Support</h3>
+              <h3 className="text-2xl font-bold mt-5">
+                {t('helpCenter.cards.courseSupport.title')}
+              </h3>
 
               <p className="text-slate-400 mt-4 leading-relaxed">
-                Get help with enrolling in courses, tracking progress,
-                certificates, and subscriptions.
+                {t('helpCenter.cards.courseSupport.desc')}
               </p>
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
               <div className="text-4xl">🤖</div>
 
-              <h3 className="text-2xl font-bold mt-5">AI Learning Help</h3>
+              <h3 className="text-2xl font-bold mt-5">
+                {t('helpCenter.cards.aiLearning.title')}
+              </h3>
 
               <p className="text-slate-400 mt-4 leading-relaxed">
-                Learn how to use AI tutor, AI quizzes, voice AI, and
-                personalized recommendations.
+                {t('helpCenter.cards.aiLearning.desc')}
               </p>
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
               <div className="text-4xl">👨‍🏫</div>
 
-              <h3 className="text-2xl font-bold mt-5">Instructor Support</h3>
+              <h3 className="text-2xl font-bold mt-5">
+                {t('helpCenter.cards.instructorSupport.title')}
+              </h3>
 
               <p className="text-slate-400 mt-4 leading-relaxed">
-                Find information about publishing courses, instructor
-                dashboards, and monetization.
+                {t('helpCenter.cards.instructorSupport.desc')}
               </p>
             </div>
           </div>
@@ -120,11 +122,11 @@ const HelpCenter = () => {
           <div className="mt-24">
             <div className="text-center">
               <p className="text-indigo-400 font-semibold">
-                FREQUENTLY ASKED QUESTIONS
+                {t('helpCenter.faq.tag')}
               </p>
 
               <h2 className="text-4xl md:text-5xl font-bold mt-4">
-                Common Questions
+                {t('helpCenter.faq.heading')}
               </h2>
             </div>
 
@@ -138,16 +140,18 @@ const HelpCenter = () => {
                     onClick={() => setOpen(open === index ? null : index)}
                     className="w-full flex items-center justify-between px-8 py-6 text-left"
                   >
-                    <h3 className="text-lg font-semibold">{faq.question}</h3>
+                    <h3 className="text-lg font-semibold">
+                      {t(faq.questionKey)}
+                    </h3>
 
                     <span className="text-2xl text-indigo-400">
-                      {open === index ? "−" : "+"}
+                      {open === index ? '−' : '+'}
                     </span>
                   </button>
 
                   {open === index && (
                     <div className="px-8 pb-6 text-slate-400 leading-relaxed">
-                      {faq.answer}
+                      {t(faq.answerKey)}
                     </div>
                   )}
                 </div>
@@ -158,16 +162,15 @@ const HelpCenter = () => {
           {/* Contact Support */}
 
           <div className="mt-24 bg-gradient-to-r from-indigo-500/20 to-cyan-500/20 border border-white/10 rounded-[40px] p-10 md:p-14 text-center">
-            <h2 className="text-4xl font-bold">Still Need Help?</h2>
+            <h2 className="text-4xl font-bold">{t('helpCenter.cta.title')}</h2>
 
             <p className="text-slate-300 mt-5 text-lg max-w-2xl mx-auto">
-              Our support team is available to help with technical issues,
-              subscriptions, business onboarding, and instructor support.
+              {t('helpCenter.cta.body')}
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-5 mt-10">
               <button className="bg-gradient-to-r from-indigo-400 to-indigo-600 px-8 py-4 rounded-2xl text-black font-semibold shadow-lg shadow-indigo-500/20">
-                <Link to="/contact">Contact Us</Link>
+                <Link to="/contact">{t('helpCenter.cta.contactButton')}</Link>
               </button>
             </div>
           </div>

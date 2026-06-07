@@ -1,27 +1,27 @@
-import { Link } from "react-router-dom";
-import InstructorDashboard from "../instructor/InstructorDashboard";
-
-const benefits = [
-  {
-    title: "AI Teaching Tools",
-    desc: "Use AI tools for quizzes, summaries, captions and student support.",
-    icon: "🤖",
-  },
-
-  {
-    title: "Live Classes",
-    desc: "Host live mentorship sessions, webinars and interactive workshops.",
-    icon: "🎥",
-  },
-
-  {
-    title: "Analytics Dashboard",
-    desc: "Track course sales, student engagement and performance analytics.",
-    icon: "📊",
-  },
-];
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Instructor = () => {
+  const { t } = useTranslation();
+
+  const benefits = [
+    {
+      title: t('instructor.benefit1.title'),
+      desc: t('instructor.benefit1.desc'),
+      icon: '🤖',
+    },
+    {
+      title: t('instructor.benefit2.title'),
+      desc: t('instructor.benefit2.desc'),
+      icon: '🎥',
+    },
+    {
+      title: t('instructor.benefit3.title'),
+      desc: t('instructor.benefit3.desc'),
+      icon: '📊',
+    },
+  ];
+
   return (
     <div className="bg-[#0B1120] text-white min-h-screen">
       {/* Hero Section */}
@@ -38,20 +38,18 @@ const Instructor = () => {
 
           <div>
             <p className="text-indigo-400 font-medium mb-5">
-              Teach & Inspire Millions
+              {t('instructor.tag')}
             </p>
 
             <h1 className="text-5xl md:text-7xl font-extrabold leading-tight">
-              Become An
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
-                Instructor
+              {t('instructor.headingLine1')}
+              <span className="block text-transparent bg-clip-text bg-linear-to-r from-indigo-400 to-cyan-400">
+                {t('instructor.headingGradient')}
               </span>
             </h1>
 
             <p className="text-slate-400 text-lg md:text-xl mt-8 leading-relaxed">
-              Share your expertise, build your community, host live sessions and
-              use AI tools to create engaging courses. Join us and inspire
-              millions of students worldwide.
+              {t('instructor.description')}
             </p>
 
             {/* Buttons */}
@@ -61,37 +59,15 @@ const Instructor = () => {
                 to="/become-instructor"
                 className="bg-indigo-600 hover:bg-indigo-700 transition duration-300 px-8 py-4 rounded-2xl text-white font-semibold shadow-xl shadow-indigo-500/20 inline-flex items-center justify-center"
               >
-                Start Teaching
+                {t('instructor.startTeaching')}
               </Link>
 
               <Link to="/instructor-details">
                 <button className="border cursor-pointer border-white/10 hover:border-indigo-400 hover:bg-indigo-500/10 transition duration-300 px-8 py-4 rounded-2xl text-white font-semibold">
-                  Learn More
+                  {t('instructor.learnMore')}
                 </button>
               </Link>
             </div>
-
-            {/* Stats */}
-
-            {/* <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mt-16">
-              <div>
-                <h2 className="text-4xl font-bold">50K+</h2>
-
-                <p className="text-slate-400 mt-2">Instructors</p>
-              </div>
-
-              <div>
-                <h2 className="text-4xl font-bold">$12M+</h2>
-
-                <p className="text-slate-400 mt-2">Revenue Paid</p>
-              </div>
-
-              <div>
-                <h2 className="text-4xl font-bold">1M+</h2>
-
-                <p className="text-slate-400 mt-2">Students</p>
-              </div>
-            </div> */}
           </div>
 
           {/* Right Dashboard */}
@@ -102,37 +78,19 @@ const Instructor = () => {
 
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-2xl font-bold">Instructor Dashboard</h2>
+                  <h2 className="text-2xl font-bold">
+                    {t('instructor.dashboardTitle')}
+                  </h2>
 
-                  <p className="text-slate-400 mt-1">Course Analytics</p>
+                  <p className="text-slate-400 mt-1">
+                    {t('instructor.dashboardSubtitle')}
+                  </p>
                 </div>
 
                 <div className="bg-green-500/20 text-green-400 px-4 py-2 rounded-xl text-sm">
-                  Active
+                  {t('instructor.statusActive')}
                 </div>
               </div>
-
-              {/* Revenue Card */}
-
-              {/* <div className="bg-[#111827] rounded-3xl p-6 border border-white/5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xl font-bold">Monthly Revenue</h3>
-
-                    <p className="text-slate-400 mt-2">
-                      AI Web Development Course
-                    </p>
-                  </div>
-
-                  <div className="text-indigo-400 font-bold text-lg">
-                    $8,420
-                  </div>
-                </div>
-
-                <div className="w-full bg-slate-700 h-3 rounded-full mt-6 overflow-hidden">
-                  <div className="bg-gradient-to-r from-indigo-500 to-cyan-500 h-3 w-[82%] rounded-full"></div>
-                </div>
-              </div> */}
 
               {/* Stats */}
 
@@ -140,23 +98,29 @@ const Instructor = () => {
                 <div className="bg-[#111827] p-6 rounded-3xl border border-white/5">
                   <h3 className="text-3xl font-bold text-indigo-400">12K+</h3>
 
-                  <p className="text-slate-400 mt-2">Students</p>
+                  <p className="text-slate-400 mt-2">
+                    {t('instructor.studentsTitle')}
+                  </p>
                 </div>
 
                 <div className="bg-[#111827] p-6 rounded-3xl border border-white/5">
                   <h3 className="text-3xl font-bold text-cyan-400">4.9</h3>
 
-                  <p className="text-slate-400 mt-2">Instructor Rating</p>
+                  <p className="text-slate-400 mt-2">
+                    {t('instructor.ratingTitle')}
+                  </p>
                 </div>
               </div>
 
               {/* AI Tools */}
 
-              <div className="mt-6 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-3xl p-6">
-                <h3 className="text-2xl font-bold">AI Teaching Assistant</h3>
+              <div className="mt-6 bg-linear-to-r from-indigo-500 to-cyan-500 rounded-3xl p-6">
+                <h3 className="text-2xl font-bold">
+                  {t('instructor.assistantTitle')}
+                </h3>
 
                 <p className="mt-2 text-white/80">
-                  AI-generated quizzes, subtitles and course summaries.
+                  {t('instructor.assistantDesc')}
                 </p>
               </div>
             </div>
@@ -170,10 +134,12 @@ const Instructor = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-indigo-400 font-medium mb-3">
-              Why Teach With Us?
+              {t('instructor.benefitsTag')}
             </p>
 
-            <h2 className="text-5xl font-bold">Instructor Benefits</h2>
+            <h2 className="text-5xl font-bold">
+              {t('instructor.benefitsHeading')}
+            </h2>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">

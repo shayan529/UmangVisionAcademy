@@ -1,46 +1,76 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import {
   fetchMyApplication,
   submitApplication,
-} from "../../redux/slices/applicationsSlice";
-import toast from "react-hot-toast";
+} from '../../redux/slices/applicationsSlice';
+import { uploadToImageKit } from '../../utils/imagekitUpload.js';
+import toast from 'react-hot-toast';
 
 const BecomeInstructorApplication = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error, myApplication } = useSelector(
-    (state) => state.applications,
+    (state) => state.applications
   );
   const { isAuthenticated } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
-    name: "",
-    expertise: "",
-    bio: "",
-    contentLink: "",
+    name: '',
+    expertise: '',
+    bio: '',
+    contentLink: '',
   });
   const [resumeFile, setResumeFile] = useState(null);
-  const [resumeError, setResumeError] = useState("");
+  const [resumeUrl, setResumeUrl] = useState('');
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const [resumeUploadProgress, setResumeUploadProgress] = useState(0);
+  const [resumeError, setResumeError] = useState('');
 
   const handleChange = (e) =>
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleResumeChange = (e) => {
+  const handleResumeChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const allowed = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+    const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
     if (!allowed.includes(file.type)) {
-      setResumeError("Only PDF, JPG, or PNG files are allowed.");
+      setResumeError(t('becomeInstructorApplication.onlyPdfJpgPng'));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setResumeError("File size must be under 5MB.");
+      setResumeError(t('becomeInstructorApplication.max5mb'));
       return;
     }
-    setResumeError("");
+    setResumeError('');
     setResumeFile(file);
+    setResumeUploading(true);
+    setResumeUploadProgress(0);
+
+    try {
+      const data = await uploadToImageKit({
+        file,
+        folder: '/instructor-resumes',
+        onUploadProgress: (event) =>
+          setResumeUploadProgress(
+            Math.round((event.loaded / event.total) * 100)
+          ),
+      });
+      setResumeUrl(data.url);
+    } catch (uploadError) {
+      setResumeError(
+        uploadError.response?.data?.message ||
+          uploadError.message ||
+          'Upload failed. Please try again.'
+      );
+      setResumeFile(null);
+      setResumeUrl('');
+    } finally {
+      setResumeUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -48,24 +78,30 @@ const BecomeInstructorApplication = () => {
 
     const { name, expertise, bio, contentLink } = formData;
     if (!name || !expertise || !bio || !contentLink) {
-      toast.error("All fields are required.");
+      toast.error(t('becomeInstructorApplication.allFieldsRequired'));
       return;
     }
 
     const payload = new FormData();
-    payload.append("name", name);
-    payload.append("expertise", expertise);
-    payload.append("bio", bio);
-    payload.append("contentLink", contentLink);
-    if (resumeFile) payload.append("resume", resumeFile);
+    payload.append('name', name);
+    payload.append('expertise', expertise);
+    payload.append('bio', bio);
+    payload.append('contentLink', contentLink);
+    if (resumeUrl) {
+      payload.append('resumeUrl', resumeUrl);
+    } else if (resumeFile) {
+      payload.append('resume', resumeFile);
+    }
 
     try {
       await dispatch(submitApplication(payload)).unwrap();
-      toast.success("Application submitted successfully!");
-      navigate("/instructor-application/status");
+      toast.success(t('becomeInstructorApplication.submitted'));
+      navigate('/instructor-application/status');
     } catch (err) {
       toast.error(
-        typeof err === "string" ? err : "Failed to submit application.",
+        typeof err === 'string'
+          ? err
+          : t('becomeInstructorApplication.failedSubmit')
       );
     }
   };
@@ -76,7 +112,7 @@ const BecomeInstructorApplication = () => {
 
   useEffect(() => {
     if (myApplication)
-      navigate("/instructor-application/status", { replace: true });
+      navigate('/instructor-application/status', { replace: true });
   }, [myApplication, navigate]);
 
   return (
@@ -99,21 +135,20 @@ const BecomeInstructorApplication = () => {
               d="M10 19l-7-7m0 0l7-7m-7 7h18"
             />
           </svg>
-          Back to overview
+          {t('becomeInstructorApplication.backToOverview')}
         </Link>
 
         <span className="inline-flex rounded-full bg-indigo-500/10 text-indigo-300 px-4 py-2 text-sm font-semibold tracking-wide mb-4">
-          Application Form
+          {t('becomeInstructorApplication.formBadge')}
         </span>
         <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
-          Become an
+          {t('becomeInstructorApplication.titleStart')}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 ml-2">
-            Instructor
+            {t('becomeInstructorApplication.titleHighlight')}
           </span>
         </h2>
         <p className="text-slate-400 text-lg leading-7 max-w-xl">
-          Tell us about your teaching experience, your expertise, and share a
-          sample content link so we can approve your profile quickly.
+          {t('becomeInstructorApplication.description')}
         </p>
       </div>
 
@@ -122,65 +157,67 @@ const BecomeInstructorApplication = () => {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <label className="block">
               <span className="text-sm font-semibold text-slate-300">
-                Your full name
+                {t('becomeInstructorApplication.fullNameLabel')}
               </span>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="John Doe"
+                placeholder={t('becomeInstructorApplication.namePlaceholder')}
                 className="mt-3 w-full rounded-3xl border border-white/10 bg-slate-950/80 px-4 py-4 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition duration-200"
               />
             </label>
 
             <label className="block">
               <span className="text-sm font-semibold text-slate-300">
-                Area of expertise
+                {t('becomeInstructorApplication.expertiseLabel')}
               </span>
               <input
                 type="text"
                 name="expertise"
                 value={formData.expertise}
                 onChange={handleChange}
-                placeholder="AI / Web Development / Design"
+                placeholder={t(
+                  'becomeInstructorApplication.expertisePlaceholder'
+                )}
                 className="mt-3 w-full rounded-3xl border border-white/10 bg-slate-950/80 px-4 py-4 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition duration-200"
               />
             </label>
 
             <label className="block">
               <span className="text-sm font-semibold text-slate-300">
-                Brief bio
+                {t('becomeInstructorApplication.bioLabel')}
               </span>
               <textarea
                 rows="4"
                 name="bio"
                 value={formData.bio}
                 onChange={handleChange}
-                placeholder="Share your teaching experience and what makes your classes unique."
+                placeholder={t('becomeInstructorApplication.bioPlaceholder')}
                 className="mt-3 w-full rounded-3xl border border-white/10 bg-slate-950/80 px-4 py-4 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition duration-200"
               />
             </label>
 
             <label className="block">
               <span className="text-sm font-semibold text-slate-300">
-                Sample content link (YouTube / Google Drive)
+                {t('becomeInstructorApplication.contentLinkLabel')}
               </span>
               <input
                 type="url"
                 name="contentLink"
                 value={formData.contentLink}
                 onChange={handleChange}
-                placeholder="https://"
+                placeholder={t('becomeInstructorApplication.urlPlaceholder')}
                 className="mt-3 w-full rounded-3xl border border-white/10 bg-slate-950/80 px-4 py-4 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition duration-200"
               />
             </label>
 
             <label className="block">
               <span className="text-sm font-semibold text-slate-300">
-                Resume{" "}
+                {t('becomeInstructorApplication.resumeLabel')}
                 <span className="text-slate-500 font-normal">
-                  (PDF, JPG, PNG — max 5MB)
+                  {` ${t('becomeInstructorApplication.resumeHint')}`}
                 </span>
               </span>
               <div className="mt-3">
@@ -204,7 +241,7 @@ const BecomeInstructorApplication = () => {
                     </span>
                   ) : (
                     <span className="text-sm text-slate-500">
-                      Click to upload your resume
+                      {t('becomeInstructorApplication.uploadPrompt')}
                     </span>
                   )}
                   <input
@@ -214,6 +251,36 @@ const BecomeInstructorApplication = () => {
                     className="hidden"
                   />
                 </label>
+                {resumeUploading && (
+                  <div className="mt-3 rounded-2xl bg-slate-950/90 px-4 py-3">
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span>Uploading resume</span>
+                      <span>{resumeUploadProgress}%</span>
+                    </div>
+                    <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-900">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400"
+                        style={{ width: `${resumeUploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {resumeUrl && !resumeUploading && (
+                  <div className="mt-3 flex items-center justify-between rounded-2xl bg-slate-950/90 px-4 py-3 text-sm text-slate-200">
+                    <span>Resume uploaded</span>
+                    <button
+                      type="button"
+                      className="text-indigo-300 hover:text-indigo-200"
+                      onClick={() => {
+                        setResumeFile(null);
+                        setResumeUrl('');
+                        setResumeUploadProgress(0);
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
                 {resumeError && (
                   <p className="mt-2 text-xs text-red-400">{resumeError}</p>
                 )}
@@ -223,10 +290,12 @@ const BecomeInstructorApplication = () => {
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || resumeUploading}
                 className="w-full rounded-3xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-6 py-4 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-indigo-500/20 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Submitting..." : "Submit Application"}
+                {loading || resumeUploading
+                  ? t('becomeInstructorApplication.submitting')
+                  : t('becomeInstructorApplication.submitButton')}
               </button>
             </div>
           </form>

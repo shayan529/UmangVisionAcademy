@@ -1,10 +1,10 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { logoutUser } from "../redux/slices/authSlice";
-import { ChevronDown } from "lucide-react";
-import { useRef } from "react";
-import { useTranslation } from "react-i18next";
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { logoutUser } from '../redux/slices/authSlice';
+import { ChevronDown } from 'lucide-react';
+import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const Navbar = () => {
   const { user, loading } = useSelector((state) => state.auth);
@@ -14,46 +14,53 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [boardOpen, setBoardOpen] = useState(false);
 
-  const isInstructorDashboard = pathname.startsWith("/instructor-dashboard");
+  const isInstructorDashboard = pathname.startsWith('/instructor-dashboard');
 
   const role = user?.roles;
-  const hasInstructorRole = role?.includes("instructor");
-  const hasStudentRole = role?.includes("student");
-  const hasAdminRole = role?.includes("admin");
+  const hasInstructorRole = role?.includes('instructor');
+  const hasStudentRole = role?.includes('student');
+  const hasAdminRole = role?.includes('admin');
   const isMultiRole = hasInstructorRole && hasStudentRole && !hasAdminRole;
 
   const dashboardPath = hasAdminRole
-    ? "/admin-dashboard"
+    ? '/admin-dashboard'
     : hasInstructorRole
-      ? "/instructor-dashboard"
-      : "/student-dashboard";
+      ? '/instructor-dashboard'
+      : '/student-dashboard';
 
   const dropdownRef = useRef(null);
+  const languageRef = useRef(null);
+  const { t, i18n } = useTranslation();
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setBoardOpen(false);
       }
+      if (languageRef.current && !languageRef.current.contains(event.target)) {
+        setLangDropdownOpen(false);
+      }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
   const closeMobile = () => setMobileMenuOpen(false);
-
-  const LanguageToggle = () => {
-    const { i18n } = useTranslation();
-    const isHindi = i18n.language === "hi";
+  const currentLanguage = i18n.language?.startsWith('hi') ? 'hi' : 'en';
+  const isHindi = currentLanguage === 'hi';
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng);
+    setLangDropdownOpen(false);
   };
 
   return (
     <nav className="w-full sticky top-0 z-50 bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10">
-      <div className="w-full px-4 md:px-12 py-4 md:py-5 flex items-center justify-between">
+      <div className="w-full px-4 md:px-6 py-4 md:py-5 flex items-center justify-between">
         {/* ── Logo ── */}
         <Link to="/" className="flex items-center gap-3 shrink-0">
           <div className="w-9 h-9 md:w-11 md:h-11 rounded-2xl bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-black font-bold text-lg md:text-xl shadow-lg shadow-indigo-500/30">
@@ -72,7 +79,7 @@ const Navbar = () => {
             to="/courses"
             className="hover:text-indigo-300 transition duration-300"
           >
-            Courses
+            {t('nav.courses')}
           </Link>
           {/* <Link
             to="/community"
@@ -84,45 +91,30 @@ const Navbar = () => {
             to="/plans"
             className="hover:text-indigo-300 transition duration-300"
           >
-            Plans
+            {t('nav.plans')}
           </Link>
-          <button
-            onClick={() => i18n.changeLanguage(isHindi ? "en" : "hi")}
-            style={{
-              padding: "6px 14px",
-              borderRadius: 20,
-              border: "1px solid #334155",
-              background: "transparent",
-              color: "#94a3b8",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            {isHindi ? "EN" : "हिंदी"}
-          </button>
           <Link
             to="/question-bank"
             className="hover:text-indigo-300 transition duration-300"
           >
-            Question Bank
+            {t('nav.questionBank')}
           </Link>
           <Link
             to="/blogs"
             className="hover:text-indigo-300 transition duration-300"
           >
-            Blogs
+            {t('nav.blogs')}
           </Link>
           <div ref={dropdownRef} className="relative">
             <button
               onClick={() => setBoardOpen((prev) => !prev)}
               className="flex items-center gap-1 hover:text-indigo-300 transition"
             >
-              Board
+              {t('nav.board')}
               <ChevronDown
                 size={16}
                 className={`transition-transform ${
-                  boardOpen ? "rotate-180" : ""
+                  boardOpen ? 'rotate-180' : ''
                 }`}
               />
             </button>
@@ -160,9 +152,42 @@ const Navbar = () => {
               to="/become-instructor"
               className="hover:text-indigo-300 transition duration-300"
             >
-              Become Instructor
+              {t('nav.becomeInstructor')}
             </Link>
           )}
+          <div ref={languageRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setLangDropdownOpen((prev) => !prev)}
+              className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800 transition"
+            >
+              {isHindi ? 'हिन्दी' : 'EN'}
+              <ChevronDown
+                size={16}
+                className={`transition-transform ${
+                  langDropdownOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            {langDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-36 rounded-2xl border border-slate-700 bg-slate-900 shadow-xl">
+                <button
+                  type="button"
+                  onClick={() => changeLanguage('en')}
+                  className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800"
+                >
+                  English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => changeLanguage('hi')}
+                  className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800"
+                >
+                  हिंदी
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Desktop right section ── */}
@@ -171,7 +196,7 @@ const Navbar = () => {
             <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
               <div className="w-4 h-4 rounded-full border-2 border-indigo-500/30 border-t-indigo-500 animate-spin" />
               <span className="text-xs text-slate-400 font-medium">
-                Verifying session...
+                {t('nav.verifyingSession')}
               </span>
             </div>
           ) : !user ? (
@@ -180,50 +205,52 @@ const Navbar = () => {
                 to="/login"
                 className="text-white hover:text-indigo-300 transition"
               >
-                Login
+                {t('nav.login')}
               </Link>
               <Link
                 to="/become-instructor"
                 className="bg-gradient-to-r from-indigo-400 to-indigo-500 hover:scale-105 transition duration-300 text-black font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20"
               >
-                Get Started
+                {t('nav.getStarted')}
               </Link>
             </>
           ) : (
             <>
               <div className="text-right">
-                <p className="text-white text-sm font-semibold">Welcome</p>
+                <p className="text-white text-sm font-semibold">
+                  {t('nav.welcome')}
+                </p>
                 <p className="text-slate-400 text-xs">{user?.name}</p>
               </div>
               {isMultiRole ? (
                 <Link
                   to={
                     isInstructorDashboard
-                      ? "/student-dashboard"
-                      : "/instructor-dashboard"
+                      ? '/student-dashboard'
+                      : '/instructor-dashboard'
                   }
                   className="whitespace-nowrap bg-gradient-to-r from-indigo-400 to-indigo-500 hover:scale-105 transition duration-300 text-black font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20"
                 >
                   {isInstructorDashboard
-                    ? "Go to Student Dashboard"
-                    : "Go to Instructor Dashboard"}
+                    ? t('nav.goToStudentDashboard')
+                    : t('nav.goToInstructorDashboard')}
                 </Link>
               ) : (
                 <Link
                   to={dashboardPath}
                   className="whitespace-nowrap bg-gradient-to-r from-indigo-400 to-indigo-500 hover:scale-105 transition duration-300 text-black font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20"
                 >
-                  Dashboard
+                  {t('nav.dashboard')}
                 </Link>
               )}
               <button
                 onClick={() => {
                   dispatch(logoutUser());
-                  navigate("/");
+                  navigate('/');
                 }}
                 className="whitespace-nowrap bg-gradient-to-r from-red-500 to-rose-500 hover:scale-105 transition duration-300 text-black font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-rose-500/20"
               >
-                Logout
+                {t('nav.logout')}
               </button>
             </>
           )}
@@ -235,25 +262,25 @@ const Navbar = () => {
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           className="md:hidden ml-3 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white hover:bg-white/5 transition text-lg"
         >
-          {mobileMenuOpen ? "✕" : "☰"}
+          {mobileMenuOpen ? '✕' : '☰'}
         </button>
       </div>
 
       {/* ── Mobile menu ── */}
       <div
-        className={`md:hidden border-t border-white/10 overflow-hidden transition-all duration-300 ${mobileMenuOpen ? "max-h-screen" : "max-h-0"}`}
+        className={`md:hidden border-t border-white/10 overflow-hidden transition-all duration-300 ${mobileMenuOpen ? 'max-h-screen' : 'max-h-0'}`}
       >
         <div className="px-4 pt-3 pb-4 space-y-1">
           {/* Nav links — compact text rows */}
           {[
-            { to: "/courses", label: "Courses" },
+            { to: '/courses', label: t('nav.courses') },
             // { to: "/community", label: "Community" },
-            { to: "/plans", label: "Plans" },
+            { to: '/plans', label: t('nav.plans') },
             ...(!hasInstructorRole && !hasAdminRole
-              ? [{ to: "/become-instructor", label: "Become Instructor" }]
+              ? [{ to: '/become-instructor', label: t('nav.becomeInstructor') }]
               : []),
-            { to: "/question-bank", label: "Question Bank" },
-            { to: "/blogs", label: "Blogs" },
+            { to: '/question-bank', label: t('nav.questionBank') },
+            { to: '/blogs', label: t('nav.blogs') },
           ].map(({ to, label }) => (
             <Link
               key={to}
@@ -265,6 +292,22 @@ const Navbar = () => {
             </Link>
           ))}
 
+          {/* Language selector */}
+          <div className="px-3 py-2">
+            <label htmlFor="mobile-language" className="sr-only">
+              {t('nav.language')}
+            </label>
+            <select
+              id="mobile-language"
+              value={currentLanguage}
+              onChange={(event) => changeLanguage(event.target.value)}
+              className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            >
+              <option value="en">English</option>
+              <option value="hi">हिंदी</option>
+            </select>
+          </div>
+
           {/* Divider */}
           <div className="border-t border-white/10 my-2" />
 
@@ -272,7 +315,7 @@ const Navbar = () => {
           {loading ? (
             <div className="flex items-center gap-2 px-3 py-2 text-slate-400 text-sm">
               <div className="w-3.5 h-3.5 rounded-full border-2 border-indigo-500/30 border-t-indigo-500 animate-spin" />
-              Verifying session...
+              {t('nav.verifyingSession')}
             </div>
           ) : !user ? (
             <div className="flex gap-2 pt-1">
@@ -281,14 +324,14 @@ const Navbar = () => {
                 onClick={closeMobile}
                 className="flex-1 text-center text-sm font-semibold py-2 px-3 rounded-lg border border-indigo-400/40 text-indigo-300 hover:bg-indigo-400/10 transition"
               >
-                Login
+                {t('nav.login')}
               </Link>
               <Link
                 to="/become-instructor"
                 onClick={closeMobile}
                 className="flex-1 text-center text-sm font-semibold py-2 px-3 rounded-lg bg-gradient-to-r from-indigo-400 to-indigo-500 text-black shadow-md transition"
               >
-                Get Started
+                {t('nav.getStarted')}
               </Link>
             </div>
           ) : (
@@ -314,15 +357,15 @@ const Navbar = () => {
                   <Link
                     to={
                       isInstructorDashboard
-                        ? "/student-dashboard"
-                        : "/instructor-dashboard"
+                        ? '/student-dashboard'
+                        : '/instructor-dashboard'
                     }
                     onClick={closeMobile}
                     className="flex-1 text-center text-xs font-semibold py-2 px-2 rounded-lg bg-gradient-to-r from-indigo-400 to-indigo-500 text-black shadow-md transition"
                   >
                     {isInstructorDashboard
-                      ? "Go to Student Dashboard"
-                      : "Go to Instructor Dashboard"}
+                      ? t('nav.goToStudentDashboard')
+                      : t('nav.goToInstructorDashboard')}
                   </Link>
                 ) : (
                   <Link
@@ -330,18 +373,18 @@ const Navbar = () => {
                     onClick={closeMobile}
                     className="flex-1 text-center text-xs font-semibold py-2 px-2 rounded-lg bg-gradient-to-r from-indigo-400 to-indigo-500 text-black shadow-md transition"
                   >
-                    Dashboard
+                    {t('nav.dashboard')}
                   </Link>
                 )}
                 <button
                   onClick={() => {
                     closeMobile();
                     dispatch(logoutUser());
-                    navigate("/");
+                    navigate('/');
                   }}
                   className="flex-1 text-xs font-semibold py-2 px-2 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-black shadow-md transition"
                 >
-                  Logout
+                  {t('nav.logout')}
                 </button>
               </div>
             </>

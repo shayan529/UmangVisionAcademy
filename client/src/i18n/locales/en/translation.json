@@ -4,7 +4,17 @@
     "plans": "Plans",
     "blogs": "Blogs",
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "questionBank": "Question Bank",
+    "board": "Board",
+    "becomeInstructor": "Become Instructor",
+    "dashboard": "Dashboard",
+    "goToStudentDashboard": "Go to Student Dashboard",
+    "goToInstructorDashboard": "Go to Instructor Dashboard",
+    "getStarted": "Get Started",
+    "welcome": "Welcome",
+    "verifyingSession": "Verifying session...",
+    "language": "Language"
   },
   "home": {
     "hero_title": "Discover. Prepare. Succeed.",
@@ -13,10 +23,20 @@
   },
   "courses": {
     "title": "Courses",
+    "headerTag": "Explore Learning By Class",
     "select_class": "Select Class",
     "select_subject": "Select Subject",
     "select_board": "Select Board",
+    "availableCourses": "{{count}} course available",
+    "availableCourses_plural": "{{count}} courses available",
+    "all": "All",
+    "allSubjects": "All Subjects",
+    "allBoards": "All Boards",
+    "retry": "Retry →",
     "no_courses": "No Courses Found",
+    "noPublished": "No published courses yet. Check back soon!",
+    "tryDifferent": "Try selecting a different class, subject, or board.",
+    "clearFilters": "Clear filters",
     "free": "Free"
   },
   "demo": {
@@ -39,6 +59,614 @@
     "email": "Email",
     "password": "Password",
     "name": "Full Name",
-    "phone": "Phone Number"
+    "phone": "Phone Number",
+    "welcome": "Welcome!",
+    "passwordsMismatch": "Passwords do not match.",
+    "agreeTerms": "Please agree to the Terms & Conditions.",
+    "accountCreated": "Account created! Welcome aboard 🎉",
+    "loginToContinue": "Log in to continue"
+  },
+  "hero": {
+    "tag": "AI Powered Online Learning",
+    "headingLine1": "Empowering Students",
+    "headingLine2": "From Class 1 to 12",
+    "text": "Welcome to Umang Vision Academy, your complete AI-powered learning platform designed for students from Classes 1 to 12. Learn with expert instructors, interactive courses, AI tutors, live classes, quizzes, assignments, and personalized learning paths that help every student achieve academic excellence.",
+    "startLearning": "Start Learning",
+    "exploreCourses": "Explore Courses",
+    "studentsWorldwide": "Students Worldwide",
+    "onlineCourses": "Online Courses",
+    "expertInstructors": "Expert Instructors"
+  },
+  "plans": {
+    "flexiblePricing": "Flexible Pricing",
+    "heading": "Subscription Plans",
+    "subtitle": "Choose the perfect plan for learning and team training.",
+    "mostPopular": "Most Popular",
+    "loginToContinue": "Log in to continue",
+    "base": {
+      "title": "Base Plan",
+      "price": "₹499",
+      "period": "month",
+      "desc": "Everything you need to start learning — structured courses, AI tools, and progress tracking.",
+      "features": [
+        "Classes 1–12 Courses",
+        "Recorded Classes & Resources",
+        "AI Tutor Assistance",
+        "Practice Quizzes & Tests",
+        "Assignment Grading",
+        "Student Progress Tracking"
+      ],
+      "button": "Get Started"
+    },
+    "premium": {
+      "title": "Premium",
+      "price": "₹999",
+      "period": "month",
+      "desc": "Unlimited access to courses, quizzes, assignments and AI-powered learning.",
+      "features": [
+        "Classes 1–12 Courses",
+        "AI Tutor Assistance",
+        "Recorded Classes & Resources",
+        "Practice Quizzes & Tests",
+        "Personalized Learning Paths",
+        "Live Interactive Classes"
+      ],
+      "button": "Start Learning"
+    }
+  },
+  "courseCard": {
+    "viewDemo": "View Demo",
+    "enroll": "Enroll"
+  },
+  "exploreCourses": {
+    "title": "Explore Courses",
+    "subtitle": "Browse {{count}} expert-led courses",
+    "searchPlaceholder": "Search courses or instructors...",
+    "enrolled": "✓ Enrolled",
+    "enrollNow": "Enroll Now",
+    "results": "results",
+    "noResults": "No courses found. Try a different search or filter."
+  },
+  "questionBank": {
+    "title": "Previous Year Question Bank",
+    "description": "Access previous 5 years question papers by class and subject.",
+    "subjectLabel": "Subject",
+    "searchPlaceholder": "Search subject...",
+    "boardLabel": "Board",
+    "classLabel": "Class",
+    "boardOptions": {
+      "all": "All",
+      "mpBoard": "MP Board",
+      "cbse": "CBSE",
+      "icse": "ICSE"
+    },
+    "classOptions": {
+      "all": "All",
+      "class9": "Class 9",
+      "class10": "Class 10",
+      "class11": "Class 11",
+      "class12": "Class 12"
+    },
+    "view": "View",
+    "questionPaper": "Question Paper",
+    "noResults": "No papers found for the selected filters."
+  },
+  "community": {
+    "tag": "Interactive Learning Experience",
+    "heading": "Instructor Communities",
+    "description": "Join premium instructor communities with live discussions, mentorship, study groups, AI assistance and collaborative learning.",
+    "leftItem1": "Talk one-to-one with instructors",
+    "leftItem2": "Join live doubt-solving sessions",
+    "leftItem3": "Access exclusive study materials",
+    "leftItem4": "Collaborate with fellow learners",
+    "cardTitle": "Instructor Community",
+    "cardSubtitle": "Premium Access Only",
+    "premiumBadge": "Premium",
+    "communityName": "React Developer Community",
+    "communitySubtitle": "Live mentorship & coding sessions",
+    "membersCount": "8.5k+",
+    "liveSessionsTitle": "120+",
+    "liveSessionsDesc": "Live Sessions",
+    "activeMembersTitle": "45k+",
+    "activeMembersDesc": "Active Members",
+    "aiAssistantTitle": "AI Community Assistant",
+    "aiAssistantDesc": "AI-powered moderation, recommendations and instant help.",
+    "featuresHeading": "Community Features",
+    "feature1": {
+      "title": "Live Q&A Sessions",
+      "desc": "Join live discussions with instructors and get your doubts solved instantly."
+    },
+    "feature2": {
+      "title": "AI Learning Assistant",
+      "desc": "Use AI-powered chat support for instant explanations and guidance."
+    },
+    "feature3": {
+      "title": "Private Communities",
+      "desc": "Exclusive premium instructor communities available for subscribers only."
+    }
+  },
+  "aiSection": {
+    "tag": "Future Of Education",
+    "heading": "AI Powered Learning",
+    "description": "Experience modern education with AI tutors, personalized learning, voice assistants, smart quizzes and advanced learning analytics designed to improve student performance.",
+    "panelTitle": "AI Learning Assistant",
+    "panelSubtitle": "Smart AI Powered Education",
+    "statusOnline": "Online",
+    "tutorCardTitle": "AI Tutor Session",
+    "tutorCardDesc": "Personalized coding assistance",
+    "tutorProgress": "92%",
+    "supportStatTitle": "AI Support",
+    "sessionsStatTitle": "AI Sessions",
+    "recommendationsTitle": "Smart AI Recommendations",
+    "recommendationsDesc": "AI suggests courses, quizzes and personalized learning paths.",
+    "featureHeading": "AI Features",
+    "feature1": {
+      "title": "AI Tutor",
+      "desc": "Ask questions instantly and receive step-by-step explanations powered by AI."
+    },
+    "feature2": {
+      "title": "AI Quiz Generator",
+      "desc": "Generate smart quizzes, mock tests and practice questions automatically."
+    },
+    "feature3": {
+      "title": "Voice AI Assistant",
+      "desc": "Learn using voice conversations and AI-powered speaking assistance."
+    },
+    "feature4": {
+      "title": "Personalized Learning",
+      "desc": "Get AI-powered course recommendations based on your learning progress."
+    },
+    "feature5": {
+      "title": "AI Notes & Summaries",
+      "desc": "Automatically generate notes, summaries and key learning points."
+    },
+    "feature6": {
+      "title": "Progress Analytics",
+      "desc": "Track learning performance, achievements and skill growth with AI insights."
+    }
+  },
+  "instructor": {
+    "tag": "Teach & Inspire Millions",
+    "headingLine1": "Become An",
+    "headingGradient": "Instructor",
+    "description": "Share your expertise, build your community, host live sessions and use AI tools to create engaging courses. Join us and inspire millions of students worldwide.",
+    "startTeaching": "Start Teaching",
+    "learnMore": "Learn More",
+    "dashboardTitle": "Instructor Dashboard",
+    "dashboardSubtitle": "Course Analytics",
+    "statusActive": "Active",
+    "studentsTitle": "Students",
+    "ratingTitle": "Instructor Rating",
+    "assistantTitle": "AI Teaching Assistant",
+    "assistantDesc": "AI-generated quizzes, subtitles and course summaries.",
+    "benefitsTag": "Why Teach With Us?",
+    "benefitsHeading": "Instructor Benefits",
+    "benefit1": {
+      "title": "AI Teaching Tools",
+      "desc": "Use AI tools for quizzes, summaries, captions and student support."
+    },
+    "benefit2": {
+      "title": "Live Classes",
+      "desc": "Host live mentorship sessions, webinars and interactive workshops."
+    },
+    "benefit3": {
+      "title": "Analytics Dashboard",
+      "desc": "Track course sales, student engagement and performance analytics."
+    }
+  },
+  "becomeInstructor": {
+    "tag": "Teach on Umang Vision Academy",
+    "headlinePart1": "Share Your",
+    "headlinePart2": "Knowledge.",
+    "subtitle": "Join 300+ instructors building courses that reach thousands of learners. Submit your application, get verified fast, and start teaching with AI-supported tools.",
+    "applyNow": "Apply now",
+    "startJourney": "Start your instructor journey",
+    "cardBody": "Fill in your expertise and sample content to get started. Our team will reach out within 24 hours with next steps.",
+    "buttonBecome": "Become an Instructor",
+    "buttonStatus": "View Application Status →",
+    "buttonChecking": "Checking...",
+    "howItWorks": "How it works",
+    "howItWorksHeading": "A simple process to launch your first course",
+    "howItWorksBody": "Apply with your expertise, get verified quickly, and publish your first course to start earning from day one.",
+    "steps": {
+      "apply": {
+        "title": "Apply",
+        "description": "Submit your bio, expertise and sample content so we can learn about your teaching style."
+      },
+      "upload": {
+        "title": "Start Uploading",
+        "description": "Start creating your first course and content, and get feedback from students."
+      },
+      "teach": {
+        "title": "Start Teaching",
+        "description": "Launch your first course, reach students, and start your journey as an instructor."
+      }
+    },
+    "readyToJoin": "Ready to join?",
+    "applyToTeach": "Apply to teach",
+    "readyBody": "Are you ready to share your expertise and shape the future of learning? Submit your application and become part of our world-class coaching community."
+  },
+  "becomeInstructorApplication": {
+    "backToOverview": "Back to overview",
+    "formBadge": "Application Form",
+    "titleStart": "Become an",
+    "titleHighlight": "Instructor",
+    "description": "Tell us about your teaching experience, your expertise, and share a sample content link so we can approve your profile quickly.",
+    "fullNameLabel": "Your full name",
+    "namePlaceholder": "John Doe",
+    "expertiseLabel": "Area of expertise",
+    "expertisePlaceholder": "AI / Web Development / Design",
+    "bioLabel": "Brief bio",
+    "bioPlaceholder": "Share your teaching experience and what makes your classes unique.",
+    "contentLinkLabel": "Sample content link (YouTube / Google Drive)",
+    "urlPlaceholder": "https://",
+    "resumeLabel": "Resume",
+    "resumeHint": "(PDF, JPG, PNG — max 5MB)",
+    "uploadPrompt": "Click to upload your resume",
+    "onlyPdfJpgPng": "Only PDF, JPG, or PNG files are allowed.",
+    "max5mb": "File size must be under 5MB.",
+    "allFieldsRequired": "All fields are required.",
+    "submitted": "Application submitted successfully!",
+    "failedSubmit": "Failed to submit application.",
+    "submitting": "Submitting...",
+    "submitButton": "Submit Application"
+  },
+  "termsOfService": {
+    "title": "Terms of Service",
+    "sections": {
+      "acceptance": {
+        "title": "1. Acceptance of Terms",
+        "body": "By accessing or using Umang Vision Academy, you agree to comply with and be bound by these Terms of Service. If you do not agree, please discontinue use of the platform."
+      },
+      "accounts": {
+        "title": "2. User Accounts",
+        "body": "Users are responsible for maintaining the confidentiality of their account credentials. Any activity performed under your account is your responsibility."
+      },
+      "courseAccess": {
+        "title": "3. Course Access",
+        "body": "Purchased or enrolled courses are intended solely for personal, non-commercial use. Sharing account credentials or course content is prohibited."
+      },
+      "instructorResponsibilities": {
+        "title": "4. Instructor Responsibilities",
+        "body": "Instructors must provide accurate information during the application process and ensure that uploaded content does not violate intellectual property rights."
+      },
+      "payments": {
+        "title": "5. Payments & Refunds",
+        "body": "Payments for courses and subscriptions are processed securely. Refund eligibility is subject to the platform's refund policy."
+      },
+      "prohibitedConduct": {
+        "title": "6. Prohibited Conduct",
+        "item1": "Sharing copyrighted content without permission.",
+        "item2": "Attempting to gain unauthorized access to the platform.",
+        "item3": "Harassing, threatening, or abusing other users.",
+        "item4": "Uploading malicious software or harmful content."
+      },
+      "accountTermination": {
+        "title": "7. Account Termination",
+        "body": "Umang Vision Academy reserves the right to suspend or terminate accounts that violate these Terms of Service."
+      },
+      "changes": {
+        "title": "8. Changes to Terms",
+        "body": "We may update these Terms periodically. Continued use of the platform constitutes acceptance of any revisions."
+      },
+      "contact": {
+        "title": "9. Contact Information",
+        "body": "For questions regarding these Terms, contact us at support@umangvisionacademy.com."
+      }
+    }
+  },
+  "privacyPolicy": {
+    "title": "Privacy Policy",
+    "sections": {
+      "information": {
+        "title": "1. Information We Collect",
+        "body": "We collect information you provide directly, including your name, email address, account details, and course activity."
+      },
+      "useInformation": {
+        "title": "2. How We Use Information",
+        "item1": "Provide and improve our services.",
+        "item2": "Personalize learning experiences.",
+        "item3": "Process payments and transactions.",
+        "item4": "Communicate important updates.",
+        "item5": "Maintain platform security."
+      },
+      "dataProtection": {
+        "title": "3. Data Protection",
+        "body": "We implement industry-standard security measures to protect personal information from unauthorized access or disclosure."
+      },
+      "cookies": {
+        "title": "4. Cookies",
+        "body": "Umang Vision Academy may use cookies and similar technologies to enhance user experience, analyze traffic, and improve functionality."
+      },
+      "thirdParty": {
+        "title": "5. Third-Party Services",
+        "body": "We may use trusted third-party providers for authentication, analytics, hosting, and payment processing."
+      },
+      "userRights": {
+        "title": "6. User Rights",
+        "body": "Users may request access, correction, or deletion of their personal information, subject to applicable laws."
+      },
+      "childrensPrivacy": {
+        "title": "7. Children's Privacy",
+        "body": "Umang Vision Academy is not intended for children under 13 years of age. We do not knowingly collect personal information from children."
+      },
+      "changes": {
+        "title": "8. Changes to Privacy Policy",
+        "body": "We may update this Privacy Policy periodically. Changes will be posted on this page."
+      },
+      "contact": {
+        "title": "9. Contact Us",
+        "body": "For privacy-related questions, contact us at privacy@umangvisionacademy.com."
+      }
+    }
+  },
+  "aboutUs": {
+    "hero": {
+      "tag": "Our Story",
+      "headingPrefix": "Built by educators,",
+      "highlight": "for every learner.",
+      "description": "SkillSphere started in a small room in Jabalpur with one goal: give every Indian student — regardless of their city, school, or income — access to world-class education. That mission hasn't changed."
+    },
+    "mission": {
+      "tag": "Our Mission",
+      "heading": "Democratise quality education across India",
+      "description": "Over 260 million students study in Indian schools. Less than 5% have access to quality coaching. We're using AI, live classes, and personalised learning paths to close that gap — one student at a time.",
+      "founded": { "label": "Founded", "value": "2021 · Jabalpur, MP" },
+      "supportedClasses": {
+        "label": "Supported classes",
+        "value": "Class 1 – 12 (CBSE & State)"
+      },
+      "languages": { "label": "Languages", "value": "English & Hindi" },
+      "learningModel": {
+        "label": "Learning model",
+        "value": "Hybrid — live + recorded + AI"
+      }
+    },
+    "stats": {
+      "activeStudents": "Active students",
+      "coursesPublished": "Courses published",
+      "passRate": "Pass rate",
+      "statesCovered": "States covered"
+    },
+    "values": {
+      "tag": "What we stand for",
+      "heading": "Our values",
+      "curiosity": {
+        "title": "Curiosity-led learning",
+        "desc": "We design experiences that encourage questions, experiments, and deeper understanding."
+      },
+      "trust": {
+        "title": "Trust through transparency",
+        "desc": "No dark patterns. No hidden fees. Students and parents always know what they're paying for and why."
+      },
+      "access": {
+        "title": "Access for everyone",
+        "desc": "Quality education shouldn't depend on your pin code. We offer scholarships and low-bandwidth support."
+      },
+      "outcomes": {
+        "title": "Outcomes over vanity",
+        "desc": "We measure success by student results — not app opens. If a feature doesn't improve scores, it ships last."
+      }
+    },
+    "team": {
+      "tag": "The people",
+      "heading": "Meet the team",
+      "RK": {
+        "name": "Rohit Kumar",
+        "role": "Founder & CEO",
+        "bio": "Started the platform to make coaching fairer and more affordable for students across India."
+      },
+      "PS": {
+        "name": "Priya Sharma",
+        "role": "Head of Curriculum",
+        "bio": "Former CBSE examiner and educator with expertise in designing outcome-driven learning paths for Classes 6–12."
+      },
+      "footer": {
+        "platform": "Platform",
+        "courses": "Courses",
+        "aboutUs": "About Us",
+        "support": "Support",
+        "contact": "Contact",
+        "helpCenter": "Help Center",
+        "faq": "FAQ"
+      },
+      "AV": {
+        "name": "Arjun Verma",
+        "role": "CTO",
+        "bio": "Ex-Google engineer passionate about accessible technology. Leads the AI tutor and adaptive learning engine."
+      },
+      "NK": {
+        "name": "Neha Kapoor",
+        "role": "Head of Student Success",
+        "bio": "Dedicated to closing the learning gap. Has personally mentored 500+ students from Tier-2 and Tier-3 cities."
+      }
+    },
+    "cta": {
+      "title": "Ready to start learning?",
+      "body": "Join 50,000+ students who are already learning smarter with SkillSphere.",
+      "getStarted": "Get started free",
+      "browseCourses": "Browse courses"
+    }
+  },
+  "contact": {
+    "tag": "CONTACT US",
+    "headline": "Let’s build the future of",
+    "highlight": "AI Learning",
+    "description": "Have questions, feedback, or business inquiries? Reach out to our team and we’ll help you with courses, subscriptions, instructor onboarding, technical support, and enterprise solutions.",
+    "supportCards": {
+      "email": {
+        "title": "📧 Email Support",
+        "detail": "support@umangvisionacademy.com"
+      },
+      "phone": { "title": "📞 Phone Support", "detail": "+91 98765 43210" },
+      "business": {
+        "title": "🏢 Business Inquiries",
+        "detail": "business@umangvisionacademy.com"
+      },
+      "hours": {
+        "title": "⏰ Working Hours",
+        "detail": "Mon - Sat / 9AM - 7PM"
+      }
+    },
+    "form": {
+      "title": "Send A Message",
+      "subtitle": "We usually respond within 24 hours.",
+      "fullName": "Full Name",
+      "namePlaceholder": "Enter your name",
+      "email": "Email Address",
+      "emailPlaceholder": "Enter your email",
+      "subject": "Subject",
+      "subjectPlaceholder": "Enter subject",
+      "message": "Message",
+      "messagePlaceholder": "Write your message...",
+      "submit": "Send Message"
+    }
+  },
+  "helpCenter": {
+    "tag": "HELP CENTER",
+    "headline": "How can we",
+    "highlight": "help you?",
+    "description": "Find answers to common questions, learn how the platform works, and get support for courses, subscriptions, AI tools, instructors, and more.",
+    "searchPlaceholder": "Search help articles...",
+    "searchButton": "Search",
+    "cards": {
+      "courseSupport": {
+        "title": "Course Support",
+        "desc": "Get help with enrolling in courses, tracking progress, certificates, and subscriptions."
+      },
+      "aiLearning": {
+        "title": "AI Learning Help",
+        "desc": "Learn how to use AI tutor, AI quizzes, voice AI, and personalized recommendations."
+      },
+      "instructorSupport": {
+        "title": "Instructor Support",
+        "desc": "Find information about publishing courses, instructor dashboards, and monetization."
+      }
+    },
+    "faq": {
+      "tag": "FREQUENTLY ASKED QUESTIONS",
+      "heading": "Common Questions"
+    },
+    "cta": {
+      "title": "Still Need Help?",
+      "body": "Our support team is available to help with technical issues, subscriptions, business onboarding, and instructor support.",
+      "contactButton": "Contact Us"
+    },
+    "faqs": {
+      "enroll": {
+        "question": "How do I enroll in a course?",
+        "answer": "Open the course page and click the enroll button to start learning instantly."
+      },
+      "resetPassword": {
+        "question": "How do I reset my password?",
+        "answer": "Use the password reset link on the login page and follow the instructions sent to your email."
+      },
+      "certificates": {
+        "question": "Do I get a certificate after completion?",
+        "answer": "Certificates are available for eligible courses once you complete the requirements successfully."
+      },
+      "aiTutor": {
+        "question": "How does the AI Tutor help me?",
+        "answer": "The AI Tutor gives personalised guidance, answers questions, and recommends next steps for your learning path."
+      },
+      "communities": {
+        "question": "Can I join learner communities?",
+        "answer": "Yes, you can connect with peers, join study groups, and participate in community discussions."
+      },
+      "business": {
+        "question": "Can businesses use the platform for training?",
+        "answer": "Yes, companies can onboard teams, manage employee learning, and track progress through business dashboards."
+      }
+    }
+  },
+  "faq": {
+    "tag": "FREQUENTLY ASKED QUESTIONS",
+    "headline": "Answers to your",
+    "highlight": "Questions",
+    "description": "Find answers about courses, AI features, certifications, instructor tools, business plans, and platform support.",
+    "categories": {
+      "courses": "Courses",
+      "aiFeatures": "AI Features",
+      "certificates": "Certificates",
+      "instructor": "Instructor",
+      "business": "Business"
+    },
+    "questions": {
+      "enroll": {
+        "course": "How do I enroll in a course?",
+        "courseAnswer": "Open the course page and click the enroll button to start learning instantly."
+      },
+      "mobile": {
+        "access": "Can I access courses on mobile?",
+        "accessAnswer": "Yes, all courses are fully responsive and accessible on mobile devices."
+      },
+      "aiTutor": {
+        "question": "How does the AI Tutor work?",
+        "answer": "The AI Tutor helps students through AI chat, voice assistance, doubt solving, and smart recommendations."
+      },
+      "quizGeneration": {
+        "question": "Can AI generate quizzes automatically?",
+        "answer": "Yes, instructors and students can generate quizzes using AI-powered tools."
+      },
+      "certificates": {
+        "receive": "Do I receive certificates after completion?",
+        "receiveAnswer": "Yes, certificates are awarded for eligible courses after successful completion.",
+        "download": "Can certificates be downloaded?",
+        "downloadAnswer": "Yes, certificates can be downloaded directly from the dashboard."
+      },
+      "instructor": {
+        "become": "How can I become an instructor?",
+        "becomeAnswer": "Go to the Become Instructor page and submit your application."
+      },
+      "business": {
+        "train": "Can companies train employees on the platform?",
+        "trainAnswer": "Yes, businesses can manage employee learning through team dashboards and analytics.",
+        "analytics": "Does the business plan include analytics?",
+        "analyticsAnswer": "Yes, advanced analytics and progress tracking are included in the business plan."
+      }
+    },
+    "cta": {
+      "title": "Still Have Questions?",
+      "body": "Contact our support team for technical help, subscription assistance, instructor onboarding, and business inquiries.",
+      "contactSupport": "Contact Support",
+      "helpCenter": "Help Center"
+    }
+  },
+  "testimonials": {
+    "heading": "What students say",
+    "items": {
+      "priya": {
+        "name": "Priya",
+        "quote": "Transformed my career in 6 months — amazing content!"
+      },
+      "mark": {
+        "name": "Mark",
+        "quote": "Practical, hands-on, and the community helped a lot."
+      },
+      "lina": {
+        "name": "Lina",
+        "quote": "Clear courses and great instructors — highly recommend."
+      }
+    }
+  },
+  "blogs": {
+    "knowledgeHub": "Knowledge Hub",
+    "pageTitle": "News & Rojgar Yojana",
+    "newsTab": "📰 Newspaper",
+    "rojgarTab": "💼 Rojgar Yojana",
+    "searchNewsPlaceholder": "Search news…",
+    "searchSchemesPlaceholder": "Search schemes or benefits…",
+    "featuredLabel": "Featured",
+    "readArticle": "Read Article →",
+    "noArticlesFound": "No articles found",
+    "noSchemesFound": "No schemes found",
+    "retry": "Retry",
+    "applyNow": "Apply Now ↗",
+    "officialPortal": "Official portal",
+    "totalSchemes": "Total Schemes",
+    "currentlyActive": "Currently Active",
+    "categories": "Categories",
+    "disclaimerTitle": "Disclaimer:",
+    "disclaimerText": "Scheme details, deadlines, and eligibility are sourced from official government portals and are subject to change. Always verify on the official website before applying. SkillSphere is not affiliated with any government body."
   }
 }
