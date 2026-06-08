@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import cookieParser from 'cookie-parser';
 import ConnectDb from './utils/ConnectDb.js';
 import 'dotenv/config';
@@ -11,6 +11,7 @@ import cors from 'cors';
 import billingRoutes from './routes/billing.route.js';
 import uploadRoutes from './routes/upload.routes.js';
 import aiRoutes from './routes/ai.routes.js';
+import cartRoutes from './routes/cart.routes.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
@@ -39,6 +40,7 @@ app.use('/api/students', studentRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api', cartRoutes);
 
 ConnectDb();
 

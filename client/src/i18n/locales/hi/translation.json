@@ -665,5 +665,72 @@
     "categories": "श्रेणियाँ",
     "disclaimerTitle": "अस्वीकरण:",
     "disclaimerText": "योजना विवरण, समय सीमा और पात्रता आधिकारिक सरकारी पोर्टलों से लिए गए हैं और परिवर्तन के अधीन हैं। आवेदन करने से पहले हमेशा आधिकारिक वेबसाइट पर सत्यापित करें। SkillSphere किसी भी सरकारी निकाय से संबद्ध नहीं है।"
+  },
+
+  "studentSidebar": {
+    "overview": "अवलोकन",
+    "myCourses": "मेरे कोर्स",
+    "aiTutor": "एआई ट्यूटर",
+    "sessions": "सत्र",
+    "leaderboard": "लीडरबोर्ड",
+    "settings": "सेटिंग्स",
+    "student": "छात्र"
+  },
+  "studentDashboard": {
+    "dashboard": "डैशबोर्ड",
+    "myCourses": "मेरे कोर्स",
+    "aiTutor": "एआई ट्यूटर",
+    "community": "कम्युनिटी",
+    "certificates": "प्रमाणपत्र",
+    "settings": "सेटिंग्स",
+    "leaderboard": "लीडरबोर्ड",
+
+    "welcomeBack": "वापसी पर स्वागत है, {{name}} 👋",
+    "studentDashboardTitle": "छात्र डैशबोर्ड",
+    "heroDescription": "अपनी सीखने की प्रगति ट्रैक करें, अपने कोर्स जारी रखें और एआई-संचालित अध्ययन उपकरणों का उपयोग करें — सब कुछ एक ही स्थान पर।",
+
+    "continueLearning": "सीखना जारी रखें →",
+
+    "enrolledCourses": "नामांकित कोर्स",
+    "overallProgress": "कुल प्रगति",
+    "leaderboardRank": "लीडरबोर्ड रैंक",
+
+    "nextGoal": "अगला लक्ष्य",
+    "weeklyGoal": "साप्ताहिक लक्ष्य",
+    "communityGoal": "कम्युनिटी",
+
+    "allCoursesComplete": "सभी कोर्स पूरे हो गए 🎉",
+    "allCoursesCompleteDesc": "अपनी सीख जारी रखने के लिए नए कोर्स में नामांकन करें।",
+
+    "weeklyGoalTitle": "अपनी निरंतरता बनाए रखें",
+    "weeklyGoalDesc": "कम से कम एक लाइव सत्र में शामिल हों और अपनी नवीनतम क्विज़ रिपोर्ट देखें।",
+
+    "communityTitle": "अगले लाइव इवेंट में शामिल हों",
+    "communityDesc": "मेंटोरशिप, प्रश्नोत्तर और समूह अध्ययन सत्रों में भाग लें।",
+
+    "recentActivity": "हाल की गतिविधि",
+    "viewAll": "सभी देखें →",
+
+    "noActivity": "अभी तक कोई हाल की गतिविधि नहीं।",
+    "noActivityDesc": "अपनी प्रगति देखने के लिए कोई कोर्स शुरू करें।",
+
+    "courseProgress": "कोर्स प्रगति",
+    "seeAll": "सभी देखें →",
+
+    "menu": "मेनू",
+
+    "minutesAgo": "{{count}} मिनट पहले",
+    "hoursAgo": "{{count}} घंटे पहले",
+    "daysAgo": "{{count}} दिन पहले"
+  },
+
+  "instructorSidebar": {
+    "dashboard": "डैशबोर्ड",
+    "courses": "मेरे कोर्स",
+    "students": "छात्र",
+    "sessions": "लाइव सेशन्स",
+    "analytics": "एनालिटिक्स",
+    "ai": "AI असिस्टेंट",
+    "settings": "सेटिंग्स"
   }
 }

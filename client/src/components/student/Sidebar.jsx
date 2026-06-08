@@ -12,6 +12,8 @@ import {
 } from "react-icons/fa";
 import { GrCertificate } from "react-icons/gr";
 
+import { useTranslation } from "react-i18next";
+
 const Sidebar = ({
   user,
   collapsed,
@@ -19,40 +21,37 @@ const Sidebar = ({
   mobileOpen,
   setMobileOpen,
 }) => {
+  const { t } = useTranslation();
+
   const navItems = [
     {
-      label: "Overview",
+      label: t("studentSidebar.overview"),
       to: "/student-dashboard",
       end: true,
       icon: FaHome,
     },
     {
-      label: "My Courses",
+      label: t("studentSidebar.myCourses"),
       to: "/student-dashboard/my-courses",
       icon: FaBookOpen,
     },
     {
-      label: "AI Tutor",
+      label: t("studentSidebar.aiTutor"),
       to: "/student-dashboard/ai-tutor",
       icon: FaRobot,
     },
     {
-      label: "Sessions",
+      label: t("studentSidebar.sessions"),
       to: "/student-dashboard/sessions",
       icon: FaUsers,
     },
     {
-      label: "Certificates",
-      to: "/student-dashboard/certificates",
-      icon: GrCertificate,
-    },
-    {
-      label: "Leaderboard",
+      label: t("studentSidebar.leaderboard"),
       to: "/student-dashboard/leaderboard",
       icon: FaTrophy,
     },
     {
-      label: "Settings",
+      label: t("studentSidebar.settings"),
       to: "/student-dashboard/settings",
       icon: FaCog,
     },

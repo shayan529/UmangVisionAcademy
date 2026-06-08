@@ -2,6 +2,7 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import User from "../models/user.model.js";
 import Course from "../models/courses.model.js";
+import Cart from "../models/cart.model.js";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -139,6 +140,10 @@ export const verifyPayment = async (req, res) => {
       await User.findByIdAndUpdate(req.user._id, {
         $addToSet: { enrolledCourses: { $each: courseIds } },
       });
+      await Cart.findOneAndUpdate(
+        { user: req.user._id },
+        { $pull: { courses: { $in: courseIds } } }
+      );
       return res.json({
         message: "Enrolled successfully.",
         enrolled: courseIds,

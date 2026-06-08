@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import api from '../../config/api.js';
+import React, { useEffect, useRef, useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import api from "../../config/api.js";
 
 // ── Local state (no Redux slice needed — single page load) ───────────────────
 const useCourseDemo = (id) => {
@@ -11,7 +11,7 @@ const useCourseDemo = (id) => {
 
   const location = useLocation();
 
-  const backPath = location.state?.from ?? '/';
+  const backPath = location.state?.from ?? "/";
 
   useEffect(() => {
     if (!id) return;
@@ -23,7 +23,7 @@ const useCourseDemo = (id) => {
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.response?.data?.message || 'Course not found.');
+        setError(err.response?.data?.message || "Course not found.");
         setLoading(false);
       });
   }, [id]);
@@ -33,9 +33,9 @@ const useCourseDemo = (id) => {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const levelColor = {
-  Beginner: '#34d399',
-  Intermediate: '#fbbf24',
-  Advanced: '#f87171',
+  Beginner: "#34d399",
+  Intermediate: "#fbbf24",
+  Advanced: "#f87171",
 };
 
 const fmt = (mins) => {
@@ -50,7 +50,7 @@ const stars = (avg = 0) =>
     <span
       key={i}
       style={{
-        color: i < Math.round(avg) ? '#fbbf24' : '#334155',
+        color: i < Math.round(avg) ? "#fbbf24" : "#334155",
         fontSize: 14,
       }}
     >
@@ -59,15 +59,15 @@ const stars = (avg = 0) =>
   ));
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
-const Sk = ({ w = '100%', h = 16, r = 8 }) => (
+const Sk = ({ w = "100%", h = 16, r = 8 }) => (
   <div
     style={{
       width: w,
       height: h,
       borderRadius: r,
-      background: 'linear-gradient(90deg,#1e293b 25%,#263348 50%,#1e293b 75%)',
-      backgroundSize: '200% 100%',
-      animation: 'shimmer 1.4s infinite',
+      background: "linear-gradient(90deg,#1e293b 25%,#263348 50%,#1e293b 75%)",
+      backgroundSize: "200% 100%",
+      animation: "shimmer 1.4s infinite",
     }}
   />
 );
@@ -100,12 +100,12 @@ const VideoPlayer = ({ url, poster }) => {
   return (
     <div
       style={{
-        position: 'relative',
+        position: "relative",
         borderRadius: 20,
-        overflow: 'hidden',
-        background: '#000',
-        aspectRatio: '16/9',
-        cursor: 'pointer',
+        overflow: "hidden",
+        background: "#000",
+        aspectRatio: "16/9",
+        cursor: "pointer",
       }}
       onClick={toggle}
     >
@@ -117,10 +117,10 @@ const VideoPlayer = ({ url, poster }) => {
         onTimeUpdate={onTimeUpdate}
         onEnded={() => setPlaying(false)}
         style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          display: 'block',
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          display: "block",
         }}
       />
 
@@ -128,28 +128,28 @@ const VideoPlayer = ({ url, poster }) => {
       {!playing && (
         <div
           style={{
-            position: 'absolute',
+            position: "absolute",
             inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0.45)',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.45)",
           }}
         >
           <div
             style={{
               width: 68,
               height: 68,
-              borderRadius: '50%',
-              background: 'rgba(124,58,237,0.9)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 0 40px rgba(124,58,237,0.5)',
-              backdropFilter: 'blur(4px)',
+              borderRadius: "50%",
+              background: "rgba(124,58,237,0.9)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 0 40px rgba(124,58,237,0.5)",
+              backdropFilter: "blur(4px)",
             }}
           >
-            <span style={{ fontSize: 26, marginLeft: 4, color: '#fff' }}>
+            <span style={{ fontSize: 26, marginLeft: 4, color: "#fff" }}>
               ▶
             </span>
           </div>
@@ -159,12 +159,12 @@ const VideoPlayer = ({ url, poster }) => {
       {/* Bottom controls */}
       <div
         style={{
-          position: 'absolute',
+          position: "absolute",
           bottom: 0,
           left: 0,
           right: 0,
-          padding: '8px 12px 10px',
-          background: 'linear-gradient(transparent,rgba(0,0,0,0.7))',
+          padding: "8px 12px 10px",
+          background: "linear-gradient(transparent,rgba(0,0,0,0.7))",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -173,55 +173,55 @@ const VideoPlayer = ({ url, poster }) => {
           onClick={seek}
           style={{
             height: 4,
-            background: 'rgba(255,255,255,0.2)',
+            background: "rgba(255,255,255,0.2)",
             borderRadius: 2,
-            cursor: 'pointer',
+            cursor: "pointer",
             marginBottom: 8,
           }}
         >
           <div
             style={{
-              height: '100%',
+              height: "100%",
               width: `${progress}%`,
-              background: '#7c3aed',
+              background: "#7c3aed",
               borderRadius: 2,
-              transition: 'width 0.1s',
+              transition: "width 0.1s",
             }}
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button
             onClick={toggle}
             style={{
-              background: 'none',
-              border: 'none',
-              color: '#fff',
+              background: "none",
+              border: "none",
+              color: "#fff",
               fontSize: 16,
-              cursor: 'pointer',
+              cursor: "pointer",
               padding: 0,
             }}
           >
-            {playing ? '⏸' : '▶'}
+            {playing ? "⏸" : "▶"}
           </button>
           <button
             onClick={() => setMuted(!muted)}
             style={{
-              background: 'none',
-              border: 'none',
-              color: '#fff',
+              background: "none",
+              border: "none",
+              color: "#fff",
               fontSize: 14,
-              cursor: 'pointer',
+              cursor: "pointer",
               padding: 0,
             }}
           >
-            {muted ? '🔇' : '🔊'}
+            {muted ? "🔇" : "🔊"}
           </button>
           <span
             style={{
-              marginLeft: 'auto',
+              marginLeft: "auto",
               fontSize: 11,
-              color: 'rgba(255,255,255,0.6)',
+              color: "rgba(255,255,255,0.6)",
               fontWeight: 600,
             }}
           >
@@ -247,15 +247,21 @@ export default function CourseDemo() {
   const cartIds = useSelector((s) => s.cart?.cartIds ?? []);
   const isInCart = cartIds.includes(id);
 
+  useEffect(() => {
+    if (!id || id === "undefined") {
+      navigate("/courses", { replace: true });
+    }
+  }, [id, navigate]);
+
   const handleEnrollClick = () => {
     if (!user) {
-      navigate('/login', {
+      navigate("/login", {
         state: { from: `/courses/${id}/demo`, replace: true },
       });
       return;
     }
     // Import addToCart lazily to avoid circular deps
-    import('../../redux/slices/cartSlice').then(({ addToCart }) => {
+    import("../../redux/slices/cartSlice").then(({ addToCart }) => {
       dispatch(addToCart(id));
       setAddedToCart(true);
     });
@@ -273,9 +279,9 @@ export default function CourseDemo() {
 
       <div
         style={{
-          minHeight: '100vh',
-          background: '#0b1120',
-          color: '#f1f5f9',
+          minHeight: "100vh",
+          background: "#0b1120",
+          color: "#f1f5f9",
           fontFamily: "'Inter','Segoe UI',sans-serif",
         }}
       >
@@ -283,26 +289,26 @@ export default function CourseDemo() {
         {error && (
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: '60vh',
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: "60vh",
               gap: 12,
             }}
           >
             <div style={{ fontSize: 48 }}>😔</div>
-            <p style={{ color: '#f87171', fontWeight: 600 }}>{error}</p>
+            <p style={{ color: "#f87171", fontWeight: 600 }}>{error}</p>
             <button
-              onClick={() => navigate('/courses')}
+              onClick={() => navigate("/courses")}
               style={{
-                padding: '10px 20px',
+                padding: "10px 20px",
                 borderRadius: 10,
-                border: 'none',
-                background: '#7c3aed',
-                color: '#fff',
+                border: "none",
+                background: "#7c3aed",
+                color: "#fff",
                 fontWeight: 600,
-                cursor: 'pointer',
+                cursor: "pointer",
               }}
             >
               Browse Courses
@@ -311,18 +317,18 @@ export default function CourseDemo() {
         )}
 
         {/* ── Back button ── */}
-        <div style={{ padding: '16px 24px' }}>
+        <div style={{ padding: "16px 24px" }}>
           <button
-            onClick={() => navigate('/courses')}
+            onClick={() => navigate("/courses")}
             style={{
-              background: 'none',
-              border: 'none',
-              color: '#94a3b8',
+              background: "none",
+              border: "none",
+              color: "#94a3b8",
               fontSize: 13,
               fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
               gap: 6,
             }}
           >
@@ -332,27 +338,27 @@ export default function CourseDemo() {
         {/* ── Main content ── */}
         {!error && (
           <div
-            style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}
+            style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 20px" }}
           >
             <div
               style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr minmax(0, 360px)',
+                display: "grid",
+                gridTemplateColumns: "1fr minmax(0, 360px)",
                 gap: 32,
-                alignItems: 'start',
+                alignItems: "start",
               }}
               className="demo-fade"
             >
               {/* ── LEFT ── */}
               <div
-                style={{ display: 'flex', flexDirection: 'column', gap: 28 }}
+                style={{ display: "flex", flexDirection: "column", gap: 28 }}
               >
                 {/* Title block */}
                 {loading ? (
                   <div
                     style={{
-                      display: 'flex',
-                      flexDirection: 'column',
+                      display: "flex",
+                      flexDirection: "column",
                       gap: 12,
                     }}
                   >
@@ -364,9 +370,9 @@ export default function CourseDemo() {
                   <div>
                     <div
                       style={{
-                        display: 'flex',
+                        display: "flex",
                         gap: 8,
-                        flexWrap: 'wrap',
+                        flexWrap: "wrap",
                         marginBottom: 12,
                       }}
                     >
@@ -374,11 +380,11 @@ export default function CourseDemo() {
                         style={{
                           fontSize: 11,
                           fontWeight: 700,
-                          padding: '3px 10px',
+                          padding: "3px 10px",
                           borderRadius: 20,
-                          background: `${levelColor[course.level] ?? '#818cf8'}18`,
-                          color: levelColor[course.level] ?? '#818cf8',
-                          border: `1px solid ${levelColor[course.level] ?? '#818cf8'}30`,
+                          background: `${levelColor[course.level] ?? "#818cf8"}18`,
+                          color: levelColor[course.level] ?? "#818cf8",
+                          border: `1px solid ${levelColor[course.level] ?? "#818cf8"}30`,
                         }}
                       >
                         {course.level}
@@ -387,10 +393,10 @@ export default function CourseDemo() {
                         style={{
                           fontSize: 11,
                           fontWeight: 700,
-                          padding: '3px 10px',
+                          padding: "3px 10px",
                           borderRadius: 20,
-                          background: '#1e293b',
-                          color: '#94a3b8',
+                          background: "#1e293b",
+                          color: "#94a3b8",
                         }}
                       >
                         {course.category}
@@ -398,9 +404,9 @@ export default function CourseDemo() {
                     </div>
                     <h1
                       style={{
-                        fontSize: 'clamp(24px,4vw,38px)',
+                        fontSize: "clamp(24px,4vw,38px)",
                         fontWeight: 800,
-                        color: '#f1f5f9',
+                        color: "#f1f5f9",
                         lineHeight: 1.2,
                         marginBottom: 12,
                       }}
@@ -409,7 +415,7 @@ export default function CourseDemo() {
                     </h1>
                     <p
                       style={{
-                        color: '#94a3b8',
+                        color: "#94a3b8",
                         fontSize: 15,
                         lineHeight: 1.7,
                       }}
@@ -420,45 +426,45 @@ export default function CourseDemo() {
                     {/* Stats row */}
                     <div
                       style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
+                        display: "flex",
+                        flexWrap: "wrap",
                         gap: 20,
                         marginTop: 16,
                       }}
                     >
                       <div
                         style={{
-                          display: 'flex',
-                          alignItems: 'center',
+                          display: "flex",
+                          alignItems: "center",
                           gap: 6,
                         }}
                       >
-                        <div style={{ display: 'flex' }}>
+                        <div style={{ display: "flex" }}>
                           {stars(course.ratingAverage)}
                         </div>
                         <span
                           style={{
                             fontSize: 13,
                             fontWeight: 700,
-                            color: '#fbbf24',
+                            color: "#fbbf24",
                           }}
                         >
-                          {course.ratingAverage?.toFixed(1) || 'New'}
+                          {course.ratingAverage?.toFixed(1) || "New"}
                         </span>
-                        <span style={{ fontSize: 12, color: '#64748b' }}>
+                        <span style={{ fontSize: 12, color: "#64748b" }}>
                           ({course.reviewCount ?? 0} reviews)
                         </span>
                       </div>
-                      <span style={{ fontSize: 13, color: '#64748b' }}>
+                      <span style={{ fontSize: 13, color: "#64748b" }}>
                         👥 {course.enrolledCount ?? 0} students
                       </span>
                       {course.lessonCount > 0 && (
-                        <span style={{ fontSize: 13, color: '#64748b' }}>
+                        <span style={{ fontSize: 13, color: "#64748b" }}>
                           📚 {course.lessonCount} lessons
                         </span>
                       )}
                       {course.durationHours > 0 && (
-                        <span style={{ fontSize: 13, color: '#64748b' }}>
+                        <span style={{ fontSize: 13, color: "#64748b" }}>
                           ⏱ {course.durationHours}h total
                         </span>
                       )}
@@ -468,8 +474,8 @@ export default function CourseDemo() {
                     {course.instructor && (
                       <div
                         style={{
-                          display: 'flex',
-                          alignItems: 'center',
+                          display: "flex",
+                          alignItems: "center",
                           gap: 10,
                           marginTop: 16,
                         }}
@@ -478,28 +484,28 @@ export default function CourseDemo() {
                           style={{
                             width: 36,
                             height: 36,
-                            borderRadius: '50%',
+                            borderRadius: "50%",
                             background:
-                              'linear-gradient(135deg,#7c3aed,#06b6d4)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                              "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                             fontSize: 14,
                             fontWeight: 700,
                             flexShrink: 0,
                           }}
                         >
-                          {course.instructor.name?.charAt(0) ?? 'I'}
+                          {course.instructor.name?.charAt(0) ?? "I"}
                         </div>
                         <div>
-                          <p style={{ fontSize: 12, color: '#64748b' }}>
+                          <p style={{ fontSize: 12, color: "#64748b" }}>
                             Instructor
                           </p>
                           <p
                             style={{
                               fontSize: 14,
                               fontWeight: 600,
-                              color: '#e2e8f0',
+                              color: "#e2e8f0",
                             }}
                           >
                             {course.instructor.name}
@@ -515,7 +521,7 @@ export default function CourseDemo() {
                   <Sk
                     h={0}
                     r={20}
-                    style={{ aspectRatio: '16/9', height: 'auto' }}
+                    style={{ aspectRatio: "16/9", height: "auto" }}
                   />
                 ) : course.demoVideoUrl ? (
                   <div>
@@ -523,9 +529,9 @@ export default function CourseDemo() {
                       style={{
                         fontSize: 12,
                         fontWeight: 700,
-                        color: '#818cf8',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.1em',
+                        color: "#818cf8",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.1em",
                         marginBottom: 10,
                       }}
                     >
@@ -541,14 +547,14 @@ export default function CourseDemo() {
                   <div
                     style={{
                       borderRadius: 20,
-                      overflow: 'hidden',
-                      aspectRatio: '16/9',
-                      background: '#111827',
-                      border: '1px dashed #334155',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      overflow: "hidden",
+                      aspectRatio: "16/9",
+                      background: "#111827",
+                      border: "1px dashed #334155",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
                       gap: 10,
                     }}
                   >
@@ -557,15 +563,15 @@ export default function CourseDemo() {
                         src={course.thumbnailUrl}
                         alt={course.title}
                         style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
                         }}
                       />
                     ) : (
                       <>
                         <span style={{ fontSize: 40 }}>🎓</span>
-                        <p style={{ color: '#475569', fontSize: 13 }}>
+                        <p style={{ color: "#475569", fontSize: 13 }}>
                           No demo video yet
                         </p>
                       </>
@@ -577,17 +583,17 @@ export default function CourseDemo() {
                 {!loading && course.description && (
                   <div
                     style={{
-                      background: '#111827',
-                      border: '1px solid #1e293b',
+                      background: "#111827",
+                      border: "1px solid #1e293b",
                       borderRadius: 18,
-                      padding: '22px 24px',
+                      padding: "22px 24px",
                     }}
                   >
                     <h3
                       style={{
                         fontSize: 16,
                         fontWeight: 700,
-                        color: '#f1f5f9',
+                        color: "#f1f5f9",
                         marginBottom: 12,
                       }}
                     >
@@ -595,10 +601,10 @@ export default function CourseDemo() {
                     </h3>
                     <p
                       style={{
-                        color: '#94a3b8',
+                        color: "#94a3b8",
                         fontSize: 14,
                         lineHeight: 1.8,
-                        whiteSpace: 'pre-wrap',
+                        whiteSpace: "pre-wrap",
                       }}
                     >
                       {course.description}
@@ -610,24 +616,24 @@ export default function CourseDemo() {
                 {!loading && course.lessons?.length > 0 && (
                   <div
                     style={{
-                      background: '#111827',
-                      border: '1px solid #1e293b',
+                      background: "#111827",
+                      border: "1px solid #1e293b",
                       borderRadius: 18,
-                      padding: '22px 24px',
+                      padding: "22px 24px",
                     }}
                   >
                     <h3
                       style={{
                         fontSize: 16,
                         fontWeight: 700,
-                        color: '#f1f5f9',
+                        color: "#f1f5f9",
                         marginBottom: 16,
                       }}
                     >
-                      Course Curriculum{' '}
+                      Course Curriculum{" "}
                       <span
                         style={{
-                          color: '#64748b',
+                          color: "#64748b",
                           fontWeight: 400,
                           fontSize: 13,
                         }}
@@ -637,8 +643,8 @@ export default function CourseDemo() {
                     </h3>
                     <div
                       style={{
-                        display: 'flex',
-                        flexDirection: 'column',
+                        display: "flex",
+                        flexDirection: "column",
                         gap: 2,
                       }}
                     >
@@ -647,12 +653,12 @@ export default function CourseDemo() {
                           key={i}
                           className="lesson-row"
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
+                            display: "flex",
+                            alignItems: "center",
                             gap: 12,
-                            padding: '10px 12px',
+                            padding: "10px 12px",
                             borderRadius: 10,
-                            transition: 'background 0.15s',
+                            transition: "background 0.15s",
                           }}
                         >
                           <div
@@ -660,13 +666,13 @@ export default function CourseDemo() {
                               width: 28,
                               height: 28,
                               borderRadius: 8,
-                              background: '#1e293b',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
+                              background: "#1e293b",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
                               fontSize: 11,
                               fontWeight: 700,
-                              color: '#64748b',
+                              color: "#64748b",
                               flexShrink: 0,
                             }}
                           >
@@ -677,10 +683,10 @@ export default function CourseDemo() {
                               style={{
                                 fontSize: 13,
                                 fontWeight: 600,
-                                color: '#e2e8f0',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
+                                color: "#e2e8f0",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
                               }}
                             >
                               {lesson.title}
@@ -689,11 +695,11 @@ export default function CourseDemo() {
                               <p
                                 style={{
                                   fontSize: 11,
-                                  color: '#64748b',
+                                  color: "#64748b",
                                   marginTop: 2,
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
                                 }}
                               >
                                 {lesson.description}
@@ -704,7 +710,7 @@ export default function CourseDemo() {
                             <span
                               style={{
                                 fontSize: 11,
-                                color: '#64748b',
+                                color: "#64748b",
                                 flexShrink: 0,
                               }}
                             >
@@ -714,7 +720,7 @@ export default function CourseDemo() {
                           <span
                             style={{
                               fontSize: 10,
-                              color: '#475569',
+                              color: "#475569",
                               flexShrink: 0,
                             }}
                           >
@@ -728,18 +734,18 @@ export default function CourseDemo() {
 
                 {/* Tags */}
                 {!loading && course.tags?.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                     {course.tags.map((tag) => (
                       <span
                         key={tag}
                         style={{
                           fontSize: 11,
                           fontWeight: 600,
-                          padding: '4px 12px',
+                          padding: "4px 12px",
                           borderRadius: 20,
-                          background: '#1e293b',
-                          color: '#64748b',
-                          border: '1px solid #334155',
+                          background: "#1e293b",
+                          color: "#64748b",
+                          border: "1px solid #334155",
                         }}
                       >
                         #{tag}
@@ -750,13 +756,13 @@ export default function CourseDemo() {
               </div>
 
               {/* ── RIGHT: sticky enroll card ── */}
-              <div style={{ position: 'sticky', top: 80 }}>
+              <div style={{ position: "sticky", top: 80 }}>
                 <div
                   style={{
-                    background: '#111827',
-                    border: '1px solid #1e293b',
+                    background: "#111827",
+                    border: "1px solid #1e293b",
                     borderRadius: 22,
-                    overflow: 'hidden',
+                    overflow: "hidden",
                   }}
                 >
                   {/* Thumbnail */}
@@ -767,20 +773,20 @@ export default function CourseDemo() {
                       src={course.thumbnailUrl}
                       alt={course.title}
                       style={{
-                        width: '100%',
+                        width: "100%",
                         height: 200,
-                        objectFit: 'cover',
-                        display: 'block',
+                        objectFit: "cover",
+                        display: "block",
                       }}
                     />
                   ) : (
                     <div
                       style={{
                         height: 200,
-                        background: 'linear-gradient(135deg,#1e1b4b,#0f172a)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        background: "linear-gradient(135deg,#1e1b4b,#0f172a)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                         fontSize: 48,
                       }}
                     >
@@ -788,12 +794,12 @@ export default function CourseDemo() {
                     </div>
                   )}
 
-                  <div style={{ padding: '22px 22px 26px' }}>
+                  <div style={{ padding: "22px 22px 26px" }}>
                     {loading ? (
                       <div
                         style={{
-                          display: 'flex',
-                          flexDirection: 'column',
+                          display: "flex",
+                          flexDirection: "column",
                           gap: 12,
                         }}
                       >
@@ -809,20 +815,20 @@ export default function CourseDemo() {
                             style={{
                               fontSize: 36,
                               fontWeight: 800,
-                              color: '#f1f5f9',
+                              color: "#f1f5f9",
                             }}
                           >
                             {course.price ? (
                               `₹${course.price}`
                             ) : (
-                              <span style={{ color: '#34d399' }}>Free</span>
+                              <span style={{ color: "#34d399" }}>Free</span>
                             )}
                           </div>
                           {course.price > 0 && (
                             <p
                               style={{
                                 fontSize: 12,
-                                color: '#64748b',
+                                color: "#64748b",
                                 marginTop: 4,
                               }}
                             >
@@ -836,43 +842,43 @@ export default function CourseDemo() {
                           className="enroll-btn"
                           onClick={handleEnrollClick}
                           style={{
-                            width: '100%',
-                            padding: '14px',
+                            width: "100%",
+                            padding: "14px",
                             borderRadius: 14,
-                            border: 'none',
+                            border: "none",
                             background:
                               isInCart || addedToCart
-                                ? 'linear-gradient(135deg,#059669,#34d399)'
-                                : 'linear-gradient(135deg,#7c3aed,#06b6d4)',
-                            color: '#fff',
+                                ? "linear-gradient(135deg,#059669,#34d399)"
+                                : "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                            color: "#fff",
                             fontSize: 15,
                             fontWeight: 700,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            boxShadow: '0 8px 24px rgba(124,58,237,0.3)',
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            boxShadow: "0 8px 24px rgba(124,58,237,0.3)",
                             marginBottom: 12,
                           }}
                         >
                           {isInCart || addedToCart
-                            ? '✓ Added to Cart'
+                            ? "✓ Added to Cart"
                             : user
-                              ? 'Add to Cart'
-                              : 'Enroll Now'}
+                              ? "Add to Cart"
+                              : "Enroll Now"}
                         </button>
 
                         {(isInCart || addedToCart) && (
                           <button
-                            onClick={() => navigate('/cart')}
+                            onClick={() => navigate("/cart")}
                             style={{
-                              width: '100%',
-                              padding: '12px',
+                              width: "100%",
+                              padding: "12px",
                               borderRadius: 14,
-                              border: '1px solid #334155',
-                              background: 'transparent',
-                              color: '#94a3b8',
+                              border: "1px solid #334155",
+                              background: "transparent",
+                              color: "#94a3b8",
                               fontSize: 14,
                               fontWeight: 600,
-                              cursor: 'pointer',
+                              cursor: "pointer",
                             }}
                           >
                             Go to Cart →
@@ -882,20 +888,20 @@ export default function CourseDemo() {
                         {!user && (
                           <p
                             style={{
-                              textAlign: 'center',
+                              textAlign: "center",
                               fontSize: 12,
-                              color: '#475569',
+                              color: "#475569",
                               marginTop: 10,
                             }}
                           >
-                            Already enrolled?{' '}
+                            Already enrolled?{" "}
                             <button
-                              onClick={() => navigate('/login')}
+                              onClick={() => navigate("/login")}
                               style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#818cf8',
-                                cursor: 'pointer',
+                                background: "none",
+                                border: "none",
+                                color: "#818cf8",
+                                cursor: "pointer",
                                 fontSize: 12,
                                 fontWeight: 600,
                               }}
@@ -909,8 +915,8 @@ export default function CourseDemo() {
                         <div
                           style={{
                             marginTop: 20,
-                            display: 'flex',
-                            flexDirection: 'column',
+                            display: "flex",
+                            flexDirection: "column",
                             gap: 8,
                           }}
                         >
@@ -919,22 +925,22 @@ export default function CourseDemo() {
                               `${course.lessonCount} lessons`,
                             course.durationHours > 0 &&
                               `${course.durationHours} hours of content`,
-                            'Lifetime access',
-                            'Certificate of completion',
+                            "Lifetime access",
+                            "Certificate of completion",
                           ]
                             .filter(Boolean)
                             .map((item) => (
                               <div
                                 key={item}
                                 style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
+                                  display: "flex",
+                                  alignItems: "center",
                                   gap: 8,
                                   fontSize: 13,
-                                  color: '#94a3b8',
+                                  color: "#94a3b8",
                                 }}
                               >
-                                <span style={{ color: '#34d399' }}>✓</span>{' '}
+                                <span style={{ color: "#34d399" }}>✓</span>{" "}
                                 {item}
                               </div>
                             ))}

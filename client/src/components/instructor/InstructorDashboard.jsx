@@ -13,6 +13,7 @@ import InstructorAI from "./InstructorAI";
 import InstructorNotifications from "./InstructorNotifications";
 import InstructorSettings from "./InstructorSettings";
 import { createCourse } from "../../redux/slices/courseSlice";
+import { useTranslation } from "react-i18next";
 
 import {
   initialSessions,
@@ -162,6 +163,7 @@ export default function InstructorDashboard() {
   // ── Sidebar content ────────────────────────────────────────────────────────
   const SidebarContent = () => {
     const { user } = useSelector((state) => state.auth);
+    const { t } = useTranslation();
     return (
       <>
         {/* <div
@@ -211,7 +213,7 @@ export default function InstructorDashboard() {
         </div>
 
         <nav style={{ flex: 1, overflowY: "auto" }}>
-          {navItems.map(({ id, label }) => (
+          {navItems.map(({ id, icon }) => (
             <button
               key={id}
               onClick={() => handleNavClick(id)}
@@ -233,7 +235,10 @@ export default function InstructorDashboard() {
                 transition: "all 0.15s",
               }}
             >
-              {label}
+              <span>
+                {icon} {t(`instructorSidebar.${id}`)}
+              </span>
+
               {id === "notifications" && unread > 0 && (
                 <span
                   style={{

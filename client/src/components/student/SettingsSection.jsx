@@ -1,12 +1,35 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchProfile } from "../../redux/slices/settingsSlice";
 
 export default function Settings() {
+  const dispatch = useDispatch();
+
+  const { profile: userProfile } = useSelector((state) => state.settings);
+
   const [profile, setProfile] = useState({
-    name: "Shayan",
-    email: "shayan@gmail.com",
-    bio: "Passionate learner exploring AI and Web Development.",
-    avatar: "S",
+    name: "",
+    email: "",
+    bio: "",
+    avatar: "",
   });
+
+  useEffect(() => {
+    dispatch(fetchProfile());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (userProfile) {
+      setProfile({
+        name: userProfile.name,
+        email: userProfile.email,
+        bio: userProfile.bio || "",
+        avatar: userProfile.name?.charAt(0),
+      });
+
+      setNotifications(userProfile.notificationSettings);
+    }
+  }, [userProfile]);
 
   const [notifications, setNotifications] = useState({
     liveClass: true,
@@ -18,20 +41,38 @@ export default function Settings() {
   const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" });
   const [pwMsg, setPwMsg] = useState("");
 
-  const saveProfile = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const saveProfile = async () => {
+    try {
+      await dispatch(
+        updateProfile({
+          name: profile.name,
+          email: profile.email,
+          bio: profile.bio,
+          notificationSettings: notifications,
+        }),
+      ).unwrap();
+
+      setSaved(true);
+
+      setTimeout(() => {
+        setSaved(false);
+      }, 2000);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const changePassword = () => {
-    if (!pwForm.current) return setPwMsg("Enter your current password");
-    if (pwForm.next.length < 6)
-      return setPwMsg("New password must be at least 6 characters");
-    if (pwForm.next !== pwForm.confirm)
-      return setPwMsg("Passwords do not match");
-    setPwMsg("Password changed successfully ✓");
-    setPwForm({ current: "", next: "", confirm: "" });
-    setTimeout(() => setPwMsg(""), 3000);
+  const changePassword = async () => {
+    try {
+      await api.put("/settings/change-password", {
+        currentPassword: pwForm.current,
+        newPassword: pwForm.next,
+      });
+
+      setPwMsg("Password changed successfully ✓");
+    } catch (error) {
+      setPwMsg(error.response?.data?.message || "Failed to change password");
+    }
   };
 
   const toggleNotif = (key) =>
@@ -134,23 +175,19 @@ export default function Settings() {
             marginBottom: 20,
           }}
         >
-          <div
+          <img
+            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+              userProfile?.name || "User",
+            )}&background=7c3aed&color=fff&size=128`}
+            alt={userProfile?.name}
             style={{
               width: 56,
               height: 56,
               borderRadius: "50%",
-              background: "linear-gradient(135deg,#7c3aed,#db2777)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 22,
-              fontWeight: 800,
-              color: "#fff",
-              flexShrink: 0,
+              objectFit: "cover",
+              border: "2px solid #334155",
             }}
-          >
-            {profile.avatar}
-          </div>
+          />
           <div>
             <button
               style={{

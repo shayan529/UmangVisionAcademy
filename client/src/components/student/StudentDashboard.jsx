@@ -7,17 +7,7 @@ import {
   fetchStudentActivity,
 } from "../../redux/slices/studentSlice";
 
-// ── Section title map ─────────────────────────────────────────────────────────
-const sectionTitles = {
-  "/student-dashboard": "Dashboard",
-  "/student-dashboard/courses": "Courses",
-  "/student-dashboard/my-courses": "My Courses",
-  "/student-dashboard/ai-tutor": "AI Tutor",
-  "/student-dashboard/community": "Community",
-  "/student-dashboard/certificates": "Certificates",
-  "/student-dashboard/settings": "Settings",
-  "/student-dashboard/leaderboard": "Leaderboard",
-};
+import { useTranslation } from "react-i18next";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const getOverallProgress = (courses = []) => {
@@ -35,14 +25,22 @@ const getLeaderboardRank = (students = [], currentUserId) => {
   return rank === -1 ? null : rank + 1;
 };
 
-const formatActivityTime = (dateStr) => {
+const formatActivityTime = (dateStr, t) => {
   if (!dateStr) return "";
+
   const diff = Date.now() - new Date(dateStr).getTime();
+
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
+
+  if (mins < 60) return t("studentDashboard.minutesAgo", { count: mins });
+
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+
+  if (hrs < 24) return t("studentDashboard.hoursAgo", { count: hrs });
+
+  return t("studentDashboard.daysAgo", {
+    count: Math.floor(hrs / 24),
+  });
 };
 
 // ── Activity type → icon/color map ───────────────────────────────────────────
@@ -84,6 +82,7 @@ export const DashboardHome = () => {
     loading: studentsLoading,
     activityLoading,
   } = useSelector((s) => s.students);
+  const { t } = useTranslation();
 
   // Enrolled courses: try common slice names
   const enrolledCourses = useSelector(
@@ -150,7 +149,7 @@ export const DashboardHome = () => {
                 marginBottom: 6,
               }}
             >
-              Welcome Back, {username} 👋
+              {t("studentDashboard.welcomeBack", { name: username })}
             </p>
             <h1
               style={{
@@ -160,7 +159,7 @@ export const DashboardHome = () => {
                 lineHeight: 1.2,
               }}
             >
-              Student Dashboard
+              {t("studentDashboard.studentDashboardTitle")}
             </h1>
             <p
               style={{
@@ -171,8 +170,7 @@ export const DashboardHome = () => {
                 fontSize: 14,
               }}
             >
-              Track your learning progress, jump into your courses, and access
-              AI‑powered study tools — all from one place.
+              {t("studentDashboard.heroDescription")}
             </p>
           </div>
           <Link
@@ -193,7 +191,7 @@ export const DashboardHome = () => {
                 whiteSpace: "nowrap",
               }}
             >
-              Continue Learning →
+              {t("studentDashboard.continueLearning")}
             </button>
           </Link>
         </section>
@@ -211,14 +209,14 @@ export const DashboardHome = () => {
           <StatCard
             loading={coursesLoading}
             value={enrolledCourses.length || "—"}
-            label="Enrolled Courses"
+            label={t("studentDashboard.enrolledCourses")}
             color="#818cf8"
           />
           {/* Progress */}
           <StatCard
             loading={coursesLoading}
             value={enrolledCourses.length ? `${overallProgress}%` : "—"}
-            label="Overall Progress"
+            label={t("studentDashboard.overallProgress")}
             color="#22d3ee"
             extra={
               enrolledCourses.length > 0 && (
@@ -248,7 +246,7 @@ export const DashboardHome = () => {
           <StatCard
             loading={studentsLoading}
             value={rank ? `#${rank}` : "—"}
-            label="Leaderboard Rank"
+            label={t("studentDashboard.leaderboardRank")}
             color="#f472b6"
           />
         </div>
@@ -263,36 +261,6 @@ export const DashboardHome = () => {
           }}
         >
           {/* Goal cards */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {/* Dynamic next course goal */}
-            <GoalCard
-              tag="NEXT GOAL"
-              tagColor="#818cf8"
-              loading={coursesLoading}
-              title={
-                nextCourse
-                  ? (nextCourse.title ?? nextCourse.name ?? "Your next course")
-                  : "All courses complete 🎉"
-              }
-              desc={
-                nextCourse
-                  ? `${nextCourse.progress ?? 0}% complete — keep going to unlock mentor feedback.`
-                  : "Enroll in a new course to keep levelling up."
-              }
-            />
-            <GoalCard
-              tag="WEEKLY GOAL"
-              tagColor="#22d3ee"
-              title="Keep your streak alive"
-              desc="Attend at least one live session and review your latest quiz analytics."
-            />
-            <GoalCard
-              tag="COMMUNITY"
-              tagColor="#f472b6"
-              title="Join the next live event"
-              desc="Jump into mentorship, Q&A, and group study sessions from the dashboard."
-            />
-          </div>
 
           {/* Recent Activity feed */}
           <div
@@ -314,7 +282,7 @@ export const DashboardHome = () => {
               }}
             >
               <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9" }}>
-                Recent Activity
+                {t("studentDashboard.recentActivity")}
               </h3>
               <Link
                 to="my-courses"
@@ -325,7 +293,7 @@ export const DashboardHome = () => {
                   fontWeight: 600,
                 }}
               >
-                View all →
+                {t("studentDashboard.viewAll")}
               </Link>
             </div>
 
@@ -442,6 +410,7 @@ export const DashboardHome = () => {
                       >
                         {formatActivityTime(
                           item.createdAt ?? item.timestamp ?? item.date,
+                          t,
                         )}
                       </span>
                     </div>
@@ -464,7 +433,7 @@ export const DashboardHome = () => {
               }}
             >
               <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9" }}>
-                Course Progress
+                {t("studentDashboard.courseProgress")}
               </h3>
               <Link
                 to="my-courses"
@@ -475,7 +444,7 @@ export const DashboardHome = () => {
                   fontWeight: 600,
                 }}
               >
-                See all →
+                {t("studentDashboard.seeAll")}
               </Link>
             </div>
             <div
@@ -660,6 +629,17 @@ const StudentDashboard = () => {
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { t } = useTranslation();
+
+  const sectionTitles = {
+    "/student-dashboard": t("studentDashboard.dashboard"),
+    "/student-dashboard/my-courses": t("studentDashboard.myCourses"),
+    "/student-dashboard/ai-tutor": t("studentDashboard.aiTutor"),
+    "/student-dashboard/community": t("studentDashboard.community"),
+    "/student-dashboard/certificates": t("studentDashboard.certificates"),
+    "/student-dashboard/settings": t("studentDashboard.settings"),
+    "/student-dashboard/leaderboard": t("studentDashboard.leaderboard"),
+  };
 
   const unreadCount = useSelector(
     (s) => s.notifications?.unread ?? s.notifications?.unreadCount ?? 0,
@@ -707,7 +687,7 @@ const StudentDashboard = () => {
               }}
               className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:border-white/20"
             >
-              Menu
+              {t("studentDashboard.menu")}
             </button>
             <h2 className="text-lg font-semibold text-white flex-1 text-center truncate">
               {pageTitle}

@@ -8,10 +8,69 @@ export const fetchAvailableCourses = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await api.get(API_ENDPOINTS.COURSES.LIST);
+      console.log("COURSES API RESPONSE:", data);
       const raw = Array.isArray(data)
         ? data
         : (data.courses ?? data.data ?? []);
       return raw.filter(Boolean);
+      console.log("RAW:", raw);
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  },
+);
+
+export const fetchCart = createAsyncThunk(
+  "cart/fetchCart",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get(API_ENDPOINTS.CART.GET);
+      const courses = data.courses || [];
+      return courses.map((c) =>
+        typeof c === "object" && c !== null ? (c._id ?? c.id) : c,
+      );
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  },
+);
+
+export const addToCart = createAsyncThunk(
+  "cart/addToCart",
+  async (courseId, { rejectWithValue }) => {
+    try {
+      const { data } = await api.post(API_ENDPOINTS.CART.ADD, { courseId });
+      const courses = data.courses || [];
+      return courses.map((c) =>
+        typeof c === "object" && c !== null ? (c._id ?? c.id) : c,
+      );
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  },
+);
+
+export const removeFromCart = createAsyncThunk(
+  "cart/removeFromCart",
+  async (courseId, { rejectWithValue }) => {
+    try {
+      const { data } = await api.delete(API_ENDPOINTS.CART.REMOVE(courseId));
+      const courses = data.courses || [];
+      return courses.map((c) =>
+        typeof c === "object" && c !== null ? (c._id ?? c.id) : c,
+      );
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  },
+);
+
+export const clearCart = createAsyncThunk(
+  "cart/clearCart",
+  async (_, { rejectWithValue }) => {
+    try {
+      await api.delete(API_ENDPOINTS.CART.CLEAR);
+      return [];
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -35,14 +94,7 @@ export const checkoutAndEnroll = createAsyncThunk(
 // ── Slice ─────────────────────────────────────────────────────────────────────
 
 const initialState = {
-  // IDs of courses the user has added to their cart (persisted to localStorage)
-  cartIds: (() => {
-    try {
-      return JSON.parse(localStorage.getItem("cartIds") ?? "[]");
-    } catch {
-      return [];
-    }
-  })(),
+  cartIds: [], // IDs of courses the user has added to their cart (fetched from MongoDB)
 
   availableCourses: [], // all courses fetched from backend
   availableLoading: false,
@@ -53,26 +105,10 @@ const initialState = {
   error: null,
 };
 
-const persist = (ids) => localStorage.setItem("cartIds", JSON.stringify(ids));
-
 const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    addToCart: (state, { payload }) => {
-      if (!state.cartIds.includes(payload)) {
-        state.cartIds.push(payload);
-        persist(state.cartIds);
-      }
-    },
-    removeFromCart: (state, { payload }) => {
-      state.cartIds = state.cartIds.filter((id) => id !== payload);
-      persist(state.cartIds);
-    },
-    clearCart: (state) => {
-      state.cartIds = [];
-      persist([]);
-    },
     clearCartError: (state) => {
       state.error = null;
     },
@@ -99,6 +135,50 @@ const cartSlice = createSlice({
         state.error = action.payload;
       })
 
+      // ── fetchCart ────────────────────────────────────────────────────────
+      .addCase(fetchCart.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(fetchCart.fulfilled, (state, action) => {
+        state.cartIds = action.payload;
+      })
+      .addCase(fetchCart.rejected, (state, action) => {
+        state.error = action.payload;
+      })
+
+      // ── addToCart ────────────────────────────────────────────────────────
+      .addCase(addToCart.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(addToCart.fulfilled, (state, action) => {
+        state.cartIds = action.payload;
+      })
+      .addCase(addToCart.rejected, (state, action) => {
+        state.error = action.payload;
+      })
+
+      // ── removeFromCart ───────────────────────────────────────────────────
+      .addCase(removeFromCart.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(removeFromCart.fulfilled, (state, action) => {
+        state.cartIds = action.payload;
+      })
+      .addCase(removeFromCart.rejected, (state, action) => {
+        state.error = action.payload;
+      })
+
+      // ── clearCart ────────────────────────────────────────────────────────
+      .addCase(clearCart.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(clearCart.fulfilled, (state) => {
+        state.cartIds = [];
+      })
+      .addCase(clearCart.rejected, (state, action) => {
+        state.error = action.payload;
+      })
+
       // ── checkoutAndEnroll ────────────────────────────────────────────────
       .addCase(checkoutAndEnroll.pending, (state) => {
         state.checkoutLoading = true;
@@ -109,23 +189,20 @@ const cartSlice = createSlice({
         state.checkoutLoading = false;
         state.checkoutSuccess = true;
         state.enrolledIds = action.payload.enrolled ?? [];
-        // Clear cart after successful enrollment
         state.cartIds = [];
-        persist([]);
       })
       .addCase(checkoutAndEnroll.rejected, (state, action) => {
         state.checkoutLoading = false;
         state.error = action.payload;
+      })
+
+      // ── logout ───────────────────────────────────────────────────────────
+      .addCase("auth/logout/fulfilled", (state) => {
+        state.cartIds = [];
       });
   },
 });
 
-export const {
-  addToCart,
-  removeFromCart,
-  clearCart,
-  clearCartError,
-  resetCheckout,
-} = cartSlice.actions;
+export const { clearCartError, resetCheckout } = cartSlice.actions;
 
 export default cartSlice.reducer;

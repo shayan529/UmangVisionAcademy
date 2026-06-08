@@ -56,6 +56,14 @@ export const API_ENDPOINTS = {
     GET: (id) => `/students/${id}`,
     ACTIVITY: '/students/activity',
   },
+
+  // Cart endpoints
+  CART: {
+    GET: '/cart',
+    ADD: '/cart/add',
+    REMOVE: (courseId) => `/cart/${courseId}`,
+    CLEAR: '/cart',
+  },
 };
 
 export const api = axios.create({

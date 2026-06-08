@@ -461,15 +461,6 @@
         "role": "Head of Curriculum",
         "bio": "Former CBSE examiner and educator with expertise in designing outcome-driven learning paths for Classes 6–12."
       },
-      "footer": {
-        "platform": "Platform",
-        "courses": "Courses",
-        "aboutUs": "About Us",
-        "support": "Support",
-        "contact": "Contact",
-        "helpCenter": "Help Center",
-        "faq": "FAQ"
-      },
       "AV": {
         "name": "Arjun Verma",
         "role": "CTO",
@@ -522,6 +513,16 @@
       "submit": "Send Message"
     }
   },
+  "footer": {
+    "platform": "Platform",
+    "courses": "Courses",
+    "aboutUs": "About Us",
+    "support": "Support",
+    "contact": "Contact",
+    "helpCenter": "Help Center",
+    "faq": "FAQ"
+  },
+
   "helpCenter": {
     "tag": "HELP CENTER",
     "headline": "How can we",
@@ -668,5 +669,72 @@
     "categories": "Categories",
     "disclaimerTitle": "Disclaimer:",
     "disclaimerText": "Scheme details, deadlines, and eligibility are sourced from official government portals and are subject to change. Always verify on the official website before applying. SkillSphere is not affiliated with any government body."
+  },
+
+  "studentSidebar": {
+    "overview": "Overview",
+    "myCourses": "My Courses",
+    "aiTutor": "AI Tutor",
+    "sessions": "Sessions",
+    "leaderboard": "Leaderboard",
+    "settings": "Settings",
+    "student": "Student"
+  },
+  "studentDashboard": {
+    "dashboard": "Dashboard",
+    "myCourses": "My Courses",
+    "aiTutor": "AI Tutor",
+    "community": "Community",
+    "certificates": "Certificates",
+    "settings": "Settings",
+    "leaderboard": "Leaderboard",
+
+    "welcomeBack": "Welcome Back, {{name}} 👋",
+    "studentDashboardTitle": "Student Dashboard",
+    "heroDescription": "Track your learning progress, jump into your courses, and access AI-powered study tools — all from one place.",
+
+    "continueLearning": "Continue Learning →",
+
+    "enrolledCourses": "Enrolled Courses",
+    "overallProgress": "Overall Progress",
+    "leaderboardRank": "Leaderboard Rank",
+
+    "nextGoal": "NEXT GOAL",
+    "weeklyGoal": "WEEKLY GOAL",
+    "communityGoal": "COMMUNITY",
+
+    "allCoursesComplete": "All courses complete 🎉",
+    "allCoursesCompleteDesc": "Enroll in a new course to keep levelling up.",
+
+    "weeklyGoalTitle": "Keep your streak alive",
+    "weeklyGoalDesc": "Attend at least one live session and review your latest quiz analytics.",
+
+    "communityTitle": "Join the next live event",
+    "communityDesc": "Jump into mentorship, Q&A, and group study sessions from the dashboard.",
+
+    "recentActivity": "Recent Activity",
+    "viewAll": "View all →",
+
+    "noActivity": "No recent activity yet.",
+    "noActivityDesc": "Start a course to see your progress here.",
+
+    "courseProgress": "Course Progress",
+    "seeAll": "See all →",
+
+    "menu": "Menu",
+
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
+  },
+
+  "instructorSidebar": {
+    "dashboard": "Dashboard",
+    "courses": "My Courses",
+    "students": "Students",
+    "sessions": "Live Sessions",
+    "analytics": "Analytics",
+    "ai": "AI Assistant",
+    "settings": "Settings"
   }
 }
