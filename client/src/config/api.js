@@ -55,6 +55,10 @@ export const API_ENDPOINTS = {
     LIST: '/students',
     GET: (id) => `/students/${id}`,
     ACTIVITY: '/students/activity',
+    LEADERBOARD: '/students/leaderboard',
+  },
+  AI: {
+    GENERATE_QUIZ: '/ai/generate-quiz',
   },
 
   // Cart endpoints

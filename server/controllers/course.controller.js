@@ -1,6 +1,6 @@
-import Course from "./../models/courses.model.js";
-import User from "./../models/user.model.js";
-import Cart from "./../models/cart.model.js";
+import Course from './../models/courses.model.js';
+import User from './../models/user.model.js';
+import Cart from './../models/cart.model.js';
 
 // ── shared shape helper ───────────────────────────────────────────────────────
 const shapeCourse = (c) => ({
@@ -18,9 +18,10 @@ const shapeCourse = (c) => ({
   durationHours: c.durationHours,
   tags: c.tags,
   lessons: c.lessons ?? [],
+  quiz: c.quiz ?? { title: 'Final Course Quiz', questions: [] },
   lessonCount: c.lessons?.length ?? 0,
   enrolledCount: c.students?.length ?? 0,
-  status: c.published ? "published" : "draft",
+  status: c.published ? 'published' : 'draft',
   revenue: (c.price ?? 0) * (c.students?.length ?? 0),
 });
 
@@ -40,24 +41,26 @@ export const createCourse = async (req, res) => {
       tags,
       board,
       published,
+      quiz,
     } = req.body;
 
     if (!title?.trim())
-      return res.status(400).json({ message: "Title is required" });
+      return res.status(400).json({ message: 'Title is required' });
     if (!summary?.trim())
-      return res.status(400).json({ message: "Summary is required" });
+      return res.status(400).json({ message: 'Summary is required' });
 
     const course = await Course.create({
       title: title.trim(),
       summary: summary.trim(),
-      description: description || "",
-      category: category || "General",
-      level: level || "Beginner",
+      description: description || '',
+      category: category || 'General',
+      level: level || 'Beginner',
       price: Number(price) || 0,
-      thumbnailUrl: thumbnailUrl || "",
-      demoVideoUrl: demoVideoUrl || "",
+      thumbnailUrl: thumbnailUrl || '',
+      demoVideoUrl: demoVideoUrl || '',
       lessons: Array.isArray(lessons) ? lessons : [],
       tags: Array.isArray(tags) ? tags : [],
+      quiz: quiz && typeof quiz === 'object' ? quiz : undefined,
       published: published ?? false,
       instructor: req.user._id,
       board: board,
@@ -86,7 +89,7 @@ export const getCourses = async (req, res) => {
 export const getPublishedCourses = async (req, res) => {
   try {
     const courses = await Course.find({ published: true })
-      .populate("instructor", "name email")
+      .populate('instructor', 'name email')
       .sort({ createdAt: -1 })
       .lean();
     res.json(courses);
@@ -99,10 +102,10 @@ export const getPublishedCourses = async (req, res) => {
 export const getCourseByIdPublic = async (req, res) => {
   try {
     const course = await Course.findOne({ _id: req.params.id, published: true })
-      .populate("instructor", "name email")
+      .populate('instructor', 'name email')
       .lean();
 
-    if (!course) return res.status(404).json({ message: "Course not found" });
+    if (!course) return res.status(404).json({ message: 'Course not found' });
 
     res.json({
       _id: course._id,
@@ -126,7 +129,7 @@ export const getCourseByIdPublic = async (req, res) => {
         title: l.title,
         description: l.description,
         durationMinutes: l.durationMinutes,
-        type: l.type ?? "video",
+        type: l.type ?? 'video',
         // videoUrl and content intentionally withheld from public
       })),
     });
@@ -139,7 +142,7 @@ export const getCourseByIdPublic = async (req, res) => {
 export const getAllCoursesAdmin = async (req, res) => {
   try {
     const courses = await Course.find({})
-      .populate("instructor", "name email")
+      .populate('instructor', 'name email')
       .sort({ createdAt: -1 })
       .lean();
     res.json(courses);
@@ -152,7 +155,7 @@ export const getAllCoursesAdmin = async (req, res) => {
 export const enrolledCourses = async (req, res) => {
   try {
     const courses = await Course.find({ students: req.user._id })
-      .populate("instructor", "name email")
+      .populate('instructor', 'name email')
       .lean();
     res.json(courses);
   } catch (err) {
@@ -167,7 +170,7 @@ export const enrollCourses = async (req, res) => {
     if (!Array.isArray(courseIds) || courseIds.length === 0)
       return res
         .status(400)
-        .json({ message: "courseIds must be a non-empty array." });
+        .json({ message: 'courseIds must be a non-empty array.' });
 
     const studentId = req.user._id;
     const enrolled = [],
@@ -182,7 +185,7 @@ export const enrollCourses = async (req, res) => {
           return;
         }
         const already = course.students.some(
-          (id) => id.toString() === studentId.toString(),
+          (id) => id.toString() === studentId.toString()
         );
         if (already) {
           alreadyEnrolled.push(courseId);
@@ -195,7 +198,7 @@ export const enrollCourses = async (req, res) => {
           $addToSet: { enrolledCourses: courseId },
         });
         enrolled.push(courseId);
-      }),
+      })
     );
 
     await Cart.findOneAndUpdate(
@@ -209,10 +212,10 @@ export const enrollCourses = async (req, res) => {
       notFound,
       message: enrolled.length
         ? `Successfully enrolled in ${enrolled.length} course(s).`
-        : "Already enrolled in all selected courses.",
+        : 'Already enrolled in all selected courses.',
     });
   } catch (err) {
-    console.error("enrollCourses error:", err);
+    console.error('enrollCourses error:', err);
     return res.status(500).json({ message: err.message });
   }
 };
@@ -221,9 +224,9 @@ export const enrollCourses = async (req, res) => {
 export const getCourseById = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
-      .populate("instructor", "name email")
-      .populate("students", "name email");
-    if (!course) return res.status(404).json({ message: "Course not found" });
+      .populate('instructor', 'name email')
+      .populate('students', 'name email');
+    if (!course) return res.status(404).json({ message: 'Course not found' });
     // Returns full lesson data including videoUrl, type, and content
     res.json(course);
   } catch (error) {
@@ -247,6 +250,7 @@ export const updateCourse = async (req, res) => {
       tags,
       published,
       board,
+      quiz,
     } = req.body;
 
     const allowedUpdates = {
@@ -262,30 +266,83 @@ export const updateCourse = async (req, res) => {
       ...(published !== undefined && { published }),
       ...(board !== undefined && { board }),
       ...(lessons !== undefined && { lessons }),
+      ...(quiz !== undefined && { quiz }),
     };
 
     const course = await Course.findOneAndUpdate(
       { _id: req.params.id, instructor: req.user._id },
       allowedUpdates,
-      { new: true, runValidators: true },
+      { new: true, runValidators: true }
     );
 
-    if (!course) return res.status(404).json({ message: "Course not found" });
+    if (!course) return res.status(404).json({ message: 'Course not found' });
     res.json(shapeCourse(course));
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-// ── deleteCourse ──────────────────────────────────────────────────────────────
+// ── submitQuiz ───────────────────────────────────────────────────────────────
+export const submitQuiz = async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const answers = Array.isArray(req.body.answers) ? req.body.answers : [];
+
+    const course = await Course.findById(courseId).lean();
+    if (!course) return res.status(404).json({ message: 'Course not found' });
+
+    const quizQuestions = course.quiz?.questions ?? [];
+    if (!quizQuestions.length)
+      return res.status(400).json({ message: 'This course has no quiz.' });
+
+    const student = await User.findById(req.user._id);
+    if (!student) return res.status(404).json({ message: 'Student not found' });
+
+    const previousSubmission = student.quizSubmissions.find(
+      (submission) => submission.courseId.toString() === courseId.toString()
+    );
+    const previousBest = previousSubmission?.score ?? 0;
+
+    let correctCount = 0;
+    quizQuestions.forEach((question, index) => {
+      if (answers[index] === question.correctOptionIndex) {
+        correctCount += 1;
+      }
+    });
+
+    const newScore = correctCount * 10;
+    const addedPoints = Math.max(0, newScore - previousBest);
+
+    student.quizSubmissions.push({
+      courseId,
+      score: newScore,
+      completedAt: new Date(),
+    });
+    if (addedPoints > 0) student.score += addedPoints;
+
+    await student.save();
+
+    res.json({
+      correctCount,
+      totalQuestions: quizQuestions.length,
+      score: newScore,
+      previousBest,
+      addedPoints,
+      totalScore: student.score,
+      quizSubmissions: student.quizSubmissions,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 export const deleteCourse = async (req, res) => {
   try {
     const course = await Course.findOneAndDelete({
       _id: req.params.id,
       instructor: req.user._id,
     });
-    if (!course) return res.status(404).json({ message: "Course not found" });
-    res.json({ message: "Course deleted" });
+    if (!course) return res.status(404).json({ message: 'Course not found' });
+    res.json({ message: 'Course deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

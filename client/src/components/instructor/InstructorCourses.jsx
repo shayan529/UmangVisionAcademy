@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchCourses,
@@ -511,7 +511,260 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
     </div>
   );
 };
+// ─── QuizManager Component ────────────────────────────────────────────────────
+// Drop inside InstructorCourses.jsx, rendered inside your course editor form
 
+export function QuizManager({
+  quiz,
+  onChange,
+  courseTitle,
+  courseDescription,
+}) {
+  // quiz shape: { title: string, questions: [{ question, options:[4], correctOptionIndex }] }
+  const [aiLoading, setAiLoading] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(null);
+
+  const questions = quiz?.questions || [];
+
+  const updateQuestions = (newQs) => onChange({ ...quiz, questions: newQs });
+
+  const addQuestion = () => {
+    const blank = {
+      question: '',
+      options: ['', '', '', ''],
+      correctOptionIndex: 0,
+    };
+    const updated = [...questions, blank];
+    updateQuestions(updated);
+    setActiveIdx(updated.length - 1);
+  };
+
+  const removeQuestion = (idx) => {
+    updateQuestions(questions.filter((_, i) => i !== idx));
+    setActiveIdx(null);
+  };
+
+  const updateQuestion = (idx, field, value) => {
+    updateQuestions(
+      questions.map((q, i) => (i === idx ? { ...q, [field]: value } : q))
+    );
+  };
+
+  const updateOption = (qIdx, oIdx, value) => {
+    updateQuestions(
+      questions.map((q, i) => {
+        if (i !== qIdx) return q;
+        const opts = [...q.options];
+        opts[oIdx] = value;
+        return { ...q, options: opts };
+      })
+    );
+  };
+
+  const generateWithAI = async () => {
+    setAiLoading(true);
+    try {
+      const token = localStorage.getItem('token'); // match your auth pattern
+      const res = await fetch('/api/ai/generate-quiz', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: courseTitle,
+          description: courseDescription,
+        }),
+      });
+      const data = await res.json();
+      if (data.questions?.length) {
+        updateQuestions(data.questions);
+        setActiveIdx(0);
+      }
+    } catch (err) {
+      console.error('AI quiz generation failed:', err);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const LABELS = ['A', 'B', 'C', 'D'];
+
+  return (
+    <div className="border border-gray-200 rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-3.5 bg-gray-50 border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">📝</span>
+          <span className="font-semibold text-gray-700 text-sm">
+            Final Quiz
+          </span>
+          <span className="text-xs bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-medium">
+            {questions.length} question{questions.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={generateWithAI}
+          disabled={aiLoading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-all"
+        >
+          {aiLoading ? (
+            <>
+              <svg
+                className="animate-spin h-3.5 w-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="white"
+                  strokeWidth="3"
+                  opacity=".3"
+                />
+                <path
+                  d="M12 2a10 10 0 0 1 10 10"
+                  stroke="white"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+              </svg>
+              Generating…
+            </>
+          ) : (
+            <>✨ Generate with AI</>
+          )}
+        </button>
+      </div>
+
+      <div className="flex" style={{ minHeight: questions.length ? 340 : 140 }}>
+        {/* Left sidebar: question list */}
+        {questions.length > 0 && (
+          <div className="w-48 border-r border-gray-100 bg-gray-50/60 p-2 space-y-1 overflow-y-auto">
+            {questions.map((q, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setActiveIdx(idx)}
+                className={`w-full text-left rounded-xl px-3 py-2 text-xs transition-all ${
+                  activeIdx === idx
+                    ? 'bg-indigo-500 text-white'
+                    : 'text-gray-500 hover:bg-white hover:shadow-sm'
+                }`}
+              >
+                <span className="font-bold">Q{idx + 1}.</span>{' '}
+                <span className="truncate block">
+                  {q.question || 'Untitled'}
+                </span>
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={addQuestion}
+              className="w-full text-left rounded-xl px-3 py-2 text-xs text-indigo-500 hover:bg-indigo-50 border border-dashed border-indigo-200 mt-1"
+            >
+              + Add Question
+            </button>
+          </div>
+        )}
+
+        {/* Right: editor or empty state */}
+        <div className="flex-1 p-5">
+          {questions.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center gap-3 text-gray-400">
+              <span className="text-3xl">🗒️</span>
+              <p className="text-sm">No questions yet</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={addQuestion}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs hover:bg-indigo-700"
+                >
+                  + Add Question
+                </button>
+                <button
+                  type="button"
+                  onClick={generateWithAI}
+                  disabled={aiLoading}
+                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs disabled:opacity-50"
+                >
+                  ✨ Generate with AI
+                </button>
+              </div>
+            </div>
+          ) : activeIdx !== null && questions[activeIdx] ? (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-semibold text-gray-700">
+                  Question {activeIdx + 1}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeQuestion(activeIdx)}
+                  className="text-xs text-red-400 hover:text-red-600"
+                >
+                  Remove
+                </button>
+              </div>
+
+              {/* Question text */}
+              <textarea
+                value={questions[activeIdx].question}
+                onChange={(e) =>
+                  updateQuestion(activeIdx, 'question', e.target.value)
+                }
+                rows={2}
+                placeholder="Enter question text…"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+              />
+
+              {/* Options */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Options — click radio to mark correct
+                </p>
+                {questions[activeIdx].options.map((opt, oIdx) => (
+                  <div key={oIdx} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name={`correct-${activeIdx}`}
+                      checked={questions[activeIdx].correctOptionIndex === oIdx}
+                      onChange={() =>
+                        updateQuestion(activeIdx, 'correctOptionIndex', oIdx)
+                      }
+                      className="w-4 h-4 accent-green-500"
+                    />
+                    <span className="text-xs font-bold text-gray-400 w-4">
+                      {LABELS[oIdx]}
+                    </span>
+                    <input
+                      value={opt}
+                      onChange={(e) =>
+                        updateOption(activeIdx, oIdx, e.target.value)
+                      }
+                      placeholder={`Option ${LABELS[oIdx]}`}
+                      className={`flex-1 border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 transition-all ${
+                        questions[activeIdx].correctOptionIndex === oIdx
+                          ? 'border-green-300 bg-green-50 focus:ring-green-400'
+                          : 'border-gray-200 focus:ring-indigo-400'
+                      }`}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+              Select a question to edit
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function InstructorCourses({ showToast }) {
   const dispatch = useDispatch();
@@ -1327,6 +1580,18 @@ export default function InstructorCourses({ showToast }) {
                 Yes, Delete
               </button>
             </div>
+          </div>
+          // Inside your course edit form, after lessons/curriculum:
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700">
+              Final Quiz
+            </label>
+            <QuizManager
+              quiz={CourseForm.quiz} // adjust to your form state variable name
+              onChange={(quiz) => setForm((prev) => ({ ...prev, quiz }))}
+              courseTitle={CourseForm.title}
+              courseDescription={CourseForm.description}
+            />
           </div>
         </div>
       )}

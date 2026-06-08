@@ -87,3 +87,87 @@ export const chatWithAI = async (req, res) => {
     }
   }
 };
+
+export const generateQuizAI = async (req, res) => {
+  try {
+    const { title, summary } = req.body;
+    if (!title || !summary)
+      return res
+        .status(400)
+        .json({ message: 'Title and summary are required.' });
+
+    const prompt = `Generate exactly 5 multiple choice questions for a final course quiz based on the following course title and summary.
+
+Course Title: ${title}
+Course Summary: ${summary}
+
+Return valid JSON only in the following shape:
+{
+  "quiz": {
+    "title": "Final Course Quiz",
+    "questions": [
+      {
+        "question": "...",
+        "options": ["...", "...", "...", "..."],
+        "correctOptionIndex": 0
+      }
+    ]
+  }
+}
+
+Each question must have exactly 4 options and a correctOptionIndex between 0 and 3.
+`;
+
+    const response = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
+      ],
+      max_tokens: 700,
+      temperature: 0.7,
+    });
+
+    const text = response.choices?.[0]?.message?.content?.trim() ?? '';
+    let parsed;
+
+    try {
+      parsed = JSON.parse(text);
+    } catch (parseErr) {
+      const jsonMatch = text.match(/\{[\s\S]*\}$/);
+      if (!jsonMatch) {
+        throw new Error('AI returned invalid quiz JSON.');
+      }
+      parsed = JSON.parse(jsonMatch[0]);
+    }
+
+    const quiz = parsed.quiz;
+    if (
+      !quiz ||
+      !Array.isArray(quiz.questions) ||
+      quiz.questions.length !== 5 ||
+      !quiz.questions.every(
+        (q) =>
+          typeof q.question === 'string' &&
+          Array.isArray(q.options) &&
+          q.options.length === 4 &&
+          q.options.every((opt) => typeof opt === 'string') &&
+          Number.isInteger(q.correctOptionIndex) &&
+          q.correctOptionIndex >= 0 &&
+          q.correctOptionIndex < 4
+      )
+    ) {
+      return res.status(500).json({
+        message: 'AI did not return a valid quiz format. Please try again.',
+      });
+    }
+
+    res.json({ quiz });
+  } catch (err) {
+    console.error('AI quiz generation error:', err);
+    res.status(500).json({
+      message:
+        err.response?.data?.message || err.message || 'Quiz generation failed.',
+    });
+  }
+};

@@ -1,9 +1,9 @@
-import User from "../models/user.model.js";
-import Course from "../models/courses.model.js";
+import User from '../models/user.model.js';
+import Course from '../models/courses.model.js';
 
 // ── Helper: get all course IDs taught by this instructor ─────────────────────
 const getInstructorCourseIds = async (instructorId) => {
-  const courses = await Course.find({ instructor: instructorId }).select("_id");
+  const courses = await Course.find({ instructor: instructorId }).select('_id');
   return courses.map((c) => c._id);
 };
 
@@ -14,7 +14,7 @@ export const getStudents = async (req, res) => {
 
     // Pull courses WITH student arrays so we can compute per-student progress
     const courses = await Course.find({ _id: { $in: courseIds } }).select(
-      "_id title students ratingAverage",
+      '_id title students ratingAverage'
     );
 
     // Collect unique student IDs
@@ -26,8 +26,8 @@ export const getStudents = async (req, res) => {
 
     const users = await User.find({
       _id: { $in: studentIds },
-      roles: { $in: ["student"] }, // roles is an array field
-    }).select("-password -resetPasswordToken -resetPasswordExpires");
+      roles: { $in: ['student'] }, // roles is an array field
+    }).select('-password -resetPasswordToken -resetPasswordExpires');
 
     // Compute per-student stats from course enrollment data
     const shaped = users.map((u) => {
@@ -35,7 +35,7 @@ export const getStudents = async (req, res) => {
 
       // Courses this student is enrolled in (within THIS instructor's courses)
       const enrolledIn = courses.filter((c) =>
-        c.students.some((s) => s.toString() === uid),
+        c.students.some((s) => s.toString() === uid)
       );
 
       return {
@@ -45,7 +45,7 @@ export const getStudents = async (req, res) => {
         avatarUrl: u.avatarUrl,
         init: u.name.slice(0, 2).toUpperCase(),
         // Use first enrolled course title as display label
-        enrolledCourse: enrolledIn[0]?.title ?? "—",
+        enrolledCourse: enrolledIn[0]?.title ?? '—',
         enrolledCount: enrolledIn.length,
         // No progress field in schema yet — default 0 until you add it
         progress: u.progress ?? 0,
@@ -63,13 +63,25 @@ export const getStudents = async (req, res) => {
   }
 };
 
+export const getLeaderboard = async (req, res) => {
+  try {
+    const leaderboard = await User.find({ roles: { $in: ['student'] } })
+      .select('name email avatarUrl score quizSubmissions')
+      .sort({ score: -1, updatedAt: -1 })
+      .lean();
+    res.json(leaderboard);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // GET /students/activity — recent activity feed (MUST be registered before /:id)
 export const getStudentActivity = async (req, res) => {
   try {
     const courseIds = await getInstructorCourseIds(req.user._id);
 
     const courses = await Course.find({ _id: { $in: courseIds } }).select(
-      "_id title students",
+      '_id title students'
     );
 
     const studentIds = [
@@ -82,26 +94,26 @@ export const getStudentActivity = async (req, res) => {
 
     const recentUsers = await User.find({
       _id: { $in: studentIds },
-      roles: { $in: ["student"] },
+      roles: { $in: ['student'] },
       updatedAt: { $gte: sevenDaysAgo },
     })
-      .select("name updatedAt")
+      .select('name updatedAt')
       .sort({ updatedAt: -1 })
       .limit(10);
 
     const activity = recentUsers.map((u) => {
       // Find which course they were last active in
       const enrolledIn = courses.filter((c) =>
-        c.students.some((s) => s.toString() === u._id.toString()),
+        c.students.some((s) => s.toString() === u._id.toString())
       );
-      const courseName = enrolledIn[0]?.title ?? "a course";
+      const courseName = enrolledIn[0]?.title ?? 'a course';
 
       return {
         _id: u._id,
         name: u.name,
         init: u.name.slice(0, 2).toUpperCase(),
         action: `Active in ${courseName}`,
-        tag: "active",
+        tag: 'active',
       };
     });
 
@@ -116,12 +128,12 @@ export const getStudentById = async (req, res) => {
   try {
     const student = await User.findOne({
       _id: req.params.id,
-      roles: { $in: ["student"] },
+      roles: { $in: ['student'] },
     })
-      .select("-password -resetPasswordToken -resetPasswordExpires")
-      .populate("enrolledCourses", "title summary");
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .populate('enrolledCourses', 'title summary');
 
-    if (!student) return res.status(404).json({ message: "Student not found" });
+    if (!student) return res.status(404).json({ message: 'Student not found' });
     res.json(student);
   } catch (error) {
     res.status(500).json({ message: error.message });

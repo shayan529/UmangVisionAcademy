@@ -7,7 +7,7 @@ export const fetchAvailableCourses = createAsyncThunk(
   "cart/fetchAvailable",
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await api.get(API_ENDPOINTS.COURSES.LIST);
+      const { data } = await api.get(API_ENDPOINTS.COURSES.PUBLIC);
       console.log("COURSES API RESPONSE:", data);
       const raw = Array.isArray(data)
         ? data

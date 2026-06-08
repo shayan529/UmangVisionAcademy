@@ -59,6 +59,27 @@ const userSchema = new Schema(
         ref: "Course",
       },
     ],
+    score: {
+      type: Number,
+      default: 0,
+    },
+    quizSubmissions: [
+      {
+        courseId: {
+          type: Types.ObjectId,
+          ref: "Course",
+          required: true,
+        },
+        score: {
+          type: Number,
+          required: true,
+        },
+        completedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
     teachingCourses: [
       {
         type: Types.ObjectId,

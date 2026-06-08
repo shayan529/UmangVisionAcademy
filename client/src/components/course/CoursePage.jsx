@@ -1,17 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import api from "../../config/api.js";
-import TextLessonViewer from "./TextLessonViewer.jsx";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import api from '../../config/api.js';
+import { updateUserScoreAndSubmissions } from '../../redux/slices/authSlice.js';
+import TextLessonViewer from './TextLessonViewer.jsx';
 
 const fmt = (secs) => {
-  if (!secs) return "";
+  if (!secs) return '';
   const m = Math.floor(secs / 60),
     s = Math.floor(secs % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 };
 const fmtMins = (mins) => {
-  if (!mins) return "";
+  if (!mins) return '';
   const h = Math.floor(mins / 60),
     m = mins % 60;
   return h ? `${h}h ${m}m` : `${m}m`;
@@ -29,7 +30,7 @@ const groupIntoChapters = (lessons = []) => {
       chapters.push(current);
     }
     if (!current) {
-      current = { title: "Chapter 1", lessons: [] };
+      current = { title: 'Chapter 1', lessons: [] };
       chapters.push(current);
     }
     current.lessons.push({ ...lesson, globalIdx: idx });
@@ -75,7 +76,7 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0 }) => {
     if (playingRef.current) {
       v.pause();
     } else {
-      v.play().catch((e) => console.warn("play() failed:", e));
+      v.play().catch((e) => console.warn('play() failed:', e));
     }
   }, []);
 
@@ -115,18 +116,18 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0 }) => {
     return (
       <div
         style={{
-          aspectRatio: "16/9",
-          background: "#0f172a",
+          aspectRatio: '16/9',
+          background: '#0f172a',
           borderRadius: 12,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
           gap: 12,
         }}
       >
         <span style={{ fontSize: 48 }}>🎬</span>
-        <p style={{ color: "#475569", fontSize: 14 }}>
+        <p style={{ color: '#475569', fontSize: 14 }}>
           No video for this lesson
         </p>
       </div>
@@ -136,13 +137,13 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0 }) => {
     <div
       onMouseMove={resetHide}
       style={{
-        position: "relative",
-        aspectRatio: "16/9",
-        background: "#000",
+        position: 'relative',
+        aspectRatio: '16/9',
+        background: '#000',
         borderRadius: 12,
-        overflow: "hidden",
-        cursor: "pointer",
-        userSelect: "none",
+        overflow: 'hidden',
+        cursor: 'pointer',
+        userSelect: 'none',
       }}
     >
       <video
@@ -177,38 +178,38 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0 }) => {
           onEnded?.();
         }}
         style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "contain",
-          display: "block",
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          display: 'block',
         }}
       />
       {!playing && (
         <div
           onClick={toggle}
           style={{
-            position: "absolute",
+            position: 'absolute',
             inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(0,0,0,0.4)",
-            cursor: "pointer",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.4)',
+            cursor: 'pointer',
           }}
         >
           <div
             style={{
               width: 68,
               height: 68,
-              borderRadius: "50%",
-              background: "rgba(124,58,237,0.95)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 0 50px rgba(124,58,237,0.6)",
+              borderRadius: '50%',
+              background: 'rgba(124,58,237,0.95)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 50px rgba(124,58,237,0.6)',
             }}
           >
-            <span style={{ fontSize: 26, marginLeft: 5, color: "#fff" }}>
+            <span style={{ fontSize: 26, marginLeft: 5, color: '#fff' }}>
               ▶
             </span>
           </div>
@@ -217,61 +218,61 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0 }) => {
       {playing && (
         <div
           onClick={toggle}
-          style={{ position: "absolute", inset: 0, cursor: "pointer" }}
+          style={{ position: 'absolute', inset: 0, cursor: 'pointer' }}
         />
       )}
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          position: "absolute",
+          position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
-          padding: "8px 14px 12px",
-          background: "linear-gradient(transparent,rgba(0,0,0,0.85))",
-          transition: "opacity 0.25s",
+          padding: '8px 14px 12px',
+          background: 'linear-gradient(transparent,rgba(0,0,0,0.85))',
+          transition: 'opacity 0.25s',
           opacity: showControls ? 1 : 0,
-          pointerEvents: showControls ? "auto" : "none",
+          pointerEvents: showControls ? 'auto' : 'none',
         }}
       >
         <div
           onClick={seek}
           style={{
             height: 4,
-            background: "rgba(255,255,255,0.2)",
+            background: 'rgba(255,255,255,0.2)',
             borderRadius: 2,
-            cursor: "pointer",
+            cursor: 'pointer',
             marginBottom: 10,
           }}
         >
           <div
             style={{
-              height: "100%",
+              height: '100%',
               width: `${progress}%`,
-              background: "#7c3aed",
+              background: '#7c3aed',
               borderRadius: 2,
-              transition: "width 0.1s",
+              transition: 'width 0.1s',
             }}
           />
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
             onClick={toggle}
             style={{
-              background: "none",
-              border: "none",
-              color: "#fff",
+              background: 'none',
+              border: 'none',
+              color: '#fff',
               fontSize: 18,
-              cursor: "pointer",
+              cursor: 'pointer',
               padding: 0,
             }}
           >
-            {playing ? "⏸" : "▶"}
+            {playing ? '⏸' : '▶'}
           </button>
           <span
             style={{
               fontSize: 12,
-              color: "rgba(255,255,255,0.7)",
+              color: 'rgba(255,255,255,0.7)',
               minWidth: 90,
             }}
           >
@@ -280,25 +281,25 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0 }) => {
           <button
             onClick={() => setMuted((m) => !m)}
             style={{
-              background: "none",
-              border: "none",
-              color: "#fff",
+              background: 'none',
+              border: 'none',
+              color: '#fff',
               fontSize: 14,
-              cursor: "pointer",
+              cursor: 'pointer',
               padding: 0,
             }}
           >
-            {muted ? "🔇" : "🔊"}
+            {muted ? '🔇' : '🔊'}
           </button>
           <button
             onClick={cycleSpeed}
             style={{
-              background: "none",
-              border: "none",
-              color: "rgba(255,255,255,0.7)",
+              background: 'none',
+              border: 'none',
+              color: 'rgba(255,255,255,0.7)',
               fontSize: 11,
               fontWeight: 700,
-              cursor: "pointer",
+              cursor: 'pointer',
               padding: 0,
             }}
           >
@@ -306,9 +307,9 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0 }) => {
           </button>
           <span
             style={{
-              marginLeft: "auto",
+              marginLeft: 'auto',
               fontSize: 11,
-              color: "rgba(255,255,255,0.4)",
+              color: 'rgba(255,255,255,0.4)',
               fontWeight: 600,
             }}
           >
@@ -317,11 +318,11 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0 }) => {
           <button
             onClick={toggleFS}
             style={{
-              background: "none",
-              border: "none",
-              color: "#fff",
+              background: 'none',
+              border: 'none',
+              color: '#fff',
               fontSize: 16,
-              cursor: "pointer",
+              cursor: 'pointer',
               padding: 0,
             }}
           >
@@ -337,13 +338,14 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0 }) => {
 export default function CoursePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { user, loading: authLoading } = useSelector((s) => s.auth);
 
   const storageKey = `course-progress-${id}`;
   const savedState = useMemo(() => {
-    if (typeof window === "undefined" || !id) return null;
+    if (typeof window === 'undefined' || !id) return null;
     try {
-      return JSON.parse(localStorage.getItem(storageKey) || "null");
+      return JSON.parse(localStorage.getItem(storageKey) || 'null');
     } catch {
       return null;
     }
@@ -351,18 +353,24 @@ export default function CoursePage() {
 
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [activeIdx, setActiveIdx] = useState(savedState?.lastLesson ?? 0);
   const [completed, setCompleted] = useState(
-    () => new Set(savedState?.completed ?? []),
+    () => new Set(savedState?.completed ?? [])
   );
   const [currentVideoPct, setCurrentVideoPct] = useState(0);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [quizStarted, setQuizStarted] = useState(false);
+  const [selectedAnswers, setSelectedAnswers] = useState([]);
+  const [currentQuizQuestion, setCurrentQuizQuestion] = useState(0);
+  const [quizResult, setQuizResult] = useState(null);
+  const [quizSubmitting, setQuizSubmitting] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedCh, setExpandedCh] = useState(new Set([0]));
 
   const lessonProgressRef = useRef(savedState?.lessonProgress ?? {});
   const [initialTime, setInitialTime] = useState(
-    lessonProgressRef.current[savedState?.lastLesson ?? 0] || 0,
+    lessonProgressRef.current[savedState?.lastLesson ?? 0] || 0
   );
 
   useEffect(() => {
@@ -382,13 +390,13 @@ export default function CoursePage() {
         localStorage.setItem(storageKey, JSON.stringify(pendingSave.current));
       }, 5000);
     },
-    [storageKey],
+    [storageKey]
   );
 
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      navigate("/login", { state: { from: `/courses/${id}` } });
+      navigate('/login', { state: { from: `/courses/${id}` } });
       return;
     }
     api
@@ -398,7 +406,7 @@ export default function CoursePage() {
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.response?.data?.message || "Course not found.");
+        setError(err.response?.data?.message || 'Course not found.');
         setLoading(false);
       });
   }, [id, user, authLoading, navigate]);
@@ -408,13 +416,13 @@ export default function CoursePage() {
       clearTimeout(saveTimer.current);
       localStorage.setItem(storageKey, JSON.stringify(pendingSave.current));
     },
-    [storageKey],
+    [storageKey]
   );
 
   const chapters = groupIntoChapters(course?.lessons ?? []);
   const allLessons = course?.lessons ?? [];
   const activeLesson = allLessons[activeIdx];
-  const isTextLesson = activeLesson?.type === "text";
+  const isTextLesson = activeLesson?.type === 'text';
 
   const handleLessonEnd = useCallback(() => {
     setCompleted((prev) => {
@@ -450,7 +458,7 @@ export default function CoursePage() {
         lessonProgress: lessonProgressRef.current,
       });
     },
-    [activeIdx, scheduleSave],
+    [activeIdx, scheduleSave]
   );
 
   const toggleChapter = (i) => {
@@ -468,14 +476,14 @@ export default function CoursePage() {
     return (
       <div
         style={{
-          minHeight: "100vh",
-          background: "#0b1120",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          minHeight: '100vh',
+          background: '#0b1120',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        <div style={{ textAlign: "center", color: "#64748b" }}>
+        <div style={{ textAlign: 'center', color: '#64748b' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>⏳</div>
           <p>Loading course…</p>
         </div>
@@ -486,27 +494,27 @@ export default function CoursePage() {
     return (
       <div
         style={{
-          minHeight: "100vh",
-          background: "#0b1120",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "column",
+          minHeight: '100vh',
+          background: '#0b1120',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
           gap: 16,
         }}
       >
         <span style={{ fontSize: 48 }}>😔</span>
-        <p style={{ color: "#f87171", fontWeight: 600 }}>{error}</p>
+        <p style={{ color: '#f87171', fontWeight: 600 }}>{error}</p>
         <button
           onClick={() => navigate(-1)}
           style={{
-            padding: "10px 20px",
+            padding: '10px 20px',
             borderRadius: 10,
-            border: "none",
-            background: "#7c3aed",
-            color: "#fff",
+            border: 'none',
+            background: '#7c3aed',
+            color: '#fff',
             fontWeight: 600,
-            cursor: "pointer",
+            cursor: 'pointer',
           }}
         >
           ← Go Back
@@ -517,12 +525,12 @@ export default function CoursePage() {
   return (
     <div
       style={{
-        minHeight: "100vh",
-        background: "#0b1120",
-        color: "#f1f5f9",
+        minHeight: '100vh',
+        background: '#0b1120',
+        color: '#f1f5f9',
         fontFamily: "'Inter','Segoe UI',sans-serif",
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {/* ── Responsive styles ── */}
@@ -547,27 +555,27 @@ export default function CoursePage() {
       {/* ── Top bar ── */}
       <div
         style={{
-          background: "#0d1526",
-          borderBottom: "1px solid #1e293b",
-          padding: "10px 14px",
-          display: "flex",
-          alignItems: "center",
+          background: '#0d1526',
+          borderBottom: '1px solid #1e293b',
+          padding: '10px 14px',
+          display: 'flex',
+          alignItems: 'center',
           gap: 10,
-          position: "sticky",
+          position: 'sticky',
           top: 0,
           zIndex: 30,
         }}
       >
         <button
-          onClick={() => navigate("/student-dashboard/my-courses")}
+          onClick={() => navigate('/student-dashboard/my-courses')}
           style={{
-            background: "none",
-            border: "none",
-            color: "#94a3b8",
+            background: 'none',
+            border: 'none',
+            color: '#94a3b8',
             fontSize: 13,
             fontWeight: 600,
-            cursor: "pointer",
-            whiteSpace: "nowrap",
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
             flexShrink: 0,
           }}
         >
@@ -576,8 +584,8 @@ export default function CoursePage() {
         <p className="cp-topbar-title">{course?.title}</p>
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 8,
             flexShrink: 0,
           }}
@@ -586,41 +594,41 @@ export default function CoursePage() {
             style={{
               width: 80,
               height: 5,
-              background: "#1e293b",
+              background: '#1e293b',
               borderRadius: 3,
-              overflow: "hidden",
+              overflow: 'hidden',
             }}
           >
             <div
               style={{
-                height: "100%",
+                height: '100%',
                 width: `${progressPct}%`,
-                background: "linear-gradient(90deg,#7c3aed,#06b6d4)",
+                background: 'linear-gradient(90deg,#7c3aed,#06b6d4)',
                 borderRadius: 3,
-                transition: "width 0.5s",
+                transition: 'width 0.5s',
               }}
             />
           </div>
-          <span style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>
             {progressPct}%
           </span>
         </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           style={{
-            background: "#1e293b",
-            border: "1px solid #334155",
+            background: '#1e293b',
+            border: '1px solid #334155',
             borderRadius: 8,
-            padding: "5px 10px",
-            color: "#94a3b8",
+            padding: '5px 10px',
+            color: '#94a3b8',
             fontSize: 11,
             fontWeight: 600,
-            cursor: "pointer",
-            whiteSpace: "nowrap",
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
             flexShrink: 0,
           }}
         >
-          {sidebarOpen ? "Hide" : "Show"}
+          {sidebarOpen ? 'Hide' : 'Show'}
         </button>
       </div>
 
@@ -644,54 +652,54 @@ export default function CoursePage() {
           <div style={{ marginTop: 18 }}>
             <div
               style={{
-                display: "flex",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
                 gap: 10,
-                flexWrap: "wrap",
+                flexWrap: 'wrap',
               }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 8,
                     marginBottom: 5,
-                    flexWrap: "wrap",
+                    flexWrap: 'wrap',
                   }}
                 >
-                  <p style={{ fontSize: 11, color: "#64748b" }}>
+                  <p style={{ fontSize: 11, color: '#64748b' }}>
                     Lesson {activeIdx + 1} of {allLessons.length}
                   </p>
                   <span
                     style={{
                       fontSize: 10,
                       fontWeight: 700,
-                      padding: "2px 8px",
+                      padding: '2px 8px',
                       borderRadius: 20,
-                      background: isTextLesson ? "#0c2a1a" : "#2e1065",
-                      color: isTextLesson ? "#4ade80" : "#a78bfa",
+                      background: isTextLesson ? '#0c2a1a' : '#2e1065',
+                      color: isTextLesson ? '#4ade80' : '#a78bfa',
                     }}
                   >
-                    {isTextLesson ? "📝 TEXT" : "🎬 VIDEO"}
+                    {isTextLesson ? '📝 TEXT' : '🎬 VIDEO'}
                   </span>
                 </div>
                 <h1
                   style={{
-                    fontSize: "clamp(17px,3vw,24px)",
+                    fontSize: 'clamp(17px,3vw,24px)',
                     fontWeight: 800,
-                    color: "#f1f5f9",
+                    color: '#f1f5f9',
                     lineHeight: 1.3,
                   }}
                 >
-                  {activeLesson?.title || "Untitled Lesson"}
+                  {activeLesson?.title || 'Untitled Lesson'}
                 </h1>
                 {activeLesson?.chapterTitle && (
                   <p
                     style={{
                       fontSize: 12,
-                      color: "#818cf8",
+                      color: '#818cf8',
                       marginTop: 5,
                       fontWeight: 600,
                     }}
@@ -699,12 +707,12 @@ export default function CoursePage() {
                     📂 {activeLesson.chapterTitle}
                   </p>
                 )}
-                <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 5 }}>
+                <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 5 }}>
                   {isTextLesson
-                    ? "Read through the lesson and mark it complete when done"
+                    ? 'Read through the lesson and mark it complete when done'
                     : currentVideoPct > 0
                       ? `Progress: ${currentVideoPct}%`
-                      : "Start watching to track progress"}
+                      : 'Start watching to track progress'}
                 </p>
               </div>
               <button
@@ -721,27 +729,27 @@ export default function CoursePage() {
                   })
                 }
                 style={{
-                  padding: "8px 14px",
+                  padding: '8px 14px',
                   borderRadius: 10,
-                  border: `1px solid ${completed.has(activeIdx) ? "#16a34a" : "#334155"}`,
+                  border: `1px solid ${completed.has(activeIdx) ? '#16a34a' : '#334155'}`,
                   background: completed.has(activeIdx)
-                    ? "#052e16"
-                    : "transparent",
-                  color: completed.has(activeIdx) ? "#4ade80" : "#94a3b8",
+                    ? '#052e16'
+                    : 'transparent',
+                  color: completed.has(activeIdx) ? '#4ade80' : '#94a3b8',
                   fontSize: 12,
                   fontWeight: 700,
-                  cursor: "pointer",
+                  cursor: 'pointer',
                   flexShrink: 0,
-                  whiteSpace: "nowrap",
+                  whiteSpace: 'nowrap',
                 }}
               >
-                {completed.has(activeIdx) ? "✓ Done" : "Mark Complete"}
+                {completed.has(activeIdx) ? '✓ Done' : 'Mark Complete'}
               </button>
             </div>
             {activeLesson?.description && (
               <p
                 style={{
-                  color: "#94a3b8",
+                  color: '#94a3b8',
                   fontSize: 14,
                   lineHeight: 1.8,
                   marginTop: 12,
@@ -753,20 +761,20 @@ export default function CoursePage() {
           </div>
 
           {/* Prev / Next */}
-          <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
             <button
               onClick={() => setActiveIdx(Math.max(0, activeIdx - 1))}
               disabled={activeIdx === 0}
               style={{
                 flex: 1,
-                padding: "11px",
+                padding: '11px',
                 borderRadius: 12,
-                border: "1px solid #334155",
-                background: "transparent",
-                color: activeIdx === 0 ? "#334155" : "#e2e8f0",
+                border: '1px solid #334155',
+                background: 'transparent',
+                color: activeIdx === 0 ? '#334155' : '#e2e8f0',
                 fontWeight: 600,
                 fontSize: 13,
-                cursor: activeIdx === 0 ? "not-allowed" : "pointer",
+                cursor: activeIdx === 0 ? 'not-allowed' : 'pointer',
               }}
             >
               ← Previous
@@ -787,20 +795,20 @@ export default function CoursePage() {
               disabled={activeIdx === allLessons.length - 1}
               style={{
                 flex: 1,
-                padding: "11px",
+                padding: '11px',
                 borderRadius: 12,
-                border: "none",
+                border: 'none',
                 background:
                   activeIdx === allLessons.length - 1
-                    ? "#1e293b"
-                    : "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                color: activeIdx === allLessons.length - 1 ? "#334155" : "#fff",
+                    ? '#1e293b'
+                    : 'linear-gradient(135deg,#7c3aed,#06b6d4)',
+                color: activeIdx === allLessons.length - 1 ? '#334155' : '#fff',
                 fontWeight: 700,
                 fontSize: 13,
                 cursor:
                   activeIdx === allLessons.length - 1
-                    ? "not-allowed"
-                    : "pointer",
+                    ? 'not-allowed'
+                    : 'pointer',
               }}
             >
               Next →
@@ -811,17 +819,17 @@ export default function CoursePage() {
           <div
             style={{
               marginTop: 28,
-              background: "#111827",
-              border: "1px solid #1e293b",
+              background: '#111827',
+              border: '1px solid #1e293b',
               borderRadius: 18,
-              padding: "18px 18px",
+              padding: '18px 18px',
             }}
           >
             <h3
               style={{
                 fontSize: 15,
                 fontWeight: 700,
-                color: "#f1f5f9",
+                color: '#f1f5f9',
                 marginBottom: 10,
               }}
             >
@@ -829,39 +837,39 @@ export default function CoursePage() {
             </h3>
             <p
               style={{
-                color: "#94a3b8",
+                color: '#94a3b8',
                 fontSize: 14,
                 lineHeight: 1.8,
-                whiteSpace: "pre-wrap",
+                whiteSpace: 'pre-wrap',
               }}
             >
               {course?.description || course?.summary}
             </p>
             <div
               style={{
-                display: "flex",
-                flexWrap: "wrap",
+                display: 'flex',
+                flexWrap: 'wrap',
                 gap: 12,
                 marginTop: 14,
               }}
             >
               {[
-                { icon: "📚", label: `${allLessons.length} lessons` },
+                { icon: '📚', label: `${allLessons.length} lessons` },
                 {
-                  icon: "👥",
+                  icon: '👥',
                   label: `${course?.students?.length ?? 0} students`,
                 },
                 {
-                  icon: "⭐",
-                  label: `${course?.ratingAverage?.toFixed(1) ?? "New"} rating`,
+                  icon: '⭐',
+                  label: `${course?.ratingAverage?.toFixed(1) ?? 'New'} rating`,
                 },
-                { icon: "📋", label: course?.board ?? "" },
+                { icon: '📋', label: course?.board ?? '' },
               ]
                 .filter((s) => s.label)
                 .map((s) => (
                   <span
                     key={s.label}
-                    style={{ fontSize: 12, color: "#64748b" }}
+                    style={{ fontSize: 12, color: '#64748b' }}
                   >
                     {s.icon} {s.label}
                   </span>
@@ -871,64 +879,64 @@ export default function CoursePage() {
         </div>
 
         {/* RIGHT: sidebar */}
-        <div className={`cp-sidebar${sidebarOpen ? " open" : ""}`}>
+        <div className={`cp-sidebar${sidebarOpen ? ' open' : ''}`}>
           <div
             style={{
-              padding: "14px 18px",
-              borderBottom: "1px solid #1e293b",
+              padding: '14px 18px',
+              borderBottom: '1px solid #1e293b',
               flexShrink: 0,
             }}
           >
-            <h2 style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
+            <h2 style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9' }}>
               Course Content
             </h2>
-            <p style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>
+            <p style={{ fontSize: 11, color: '#64748b', marginTop: 3 }}>
               {chapters.length} chapters · {allLessons.length} lessons
             </p>
           </div>
-          <div style={{ flex: 1, overflowY: "auto" }}>
+          <div style={{ flex: 1, overflowY: 'auto' }}>
             {chapters.map((chapter, ci) => (
               <div key={ci}>
                 <button
                   onClick={() => toggleChapter(ci)}
                   style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "12px 18px",
-                    background: "#111827",
-                    border: "none",
-                    borderBottom: "1px solid #1e293b",
-                    cursor: "pointer",
-                    textAlign: "left",
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 18px',
+                    background: '#111827',
+                    border: 'none',
+                    borderBottom: '1px solid #1e293b',
+                    cursor: 'pointer',
+                    textAlign: 'left',
                   }}
                 >
                   <span
                     style={{
                       fontSize: 13,
                       fontWeight: 700,
-                      color: "#f1f5f9",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      color: '#f1f5f9',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {chapter.title}
                   </span>
                   <div
                     style={{
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 6,
                       flexShrink: 0,
                     }}
                   >
-                    <span style={{ fontSize: 11, color: "#64748b" }}>
+                    <span style={{ fontSize: 11, color: '#64748b' }}>
                       {chapter.lessons.length}
                     </span>
-                    <span style={{ color: "#64748b", fontSize: 11 }}>
-                      {expandedCh.has(ci) ? "▲" : "▼"}
+                    <span style={{ color: '#64748b', fontSize: 11 }}>
+                      {expandedCh.has(ci) ? '▲' : '▼'}
                     </span>
                   </div>
                 </button>
@@ -936,7 +944,7 @@ export default function CoursePage() {
                   chapter.lessons.map((lesson) => {
                     const isActive = lesson.globalIdx === activeIdx;
                     const isDone = completed.has(lesson.globalIdx);
-                    const lessonIsText = lesson.type === "text";
+                    const lessonIsText = lesson.type === 'text';
                     return (
                       <button
                         key={lesson.globalIdx}
@@ -945,35 +953,35 @@ export default function CoursePage() {
                           if (window.innerWidth < 768) setSidebarOpen(false);
                         }}
                         style={{
-                          width: "100%",
-                          display: "flex",
-                          alignItems: "flex-start",
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'flex-start',
                           gap: 10,
-                          padding: "11px 18px 11px 24px",
-                          background: isActive ? "#1e1b4b" : "transparent",
-                          border: "none",
-                          borderBottom: "1px solid #1e293b1a",
-                          cursor: "pointer",
-                          textAlign: "left",
-                          transition: "background 0.15s",
+                          padding: '11px 18px 11px 24px',
+                          background: isActive ? '#1e1b4b' : 'transparent',
+                          border: 'none',
+                          borderBottom: '1px solid #1e293b1a',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'background 0.15s',
                         }}
                       >
                         <div
                           style={{
                             width: 18,
                             height: 18,
-                            borderRadius: "50%",
-                            border: `2px solid ${isDone ? "#4ade80" : isActive ? "#7c3aed" : "#334155"}`,
-                            background: isDone ? "#052e16" : "transparent",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                            borderRadius: '50%',
+                            border: `2px solid ${isDone ? '#4ade80' : isActive ? '#7c3aed' : '#334155'}`,
+                            background: isDone ? '#052e16' : 'transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                             flexShrink: 0,
                             marginTop: 2,
                           }}
                         >
                           {isDone && (
-                            <span style={{ color: "#4ade80", fontSize: 9 }}>
+                            <span style={{ color: '#4ade80', fontSize: 9 }}>
                               ✓
                             </span>
                           )}
@@ -983,23 +991,23 @@ export default function CoursePage() {
                             style={{
                               fontSize: 12,
                               fontWeight: isActive ? 700 : 500,
-                              color: isActive ? "#a78bfa" : "#e2e8f0",
+                              color: isActive ? '#a78bfa' : '#e2e8f0',
                               lineHeight: 1.4,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
                             }}
                           >
                             {lesson.title}
                           </p>
                           <div
-                            style={{ display: "flex", gap: 6, marginTop: 2 }}
+                            style={{ display: 'flex', gap: 6, marginTop: 2 }}
                           >
-                            <span style={{ fontSize: 10, color: "#475569" }}>
-                              {lessonIsText ? "📝 Text" : "🎬 Video"}
+                            <span style={{ fontSize: 10, color: '#475569' }}>
+                              {lessonIsText ? '📝 Text' : '🎬 Video'}
                             </span>
                             {!lessonIsText && lesson.durationMinutes > 0 && (
-                              <span style={{ fontSize: 10, color: "#475569" }}>
+                              <span style={{ fontSize: 10, color: '#475569' }}>
                                 {fmtMins(lesson.durationMinutes)}
                               </span>
                             )}
@@ -1008,7 +1016,7 @@ export default function CoursePage() {
                         {isActive && (
                           <span
                             style={{
-                              color: "#7c3aed",
+                              color: '#7c3aed',
                               fontSize: 12,
                               flexShrink: 0,
                             }}

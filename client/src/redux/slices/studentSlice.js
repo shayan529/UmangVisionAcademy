@@ -1,8 +1,8 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import api, { API_ENDPOINTS } from "../../config/api.js";
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import api, { API_ENDPOINTS } from '../../config/api.js';
 
 export const fetchStudents = createAsyncThunk(
-  "students/fetchAll",
+  'students/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await api.get(API_ENDPOINTS.STUDENTS.LIST);
@@ -10,11 +10,11 @@ export const fetchStudents = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
-  },
+  }
 );
 
 export const fetchStudentActivity = createAsyncThunk(
-  "students/fetchActivity",
+  'students/fetchActivity',
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await api.get(API_ENDPOINTS.STUDENTS.ACTIVITY);
@@ -22,19 +22,33 @@ export const fetchStudentActivity = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
-  },
+  }
+);
+
+export const fetchLeaderboard = createAsyncThunk(
+  'students/fetchLeaderboard',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get(API_ENDPOINTS.STUDENTS.LEADERBOARD);
+      return data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
 );
 
 const initialState = {
   students: [],
+  leaderboard: [],
   activity: [],
   loading: false,
+  leaderboardLoading: false,
   activityLoading: false,
   error: null,
 };
 
 const studentSlice = createSlice({
-  name: "students",
+  name: 'students',
   initialState,
   reducers: {
     clearStudentError: (state) => {
@@ -66,6 +80,18 @@ const studentSlice = createSlice({
       })
       .addCase(fetchStudentActivity.rejected, (state, action) => {
         state.activityLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchLeaderboard.pending, (state) => {
+        state.leaderboardLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchLeaderboard.fulfilled, (state, action) => {
+        state.leaderboardLoading = false;
+        state.leaderboard = action.payload;
+      })
+      .addCase(fetchLeaderboard.rejected, (state, action) => {
+        state.leaderboardLoading = false;
         state.error = action.payload;
       });
   },
