@@ -132,6 +132,11 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
     });
+
+    // ── Profile Updates ──────────────────────────────────────────────────
+    builder.addCase("settings/updateProfile/fulfilled", (state, action) => {
+      state.user = action.payload;
+    });
   },
 });
 

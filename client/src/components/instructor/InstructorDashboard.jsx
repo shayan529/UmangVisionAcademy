@@ -150,8 +150,6 @@ export default function InstructorDashboard() {
       case "settings":
         return (
           <InstructorSettings
-            settings={settings}
-            setSettings={setSettings}
             showToast={showToast}
           />
         );

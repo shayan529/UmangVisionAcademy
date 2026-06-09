@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchEnrolledCourses } from "../../redux/slices/courseSlice";
 import { Link } from "react-router-dom";
+import api from "../../config/api.js";
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const statusConfig = {
@@ -61,6 +62,9 @@ const getLocalProgress = (courseId, totalLessons) => {
   }
 };
 
+const getRatingUserId = (rating) =>
+  rating?.user?._id ?? rating?.user?.id ?? rating?.user;
+
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 const Skeleton = ({ w = "100%", h = 16, radius = 8, style = {} }) => (
   <div
@@ -106,12 +110,14 @@ const CourseCardSkeleton = () => (
 export default function MyCourses() {
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState("all");
+  const [ratingCourse, setRatingCourse] = useState(null);
 
   const {
     enrolled: rawEnrolled,
     enrolledLoading,
     error,
   } = useSelector((s) => s.courses);
+  const { user } = useSelector((s) => s.auth);
 
   useEffect(() => {
     dispatch(fetchEnrolledCourses());
@@ -323,20 +329,237 @@ export default function MyCourses() {
               key={course._id ?? course.id ?? i}
               course={course}
               animDelay={i * 0.04}
+              onRate={() => setRatingCourse(course)}
             />
           ))
         )}
       </div>
+
+      {ratingCourse && (
+        <RatingDialog
+          course={ratingCourse}
+          user={user}
+          onClose={() => setRatingCourse(null)}
+          onSubmitted={() => {
+            setRatingCourse(null);
+            dispatch(fetchEnrolledCourses());
+          }}
+        />
+      )}
     </>
   );
 }
 
+function RatingDialog({ course, user, onClose, onSubmitted }) {
+  const userId = user?._id ?? user?.id;
+  const existingRating = course?.ratings?.find(
+    (r) => getRatingUserId(r)?.toString() === userId?.toString(),
+  );
+  const [selected, setSelected] = useState(existingRating?.rating ?? 0);
+  const [hovered, setHovered] = useState(0);
+  const [review, setReview] = useState(existingRating?.review ?? "");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const active = hovered || selected;
+
+  const handleSubmit = async () => {
+    if (!selected) {
+      setError("Please select a star rating.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      await api.post(`/courses/${course._id}/rate`, {
+        rating: selected,
+        review: review.trim(),
+      });
+      onSubmitted?.();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to submit rating.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(2,8,23,0.72)",
+        zIndex: 100,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "100%",
+          maxWidth: 420,
+          background: "#0d1526",
+          border: "1px solid #1e293b",
+          borderRadius: 18,
+          boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            padding: "18px 20px",
+            borderBottom: "1px solid #1e293b",
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          <div style={{ minWidth: 0 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: "#f1f5f9" }}>
+              {existingRating ? "Update your rating" : "Rate this course"}
+            </h3>
+            <p
+              style={{
+                fontSize: 12,
+                color: "#64748b",
+                marginTop: 4,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {course.title}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 8,
+              border: "none",
+              background: "#1e293b",
+              color: "#94a3b8",
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            X
+          </button>
+        </div>
+
+        <div style={{ padding: "22px 20px 20px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: 8,
+              marginBottom: 14,
+            }}
+          >
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onMouseEnter={() => setHovered(star)}
+                onMouseLeave={() => setHovered(0)}
+                onClick={() => setSelected(star)}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  color: star <= active ? "#fbbf24" : "#334155",
+                  cursor: "pointer",
+                  fontSize: 34,
+                  lineHeight: 1,
+                  padding: "2px 0",
+                }}
+                aria-label={`Rate ${star} stars`}
+              >
+                ★
+              </button>
+            ))}
+          </div>
+
+          <textarea
+            value={review}
+            onChange={(e) => setReview(e.target.value)}
+            placeholder="Share a short review (optional)"
+            rows={3}
+            maxLength={500}
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              resize: "vertical",
+              background: "#111827",
+              border: "1px solid #1e293b",
+              borderRadius: 10,
+              color: "#e2e8f0",
+              padding: "10px 12px",
+              fontSize: 13,
+              fontFamily: "inherit",
+              outline: "none",
+            }}
+          />
+
+          {error && (
+            <p style={{ color: "#f87171", fontSize: 12, marginTop: 10 }}>
+              {error}
+            </p>
+          )}
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 10,
+              marginTop: 16,
+            }}
+          >
+            <button
+              onClick={onClose}
+              style={{
+                padding: "9px 16px",
+                borderRadius: 10,
+                border: "1px solid #334155",
+                background: "transparent",
+                color: "#94a3b8",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              style={{
+                padding: "9px 18px",
+                borderRadius: 10,
+                border: "none",
+                background: loading ? "#334155" : "#052e16",
+                color: "#4ade80",
+                fontWeight: 800,
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
+            >
+              {loading ? "Submitting..." : "Submit Rating"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── CourseCard ────────────────────────────────────────────────────────────────
-function CourseCard({ course, animDelay = 0 }) {
+function CourseCard({ course, animDelay = 0, onRate }) {
   const st = statusConfig[course.status] ?? statusConfig["not-started"];
   const accent = categoryAccent(course.category);
   const emoji = categoryEmoji(course.category);
   const isComplete = course.status === "completed";
+  const hasFinalQuiz = (course.quiz?.questions?.length ?? 0) > 0;
 
   // Instructor name: may be a populated object or a plain string
   const instructorName =
@@ -553,20 +776,39 @@ function CourseCard({ course, animDelay = 0 }) {
               )}
               {isComplete && (
                 <>
-                  {/* <button
+                  <button
+                    onClick={onRate}
                     style={{
-                      padding: '7px 16px',
+                      padding: "7px 16px",
                       borderRadius: 10,
-                      border: 'none',
-                      background: '#052e16',
-                      color: '#4ade80',
+                      border: "none",
+                      background: "#052e16",
+                      color: "#4ade80",
                       fontSize: 12,
                       fontWeight: 700,
-                      cursor: 'pointer',
+                      cursor: "pointer",
                     }}
                   >
-                    View Certificate 🏅
-                  </button> */}
+                    Rate This Course 🌟
+                  </button>
+                  {hasFinalQuiz && (
+                    <Link to={`/courses/${course._id}?quiz=1`}>
+                      <button
+                        style={{
+                          padding: "7px 16px",
+                          borderRadius: 10,
+                          border: "none",
+                          background: "#1e1b4b",
+                          color: "#a78bfa",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Final Quiz
+                      </button>
+                    </Link>
+                  )}
                   <Link to={`/courses/${course._id}`}>
                     <button
                       style={{

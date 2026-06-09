@@ -99,6 +99,18 @@ const userSchema = new Schema(
       razorpayOrderId: { type: String, default: "" },
       razorpayPaymentId: { type: String, default: "" },
     },
+    specialization: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    notificationSettings: {
+      liveClass: { type: Boolean, default: true },
+      newCourse: { type: Boolean, default: true },
+      community: { type: Boolean, default: true },
+      emailNotifications: { type: Boolean, default: true },
+      liveSessionAlerts: { type: Boolean, default: true },
+    },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
   },

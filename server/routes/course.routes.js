@@ -1,4 +1,4 @@
-﻿import express from 'express';
+﻿import express from "express";
 import {
   createCourse,
   getCourses,
@@ -10,26 +10,29 @@ import {
   enrollCourses,
   getAllCoursesAdmin,
   getPublishedCourses,
-} from '../controllers/course.controller.js';
-import { protect } from '../middleware/auth.middleware.js';
+  submitQuiz,
+  rateCourse, // ← new
+} from "../controllers/course.controller.js";
+import { protect } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
 // ── Public (no auth) ──────────────────────────────────────────────────────────
-router.get('/public', getPublishedCourses); // GET  /courses/public        — all published
-router.get('/public/:id', getCourseByIdPublic); // GET  /courses/public/:id    — single course for demo page
+router.get("/public", getPublishedCourses); // GET  /courses/public
+router.get("/public/:id", getCourseByIdPublic); // GET  /courses/public/:id
 
 // ── Protected: specific paths BEFORE /:id ────────────────────────────────────
-router.get('/admin/all', protect, getAllCoursesAdmin); // GET  /courses/admin/all    — admin: all courses
-router.get('/enrolled', protect, enrolledCourses); // GET  /courses/enrolled     — student: own enrolled
-router.post('/enroll', protect, enrollCourses); // POST /courses/enroll       — student: enroll
+router.get("/admin/all", protect, getAllCoursesAdmin);
+router.get("/enrolled", protect, enrolledCourses);
+router.post("/enroll", protect, enrollCourses);
 
-// ── Protected: CRUD ───────────────────────────────────────────────────────────
-router.get('/', protect, getCourses); // GET  /courses              — instructor: own courses
-router.post('/', protect, createCourse); // POST /courses              — instructor: create
-router.post('/:id/quiz/submit', protect, submitQuiz); // POST /courses/:id/quiz/submit — student quiz submission
-router.get('/:id', protect, getCourseById); // GET  /courses/:id          — full detail (auth)
-router.put('/:id', protect, updateCourse); // PUT  /courses/:id          — instructor: update
-router.delete('/:id', protect, deleteCourse); // DELETE /courses/:id        — instructor: delete
+// ── Protected: CRUD + actions ─────────────────────────────────────────────────
+router.get("/", protect, getCourses);
+router.post("/", protect, createCourse);
+router.post("/:id/quiz/submit", protect, submitQuiz);
+router.post("/:id/rate", protect, rateCourse); // ← new: POST /courses/:id/rate
+router.get("/:id", protect, getCourseById);
+router.put("/:id", protect, updateCourse);
+router.delete("/:id", protect, deleteCourse);
 
 export default router;

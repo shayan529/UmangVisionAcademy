@@ -1,7 +1,185 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchCourses } from "../../redux/slices/courseSlice"; // adjust path
+import { fetchCourses } from "../../redux/slices/courseSlice";
 import { StatCard, Card, SectionHeader, ProgressBar } from "./InstructorUi";
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+const fmt = (n) =>
+  Number.isFinite(n) ? "₹" + Math.round(n).toLocaleString("en-IN") : "₹0";
+
+const avg = (arr, key) =>
+  arr.length
+    ? Math.round(arr.reduce((s, c) => s + (c[key] ?? 0), 0) / arr.length)
+    : 0;
+
+/** Derive revenue for a course when the backend doesn't send it explicitly */
+const courseRevenue = (c) =>
+  c.revenue ?? (c.price || 0) * (c.enrolledCount ?? c.students ?? 0);
+
+const studentCount = (c) => c.enrolledCount ?? c.students ?? 0;
+const completion = (c) => c.avgCompletion ?? c.prog ?? 0;
+const courseRating = (c) => c.ratingAverage ?? c.rating ?? 0;
+const quizPassRate = (c) => c.quizPassRate ?? c.quizPassPercentage ?? null;
+
+// ─── sub-components ───────────────────────────────────────────────────────────
+
+const styles = {
+  // stat grid
+  statGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+    gap: 10,
+    marginBottom: 16,
+  },
+  statBox: {
+    background: "#1e293b",
+    borderRadius: 10,
+    padding: "14px 16px",
+  },
+  statLabel: {
+    fontSize: 12,
+    color: "#64748b",
+    marginBottom: 6,
+    display: "flex",
+    alignItems: "center",
+    gap: 5,
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+  },
+  statValue: {
+    fontSize: 22,
+    fontWeight: 700,
+    color: "#f1f5f9",
+  },
+  statSub: {
+    fontSize: 12,
+    color: "#475569",
+    marginTop: 3,
+  },
+  // two-column grid
+  grid2: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 14,
+    marginBottom: 14,
+  },
+  // enrollment bars
+  barWrap: {
+    display: "flex",
+    alignItems: "flex-end",
+    gap: 5,
+    height: 90,
+    marginBottom: 14,
+  },
+  // top-course highlight
+  topCourseBox: {
+    background: "#0f172a",
+    borderRadius: 10,
+    padding: "12px 14px",
+  },
+  // revenue per course bars
+  revBars: {
+    display: "flex",
+    alignItems: "flex-end",
+    gap: 10,
+    height: 260,
+    paddingTop: 16,
+  },
+  revCol: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    height: "100%",
+    minWidth: 0,
+  },
+  // performance table
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    fontSize: 13,
+  },
+  th: {
+    textAlign: "left",
+    color: "#64748b",
+    fontWeight: 600,
+    padding: "8px 0",
+    borderBottom: "1px solid #1e293b",
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+  },
+  thRight: {
+    textAlign: "right",
+    color: "#64748b",
+    fontWeight: 600,
+    padding: "8px 0",
+    borderBottom: "1px solid #1e293b",
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+  },
+  td: {
+    padding: "11px 0",
+    borderBottom: "1px solid #0f172a",
+    color: "#e2e8f0",
+    verticalAlign: "middle",
+  },
+  tdRight: {
+    padding: "11px 0",
+    borderBottom: "1px solid #0f172a",
+    color: "#e2e8f0",
+    verticalAlign: "middle",
+    textAlign: "right",
+  },
+  // status badge
+  badgeHigh: {
+    display: "inline-block",
+    fontSize: 11,
+    padding: "2px 9px",
+    borderRadius: 20,
+    fontWeight: 600,
+    background: "#064e3b",
+    color: "#34d399",
+  },
+  badgeMid: {
+    display: "inline-block",
+    fontSize: 11,
+    padding: "2px 9px",
+    borderRadius: 20,
+    fontWeight: 600,
+    background: "#451a03",
+    color: "#fbbf24",
+  },
+  badgeLow: {
+    display: "inline-block",
+    fontSize: 11,
+    padding: "2px 9px",
+    borderRadius: 20,
+    fontWeight: 600,
+    background: "#450a0a",
+    color: "#f87171",
+  },
+  empty: {
+    textAlign: "center",
+    color: "#475569",
+    padding: "32px 0",
+    fontSize: 14,
+  },
+  sectionFull: {
+    marginTop: 14,
+  },
+};
+
+function StatusBadge({ value }) {
+  if (value >= 70) return <span style={styles.badgeHigh}>On track</span>;
+  if (value >= 45) return <span style={styles.badgeMid}>Average</span>;
+  return <span style={styles.badgeLow}>Needs attention</span>;
+}
+
+// ─── main component ───────────────────────────────────────────────────────────
 
 const InstructorAnalytics = () => {
   const dispatch = useDispatch();
@@ -11,217 +189,315 @@ const InstructorAnalytics = () => {
     dispatch(fetchCourses());
   }, [dispatch]);
 
-  // ── Derived stats ────────────────────────────────────────────────────────
-  const avg = (key) =>
-    courses.length
-      ? Math.round(
-          courses.reduce((sum, c) => sum + (c[key] ?? 0), 0) / courses.length,
-        )
-      : 0;
+  // ── aggregates ──────────────────────────────────────────────────────────────
+  const totalRevenue = courses.reduce((s, c) => s + courseRevenue(c), 0);
+  const totalStudents = courses.reduce((s, c) => s + studentCount(c), 0);
 
-  const avgCompletion = avg("avgCompletion") || avg("prog");
-  const avgQuizPass = avg("quizPassRate");
-  const avgAttendance = avg("liveAttendance");
-  const avgRating = courses.length
-    ? (
-        courses.reduce((sum, c) => sum + (c.rating ?? 0), 0) / courses.length
-      ).toFixed(1)
-    : "—";
+  // NOTE: weekRevenue / monthRevenue must be returned by your backend per
+  // course (e.g. from an analytics sub-document). If not available yet, these
+  // will simply show ₹0 until the backend provides them.
+  const thisWeekRevenue = courses.reduce((s, c) => s + (c.weekRevenue || 0), 0);
+  const thisMonthRevenue = courses.reduce(
+    (s, c) => s + (c.monthRevenue || 0),
+    0,
+  );
+  const avgRevPerCourse =
+    courses.length > 0 ? Math.round(totalRevenue / courses.length) : 0;
 
-  // Last 7 days enrollment — use real data if available, else zeros
+  const avgRating =
+    courses.length > 0
+      ? (
+          courses.reduce((s, c) => s + courseRating(c), 0) / courses.length
+        ).toFixed(1)
+      : "–";
+
+  const avgCompletion = avg(courses, "avgCompletion") || avg(courses, "prog");
+  const quizPassRates = courses
+    .map(quizPassRate)
+    .filter((rate) => rate != null);
+  const avgQuizPass = quizPassRates.length
+    ? Math.round(
+        quizPassRates.reduce((sum, rate) => sum + rate, 0) /
+          quizPassRates.length,
+      )
+    : 0;
+  const avgAttendance = avg(courses, "liveAttendance");
+
+  // ── enrollment trend (last 7 courses by array order) ────────────────────────
   const enrollmentTrend = courses.length
-    ? courses.slice(-7).map((c) => c.enrolledCount ?? c.students ?? 0)
-    : [0, 0, 0, 0, 0, 0, 0];
-
+    ? courses.slice(-7).map(studentCount)
+    : Array(7).fill(0);
   const trendMax = Math.max(...enrollmentTrend, 1);
 
-  // Top performing course by completion
-  const topCourse = [...courses].sort(
-    (a, b) =>
-      (b.avgCompletion ?? b.prog ?? 0) - (a.avgCompletion ?? a.prog ?? 0),
-  )[0];
+  // ── top course by completion ─────────────────────────────────────────────────
+  const topCourse =
+    courses.length > 0
+      ? [...courses].sort((a, b) => completion(b) - completion(a))[0]
+      : null;
 
-  const metrics = [
-    { label: "Course completion", val: avgCompletion, color: "#7c3aed" },
-    { label: "Quiz performance", val: avgQuizPass, color: "#10b981" },
-    {
-      label: "Video completion",
-      val: avg("videoCompletion"),
-      color: "#f59e0b",
-    },
-    { label: "Community posts", val: avg("communityPosts"), color: "#ef4444" },
-    { label: "Live attendance", val: avgAttendance, color: "#db2777" },
-  ];
+  // ── revenue per course ───────────────────────────────────────────────────────
+  const revenueData = courses.map((c) => ({
+    title: c.title,
+    revenue: courseRevenue(c),
+  }));
+  const maxRevenue = Math.max(...revenueData.map((c) => c.revenue), 1);
+
+  // ── table rows sorted by revenue desc ────────────────────────────────────────
+  const sortedCourses = [...courses].sort(
+    (a, b) => courseRevenue(b) - courseRevenue(a),
+  );
+
+  // ── loading skeleton ─────────────────────────────────────────────────────────
+  const dash = loading ? "…" : null;
 
   return (
     <>
-      {/* Stats row */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4,1fr)",
-          gap: 12,
-          marginBottom: 20,
-        }}
-      >
-        <StatCard
-          label="Avg Completion"
-          value={loading ? "…" : `${avgCompletion}%`}
-          color="#a78bfa"
-        />
-        <StatCard
-          label="Quiz Pass Rate"
-          value={loading ? "…" : `${avgQuizPass}%`}
-          color="#34d399"
-        />
-        <StatCard
-          label="Live Attendance"
-          value={loading ? "…" : `${avgAttendance}%`}
-          color="#fbbf24"
-        />
-        <StatCard
-          label="Review Score"
-          value={loading ? "…" : `${avgRating} ★`}
-          color="#4ade80"
-        />
+      {/* ── stat strip ────────────────────────────────────────────────────── */}
+      <div style={styles.statGrid}>
+        <div style={styles.statBox}>
+          <div style={styles.statLabel}>💰 Total revenue</div>
+          <div style={styles.statValue}>{dash ?? fmt(totalRevenue)}</div>
+          <div style={styles.statSub}>{courses.length} courses</div>
+        </div>
+
+        <div style={styles.statBox}>
+          <div style={styles.statLabel}>👥 Students</div>
+          <div style={styles.statValue}>
+            {dash ?? totalStudents.toLocaleString("en-IN")}
+          </div>
+          <div style={styles.statSub}>total enrolled</div>
+        </div>
+
+        <div style={styles.statBox}>
+          <div style={styles.statLabel}>⭐ Avg rating</div>
+          <div style={styles.statValue}>{dash ?? `${avgRating} ★`}</div>
+          <div style={styles.statSub}>out of 5.0</div>
+        </div>
+
+        <div style={styles.statBox}>
+          <div style={styles.statLabel}>📈 Avg completion</div>
+          <div style={styles.statValue}>{dash ?? `${avgCompletion}%`}</div>
+          <div style={styles.statSub}>
+            quiz pass: {dash ?? `${avgQuizPass}%`}
+          </div>
+        </div>
+
+        <div style={styles.statBox}>
+          <div style={styles.statLabel}>🎙 Live attendance</div>
+          <div style={styles.statValue}>{dash ?? `${avgAttendance}%`}</div>
+          <div style={styles.statSub}>avg across sessions</div>
+        </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        {/* Engagement metrics */}
+      {/* ── revenue overview + enrollment trend ───────────────────────────── */}
+      <div style={styles.grid2}>
+        {/* Revenue overview */}
         <Card>
-          <SectionHeader title="Engagement Metrics" />
-          {loading ? (
-            <div
-              style={{
-                padding: "24px 0",
-                textAlign: "center",
-                color: "#64748b",
-                fontSize: 13,
-              }}
-            >
-              Loading…
+          <SectionHeader title="Revenue Overview" />
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ color: "#94a3b8", fontSize: 13, marginBottom: 8 }}>
+              Total revenue
             </div>
-          ) : (
-            metrics.map((m) => (
-              <div
-                key={m.label}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  marginBottom: 12,
-                }}
-              >
+            <div style={{ fontSize: 42, fontWeight: 800, color: "#a78bfa" }}>
+              {dash ?? fmt(totalRevenue)}
+            </div>
+          </div>
+
+          <div
+            style={{
+              borderTop: "1px solid #1e293b",
+              paddingTop: 18,
+              display: "grid",
+              gridTemplateColumns: "repeat(3,1fr)",
+              gap: 16,
+            }}
+          >
+            {[
+              { label: "This week", value: fmt(thisWeekRevenue) },
+              { label: "This month", value: fmt(thisMonthRevenue) },
+              { label: "Avg / course", value: fmt(avgRevPerCourse) },
+            ].map(({ label, value }) => (
+              <div key={label}>
                 <div
-                  style={{
-                    fontSize: 12,
-                    color: "#94a3b8",
-                    width: 130,
-                    flexShrink: 0,
-                  }}
+                  style={{ color: "#64748b", fontSize: 12, marginBottom: 5 }}
                 >
-                  {m.label}
+                  {label}
                 </div>
                 <div
-                  style={{
-                    flex: 1,
-                    height: 6,
-                    background: "#1e293b",
-                    borderRadius: 3,
-                    overflow: "hidden",
-                  }}
+                  style={{ fontSize: 20, fontWeight: 700, color: "#a78bfa" }}
                 >
-                  <div
-                    style={{
-                      height: "100%",
-                      width: `${m.val}%`,
-                      background: m.color,
-                      borderRadius: 3,
-                    }}
-                  />
-                </div>
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: m.color,
-                    width: 36,
-                    textAlign: "right",
-                  }}
-                >
-                  {m.val}%
+                  {dash ?? value}
                 </div>
               </div>
-            ))
-          )}
+            ))}
+          </div>
         </Card>
 
         {/* Enrollment trend */}
         <Card>
           <SectionHeader title="Enrollment Trend (last 7 courses)" />
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-end",
-              gap: 4,
-              height: 80,
-              marginBottom: 16,
-            }}
-          >
+
+          <div style={styles.barWrap}>
             {enrollmentTrend.map((v, i) => (
               <div
                 key={i}
+                title={`${v} students`}
                 style={{
                   flex: 1,
-                  height: `${(v / trendMax) * 100}%`,
-                  minHeight: 4,
+                  height: `${Math.max(4, Math.round((v / trendMax) * 100))}%`,
                   background: "linear-gradient(to top,#7c3aed,#a78bfa)",
                   borderRadius: "3px 3px 0 0",
-                  transition: "height 0.4s",
+                  transition: "opacity 0.15s",
+                  cursor: "default",
                 }}
               />
             ))}
           </div>
 
           {topCourse ? (
-            <div
-              style={{ background: "#1e293b", borderRadius: 12, padding: 14 }}
-            >
-              <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 4 }}>
+            <div style={styles.topCourseBox}>
+              <div style={{ fontSize: 11, color: "#64748b", marginBottom: 3 }}>
                 Top performing course
               </div>
               <div style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9" }}>
                 {topCourse.title}
               </div>
               <div
-                style={{ fontSize: 12, color: "#64748b", margin: "3px 0 8px" }}
-              >
-                {topCourse.avgCompletion ?? topCourse.prog ?? 0}% completion ·{" "}
-                {topCourse.rating
-                  ? `${topCourse.rating}★ rating`
-                  : "No rating yet"}
-              </div>
-              <ProgressBar
-                value={topCourse.avgCompletion ?? topCourse.prog ?? 0}
-                color="#10b981"
-              />
-            </div>
-          ) : (
-            !loading && (
-              <div
                 style={{
-                  padding: "12px 0",
-                  textAlign: "center",
+                  fontSize: 12,
                   color: "#64748b",
-                  fontSize: 13,
+                  margin: "3px 0 8px",
                 }}
               >
-                No course data yet.
+                {completion(topCourse)}% completion ·{" "}
+                {courseRating(topCourse) > 0
+                  ? `${courseRating(topCourse)}★`
+                  : "No rating yet"}
               </div>
-            )
+              <ProgressBar value={completion(topCourse)} color="#10b981" />
+            </div>
+          ) : (
+            !loading && <div style={styles.empty}>No course data yet.</div>
           )}
         </Card>
       </div>
+
+      {/* ── revenue per course (bar chart) ────────────────────────────────── */}
+      <Card style={styles.sectionFull}>
+        <SectionHeader title="Revenue Per Course" />
+
+        {revenueData.length > 0 ? (
+          <div style={styles.revBars}>
+            {revenueData.map((course) => {
+              const barH = Math.max(
+                8,
+                Math.round((course.revenue / maxRevenue) * 210),
+              );
+              return (
+                <div key={course.title} style={styles.revCol}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "#a78bfa",
+                      fontWeight: 700,
+                      marginBottom: 6,
+                      textAlign: "center",
+                    }}
+                  >
+                    {fmt(course.revenue)}
+                  </div>
+                  <div
+                    title={`${course.title}: ${fmt(course.revenue)}`}
+                    style={{
+                      width: "100%",
+                      height: barH,
+                      background: "linear-gradient(180deg,#c4b5fd,#7c3aed)",
+                      borderRadius: "8px 8px 0 0",
+                      transition: "opacity 0.15s",
+                      cursor: "default",
+                    }}
+                  />
+                  <div
+                    style={{
+                      marginTop: 8,
+                      fontSize: 11,
+                      color: "#94a3b8",
+                      textAlign: "center",
+                      width: "100%",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                    title={course.title}
+                  >
+                    {course.title}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={styles.empty}>No revenue data available.</div>
+        )}
+      </Card>
+
+      {/* ── course performance table ──────────────────────────────────────── */}
+      <Card style={styles.sectionFull}>
+        <SectionHeader title="Course Performance" />
+
+        {sortedCourses.length > 0 ? (
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>Course</th>
+                <th style={styles.thRight}>Students</th>
+                <th style={styles.thRight}>Revenue</th>
+                <th style={styles.thRight}>Completion</th>
+                <th style={styles.thRight}>Quiz pass</th>
+                <th style={styles.thRight}>Rating</th>
+                {/* <th style={styles.thRight}>Status</th> */}
+              </tr>
+            </thead>
+            <tbody>
+              {sortedCourses.map((course) => {
+                const comp = completion(course);
+                const passRate = quizPassRate(course);
+                const id = course._id ?? course.id ?? course.title;
+                return (
+                  <tr key={id}>
+                    <td style={{ ...styles.td, fontWeight: 600 }}>
+                      {course.title}
+                    </td>
+                    <td style={styles.tdRight}>
+                      {studentCount(course).toLocaleString("en-IN")}
+                    </td>
+                    <td style={{ ...styles.tdRight, color: "#a78bfa" }}>
+                      {fmt(courseRevenue(course))}
+                    </td>
+                    <td style={styles.tdRight}>{comp}%</td>
+                    <td style={styles.tdRight}>
+                      {passRate != null ? `${passRate}%` : "–"}
+                    </td>
+                    <td style={styles.tdRight}>
+                      {courseRating(course) > 0
+                        ? `${courseRating(course)} ★`
+                        : "–"}
+                    </td>
+                    {/* <td style={styles.tdRight}>
+                      <StatusBadge value={comp} />
+                    </td> */}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <div style={styles.empty}>
+            {loading ? "Loading courses…" : "No courses found."}
+          </div>
+        )}
+      </Card>
     </>
   );
 };

@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { register, clearError } from "../../redux/slices/authSlice";
 import { toast } from "react-hot-toast";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import axios from "axios";
 
 const indianCitiesByState = {
   "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati"],
@@ -109,15 +110,265 @@ const ParticleCanvas = () => {
   );
 };
 
+/* ── OTP Step ── */
+const OtpStep = ({ email, payload, onSuccess, onBack }) => {
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [verifying, setVerifying] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(30);
+  const [resending, setResending] = useState(false);
+  const inputsRef = useRef([]);
+
+  useEffect(() => {
+    inputsRef.current[0]?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  const handleOtpChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return;
+    const updated = [...otp];
+    updated[index] = value.slice(-1);
+    setOtp(updated);
+    if (value && index < 5) inputsRef.current[index + 1]?.focus();
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputsRef.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6);
+    const updated = [...otp];
+    for (let i = 0; i < pasted.length; i++) updated[i] = pasted[i];
+    setOtp(updated);
+    inputsRef.current[Math.min(pasted.length, 5)]?.focus();
+  };
+
+  const handleVerify = async () => {
+    const code = otp.join("");
+    if (code.length < 6) {
+      toast.error("Please enter the full 6-digit OTP.");
+      return;
+    }
+    setVerifying(true);
+    try {
+      await axios.post("/api/auth/verify-otp", { email, otp: code });
+      const result = await dispatch(register(payload));
+      if (register.fulfilled.match(result)) {
+        toast("Account created! Welcome aboard 🎉", { icon: "👋" });
+        onSuccess();
+      }
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Invalid OTP. Please try again.",
+      );
+      setOtp(["", "", "", "", "", ""]);
+      inputsRef.current[0]?.focus();
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResending(true);
+    try {
+      await axios.post("/api/auth/send-otp", { email });
+      toast.success("OTP resent to your email.");
+      setResendCooldown(30);
+      setOtp(["", "", "", "", "", ""]);
+      inputsRef.current[0]?.focus();
+    } catch {
+      toast.error("Failed to resend OTP. Please try again.");
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const isBusy = verifying || loading;
+
+  return (
+    <div className="text-center">
+      {/* Icon */}
+      <div className="flex items-center justify-center mb-5">
+        <div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center"
+          style={{
+            background: "rgba(14,165,233,0.12)",
+            border: "1px solid rgba(14,165,233,0.2)",
+          }}
+        >
+          <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none">
+            <rect
+              x="2"
+              y="7"
+              width="20"
+              height="14"
+              rx="2"
+              stroke="#38bdf8"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2Z"
+              stroke="#38bdf8"
+              strokeWidth="1.5"
+            />
+            <circle cx="12" cy="14" r="2" stroke="#38bdf8" strokeWidth="1.5" />
+            <path
+              d="M12 16v2"
+              stroke="#38bdf8"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <h2 className="df text-3xl font-black text-white mb-2">Verify Email</h2>
+      <p className="text-slate-400 text-sm mb-1">We sent a 6-digit code to</p>
+      <p className="text-cyan-400 font-semibold text-sm mb-7 truncate">
+        {email}
+      </p>
+
+      {/* OTP inputs */}
+      <div className="flex gap-2.5 justify-center mb-6">
+        {otp.map((digit, i) => (
+          <input
+            key={i}
+            ref={(el) => (inputsRef.current[i] = el)}
+            type="text"
+            inputMode="numeric"
+            maxLength={1}
+            value={digit}
+            onChange={(e) => handleOtpChange(i, e.target.value)}
+            onKeyDown={(e) => handleOtpKeyDown(i, e)}
+            onPaste={i === 0 ? handlePaste : undefined}
+            className="w-11 text-center text-xl font-bold text-white rounded-xl outline-none transition-all duration-200"
+            style={{
+              height: "52px",
+              background: digit
+                ? "rgba(14,165,233,0.12)"
+                : "rgba(255,255,255,0.05)",
+              border: digit
+                ? "1px solid rgba(56,189,248,0.6)"
+                : "1px solid rgba(255,255,255,0.12)",
+              boxShadow: digit ? "0 0 0 3px rgba(34,211,238,0.08)" : "none",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Verify button */}
+      <button
+        onClick={handleVerify}
+        disabled={isBusy || otp.join("").length < 6}
+        className="btn-grad w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2.5 mb-4 disabled:opacity-60"
+      >
+        {isBusy ? (
+          <>
+            <svg
+              className="w-5 h-5 animate-spin"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="rgba(255,255,255,.3)"
+                strokeWidth="3"
+              />
+              <path
+                d="M12 2a10 10 0 0 1 10 10"
+                stroke="white"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+            </svg>
+            Verifying…
+          </>
+        ) : (
+          <>
+            Verify & Create Account
+            <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
+              <path
+                d="M4 10h12M10 4l6 6-6 6"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </>
+        )}
+      </button>
+
+      {/* Resend */}
+      <div className="flex items-center justify-center gap-1.5 text-sm">
+        <span className="text-slate-500">Didn't receive it?</span>
+        {resendCooldown > 0 ? (
+          <span className="text-slate-500">
+            Resend in{" "}
+            <span className="text-cyan-400 font-semibold">
+              {resendCooldown}s
+            </span>
+          </span>
+        ) : (
+          <button
+            onClick={handleResend}
+            disabled={resending}
+            className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors disabled:opacity-60"
+          >
+            {resending ? "Sending…" : "Resend OTP"}
+          </button>
+        )}
+      </div>
+
+      {/* Back */}
+      <button
+        onClick={onBack}
+        className="mt-5 text-slate-500 hover:text-slate-300 text-sm transition-colors flex items-center gap-1.5 mx-auto"
+      >
+        <svg viewBox="0 0 20 20" className="w-4 h-4" fill="none">
+          <path
+            d="M16 10H4M10 4l-6 6 6 6"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        Back to sign up
+      </button>
+    </div>
+  );
+};
+
 /* ── Signup ── */
 const Signup = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
 
+  const [step, setStep] = useState("form"); // "form" | "otp"
+  const [pendingPayload, setPendingPayload] = useState(null);
+  const [sendingOtp, setSendingOtp] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    countryCode: "+91",
     phoneNumber: "",
     city: "",
     state: "",
@@ -129,7 +380,6 @@ const Signup = () => {
   const [focused, setFocused] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  // Show redux errors as toasts
   useEffect(() => {
     if (error) {
       toast.error(error);
@@ -148,6 +398,16 @@ const Signup = () => {
 
   const states = Object.keys(indianCitiesByState);
   const cityOptions = indianCitiesByState[formData.state] || [];
+  const countryCodes = [
+    { code: "+91", country: "India" },
+    { code: "+1", country: "USA/Canada" },
+    { code: "+44", country: "United Kingdom" },
+    { code: "+61", country: "Australia" },
+    { code: "+971", country: "UAE" },
+    { code: "+65", country: "Singapore" },
+    { code: "+81", country: "Japan" },
+    { code: "+49", country: "Germany" },
+  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -160,23 +420,32 @@ const Signup = () => {
       toast.error("Please agree to the Terms & Conditions.");
       return;
     }
+    if (!/^[0-9]{10}$/.test(formData.phoneNumber)) {
+      toast.error("Please enter a valid 10-digit phone number.");
+      return;
+    }
 
-    const { confirmPassword, ...payload } = formData;
+    const { confirmPassword, countryCode, phoneNumber, ...rest } = formData;
+    const payload = { ...rest, phoneNumber: `${countryCode}${phoneNumber}` };
 
-    const result = await dispatch(register(payload));
-
-    if (register.fulfilled.match(result)) {
-      toast("Account created! Welcome aboard 🎉", { icon: "👋" });
-      const user = result.payload;
-      navigate("/student-dashboard");
+    setSendingOtp(true);
+    try {
+      await axios.post("/api/auth/send-otp", { email: formData.email });
+      toast.success("OTP sent to your email!");
+      setPendingPayload(payload);
+      setStep("otp");
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to send OTP. Please try again.",
+      );
+    } finally {
+      setSendingOtp(false);
     }
   };
 
   const inputCls = (name) =>
     `w-full border rounded-2xl px-5 py-3.5 text-white text-sm outline-none transition-all duration-300 placeholder-slate-500 ${
-      name === "state" || name === "city"
-        ? "bg-[#1e293b]" // solid bg for selects so options are visible
-        : "bg-white/5" // translucent for text inputs
+      name === "state" || name === "city" ? "bg-[#1e293b]" : "bg-white/5"
     } ${
       focused === name
         ? "border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]"
@@ -525,270 +794,306 @@ const Signup = () => {
                 backdropFilter: "blur(24px)",
               }}
             >
-              <div className="text-center mb-7">
-                <h2 className="df text-3xl font-black text-white">
-                  Create Account
-                </h2>
-                <p className="text-slate-400 mt-1.5 text-sm">
-                  Join thousands of learners today
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Name */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    onFocus={() => setFocused("name")}
-                    onBlur={() => setFocused("")}
-                    placeholder="John Doe"
-                    required
-                    className={inputCls("name")}
-                  />
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    onFocus={() => setFocused("email")}
-                    onBlur={() => setFocused("")}
-                    placeholder="you@example.com"
-                    required
-                    className={inputCls("email")}
-                  />
-                </div>
-
-                {/* Phone Number */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleChange}
-                    onFocus={() => setFocused("phoneNumber")}
-                    onBlur={() => setFocused("")}
-                    placeholder="+91 98765 43210"
-                    required
-                    className={inputCls("phoneNumber")}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* State */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                      State
-                    </label>
-                    <select
-                      name="state"
-                      value={formData.state}
-                      onChange={handleChange}
-                      onFocus={() => setFocused("state")}
-                      onBlur={() => setFocused("")}
-                      required
-                      className={inputCls("state")}
-                    >
-                      <option value="" disabled>
-                        Select state
-                      </option>
-                      {states.map((state) => (
-                        <option key={state} value={state}>
-                          {state}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* City */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                      City
-                    </label>
-                    <select
-                      name="city"
-                      value={formData.city}
-                      onChange={handleChange}
-                      onFocus={() => setFocused("city")}
-                      onBlur={() => setFocused("")}
-                      required
-                      className={
-                        inputCls("city") +
-                        (!formData.state
-                          ? " cursor-not-allowed opacity-50"
-                          : "")
-                      }
-                    >
-                      <option value="" disabled>
-                        {formData.state
-                          ? "Select city"
-                          : "Choose a state first"}
-                      </option>
-                      {cityOptions.map((city) => (
-                        <option key={city} value={city}>
-                          {city}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Password */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      onFocus={() => setFocused("password")}
-                      onBlur={() => setFocused("")}
-                      placeholder="••••••••••"
-                      required
-                      className={inputCls("password") + " pr-12"}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((s) => !s)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-cyan-300 transition-colors"
-                    >
-                      {showPassword ? (
-                        <FiEyeOff size={18} />
-                      ) : (
-                        <FiEye size={18} />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Confirm Password */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showConfirm ? "text" : "password"}
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      onFocus={() => setFocused("confirmPassword")}
-                      onBlur={() => setFocused("")}
-                      placeholder="••••••••••"
-                      required
-                      className={inputCls("confirmPassword") + " pr-12"}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirm((s) => !s)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-cyan-300 transition-colors"
-                    >
-                      {showConfirm ? (
-                        <FiEyeOff size={18} />
-                      ) : (
-                        <FiEye size={18} />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Terms */}
-                <div className="flex items-start gap-2.5 pt-1">
-                  <input
-                    type="checkbox"
-                    id="terms"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="w-4 h-4 mt-0.5 rounded accent-cyan-400 flex-shrink-0"
-                  />
-                  <label
-                    htmlFor="terms"
-                    className="text-slate-400 text-sm cursor-pointer leading-relaxed"
-                  >
-                    I agree to the{" "}
-                    <span className="text-cyan-400 hover:text-cyan-300 transition-colors">
-                      <Link to="/terms">Terms of Service</Link>
-                    </span>{" "}
-                    &amp;{" "}
-                    <span className="text-cyan-400 hover:text-cyan-300 transition-colors">
-                      <Link to="/privacy">Privacy Policy</Link>
-                    </span>
-                  </label>
-                </div>
-
-                {/* Submit */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="btn-grad w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2.5 mt-1 disabled:opacity-60"
-                >
-                  {loading ? (
-                    <>
-                      <svg
-                        className="w-5 h-5 animate-spin"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                      >
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="rgba(255,255,255,.3)"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M12 2a10 10 0 0 1 10 10"
-                          stroke="white"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      Creating Account…
-                    </>
-                  ) : (
-                    <>
+              {step === "otp" ? (
+                <OtpStep
+                  email={formData.email}
+                  payload={pendingPayload}
+                  onSuccess={() => navigate("/student-dashboard")}
+                  onBack={() => setStep("form")}
+                />
+              ) : (
+                <>
+                  <div className="text-center mb-7">
+                    <h2 className="df text-3xl font-black text-white">
                       Create Account
-                      <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
-                        <path
-                          d="M4 10h12M10 4l6 6-6 6"
-                          stroke="white"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </>
-                  )}
-                </button>
-              </form>
+                    </h2>
+                    <p className="text-slate-400 mt-1.5 text-sm">
+                      Join thousands of learners today
+                    </p>
+                  </div>
 
-              <p className="text-center text-slate-500 text-sm mt-6">
-                Already have an account?{" "}
-                <Link
-                  to="/login"
-                  className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors"
-                >
-                  Sign In
-                </Link>
-              </p>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Name */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        onFocus={() => setFocused("name")}
+                        onBlur={() => setFocused("")}
+                        placeholder="John Doe"
+                        required
+                        className={inputCls("name")}
+                      />
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        onFocus={() => setFocused("email")}
+                        onBlur={() => setFocused("")}
+                        placeholder="you@example.com"
+                        required
+                        className={inputCls("email")}
+                      />
+                    </div>
+
+                    {/* Phone Number */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
+                        Phone Number
+                      </label>
+                      <div className="flex gap-2">
+                        <select
+                          name="countryCode"
+                          value={formData.countryCode}
+                          onChange={handleChange}
+                          className="w-28 border border-white/10 rounded-2xl px-3 py-3.5 bg-[#1e293b] text-white"
+                        >
+                          {countryCodes.map((country) => (
+                            <option key={country.code} value={country.code}>
+                              {country.code}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="tel"
+                          name="phoneNumber"
+                          value={formData.phoneNumber}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, "");
+                            setFormData((prev) => ({
+                              ...prev,
+                              phoneNumber: value,
+                            }));
+                          }}
+                          onFocus={() => setFocused("phoneNumber")}
+                          onBlur={() => setFocused("")}
+                          placeholder="9876543210"
+                          required
+                          maxLength={10}
+                          className={inputCls("phoneNumber")}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* State */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
+                          State
+                        </label>
+                        <select
+                          name="state"
+                          value={formData.state}
+                          onChange={handleChange}
+                          onFocus={() => setFocused("state")}
+                          onBlur={() => setFocused("")}
+                          required
+                          className={inputCls("state")}
+                        >
+                          <option value="" disabled>
+                            Select state
+                          </option>
+                          {states.map((state) => (
+                            <option key={state} value={state}>
+                              {state}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* City */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
+                          City
+                        </label>
+                        <select
+                          name="city"
+                          value={formData.city}
+                          onChange={handleChange}
+                          onFocus={() => setFocused("city")}
+                          onBlur={() => setFocused("")}
+                          required
+                          className={
+                            inputCls("city") +
+                            (!formData.state
+                              ? " cursor-not-allowed opacity-50"
+                              : "")
+                          }
+                        >
+                          <option value="" disabled>
+                            {formData.state
+                              ? "Select city"
+                              : "Choose a state first"}
+                          </option>
+                          {cityOptions.map((city) => (
+                            <option key={city} value={city}>
+                              {city}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Password */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
+                        Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          name="password"
+                          value={formData.password}
+                          onChange={handleChange}
+                          onFocus={() => setFocused("password")}
+                          onBlur={() => setFocused("")}
+                          placeholder="••••••••••"
+                          required
+                          className={inputCls("password") + " pr-12"}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((s) => !s)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-cyan-300 transition-colors"
+                        >
+                          {showPassword ? (
+                            <FiEyeOff size={18} />
+                          ) : (
+                            <FiEye size={18} />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Confirm Password */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
+                        Confirm Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showConfirm ? "text" : "password"}
+                          name="confirmPassword"
+                          value={formData.confirmPassword}
+                          onChange={handleChange}
+                          onFocus={() => setFocused("confirmPassword")}
+                          onBlur={() => setFocused("")}
+                          placeholder="••••••••••"
+                          required
+                          className={inputCls("confirmPassword") + " pr-12"}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirm((s) => !s)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-cyan-300 transition-colors"
+                        >
+                          {showConfirm ? (
+                            <FiEyeOff size={18} />
+                          ) : (
+                            <FiEye size={18} />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Terms */}
+                    <div className="flex items-start gap-2.5 pt-1">
+                      <input
+                        type="checkbox"
+                        id="terms"
+                        checked={agreedToTerms}
+                        onChange={(e) => setAgreedToTerms(e.target.checked)}
+                        className="w-4 h-4 mt-0.5 rounded accent-cyan-400 flex-shrink-0"
+                      />
+                      <label
+                        htmlFor="terms"
+                        className="text-slate-400 text-sm cursor-pointer leading-relaxed"
+                      >
+                        I agree to the{" "}
+                        <span className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                          <Link to="/terms">Terms of Service</Link>
+                        </span>{" "}
+                        &amp;{" "}
+                        <span className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                          <Link to="/privacy">Privacy Policy</Link>
+                        </span>
+                      </label>
+                    </div>
+
+                    {/* Submit */}
+                    <button
+                      type="submit"
+                      disabled={loading || sendingOtp}
+                      className="btn-grad w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2.5 mt-1 disabled:opacity-60"
+                    >
+                      {sendingOtp ? (
+                        <>
+                          <svg
+                            className="w-5 h-5 animate-spin"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="rgba(255,255,255,.3)"
+                              strokeWidth="3"
+                            />
+                            <path
+                              d="M12 2a10 10 0 0 1 10 10"
+                              stroke="white"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          Sending OTP…
+                        </>
+                      ) : (
+                        <>
+                          Continue
+                          <svg
+                            viewBox="0 0 20 20"
+                            className="w-5 h-5"
+                            fill="none"
+                          >
+                            <path
+                              d="M4 10h12M10 4l6 6-6 6"
+                              stroke="white"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </>
+                      )}
+                    </button>
+                  </form>
+
+                  <p className="text-center text-slate-500 text-sm mt-6">
+                    Already have an account?{" "}
+                    <Link
+                      to="/login"
+                      className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors"
+                    >
+                      Sign In
+                    </Link>
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>

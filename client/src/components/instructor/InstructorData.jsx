@@ -167,7 +167,6 @@ export const navItems = [
 export const sectionTitles = {
   dashboard: "Dashboard",
   courses: "My Courses",
-  students: "Student Insights",
   sessions: "Live Sessions",
   analytics: "Analytics",
   ai: "AI Assistant",
