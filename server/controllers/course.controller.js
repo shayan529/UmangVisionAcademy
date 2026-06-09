@@ -2,62 +2,8 @@ import Course from "./../models/courses.model.js";
 import User from "./../models/user.model.js";
 import Cart from "./../models/cart.model.js";
 
-const QUIZ_PASS_SCORE = 60;
-
-const getQuizAnalyticsByCourse = async (courses) => {
-  const courseIds = courses.map((course) => course._id);
-  const studentIds = [
-    ...new Set(
-      courses.flatMap((course) =>
-        (course.students ?? []).map((studentId) => studentId.toString()),
-      ),
-    ),
-  ];
-  const analytics = new Map(
-    courseIds.map((courseId) => [
-      courseId.toString(),
-      {
-        quizSubmissionCount: 0,
-        quizPassCount: 0,
-        quizPassRate: null,
-      },
-    ]),
-  );
-
-  if (courseIds.length === 0 || studentIds.length === 0) return analytics;
-
-  const students = await User.find({
-    _id: { $in: studentIds },
-    "quizSubmissions.courseId": { $in: courseIds },
-  })
-    .select("quizSubmissions")
-    .lean();
-
-  students.forEach((student) => {
-    (student.quizSubmissions ?? []).forEach((submission) => {
-      const courseId = submission.courseId?.toString();
-      const stat = analytics.get(courseId);
-      if (!stat) return;
-
-      stat.quizSubmissionCount += 1;
-      if ((submission.score ?? 0) >= QUIZ_PASS_SCORE) {
-        stat.quizPassCount += 1;
-      }
-    });
-  });
-
-  analytics.forEach((stat) => {
-    stat.quizPassRate =
-      stat.quizSubmissionCount > 0
-        ? Math.round((stat.quizPassCount / stat.quizSubmissionCount) * 100)
-        : null;
-  });
-
-  return analytics;
-};
-
 // ── shared shape helper ───────────────────────────────────────────────────────
-const shapeCourse = (c, quizAnalytics = {}) => ({
+const shapeCourse = (c) => ({
   _id: c._id,
   title: c.title,
   summary: c.summary,
@@ -67,21 +13,19 @@ const shapeCourse = (c, quizAnalytics = {}) => ({
   thumbnailUrl: c.thumbnailUrl,
   demoVideoUrl: c.demoVideoUrl,
   published: c.published,
+  approvalStatus: c.approvalStatus, // "draft" | "pending" | "approved" | "rejected"
+  rejectionReason: c.rejectionReason,
   ratingAverage: c.ratingAverage,
-  rating: c.ratingAverage,
   reviewCount: c.reviewCount,
   durationHours: c.durationHours,
   tags: c.tags,
   lessons: c.lessons ?? [],
   quiz: c.quiz ?? { title: "Final Course Quiz", questions: [] },
-  ratings: c.ratings ?? [], // include so the frontend can read user's own rating
+  ratings: c.ratings ?? [],
   lessonCount: c.lessons?.length ?? 0,
   enrolledCount: c.students?.length ?? 0,
   status: c.published ? "published" : "draft",
   revenue: (c.price ?? 0) * (c.students?.length ?? 0),
-  quizSubmissionCount: quizAnalytics.quizSubmissionCount ?? 0,
-  quizPassCount: quizAnalytics.quizPassCount ?? 0,
-  quizPassRate: quizAnalytics.quizPassRate ?? null,
 });
 
 // ── createCourse ──────────────────────────────────────────────────────────────
@@ -108,6 +52,10 @@ export const createCourse = async (req, res) => {
     if (!summary?.trim())
       return res.status(400).json({ message: "Summary is required" });
 
+    // If instructor clicked "Publish" → set approvalStatus to "pending"
+    // If saved as draft → approvalStatus stays "draft", published stays false
+    const wantsPublish = published === true;
+
     const course = await Course.create({
       title: title.trim(),
       summary: summary.trim(),
@@ -120,9 +68,10 @@ export const createCourse = async (req, res) => {
       lessons: Array.isArray(lessons) ? lessons : [],
       tags: Array.isArray(tags) ? tags : [],
       quiz: quiz && typeof quiz === "object" ? quiz : undefined,
-      published: published ?? false,
+      published: false, // never auto-published
+      approvalStatus: wantsPublish ? "pending" : "draft", // pending = awaiting admin
       instructor: req.user._id,
-      board: board,
+      board,
       students: [],
     });
 
@@ -138,21 +87,19 @@ export const getCourses = async (req, res) => {
     const courses = await Course.find({ instructor: req.user._id }).sort({
       createdAt: -1,
     });
-    const quizAnalytics = await getQuizAnalyticsByCourse(courses);
-    res.json(
-      courses.map((course) =>
-        shapeCourse(course, quizAnalytics.get(course._id.toString())),
-      ),
-    );
+    res.json(courses.map(shapeCourse));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// ── getPublishedCourses (public — no auth) ────────────────────────────────────
+// ── getPublishedCourses (public — only admin-approved) ────────────────────────
 export const getPublishedCourses = async (req, res) => {
   try {
-    const courses = await Course.find({ published: true })
+    const courses = await Course.find({
+      approvalStatus: "approved",
+      published: true,
+    })
       .populate("instructor", "name email")
       .sort({ createdAt: -1 })
       .lean();
@@ -165,7 +112,11 @@ export const getPublishedCourses = async (req, res) => {
 // ── getCourseByIdPublic ───────────────────────────────────────────────────────
 export const getCourseByIdPublic = async (req, res) => {
   try {
-    const course = await Course.findOne({ _id: req.params.id, published: true })
+    const course = await Course.findOne({
+      _id: req.params.id,
+      approvalStatus: "approved",
+      published: true,
+    })
       .populate("instructor", "name email")
       .lean();
 
@@ -194,7 +145,6 @@ export const getCourseByIdPublic = async (req, res) => {
         description: l.description,
         durationMinutes: l.durationMinutes,
         type: l.type ?? "video",
-        // videoUrl and content intentionally withheld from public
       })),
     });
   } catch (error) {
@@ -202,7 +152,7 @@ export const getCourseByIdPublic = async (req, res) => {
   }
 };
 
-// ── getAllCoursesAdmin ────────────────────────────────────────────────────────
+// ── getAllCoursesAdmin — returns ALL courses for admin review ─────────────────
 export const getAllCoursesAdmin = async (req, res) => {
   try {
     const courses = await Course.find({})
@@ -210,6 +160,56 @@ export const getAllCoursesAdmin = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
     res.json(courses);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── approveCourse (admin only) ────────────────────────────────────────────────
+// POST /courses/:id/approve
+export const approveCourse = async (req, res) => {
+  try {
+    const course = await Course.findByIdAndUpdate(
+      req.params.id,
+      {
+        approvalStatus: "approved",
+        published: true,
+        rejectionReason: "",
+      },
+      { new: true },
+    );
+    if (!course) return res.status(404).json({ message: "Course not found" });
+    res.json({
+      success: true,
+      message: "Course approved and published.",
+      course: shapeCourse(course),
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── rejectCourse (admin only) ─────────────────────────────────────────────────
+// POST /courses/:id/reject
+// Body: { reason?: string }
+export const rejectCourse = async (req, res) => {
+  try {
+    const { reason = "" } = req.body;
+    const course = await Course.findByIdAndUpdate(
+      req.params.id,
+      {
+        approvalStatus: "rejected",
+        published: false,
+        rejectionReason: reason.trim(),
+      },
+      { new: true },
+    );
+    if (!course) return res.status(404).json({ message: "Course not found" });
+    res.json({
+      success: true,
+      message: "Course rejected.",
+      course: shapeCourse(course),
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -279,8 +279,7 @@ export const enrollCourses = async (req, res) => {
         : "Already enrolled in all selected courses.",
     });
   } catch (err) {
-    console.error("enrollCourses error:", err);
-    return res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -290,7 +289,7 @@ export const getCourseById = async (req, res) => {
     const course = await Course.findById(req.params.id)
       .populate("instructor", "name email")
       .populate("students", "name email")
-      .populate("ratings.user", "name"); // so frontend can show reviewer names if needed
+      .populate("ratings.user", "name");
     if (!course) return res.status(404).json({ message: "Course not found" });
     res.json(course);
   } catch (error) {
@@ -299,6 +298,8 @@ export const getCourseById = async (req, res) => {
 };
 
 // ── updateCourse ──────────────────────────────────────────────────────────────
+// When instructor edits a rejected/approved course and re-submits,
+// it goes back to "pending" if they clicked publish, otherwise stays "draft".
 export const updateCourse = async (req, res) => {
   try {
     const {
@@ -317,6 +318,37 @@ export const updateCourse = async (req, res) => {
       quiz,
     } = req.body;
 
+    const existing = await Course.findOne({
+      _id: req.params.id,
+      instructor: req.user._id,
+    });
+    if (!existing) return res.status(404).json({ message: "Course not found" });
+
+    const wantsPublish = published === true;
+
+    // Re-submission logic:
+    // - If currently rejected/draft and instructor clicks publish → reset to pending
+    // - If saving as draft → keep or revert to draft
+    // - If already approved and instructor saves → keep approved (edits to live course)
+    let newApprovalStatus = existing.approvalStatus;
+    let newPublished = existing.published;
+
+    if (wantsPublish) {
+      if (existing.approvalStatus === "approved") {
+        // Already approved — keep published (instructor editing a live course)
+        newApprovalStatus = "approved";
+        newPublished = true;
+      } else {
+        // Draft or rejected — send back for review
+        newApprovalStatus = "pending";
+        newPublished = false;
+      }
+    } else {
+      // Saving as draft — pull back from pending/approved
+      newApprovalStatus = "draft";
+      newPublished = false;
+    }
+
     const allowedUpdates = {
       ...(title !== undefined && { title }),
       ...(summary !== undefined && { summary }),
@@ -327,10 +359,13 @@ export const updateCourse = async (req, res) => {
       ...(thumbnailUrl !== undefined && { thumbnailUrl }),
       ...(demoVideoUrl !== undefined && { demoVideoUrl }),
       ...(tags !== undefined && { tags: Array.isArray(tags) ? tags : [] }),
-      ...(published !== undefined && { published }),
       ...(board !== undefined && { board }),
       ...(lessons !== undefined && { lessons }),
       ...(quiz !== undefined && { quiz }),
+      published: newPublished,
+      approvalStatus: newApprovalStatus,
+      rejectionReason:
+        newApprovalStatus === "pending" ? "" : existing.rejectionReason,
     };
 
     const course = await Course.findOneAndUpdate(
@@ -339,7 +374,6 @@ export const updateCourse = async (req, res) => {
       { new: true, runValidators: true },
     );
 
-    if (!course) return res.status(404).json({ message: "Course not found" });
     res.json(shapeCourse(course));
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -347,14 +381,9 @@ export const updateCourse = async (req, res) => {
 };
 
 // ── rateCourse ────────────────────────────────────────────────────────────────
-// POST /courses/:id/rate
-// Body: { rating: 1-5, review?: string }
-// Only enrolled students can rate. One rating per student (upsert).
 export const rateCourse = async (req, res) => {
   try {
     const { rating, review = "" } = req.body;
-
-    // Validate rating value
     const stars = Number(rating);
     if (!stars || stars < 1 || stars > 5)
       return res
@@ -364,7 +393,6 @@ export const rateCourse = async (req, res) => {
     const course = await Course.findById(req.params.id);
     if (!course) return res.status(404).json({ message: "Course not found." });
 
-    // Only enrolled students can rate
     const isEnrolled = course.students.some(
       (s) => s.toString() === req.user._id.toString(),
     );
@@ -373,7 +401,6 @@ export const rateCourse = async (req, res) => {
         .status(403)
         .json({ message: "You must be enrolled to rate this course." });
 
-    // Upsert: update existing rating or push a new one
     const existingIdx = course.ratings.findIndex(
       (r) => r.user.toString() === req.user._id.toString(),
     );
@@ -389,9 +416,7 @@ export const rateCourse = async (req, res) => {
       });
     }
 
-    // Recalculate average and count
     course.recalcRatings();
-
     await course.save();
 
     res.json({
@@ -401,7 +426,6 @@ export const rateCourse = async (req, res) => {
       message: existingIdx !== -1 ? "Rating updated." : "Rating submitted.",
     });
   } catch (err) {
-    console.error("rateCourse error:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -423,7 +447,7 @@ export const deleteCourse = async (req, res) => {
 // ── submitQuiz ────────────────────────────────────────────────────────────────
 export const submitQuiz = async (req, res) => {
   try {
-    const { answers } = req.body; // { [qIdx]: optionIndex }
+    const { answers } = req.body;
     const course = await Course.findById(req.params.id);
     if (!course?.quiz?.questions?.length)
       return res.status(404).json({ success: false, message: "No quiz found" });

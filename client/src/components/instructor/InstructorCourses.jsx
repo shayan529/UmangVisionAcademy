@@ -40,10 +40,40 @@ const isDraftForm = (form) =>
     Number(form.price) > 0,
   );
 
-const statusStyle = (published) =>
-  published
-    ? { bg: "#052e16", text: "#4ade80", label: "Published" }
-    : { bg: "#1c1003", text: "#fbbf24", label: "Draft" };
+// ── Updated statusStyle — based on approvalStatus ─────────────────────────────
+const statusStyle = (course) => {
+  const s = course.approvalStatus ?? (course.published ? "approved" : "draft");
+  switch (s) {
+    case "pending":
+      return {
+        bg: "#1c1a00",
+        text: "#fbbf24",
+        border: "#854d0e",
+        label: "Pending Review",
+      };
+    case "approved":
+      return {
+        bg: "#052e16",
+        text: "#4ade80",
+        border: "#166534",
+        label: "Published",
+      };
+    case "rejected":
+      return {
+        bg: "#2d0a0a",
+        text: "#f87171",
+        border: "#7f1d1d",
+        label: "Rejected",
+      };
+    default:
+      return {
+        bg: "#111827",
+        text: "#64748b",
+        border: "#1e293b",
+        label: "Draft",
+      };
+  }
+};
 
 // ── FileUploader ──────────────────────────────────────────────────────────────
 const FileUploader = ({
@@ -125,7 +155,6 @@ const FileUploader = ({
           </span>
         )}
       </label>
-
       <div
         onClick={() => status !== "uploading" && inputRef.current?.click()}
         onDrop={handleDrop}
@@ -215,7 +244,6 @@ const FileUploader = ({
           <p style={{ fontSize: 13, color: "#f87171" }}>❌ {errMsg}</p>
         )}
       </div>
-
       <div
         style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center" }}
       >
@@ -357,13 +385,11 @@ const Sel = ({ value, onChange, options }) => (
 function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
   const [aiLoading, setAiLoading] = useState(false);
   const [activeIdx, setActiveIdx] = useState(null);
-
   const questions = quiz?.questions || [];
   const LABELS = ["A", "B", "C", "D"];
 
   const updateQuestions = (newQs) =>
     onChange({ ...(quiz || { title: "Final Quiz" }), questions: newQs });
-
   const addQuestion = () => {
     const blank = {
       question: "",
@@ -374,17 +400,14 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
     updateQuestions(updated);
     setActiveIdx(updated.length - 1);
   };
-
   const removeQuestion = (idx) => {
     updateQuestions(questions.filter((_, i) => i !== idx));
     setActiveIdx(null);
   };
-
   const updateQuestion = (idx, field, value) =>
     updateQuestions(
       questions.map((q, i) => (i === idx ? { ...q, [field]: value } : q)),
     );
-
   const updateOption = (qIdx, oIdx, value) =>
     updateQuestions(
       questions.map((q, i) => {
@@ -431,7 +454,6 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
         background: "#0b1120",
       }}
     >
-      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -514,9 +536,7 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
           )}
         </button>
       </div>
-
       <div style={{ display: "flex", minHeight: questions.length ? 320 : 120 }}>
-        {/* Left: question list */}
         {questions.length > 0 && (
           <div
             style={{
@@ -577,8 +597,6 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
             </button>
           </div>
         )}
-
-        {/* Right: editor */}
         <div style={{ flex: 1, padding: 16, overflowY: "auto" }}>
           {questions.length === 0 ? (
             <div
@@ -660,8 +678,6 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
                   Remove
                 </button>
               </div>
-
-              {/* Question text */}
               <textarea
                 value={questions[activeIdx].question}
                 onChange={(e) =>
@@ -678,8 +694,6 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
                 onFocus={focus}
                 onBlur={blur}
               />
-
-              {/* Options */}
               <div>
                 <p
                   style={{
@@ -785,7 +799,6 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
 // ── CourseForm ────────────────────────────────────────────────────────────────
 const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
@@ -812,7 +825,6 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
           <Sel
             value={form.board}
             onChange={set("board")}
-            required
             options={[
               { value: "", label: "Select board" },
               ...BOARDS.map((b) => ({ value: b, label: b })),
@@ -828,12 +840,10 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
           />
         </Field>
       </div>
-
       <ChapterManager
         lessons={form.lessons ?? []}
         onChange={(lessons) => setForm((f) => ({ ...f, lessons }))}
       />
-
       <Field label="Description" hint="* (course summary)">
         <Textarea
           value={form.description}
@@ -842,7 +852,6 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
           rows={3}
         />
       </Field>
-
       <Field label="Course Content" hint="(chapters, topics)">
         <Textarea
           value={form.content}
@@ -851,7 +860,6 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
           rows={5}
         />
       </Field>
-
       <div
         style={{
           display: "grid",
@@ -878,8 +886,6 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
           onUploaded={(url) => setForm((f) => ({ ...f, demoVideoUrl: url }))}
         />
       </div>
-
-      {/* ── Final Quiz ── */}
       <Field
         label="Final Quiz"
         hint="(optional — students take after completing all lessons)"
@@ -891,7 +897,6 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
           courseDescription={form.description}
         />
       </Field>
-
       <div
         style={{
           display: "flex",
@@ -949,11 +954,12 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
             boxShadow: "0 4px 16px rgba(124,58,237,.25)",
           }}
         >
+          {/* ← Updated label: "Submit for Review" instead of "Publish" */}
           {saving
             ? "Saving…"
             : mode === "create"
-              ? "Publish Course"
-              : "Save & Publish"}
+              ? "Submit for Review"
+              : "Save & Submit for Review"}
         </button>
       </div>
     </div>
@@ -992,9 +998,7 @@ export default function InstructorCourses({ showToast }) {
     if (!savedDraft) return;
     try {
       const parsed = JSON.parse(savedDraft);
-      if (isDraftForm(parsed)) {
-        setCreateForm({ ...EMPTY_FORM, ...parsed });
-      }
+      if (isDraftForm(parsed)) setCreateForm({ ...EMPTY_FORM, ...parsed });
     } catch {
       localStorage.removeItem(DRAFT_STORAGE_KEY);
     }
@@ -1002,15 +1006,11 @@ export default function InstructorCourses({ showToast }) {
 
   useEffect(() => {
     const saveDraft = () => {
-      if (isDraftForm(createForm)) {
+      if (isDraftForm(createForm))
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(createForm));
-      } else {
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
-      }
+      else localStorage.removeItem(DRAFT_STORAGE_KEY);
     };
-
     saveDraft();
-
     const handleBeforeUnload = (event) => {
       if (view === "create" && isDraftForm(createForm)) {
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(createForm));
@@ -1018,7 +1018,6 @@ export default function InstructorCourses({ showToast }) {
         event.returnValue = "";
       }
     };
-
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
       saveDraft();
@@ -1031,19 +1030,28 @@ export default function InstructorCourses({ showToast }) {
     const matchSearch =
       c.title?.toLowerCase().includes(q) ||
       c.category?.toLowerCase().includes(q);
+    const approvalS = c.approvalStatus ?? "draft";
     const matchStatus =
       filterStatus === "all"
         ? true
         : filterStatus === "published"
-          ? c.published
-          : !c.published;
+          ? approvalS === "approved"
+          : filterStatus === "pending"
+            ? approvalS === "pending"
+            : filterStatus === "rejected"
+              ? approvalS === "rejected"
+              : approvalS === "draft";
     return matchSearch && matchStatus;
   });
 
   const counts = {
     total: courses.length,
-    published: courses.filter((c) => c.published).length,
-    draft: courses.filter((c) => !c.published).length,
+    pending: courses.filter((c) => c.approvalStatus === "pending").length,
+    approved: courses.filter((c) => c.approvalStatus === "approved").length,
+    rejected: courses.filter((c) => c.approvalStatus === "rejected").length,
+    draft: courses.filter(
+      (c) => !c.approvalStatus || c.approvalStatus === "draft",
+    ).length,
   };
 
   const openEdit = (course) => {
@@ -1058,7 +1066,6 @@ export default function InstructorCourses({ showToast }) {
       thumbnailUrl: course.thumbnailUrl ?? "",
       demoVideoUrl: course.demoVideoUrl ?? "",
       price: course.price ?? 0,
-      // ← load existing quiz into the edit form
       quiz: course.quiz ?? { title: "Final Quiz", questions: [] },
     });
     setView("list");
@@ -1075,8 +1082,7 @@ export default function InstructorCourses({ showToast }) {
     price: Number(form.price) || 0,
     thumbnailUrl: form.thumbnailUrl || "",
     demoVideoUrl: form.demoVideoUrl || "",
-    published,
-    // ← include quiz in payload
+    published, // controller interprets: published=true → pending, false → draft
     quiz: form.quiz ?? { title: "Final Quiz", questions: [] },
   });
 
@@ -1088,35 +1094,30 @@ export default function InstructorCourses({ showToast }) {
       { key: "description", label: "Description" },
       { key: "content", label: "Course Content" },
       { key: "thumbnailUrl", label: "Thumbnail" },
-      // { key: "demoVideoUrl", label: "Demo Video" },
     ];
-
     for (const field of requiredFields) {
-      const value = form[field.key];
-      if (value === undefined || value === null || value === "") {
-        showToast?.(`${field.label} is required before publishing`);
+      if (!form[field.key]) {
+        showToast?.(`${field.label} is required before submitting for review`);
         return false;
       }
     }
-
     return true;
   };
 
   const handleCreate = async (publish) => {
     if (publish && !validateForPublish(createForm)) return;
-
     setSaving(true);
     const resultAction = await dispatch(
       createCourse(buildPayload(createForm, publish)),
     );
     setSaving(false);
-
     if (createCourse.fulfilled.match(resultAction)) {
       setCreateForm(EMPTY_FORM);
       localStorage.removeItem(DRAFT_STORAGE_KEY);
-      setFilterStatus(publish ? filterStatus : "draft");
       setView("list");
-      showToast?.(publish ? "Course published!" : "Saved as draft.");
+      showToast?.(
+        publish ? "Course submitted for admin review!" : "Saved as draft.",
+      );
     } else {
       showToast?.(
         resultAction.payload ||
@@ -1127,7 +1128,6 @@ export default function InstructorCourses({ showToast }) {
 
   const handleEdit = async (publish) => {
     if (publish && !validateForPublish(editForm)) return;
-
     setSaving(true);
     await dispatch(
       updateCourse({
@@ -1137,17 +1137,7 @@ export default function InstructorCourses({ showToast }) {
     );
     setSaving(false);
     closeEdit();
-    showToast?.(publish ? "Course updated & published!" : "Saved as draft.");
-  };
-
-  const handleTogglePublish = async (course) => {
-    await dispatch(
-      updateCourse({
-        id: course._id,
-        courseData: { published: !course.published },
-      }),
-    );
-    showToast?.(course.published ? "Course unpublished." : "Course published!");
+    showToast?.(publish ? "Course resubmitted for review!" : "Saved as draft.");
   };
 
   const handleDelete = async (id) => {
@@ -1270,22 +1260,20 @@ export default function InstructorCourses({ showToast }) {
         {/* List view */}
         {view === "list" && (
           <>
-            {/* Stats */}
+            {/* Stats — now shows approval-aware counts */}
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(3,1fr)",
+                gridTemplateColumns: "repeat(auto-fit,minmax(110px,1fr))",
                 gap: 12,
               }}
             >
               {[
                 { label: "Total", value: counts.total, color: "#818cf8" },
-                {
-                  label: "Published",
-                  value: counts.published,
-                  color: "#4ade80",
-                },
-                { label: "Drafts", value: counts.draft, color: "#fbbf24" },
+                { label: "Pending", value: counts.pending, color: "#fbbf24" },
+                { label: "Live", value: counts.approved, color: "#4ade80" },
+                { label: "Rejected", value: counts.rejected, color: "#f87171" },
+                { label: "Drafts", value: counts.draft, color: "#64748b" },
               ].map((s) => (
                 <div
                   key={s.label}
@@ -1333,23 +1321,30 @@ export default function InstructorCourses({ showToast }) {
                   outline: "none",
                 }}
               />
-              {["all", "published", "draft"].map((f) => (
+              {[
+                { key: "all", label: "All" },
+                { key: "draft", label: "Draft" },
+                { key: "pending", label: "In Review" },
+                { key: "published", label: "Live" },
+                { key: "rejected", label: "Rejected" },
+              ].map(({ key, label }) => (
                 <button
-                  key={f}
-                  onClick={() => setFilterStatus(f)}
+                  key={key}
+                  onClick={() => setFilterStatus(key)}
                   style={{
                     padding: "8px 16px",
                     borderRadius: 20,
-                    border: `1px solid ${filterStatus === f ? "#7c3aed" : "#1e293b"}`,
-                    background: filterStatus === f ? "#7c3aed" : "transparent",
-                    color: filterStatus === f ? "#fff" : "#64748b",
+                    border: `1px solid ${filterStatus === key ? "#7c3aed" : "#1e293b"}`,
+                    background:
+                      filterStatus === key ? "#7c3aed" : "transparent",
+                    color: filterStatus === key ? "#fff" : "#64748b",
                     fontSize: 12,
                     fontWeight: 600,
                     cursor: "pointer",
                     textTransform: "capitalize",
                   }}
                 >
-                  {f}
+                  {label}
                 </button>
               ))}
             </div>
@@ -1396,7 +1391,7 @@ export default function InstructorCourses({ showToast }) {
                 style={{ display: "flex", flexDirection: "column", gap: 10 }}
               >
                 {filtered.map((course) => {
-                  const st = statusStyle(course.published);
+                  const st = statusStyle(course);
                   const isOpen = expandedId === course._id;
                   return (
                     <div
@@ -1448,7 +1443,6 @@ export default function InstructorCourses({ showToast }) {
                             "📚"
                           )}
                         </div>
-
                         {/* Meta */}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div
@@ -1480,12 +1474,12 @@ export default function InstructorCourses({ showToast }) {
                                 borderRadius: 20,
                                 background: st.bg,
                                 color: st.text,
+                                border: `1px solid ${st.border}`,
                                 flexShrink: 0,
                               }}
                             >
                               {st.label}
                             </span>
-                            {/* Quiz badge */}
                             {course.quiz?.questions?.length > 0 && (
                               <span
                                 style={{
@@ -1530,8 +1524,7 @@ export default function InstructorCourses({ showToast }) {
                             )}
                           </div>
                         </div>
-
-                        {/* Buttons */}
+                        {/* Action buttons — status-aware */}
                         <div
                           style={{
                             display: "flex",
@@ -1541,44 +1534,44 @@ export default function InstructorCourses({ showToast }) {
                             justifyContent: "flex-end",
                           }}
                         >
-                          <button
-                            className="ic-btn"
-                            onClick={() => handleTogglePublish(course)}
-                            style={{
-                              padding: "6px 12px",
-                              borderRadius: 8,
-                              border: `1px solid ${course.published ? "#334155" : "#16a34a40"}`,
-                              background: course.published
-                                ? "transparent"
-                                : "#052e16",
-                              color: course.published ? "#64748b" : "#4ade80",
-                              fontSize: 11,
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              transition: "opacity 0.15s",
-                            }}
-                          >
-                            {course.published ? "Unpublish" : "Publish"}
-                          </button>
-                          <button
-                            className="ic-btn"
-                            onClick={() =>
-                              isOpen ? closeEdit() : openEdit(course)
-                            }
-                            style={{
-                              padding: "6px 14px",
-                              borderRadius: 8,
-                              border: `1px solid ${isOpen ? "#7c3aed" : "#334155"}`,
-                              background: isOpen ? "#2e1065" : "transparent",
-                              color: isOpen ? "#a78bfa" : "#e2e8f0",
-                              fontSize: 12,
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              transition: "all 0.15s",
-                            }}
-                          >
-                            {isOpen ? "✕ Close" : "Edit / Manage"}
-                          </button>
+                          {/* Pending: show waiting label, no actions */}
+                          {course.approvalStatus === "pending" && (
+                            <span
+                              style={{
+                                fontSize: 11,
+                                color: "#fbbf24",
+                                padding: "6px 12px",
+                                background: "#1c1a00",
+                                borderRadius: 8,
+                                border: "1px solid #854d0e",
+                                fontWeight: 600,
+                              }}
+                            >
+                              ⏳ In review
+                            </span>
+                          )}
+                          {/* Edit: always available except pending */}
+                          {course.approvalStatus !== "pending" && (
+                            <button
+                              className="ic-btn"
+                              onClick={() =>
+                                isOpen ? closeEdit() : openEdit(course)
+                              }
+                              style={{
+                                padding: "6px 14px",
+                                borderRadius: 8,
+                                border: `1px solid ${isOpen ? "#7c3aed" : "#334155"}`,
+                                background: isOpen ? "#2e1065" : "transparent",
+                                color: isOpen ? "#a78bfa" : "#e2e8f0",
+                                fontSize: 12,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                transition: "all 0.15s",
+                              }}
+                            >
+                              {isOpen ? "✕ Close" : "Edit / Manage"}
+                            </button>
+                          )}
                           <button
                             className="ic-btn"
                             onClick={() => setDeleteId(course._id)}
@@ -1617,11 +1610,64 @@ export default function InstructorCourses({ showToast }) {
                               color: "#a78bfa",
                               textTransform: "uppercase",
                               letterSpacing: "0.12em",
-                              marginBottom: 20,
+                              marginBottom: 16,
                             }}
                           >
                             ✏️ Editing: {course.title}
                           </p>
+
+                          {/* ── Rejection reason banner ── */}
+                          {course.approvalStatus === "rejected" &&
+                            course.rejectionReason && (
+                              <div
+                                style={{
+                                  background: "#2d0a0a",
+                                  border: "1px solid #7f1d1d",
+                                  borderRadius: 10,
+                                  padding: "12px 16px",
+                                  marginBottom: 16,
+                                  display: "flex",
+                                  gap: 12,
+                                  alignItems: "flex-start",
+                                }}
+                              >
+                                <span style={{ fontSize: 20, flexShrink: 0 }}>
+                                  ❌
+                                </span>
+                                <div>
+                                  <p
+                                    style={{
+                                      fontSize: 12,
+                                      fontWeight: 700,
+                                      color: "#f87171",
+                                      marginBottom: 4,
+                                    }}
+                                  >
+                                    Rejected by admin
+                                  </p>
+                                  <p
+                                    style={{
+                                      fontSize: 13,
+                                      color: "#fca5a5",
+                                      lineHeight: 1.6,
+                                    }}
+                                  >
+                                    {course.rejectionReason}
+                                  </p>
+                                  <p
+                                    style={{
+                                      fontSize: 11,
+                                      color: "#64748b",
+                                      marginTop: 6,
+                                    }}
+                                  >
+                                    Edit your course and click "Save & Submit
+                                    for Review" to resubmit.
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+
                           <CourseForm
                             form={editForm}
                             setForm={setEditForm}

@@ -15,7 +15,6 @@ const lessonSchema = new Schema(
   { _id: false },
 );
 
-// ── Rating sub-document ───────────────────────────────────────────────────────
 const ratingSchema = new Schema(
   {
     user: { type: Types.ObjectId, ref: "User", required: true },
@@ -43,14 +42,25 @@ const courseSchema = new Schema(
     lessons: [lessonSchema],
     students: [{ type: Types.ObjectId, ref: "User" }],
     tags: [{ type: String, trim: true }],
-    published: { type: Boolean, default: false },
+
+    // ── Approval workflow ─────────────────────────────────────────────────────
+    // Instructors submit courses; admin approves before they go live.
+    // "draft"   — instructor hasn't submitted yet (save without publish)
+    // "pending" — instructor clicked "Publish" → waiting for admin approval
+    // "approved"— admin approved → course is publicly visible
+    // "rejected"— admin rejected → instructor can edit and resubmit
+    approvalStatus: {
+      type: String,
+      enum: ["draft", "pending", "approved", "rejected"],
+      default: "draft",
+    },
+    rejectionReason: { type: String, trim: true, default: "" },
+    published: { type: Boolean, default: false }, // true only when approvalStatus === 'approved'
+
     durationHours: { type: Number, default: 0, min: 0 },
-
-    // ── Ratings ───────────────────────────────────────────────────────────────
-    ratings: [ratingSchema], // individual ratings from students
-    reviewCount: { type: Number, default: 0, min: 0 }, // auto-maintained
-    ratingAverage: { type: Number, default: 0, min: 0, max: 5 }, // auto-maintained
-
+    ratings: [ratingSchema],
+    reviewCount: { type: Number, default: 0, min: 0 },
+    ratingAverage: { type: Number, default: 0, min: 0, max: 5 },
     board: { type: String, trim: true, default: "" },
     quiz: {
       title: { type: String, default: "Final Course Quiz" },
@@ -66,7 +76,6 @@ const courseSchema = new Schema(
   { timestamps: true },
 );
 
-// ── Auto-recalculate ratingAverage and reviewCount on save ────────────────────
 courseSchema.methods.recalcRatings = function () {
   const ratings = this.ratings ?? [];
   this.reviewCount = ratings.length;

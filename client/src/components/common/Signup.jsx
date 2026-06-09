@@ -5,6 +5,7 @@ import { register, clearError } from "../../redux/slices/authSlice";
 import { toast } from "react-hot-toast";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import axios from "axios";
+import emailjs from "@emailjs/browser";
 
 const indianCitiesByState = {
   "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati"],
@@ -111,7 +112,14 @@ const ParticleCanvas = () => {
 };
 
 /* ── OTP Step ── */
-const OtpStep = ({ email, payload, onSuccess, onBack }) => {
+const OtpStep = ({
+  email,
+  payload,
+  otpRef,
+  otpExpiryRef,
+  onSuccess,
+  onBack,
+}) => {
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.auth);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -158,24 +166,31 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
 
   const handleVerify = async () => {
     const code = otp.join("");
+
     if (code.length < 6) {
       toast.error("Please enter the full 6-digit OTP.");
       return;
     }
+
+    if (Date.now() > otpExpiryRef.current) {
+      toast.error("OTP expired. Please resend.");
+      return;
+    }
+
+    if (code !== otpRef.current) {
+      toast.error("Invalid OTP.");
+      return;
+    }
+
     setVerifying(true);
+
     try {
-      await axios.post("/api/auth/verify-otp", { email, otp: code });
       const result = await dispatch(register(payload));
+
       if (register.fulfilled.match(result)) {
-        toast("Account created! Welcome aboard 🎉", { icon: "👋" });
+        toast.success("Account created successfully");
         onSuccess();
       }
-    } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Invalid OTP. Please try again.",
-      );
-      setOtp(["", "", "", "", "", ""]);
-      inputsRef.current[0]?.focus();
     } finally {
       setVerifying(false);
     }
@@ -183,14 +198,28 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
 
   const handleResend = async () => {
     setResending(true);
+
     try {
-      await axios.post("/api/auth/send-otp", { email });
-      toast.success("OTP resent to your email.");
+      const newOtp = (Math.floor(Math.random() * 900000) + 100000).toString();
+
+      otpRef.current = newOtp;
+      otpExpiryRef.current = Date.now() + 10 * 60 * 1000;
+
+      await emailjs.send(
+        "YOUR_SERVICE_ID",
+        "YOUR_TEMPLATE_ID",
+        {
+          to_email: email,
+          otp: newOtp,
+        },
+        "YOUR_PUBLIC_KEY",
+      );
+
+      toast.success("OTP resent");
       setResendCooldown(30);
       setOtp(["", "", "", "", "", ""]);
-      inputsRef.current[0]?.focus();
-    } catch {
-      toast.error("Failed to resend OTP. Please try again.");
+    } catch (err) {
+      toast.error("Failed to resend OTP");
     } finally {
       setResending(false);
     }
@@ -365,6 +394,19 @@ const Signup = () => {
   const [pendingPayload, setPendingPayload] = useState(null);
   const [sendingOtp, setSendingOtp] = useState(false);
 
+  const generateOtp = () => {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    return ((array[0] % 900000) + 100000).toString();
+  };
+
+  const otpRef = useRef("");
+  const otpExpiryRef = useRef(null);
+
+  const EMAILJS_SERVICE_ID = "service_8g8ffws";
+  const EMAILJS_TEMPLATE_ID = "template_saxjx6e";
+  const EMAILJS_PUBLIC_KEY = "9RKOM9JEfwUB3Smfq";
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -416,28 +458,49 @@ const Signup = () => {
       toast.error("Passwords do not match.");
       return;
     }
+
     if (!agreedToTerms) {
       toast.error("Please agree to the Terms & Conditions.");
       return;
     }
+
     if (!/^[0-9]{10}$/.test(formData.phoneNumber)) {
       toast.error("Please enter a valid 10-digit phone number.");
       return;
     }
 
-    const { confirmPassword, countryCode, phoneNumber, ...rest } = formData;
-    const payload = { ...rest, phoneNumber: `${countryCode}${phoneNumber}` };
+    const otp = generateOtp();
 
+    otpRef.current = otp;
+    otpExpiryRef.current = Date.now() + 10 * 60 * 1000;
+
+    const { confirmPassword, countryCode, phoneNumber, ...rest } = formData;
+
+    const payload = {
+      ...rest,
+      phoneNumber: `${countryCode}${phoneNumber}`,
+    };
+
+    setPendingPayload(payload);
     setSendingOtp(true);
+
     try {
-      await axios.post("/api/auth/send-otp", { email: formData.email });
-      toast.success("OTP sent to your email!");
-      setPendingPayload(payload);
-      setStep("otp");
-    } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Failed to send OTP. Please try again.",
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        {
+          to_email: formData.email,
+          otp,
+          name: formData.name,
+        },
+        EMAILJS_PUBLIC_KEY,
       );
+
+      toast.success("OTP sent to your email");
+      setStep("otp");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to send OTP");
     } finally {
       setSendingOtp(false);
     }
@@ -798,6 +861,8 @@ const Signup = () => {
                 <OtpStep
                   email={formData.email}
                   payload={pendingPayload}
+                  otpRef={otpRef}
+                  otpExpiryRef={otpExpiryRef}
                   onSuccess={() => navigate("/student-dashboard")}
                   onBack={() => setStep("form")}
                 />
