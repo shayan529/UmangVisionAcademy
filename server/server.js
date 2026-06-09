@@ -13,6 +13,7 @@ import uploadRoutes from './routes/upload.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import cartRoutes from './routes/cart.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
+import authRoutes from './routes/auth.route.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
@@ -43,6 +44,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api', cartRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/auth', authRoutes);
 
 ConnectDb();
 
