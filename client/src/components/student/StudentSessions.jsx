@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSessions } from "../../redux/slices/sessionSlice";
+import { fetchSubscription } from "../../redux/slices/billingSlice";
 
 const StudentSessions = ({ showToast }) => {
   const dispatch = useDispatch();
@@ -9,6 +10,10 @@ const StudentSessions = ({ showToast }) => {
 
   useEffect(() => {
     dispatch(fetchSessions());
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchSubscription());
   }, [dispatch]);
 
   const copyLink = async (url) => {

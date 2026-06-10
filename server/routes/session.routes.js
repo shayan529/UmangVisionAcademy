@@ -1,22 +1,27 @@
-import express from 'express';
+import express from "express";
 import {
-  getSessions,
   getSessionById,
   createSession,
   updateSession,
   deleteSession,
-} from '../controllers/session.controller.js';
-import { protect } from '../middleware/auth.middleware.js';
+  getStudentSessions,
+  getInstructorSessions,
+} from "../controllers/session.controller.js";
+import { protect } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// All session routes require authentication
 router.use(protect);
 
-router.get('/', protect, getSessions);
-router.get('/:id', getSessionById);
-router.post('/', createSession);
-router.put('/:id', updateSession);
-router.delete('/:id', deleteSession);
+// Single GET / that branches by role
+router.get("/", (req, res) => {
+  if (req.user.role === "instructor") return getInstructorSessions(req, res);
+  return getStudentSessions(req, res);
+});
+
+router.get("/:id", getSessionById);
+router.post("/", createSession);
+router.put("/:id", updateSession);
+router.delete("/:id", deleteSession);
 
 export default router;

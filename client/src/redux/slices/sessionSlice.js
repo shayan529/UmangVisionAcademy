@@ -67,7 +67,10 @@ const sessionSlice = createSlice({
       })
       .addCase(fetchSessions.fulfilled, (state, action) => {
         state.loading = false;
-        state.sessions = action.payload;
+        const payload = action.payload;
+        state.sessions = Array.isArray(payload)
+          ? payload
+          : (payload.sessions ?? payload.data ?? []);
       })
       .addCase(fetchSessions.rejected, (state, action) => {
         state.loading = false;
@@ -82,7 +85,9 @@ const sessionSlice = createSlice({
       })
       .addCase(createSession.fulfilled, (state, action) => {
         state.loading = false;
-        state.sessions.push(action.payload);
+        const session =
+          action.payload?.session ?? action.payload?.data ?? action.payload;
+        state.sessions.push(session);
         state.success = "Session scheduled!";
       })
       .addCase(createSession.rejected, (state, action) => {

@@ -361,6 +361,61 @@ function OtpModal({ title, subtitle, onVerify, onResend, onClose }) {
   );
 }
 
+const SectionCard = ({ title, children }) => (
+  <div
+    style={{
+      background: "#111827",
+      border: "1px solid #1e293b",
+      borderRadius: 18,
+      padding: "22px 24px",
+      marginBottom: 16,
+    }}
+  >
+    <h3
+      style={{
+        fontSize: 15,
+        fontWeight: 700,
+        color: "#f1f5f9",
+        marginBottom: 18,
+      }}
+    >
+      {title}
+    </h3>
+    {children}
+  </div>
+);
+
+const Toggle = ({ checked, onChange }) => (
+  <button
+    type="button"
+    onClick={onChange}
+    style={{
+      width: 44,
+      height: 24,
+      borderRadius: 12,
+      border: "none",
+      cursor: "pointer",
+      background: checked ? "#7c3aed" : "#334155",
+      position: "relative",
+      transition: "background 0.2s",
+      flexShrink: 0,
+    }}
+  >
+    <div
+      style={{
+        position: "absolute",
+        top: 3,
+        left: checked ? "calc(100% - 19px)" : 3,
+        width: 18,
+        height: 18,
+        borderRadius: "50%",
+        background: "#fff",
+        transition: "left 0.2s",
+      }}
+    />
+  </button>
+);
+
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function Settings() {
   const dispatch = useDispatch();
@@ -531,6 +586,7 @@ export default function Settings() {
         text: err.response?.data?.message || "Failed to send OTP",
         ok: false,
       });
+
       setEmailStep("idle");
     }
   };
@@ -733,61 +789,6 @@ export default function Settings() {
     color: "#fff",
     opacity: disabled ? 0.6 : 1,
   });
-
-  const SectionCard = ({ title, children }) => (
-    <div
-      style={{
-        background: "#111827",
-        border: "1px solid #1e293b",
-        borderRadius: 18,
-        padding: "22px 24px",
-        marginBottom: 16,
-      }}
-    >
-      <h3
-        style={{
-          fontSize: 15,
-          fontWeight: 700,
-          color: "#f1f5f9",
-          marginBottom: 18,
-        }}
-      >
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-
-  const Toggle = ({ checked, onChange }) => (
-    <button
-      type="button"
-      onClick={onChange}
-      style={{
-        width: 44,
-        height: 24,
-        borderRadius: 12,
-        border: "none",
-        cursor: "pointer",
-        background: checked ? "#7c3aed" : "#334155",
-        position: "relative",
-        transition: "background 0.2s",
-        flexShrink: 0,
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          top: 3,
-          left: checked ? "calc(100% - 19px)" : 3,
-          width: 18,
-          height: 18,
-          borderRadius: "50%",
-          background: "#fff",
-          transition: "left 0.2s",
-        }}
-      />
-    </button>
-  );
 
   return (
     <>
