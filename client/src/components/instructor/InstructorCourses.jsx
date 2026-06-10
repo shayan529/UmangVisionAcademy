@@ -1,31 +1,31 @@
-import { useEffect, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   fetchCourses,
   createCourse,
   updateCourse,
   deleteCourse,
-} from '../../redux/slices/courseSlice';
-import { uploadToImageKit } from '../../utils/imagekitUpload.js';
-import ChapterManager from '../course/ChapterManager.jsx';
+} from "../../redux/slices/courseSlice";
+import { uploadToImageKit } from "../../utils/imagekitUpload.js";
+import ChapterManager from "../course/ChapterManager.jsx";
 
 // ── constants ─────────────────────────────────────────────────────────────────
 const EMPTY_FORM = {
-  subject: '',
-  className: '',
-  board: '',
-  description: '',
-  content: '',
+  subject: "",
+  className: "",
+  board: "",
+  description: "",
+  content: "",
   lessons: [],
-  price: '',
-  thumbnailUrl: '',
-  demoVideoUrl: '',
-  quiz: { title: 'Final Quiz', questions: [] },
+  price: "",
+  thumbnailUrl: "",
+  demoVideoUrl: "",
+  quiz: { title: "Final Quiz", questions: [] },
 };
 
 const CLASSES = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`);
-const BOARDS = ['CBSE', 'ICSE', 'MP Board'];
-const DRAFT_STORAGE_KEY = 'instructorCourseDraft';
+const BOARDS = ["CBSE", "ICSE", "MP Board"];
+const DRAFT_STORAGE_KEY = "instructorCourseDraft";
 
 const isDraftForm = (form) =>
   Boolean(
@@ -37,40 +37,40 @@ const isDraftForm = (form) =>
     form.thumbnailUrl?.trim() ||
     form.demoVideoUrl?.trim() ||
     (Array.isArray(form.lessons) && form.lessons.length > 0) ||
-    Number(form.price) > 0
+    Number(form.price) > 0,
   );
 
 // ── Updated statusStyle — based on approvalStatus ─────────────────────────────
 const statusStyle = (course) => {
-  const s = course.approvalStatus ?? (course.published ? 'approved' : 'draft');
+  const s = course.approvalStatus ?? (course.published ? "approved" : "draft");
   switch (s) {
-    case 'pending':
+    case "pending":
       return {
-        bg: '#1c1a00',
-        text: '#fbbf24',
-        border: '#854d0e',
-        label: 'Pending Review',
+        bg: "#1c1a00",
+        text: "#fbbf24",
+        border: "#854d0e",
+        label: "Pending Review",
       };
-    case 'approved':
+    case "approved":
       return {
-        bg: '#052e16',
-        text: '#4ade80',
-        border: '#166534',
-        label: 'Published',
+        bg: "#052e16",
+        text: "#4ade80",
+        border: "#166534",
+        label: "Published",
       };
-    case 'rejected':
+    case "rejected":
       return {
-        bg: '#2d0a0a',
-        text: '#f87171',
-        border: '#7f1d1d',
-        label: 'Rejected',
+        bg: "#2d0a0a",
+        text: "#f87171",
+        border: "#7f1d1d",
+        label: "Rejected",
       };
     default:
       return {
-        bg: '#111827',
-        text: '#64748b',
-        border: '#1e293b',
-        label: 'Draft',
+        bg: "#111827",
+        text: "#64748b",
+        border: "#1e293b",
+        label: "Draft",
       };
   }
 };
@@ -86,18 +86,18 @@ const FileUploader = ({
   icon,
 }) => {
   const inputRef = useRef(null);
-  const [status, setStatus] = useState(currentUrl ? 'done' : 'idle');
+  const [status, setStatus] = useState(currentUrl ? "done" : "idle");
   const [progress, setProgress] = useState(0);
   const [preview, setPreview] = useState(currentUrl || null);
-  const [errMsg, setErrMsg] = useState('');
-  const isImage = accept.includes('image');
+  const [errMsg, setErrMsg] = useState("");
+  const isImage = accept.includes("image");
 
   const handleFile = async (file) => {
     if (!file) return;
     if (isImage) setPreview(URL.createObjectURL(file));
-    setStatus('uploading');
+    setStatus("uploading");
     setProgress(0);
-    setErrMsg('');
+    setErrMsg("");
     try {
       const data = await uploadToImageKit({
         file,
@@ -105,12 +105,12 @@ const FileUploader = ({
         onUploadProgress: (e) =>
           setProgress(Math.round((e.loaded / e.total) * 100)),
       });
-      setStatus('done');
+      setStatus("done");
       onUploaded(data.url);
       if (!isImage) setPreview(null);
     } catch (err) {
-      setStatus('error');
-      setErrMsg(err.response?.data?.message || err.message || 'Upload failed.');
+      setStatus("error");
+      setErrMsg(err.response?.data?.message || err.message || "Upload failed.");
     }
   };
 
@@ -120,11 +120,11 @@ const FileUploader = ({
   };
 
   const clear = () => {
-    setStatus('idle');
+    setStatus("idle");
     setPreview(null);
     setProgress(0);
-    onUploaded('');
-    if (inputRef.current) inputRef.current.value = '';
+    onUploaded("");
+    if (inputRef.current) inputRef.current.value = "";
   };
 
   return (
@@ -133,10 +133,10 @@ const FileUploader = ({
         style={{
           fontSize: 11,
           fontWeight: 700,
-          color: '#94a3b8',
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          display: 'block',
+          color: "#94a3b8",
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          display: "block",
           marginBottom: 8,
         }}
       >
@@ -144,9 +144,9 @@ const FileUploader = ({
         {hint && (
           <span
             style={{
-              color: '#475569',
+              color: "#475569",
               fontWeight: 400,
-              textTransform: 'none',
+              textTransform: "none",
               letterSpacing: 0,
               marginLeft: 6,
             }}
@@ -156,23 +156,23 @@ const FileUploader = ({
         )}
       </label>
       <div
-        onClick={() => status !== 'uploading' && inputRef.current?.click()}
+        onClick={() => status !== "uploading" && inputRef.current?.click()}
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
         style={{
-          border: `2px dashed ${status === 'done' ? '#16a34a' : status === 'error' ? '#dc2626' : '#334155'}`,
+          border: `2px dashed ${status === "done" ? "#16a34a" : status === "error" ? "#dc2626" : "#334155"}`,
           borderRadius: 12,
           padding: 16,
-          cursor: status === 'uploading' ? 'not-allowed' : 'pointer',
-          background: '#0b1120',
+          cursor: status === "uploading" ? "not-allowed" : "pointer",
+          background: "#0b1120",
           minHeight: 90,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
           gap: 8,
-          overflow: 'hidden',
-          transition: 'border-color 0.2s',
+          overflow: "hidden",
+          transition: "border-color 0.2s",
         }}
       >
         {isImage && preview && (
@@ -180,74 +180,74 @@ const FileUploader = ({
             src={preview}
             alt="preview"
             style={{
-              width: '100%',
+              width: "100%",
               maxHeight: 120,
-              objectFit: 'cover',
+              objectFit: "cover",
               borderRadius: 8,
             }}
           />
         )}
-        {status === 'idle' && !preview && (
-          <div style={{ textAlign: 'center' }}>
+        {status === "idle" && !preview && (
+          <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 24, marginBottom: 4 }}>{icon}</div>
-            <p style={{ fontSize: 13, color: '#94a3b8', fontWeight: 500 }}>
+            <p style={{ fontSize: 13, color: "#94a3b8", fontWeight: 500 }}>
               Click or drag & drop
             </p>
-            <p style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>
+            <p style={{ fontSize: 11, color: "#475569", marginTop: 2 }}>
               {hint}
             </p>
           </div>
         )}
-        {status === 'uploading' && (
+        {status === "uploading" && (
           <div
             style={{
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
               gap: 8,
-              alignItems: 'center',
+              alignItems: "center",
             }}
           >
-            <p style={{ fontSize: 13, color: '#94a3b8' }}>
+            <p style={{ fontSize: 13, color: "#94a3b8" }}>
               Uploading… {progress}%
             </p>
             <div
               style={{
-                width: '100%',
+                width: "100%",
                 height: 6,
-                background: '#1e293b',
+                background: "#1e293b",
                 borderRadius: 4,
-                overflow: 'hidden',
+                overflow: "hidden",
               }}
             >
               <div
                 style={{
-                  height: '100%',
+                  height: "100%",
                   width: `${progress}%`,
-                  background: 'linear-gradient(90deg,#7c3aed,#06b6d4)',
+                  background: "linear-gradient(90deg,#7c3aed,#06b6d4)",
                   borderRadius: 4,
-                  transition: 'width 0.2s',
+                  transition: "width 0.2s",
                 }}
               />
             </div>
           </div>
         )}
-        {status === 'done' && !preview && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {status === "done" && !preview && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 18 }}>✅</span>
-            <p style={{ fontSize: 13, color: '#4ade80', fontWeight: 600 }}>
-              {isImage ? 'Image' : 'Video'} uploaded
+            <p style={{ fontSize: 13, color: "#4ade80", fontWeight: 600 }}>
+              {isImage ? "Image" : "Video"} uploaded
             </p>
           </div>
         )}
-        {status === 'error' && (
-          <p style={{ fontSize: 13, color: '#f87171' }}>❌ {errMsg}</p>
+        {status === "error" && (
+          <p style={{ fontSize: 13, color: "#f87171" }}>❌ {errMsg}</p>
         )}
       </div>
       <div
-        style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}
+        style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center" }}
       >
-        {status !== 'uploading' && (
+        {status !== "uploading" && (
           <button
             type="button"
             onClick={(e) => {
@@ -257,27 +257,27 @@ const FileUploader = ({
             style={{
               fontSize: 11,
               fontWeight: 600,
-              color: '#818cf8',
-              background: 'none',
-              border: '1px solid #334155',
+              color: "#818cf8",
+              background: "none",
+              border: "1px solid #334155",
               borderRadius: 8,
-              padding: '4px 10px',
-              cursor: 'pointer',
+              padding: "4px 10px",
+              cursor: "pointer",
             }}
           >
-            {status === 'done' ? 'Replace' : 'Choose file'}
+            {status === "done" ? "Replace" : "Choose file"}
           </button>
         )}
-        {(status === 'done' || preview) && (
+        {(status === "done" || preview) && (
           <button
             type="button"
             onClick={clear}
             style={{
               fontSize: 11,
-              color: '#64748b',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
+              color: "#64748b",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
             }}
           >
             Remove
@@ -288,7 +288,7 @@ const FileUploader = ({
         ref={inputRef}
         type="file"
         accept={accept}
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
         onChange={(e) => handleFile(e.target.files[0])}
       />
     </div>
@@ -297,37 +297,37 @@ const FileUploader = ({
 
 // ── shared field/input primitives ─────────────────────────────────────────────
 const iStyle = {
-  padding: '10px 14px',
-  background: '#0b1120',
-  border: '1px solid #1e293b',
+  padding: "10px 14px",
+  background: "#0b1120",
+  border: "1px solid #1e293b",
   borderRadius: 10,
-  color: '#f1f5f9',
+  color: "#f1f5f9",
   fontSize: 13,
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
+  outline: "none",
+  width: "100%",
+  boxSizing: "border-box",
 };
-const focus = (e) => (e.target.style.borderColor = '#7c3aed');
-const blur = (e) => (e.target.style.borderColor = '#1e293b');
+const focus = (e) => (e.target.style.borderColor = "#7c3aed");
+const blur = (e) => (e.target.style.borderColor = "#1e293b");
 
 const Field = ({ label, hint, children }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
     <label
       style={{
         fontSize: 11,
         fontWeight: 700,
-        color: '#94a3b8',
-        textTransform: 'uppercase',
-        letterSpacing: '0.1em',
+        color: "#94a3b8",
+        textTransform: "uppercase",
+        letterSpacing: "0.1em",
       }}
     >
       {label}
       {hint && (
         <span
           style={{
-            color: '#475569',
+            color: "#475569",
             fontWeight: 400,
-            textTransform: 'none',
+            textTransform: "none",
             letterSpacing: 0,
             marginLeft: 6,
           }}
@@ -339,7 +339,7 @@ const Field = ({ label, hint, children }) => (
     {children}
   </div>
 );
-const Input = ({ value, onChange, placeholder, type = 'text' }) => (
+const Input = ({ value, onChange, placeholder, type = "text" }) => (
   <input
     type={type}
     value={value}
@@ -356,7 +356,7 @@ const Textarea = ({ value, onChange, placeholder, rows = 4 }) => (
     onChange={onChange}
     placeholder={placeholder}
     rows={rows}
-    style={{ ...iStyle, resize: 'vertical', fontFamily: 'inherit' }}
+    style={{ ...iStyle, resize: "vertical", fontFamily: "inherit" }}
     onFocus={focus}
     onBlur={blur}
   />
@@ -373,7 +373,7 @@ const Sel = ({ value, onChange, options }) => (
       <option
         key={o.value ?? o}
         value={o.value ?? o}
-        style={{ background: '#0b1120' }}
+        style={{ background: "#0b1120" }}
       >
         {o.label ?? o}
       </option>
@@ -386,14 +386,14 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
   const [aiLoading, setAiLoading] = useState(false);
   const [activeIdx, setActiveIdx] = useState(null);
   const questions = quiz?.questions || [];
-  const LABELS = ['A', 'B', 'C', 'D'];
+  const LABELS = ["A", "B", "C", "D"];
 
   const updateQuestions = (newQs) =>
-    onChange({ ...(quiz || { title: 'Final Quiz' }), questions: newQs });
+    onChange({ ...(quiz || { title: "Final Quiz" }), questions: newQs });
   const addQuestion = () => {
     const blank = {
-      question: '',
-      options: ['', '', '', ''],
+      question: "",
+      options: ["", "", "", ""],
       correctOptionIndex: 0,
     };
     const updated = [...questions, blank];
@@ -406,7 +406,7 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
   };
   const updateQuestion = (idx, field, value) =>
     updateQuestions(
-      questions.map((q, i) => (i === idx ? { ...q, [field]: value } : q))
+      questions.map((q, i) => (i === idx ? { ...q, [field]: value } : q)),
     );
   const updateOption = (qIdx, oIdx, value) =>
     updateQuestions(
@@ -415,17 +415,17 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
         const opts = [...q.options];
         opts[oIdx] = value;
         return { ...q, options: opts };
-      })
+      }),
     );
 
   const generateWithAI = async () => {
     setAiLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/ai/generate-quiz', {
-        method: 'POST',
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/ai/generate-quiz", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -439,7 +439,7 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
         setActiveIdx(0);
       }
     } catch (err) {
-      console.error('AI quiz generation failed:', err);
+      console.error("AI quiz generation failed:", err);
     } finally {
       setAiLoading(false);
     }
@@ -448,38 +448,38 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
   return (
     <div
       style={{
-        border: '1px solid #1e293b',
+        border: "1px solid #1e293b",
         borderRadius: 14,
-        overflow: 'hidden',
-        background: '#0b1120',
+        overflow: "hidden",
+        background: "#0b1120",
       }}
     >
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 16px',
-          background: '#111827',
-          borderBottom: '1px solid #1e293b',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "12px 16px",
+          background: "#111827",
+          borderBottom: "1px solid #1e293b",
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 16 }}>📝</span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9' }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
             Final Quiz
           </span>
           <span
             style={{
               fontSize: 10,
               fontWeight: 700,
-              padding: '2px 8px',
+              padding: "2px 8px",
               borderRadius: 20,
-              background: '#1e1b4b',
-              color: '#818cf8',
+              background: "#1e1b4b",
+              color: "#818cf8",
             }}
           >
-            {questions.length} question{questions.length !== 1 ? 's' : ''}
+            {questions.length} question{questions.length !== 1 ? "s" : ""}
           </span>
         </div>
         <button
@@ -487,19 +487,19 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
           onClick={generateWithAI}
           disabled={aiLoading}
           style={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 6,
-            padding: '6px 14px',
+            padding: "6px 14px",
             borderRadius: 10,
-            border: 'none',
+            border: "none",
             background: aiLoading
-              ? '#334155'
-              : 'linear-gradient(135deg,#7c3aed,#06b6d4)',
-            color: '#fff',
+              ? "#334155"
+              : "linear-gradient(135deg,#7c3aed,#06b6d4)",
+            color: "#fff",
             fontSize: 11,
             fontWeight: 700,
-            cursor: aiLoading ? 'not-allowed' : 'pointer',
+            cursor: aiLoading ? "not-allowed" : "pointer",
             opacity: aiLoading ? 0.7 : 1,
           }}
         >
@@ -507,7 +507,7 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
             <>
               <svg
                 style={{
-                  animation: 'spin 1s linear infinite',
+                  animation: "spin 1s linear infinite",
                   width: 12,
                   height: 12,
                 }}
@@ -532,22 +532,22 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
               Generating…
             </>
           ) : (
-            '✨ Generate with AI'
+            "✨ Generate with AI"
           )}
         </button>
       </div>
-      <div style={{ display: 'flex', minHeight: questions.length ? 320 : 120 }}>
+      <div style={{ display: "flex", minHeight: questions.length ? 320 : 120 }}>
         {questions.length > 0 && (
           <div
             style={{
               width: 176,
-              borderRight: '1px solid #1e293b',
-              background: '#0d1526',
+              borderRight: "1px solid #1e293b",
+              background: "#0d1526",
               padding: 8,
-              display: 'flex',
-              flexDirection: 'column',
+              display: "flex",
+              flexDirection: "column",
               gap: 4,
-              overflowY: 'auto',
+              overflowY: "auto",
               flexShrink: 0,
             }}
           >
@@ -557,39 +557,39 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
                 type="button"
                 onClick={() => setActiveIdx(idx)}
                 style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  padding: '8px 10px',
+                  width: "100%",
+                  textAlign: "left",
+                  padding: "8px 10px",
                   borderRadius: 10,
-                  border: 'none',
-                  background: activeIdx === idx ? '#7c3aed' : 'transparent',
-                  color: activeIdx === idx ? '#fff' : '#94a3b8',
+                  border: "none",
+                  background: activeIdx === idx ? "#7c3aed" : "transparent",
+                  color: activeIdx === idx ? "#fff" : "#94a3b8",
                   fontSize: 11,
                   fontWeight: activeIdx === idx ? 700 : 500,
-                  cursor: 'pointer',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  cursor: "pointer",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
                 }}
               >
-                <span style={{ fontWeight: 800 }}>Q{idx + 1}.</span>{' '}
-                {q.question || 'Untitled'}
+                <span style={{ fontWeight: 800 }}>Q{idx + 1}.</span>{" "}
+                {q.question || "Untitled"}
               </button>
             ))}
             <button
               type="button"
               onClick={addQuestion}
               style={{
-                width: '100%',
-                textAlign: 'left',
-                padding: '8px 10px',
+                width: "100%",
+                textAlign: "left",
+                padding: "8px 10px",
                 borderRadius: 10,
-                border: '1px dashed #334155',
-                background: 'transparent',
-                color: '#818cf8',
+                border: "1px dashed #334155",
+                background: "transparent",
+                color: "#818cf8",
                 fontSize: 11,
                 fontWeight: 600,
-                cursor: 'pointer',
+                cursor: "pointer",
                 marginTop: 4,
               }}
             >
@@ -597,34 +597,34 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
             </button>
           </div>
         )}
-        <div style={{ flex: 1, padding: 16, overflowY: 'auto' }}>
+        <div style={{ flex: 1, padding: 16, overflowY: "auto" }}>
           {questions.length === 0 ? (
             <div
               style={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
                 gap: 12,
-                color: '#475569',
+                color: "#475569",
               }}
             >
               <span style={{ fontSize: 28 }}>🗒️</span>
               <p style={{ fontSize: 13 }}>No questions yet</p>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: "flex", gap: 8 }}>
                 <button
                   type="button"
                   onClick={addQuestion}
                   style={{
-                    padding: '7px 14px',
+                    padding: "7px 14px",
                     borderRadius: 10,
-                    border: 'none',
-                    background: '#7c3aed',
-                    color: '#fff',
+                    border: "none",
+                    background: "#7c3aed",
+                    color: "#fff",
                     fontSize: 12,
                     fontWeight: 600,
-                    cursor: 'pointer',
+                    cursor: "pointer",
                   }}
                 >
                   + Add Question
@@ -634,14 +634,14 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
                   onClick={generateWithAI}
                   disabled={aiLoading}
                   style={{
-                    padding: '7px 14px',
+                    padding: "7px 14px",
                     borderRadius: 10,
-                    border: 'none',
-                    background: 'linear-gradient(135deg,#7c3aed,#06b6d4)',
-                    color: '#fff',
+                    border: "none",
+                    background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                    color: "#fff",
                     fontSize: 12,
                     fontWeight: 600,
-                    cursor: 'pointer',
+                    cursor: "pointer",
                     opacity: aiLoading ? 0.5 : 1,
                   }}
                 >
@@ -650,16 +650,16 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
               </div>
             </div>
           ) : activeIdx !== null && questions[activeIdx] ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                 }}
               >
                 <span
-                  style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9' }}
+                  style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}
                 >
                   Question {activeIdx + 1}
                 </span>
@@ -668,11 +668,11 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
                   onClick={() => removeQuestion(activeIdx)}
                   style={{
                     fontSize: 11,
-                    color: '#f87171',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '2px 8px',
+                    color: "#f87171",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "2px 8px",
                   }}
                 >
                   Remove
@@ -681,14 +681,14 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
               <textarea
                 value={questions[activeIdx].question}
                 onChange={(e) =>
-                  updateQuestion(activeIdx, 'question', e.target.value)
+                  updateQuestion(activeIdx, "question", e.target.value)
                 }
                 rows={2}
                 placeholder="Enter question text…"
                 style={{
                   ...iStyle,
-                  resize: 'vertical',
-                  fontFamily: 'inherit',
+                  resize: "vertical",
+                  fontFamily: "inherit",
                   borderRadius: 10,
                 }}
                 onFocus={focus}
@@ -699,16 +699,16 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
                   style={{
                     fontSize: 10,
                     fontWeight: 700,
-                    color: '#475569',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
+                    color: "#475569",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
                     marginBottom: 8,
                   }}
                 >
                   Options — select correct answer
                 </p>
                 <div
-                  style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+                  style={{ display: "flex", flexDirection: "column", gap: 8 }}
                 >
                   {questions[activeIdx].options.map((opt, oIdx) => {
                     const isCorrect =
@@ -717,8 +717,8 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
                       <div
                         key={oIdx}
                         style={{
-                          display: 'flex',
-                          alignItems: 'center',
+                          display: "flex",
+                          alignItems: "center",
                           gap: 8,
                         }}
                       >
@@ -729,14 +729,14 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
                           onChange={() =>
                             updateQuestion(
                               activeIdx,
-                              'correctOptionIndex',
-                              oIdx
+                              "correctOptionIndex",
+                              oIdx,
                             )
                           }
                           style={{
                             width: 16,
                             height: 16,
-                            accentColor: '#4ade80',
+                            accentColor: "#4ade80",
                             flexShrink: 0,
                           }}
                         />
@@ -744,7 +744,7 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
                           style={{
                             fontSize: 11,
                             fontWeight: 800,
-                            color: '#64748b',
+                            color: "#64748b",
                             width: 16,
                             flexShrink: 0,
                           }}
@@ -759,15 +759,15 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
                           placeholder={`Option ${LABELS[oIdx]}`}
                           style={{
                             ...iStyle,
-                            borderColor: isCorrect ? '#16a34a' : '#1e293b',
-                            background: isCorrect ? '#052e16' : '#0b1120',
-                            color: isCorrect ? '#4ade80' : '#f1f5f9',
+                            borderColor: isCorrect ? "#16a34a" : "#1e293b",
+                            background: isCorrect ? "#052e16" : "#0b1120",
+                            color: isCorrect ? "#4ade80" : "#f1f5f9",
                           }}
                           onFocus={focus}
                           onBlur={(e) => {
                             e.target.style.borderColor = isCorrect
-                              ? '#16a34a'
-                              : '#1e293b';
+                              ? "#16a34a"
+                              : "#1e293b";
                           }}
                         />
                       </div>
@@ -779,11 +779,11 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
           ) : (
             <div
               style={{
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#475569',
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#475569",
                 fontSize: 13,
               }}
             >
@@ -800,33 +800,33 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
 const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <Field label="Subject" hint="*">
           <Input
             value={form.subject}
-            onChange={set('subject')}
+            onChange={set("subject")}
             placeholder="e.g. Mathematics"
           />
         </Field>
         <Field label="Class" hint="*">
           <Sel
             value={form.className}
-            onChange={set('className')}
+            onChange={set("className")}
             options={[
-              { value: '', label: 'Select class' },
+              { value: "", label: "Select class" },
               ...CLASSES.map((c) => ({ value: c, label: c })),
             ]}
           />
         </Field>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <Field label="Board" hint="*">
           <Sel
             value={form.board}
-            onChange={set('board')}
+            onChange={set("board")}
             options={[
-              { value: '', label: 'Select board' },
+              { value: "", label: "Select board" },
               ...BOARDS.map((b) => ({ value: b, label: b })),
             ]}
           />
@@ -834,7 +834,7 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
         <Field label="Price" hint="(₹ — 0 for free)">
           <Input
             value={form.price}
-            onChange={set('price')}
+            onChange={set("price")}
             placeholder="0"
             type="number"
           />
@@ -847,7 +847,7 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
       <Field label="Description" hint="* (course summary)">
         <Textarea
           value={form.description}
-          onChange={set('description')}
+          onChange={set("description")}
           placeholder="Brief description"
           rows={3}
         />
@@ -855,15 +855,15 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
       <Field label="Course Content" hint="(chapters, topics)">
         <Textarea
           value={form.content}
-          onChange={set('content')}
-          placeholder={'Chapter 1: Algebra\nChapter 2: Geometry'}
+          onChange={set("content")}
+          placeholder={"Chapter 1: Algebra\nChapter 2: Geometry"}
           rows={5}
         />
       </Field>
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))',
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
           gap: 16,
         }}
       >
@@ -899,24 +899,24 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
       </Field>
       <div
         style={{
-          display: 'flex',
+          display: "flex",
           gap: 10,
-          justifyContent: 'flex-end',
+          justifyContent: "flex-end",
           paddingTop: 8,
-          borderTop: '1px solid #1e293b',
+          borderTop: "1px solid #1e293b",
         }}
       >
         <button
           onClick={onCancel}
           style={{
-            padding: '10px 20px',
+            padding: "10px 20px",
             borderRadius: 10,
-            border: '1px solid #334155',
-            background: 'transparent',
-            color: '#94a3b8',
+            border: "1px solid #334155",
+            background: "transparent",
+            color: "#94a3b8",
             fontWeight: 600,
             fontSize: 13,
-            cursor: 'pointer',
+            cursor: "pointer",
           }}
         >
           Cancel
@@ -925,14 +925,14 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
           onClick={() => onSave(false)}
           disabled={saving}
           style={{
-            padding: '10px 20px',
+            padding: "10px 20px",
             borderRadius: 10,
-            border: '1px solid #334155',
-            background: 'transparent',
-            color: '#e2e8f0',
+            border: "1px solid #334155",
+            background: "transparent",
+            color: "#e2e8f0",
             fontWeight: 600,
             fontSize: 13,
-            cursor: 'pointer',
+            cursor: "pointer",
             opacity: saving ? 0.6 : 1,
           }}
         >
@@ -942,24 +942,24 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
           onClick={() => onSave(true)}
           disabled={saving}
           style={{
-            padding: '10px 20px',
+            padding: "10px 20px",
             borderRadius: 10,
-            border: 'none',
-            background: 'linear-gradient(135deg,#7c3aed,#06b6d4)',
-            color: '#fff',
+            border: "none",
+            background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+            color: "#fff",
             fontWeight: 700,
             fontSize: 13,
-            cursor: 'pointer',
+            cursor: "pointer",
             opacity: saving ? 0.6 : 1,
-            boxShadow: '0 4px 16px rgba(124,58,237,.25)',
+            boxShadow: "0 4px 16px rgba(124,58,237,.25)",
           }}
         >
           {/* ← Updated label: "Submit for Review" instead of "Publish" */}
           {saving
-            ? 'Saving…'
-            : mode === 'create'
-              ? 'Submit for Review'
-              : 'Save & Submit for Review'}
+            ? "Saving…"
+            : mode === "create"
+              ? "Submit for Review"
+              : "Save & Submit for Review"}
         </button>
       </div>
     </div>
@@ -971,7 +971,7 @@ export default function InstructorCourses({ showToast }) {
   const dispatch = useDispatch();
   const { courses = [], loading, error } = useSelector((s) => s.courses);
 
-  const [view, setView] = useState('list');
+  const [view, setView] = useState("list");
   const [expandedId, setExpandedId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [createForm, setCreateForm] = useState(() => {
@@ -986,8 +986,8 @@ export default function InstructorCourses({ showToast }) {
   });
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   useEffect(() => {
     dispatch(fetchCourses());
@@ -1012,16 +1012,16 @@ export default function InstructorCourses({ showToast }) {
     };
     saveDraft();
     const handleBeforeUnload = (event) => {
-      if (view === 'create' && isDraftForm(createForm)) {
+      if (view === "create" && isDraftForm(createForm)) {
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(createForm));
         event.preventDefault();
-        event.returnValue = '';
+        event.returnValue = "";
       }
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
       saveDraft();
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [createForm, view]);
 
@@ -1030,70 +1030,70 @@ export default function InstructorCourses({ showToast }) {
     const matchSearch =
       c.title?.toLowerCase().includes(q) ||
       c.category?.toLowerCase().includes(q);
-    const approvalS = c.approvalStatus ?? 'draft';
+    const approvalS = c.approvalStatus ?? "draft";
     const matchStatus =
-      filterStatus === 'all'
+      filterStatus === "all"
         ? true
-        : filterStatus === 'published'
-          ? approvalS === 'approved'
-          : filterStatus === 'pending'
-            ? approvalS === 'pending'
-            : filterStatus === 'rejected'
-              ? approvalS === 'rejected'
-              : approvalS === 'draft';
+        : filterStatus === "published"
+          ? approvalS === "approved"
+          : filterStatus === "pending"
+            ? approvalS === "pending"
+            : filterStatus === "rejected"
+              ? approvalS === "rejected"
+              : approvalS === "draft";
     return matchSearch && matchStatus;
   });
 
   const counts = {
     total: courses.length,
-    pending: courses.filter((c) => c.approvalStatus === 'pending').length,
-    approved: courses.filter((c) => c.approvalStatus === 'approved').length,
-    rejected: courses.filter((c) => c.approvalStatus === 'rejected').length,
+    pending: courses.filter((c) => c.approvalStatus === "pending").length,
+    approved: courses.filter((c) => c.approvalStatus === "approved").length,
+    rejected: courses.filter((c) => c.approvalStatus === "rejected").length,
     draft: courses.filter(
-      (c) => !c.approvalStatus || c.approvalStatus === 'draft'
+      (c) => !c.approvalStatus || c.approvalStatus === "draft",
     ).length,
   };
 
   const openEdit = (course) => {
     setExpandedId(course._id);
     setEditForm({
-      subject: course.title ?? '',
-      className: course.category ?? '',
-      board: course.board ?? '',
-      description: course.summary ?? '',
+      subject: course.title ?? "",
+      className: course.category ?? "",
+      board: course.board ?? "",
+      description: course.summary ?? "",
       lessons: course.lessons ?? [],
-      content: course.description ?? '',
-      thumbnailUrl: course.thumbnailUrl ?? '',
-      demoVideoUrl: course.demoVideoUrl ?? '',
+      content: course.description ?? "",
+      thumbnailUrl: course.thumbnailUrl ?? "",
+      demoVideoUrl: course.demoVideoUrl ?? "",
       price: course.price ?? 0,
-      quiz: course.quiz ?? { title: 'Final Quiz', questions: [] },
+      quiz: course.quiz ?? { title: "Final Quiz", questions: [] },
     });
-    setView('list');
+    setView("list");
   };
   const closeEdit = () => setExpandedId(null);
 
   const buildPayload = (form, published) => ({
     title: form.subject.trim(),
     summary: form.description.trim(),
-    description: form.content?.trim() || '',
+    description: form.content?.trim() || "",
     category: form.className,
     board: form.board,
     lessons: form.lessons ?? [],
     price: Number(form.price) || 0,
-    thumbnailUrl: form.thumbnailUrl || '',
-    demoVideoUrl: form.demoVideoUrl || '',
+    thumbnailUrl: form.thumbnailUrl || "",
+    demoVideoUrl: form.demoVideoUrl || "",
     published, // controller interprets: published=true → pending, false → draft
-    quiz: form.quiz ?? { title: 'Final Quiz', questions: [] },
+    quiz: form.quiz ?? { title: "Final Quiz", questions: [] },
   });
 
   const validateForPublish = (form) => {
     const requiredFields = [
-      { key: 'subject', label: 'Subject' },
-      { key: 'className', label: 'Class' },
-      { key: 'board', label: 'Board' },
-      { key: 'description', label: 'Description' },
-      { key: 'content', label: 'Course Content' },
-      { key: 'thumbnailUrl', label: 'Thumbnail' },
+      { key: "subject", label: "Subject" },
+      { key: "className", label: "Class" },
+      { key: "board", label: "Board" },
+      { key: "description", label: "Description" },
+      { key: "content", label: "Course Content" },
+      { key: "thumbnailUrl", label: "Thumbnail" },
     ];
     for (const field of requiredFields) {
       if (!form[field.key]) {
@@ -1108,20 +1108,20 @@ export default function InstructorCourses({ showToast }) {
     if (publish && !validateForPublish(createForm)) return;
     setSaving(true);
     const resultAction = await dispatch(
-      createCourse(buildPayload(createForm, publish))
+      createCourse(buildPayload(createForm, publish)),
     );
     setSaving(false);
     if (createCourse.fulfilled.match(resultAction)) {
       setCreateForm(EMPTY_FORM);
       localStorage.removeItem(DRAFT_STORAGE_KEY);
-      setView('list');
+      setView("list");
       showToast?.(
-        publish ? 'Course submitted for admin review!' : 'Saved as draft.'
+        publish ? "Course submitted for admin review!" : "Saved as draft.",
       );
     } else {
       showToast?.(
         resultAction.payload ||
-          'Failed to save course. Your draft is preserved.'
+          "Failed to save course. Your draft is preserved.",
       );
     }
   };
@@ -1133,18 +1133,18 @@ export default function InstructorCourses({ showToast }) {
       updateCourse({
         id: expandedId,
         courseData: buildPayload(editForm, publish),
-      })
+      }),
     );
     setSaving(false);
     closeEdit();
-    showToast?.(publish ? 'Course resubmitted for review!' : 'Saved as draft.');
+    showToast?.(publish ? "Course resubmitted for review!" : "Saved as draft.");
   };
 
   const handleDelete = async (id) => {
     await dispatch(deleteCourse(id));
     setDeleteId(null);
     if (expandedId === id) closeEdit();
-    showToast?.('Course deleted.');
+    showToast?.("Course deleted.");
   };
 
   return (
@@ -1161,19 +1161,18 @@ export default function InstructorCourses({ showToast }) {
 
       <div
         style={{
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
           gap: 24,
-          maxWidth: 900,
         }}
       >
         {/* Header */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
             gap: 12,
           }}
         >
@@ -1182,52 +1181,52 @@ export default function InstructorCourses({ showToast }) {
               style={{
                 fontSize: 11,
                 fontWeight: 700,
-                letterSpacing: '0.14em',
-                color: '#818cf8',
-                textTransform: 'uppercase',
+                letterSpacing: "0.14em",
+                color: "#818cf8",
+                textTransform: "uppercase",
                 marginBottom: 4,
               }}
             >
               Course Management
             </p>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: '#f1f5f9' }}>
-              {view === 'create' ? 'Create New Course' : 'Your Courses'}
+            <h2 style={{ fontSize: 24, fontWeight: 800, color: "#f1f5f9" }}>
+              {view === "create" ? "Create New Course" : "Your Courses"}
             </h2>
           </div>
-          {view === 'list' ? (
+          {view === "list" ? (
             <button
               onClick={() => {
                 loadSavedDraft();
-                setView('create');
+                setView("create");
                 closeEdit();
               }}
               style={{
-                padding: '10px 20px',
+                padding: "10px 20px",
                 borderRadius: 12,
-                border: 'none',
-                background: 'linear-gradient(135deg,#7c3aed,#06b6d4)',
-                color: '#fff',
+                border: "none",
+                background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                color: "#fff",
                 fontWeight: 700,
                 fontSize: 13,
-                cursor: 'pointer',
-                boxShadow: '0 4px 16px rgba(124,58,237,.3)',
-                whiteSpace: 'nowrap',
+                cursor: "pointer",
+                boxShadow: "0 4px 16px rgba(124,58,237,.3)",
+                whiteSpace: "nowrap",
               }}
             >
               + New Course
             </button>
           ) : (
             <button
-              onClick={() => setView('list')}
+              onClick={() => setView("list")}
               style={{
-                padding: '10px 20px',
+                padding: "10px 20px",
                 borderRadius: 12,
-                border: '1px solid #334155',
-                background: 'transparent',
-                color: '#94a3b8',
+                border: "1px solid #334155",
+                background: "transparent",
+                color: "#94a3b8",
                 fontWeight: 600,
                 fontSize: 13,
-                cursor: 'pointer',
+                cursor: "pointer",
               }}
             >
               ← Back to Courses
@@ -1236,21 +1235,21 @@ export default function InstructorCourses({ showToast }) {
         </div>
 
         {/* Create view */}
-        {view === 'create' && (
+        {view === "create" && (
           <div
             style={{
-              background: '#111827',
-              border: '1px solid #1e293b',
+              background: "#111827",
+              border: "1px solid #1e293b",
               borderRadius: 18,
               padding: 28,
-              animation: 'slideDown 0.3s ease',
+              animation: "slideDown 0.3s ease",
             }}
           >
             <CourseForm
               form={createForm}
               setForm={setCreateForm}
               onSave={handleCreate}
-              onCancel={() => setView('list')}
+              onCancel={() => setView("list")}
               saving={saving}
               mode="create"
             />
@@ -1258,30 +1257,30 @@ export default function InstructorCourses({ showToast }) {
         )}
 
         {/* List view */}
-        {view === 'list' && (
+        {view === "list" && (
           <>
             {/* Stats — now shows approval-aware counts */}
             <div
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit,minmax(110px,1fr))',
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit,minmax(110px,1fr))",
                 gap: 12,
               }}
             >
               {[
-                { label: 'Total', value: counts.total, color: '#818cf8' },
-                { label: 'Pending', value: counts.pending, color: '#fbbf24' },
-                { label: 'Live', value: counts.approved, color: '#4ade80' },
-                { label: 'Rejected', value: counts.rejected, color: '#f87171' },
-                { label: 'Drafts', value: counts.draft, color: '#64748b' },
+                { label: "Total", value: counts.total, color: "#818cf8" },
+                { label: "Pending", value: counts.pending, color: "#fbbf24" },
+                { label: "Live", value: counts.approved, color: "#4ade80" },
+                { label: "Rejected", value: counts.rejected, color: "#f87171" },
+                { label: "Drafts", value: counts.draft, color: "#64748b" },
               ].map((s) => (
                 <div
                   key={s.label}
                   style={{
-                    background: '#111827',
-                    border: '1px solid #1e293b',
+                    background: "#111827",
+                    border: "1px solid #1e293b",
                     borderRadius: 14,
-                    padding: '16px 18px',
+                    padding: "16px 18px",
                   }}
                 >
                   <div
@@ -1289,7 +1288,7 @@ export default function InstructorCourses({ showToast }) {
                   >
                     {s.value}
                   </div>
-                  <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
+                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
                     {s.label}
                   </div>
                 </div>
@@ -1299,10 +1298,10 @@ export default function InstructorCourses({ showToast }) {
             {/* Search + filter */}
             <div
               style={{
-                display: 'flex',
+                display: "flex",
                 gap: 10,
-                flexWrap: 'wrap',
-                alignItems: 'center',
+                flexWrap: "wrap",
+                alignItems: "center",
               }}
             >
               <input
@@ -1312,36 +1311,36 @@ export default function InstructorCourses({ showToast }) {
                 style={{
                   flex: 1,
                   minWidth: 180,
-                  padding: '9px 14px',
-                  background: '#111827',
-                  border: '1px solid #1e293b',
+                  padding: "9px 14px",
+                  background: "#111827",
+                  border: "1px solid #1e293b",
                   borderRadius: 10,
-                  color: '#f1f5f9',
+                  color: "#f1f5f9",
                   fontSize: 13,
-                  outline: 'none',
+                  outline: "none",
                 }}
               />
               {[
-                { key: 'all', label: 'All' },
-                { key: 'draft', label: 'Draft' },
-                { key: 'pending', label: 'In Review' },
-                { key: 'published', label: 'Live' },
-                { key: 'rejected', label: 'Rejected' },
+                { key: "all", label: "All" },
+                { key: "draft", label: "Draft" },
+                { key: "pending", label: "In Review" },
+                { key: "published", label: "Live" },
+                { key: "rejected", label: "Rejected" },
               ].map(({ key, label }) => (
                 <button
                   key={key}
                   onClick={() => setFilterStatus(key)}
                   style={{
-                    padding: '8px 16px',
+                    padding: "8px 16px",
                     borderRadius: 20,
-                    border: `1px solid ${filterStatus === key ? '#7c3aed' : '#1e293b'}`,
+                    border: `1px solid ${filterStatus === key ? "#7c3aed" : "#1e293b"}`,
                     background:
-                      filterStatus === key ? '#7c3aed' : 'transparent',
-                    color: filterStatus === key ? '#fff' : '#64748b',
+                      filterStatus === key ? "#7c3aed" : "transparent",
+                    color: filterStatus === key ? "#fff" : "#64748b",
                     fontSize: 12,
                     fontWeight: 600,
-                    cursor: 'pointer',
-                    textTransform: 'capitalize',
+                    cursor: "pointer",
+                    textTransform: "capitalize",
                   }}
                 >
                   {label}
@@ -1352,11 +1351,11 @@ export default function InstructorCourses({ showToast }) {
             {error && (
               <div
                 style={{
-                  background: '#2d0a0a',
-                  border: '1px solid #7f1d1d',
+                  background: "#2d0a0a",
+                  border: "1px solid #7f1d1d",
                   borderRadius: 12,
-                  padding: '12px 16px',
-                  color: '#f87171',
+                  padding: "12px 16px",
+                  color: "#f87171",
                   fontSize: 13,
                 }}
               >
@@ -1371,24 +1370,24 @@ export default function InstructorCourses({ showToast }) {
                   key={i}
                   style={{
                     height: 80,
-                    background: '#111827',
+                    background: "#111827",
                     borderRadius: 16,
-                    animation: 'pulse 1.4s infinite',
+                    animation: "pulse 1.4s infinite",
                   }}
                 />
               ))
             ) : filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '64px 0' }}>
+              <div style={{ textAlign: "center", padding: "64px 0" }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
-                <p style={{ color: '#64748b', fontWeight: 600 }}>
+                <p style={{ color: "#64748b", fontWeight: 600 }}>
                   {courses.length === 0
-                    ? 'No courses yet. Create your first one!'
-                    : 'No courses match your filter.'}
+                    ? "No courses yet. Create your first one!"
+                    : "No courses match your filter."}
                 </p>
               </div>
             ) : (
               <div
-                style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}
               >
                 {filtered.map((course) => {
                   const st = statusStyle(course);
@@ -1396,19 +1395,19 @@ export default function InstructorCourses({ showToast }) {
                   return (
                     <div
                       key={course._id}
-                      style={{ animation: 'fadeIn 0.25s ease' }}
+                      style={{ animation: "fadeIn 0.25s ease" }}
                     >
                       <div
                         className="ic-row"
                         style={{
-                          background: '#111827',
-                          border: `1px solid ${isOpen ? '#7c3aed40' : '#1e293b'}`,
-                          borderRadius: isOpen ? '18px 18px 0 0' : 18,
-                          padding: '16px 20px',
-                          display: 'flex',
-                          alignItems: 'center',
+                          background: "#111827",
+                          border: `1px solid ${isOpen ? "#7c3aed40" : "#1e293b"}`,
+                          borderRadius: isOpen ? "18px 18px 0 0" : 18,
+                          padding: "16px 20px",
+                          display: "flex",
+                          alignItems: "center",
                           gap: 14,
-                          transition: 'border-color 0.15s',
+                          transition: "border-color 0.15s",
                         }}
                       >
                         {/* Thumb */}
@@ -1417,12 +1416,12 @@ export default function InstructorCourses({ showToast }) {
                             width: 56,
                             height: 56,
                             borderRadius: 12,
-                            background: '#1e293b',
+                            background: "#1e293b",
                             flexShrink: 0,
-                            overflow: 'hidden',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            overflow: "hidden",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                             fontSize: 22,
                           }}
                         >
@@ -1431,46 +1430,46 @@ export default function InstructorCourses({ showToast }) {
                               src={course.thumbnailUrl}
                               alt=""
                               style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
                               }}
                               onError={(e) => {
-                                e.target.style.display = 'none';
+                                e.target.style.display = "none";
                               }}
                             />
                           ) : (
-                            '📚'
+                            "📚"
                           )}
                         </div>
                         {/* Meta */}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div
                             style={{
-                              display: 'flex',
-                              alignItems: 'center',
+                              display: "flex",
+                              alignItems: "center",
                               gap: 8,
-                              flexWrap: 'wrap',
+                              flexWrap: "wrap",
                             }}
                           >
                             <p
                               style={{
                                 fontSize: 14,
                                 fontWeight: 700,
-                                color: '#f1f5f9',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                maxWidth: '30ch',
+                                color: "#f1f5f9",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: "30ch",
                               }}
                             >
-                              {course.title || 'Untitled'}
+                              {course.title || "Untitled"}
                             </p>
                             <span
                               style={{
                                 fontSize: 10,
                                 fontWeight: 700,
-                                padding: '2px 8px',
+                                padding: "2px 8px",
                                 borderRadius: 20,
                                 background: st.bg,
                                 color: st.text,
@@ -1485,10 +1484,10 @@ export default function InstructorCourses({ showToast }) {
                                 style={{
                                   fontSize: 10,
                                   fontWeight: 700,
-                                  padding: '2px 8px',
+                                  padding: "2px 8px",
                                   borderRadius: 20,
-                                  background: '#1e1b4b',
-                                  color: '#818cf8',
+                                  background: "#1e1b4b",
+                                  color: "#818cf8",
                                   flexShrink: 0,
                                 }}
                               >
@@ -1498,27 +1497,27 @@ export default function InstructorCourses({ showToast }) {
                           </div>
                           <div
                             style={{
-                              display: 'flex',
+                              display: "flex",
                               gap: 12,
                               marginTop: 4,
-                              flexWrap: 'wrap',
+                              flexWrap: "wrap",
                             }}
                           >
                             {course.category && (
-                              <span style={{ fontSize: 11, color: '#64748b' }}>
+                              <span style={{ fontSize: 11, color: "#64748b" }}>
                                 {course.category}
                               </span>
                             )}
                             {course.board && (
-                              <span style={{ fontSize: 11, color: '#64748b' }}>
+                              <span style={{ fontSize: 11, color: "#64748b" }}>
                                 📋 {course.board}
                               </span>
                             )}
-                            <span style={{ fontSize: 11, color: '#64748b' }}>
+                            <span style={{ fontSize: 11, color: "#64748b" }}>
                               👥 {course.enrolledCount ?? 0}
                             </span>
                             {course.price > 0 && (
-                              <span style={{ fontSize: 11, color: '#64748b' }}>
+                              <span style={{ fontSize: 11, color: "#64748b" }}>
                                 ₹{course.price}
                               </span>
                             )}
@@ -1527,23 +1526,23 @@ export default function InstructorCourses({ showToast }) {
                         {/* Action buttons — status-aware */}
                         <div
                           style={{
-                            display: 'flex',
+                            display: "flex",
                             gap: 8,
                             flexShrink: 0,
-                            flexWrap: 'wrap',
-                            justifyContent: 'flex-end',
+                            flexWrap: "wrap",
+                            justifyContent: "flex-end",
                           }}
                         >
                           {/* Pending: show waiting label, no actions */}
-                          {course.approvalStatus === 'pending' && (
+                          {course.approvalStatus === "pending" && (
                             <span
                               style={{
                                 fontSize: 11,
-                                color: '#fbbf24',
-                                padding: '6px 12px',
-                                background: '#1c1a00',
+                                color: "#fbbf24",
+                                padding: "6px 12px",
+                                background: "#1c1a00",
                                 borderRadius: 8,
-                                border: '1px solid #854d0e',
+                                border: "1px solid #854d0e",
                                 fontWeight: 600,
                               }}
                             >
@@ -1551,39 +1550,39 @@ export default function InstructorCourses({ showToast }) {
                             </span>
                           )}
                           {/* Edit: always available except pending */}
-                          {course.approvalStatus !== 'pending' && (
+                          {course.approvalStatus !== "pending" && (
                             <button
                               className="ic-btn"
                               onClick={() =>
                                 isOpen ? closeEdit() : openEdit(course)
                               }
                               style={{
-                                padding: '6px 14px',
+                                padding: "6px 14px",
                                 borderRadius: 8,
-                                border: `1px solid ${isOpen ? '#7c3aed' : '#334155'}`,
-                                background: isOpen ? '#2e1065' : 'transparent',
-                                color: isOpen ? '#a78bfa' : '#e2e8f0',
+                                border: `1px solid ${isOpen ? "#7c3aed" : "#334155"}`,
+                                background: isOpen ? "#2e1065" : "transparent",
+                                color: isOpen ? "#a78bfa" : "#e2e8f0",
                                 fontSize: 12,
                                 fontWeight: 700,
-                                cursor: 'pointer',
-                                transition: 'all 0.15s',
+                                cursor: "pointer",
+                                transition: "all 0.15s",
                               }}
                             >
-                              {isOpen ? '✕ Close' : 'Edit / Manage'}
+                              {isOpen ? "✕ Close" : "Edit / Manage"}
                             </button>
                           )}
                           <button
                             className="ic-btn"
                             onClick={() => setDeleteId(course._id)}
                             style={{
-                              padding: '6px 10px',
+                              padding: "6px 10px",
                               borderRadius: 8,
-                              border: '1px solid #7f1d1d30',
-                              background: '#2d0a0a',
-                              color: '#f87171',
+                              border: "1px solid #7f1d1d30",
+                              background: "#2d0a0a",
+                              color: "#f87171",
                               fontSize: 11,
-                              cursor: 'pointer',
-                              transition: 'opacity 0.15s',
+                              cursor: "pointer",
+                              transition: "opacity 0.15s",
                             }}
                           >
                             🗑
@@ -1595,21 +1594,21 @@ export default function InstructorCourses({ showToast }) {
                       {isOpen && (
                         <div
                           style={{
-                            background: '#0f172a',
-                            border: '1px solid #7c3aed40',
-                            borderTop: 'none',
-                            borderRadius: '0 0 18px 18px',
-                            padding: '24px 24px 28px',
-                            animation: 'slideDown 0.25s ease',
+                            background: "#0f172a",
+                            border: "1px solid #7c3aed40",
+                            borderTop: "none",
+                            borderRadius: "0 0 18px 18px",
+                            padding: "24px 24px 28px",
+                            animation: "slideDown 0.25s ease",
                           }}
                         >
                           <p
                             style={{
                               fontSize: 11,
                               fontWeight: 700,
-                              color: '#a78bfa',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.12em',
+                              color: "#a78bfa",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.12em",
                               marginBottom: 16,
                             }}
                           >
@@ -1617,18 +1616,18 @@ export default function InstructorCourses({ showToast }) {
                           </p>
 
                           {/* ── Rejection reason banner ── */}
-                          {course.approvalStatus === 'rejected' &&
+                          {course.approvalStatus === "rejected" &&
                             course.rejectionReason && (
                               <div
                                 style={{
-                                  background: '#2d0a0a',
-                                  border: '1px solid #7f1d1d',
+                                  background: "#2d0a0a",
+                                  border: "1px solid #7f1d1d",
                                   borderRadius: 10,
-                                  padding: '12px 16px',
+                                  padding: "12px 16px",
                                   marginBottom: 16,
-                                  display: 'flex',
+                                  display: "flex",
                                   gap: 12,
-                                  alignItems: 'flex-start',
+                                  alignItems: "flex-start",
                                 }}
                               >
                                 <span style={{ fontSize: 20, flexShrink: 0 }}>
@@ -1639,7 +1638,7 @@ export default function InstructorCourses({ showToast }) {
                                     style={{
                                       fontSize: 12,
                                       fontWeight: 700,
-                                      color: '#f87171',
+                                      color: "#f87171",
                                       marginBottom: 4,
                                     }}
                                   >
@@ -1648,7 +1647,7 @@ export default function InstructorCourses({ showToast }) {
                                   <p
                                     style={{
                                       fontSize: 13,
-                                      color: '#fca5a5',
+                                      color: "#fca5a5",
                                       lineHeight: 1.6,
                                     }}
                                   >
@@ -1657,7 +1656,7 @@ export default function InstructorCourses({ showToast }) {
                                   <p
                                     style={{
                                       fontSize: 11,
-                                      color: '#64748b',
+                                      color: "#64748b",
                                       marginTop: 6,
                                     }}
                                   >
@@ -1682,48 +1681,48 @@ export default function InstructorCourses({ showToast }) {
                             style={{
                               marginTop: 20,
                               paddingTop: 16,
-                              borderTop: '1px solid #1e293b',
-                              display: 'grid',
+                              borderTop: "1px solid #1e293b",
+                              display: "grid",
                               gridTemplateColumns:
-                                'repeat(auto-fit,minmax(110px,1fr))',
+                                "repeat(auto-fit,minmax(110px,1fr))",
                               gap: 10,
                             }}
                           >
                             {[
                               {
-                                label: 'Enrolled',
+                                label: "Enrolled",
                                 value: course.enrolledCount ?? 0,
                               },
                               {
-                                label: 'Revenue',
+                                label: "Revenue",
                                 value: `₹${course.revenue ?? 0}`,
                               },
                               {
-                                label: 'Rating',
+                                label: "Rating",
                                 value:
                                   course.ratingAverage > 0
                                     ? `${course.ratingAverage} ★`
-                                    : 'No ratings',
+                                    : "No ratings",
                               },
                               {
-                                label: 'Lessons',
+                                label: "Lessons",
                                 value: course.lessons?.length ?? 0,
                               },
                             ].map((s) => (
                               <div
                                 key={s.label}
                                 style={{
-                                  background: '#111827',
+                                  background: "#111827",
                                   borderRadius: 10,
-                                  padding: '12px 14px',
-                                  border: '1px solid #1e293b',
+                                  padding: "12px 14px",
+                                  border: "1px solid #1e293b",
                                 }}
                               >
                                 <div
                                   style={{
                                     fontSize: 16,
                                     fontWeight: 700,
-                                    color: '#f1f5f9',
+                                    color: "#f1f5f9",
                                   }}
                                 >
                                   {s.value}
@@ -1731,7 +1730,7 @@ export default function InstructorCourses({ showToast }) {
                                 <div
                                   style={{
                                     fontSize: 11,
-                                    color: '#64748b',
+                                    color: "#64748b",
                                     marginTop: 2,
                                   }}
                                 >
@@ -1755,33 +1754,33 @@ export default function InstructorCourses({ showToast }) {
       {deleteId && (
         <div
           style={{
-            position: 'fixed',
+            position: "fixed",
             inset: 0,
-            background: 'rgba(0,0,0,0.7)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            background: "rgba(0,0,0,0.7)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             zIndex: 100,
             padding: 16,
           }}
         >
           <div
             style={{
-              background: '#111827',
-              border: '1px solid #334155',
+              background: "#111827",
+              border: "1px solid #334155",
               borderRadius: 20,
               padding: 28,
               maxWidth: 380,
-              width: '100%',
-              animation: 'slideDown 0.25s ease',
+              width: "100%",
+              animation: "slideDown 0.25s ease",
             }}
           >
             <h3
               style={{
                 fontSize: 18,
                 fontWeight: 800,
-                color: '#f1f5f9',
+                color: "#f1f5f9",
                 marginBottom: 10,
               }}
             >
@@ -1790,7 +1789,7 @@ export default function InstructorCourses({ showToast }) {
             <p
               style={{
                 fontSize: 14,
-                color: '#94a3b8',
+                color: "#94a3b8",
                 lineHeight: 1.7,
                 marginBottom: 22,
               }}
@@ -1798,18 +1797,18 @@ export default function InstructorCourses({ showToast }) {
               This will permanently remove the course and unenroll all students.
               This cannot be undone.
             </p>
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: "flex", gap: 10 }}>
               <button
                 onClick={() => setDeleteId(null)}
                 style={{
                   flex: 1,
                   padding: 11,
                   borderRadius: 10,
-                  border: '1px solid #334155',
-                  background: 'transparent',
-                  color: '#94a3b8',
+                  border: "1px solid #334155",
+                  background: "transparent",
+                  color: "#94a3b8",
                   fontWeight: 600,
-                  cursor: 'pointer',
+                  cursor: "pointer",
                   fontSize: 13,
                 }}
               >
@@ -1821,11 +1820,11 @@ export default function InstructorCourses({ showToast }) {
                   flex: 1,
                   padding: 11,
                   borderRadius: 10,
-                  border: 'none',
-                  background: '#7f1d1d',
-                  color: '#fca5a5',
+                  border: "none",
+                  background: "#7f1d1d",
+                  color: "#fca5a5",
                   fontWeight: 700,
-                  cursor: 'pointer',
+                  cursor: "pointer",
                   fontSize: 13,
                 }}
               >
