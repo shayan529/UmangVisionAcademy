@@ -118,22 +118,58 @@ const AdminApplications = () => {
               className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 p-4 bg-slate-900/35 border border-slate-800/80 rounded-2xl transition duration-150 hover:border-slate-700/60"
             >
               {/* Applicant detail */}
-              <div className="flex items-center gap-3.5 min-w-0">
-                <Av name={app.user?.name} size={40} />
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-slate-200 truncate">
-                    {app.user?.name}
-                  </p>
-                  <p className="text-[10px] text-slate-500 truncate mt-0.5">
-                    {app.user?.email}
-                  </p>
-                  {app.expertise && (
-                    <p className="text-[10px] text-slate-400 font-medium mt-1">
-                      Expertise:{" "}
-                      <span className="text-slate-300 font-semibold">
-                        {app.expertise}
-                      </span>
+              <div className="flex gap-4">
+                <Av name={app.user?.name} size={42} />
+
+                <div className="flex-1 min-w-0 space-y-3">
+                  {/* User Info */}
+                  <div>
+                    <p className="text-sm font-bold text-white">
+                      {app.user?.name}
                     </p>
+                    <p className="text-xs text-slate-400">{app.user?.email}</p>
+                  </div>
+
+                  {/* Expertise */}
+                  {app.expertise && (
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+                      <p className="text-[11px] uppercase tracking-wider text-cyan-400 font-semibold mb-1">
+                        Expertise
+                      </p>
+                      <p className="text-sm text-slate-200 break-words">
+                        {app.expertise}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Bio */}
+                  {app.bio && (
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+                      <p className="text-[11px] uppercase tracking-wider text-emerald-400 font-semibold mb-1">
+                        Bio
+                      </p>
+                      <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
+                        {app.bio}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Content Link */}
+                  {app.contentLink && (
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+                      <p className="text-[11px] uppercase tracking-wider text-violet-400 font-semibold mb-2">
+                        Content Link
+                      </p>
+
+                      <a
+                        href={app.contentLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-400 hover:text-blue-300 break-all underline"
+                      >
+                        {app.contentLink}
+                      </a>
+                    </div>
                   )}
                 </div>
               </div>

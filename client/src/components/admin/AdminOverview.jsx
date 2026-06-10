@@ -1,38 +1,38 @@
-import React from 'react';
-import { BookOpen, Trophy, Medal, Award, Star } from 'lucide-react';
+import React from "react";
+import { BookOpen, Trophy, Medal, Award, Star } from "lucide-react";
 
 /* ─── helpers ─────────────────────────────────────────── */
-const fmt = (n) => (n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n}`);
+const fmt = (n) => (n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : `₹${n}`);
 const pct = (n, max) => Math.min(100, Math.round((n / (max || 1)) * 100));
-const hue = (name = '?') => {
+const hue = (name = "?") => {
   const palette = [
-    '#7c3aed',
-    '#0ea5e9',
-    '#10b981',
-    '#f59e0b',
-    '#ec4899',
-    '#8b5cf6',
-    '#14b8a6',
+    "#7c3aed",
+    "#0ea5e9",
+    "#10b981",
+    "#f59e0b",
+    "#ec4899",
+    "#8b5cf6",
+    "#14b8a6",
   ];
   return palette[name.charCodeAt(0) % palette.length];
 };
 
 /* ─── Avatar ──────────────────────────────────────────── */
-const Av = ({ name = '?', size = 32 }) => (
+const Av = ({ name = "?", size = 32 }) => (
   <div
     style={{
       width: size,
       height: size,
-      borderRadius: '50%',
+      borderRadius: "50%",
       background: hue(name),
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
       fontSize: size * 0.38,
       fontWeight: 800,
-      color: '#fff',
+      color: "#fff",
       flexShrink: 0,
-      letterSpacing: '-0.02em',
+      letterSpacing: "-0.02em",
     }}
   >
     {name.slice(0, 2).toUpperCase()}
@@ -222,10 +222,10 @@ const AdminOverview = ({
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-200 truncate">
-                      {c.title || 'Untitled Course'}
+                      {c.title || "Untitled Course"}
                     </p>
                     <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                      By {c.instructor?.name || 'Anonymous'} ·{' '}
+                      By {c.instructor?.name || "Anonymous"} ·{" "}
                       {c.students?.length || 0} students
                     </p>
                   </div>

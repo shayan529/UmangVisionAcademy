@@ -218,9 +218,7 @@ export default function CartPage() {
   const anyLoading =
     checkoutLoading || orderLoading || paymentLoading || mockLoading;
   const anyError = cartError || billingError || razorError;
-  console.log("availableCourses", availableCourses);
-  console.log("cartIds", cartIds);
-  console.log("cartItems", cartItems);
+
   return (
     <div className="min-h-screen bg-[#020817] text-white">
       <style>{`

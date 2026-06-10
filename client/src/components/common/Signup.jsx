@@ -1,44 +1,44 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { register, clearError } from '../../redux/slices/authSlice';
-import { toast } from 'react-hot-toast';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { register, clearError } from "../../redux/slices/authSlice";
+import { toast } from "react-hot-toast";
+import { FiEye, FiEyeOff } from "react-icons/fi";
+import axios from "axios";
 
 const indianCitiesByState = {
-  'Andhra Pradesh': ['Visakhapatnam', 'Vijayawada', 'Guntur', 'Tirupati'],
-  'Arunachal Pradesh': ['Itanagar', 'Tawang', 'Naharlagun'],
-  Assam: ['Guwahati', 'Dibrugarh', 'Jorhat', 'Silchar'],
-  Bihar: ['Patna', 'Gaya', 'Bhagalpur', 'Muzaffarpur'],
-  Chhattisgarh: ['Raipur', 'Bhilai', 'Korba', 'Durg'],
-  Goa: ['Panaji', 'Margao', 'Vasco da Gama'],
-  Gujarat: ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot'],
-  Haryana: ['Gurugram', 'Faridabad', 'Panipat', 'Karnal'],
-  'Himachal Pradesh': ['Shimla', 'Dharamshala', 'Manali'],
-  Jharkhand: ['Ranchi', 'Jamshedpur', 'Dhanbad'],
-  Karnataka: ['Bengaluru', 'Mysuru', 'Mangalore', 'Hubli'],
-  Kerala: ['Thiruvananthapuram', 'Kochi', 'Kozhikode', 'Kollam'],
-  'Madhya Pradesh': ['Bhopal', 'Indore', 'Gwalior', 'Jabalpur'],
-  Maharashtra: ['Mumbai', 'Pune', 'Nagpur', 'Nashik'],
-  Manipur: ['Imphal', 'Churachandpur'],
-  Meghalaya: ['Shillong', 'Tura'],
-  Mizoram: ['Aizawl', 'Lunglei'],
-  Nagaland: ['Kohima', 'Dimapur'],
-  Odisha: ['Bhubaneswar', 'Cuttack', 'Rourkela'],
-  Punjab: ['Chandigarh', 'Amritsar', 'Ludhiana', 'Jalandhar'],
-  Rajasthan: ['Jaipur', 'Jodhpur', 'Udaipur', 'Kota'],
-  Sikkim: ['Gangtok', 'Namchi'],
-  'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli'],
-  Telangana: ['Hyderabad', 'Warangal', 'Nizamabad'],
-  Tripura: ['Agartala', 'Udaipur'],
-  'Uttar Pradesh': ['Lucknow', 'Kanpur', 'Varanasi', 'Agra'],
-  Uttarakhand: ['Dehradun', 'Haridwar', 'Nainital'],
-  'West Bengal': ['Kolkata', 'Howrah', 'Durgapur', 'Siliguri'],
-  Delhi: ['New Delhi', 'Dwarka', 'Rohini'],
-  'Jammu & Kashmir': ['Srinagar', 'Jammu'],
-  Ladakh: ['Leh', 'Kargil'],
-  Puducherry: ['Puducherry', 'Karaikal'],
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati"],
+  "Arunachal Pradesh": ["Itanagar", "Tawang", "Naharlagun"],
+  Assam: ["Guwahati", "Dibrugarh", "Jorhat", "Silchar"],
+  Bihar: ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur"],
+  Chhattisgarh: ["Raipur", "Bhilai", "Korba", "Durg"],
+  Goa: ["Panaji", "Margao", "Vasco da Gama"],
+  Gujarat: ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
+  Haryana: ["Gurugram", "Faridabad", "Panipat", "Karnal"],
+  "Himachal Pradesh": ["Shimla", "Dharamshala", "Manali"],
+  Jharkhand: ["Ranchi", "Jamshedpur", "Dhanbad"],
+  Karnataka: ["Bengaluru", "Mysuru", "Mangalore", "Hubli"],
+  Kerala: ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam"],
+  "Madhya Pradesh": ["Bhopal", "Indore", "Gwalior", "Jabalpur"],
+  Maharashtra: ["Mumbai", "Pune", "Nagpur", "Nashik"],
+  Manipur: ["Imphal", "Churachandpur"],
+  Meghalaya: ["Shillong", "Tura"],
+  Mizoram: ["Aizawl", "Lunglei"],
+  Nagaland: ["Kohima", "Dimapur"],
+  Odisha: ["Bhubaneswar", "Cuttack", "Rourkela"],
+  Punjab: ["Chandigarh", "Amritsar", "Ludhiana", "Jalandhar"],
+  Rajasthan: ["Jaipur", "Jodhpur", "Udaipur", "Kota"],
+  Sikkim: ["Gangtok", "Namchi"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli"],
+  Telangana: ["Hyderabad", "Warangal", "Nizamabad"],
+  Tripura: ["Agartala", "Udaipur"],
+  "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra"],
+  Uttarakhand: ["Dehradun", "Haridwar", "Nainital"],
+  "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Siliguri"],
+  Delhi: ["New Delhi", "Dwarka", "Rohini"],
+  "Jammu & Kashmir": ["Srinagar", "Jammu"],
+  Ladakh: ["Leh", "Kargil"],
+  Puducherry: ["Puducherry", "Karaikal"],
 };
 
 /* ── Animated particle canvas ── */
@@ -46,14 +46,14 @@ const ParticleCanvas = () => {
   const canvasRef = useRef(null);
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     let animId;
     const resize = () => {
       canvas.width = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
     };
     resize();
-    window.addEventListener('resize', resize);
+    window.addEventListener("resize", resize);
 
     const NODES = Array.from({ length: 55 }, () => ({
       x: Math.random() * 1400,
@@ -98,7 +98,7 @@ const ParticleCanvas = () => {
     draw();
     return () => {
       cancelAnimationFrame(animId);
-      window.removeEventListener('resize', resize);
+      window.removeEventListener("resize", resize);
     };
   }, []);
   return (
@@ -114,7 +114,7 @@ const ParticleCanvas = () => {
 const OtpStep = ({ email, payload, onSuccess, onBack }) => {
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.auth);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [verifying, setVerifying] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(30);
   const [resending, setResending] = useState(false);
@@ -139,7 +139,7 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
   };
 
   const handleOtpKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputsRef.current[index - 1]?.focus();
     }
   };
@@ -147,8 +147,8 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
   const handlePaste = (e) => {
     e.preventDefault();
     const pasted = e.clipboardData
-      .getData('text')
-      .replace(/\D/g, '')
+      .getData("text")
+      .replace(/\D/g, "")
       .slice(0, 6);
     const updated = [...otp];
     for (let i = 0; i < pasted.length; i++) updated[i] = pasted[i];
@@ -157,24 +157,24 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
   };
 
   const handleVerify = async () => {
-    const code = otp.join('');
+    const code = otp.join("");
     if (code.length < 6) {
-      toast.error('Please enter the full 6-digit OTP.');
+      toast.error("Please enter the full 6-digit OTP.");
       return;
     }
     setVerifying(true);
     try {
-      await axios.post('/api/auth/verify-otp', { email, otp: code });
+      await axios.post("/api/auth/verify-email-otp", { email, otp: code });
       const result = await dispatch(register(payload));
       if (register.fulfilled.match(result)) {
-        toast('Account created! Welcome aboard 🎉', { icon: '👋' });
+        toast("Account created! Welcome aboard 🎉", { icon: "👋" });
         onSuccess();
       }
     } catch (err) {
       toast.error(
-        err?.response?.data?.message || 'Invalid OTP. Please try again.'
+        err?.response?.data?.message || "Invalid OTP. Please try again.",
       );
-      setOtp(['', '', '', '', '', '']);
+      setOtp(["", "", "", "", "", ""]);
       inputsRef.current[0]?.focus();
     } finally {
       setVerifying(false);
@@ -184,13 +184,13 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
   const handleResend = async () => {
     setResending(true);
     try {
-      await axios.post('/api/auth/send-otp', { email });
-      toast.success('OTP resent to your email.');
+      await axios.post("/api/auth/send-otp", { email });
+      toast.success("OTP resent to your email.");
       setResendCooldown(30);
-      setOtp(['', '', '', '', '', '']);
+      setOtp(["", "", "", "", "", ""]);
       inputsRef.current[0]?.focus();
     } catch {
-      toast.error('Failed to resend OTP. Please try again.');
+      toast.error("Failed to resend OTP. Please try again.");
     } finally {
       setResending(false);
     }
@@ -205,8 +205,8 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center"
           style={{
-            background: 'rgba(14,165,233,0.12)',
-            border: '1px solid rgba(14,165,233,0.2)',
+            background: "rgba(14,165,233,0.12)",
+            border: "1px solid rgba(14,165,233,0.2)",
           }}
         >
           <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none">
@@ -256,14 +256,14 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
             onPaste={i === 0 ? handlePaste : undefined}
             className="w-11 text-center text-xl font-bold text-white rounded-xl outline-none transition-all duration-200"
             style={{
-              height: '52px',
+              height: "52px",
               background: digit
-                ? 'rgba(14,165,233,0.12)'
-                : 'rgba(255,255,255,0.05)',
+                ? "rgba(14,165,233,0.12)"
+                : "rgba(255,255,255,0.05)",
               border: digit
-                ? '1px solid rgba(56,189,248,0.6)'
-                : '1px solid rgba(255,255,255,0.12)',
-              boxShadow: digit ? '0 0 0 3px rgba(34,211,238,0.08)' : 'none',
+                ? "1px solid rgba(56,189,248,0.6)"
+                : "1px solid rgba(255,255,255,0.12)",
+              boxShadow: digit ? "0 0 0 3px rgba(34,211,238,0.08)" : "none",
             }}
           />
         ))}
@@ -272,7 +272,7 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
       {/* Verify button */}
       <button
         onClick={handleVerify}
-        disabled={isBusy || otp.join('').length < 6}
+        disabled={isBusy || otp.join("").length < 6}
         className="btn-grad w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2.5 mb-4 disabled:opacity-60"
       >
         {isBusy ? (
@@ -319,7 +319,7 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
         <span className="text-slate-500">Didn't receive it?</span>
         {resendCooldown > 0 ? (
           <span className="text-slate-500">
-            Resend in{' '}
+            Resend in{" "}
             <span className="text-cyan-400 font-semibold">
               {resendCooldown}s
             </span>
@@ -330,7 +330,7 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
             disabled={resending}
             className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors disabled:opacity-60"
           >
-            {resending ? 'Sending…' : 'Resend OTP'}
+            {resending ? "Sending…" : "Resend OTP"}
           </button>
         )}
       </div>
@@ -361,23 +361,39 @@ const Signup = () => {
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
 
-  const [step, setStep] = useState('form'); // "form" | "otp"
+  const [step, setStep] = useState("form"); // "form" | "otp"
   const [pendingPayload, setPendingPayload] = useState(null);
   const [sendingOtp, setSendingOtp] = useState(false);
 
+  // ── Phone OTP state ──
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneOtpInputs, setPhoneOtpInputs] = useState([
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+  ]);
+  const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false);
+  const [verifyingPhone, setVerifyingPhone] = useState(false);
+  const [phoneResendCooldown, setPhoneResendCooldown] = useState(0);
+  const phoneOtpRefs = useRef([]);
+
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    countryCode: '+91',
-    phoneNumber: '',
-    city: '',
-    state: '',
-    password: '',
-    confirmPassword: '',
+    name: "",
+    email: "",
+    countryCode: "+91",
+    phoneNumber: "",
+    city: "",
+    state: "",
+    password: "",
+    confirmPassword: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [focused, setFocused] = useState('');
+  const [focused, setFocused] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   useEffect(() => {
@@ -392,36 +408,129 @@ const Signup = () => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-      ...(name === 'state' && { city: '' }),
+      ...(name === "state" && { city: "" }),
     }));
   };
 
   const states = Object.keys(indianCitiesByState);
   const cityOptions = indianCitiesByState[formData.state] || [];
   const countryCodes = [
-    { code: '+91', country: 'India' },
-    { code: '+1', country: 'USA/Canada' },
-    { code: '+44', country: 'United Kingdom' },
-    { code: '+61', country: 'Australia' },
-    { code: '+971', country: 'UAE' },
-    { code: '+65', country: 'Singapore' },
-    { code: '+81', country: 'Japan' },
-    { code: '+49', country: 'Germany' },
+    { code: "+91", country: "India" },
+    { code: "+1", country: "USA/Canada" },
+    { code: "+44", country: "United Kingdom" },
+    { code: "+61", country: "Australia" },
+    { code: "+971", country: "UAE" },
+    { code: "+65", country: "Singapore" },
+    { code: "+81", country: "Japan" },
+    { code: "+49", country: "Germany" },
   ];
+
+  // Phone OTP cooldown ticker
+  useEffect(() => {
+    if (phoneResendCooldown <= 0) return;
+    const t = setTimeout(() => setPhoneResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [phoneResendCooldown]);
+
+  // Reset phone verified if the user edits the phone number
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.replace(/\D/g, "");
+    setFormData((prev) => ({ ...prev, phoneNumber: value }));
+    if (phoneVerified || phoneOtpSent) {
+      setPhoneVerified(false);
+      setPhoneOtpSent(false);
+      setPhoneOtpInputs(["", "", "", "", "", ""]);
+    }
+  };
+
+  const handleSendPhoneOtp = async () => {
+    if (!/^[0-9]{10}$/.test(formData.phoneNumber)) {
+      toast.error("Please enter a valid 10-digit phone number.");
+      return;
+    }
+    setSendingPhoneOtp(true);
+    try {
+      await axios.post("/api/auth/send-phone-otp", {
+        phoneNumber: `${formData.countryCode}${formData.phoneNumber}`,
+      });
+      toast.success("OTP sent to your phone!");
+      setPhoneOtpSent(true);
+      setPhoneResendCooldown(30);
+      setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to send SMS OTP.");
+    } finally {
+      setSendingPhoneOtp(false);
+    }
+  };
+
+  const handlePhoneOtpChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return;
+    const updated = [...phoneOtpInputs];
+    updated[index] = value.slice(-1);
+    setPhoneOtpInputs(updated);
+    if (value && index < 5) phoneOtpRefs.current[index + 1]?.focus();
+  };
+
+  const handlePhoneOtpKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !phoneOtpInputs[index] && index > 0) {
+      phoneOtpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePhoneOtpPaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6);
+    const updated = [...phoneOtpInputs];
+    for (let i = 0; i < pasted.length; i++) updated[i] = pasted[i];
+    setPhoneOtpInputs(updated);
+    phoneOtpRefs.current[Math.min(pasted.length, 5)]?.focus();
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    const code = phoneOtpInputs.join("");
+    if (code.length < 6) {
+      toast.error("Please enter the full 6-digit OTP.");
+      return;
+    }
+    setVerifyingPhone(true);
+    try {
+      await axios.post("/api/auth/verify-phone-otp", {
+        phoneNumber: `${formData.countryCode}${formData.phoneNumber}`,
+        otp: code,
+      });
+      setPhoneVerified(true);
+      setPhoneOtpSent(false);
+      toast.success("Phone number verified! ✓");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Invalid OTP. Try again.");
+      setPhoneOtpInputs(["", "", "", "", "", ""]);
+      phoneOtpRefs.current[0]?.focus();
+    } finally {
+      setVerifyingPhone(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match.');
+      toast.error("Passwords do not match.");
       return;
     }
     if (!agreedToTerms) {
-      toast.error('Please agree to the Terms & Conditions.');
+      toast.error("Please agree to the Terms & Conditions.");
       return;
     }
     if (!/^[0-9]{10}$/.test(formData.phoneNumber)) {
-      toast.error('Please enter a valid 10-digit phone number.');
+      toast.error("Please enter a valid 10-digit phone number.");
+      return;
+    }
+    if (!phoneVerified) {
+      toast.error("Please verify your phone number before continuing.");
       return;
     }
 
@@ -430,13 +539,13 @@ const Signup = () => {
 
     setSendingOtp(true);
     try {
-      await axios.post('/api/auth/send-otp', { email: formData.email });
-      toast.success('OTP sent to your email!');
+      await axios.post("/api/auth/send-email-otp", { email: formData.email });
+      toast.success("OTP sent to your email!");
       setPendingPayload(payload);
-      setStep('otp');
+      setStep("otp");
     } catch (err) {
       toast.error(
-        err?.response?.data?.message || 'Failed to send OTP. Please try again.'
+        err?.response?.data?.message || "Failed to send OTP. Please try again.",
       );
     } finally {
       setSendingOtp(false);
@@ -445,11 +554,11 @@ const Signup = () => {
 
   const inputCls = (name) =>
     `w-full border rounded-2xl px-5 py-3.5 text-white text-sm outline-none transition-all duration-300 placeholder-slate-500 ${
-      name === 'state' || name === 'city' ? 'bg-[#1e293b]' : 'bg-white/5'
+      name === "state" || name === "city" ? "bg-[#1e293b]" : "bg-white/5"
     } ${
       focused === name
-        ? 'border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]'
-        : 'border-white/10 hover:border-white/20'
+        ? "border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]"
+        : "border-white/10 hover:border-white/20"
     }`;
 
   return (
@@ -506,32 +615,32 @@ const Signup = () => {
           className="orb1 absolute -top-32 -left-20 w-[520px] h-[520px] rounded-full"
           style={{
             background:
-              'radial-gradient(circle,rgba(56,189,248,.22) 0%,transparent 70%)',
+              "radial-gradient(circle,rgba(56,189,248,.22) 0%,transparent 70%)",
           }}
         />
         <div
           className="orb2 absolute -bottom-36 -right-24 w-[620px] h-[620px] rounded-full"
           style={{
             background:
-              'radial-gradient(circle,rgba(99,102,241,.18) 0%,transparent 70%)',
+              "radial-gradient(circle,rgba(99,102,241,.18) 0%,transparent 70%)",
           }}
         />
         <div
           className="orb3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full"
           style={{
             background:
-              'radial-gradient(circle,rgba(14,165,233,.06) 0%,transparent 70%)',
+              "radial-gradient(circle,rgba(14,165,233,.06) 0%,transparent 70%)",
           }}
         />
 
         {/* Orbit rings */}
         <div
           className="ring1 absolute top-[8%] right-[4%] w-[350px] h-[350px] rounded-full opacity-[0.07]"
-          style={{ border: '1px solid rgba(147,210,255,.9)' }}
+          style={{ border: "1px solid rgba(147,210,255,.9)" }}
         />
         <div
           className="ring2 absolute top-[5%] right-[2%] w-[420px] h-[420px] rounded-full opacity-[0.04]"
-          style={{ border: '1px dashed rgba(147,210,255,.9)' }}
+          style={{ border: "1px dashed rgba(147,210,255,.9)" }}
         />
 
         {/* Grid */}
@@ -559,26 +668,26 @@ const Signup = () => {
 
         {/* Stars */}
         {[
-          { t: '7%', l: '10%', d: '2.8s', del: '0s' },
-          { t: '14%', l: '73%', d: '3.5s', del: '.7s' },
-          { t: '32%', l: '4%', d: '4s', del: '1.2s' },
-          { t: '54%', l: '90%', d: '3.1s', del: '.3s' },
-          { t: '72%', l: '18%', d: '2.5s', del: '1.8s' },
-          { t: '83%', l: '58%', d: '3.8s', del: '.9s' },
-          { t: '46%', l: '48%', d: '5s', del: '2.1s' },
-          { t: '22%', l: '38%', d: '2.2s', del: '.4s' },
+          { t: "7%", l: "10%", d: "2.8s", del: "0s" },
+          { t: "14%", l: "73%", d: "3.5s", del: ".7s" },
+          { t: "32%", l: "4%", d: "4s", del: "1.2s" },
+          { t: "54%", l: "90%", d: "3.1s", del: ".3s" },
+          { t: "72%", l: "18%", d: "2.5s", del: "1.8s" },
+          { t: "83%", l: "58%", d: "3.8s", del: ".9s" },
+          { t: "46%", l: "48%", d: "5s", del: "2.1s" },
+          { t: "22%", l: "38%", d: "2.2s", del: ".4s" },
         ].map((s, i) => (
           <div
             key={i}
             className="star absolute w-1 h-1 rounded-full bg-white"
-            style={{ top: s.t, left: s.l, '--d': s.d, '--del': s.del }}
+            style={{ top: s.t, left: s.l, "--d": s.d, "--del": s.del }}
           />
         ))}
 
         {/* Floating shapes */}
         <div
           className="floaty absolute top-[20%] left-[7%] w-14 h-14 opacity-[.15]"
-          style={{ animationDelay: '1s' }}
+          style={{ animationDelay: "1s" }}
         >
           <svg viewBox="0 0 56 56">
             <polygon
@@ -591,7 +700,7 @@ const Signup = () => {
         </div>
         <div
           className="floaty absolute bottom-[20%] right-[9%] w-10 h-10 opacity-[.12]"
-          style={{ animationDelay: '3s' }}
+          style={{ animationDelay: "3s" }}
         >
           <svg viewBox="0 0 40 40">
             <rect
@@ -608,7 +717,7 @@ const Signup = () => {
         </div>
         <div
           className="floaty absolute top-[62%] left-[2%] w-8 h-8 opacity-[.18]"
-          style={{ animationDelay: '2s' }}
+          style={{ animationDelay: "2s" }}
         >
           <svg viewBox="0 0 32 32">
             <circle
@@ -629,21 +738,21 @@ const Signup = () => {
           {/* Left hero */}
           <div
             className="hidden lg:flex flex-col flex-1 gap-8 su"
-            style={{ animationDelay: '.2s' }}
+            style={{ animationDelay: ".2s" }}
           >
             <div className="floaty relative">
               <div
                 className="absolute inset-0 rounded-full blur-3xl opacity-20"
                 style={{
-                  background: 'radial-gradient(circle,#38bdf8,transparent 70%)',
+                  background: "radial-gradient(circle,#38bdf8,transparent 70%)",
                 }}
               />
               <svg viewBox="0 0 300 320" className="w-72 h-72 drop-shadow-2xl">
                 {[
-                  { x: 30, y: 20, f: '#38bdf8', r: 20 },
-                  { x: 200, y: 10, f: '#6366f1', r: 45 },
-                  { x: 250, y: 50, f: '#0ea5e9', r: -15 },
-                  { x: 10, y: 150, f: '#818cf8', r: 30 },
+                  { x: 30, y: 20, f: "#38bdf8", r: 20 },
+                  { x: 200, y: 10, f: "#6366f1", r: 45 },
+                  { x: 250, y: 50, f: "#0ea5e9", r: -15 },
+                  { x: 10, y: 150, f: "#818cf8", r: 30 },
                 ].map((c, i) => (
                   <rect
                     key={i}
@@ -760,9 +869,9 @@ const Signup = () => {
               </p>
               <div className="mt-7 flex items-center gap-7">
                 {[
-                  ['50K+', 'Students'],
-                  ['200+', 'Courses'],
-                  ['98%', 'Pass Rate'],
+                  ["50K+", "Students"],
+                  ["200+", "Courses"],
+                  ["98%", "Pass Rate"],
                 ].map(([n, l]) => (
                   <div key={l}>
                     <p className="df text-xl font-black text-white">{n}</p>
@@ -776,13 +885,13 @@ const Signup = () => {
           {/* Right card */}
           <div
             className="w-full max-w-md su"
-            style={{ animationDelay: '.35s' }}
+            style={{ animationDelay: ".35s" }}
           >
             <div
               className="h-[2px] w-full rounded-t-full mb-[-2px] relative z-10"
               style={{
                 background:
-                  'linear-gradient(90deg,transparent,#38bdf8,#6366f1,transparent)',
+                  "linear-gradient(90deg,transparent,#38bdf8,#6366f1,transparent)",
               }}
             />
 
@@ -790,16 +899,16 @@ const Signup = () => {
               className="card-glow rounded-3xl p-9"
               style={{
                 background:
-                  'linear-gradient(160deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%)',
-                backdropFilter: 'blur(24px)',
+                  "linear-gradient(160deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%)",
+                backdropFilter: "blur(24px)",
               }}
             >
-              {step === 'otp' ? (
+              {step === "otp" ? (
                 <OtpStep
                   email={formData.email}
                   payload={pendingPayload}
-                  onSuccess={() => navigate('/student-dashboard')}
-                  onBack={() => setStep('form')}
+                  onSuccess={() => navigate("/student-dashboard")}
+                  onBack={() => setStep("form")}
                 />
               ) : (
                 <>
@@ -823,11 +932,11 @@ const Signup = () => {
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        onFocus={() => setFocused('name')}
-                        onBlur={() => setFocused('')}
+                        onFocus={() => setFocused("name")}
+                        onBlur={() => setFocused("")}
                         placeholder="John Doe"
                         required
-                        className={inputCls('name')}
+                        className={inputCls("name")}
                       />
                     </div>
 
@@ -841,11 +950,11 @@ const Signup = () => {
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        onFocus={() => setFocused('email')}
-                        onBlur={() => setFocused('')}
+                        onFocus={() => setFocused("email")}
+                        onBlur={() => setFocused("")}
                         placeholder="you@example.com"
                         required
-                        className={inputCls('email')}
+                        className={inputCls("email")}
                       />
                     </div>
 
@@ -854,12 +963,22 @@ const Signup = () => {
                       <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
                         Phone Number
                       </label>
+
+                      {/* Phone input row */}
                       <div className="flex gap-2">
                         <select
                           name="countryCode"
                           value={formData.countryCode}
-                          onChange={handleChange}
-                          className="w-28 border border-white/10 rounded-2xl px-3 py-3.5 bg-[#1e293b] text-white"
+                          onChange={(e) => {
+                            handleChange(e);
+                            if (phoneVerified || phoneOtpSent) {
+                              setPhoneVerified(false);
+                              setPhoneOtpSent(false);
+                              setPhoneOtpInputs(["", "", "", "", "", ""]);
+                            }
+                          }}
+                          disabled={phoneVerified}
+                          className="w-28 border border-white/10 rounded-2xl px-3 py-3.5 bg-[#1e293b] text-white disabled:opacity-50"
                         >
                           {countryCodes.map((country) => (
                             <option key={country.code} value={country.code}>
@@ -867,25 +986,241 @@ const Signup = () => {
                             </option>
                           ))}
                         </select>
-                        <input
-                          type="tel"
-                          name="phoneNumber"
-                          value={formData.phoneNumber}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '');
-                            setFormData((prev) => ({
-                              ...prev,
-                              phoneNumber: value,
-                            }));
-                          }}
-                          onFocus={() => setFocused('phoneNumber')}
-                          onBlur={() => setFocused('')}
-                          placeholder="9876543210"
-                          required
-                          maxLength={10}
-                          className={inputCls('phoneNumber')}
-                        />
+
+                        <div className="relative flex-1">
+                          <input
+                            type="tel"
+                            name="phoneNumber"
+                            value={formData.phoneNumber}
+                            onChange={handlePhoneChange}
+                            onFocus={() => setFocused("phoneNumber")}
+                            onBlur={() => setFocused("")}
+                            placeholder="9876543210"
+                            required
+                            maxLength={10}
+                            disabled={phoneVerified}
+                            className={
+                              inputCls("phoneNumber") +
+                              " pr-10 disabled:opacity-50"
+                            }
+                          />
+                          {/* Green tick when verified */}
+                          {phoneVerified && (
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <svg
+                                viewBox="0 0 20 20"
+                                className="w-5 h-5"
+                                fill="none"
+                              >
+                                <circle
+                                  cx="10"
+                                  cy="10"
+                                  r="9"
+                                  fill="rgba(34,197,94,0.15)"
+                                  stroke="#22c55e"
+                                  strokeWidth="1.5"
+                                />
+                                <path
+                                  d="M6 10l3 3 5-5"
+                                  stroke="#22c55e"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Send / Resend button */}
+                        {!phoneVerified && (
+                          <button
+                            type="button"
+                            onClick={
+                              phoneOtpSent
+                                ? handleSendPhoneOtp
+                                : handleSendPhoneOtp
+                            }
+                            disabled={
+                              sendingPhoneOtp ||
+                              formData.phoneNumber.length < 10 ||
+                              phoneResendCooldown > 0
+                            }
+                            className="shrink-0 px-4 py-2 rounded-2xl text-sm font-bold text-white transition-all duration-200 disabled:opacity-50"
+                            style={{
+                              background:
+                                "linear-gradient(135deg,#0ea5e9,#6366f1)",
+                              boxShadow: "0 4px 14px rgba(14,165,233,.3)",
+                            }}
+                          >
+                            {sendingPhoneOtp ? (
+                              <svg
+                                className="w-4 h-4 animate-spin"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                              >
+                                <circle
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="rgba(255,255,255,.3)"
+                                  strokeWidth="3"
+                                />
+                                <path
+                                  d="M12 2a10 10 0 0 1 10 10"
+                                  stroke="white"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                            ) : phoneResendCooldown > 0 ? (
+                              `${phoneResendCooldown}s`
+                            ) : phoneOtpSent ? (
+                              "Resend"
+                            ) : (
+                              "Send OTP"
+                            )}
+                          </button>
+                        )}
+
+                        {/* Edit button when verified */}
+                        {phoneVerified && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPhoneVerified(false);
+                              setPhoneOtpSent(false);
+                              setPhoneOtpInputs(["", "", "", "", "", ""]);
+                            }}
+                            className="shrink-0 px-4 py-2 rounded-2xl text-sm font-semibold text-slate-400 hover:text-white border border-white/10 hover:border-white/20 transition-all"
+                          >
+                            Edit
+                          </button>
+                        )}
                       </div>
+
+                      {/* Inline OTP input — visible after SMS sent, hidden once verified */}
+                      {phoneOtpSent && !phoneVerified && (
+                        <div
+                          className="mt-3 p-4 rounded-2xl"
+                          style={{
+                            background: "rgba(14,165,233,0.05)",
+                            border: "1px solid rgba(56,189,248,0.15)",
+                          }}
+                        >
+                          <p className="text-xs text-slate-400 mb-3 text-center">
+                            Enter the 6-digit code sent to{" "}
+                            <span className="text-cyan-400 font-semibold">
+                              {formData.countryCode} {formData.phoneNumber}
+                            </span>
+                          </p>
+
+                          {/* OTP boxes */}
+                          <div className="flex gap-2 justify-center mb-3">
+                            {phoneOtpInputs.map((digit, i) => (
+                              <input
+                                key={i}
+                                ref={(el) => (phoneOtpRefs.current[i] = el)}
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={1}
+                                value={digit}
+                                onChange={(e) =>
+                                  handlePhoneOtpChange(i, e.target.value)
+                                }
+                                onKeyDown={(e) => handlePhoneOtpKeyDown(i, e)}
+                                onPaste={
+                                  i === 0 ? handlePhoneOtpPaste : undefined
+                                }
+                                className="w-10 text-center text-lg font-bold text-white rounded-xl outline-none transition-all duration-200"
+                                style={{
+                                  height: "44px",
+                                  background: digit
+                                    ? "rgba(14,165,233,0.12)"
+                                    : "rgba(255,255,255,0.05)",
+                                  border: digit
+                                    ? "1px solid rgba(56,189,248,0.6)"
+                                    : "1px solid rgba(255,255,255,0.12)",
+                                  boxShadow: digit
+                                    ? "0 0 0 3px rgba(34,211,238,0.08)"
+                                    : "none",
+                                }}
+                              />
+                            ))}
+                          </div>
+
+                          {/* Verify button */}
+                          <button
+                            type="button"
+                            onClick={handleVerifyPhoneOtp}
+                            disabled={
+                              verifyingPhone ||
+                              phoneOtpInputs.join("").length < 6
+                            }
+                            className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all duration-200 disabled:opacity-50"
+                            style={{
+                              background:
+                                "linear-gradient(135deg,#0ea5e9,#6366f1)",
+                              boxShadow: "0 4px 14px rgba(14,165,233,.25)",
+                            }}
+                          >
+                            {verifyingPhone ? (
+                              <span className="flex items-center justify-center gap-2">
+                                <svg
+                                  className="w-4 h-4 animate-spin"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                >
+                                  <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="rgba(255,255,255,.3)"
+                                    strokeWidth="3"
+                                  />
+                                  <path
+                                    d="M12 2a10 10 0 0 1 10 10"
+                                    stroke="white"
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                  />
+                                </svg>
+                                Verifying…
+                              </span>
+                            ) : (
+                              "Verify Phone"
+                            )}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Verified badge */}
+                      {phoneVerified && (
+                        <p className="mt-2 text-xs text-emerald-400 flex items-center gap-1.5">
+                          <svg
+                            viewBox="0 0 16 16"
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                          >
+                            <circle
+                              cx="8"
+                              cy="8"
+                              r="7"
+                              fill="rgba(34,197,94,0.15)"
+                              stroke="#22c55e"
+                              strokeWidth="1.5"
+                            />
+                            <path
+                              d="M5 8l2.5 2.5L11 6"
+                              stroke="#22c55e"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          Phone number verified successfully
+                        </p>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -898,10 +1233,10 @@ const Signup = () => {
                           name="state"
                           value={formData.state}
                           onChange={handleChange}
-                          onFocus={() => setFocused('state')}
-                          onBlur={() => setFocused('')}
+                          onFocus={() => setFocused("state")}
+                          onBlur={() => setFocused("")}
                           required
-                          className={inputCls('state')}
+                          className={inputCls("state")}
                         >
                           <option value="" disabled>
                             Select state
@@ -923,20 +1258,20 @@ const Signup = () => {
                           name="city"
                           value={formData.city}
                           onChange={handleChange}
-                          onFocus={() => setFocused('city')}
-                          onBlur={() => setFocused('')}
+                          onFocus={() => setFocused("city")}
+                          onBlur={() => setFocused("")}
                           required
                           className={
-                            inputCls('city') +
+                            inputCls("city") +
                             (!formData.state
-                              ? ' cursor-not-allowed opacity-50'
-                              : '')
+                              ? " cursor-not-allowed opacity-50"
+                              : "")
                           }
                         >
                           <option value="" disabled>
                             {formData.state
-                              ? 'Select city'
-                              : 'Choose a state first'}
+                              ? "Select city"
+                              : "Choose a state first"}
                           </option>
                           {cityOptions.map((city) => (
                             <option key={city} value={city}>
@@ -954,15 +1289,15 @@ const Signup = () => {
                       </label>
                       <div className="relative">
                         <input
-                          type={showPassword ? 'text' : 'password'}
+                          type={showPassword ? "text" : "password"}
                           name="password"
                           value={formData.password}
                           onChange={handleChange}
-                          onFocus={() => setFocused('password')}
-                          onBlur={() => setFocused('')}
+                          onFocus={() => setFocused("password")}
+                          onBlur={() => setFocused("")}
                           placeholder="••••••••••"
                           required
-                          className={inputCls('password') + ' pr-12'}
+                          className={inputCls("password") + " pr-12"}
                         />
                         <button
                           type="button"
@@ -985,15 +1320,15 @@ const Signup = () => {
                       </label>
                       <div className="relative">
                         <input
-                          type={showConfirm ? 'text' : 'password'}
+                          type={showConfirm ? "text" : "password"}
                           name="confirmPassword"
                           value={formData.confirmPassword}
                           onChange={handleChange}
-                          onFocus={() => setFocused('confirmPassword')}
-                          onBlur={() => setFocused('')}
+                          onFocus={() => setFocused("confirmPassword")}
+                          onBlur={() => setFocused("")}
                           placeholder="••••••••••"
                           required
-                          className={inputCls('confirmPassword') + ' pr-12'}
+                          className={inputCls("confirmPassword") + " pr-12"}
                         />
                         <button
                           type="button"
@@ -1022,11 +1357,11 @@ const Signup = () => {
                         htmlFor="terms"
                         className="text-slate-400 text-sm cursor-pointer leading-relaxed"
                       >
-                        I agree to the{' '}
+                        I agree to the{" "}
                         <span className="text-cyan-400 hover:text-cyan-300 transition-colors">
                           <Link to="/terms">Terms of Service</Link>
-                        </span>{' '}
-                        &amp;{' '}
+                        </span>{" "}
+                        &amp;{" "}
                         <span className="text-cyan-400 hover:text-cyan-300 transition-colors">
                           <Link to="/privacy">Privacy Policy</Link>
                         </span>
@@ -1084,7 +1419,7 @@ const Signup = () => {
                   </form>
 
                   <p className="text-center text-slate-500 text-sm mt-6">
-                    Already have an account?{' '}
+                    Already have an account?{" "}
                     <Link
                       to="/login"
                       className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors"

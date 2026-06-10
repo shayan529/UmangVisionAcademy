@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import { useDispatch } from "react-redux";
 import api from "../../config/api.js";
 import { fetchAllCoursesAdmin } from "../../redux/slices/courseSlice";
@@ -153,9 +154,496 @@ function RejectModal({ course, onClose, onConfirm, loading }) {
   );
 }
 
+// ── ImageKit video URL helpers ────────────────────────────────────────────────
+
+/**
+ * ImageKit raw URLs work fine as plain MP4 in the browser — we just need to
+ * strip the query string (?updatedAt=... etc.) which confuses MIME detection.
+ * We do NOT append /ik-video.mp4 because that counts as a video transformation
+ * and burns the monthly quota on free/starter plans.
+ */
+const toIkMp4 = (url) => {
+  if (!url) return url;
+  try {
+    const u = new URL(url);
+    u.search = ""; // strip ?updatedAt=... and any other params
+    return u.toString();
+  } catch {
+    return url;
+  }
+};
+
+// ── HLS-aware video player ────────────────────────────────────────────────────
+function IKVideoPlayer({ src }) {
+  const videoRef = React.useRef(null);
+  const [status, setStatus] = React.useState("loading"); // loading | playing | error
+  const [errorMsg, setErrorMsg] = React.useState("");
+
+  React.useEffect(() => {
+    if (!src || !videoRef.current) return;
+    const video = videoRef.current;
+
+    // Convert ImageKit URL to the plain MP4 endpoint
+    const mp4Src = toIkMp4(src);
+
+    // Try native MP4 first — ImageKit /ik-video.mp4 works in most browsers
+    video.src = mp4Src;
+    video.load();
+
+    const onCanPlay = () => setStatus("playing");
+    const onError = async () => {
+      // Native MP4 failed → try HLS.js with the original URL
+      try {
+        const HlsModule =
+          await import("https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js");
+        const Hls = HlsModule.default ?? HlsModule;
+
+        if (Hls.isSupported()) {
+          const hls = new Hls({ enableWorker: false });
+          hls.loadSource(src);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            setStatus("playing");
+            video.play().catch(() => {});
+          });
+          hls.on(Hls.Events.ERROR, (_, data) => {
+            if (data.fatal) {
+              setStatus("error");
+              setErrorMsg("Could not load video stream.");
+            }
+          });
+          video._hls = hls; // keep ref for cleanup
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          // Safari native HLS
+          video.src = src;
+          video.load();
+          video.addEventListener("canplay", () => setStatus("playing"), {
+            once: true,
+          });
+        } else {
+          setStatus("error");
+          setErrorMsg("HLS is not supported in this browser.");
+        }
+      } catch (e) {
+        setStatus("error");
+        setErrorMsg("Failed to load video player library.");
+      }
+    };
+
+    video.addEventListener("canplay", onCanPlay, { once: true });
+    video.addEventListener("error", onError, { once: true });
+
+    return () => {
+      video.removeEventListener("canplay", onCanPlay);
+      video.removeEventListener("error", onError);
+      if (video._hls) {
+        video._hls.destroy();
+        delete video._hls;
+      }
+    };
+  }, [src]);
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        background: "#000",
+        borderRadius: 12,
+        overflow: "hidden",
+      }}
+    >
+      {/* Loading shimmer */}
+      {status === "loading" && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 2,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 12,
+            background: "linear-gradient(135deg,#060d1f,#0d1526)",
+          }}
+        >
+          <svg
+            className="ik-spin"
+            viewBox="0 0 24 24"
+            fill="none"
+            style={{ width: 32, height: 32 }}
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="rgba(56,189,248,0.2)"
+              strokeWidth="3"
+            />
+            <path
+              d="M12 2a10 10 0 0 1 10 10"
+              stroke="#38bdf8"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+          </svg>
+          <span style={{ fontSize: 12, color: "#475569" }}>Loading video…</span>
+        </div>
+      )}
+
+      {/* Error state */}
+      {status === "error" && (
+        <div
+          style={{
+            height: 200,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+            background: "#060d1f",
+          }}
+        >
+          <span style={{ fontSize: 32 }}>⚠️</span>
+          <p style={{ fontSize: 13, color: "#f87171", fontWeight: 600 }}>
+            Video failed to load
+          </p>
+          <p
+            style={{
+              fontSize: 11,
+              color: "#475569",
+              maxWidth: 280,
+              textAlign: "center",
+            }}
+          >
+            {errorMsg}
+          </p>
+          <a
+            href={src}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              fontSize: 12,
+              color: "#38bdf8",
+              textDecoration: "underline",
+              marginTop: 4,
+            }}
+          >
+            Open in new tab ↗
+          </a>
+        </div>
+      )}
+
+      <video
+        ref={videoRef}
+        controls
+        controlsList="nodownload"
+        playsInline
+        style={{
+          width: "100%",
+          display: "block",
+          maxHeight: 420,
+          opacity: status === "playing" ? 1 : 0,
+          transition: "opacity 0.3s ease",
+        }}
+      />
+    </div>
+  );
+}
+
+// ── Lesson Preview Modal ──────────────────────────────────────────────────────
+function LessonPreviewModal({ lesson, lessonIndex, onClose }) {
+  if (!lesson) return null;
+
+  const isVideo = lesson.type !== "text";
+  const hasVideo = !!lesson.videoUrl;
+  const hasText = !!lesson.content;
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 300,
+        background: "rgba(0,0,0,0.82)",
+        backdropFilter: "blur(6px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+        animation: "fadeInModal 0.18s ease",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "100%",
+          maxWidth: isVideo ? 760 : 600,
+          maxHeight: "90vh",
+          background: "#0d1526",
+          border: "1px solid #1e3a5f",
+          borderRadius: 20,
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          boxShadow:
+            "0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(56,189,248,0.08)",
+          animation: "slideUpModal 0.22s cubic-bezier(.22,1,.36,1)",
+        }}
+      >
+        {/* ── Modal header ── */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            padding: "16px 20px",
+            background:
+              "linear-gradient(135deg,rgba(14,165,233,0.1),rgba(99,102,241,0.07))",
+            borderBottom: "1px solid #1e3a5f",
+            flexShrink: 0,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              minWidth: 0,
+            }}
+          >
+            {/* Lesson number badge */}
+            <div
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                flexShrink: 0,
+                background: "rgba(14,165,233,0.15)",
+                border: "1px solid rgba(56,189,248,0.25)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 11,
+                fontWeight: 800,
+                color: "#38bdf8",
+              }}
+            >
+              {lessonIndex + 1}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <p
+                style={{
+                  fontSize: 15,
+                  fontWeight: 800,
+                  color: "#f1f5f9",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {lesson.title}
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginTop: 2,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: "1px 7px",
+                    borderRadius: 20,
+                    background: isVideo
+                      ? "rgba(99,102,241,0.15)"
+                      : "rgba(16,185,129,0.12)",
+                    color: isVideo ? "#818cf8" : "#34d399",
+                    border: `1px solid ${isVideo ? "rgba(99,102,241,0.3)" : "rgba(16,185,129,0.25)"}`,
+                  }}
+                >
+                  {isVideo ? "🎬 Video Lesson" : "📝 Text Lesson"}
+                </span>
+                {lesson.duration && (
+                  <span style={{ fontSize: 11, color: "#475569" }}>
+                    ⏱ {lesson.duration}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            style={{
+              flexShrink: 0,
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: "#1e293b",
+              border: "1px solid #334155",
+              color: "#94a3b8",
+              fontSize: 14,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#334155";
+              e.currentTarget.style.color = "#f1f5f9";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#1e293b";
+              e.currentTarget.style.color = "#94a3b8";
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* ── Video content ── */}
+        {isVideo && (
+          <div style={{ padding: "20px 20px 8px", flexShrink: 0 }}>
+            {hasVideo ? (
+              <IKVideoPlayer src={lesson.videoUrl} />
+            ) : (
+              <div
+                style={{
+                  height: 200,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10,
+                  background: "#060d1f",
+                  borderRadius: 12,
+                  border: "1px dashed #1e3a5f",
+                }}
+              >
+                <span style={{ fontSize: 36 }}>🎬</span>
+                <p style={{ fontSize: 13, color: "#475569", fontWeight: 600 }}>
+                  No video URL attached
+                </p>
+                <p style={{ fontSize: 11, color: "#334155" }}>
+                  The instructor hasn't uploaded a video for this lesson yet.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Text content ── */}
+        {!isVideo && (
+          <div style={{ padding: "20px", overflowY: "auto", flex: 1 }}>
+            {hasText ? (
+              <div
+                style={{
+                  fontSize: 14,
+                  color: "#94a3b8",
+                  lineHeight: 1.9,
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  background: "#060d1f",
+                  borderRadius: 12,
+                  padding: "18px 20px",
+                  border: "1px solid #1e293b",
+                }}
+              >
+                {lesson.content}
+              </div>
+            ) : (
+              <div
+                style={{
+                  height: 160,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10,
+                  background: "#060d1f",
+                  borderRadius: 12,
+                  border: "1px dashed #1e3a5f",
+                }}
+              >
+                <span style={{ fontSize: 36 }}>📄</span>
+                <p style={{ fontSize: 13, color: "#475569", fontWeight: 600 }}>
+                  No text content attached
+                </p>
+                <p style={{ fontSize: 11, color: "#334155" }}>
+                  The instructor hasn't added written content for this lesson
+                  yet.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Footer with video URL ── */}
+        {isVideo && hasVideo && (
+          <div
+            style={{
+              padding: "10px 20px 16px",
+              borderTop: "1px solid #0f1e35",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ fontSize: 11, color: "#334155", flexShrink: 0 }}>
+              🔗
+            </span>
+            <span
+              style={{
+                fontSize: 11,
+                color: "#334155",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {lesson.videoUrl}
+            </span>
+          </div>
+        )}
+
+        {/* ── Dismiss hint ── */}
+        <div
+          style={{ padding: "8px 0 12px", textAlign: "center", flexShrink: 0 }}
+        >
+          <span style={{ fontSize: 11, color: "#1e3a5f" }}>
+            Click outside to close
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Course detail drawer ──────────────────────────────────────────────────────
 function CourseDrawer({ course, onClose, onApprove, onReject, actioning }) {
   const st = STATUS_CONFIG[course.approvalStatus ?? "draft"];
+  const [previewLesson, setPreviewLesson] = useState(null);
+  const [previewIndex, setPreviewIndex] = useState(null);
+
+  const openPreview = (lesson, index) => {
+    setPreviewLesson(lesson);
+    setPreviewIndex(index);
+  };
+
+  const closePreview = () => {
+    setPreviewLesson(null);
+    setPreviewIndex(null);
+  };
+
   return (
     <div
       onClick={onClose}
@@ -171,7 +659,7 @@ function CourseDrawer({ course, onClose, onApprove, onReject, actioning }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: "min(480px, 100vw)",
+          width: "min(520px, 100vw)",
           height: "100%",
           background: "#0d1526",
           borderLeft: "1px solid #1e293b",
@@ -265,7 +753,7 @@ function CourseDrawer({ course, onClose, onApprove, onReject, actioning }) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: "repeat(3,1fr)",
             gap: 10,
           }}
         >
@@ -355,76 +843,155 @@ function CourseDrawer({ course, onClose, onApprove, onReject, actioning }) {
             ))}
         </div>
 
-        {/* Lessons preview */}
+        {/* ── Lessons — click to preview in modal ── */}
         {course.lessons?.length > 0 && (
           <div>
-            <p
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: "#64748b",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                marginBottom: 8,
-              }}
-            >
-              Lessons ({course.lessons.length})
-            </p>
             <div
               style={{
                 display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                maxHeight: 200,
-                overflowY: "auto",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 8,
               }}
             >
-              {course.lessons.map((l, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    padding: "8px 12px",
-                    background: "#111827",
-                    borderRadius: 8,
-                    fontSize: 12,
-                    color: "#e2e8f0",
-                  }}
-                >
-                  <span
+              <p
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "#64748b",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                Lessons ({course.lessons.length})
+              </p>
+              <span style={{ fontSize: 11, color: "#475569" }}>
+                Click a lesson to preview
+              </span>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {course.lessons.map((l, i) => {
+                const isVideo = l.type !== "text";
+                const hasContent = isVideo ? !!l.videoUrl : !!l.content;
+
+                return (
+                  <div
+                    key={i}
+                    onClick={() => openPreview(l, i)}
                     style={{
-                      color: "#64748b",
-                      fontSize: 10,
-                      fontWeight: 700,
-                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "10px 14px",
+                      background: "#111827",
+                      border: "1px solid #1e293b",
+                      borderRadius: 10,
+                      fontSize: 12,
+                      color: "#e2e8f0",
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background =
+                        "rgba(14,165,233,0.07)";
+                      e.currentTarget.style.borderColor =
+                        "rgba(56,189,248,0.25)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "#111827";
+                      e.currentTarget.style.borderColor = "#1e293b";
                     }}
                   >
-                    {i + 1}
-                  </span>
-                  <span
-                    style={{
-                      flex: 1,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {l.title}
-                  </span>
-                  <span
-                    style={{ fontSize: 10, color: "#475569", flexShrink: 0 }}
-                  >
-                    {l.type === "text" ? "📝" : "🎬"}
-                  </span>
-                </div>
-              ))}
+                    {/* Index */}
+                    <span
+                      style={{
+                        color: "#64748b",
+                        fontSize: 10,
+                        fontWeight: 700,
+                        flexShrink: 0,
+                        width: 16,
+                        textAlign: "center",
+                      }}
+                    >
+                      {i + 1}
+                    </span>
+
+                    {/* Type icon */}
+                    <span style={{ fontSize: 14, flexShrink: 0 }}>
+                      {isVideo ? "🎬" : "📝"}
+                    </span>
+
+                    {/* Title */}
+                    <span
+                      style={{
+                        flex: 1,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {l.title}
+                    </span>
+
+                    {/* Content status badge */}
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 600,
+                        padding: "2px 8px",
+                        borderRadius: 20,
+                        flexShrink: 0,
+                        background: hasContent
+                          ? "rgba(34,197,94,0.1)"
+                          : "rgba(239,68,68,0.1)",
+                        color: hasContent ? "#4ade80" : "#f87171",
+                        border: `1px solid ${hasContent ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
+                      }}
+                    >
+                      {hasContent
+                        ? isVideo
+                          ? "Has video"
+                          : "Has text"
+                        : "No content"}
+                    </span>
+
+                    {/* Play/view icon */}
+                    <div
+                      style={{
+                        flexShrink: 0,
+                        width: 26,
+                        height: 26,
+                        borderRadius: 6,
+                        background: "rgba(14,165,233,0.12)",
+                        border: "1px solid rgba(56,189,248,0.2)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 11,
+                        color: "#38bdf8",
+                      }}
+                    >
+                      {isVideo ? "▶" : "👁"}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* Rejection reason if present */}
+        {/* Lesson preview modal — rendered inside drawer, portalled above everything */}
+        {previewLesson && (
+          <LessonPreviewModal
+            lesson={previewLesson}
+            lessonIndex={previewIndex}
+            onClose={closePreview}
+          />
+        )}
+
+        {/* Rejection reason */}
         {course.rejectionReason && (
           <div
             style={{
@@ -466,7 +1033,7 @@ function CourseDrawer({ course, onClose, onApprove, onReject, actioning }) {
           </a>
         )}
 
-        {/* Action buttons — only for pending courses */}
+        {/* Action buttons — pending */}
         {course.approvalStatus === "pending" && (
           <div
             style={{
@@ -517,7 +1084,7 @@ function CourseDrawer({ course, onClose, onApprove, onReject, actioning }) {
           </div>
         )}
 
-        {/* Re-review already approved/rejected */}
+        {/* Revoke approved */}
         {course.approvalStatus === "approved" && (
           <div
             style={{
@@ -548,6 +1115,7 @@ function CourseDrawer({ course, onClose, onApprove, onReject, actioning }) {
             </button>
           </div>
         )}
+
         {course.approvalStatus === "rejected" && (
           <div
             style={{
@@ -632,8 +1200,12 @@ export default function AdminCourses({
   return (
     <>
       <style>{`
-        @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-        .ac-row:hover { border-color: #334155 !important; background: #131f35 !important; }
+        @keyframes fadeIn       { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeInModal  { from{opacity:0} to{opacity:1} }
+        @keyframes slideUpModal { from{opacity:0;transform:translateY(24px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+        @keyframes ik-spin      { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        .ac-row:hover { border-color:#334155 !important; background:#131f35 !important; }
+        .ik-spin { animation: ik-spin 0.8s linear infinite; }
       `}</style>
 
       {/* Header */}
@@ -667,8 +1239,6 @@ export default function AdminCourses({
             Approve or reject instructor submissions before they go live.
           </p>
         </div>
-
-        {/* Pending badge */}
         {counts.pending > 0 && (
           <div
             style={{
@@ -827,7 +1397,6 @@ export default function AdminCourses({
                   animation: "fadeIn 0.2s ease",
                 }}
               >
-                {/* Thumb */}
                 <div
                   style={{
                     width: 48,
@@ -859,8 +1428,6 @@ export default function AdminCourses({
                     "📚"
                   )}
                 </div>
-
-                {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
@@ -924,8 +1491,6 @@ export default function AdminCourses({
                     )}
                   </div>
                 </div>
-
-                {/* Quick actions for pending — without opening drawer */}
                 {course.approvalStatus === "pending" && (
                   <div
                     style={{ display: "flex", gap: 8, flexShrink: 0 }}
@@ -971,7 +1536,6 @@ export default function AdminCourses({
                     </button>
                   </div>
                 )}
-
                 <span style={{ color: "#334155", fontSize: 14, flexShrink: 0 }}>
                   ›
                 </span>
@@ -981,7 +1545,6 @@ export default function AdminCourses({
         </div>
       )}
 
-      {/* Detail drawer */}
       {selected && (
         <CourseDrawer
           course={selected}
@@ -992,7 +1555,6 @@ export default function AdminCourses({
         />
       )}
 
-      {/* Reject reason modal */}
       {rejectTarget && (
         <RejectModal
           course={rejectTarget}

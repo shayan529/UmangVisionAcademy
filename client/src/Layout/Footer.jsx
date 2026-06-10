@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next'; // add this
+import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next"; // add this
 
 const Footer = () => {
   const { t } = useTranslation(); // add this
@@ -13,41 +13,41 @@ const Footer = () => {
             <img src="/Logo.png" alt="Logo" />
           </div>
           <h2 className="text-2xl font-bold">
-            Umang Vision <span className="text-blue-500"> Academy</span>
+            Umang Vision <span className="shimmer-txt"> Academy</span>
           </h2>
         </div>
 
         {/* Right Side Links */}
         <div className="flex flex-col sm:flex-row gap-12 md:gap-20">
           <div className="m-10">
-            <h3 className="font-bold mb-5">{t('footer.platform')}</h3>
+            <h3 className="font-bold mb-5">{t("footer.platform")}</h3>
             <div className="space-y-3 text-slate-400">
               <Link to="/courses" className="block hover:text-white transition">
-                {t('footer.courses')}
+                {t("footer.courses")}
               </Link>
               <Link
                 to="/about-us"
                 className="block hover:text-white transition"
               >
-                {t('footer.aboutUs')}
+                {t("footer.aboutUs")}
               </Link>
             </div>
           </div>
 
           <div className="m-10">
-            <h3 className="font-bold mb-5">{t('footer.support')}</h3>
+            <h3 className="font-bold mb-5">{t("footer.support")}</h3>
             <div className="space-y-3 text-slate-400">
               <Link to="/contact" className="block hover:text-white transition">
-                {t('footer.contact')}
+                {t("footer.contact")}
               </Link>
               <Link
                 to="/help-center"
                 className="block hover:text-white transition"
               >
-                {t('footer.helpCenter')}
+                {t("footer.helpCenter")}
               </Link>
               <Link to="/faq" className="block hover:text-white transition">
-                {t('footer.faq')}
+                {t("footer.faq")}
               </Link>
             </div>
           </div>

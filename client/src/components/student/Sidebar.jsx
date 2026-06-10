@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "lucide-react";
 import {
   FaHome,
@@ -13,6 +13,7 @@ import {
 import { GrCertificate } from "react-icons/gr";
 
 import { useTranslation } from "react-i18next";
+import { useSelector } from "react-redux";
 
 const Sidebar = ({
   user,
@@ -22,6 +23,10 @@ const Sidebar = ({
   setMobileOpen,
 }) => {
   const { t } = useTranslation();
+
+  const subscription = useSelector((state) => state.billing.subscription);
+
+  const isPremium = subscription?.plan === "premium";
 
   const navItems = [
     {
@@ -40,11 +45,15 @@ const Sidebar = ({
       to: "/student-dashboard/ai-tutor",
       icon: FaRobot,
     },
-    {
-      label: t("studentSidebar.sessions"),
-      to: "/student-dashboard/sessions",
-      icon: FaUsers,
-    },
+    ...(isPremium
+      ? [
+          {
+            label: t("studentSidebar.sessions"),
+            to: "/student-dashboard/sessions",
+            icon: FaUsers,
+          },
+        ]
+      : []),
     {
       label: t("studentSidebar.leaderboard"),
       to: "/student-dashboard/leaderboard",
@@ -80,18 +89,6 @@ ${mobileOpen ? "fixed top-0 left-0 h-screen shadow-2xl" : "hidden md:flex"}
 `;
   return (
     <aside className={sidebarClass}>
-      {/* <div
-        className={`font-extrabold text-[20px] text-white mb-7 ${
-          collapsed ? "text-center" : "px-2"
-        }`}
-      >
-        {!collapsed && (
-          <>
-            Skill<span className="text-[#a78bfa]">Sphere</span>
-          </>
-        )}
-      </div> */}
-
       <div
         className={`flex items-center gap-3 p-3 mb-6 rounded-xl bg-[#1e293b] ${
           collapsed ? "justify-center" : ""

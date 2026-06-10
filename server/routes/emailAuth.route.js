@@ -1,7 +1,7 @@
-import express from 'express';
-import crypto from 'crypto';
-import { sendOtpEmail } from '../utils/mailer.js'; // adjust path as needed
-import User from '../models/user.model.js'; // adjust path as needed
+import express from "express";
+import crypto from "crypto";
+import { sendOtpEmail } from "../utils/mailer.js"; // adjust path as needed
+import User from "../models/user.model.js"; // adjust path as needed
 
 const router = express.Router();
 
@@ -13,18 +13,18 @@ const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const MAX_OTP_ATTEMPTS = 5; // lock out after 5 wrong guesses
 
 // ── POST /api/auth/send-otp ──────────────────────────────────────────────────
-router.post('/send-otp', async (req, res) => {
+router.post("/send-email-otp", async (req, res) => {
   try {
     const { email } = req.body;
 
     if (!email) {
-      return res.status(400).json({ message: 'Email is required.' });
+      return res.status(400).json({ message: "Email is required." });
     }
 
     // Block if email is already registered
     const existing = await User.findOne({ email });
     if (existing) {
-      return res.status(409).json({ message: 'Email is already in use.' });
+      return res.status(409).json({ message: "Email is already in use." });
     }
 
     // Rate-limit: don't allow a new OTP within 60 seconds of the last one
@@ -49,29 +49,29 @@ router.post('/send-otp', async (req, res) => {
 
     await sendOtpEmail(email, otp);
 
-    return res.json({ message: 'OTP sent successfully.' });
+    return res.json({ message: "OTP sent successfully." });
   } catch (err) {
-    console.error('send-otp error:', err);
+    console.error("send-otp error:", err);
     return res
       .status(500)
-      .json({ message: 'Failed to send OTP. Please try again.' });
+      .json({ message: "Failed to send OTP. Please try again." });
   }
 });
 
 // ── POST /api/auth/verify-otp ────────────────────────────────────────────────
-router.post('/verify-otp', (req, res) => {
+router.post("/verify-email-otp", (req, res) => {
   try {
     const { email, otp } = req.body;
 
     if (!email || !otp) {
-      return res.status(400).json({ message: 'Email and OTP are required.' });
+      return res.status(400).json({ message: "Email and OTP are required." });
     }
 
     const record = otpStore.get(email);
 
     if (!record) {
       return res.status(400).json({
-        message: 'OTP not found or already used. Please request a new one.',
+        message: "OTP not found or already used. Please request a new one.",
       });
     }
 
@@ -79,14 +79,14 @@ router.post('/verify-otp', (req, res) => {
       otpStore.delete(email);
       return res
         .status(400)
-        .json({ message: 'OTP has expired. Please request a new one.' });
+        .json({ message: "OTP has expired. Please request a new one." });
     }
 
     // Brute-force guard
     if (record.attempts >= MAX_OTP_ATTEMPTS) {
       otpStore.delete(email);
       return res.status(429).json({
-        message: 'Too many incorrect attempts. Please request a new OTP.',
+        message: "Too many incorrect attempts. Please request a new OTP.",
       });
     }
 
@@ -94,7 +94,7 @@ router.post('/verify-otp', (req, res) => {
       record.attempts += 1;
       const remaining = MAX_OTP_ATTEMPTS - record.attempts;
       return res.status(400).json({
-        message: `Invalid OTP. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`,
+        message: `Invalid OTP. ${remaining} attempt${remaining === 1 ? "" : "s"} remaining.`,
       });
     }
 
@@ -102,10 +102,10 @@ router.post('/verify-otp', (req, res) => {
     otpStore.delete(email);
     return res.json({ success: true });
   } catch (err) {
-    console.error('verify-otp error:', err);
+    console.error("verify-otp error:", err);
     return res
       .status(500)
-      .json({ message: 'Verification failed. Please try again.' });
+      .json({ message: "Verification failed. Please try again." });
   }
 });
 
