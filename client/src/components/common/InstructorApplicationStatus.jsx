@@ -410,7 +410,7 @@ const InstructorApplicationStatus = () => {
             <p className="text-xs text-slate-600 ml-auto">
               Questions?{" "}
               <Link
-                to="contact"
+                to="/contact"
                 className="text-indigo-400 hover:text-indigo-300 transition-colors"
               >
                 Contact support

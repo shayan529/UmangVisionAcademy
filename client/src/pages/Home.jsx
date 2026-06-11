@@ -17,7 +17,7 @@ const Home = () => {
       <FeaturedCourses />
       <Testimonials />
       <Instructors />
-      <Community />
+      {/* <Community /> */}
       <AISection />
       <Plans />
     </div>

@@ -9,7 +9,6 @@ import {
 import { uploadToImageKit } from "../../utils/imagekitUpload.js";
 import ChapterManager from "../course/ChapterManager.jsx";
 
-// ── constants ─────────────────────────────────────────────────────────────────
 const EMPTY_FORM = {
   subject: "",
   className: "",
@@ -40,7 +39,6 @@ const isDraftForm = (form) =>
     Number(form.price) > 0,
   );
 
-// ── Updated statusStyle — based on approvalStatus ─────────────────────────────
 const statusStyle = (course) => {
   const s = course.approvalStatus ?? (course.published ? "approved" : "draft");
   switch (s) {
@@ -118,7 +116,6 @@ const FileUploader = ({
     e.preventDefault();
     handleFile(e.dataTransfer.files[0]);
   };
-
   const clear = () => {
     setStatus("idle");
     setPreview(null);
@@ -749,14 +746,14 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
                             flexShrink: 0,
                           }}
                         >
-                          {LABELS[oIdx]}
+                          {"ABCD"[oIdx]}
                         </span>
                         <input
                           value={opt}
                           onChange={(e) =>
                             updateOption(activeIdx, oIdx, e.target.value)
                           }
-                          placeholder={`Option ${LABELS[oIdx]}`}
+                          placeholder={`Option ${"ABCD"[oIdx]}`}
                           style={{
                             ...iStyle,
                             borderColor: isCorrect ? "#16a34a" : "#1e293b",
@@ -840,10 +837,15 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
           />
         </Field>
       </div>
+
+      {/* ── ChapterManager now receives course context for AI generation ── */}
       <ChapterManager
         lessons={form.lessons ?? []}
         onChange={(lessons) => setForm((f) => ({ ...f, lessons }))}
+        courseSubject={form.subject}
+        courseDescription={form.description}
       />
+
       <Field label="Description" hint="* (course summary)">
         <Textarea
           value={form.description}
@@ -954,7 +956,6 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
             boxShadow: "0 4px 16px rgba(124,58,237,.25)",
           }}
         >
-          {/* ← Updated label: "Submit for Review" instead of "Publish" */}
           {saving
             ? "Saving…"
             : mode === "create"
@@ -1082,7 +1083,7 @@ export default function InstructorCourses({ showToast }) {
     price: Number(form.price) || 0,
     thumbnailUrl: form.thumbnailUrl || "",
     demoVideoUrl: form.demoVideoUrl || "",
-    published, // controller interprets: published=true → pending, false → draft
+    published,
     quiz: form.quiz ?? { title: "Final Quiz", questions: [] },
   });
 
@@ -1159,13 +1160,7 @@ export default function InstructorCourses({ showToast }) {
         select option { background:#0b1120; color:#f1f5f9; }
       `}</style>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 24,
-        }}
-      >
+      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
         {/* Header */}
         <div
           style={{
@@ -1259,7 +1254,6 @@ export default function InstructorCourses({ showToast }) {
         {/* List view */}
         {view === "list" && (
           <>
-            {/* Stats — now shows approval-aware counts */}
             <div
               style={{
                 display: "grid",
@@ -1295,7 +1289,6 @@ export default function InstructorCourses({ showToast }) {
               ))}
             </div>
 
-            {/* Search + filter */}
             <div
               style={{
                 display: "flex",
@@ -1363,7 +1356,6 @@ export default function InstructorCourses({ showToast }) {
               </div>
             )}
 
-            {/* Course rows */}
             {loading && courses.length === 0 ? (
               [...Array(3)].map((_, i) => (
                 <div
@@ -1410,7 +1402,6 @@ export default function InstructorCourses({ showToast }) {
                           transition: "border-color 0.15s",
                         }}
                       >
-                        {/* Thumb */}
                         <div
                           style={{
                             width: 56,
@@ -1442,7 +1433,6 @@ export default function InstructorCourses({ showToast }) {
                             "📚"
                           )}
                         </div>
-                        {/* Meta */}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div
                             style={{
@@ -1523,7 +1513,6 @@ export default function InstructorCourses({ showToast }) {
                             )}
                           </div>
                         </div>
-                        {/* Action buttons — status-aware */}
                         <div
                           style={{
                             display: "flex",
@@ -1533,7 +1522,6 @@ export default function InstructorCourses({ showToast }) {
                             justifyContent: "flex-end",
                           }}
                         >
-                          {/* Pending: show waiting label, no actions */}
                           {course.approvalStatus === "pending" && (
                             <span
                               style={{
@@ -1549,7 +1537,6 @@ export default function InstructorCourses({ showToast }) {
                               ⏳ In review
                             </span>
                           )}
-                          {/* Edit: always available except pending */}
                           {course.approvalStatus !== "pending" && (
                             <button
                               className="ic-btn"
@@ -1590,7 +1577,6 @@ export default function InstructorCourses({ showToast }) {
                         </div>
                       </div>
 
-                      {/* Inline edit panel */}
                       {isOpen && (
                         <div
                           style={{
@@ -1615,7 +1601,6 @@ export default function InstructorCourses({ showToast }) {
                             ✏️ Editing: {course.title}
                           </p>
 
-                          {/* ── Rejection reason banner ── */}
                           {course.approvalStatus === "rejected" &&
                             course.rejectionReason && (
                               <div
@@ -1676,7 +1661,6 @@ export default function InstructorCourses({ showToast }) {
                             mode="edit"
                           />
 
-                          {/* Stats strip */}
                           <div
                             style={{
                               marginTop: 20,
@@ -1750,7 +1734,6 @@ export default function InstructorCourses({ showToast }) {
         )}
       </div>
 
-      {/* Delete modal */}
       {deleteId && (
         <div
           style={{

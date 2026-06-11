@@ -2,13 +2,7 @@ import React, { useState } from "react";
 import { Card, SectionHeader, Btn } from "./InstructorUi";
 import { aiReplies } from "./InstructorData";
 
-const TABS = [
-  { id: "chat", label: "Chat" },
-  { id: "quiz", label: "Quiz Generator" },
-];
-
 const InstructorAI = ({ showToast }) => {
-  const [activeTab, setActiveTab] = useState("chat");
   const [chatLog, setChatLog] = useState([
     {
       role: "ai",
@@ -17,12 +11,6 @@ const InstructorAI = ({ showToast }) => {
   ]);
   const [chatInput, setChatInput] = useState("");
   const [typing, setTyping] = useState(false);
-  const [quizForm, setQuizForm] = useState({
-    topic: "",
-    difficulty: "Intermediate",
-  });
-  const [quiz, setQuiz] = useState(null);
-  const [quizLoading, setQuizLoading] = useState(false);
 
   // ── Chat ──────────────────────────────────────────────────────────────────
   const sendChat = (msg) => {
@@ -38,46 +26,6 @@ const InstructorAI = ({ showToast }) => {
         {
           role: "ai",
           text: aiReplies[Math.floor(Math.random() * aiReplies.length)],
-        },
-      ]);
-    }, 1200);
-  };
-
-  // ── Quiz generator ────────────────────────────────────────────────────────
-  const generateQuiz = () => {
-    if (!quizForm.topic.trim()) {
-      showToast("Enter a topic");
-      return;
-    }
-    setQuizLoading(true);
-    setQuiz(null);
-    setTimeout(() => {
-      setQuizLoading(false);
-      setQuiz([
-        {
-          q: `What is the primary use case of ${quizForm.topic}?`,
-          opts: [
-            "Styling web pages",
-            "Adding dynamic behavior",
-            "Structuring HTML",
-            "Server configuration",
-          ],
-          ans: 1,
-        },
-        {
-          q: `Which concept is fundamental to ${quizForm.topic}?`,
-          opts: ["Inheritance", "Closures", "Flexbox", "SQL joins"],
-          ans: 1,
-        },
-        {
-          q: `How do you handle async operations in ${quizForm.topic}?`,
-          opts: [
-            "CSS transitions",
-            "Promises / async-await",
-            "HTML attributes",
-            "SQL transactions",
-          ],
-          ans: 1,
         },
       ]);
     }, 1200);
@@ -103,271 +51,110 @@ const InstructorAI = ({ showToast }) => {
         }
       />
 
-      {/* Tab bar */}
       <div
         style={{
+          minHeight: 140,
+          maxHeight: 200,
+          overflowY: "auto",
           display: "flex",
-          gap: 4,
-          background: "#1e293b",
-          padding: 4,
-          borderRadius: 12,
-          marginBottom: 16,
+          flexDirection: "column",
+          gap: 8,
+          marginBottom: 12,
         }}
       >
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setActiveTab(t.id)}
+        {chatLog.map((m, i) => (
+          <div
+            key={i}
             style={{
-              flex: 1,
-              padding: "7px 12px",
-              borderRadius: 8,
-              border: "none",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer",
-              background: activeTab === t.id ? "#0f172a" : "transparent",
-              color: activeTab === t.id ? "#a78bfa" : "#64748b",
-              transition: "all 0.15s",
+              padding: "10px 14px",
+              borderRadius: 12,
+              fontSize: 13,
+              lineHeight: 1.5,
+              maxWidth: "80%",
+              alignSelf: m.role === "user" ? "flex-end" : "flex-start",
+              background:
+                m.role === "user"
+                  ? "linear-gradient(135deg,#7c3aed,#db2777)"
+                  : "#1e293b",
+              color: "#f1f5f9",
             }}
           >
-            {t.label}
-          </button>
+            {m.text}
+          </div>
         ))}
-      </div>
-
-      {/* ── Chat tab ─────────────────────────────────────────────────────── */}
-      {activeTab === "chat" && (
-        <>
+        {typing && (
           <div
             style={{
-              minHeight: 140,
-              maxHeight: 200,
-              overflowY: "auto",
+              padding: "10px 14px",
+              borderRadius: 12,
+              background: "#1e293b",
               display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              marginBottom: 12,
+              gap: 4,
+              alignItems: "center",
+              width: 60,
             }}
           >
-            {chatLog.map((m, i) => (
+            {[0, 0.2, 0.4].map((d, i) => (
               <div
                 key={i}
                 style={{
-                  padding: "10px 14px",
-                  borderRadius: 12,
-                  fontSize: 13,
-                  lineHeight: 1.5,
-                  maxWidth: "80%",
-                  alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-                  background:
-                    m.role === "user"
-                      ? "linear-gradient(135deg,#7c3aed,#db2777)"
-                      : "#1e293b",
-                  color: "#f1f5f9",
-                }}
-              >
-                {m.text}
-              </div>
-            ))}
-            {typing && (
-              <div
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 12,
-                  background: "#1e293b",
-                  display: "flex",
-                  gap: 4,
-                  alignItems: "center",
-                  width: 60,
-                }}
-              >
-                {[0, 0.2, 0.4].map((d, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: "50%",
-                      background: "#64748b",
-                      animation: `pulse 1.2s ${d}s infinite`,
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            <input
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendChat()}
-              placeholder="e.g. What topics are students struggling with?"
-              style={{
-                flex: 1,
-                padding: "10px 14px",
-                background: "#1e293b",
-                border: "1px solid #334155",
-                borderRadius: 10,
-                color: "#f1f5f9",
-                fontSize: 13,
-                outline: "none",
-              }}
-            />
-            <Btn variant="primary" onClick={() => sendChat()}>
-              Send
-            </Btn>
-          </div>
-
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {[
-              "Improve my lowest-rated course",
-              "What are students struggling with?",
-              "Generate a quiz on React hooks",
-            ].map((q) => (
-              <button
-                key={q}
-                onClick={() => sendChat(q)}
-                style={{
-                  fontSize: 11,
-                  padding: "5px 10px",
-                  borderRadius: 8,
-                  border: "1px solid #334155",
-                  background: "#1e293b",
-                  color: "#94a3b8",
-                  cursor: "pointer",
-                }}
-              >
-                {q}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* ── Quiz generator tab ────────────────────────────────────────────── */}
-      {activeTab === "quiz" && (
-        <>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 12,
-              marginBottom: 14,
-            }}
-          >
-            <div>
-              <div style={{ fontSize: 11, color: "#64748b", marginBottom: 5 }}>
-                Topic
-              </div>
-              <input
-                type="text"
-                placeholder="e.g. JavaScript closures"
-                value={quizForm.topic}
-                onChange={(e) =>
-                  setQuizForm({ ...quizForm, topic: e.target.value })
-                }
-                style={{
-                  width: "100%",
-                  padding: "9px 12px",
-                  background: "#1e293b",
-                  border: "1px solid #334155",
-                  borderRadius: 10,
-                  color: "#f1f5f9",
-                  fontSize: 13,
-                  outline: "none",
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "#64748b",
+                  animation: `pulse 1.2s ${d}s infinite`,
                 }}
               />
-            </div>
-            <div>
-              <div style={{ fontSize: 11, color: "#64748b", marginBottom: 5 }}>
-                Difficulty
-              </div>
-              <select
-                value={quizForm.difficulty}
-                onChange={(e) =>
-                  setQuizForm({ ...quizForm, difficulty: e.target.value })
-                }
-                style={{
-                  width: "100%",
-                  padding: "9px 12px",
-                  background: "#1e293b",
-                  border: "1px solid #334155",
-                  borderRadius: 10,
-                  color: "#f1f5f9",
-                  fontSize: 13,
-                  outline: "none",
-                }}
-              >
-                <option>Beginner</option>
-                <option>Intermediate</option>
-                <option>Advanced</option>
-              </select>
-            </div>
+            ))}
           </div>
+        )}
+      </div>
 
-          <Btn variant="primary" onClick={generateQuiz}>
-            ✨ Generate Quiz
-          </Btn>
+      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        <input
+          value={chatInput}
+          onChange={(e) => setChatInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && sendChat()}
+          placeholder="e.g. What topics are students struggling with?"
+          style={{
+            flex: 1,
+            padding: "10px 14px",
+            background: "#1e293b",
+            border: "1px solid #334155",
+            borderRadius: 10,
+            color: "#f1f5f9",
+            fontSize: 13,
+            outline: "none",
+          }}
+        />
+        <Btn variant="primary" onClick={() => sendChat()}>
+          Send
+        </Btn>
+      </div>
 
-          {quizLoading && (
-            <div style={{ fontSize: 13, color: "#64748b", marginTop: 12 }}>
-              Generating quiz...
-            </div>
-          )}
-
-          {quiz && (
-            <div style={{ marginTop: 16 }}>
-              {quiz.map((q, i) => (
-                <div
-                  key={i}
-                  style={{
-                    background: "#1e293b",
-                    borderRadius: 12,
-                    padding: 14,
-                    marginBottom: 10,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "#f1f5f9",
-                      marginBottom: 10,
-                    }}
-                  >
-                    Q{i + 1}. {q.q}
-                  </div>
-                  {q.opts.map((o, j) => (
-                    <div
-                      key={j}
-                      style={{
-                        fontSize: 12,
-                        padding: "6px 10px",
-                        borderRadius: 8,
-                        marginBottom: 4,
-                        background: j === q.ans ? "#052e16" : "#0f172a",
-                        color: j === q.ans ? "#4ade80" : "#94a3b8",
-                        border: `1px solid ${j === q.ans ? "#14532d" : "#1e293b"}`,
-                      }}
-                    >
-                      {o}
-                      {j === q.ans ? " ✓" : ""}
-                    </div>
-                  ))}
-                </div>
-              ))}
-              <Btn
-                variant="success"
-                onClick={() => showToast("Quiz added to course")}
-              >
-                ✓ Add to Course
-              </Btn>
-            </div>
-          )}
-        </>
-      )}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {[
+          "Improve my lowest-rated course",
+          "What are students struggling with?",
+          "Generate a quiz on React hooks",
+        ].map((q) => (
+          <button
+            key={q}
+            onClick={() => sendChat(q)}
+            style={{
+              fontSize: 11,
+              padding: "5px 10px",
+              borderRadius: 8,
+              border: "1px solid #334155",
+              background: "#1e293b",
+              color: "#94a3b8",
+              cursor: "pointer",
+            }}
+          >
+            {q}
+          </button>
+        ))}
+      </div>
 
       {/* Typing dots keyframe */}
       <style>{`@keyframes pulse{0%,80%,100%{opacity:.3}40%{opacity:1}}`}</style>

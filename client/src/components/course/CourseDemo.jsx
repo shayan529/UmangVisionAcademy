@@ -3,14 +3,12 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../../config/api.js";
 
-// ── Local state (no Redux slice needed — single page load) ───────────────────
+// ── Local state ───────────────────────────────────────────────────────────────
 const useCourseDemo = (id) => {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const location = useLocation();
-
   const backPath = location.state?.from ?? "/";
 
   useEffect(() => {
@@ -93,8 +91,8 @@ const VideoPlayer = ({ url, poster }) => {
   const seek = (e) => {
     if (!ref.current) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
-    ref.current.currentTime = pct * ref.current.duration;
+    ref.current.currentTime =
+      ((e.clientX - rect.left) / rect.width) * ref.current.duration;
   };
 
   return (
@@ -123,8 +121,6 @@ const VideoPlayer = ({ url, poster }) => {
           display: "block",
         }}
       />
-
-      {/* Play overlay */}
       {!playing && (
         <div
           style={{
@@ -155,8 +151,6 @@ const VideoPlayer = ({ url, poster }) => {
           </div>
         </div>
       )}
-
-      {/* Bottom controls */}
       <div
         style={{
           position: "absolute",
@@ -168,7 +162,6 @@ const VideoPlayer = ({ url, poster }) => {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Seek bar */}
         <div
           onClick={seek}
           style={{
@@ -189,7 +182,6 @@ const VideoPlayer = ({ url, poster }) => {
             }}
           />
         </div>
-
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button
             onClick={toggle}
@@ -233,6 +225,186 @@ const VideoPlayer = ({ url, poster }) => {
   );
 };
 
+// ── Enroll Card (shared between mobile inline + desktop sticky) ───────────────
+const EnrollCard = ({
+  course,
+  loading,
+  user,
+  isInCart,
+  addedToCart,
+  onEnroll,
+  navigate,
+}) => (
+  <div
+    style={{
+      background: "#111827",
+      border: "1px solid #1e293b",
+      borderRadius: 22,
+      overflow: "hidden",
+    }}
+  >
+    {loading ? (
+      <Sk h={200} r={0} />
+    ) : course?.thumbnailUrl ? (
+      <img
+        src={course.thumbnailUrl}
+        alt={course.title}
+        style={{
+          width: "100%",
+          height: 200,
+          objectFit: "cover",
+          display: "block",
+        }}
+      />
+    ) : (
+      <div
+        style={{
+          height: 200,
+          background: "linear-gradient(135deg,#1e1b4b,#0f172a)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 48,
+        }}
+      >
+        🎓
+      </div>
+    )}
+
+    <div style={{ padding: "22px 22px 26px" }}>
+      {loading ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <Sk w="50%" h={36} r={8} />
+          <Sk h={48} r={14} />
+          <Sk h={40} r={14} />
+        </div>
+      ) : (
+        <>
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 36, fontWeight: 800, color: "#f1f5f9" }}>
+              {course.price ? (
+                `₹${course.price}`
+              ) : (
+                <span style={{ color: "#34d399" }}>Free</span>
+              )}
+            </div>
+            {course.price > 0 && (
+              <p style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
+                One-time payment · Lifetime access
+              </p>
+            )}
+          </div>
+
+          <button
+            className="enroll-btn"
+            onClick={onEnroll}
+            style={{
+              width: "100%",
+              padding: "14px",
+              borderRadius: 14,
+              border: "none",
+              background:
+                isInCart || addedToCart
+                  ? "linear-gradient(135deg,#059669,#34d399)"
+                  : "linear-gradient(135deg,#7c3aed,#06b6d4)",
+              color: "#fff",
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: "pointer",
+              transition: "all 0.2s",
+              boxShadow: "0 8px 24px rgba(124,58,237,0.3)",
+              marginBottom: 12,
+            }}
+          >
+            {isInCart || addedToCart
+              ? "✓ Added to Cart"
+              : user
+                ? "Add to Cart"
+                : "Enroll Now"}
+          </button>
+
+          {(isInCart || addedToCart) && (
+            <button
+              onClick={() => navigate("/cart")}
+              style={{
+                width: "100%",
+                padding: "12px",
+                borderRadius: 14,
+                border: "1px solid #334155",
+                background: "transparent",
+                color: "#94a3b8",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Go to Cart →
+            </button>
+          )}
+
+          {!user && (
+            <p
+              style={{
+                textAlign: "center",
+                fontSize: 12,
+                color: "#475569",
+                marginTop: 10,
+              }}
+            >
+              Already enrolled?{" "}
+              <button
+                onClick={() => navigate("/login")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#818cf8",
+                  cursor: "pointer",
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                Log in
+              </button>
+            </p>
+          )}
+
+          <div
+            style={{
+              marginTop: 20,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            {[
+              course.lessonCount > 0 && `${course.lessonCount} lessons`,
+              course.durationHours > 0 &&
+                `${course.durationHours} hours of content`,
+              "Lifetime access",
+              "Certificate of completion",
+            ]
+              .filter(Boolean)
+              .map((item) => (
+                <div
+                  key={item}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    fontSize: 13,
+                    color: "#94a3b8",
+                  }}
+                >
+                  <span style={{ color: "#34d399" }}>✓</span> {item}
+                </div>
+              ))}
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+);
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function CourseDemo() {
   const { id } = useParams();
@@ -242,16 +414,20 @@ export default function CourseDemo() {
 
   const { course, loading, error } = useCourseDemo(id);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
-  // Check if already in cart
   const cartIds = useSelector((s) => s.cart?.cartIds ?? []);
   const isInCart = cartIds.includes(id);
 
   useEffect(() => {
-    if (!id || id === "undefined") {
-      navigate("/courses", { replace: true });
-    }
+    if (!id || id === "undefined") navigate("/courses", { replace: true });
   }, [id, navigate]);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
   const handleEnrollClick = () => {
     if (!user) {
@@ -260,11 +436,20 @@ export default function CourseDemo() {
       });
       return;
     }
-    // Import addToCart lazily to avoid circular deps
     import("../../redux/slices/cartSlice").then(({ addToCart }) => {
       dispatch(addToCart(id));
       setAddedToCart(true);
     });
+  };
+
+  const enrollCardProps = {
+    course,
+    loading,
+    user,
+    isInCart,
+    addedToCart,
+    onEnroll: handleEnrollClick,
+    navigate,
   };
 
   return (
@@ -317,7 +502,7 @@ export default function CourseDemo() {
         )}
 
         {/* ── Back button ── */}
-        <div style={{ padding: "16px 24px" }}>
+        <div style={{ padding: isMobile ? "14px 16px" : "16px 24px" }}>
           <button
             onClick={() => navigate("/courses")}
             style={{
@@ -335,23 +520,32 @@ export default function CourseDemo() {
             ← Back to Courses
           </button>
         </div>
+
         {/* ── Main content ── */}
         {!error && (
           <div
-            style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 20px" }}
+            style={{
+              maxWidth: 1100,
+              margin: "0 auto",
+              padding: isMobile ? "16px 16px 40px" : "32px 20px",
+            }}
           >
             <div
+              className="demo-fade"
               style={{
                 display: "grid",
-                gridTemplateColumns: "1fr minmax(0, 360px)",
-                gap: 32,
+                gridTemplateColumns: isMobile ? "1fr" : "1fr minmax(0, 360px)",
+                gap: isMobile ? 24 : 32,
                 alignItems: "start",
               }}
-              className="demo-fade"
             >
-              {/* ── LEFT ── */}
+              {/* ── LEFT column ── */}
               <div
-                style={{ display: "flex", flexDirection: "column", gap: 28 }}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: isMobile ? 20 : 28,
+                }}
               >
                 {/* Title block */}
                 {loading ? (
@@ -402,12 +596,13 @@ export default function CourseDemo() {
                         {course.category}
                       </span>
                     </div>
+
                     <h1
                       style={{
-                        fontSize: "clamp(24px,4vw,38px)",
+                        fontSize: isMobile ? 24 : "clamp(24px,4vw,38px)",
                         fontWeight: 800,
                         color: "#f1f5f9",
-                        lineHeight: 1.2,
+                        lineHeight: 1.25,
                         marginBottom: 12,
                       }}
                     >
@@ -416,19 +611,19 @@ export default function CourseDemo() {
                     <p
                       style={{
                         color: "#94a3b8",
-                        fontSize: 15,
+                        fontSize: isMobile ? 14 : 15,
                         lineHeight: 1.7,
                       }}
                     >
                       {course.summary}
                     </p>
 
-                    {/* Stats row */}
+                    {/* Stats row — wraps naturally on mobile */}
                     <div
                       style={{
                         display: "flex",
                         flexWrap: "wrap",
-                        gap: 20,
+                        gap: isMobile ? 12 : 20,
                         marginTop: 16,
                       }}
                     >
@@ -516,12 +711,17 @@ export default function CourseDemo() {
                   </div>
                 )}
 
+                {/* ── Enroll card — MOBILE ONLY (sits between title and video) ── */}
+                {isMobile && <EnrollCard {...enrollCardProps} />}
+
                 {/* Video player */}
                 {loading ? (
-                  <Sk
-                    h={0}
-                    r={20}
-                    style={{ aspectRatio: "16/9", height: "auto" }}
+                  <div
+                    style={{
+                      aspectRatio: "16/9",
+                      background: "#1e293b",
+                      borderRadius: 20,
+                    }}
                   />
                 ) : course.demoVideoUrl ? (
                   <div>
@@ -543,7 +743,6 @@ export default function CourseDemo() {
                     />
                   </div>
                 ) : (
-                  /* No demo video — show thumbnail or placeholder */
                   <div
                     style={{
                       borderRadius: 20,
@@ -586,7 +785,7 @@ export default function CourseDemo() {
                       background: "#111827",
                       border: "1px solid #1e293b",
                       borderRadius: 18,
-                      padding: "22px 24px",
+                      padding: isMobile ? "18px 16px" : "22px 24px",
                     }}
                   >
                     <h3
@@ -619,7 +818,7 @@ export default function CourseDemo() {
                       background: "#111827",
                       border: "1px solid #1e293b",
                       borderRadius: 18,
-                      padding: "22px 24px",
+                      padding: isMobile ? "18px 16px" : "22px 24px",
                     }}
                   >
                     <h3
@@ -655,8 +854,8 @@ export default function CourseDemo() {
                           style={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 12,
-                            padding: "10px 12px",
+                            gap: 10,
+                            padding: "10px 10px",
                             borderRadius: 10,
                             transition: "background 0.15s",
                           }}
@@ -755,201 +954,12 @@ export default function CourseDemo() {
                 )}
               </div>
 
-              {/* ── RIGHT: sticky enroll card ── */}
-              <div style={{ position: "sticky", top: 80 }}>
-                <div
-                  style={{
-                    background: "#111827",
-                    border: "1px solid #1e293b",
-                    borderRadius: 22,
-                    overflow: "hidden",
-                  }}
-                >
-                  {/* Thumbnail */}
-                  {loading ? (
-                    <Sk h={200} r={0} />
-                  ) : course.thumbnailUrl ? (
-                    <img
-                      src={course.thumbnailUrl}
-                      alt={course.title}
-                      style={{
-                        width: "100%",
-                        height: 200,
-                        objectFit: "cover",
-                        display: "block",
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        height: 200,
-                        background: "linear-gradient(135deg,#1e1b4b,#0f172a)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 48,
-                      }}
-                    >
-                      🎓
-                    </div>
-                  )}
-
-                  <div style={{ padding: "22px 22px 26px" }}>
-                    {loading ? (
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 12,
-                        }}
-                      >
-                        <Sk w="50%" h={36} r={8} />
-                        <Sk h={48} r={14} />
-                        <Sk h={40} r={14} />
-                      </div>
-                    ) : (
-                      <>
-                        {/* Price */}
-                        <div style={{ marginBottom: 20 }}>
-                          <div
-                            style={{
-                              fontSize: 36,
-                              fontWeight: 800,
-                              color: "#f1f5f9",
-                            }}
-                          >
-                            {course.price ? (
-                              `₹${course.price}`
-                            ) : (
-                              <span style={{ color: "#34d399" }}>Free</span>
-                            )}
-                          </div>
-                          {course.price > 0 && (
-                            <p
-                              style={{
-                                fontSize: 12,
-                                color: "#64748b",
-                                marginTop: 4,
-                              }}
-                            >
-                              One-time payment · Lifetime access
-                            </p>
-                          )}
-                        </div>
-
-                        {/* CTA */}
-                        <button
-                          className="enroll-btn"
-                          onClick={handleEnrollClick}
-                          style={{
-                            width: "100%",
-                            padding: "14px",
-                            borderRadius: 14,
-                            border: "none",
-                            background:
-                              isInCart || addedToCart
-                                ? "linear-gradient(135deg,#059669,#34d399)"
-                                : "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                            color: "#fff",
-                            fontSize: 15,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            transition: "all 0.2s",
-                            boxShadow: "0 8px 24px rgba(124,58,237,0.3)",
-                            marginBottom: 12,
-                          }}
-                        >
-                          {isInCart || addedToCart
-                            ? "✓ Added to Cart"
-                            : user
-                              ? "Add to Cart"
-                              : "Enroll Now"}
-                        </button>
-
-                        {(isInCart || addedToCart) && (
-                          <button
-                            onClick={() => navigate("/cart")}
-                            style={{
-                              width: "100%",
-                              padding: "12px",
-                              borderRadius: 14,
-                              border: "1px solid #334155",
-                              background: "transparent",
-                              color: "#94a3b8",
-                              fontSize: 14,
-                              fontWeight: 600,
-                              cursor: "pointer",
-                            }}
-                          >
-                            Go to Cart →
-                          </button>
-                        )}
-
-                        {!user && (
-                          <p
-                            style={{
-                              textAlign: "center",
-                              fontSize: 12,
-                              color: "#475569",
-                              marginTop: 10,
-                            }}
-                          >
-                            Already enrolled?{" "}
-                            <button
-                              onClick={() => navigate("/login")}
-                              style={{
-                                background: "none",
-                                border: "none",
-                                color: "#818cf8",
-                                cursor: "pointer",
-                                fontSize: 12,
-                                fontWeight: 600,
-                              }}
-                            >
-                              Log in
-                            </button>
-                          </p>
-                        )}
-
-                        {/* What you get */}
-                        <div
-                          style={{
-                            marginTop: 20,
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 8,
-                          }}
-                        >
-                          {[
-                            course.lessonCount > 0 &&
-                              `${course.lessonCount} lessons`,
-                            course.durationHours > 0 &&
-                              `${course.durationHours} hours of content`,
-                            "Lifetime access",
-                            "Certificate of completion",
-                          ]
-                            .filter(Boolean)
-                            .map((item) => (
-                              <div
-                                key={item}
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 8,
-                                  fontSize: 13,
-                                  color: "#94a3b8",
-                                }}
-                              >
-                                <span style={{ color: "#34d399" }}>✓</span>{" "}
-                                {item}
-                              </div>
-                            ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
+              {/* ── RIGHT: sticky enroll card — DESKTOP ONLY ── */}
+              {!isMobile && (
+                <div style={{ position: "sticky", top: 80 }}>
+                  <EnrollCard {...enrollCardProps} />
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}

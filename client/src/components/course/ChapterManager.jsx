@@ -1,12 +1,11 @@
-import { useRef, useState } from "react";
-import { uploadToImageKit } from "../../utils/imagekitUpload.js";
+import { useState } from "react";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── shared primitives (duplicated from parent for standalone use) ──────────────
 const iStyle = {
-  padding: "9px 12px",
+  padding: "10px 14px",
   background: "#0b1120",
   border: "1px solid #1e293b",
-  borderRadius: 8,
+  borderRadius: 10,
   color: "#f1f5f9",
   fontSize: 13,
   outline: "none",
@@ -18,293 +17,19 @@ const blur = (e) => (e.target.style.borderColor = "#1e293b");
 
 const EMPTY_LESSON = {
   title: "",
-  description: "",
+  type: "video",
   videoUrl: "",
-  content: "", // written lesson body
-  type: "video", // 'video' | 'text'
-  chapterTitle: "",
+  content: "",
+  description: "",
 };
 
-// ── Video upload cell ─────────────────────────────────────────────────────────
-const VideoUploadCell = ({ value, onUploaded }) => {
-  const ref = useRef(null);
-  const [status, setStatus] = useState(value ? "done" : "idle");
-  const [progress, setProgress] = useState(0);
-  const [errMsg, setErrMsg] = useState("");
-  const [dragging, setDragging] = useState(false);
-
-  const handleFile = async (file) => {
-    if (!file) return;
-    setStatus("uploading");
-    setProgress(0);
-    setErrMsg("");
-    try {
-      const data = await uploadToImageKit({
-        file,
-        folder: "/skillsphere/lessons",
-        onUploadProgress: (e) =>
-          setProgress(Math.round((e.loaded / e.total) * 100)),
-      });
-      setStatus("done");
-      onUploaded(data.url);
-    } catch (err) {
-      setStatus("error");
-      setErrMsg(err.response?.data?.message || err.message || "Upload failed.");
-    }
-  };
-
-  const onDrop = (e) => {
-    e.preventDefault();
-    setDragging(false);
-    handleFile(e.dataTransfer.files[0]);
-  };
-
-  if (status === "uploading")
-    return (
-      <div
-        style={{
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          gap: 6,
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 12, color: "#94a3b8" }}>
-            Uploading video…
-          </span>
-          <span style={{ fontSize: 12, color: "#7c3aed", fontWeight: 700 }}>
-            {progress}%
-          </span>
-        </div>
-        <div
-          style={{
-            height: 5,
-            background: "#1e293b",
-            borderRadius: 3,
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              height: "100%",
-              width: `${progress}%`,
-              background: "linear-gradient(90deg,#7c3aed,#06b6d4)",
-              borderRadius: 3,
-              transition: "width 0.2s",
-            }}
-          />
-        </div>
-      </div>
-    );
-
-  if (status === "done" || value)
-    return (
-      <div
-        style={{
-          width: "100%",
-          border: "1px solid #16a34a40",
-          borderRadius: 10,
-          background: "#052e1680",
-          padding: "12px 16px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 10,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 20 }}>🎬</span>
-          <div>
-            <p
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#4ade80",
-                margin: 0,
-              }}
-            >
-              Video uploaded
-            </p>
-            <p style={{ fontSize: 10, color: "#475569", marginTop: 2 }}>
-              MP4, WEBM — max 500 MB
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => ref.current?.click()}
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: "#94a3b8",
-            background: "none",
-            border: "1px solid #334155",
-            borderRadius: 8,
-            padding: "4px 12px",
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-            flexShrink: 0,
-          }}
-        >
-          Replace
-        </button>
-        <input
-          ref={ref}
-          type="file"
-          accept="video/mp4,video/webm,video/quicktime"
-          style={{ display: "none" }}
-          onChange={(e) => handleFile(e.target.files[0])}
-        />
-      </div>
-    );
-
-  return (
-    <div
-      onClick={() => ref.current?.click()}
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDragging(true);
-      }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={onDrop}
-      style={{
-        width: "100%",
-        border: `2px dashed ${dragging ? "#7c3aed" : status === "error" ? "#f87171" : "#334155"}`,
-        borderRadius: 10,
-        background: dragging ? "#2e106520" : "#0b112080",
-        padding: "20px 16px",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 6,
-        cursor: "pointer",
-        transition: "border-color 0.15s, background 0.15s",
-      }}
-    >
-      <span style={{ fontSize: 28 }}>🎬</span>
-      <p style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0", margin: 0 }}>
-        Click or drag & drop
-      </p>
-      <p style={{ fontSize: 11, color: "#475569", margin: 0 }}>
-        MP4, WEBM — max 500 MB
-      </p>
-      {status === "error" && (
-        <p style={{ fontSize: 11, color: "#f87171", marginTop: 4 }}>
-          ❌ {errMsg}
-        </p>
-      )}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          ref.current?.click();
-        }}
-        style={{
-          marginTop: 6,
-          fontSize: 12,
-          fontWeight: 600,
-          color: "#f1f5f9",
-          background: "#1e293b",
-          border: "1px solid #334155",
-          borderRadius: 8,
-          padding: "6px 16px",
-          cursor: "pointer",
-        }}
-      >
-        Choose file
-      </button>
-      <input
-        ref={ref}
-        type="file"
-        accept="video/mp4,video/webm,video/quicktime"
-        style={{ display: "none" }}
-        onChange={(e) => handleFile(e.target.files[0])}
-      />
-    </div>
-  );
-};
-
-// ── Text lesson editor ────────────────────────────────────────────────────────
-const TextLessonEditor = ({ value, onChange }) => {
-  const [focused, setFocused] = useState(false);
-  return (
-    <div
-      style={{
-        border: `2px solid ${focused ? "#7c3aed" : "#334155"}`,
-        borderRadius: 10,
-        background: "#0b112080",
-        overflow: "hidden",
-        transition: "border-color 0.15s",
-        width: "100%",
-      }}
-    >
-      {/* Toolbar hint */}
-      <div
-        style={{
-          padding: "8px 14px",
-          background: "#111827",
-          borderBottom: "1px solid #1e293b",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-        }}
-      >
-        <span style={{ fontSize: 14 }}>📝</span>
-        <span style={{ fontSize: 11, color: "#475569", fontWeight: 600 }}>
-          Written Lesson Content
-        </span>
-        <span style={{ fontSize: 10, color: "#334155", marginLeft: "auto" }}>
-          Markdown supported
-        </span>
-      </div>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        rows={8}
-        placeholder={`Write your lesson content here…\n\nYou can use Markdown:\n# Heading\n**bold**, *italic*\n- bullet points\n\n> blockquotes`}
-        style={{
-          width: "100%",
-          boxSizing: "border-box",
-          padding: "14px 16px",
-          background: "transparent",
-          border: "none",
-          color: "#e2e8f0",
-          fontSize: 13,
-          lineHeight: 1.7,
-          fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
-          outline: "none",
-          resize: "vertical",
-          minHeight: 160,
-        }}
-      />
-      <div
-        style={{
-          padding: "6px 14px",
-          background: "#111827",
-          borderTop: "1px solid #1e293b",
-          display: "flex",
-          justifyContent: "flex-end",
-        }}
-      >
-        <span style={{ fontSize: 10, color: "#334155" }}>
-          {value?.length ?? 0} characters
-        </span>
-      </div>
-    </div>
-  );
-};
-
-// ── Lesson Type Toggle ────────────────────────────────────────────────────────
+// ── TypeToggle ────────────────────────────────────────────────────────────────
 const TypeToggle = ({ value, onChange }) => (
   <div
     style={{
       display: "flex",
-      gap: 4,
-      background: "#0b1120",
-      border: "1px solid #1e293b",
+      gap: 0,
+      background: "#1e293b",
       borderRadius: 8,
       padding: 3,
       flexShrink: 0,
@@ -312,47 +37,334 @@ const TypeToggle = ({ value, onChange }) => (
   >
     {[
       { key: "video", icon: "🎬", label: "Video" },
-      { key: "text", icon: "📝", label: "Text" },
-    ].map(({ key, icon, label }) => (
+      { key: "text", icon: "📄", label: "Text" },
+    ].map((t) => (
       <button
-        key={key}
+        key={t.key}
         type="button"
-        onClick={() => onChange(key)}
+        onClick={() => onChange(t.key)}
         style={{
           padding: "4px 10px",
           borderRadius: 6,
           border: "none",
-          background:
-            value === key
-              ? key === "video"
-                ? "#2e1065"
-                : "#0c2a1a"
-              : "transparent",
-          color:
-            value === key
-              ? key === "video"
-                ? "#a78bfa"
-                : "#4ade80"
-              : "#475569",
           fontSize: 11,
           fontWeight: 700,
           cursor: "pointer",
+          background:
+            value === t.key
+              ? t.key === "text"
+                ? "#166534"
+                : "#2e1065"
+              : "transparent",
+          color:
+            value === t.key
+              ? t.key === "text"
+                ? "#4ade80"
+                : "#a78bfa"
+              : "#64748b",
+          transition: "all 0.15s",
           display: "flex",
           alignItems: "center",
           gap: 4,
-          transition: "all 0.15s",
-          whiteSpace: "nowrap",
         }}
       >
-        <span>{icon}</span>
-        <span>{label}</span>
+        {t.icon} {t.label}
       </button>
     ))}
   </div>
 );
 
-// ── Main ChapterManager ───────────────────────────────────────────────────────
-export default function ChapterManager({ lessons = [], onChange }) {
+// ── VideoUploadCell ───────────────────────────────────────────────────────────
+const VideoUploadCell = ({ value, onUploaded }) => {
+  const [dragOver, setDragOver] = useState(false);
+  return (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragOver(true);
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOver(false);
+      }}
+      style={{
+        border: `1px dashed ${dragOver ? "#7c3aed" : "#1e293b"}`,
+        borderRadius: 10,
+        padding: "10px 14px",
+        background: "#0b1120",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        transition: "border-color 0.15s",
+      }}
+    >
+      <span style={{ fontSize: 16, flexShrink: 0 }}>🎬</span>
+      <input
+        value={value || ""}
+        onChange={(e) => onUploaded(e.target.value)}
+        placeholder="Paste video URL or upload…"
+        style={{
+          ...iStyle,
+          border: "none",
+          background: "transparent",
+          padding: 0,
+        }}
+        onFocus={focus}
+        onBlur={blur}
+      />
+    </div>
+  );
+};
+
+// ── TextLessonEditor ──────────────────────────────────────────────────────────
+const TextLessonEditor = ({
+  value,
+  onChange,
+  lessonTitle,
+  courseSubject,
+  courseDescription,
+}) => {
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState("");
+
+  const canGenerate = !!lessonTitle?.trim();
+
+  const generateWithAI = async () => {
+    setAiGenerating(true);
+    setAiError("");
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          messages: [
+            {
+              role: "user",
+              content: `Write a comprehensive, well-structured educational lesson on: "${lessonTitle}".
+${courseSubject ? `Course subject: ${courseSubject}.` : ""}
+${courseDescription ? `Course description: ${courseDescription}` : ""}
+
+Format in Markdown:
+- Brief introduction paragraph
+- Key concepts with ## headings
+- Concrete examples where helpful
+- Short summary at the end
+
+Write clearly for school/college students. Be educational and engaging. Use Markdown formatting throughout.`,
+            },
+          ],
+        }),
+      });
+
+      if (!res.ok) throw new Error("AI service unavailable");
+
+      // Collect SSE stream
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fullText = "";
+
+      while (true) {
+        const { done, value: chunk } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(chunk, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const payload = line.slice(6).trim();
+          if (payload === "[DONE]") break;
+          try {
+            const { text } = JSON.parse(payload);
+            if (text) fullText += text;
+          } catch {}
+        }
+      }
+
+      onChange(fullText.trim());
+    } catch (err) {
+      console.error("AI lesson generation failed:", err);
+      setAiError("AI generation failed. Please try again.");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        border: "1px solid #1e293b",
+        borderRadius: 12,
+        overflow: "hidden",
+        background: "#070e1a",
+      }}
+    >
+      {/* Toolbar */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "8px 12px",
+          background: "#0b1120",
+          borderBottom: "1px solid #1e293b",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 13 }}>📄</span>
+          <span style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>
+            Written Lesson Content
+          </span>
+          <span style={{ fontSize: 10, color: "#334155" }}>
+            Markdown supported
+          </span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {aiError && (
+            <span style={{ fontSize: 10, color: "#f87171" }}>{aiError}</span>
+          )}
+          <button
+            type="button"
+            onClick={generateWithAI}
+            disabled={aiGenerating || !canGenerate}
+            title={
+              !canGenerate
+                ? "Enter a lesson title first"
+                : "Generate lesson content with AI"
+            }
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "5px 12px",
+              borderRadius: 8,
+              border: "none",
+              background: aiGenerating
+                ? "#334155"
+                : !canGenerate
+                  ? "#1e293b"
+                  : "linear-gradient(135deg,#7c3aed,#06b6d4)",
+              color: !canGenerate ? "#475569" : "#fff",
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: aiGenerating || !canGenerate ? "not-allowed" : "pointer",
+              opacity: aiGenerating ? 0.75 : 1,
+              transition: "all 0.15s",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {aiGenerating ? (
+              <>
+                <svg
+                  style={{
+                    animation: "spin 1s linear infinite",
+                    width: 11,
+                    height: 11,
+                    flexShrink: 0,
+                  }}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="white"
+                    strokeWidth="3"
+                    opacity=".3"
+                  />
+                  <path
+                    d="M12 2a10 10 0 0 1 10 10"
+                    stroke="white"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                Generating…
+              </>
+            ) : (
+              "✨ Generate with AI"
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Textarea */}
+      <textarea
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        rows={10}
+        placeholder={
+          aiGenerating
+            ? "AI is writing your lesson…"
+            : !canGenerate
+              ? "Enter a lesson title above, then click ✨ Generate with AI…\n\nOr write your content here using Markdown:\n# Heading\n**bold**, *italic*\n- bullet points\n> blockquotes"
+              : "Write your lesson content here…\n\nOr click ✨ Generate with AI above.\n\nMarkdown:\n# Heading\n**bold**, *italic*\n- bullet points\n> blockquotes"
+        }
+        style={{
+          width: "100%",
+          padding: "14px 16px",
+          background: "#070e1a",
+          border: "none",
+          color: aiGenerating ? "#334155" : "#f1f5f9",
+          fontSize: 13,
+          fontFamily: "monospace",
+          resize: "vertical",
+          outline: "none",
+          boxSizing: "border-box",
+          lineHeight: 1.7,
+          transition: "color 0.2s",
+          minHeight: 180,
+        }}
+      />
+
+      {/* Footer */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "5px 12px",
+          background: "#0b1120",
+          borderTop: "1px solid #1e293b",
+        }}
+      >
+        <span style={{ fontSize: 10, color: "#334155" }}>
+          {(value || "").length} characters
+        </span>
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            style={{
+              fontSize: 10,
+              color: "#475569",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── ChapterManager ────────────────────────────────────────────────────────────
+export default function ChapterManager({
+  lessons = [],
+  onChange,
+  courseSubject = "",
+  courseDescription = "",
+}) {
   const buildGroups = (ls) => {
     const groups = [];
     ls.forEach((l) => {
@@ -389,6 +401,7 @@ export default function ChapterManager({ lessons = [], onChange }) {
 
   const renameChapter = (ci, title) =>
     sync(groups.map((gr, i) => (i === ci ? { ...gr, title } : gr)));
+
   const deleteChapter = (ci) => {
     if (groups.length === 1) return;
     sync(groups.filter((_, i) => i !== ci));
@@ -639,7 +652,7 @@ export default function ChapterManager({ lessons = [], onChange }) {
                         </button>
                       </div>
 
-                      {/* Content area — video or text */}
+                      {/* Content area */}
                       <div style={{ paddingLeft: 28 }}>
                         {isText ? (
                           <TextLessonEditor
@@ -647,6 +660,9 @@ export default function ChapterManager({ lessons = [], onChange }) {
                             onChange={(val) =>
                               updateLesson(ci, li, "content", val)
                             }
+                            lessonTitle={lesson.title}
+                            courseSubject={courseSubject}
+                            courseDescription={courseDescription}
                           />
                         ) : (
                           <VideoUploadCell
@@ -658,7 +674,7 @@ export default function ChapterManager({ lessons = [], onChange }) {
                         )}
                       </div>
 
-                      {/* Description (optional, both types) */}
+                      {/* Description */}
                       <textarea
                         value={lesson.description}
                         onChange={(e) =>
