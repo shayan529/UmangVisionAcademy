@@ -1,13 +1,16 @@
-import Session from "../models/session.model.js";
-import Course from "../models/courses.model.js";
+import Session from '../models/session.model.js';
+import Course from '../models/courses.model.js';
 
 // GET /sessions — for INSTRUCTOR (their own sessions)
 export const getInstructorSessions = async (req, res) => {
+  console.log('req.user._id:', req.user._id);
   try {
+    // In getInstructorSessions controller
     const sessions = await Session.find({ instructor: req.user._id })
-      .populate("course", "title")
-      .sort({ date: 1 })
-      .lean();
+      .lean()
+      .populate('course', 'title')
+      .sort({ date: 1 });
+    console.log('Sessions found:', sessions.length);
 
     res.json(sessions);
   } catch (err) {
@@ -19,15 +22,22 @@ export const getInstructorSessions = async (req, res) => {
 export const getStudentSessions = async (req, res) => {
   try {
     const enrolledCourses = await Course.find({ students: req.user._id })
-      .select("_id")
+      .select('_id instructor')
       .lean();
 
     const enrolledCourseIds = enrolledCourses.map((c) => c._id);
+    const instructorIds = enrolledCourses.map((c) => c.instructor).filter(Boolean);
+
     if (enrolledCourseIds.length === 0) return res.json([]);
 
-    const sessions = await Session.find({ course: { $in: enrolledCourseIds } })
-      .populate("course", "title")
-      .populate("instructor", "name")
+    const sessions = await Session.find({
+      $or: [
+        { course: { $in: enrolledCourseIds } },
+        { instructor: { $in: instructorIds } },
+      ],
+    })
+      .populate('course', 'title')
+      .populate('instructor', 'name')
       .sort({ date: 1 })
       .lean();
 
@@ -44,7 +54,7 @@ export const getSessionById = async (req, res) => {
       _id: req.params.id,
       instructor: req.user._id,
     });
-    if (!session) return res.status(404).json({ message: "Session not found" });
+    if (!session) return res.status(404).json({ message: 'Session not found' });
     res.json(session);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -56,13 +66,13 @@ export const createSession = async (req, res) => {
   try {
     const { title, date, time, status, course, url } = req.body;
     if (!title?.trim()) {
-      return res.status(400).json({ message: "Session title is required" });
+      return res.status(400).json({ message: 'Session title is required' });
     }
     const session = await Session.create({
       title,
-      date: date || "TBD",
-      time: time || "TBD",
-      status: status || "upcoming",
+      date: date || 'TBD',
+      time: time || 'TBD',
+      status: status || 'upcoming',
       course: course || null,
       instructor: req.user._id,
       url: url || null,
@@ -79,9 +89,9 @@ export const updateSession = async (req, res) => {
     const session = await Session.findOneAndUpdate(
       { _id: req.params.id, instructor: req.user._id },
       req.body,
-      { new: true, runValidators: true },
+      { new: true, runValidators: true }
     );
-    if (!session) return res.status(404).json({ message: "Session not found" });
+    if (!session) return res.status(404).json({ message: 'Session not found' });
     res.json(session);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -95,8 +105,8 @@ export const deleteSession = async (req, res) => {
       _id: req.params.id,
       instructor: req.user._id,
     });
-    if (!session) return res.status(404).json({ message: "Session not found" });
-    res.json({ message: "Session deleted" });
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+    res.json({ message: 'Session deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -1,35 +1,35 @@
-import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchSessions,
   createSession,
   deleteSession,
   clearSessionSuccess,
   clearSessionError,
-} from "../../redux/slices/sessionSlice";
-import { Card, SectionHeader, Btn } from "./InstructorUi";
+} from '../../redux/slices/sessionSlice';
+import { Card, SectionHeader, Btn } from './InstructorUi';
 
 const InstructorSessions = ({ showToast }) => {
   const dispatch = useDispatch();
   const { sessions, loading, success, error } = useSelector((s) => s.sessions);
-  const [form, setForm] = useState({ title: "", date: "", time: "", url: "" });
+  const [form, setForm] = useState({ title: '', date: '', time: '', url: '' });
 
   useEffect(() => {
     dispatch(fetchSessions());
   }, [dispatch]);
 
   const sessionsState = useSelector((s) => s.sessions);
-  console.log("sessions state:", sessionsState);
+  console.log('sessions state:', sessionsState);
 
   const inputStyle = {
-    width: "100%",
-    padding: "10px 12px",
-    background: "#1e293b",
-    border: "1px solid #334155",
+    width: '100%',
+    padding: '10px 12px',
+    background: '#1e293b',
+    border: '1px solid #334155',
     borderRadius: 10,
-    color: "#f8fafc",
+    color: '#f8fafc',
     fontSize: 14,
-    outline: "none",
+    outline: 'none',
   };
 
   // ── Toast on success / error ──────────────────────────────────────────
@@ -49,15 +49,15 @@ const InstructorSessions = ({ showToast }) => {
 
   const copySessionLink = async (url) => {
     if (!url) {
-      showToast("No session URL available");
+      showToast('No session URL available');
       return;
     }
 
     try {
       await navigator.clipboard.writeText(url);
-      showToast("Session link copied");
+      showToast('Session link copied');
     } catch (error) {
-      showToast("Failed to copy link");
+      showToast('Failed to copy link');
     }
   };
 
@@ -69,12 +69,12 @@ const InstructorSessions = ({ showToast }) => {
       !form.date.trim() ||
       !form.time.trim()
     ) {
-      showToast("Enter all session details");
+      showToast('Enter all session details');
       return;
     }
 
     if (form.url && !/^https?:\/\/.+/i.test(form.url)) {
-      showToast("Enter a valid URL starting with http:// or https://");
+      showToast('Enter a valid URL starting with http:// or https://');
       return;
     }
 
@@ -83,16 +83,16 @@ const InstructorSessions = ({ showToast }) => {
         title: form.title,
         date: form.date,
         time: form.time,
-        status: "upcoming",
+        status: 'upcoming',
         url: form.url,
-      }),
+      })
     );
 
     setForm({
-      title: "",
-      date: "",
-      time: "",
-      url: "",
+      title: '',
+      date: '',
+      time: '',
+      url: '',
     });
   };
 
@@ -106,8 +106,8 @@ const InstructorSessions = ({ showToast }) => {
 
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
             gap: 12,
             marginBottom: 16,
           }}
@@ -116,10 +116,10 @@ const InstructorSessions = ({ showToast }) => {
           <div>
             <label
               style={{
-                display: "block",
+                display: 'block',
                 marginBottom: 6,
                 fontSize: 12,
-                color: "#94a3b8",
+                color: '#94a3b8',
               }}
             >
               Session Title
@@ -138,10 +138,10 @@ const InstructorSessions = ({ showToast }) => {
           <div>
             <label
               style={{
-                display: "block",
+                display: 'block',
                 marginBottom: 6,
                 fontSize: 12,
-                color: "#94a3b8",
+                color: '#94a3b8',
               }}
             >
               Date
@@ -159,10 +159,10 @@ const InstructorSessions = ({ showToast }) => {
           <div>
             <label
               style={{
-                display: "block",
+                display: 'block',
                 marginBottom: 6,
                 fontSize: 12,
-                color: "#94a3b8",
+                color: '#94a3b8',
               }}
             >
               Time
@@ -180,10 +180,10 @@ const InstructorSessions = ({ showToast }) => {
           <div>
             <label
               style={{
-                display: "block",
+                display: 'block',
                 marginBottom: 6,
                 fontSize: 12,
-                color: "#94a3b8",
+                color: '#94a3b8',
               }}
             >
               Meeting URL
@@ -200,7 +200,7 @@ const InstructorSessions = ({ showToast }) => {
         </div>
 
         <Btn variant="primary" onClick={schedule} disabled={loading}>
-          {loading ? "Scheduling..." : "📅 Schedule Session"}
+          {loading ? 'Scheduling...' : '📅 Schedule Session'}
         </Btn>
       </Card>
       {/* Session list */}
@@ -210,10 +210,10 @@ const InstructorSessions = ({ showToast }) => {
         {loading && (
           <div
             style={{
-              color: "#64748b",
+              color: '#64748b',
               fontSize: 13,
-              textAlign: "center",
-              padding: "20px 0",
+              textAlign: 'center',
+              padding: '20px 0',
             }}
           >
             Loading sessions…
@@ -223,10 +223,10 @@ const InstructorSessions = ({ showToast }) => {
         {!loading && sessions.length === 0 && (
           <div
             style={{
-              color: "#64748b",
+              color: '#64748b',
               fontSize: 13,
-              textAlign: "center",
-              padding: "20px 0",
+              textAlign: 'center',
+              padding: '20px 0',
             }}
           >
             No sessions scheduled yet.
@@ -238,19 +238,19 @@ const InstructorSessions = ({ showToast }) => {
             <div
               key={s._id}
               style={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 12,
-                padding: "12px 0",
-                borderBottom: "1px solid #1e293b",
+                padding: '12px 0',
+                borderBottom: '1px solid #1e293b',
               }}
             >
               <div
                 style={{
                   width: 10,
                   height: 10,
-                  borderRadius: "50%",
-                  background: s.status === "live" ? "#10b981" : "#7c3aed",
+                  borderRadius: '50%',
+                  background: s.status === 'live' ? '#10b981' : '#7c3aed',
                   flexShrink: 0,
                 }}
               />
@@ -259,27 +259,27 @@ const InstructorSessions = ({ showToast }) => {
                   style={{
                     fontSize: 14,
                     fontWeight: 600,
-                    color: "#f1f5f9",
+                    color: '#f1f5f9',
                   }}
                 >
                   {s.title}
                 </div>
-                <div style={{ fontSize: 12, color: "#64748b" }}>
+                <div style={{ fontSize: 12, color: '#64748b' }}>
                   {s.date}
-                  {s.time ? ` — ${s.time}` : ""}
+                  {s.time ? ` — ${s.time}` : ''}
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <Btn
                   variant="success"
                   style={{ fontSize: 12 }}
                   onClick={() => {
                     if (!s.url) {
-                      showToast("No session URL available");
+                      showToast('No session URL available');
                       return;
                     }
 
-                    window.open(s.url, "_blank");
+                    window.open(s.url, '_blank');
                   }}
                 >
                   Join
@@ -295,7 +295,7 @@ const InstructorSessions = ({ showToast }) => {
 
                 <Btn
                   variant="danger"
-                  style={{ fontSize: 12, padding: "8px 10px" }}
+                  style={{ fontSize: 12, padding: '8px 10px' }}
                   onClick={() => remove(s._id)}
                 >
                   🗑

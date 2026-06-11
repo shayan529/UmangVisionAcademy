@@ -1,8 +1,8 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import api, { API_ENDPOINTS } from "../../config/api.js";
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import api, { API_ENDPOINTS } from '../../config/api.js';
 
 export const fetchSessions = createAsyncThunk(
-  "sessions/fetchAll",
+  'sessions/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await api.get(API_ENDPOINTS.SESSIONS.LIST);
@@ -10,26 +10,26 @@ export const fetchSessions = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
-  },
+  }
 );
 
 export const createSession = createAsyncThunk(
-  "sessions/create",
+  'sessions/create',
   async (sessionData, { rejectWithValue }) => {
     try {
       const { data } = await api.post(
         API_ENDPOINTS.SESSIONS.CREATE,
-        sessionData,
+        sessionData
       );
       return data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
-  },
+  }
 );
 
 export const deleteSession = createAsyncThunk(
-  "sessions/delete",
+  'sessions/delete',
   async (id, { rejectWithValue }) => {
     try {
       await api.delete(API_ENDPOINTS.SESSIONS.DELETE(id));
@@ -37,7 +37,7 @@ export const deleteSession = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
-  },
+  }
 );
 
 const initialState = {
@@ -48,7 +48,7 @@ const initialState = {
 };
 
 const sessionSlice = createSlice({
-  name: "sessions",
+  name: 'sessions',
   initialState,
   reducers: {
     clearSessionError: (state) => {
@@ -68,9 +68,20 @@ const sessionSlice = createSlice({
       .addCase(fetchSessions.fulfilled, (state, action) => {
         state.loading = false;
         const payload = action.payload;
-        state.sessions = Array.isArray(payload)
-          ? payload
-          : (payload.sessions ?? payload.data ?? []);
+        console.log('✅ sessions payload:', action.payload);
+
+        // Handle: [], { sessions: [] }, { data: [] }, { data: { sessions: [] } }
+        if (Array.isArray(payload)) {
+          state.sessions = payload;
+        } else if (Array.isArray(payload?.sessions)) {
+          state.sessions = payload.sessions;
+        } else if (Array.isArray(payload?.data)) {
+          state.sessions = payload.data;
+        } else if (Array.isArray(payload?.data?.sessions)) {
+          state.sessions = payload.data.sessions;
+        } else {
+          state.sessions = [];
+        }
       })
       .addCase(fetchSessions.rejected, (state, action) => {
         state.loading = false;
@@ -88,7 +99,7 @@ const sessionSlice = createSlice({
         const session =
           action.payload?.session ?? action.payload?.data ?? action.payload;
         state.sessions.push(session);
-        state.success = "Session scheduled!";
+        state.success = 'Session scheduled!';
       })
       .addCase(createSession.rejected, (state, action) => {
         state.loading = false;
@@ -104,7 +115,7 @@ const sessionSlice = createSlice({
       .addCase(deleteSession.fulfilled, (state, action) => {
         state.loading = false;
         state.sessions = state.sessions.filter((s) => s._id !== action.payload);
-        state.success = "Session removed";
+        state.success = 'Session removed';
       })
       .addCase(deleteSession.rejected, (state, action) => {
         state.loading = false;
