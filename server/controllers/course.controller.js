@@ -26,6 +26,13 @@ const shapeCourse = (c) => ({
   enrolledCount: c.students?.length ?? 0,
   status: c.published ? "published" : "draft",
   revenue: (c.price ?? 0) * (c.students?.length ?? 0),
+  certificate: c.certificate ?? {
+    enabled: false,
+    title: "Certificate of Completion",
+    signatoryName: "",
+    signatoryTitle: "",
+    theme: "purple",
+  },
 });
 
 // ── createCourse ──────────────────────────────────────────────────────────────
@@ -45,6 +52,7 @@ export const createCourse = async (req, res) => {
       board,
       published,
       quiz,
+      certificate,
     } = req.body;
 
     if (!title?.trim())
@@ -73,6 +81,7 @@ export const createCourse = async (req, res) => {
       instructor: req.user._id,
       board,
       students: [],
+      certificate: certificate && typeof certificate === "object" ? certificate : undefined,
     });
 
     res.status(201).json(shapeCourse(course));
@@ -316,6 +325,7 @@ export const updateCourse = async (req, res) => {
       published,
       board,
       quiz,
+      certificate,
     } = req.body;
 
     const existing = await Course.findOne({
@@ -362,6 +372,7 @@ export const updateCourse = async (req, res) => {
       ...(board !== undefined && { board }),
       ...(lessons !== undefined && { lessons }),
       ...(quiz !== undefined && { quiz }),
+      ...(certificate !== undefined && { certificate }),
       published: newPublished,
       approvalStatus: newApprovalStatus,
       rejectionReason:

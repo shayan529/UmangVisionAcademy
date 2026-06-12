@@ -53,6 +53,11 @@ const userSchema = new Schema(
       trim: true,
       default: "",
     },
+    pincode: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     enrolledCourses: [
       {
         type: Types.ObjectId,
@@ -113,6 +118,13 @@ const userSchema = new Schema(
     },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    devices: [
+      {
+        userAgent: { type: String, default: "" },
+        ip: { type: String, default: "" },
+        lastLogin: { type: Date, default: Date.now },
+      },
+    ],
   },
   {
     timestamps: true,

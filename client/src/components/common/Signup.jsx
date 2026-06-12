@@ -388,6 +388,7 @@ const Signup = () => {
     phoneNumber: "",
     city: "",
     state: "",
+    pincode: "",
     password: "",
     confirmPassword: "",
   });
@@ -531,6 +532,10 @@ const Signup = () => {
     }
     if (!phoneVerified) {
       toast.error("Please verify your phone number before continuing.");
+      return;
+    }
+    if (!/^[0-9]{6}$/.test(formData.pincode)) {
+      toast.error("Please enter a valid 6-digit pincode.");
       return;
     }
 
@@ -1223,7 +1228,7 @@ const Signup = () => {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {/* State */}
                       <div>
                         <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
@@ -1279,6 +1284,28 @@ const Signup = () => {
                             </option>
                           ))}
                         </select>
+                      </div>
+
+                      {/* Pincode */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
+                          Pincode
+                        </label>
+                        <input
+                          type="text"
+                          name="pincode"
+                          value={formData.pincode}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                            setFormData((prev) => ({ ...prev, pincode: value }));
+                          }}
+                          onFocus={() => setFocused("pincode")}
+                          onBlur={() => setFocused("")}
+                          placeholder="452001"
+                          required
+                          maxLength={6}
+                          className={inputCls("pincode")}
+                        />
                       </div>
                     </div>
 

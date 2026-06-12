@@ -20,6 +20,13 @@ const EMPTY_FORM = {
   thumbnailUrl: "",
   demoVideoUrl: "",
   quiz: { title: "Final Quiz", questions: [] },
+  certificate: {
+    enabled: false,
+    title: "Certificate of Completion",
+    signatoryName: "",
+    signatoryTitle: "",
+    theme: "purple",
+  },
 };
 
 const CLASSES = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`);
@@ -793,6 +800,305 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
   );
 }
 
+// ── CertificateManager ────────────────────────────────────────────────────────
+function CertificateManager({ certificate, onChange, courseTitle }) {
+  const enabled = certificate?.enabled ?? false;
+  const title = certificate?.title ?? "Certificate of Completion";
+  const signatoryName = certificate?.signatoryName ?? "";
+  const signatoryTitle = certificate?.signatoryTitle ?? "";
+  const theme = certificate?.theme ?? "purple";
+
+  const updateCert = (field, value) => {
+    onChange({
+      ...(certificate || {
+        enabled: false,
+        title: "Certificate of Completion",
+        signatoryName: "",
+        signatoryTitle: "",
+        theme: "purple",
+      }),
+      [field]: value,
+    });
+  };
+
+  const themes = {
+    purple: {
+      name: "Purple Luxury",
+      colors: ["#4c1d95", "#7c3aed"],
+      accent: "#a78bfa",
+    },
+    blue: {
+      name: "Classic Navy",
+      colors: ["#1e3a8a", "#3b82f6"],
+      accent: "#93c5fd",
+    },
+    green: {
+      name: "Emerald Professional",
+      colors: ["#064e3b", "#10b981"],
+      accent: "#6ee7b7",
+    },
+    gold: {
+      name: "Royal Gold",
+      colors: ["#78350f", "#d97706"],
+      accent: "#fde047",
+    },
+    dark: {
+      name: "Minimalist Slate",
+      colors: ["#0f172a", "#334155"],
+      accent: "#cbd5e1",
+    },
+  };
+
+  const activeTheme = themes[theme] || themes.purple;
+
+  return (
+    <div
+      style={{
+        border: "1px solid #1e293b",
+        borderRadius: 14,
+        overflow: "hidden",
+        background: "#0b1120",
+        padding: 18,
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 18 }}>🎓</span>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
+              Course Certificate
+            </div>
+            <div style={{ fontSize: 11, color: "#64748b" }}>
+              Award a customized certificate to students who complete this course
+            </div>
+          </div>
+        </div>
+        <label
+          style={{
+            position: "relative",
+            display: "inline-block",
+            width: 44,
+            height: 22,
+            cursor: "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => updateCert("enabled", e.target.checked)}
+            style={{ opacity: 0, width: 0, height: 0 }}
+          />
+          <span
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: enabled ? "#7c3aed" : "#334155",
+              transition: ".3s",
+              borderRadius: 34,
+              boxShadow: enabled ? "0 0 8px rgba(124,58,237,.4)" : "none",
+            }}
+          />
+          <span
+            style={{
+              position: "absolute",
+              content: '""',
+              height: 16,
+              width: 16,
+              left: enabled ? 24 : 4,
+              bottom: 3,
+              backgroundColor: "white",
+              transition: ".3s",
+              borderRadius: "50%",
+            }}
+          />
+        </label>
+      </div>
+
+      {enabled && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 18,
+            animation: "slideDown 0.3s ease",
+            paddingTop: 12,
+            borderTop: "1px solid #1e293b",
+          }}
+        >
+          {/* Certificate Config */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <Field label="Certificate Title" hint="* (e.g. Certificate of Completion)">
+              <Input
+                value={title}
+                onChange={(e) => updateCert("title", e.target.value)}
+                placeholder="Certificate of Completion"
+              />
+            </Field>
+            <Field label="Certificate Theme" hint="* (select layout design)">
+              <Sel
+                value={theme}
+                onChange={(e) => updateCert("theme", e.target.value)}
+                options={Object.keys(themes).map((k) => ({
+                  value: k,
+                  label: themes[k].name,
+                }))}
+              />
+            </Field>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <Field label="Signatory Name" hint="(authorized person signing)">
+              <Input
+                value={signatoryName}
+                onChange={(e) => updateCert("signatoryName", e.target.value)}
+                placeholder="e.g. Jane Doe"
+              />
+            </Field>
+            <Field label="Signatory Title" hint="(e.g. Lead Instructor / Founder)">
+              <Input
+                value={signatoryTitle}
+                onChange={(e) => updateCert("signatoryTitle", e.target.value)}
+                placeholder="e.g. Lead Instructor"
+              />
+            </Field>
+          </div>
+
+          {/* Certificate Live Preview */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: "#475569",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+              }}
+            >
+              Live Certificate Preview
+            </div>
+
+            <div
+              style={{
+                background: `linear-gradient(135deg, ${activeTheme.colors[0]}, ${activeTheme.colors[1]})`,
+                borderRadius: 16,
+                padding: "24px 28px",
+                position: "relative",
+                overflow: "hidden",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                border: `1px solid ${activeTheme.accent}33`,
+                minHeight: 180,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+              }}
+            >
+              {/* decorative circles */}
+              <div
+                style={{
+                  position: "absolute",
+                  right: -20,
+                  top: -20,
+                  width: 100,
+                  height: 100,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.06)",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  right: 30,
+                  bottom: -30,
+                  width: 130,
+                  height: 130,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.04)",
+                }}
+              />
+
+              {/* Top Row */}
+              <div style={{ display: "flex", justifyBetween: "space-between", justifyContent: "space-between", alignItems: "flex-start", zIndex: 1 }}>
+                <div>
+                  <div
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 800,
+                      color: activeTheme.accent,
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      marginBottom: 2,
+                    }}
+                  >
+                    {title || "Certificate of Completion"}
+                  </div>
+                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.5)" }}>
+                    AICoaching Platform · Verify ID: CERT-XXXXXX
+                  </div>
+                </div>
+                <div style={{ fontSize: 28 }}>🏅</div>
+              </div>
+
+              {/* Middle Section */}
+              <div style={{ margin: "14px 0", zIndex: 1 }}>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", marginBottom: 2 }}>
+                  THIS IS PROUDLY PRESENTED TO A STUDENT FOR SUCCESSFULLY COMPLETING
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: "#fff", lineHeight: 1.2 }}>
+                  {courseTitle || "Course Subject/Title"}
+                </div>
+              </div>
+
+              {/* Signatory Footer */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-end",
+                  borderTop: "1px solid rgba(255,255,255,0.1)",
+                  paddingTop: 8,
+                  zIndex: 1,
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "#fff" }}>
+                    {signatoryName || "Authorized Signatory"}
+                  </div>
+                  <div style={{ fontSize: 8, color: "rgba(255,255,255,0.6)" }}>
+                    {signatoryTitle || "Instructor / Platform Admin"}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    fontFamily: "Georgia, serif",
+                    fontStyle: "italic",
+                    fontSize: 12,
+                    color: activeTheme.accent,
+                    opacity: 0.85,
+                  }}
+                >
+                  {signatoryName || "Signature"}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── CourseForm ────────────────────────────────────────────────────────────────
 const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -844,6 +1150,12 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
         onChange={(lessons) => setForm((f) => ({ ...f, lessons }))}
         courseSubject={form.subject}
         courseDescription={form.description}
+      />
+
+      <CertificateManager
+        certificate={form.certificate}
+        onChange={(certificate) => setForm((f) => ({ ...f, certificate }))}
+        courseTitle={form.subject}
       />
 
       <Field label="Description" hint="* (course summary)">
@@ -1068,6 +1380,13 @@ export default function InstructorCourses({ showToast }) {
       demoVideoUrl: course.demoVideoUrl ?? "",
       price: course.price ?? 0,
       quiz: course.quiz ?? { title: "Final Quiz", questions: [] },
+      certificate: course.certificate ?? {
+        enabled: false,
+        title: "Certificate of Completion",
+        signatoryName: "",
+        signatoryTitle: "",
+        theme: "purple",
+      },
     });
     setView("list");
   };
@@ -1085,6 +1404,13 @@ export default function InstructorCourses({ showToast }) {
     demoVideoUrl: form.demoVideoUrl || "",
     published,
     quiz: form.quiz ?? { title: "Final Quiz", questions: [] },
+    certificate: form.certificate ?? {
+      enabled: false,
+      title: "Certificate of Completion",
+      signatoryName: "",
+      signatoryTitle: "",
+      theme: "purple",
+    },
   });
 
   const validateForPublish = (form) => {

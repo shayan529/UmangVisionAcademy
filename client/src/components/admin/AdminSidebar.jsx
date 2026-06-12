@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   Settings,
   LogOut,
+  Shield,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -37,6 +38,7 @@ const AdminSidebar = ({
       icon: CheckCircle,
       badge: applicationsCount,
     },
+    { id: 'devices', label: 'Logged In Devices', icon: Shield },
   ];
 
   const sidebarClass = `bg-[#0b1120] border-r border-slate-800 flex flex-col transition-all duration-300 z-40 ${

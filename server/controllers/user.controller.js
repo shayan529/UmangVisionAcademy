@@ -21,14 +21,14 @@ const setTokenCookie = (res, token) => {
 };
 
 export const RegisterUser = async (req, res) => {
-  const { name, email, password, role, city, state, phoneNumber } = req.body;
+  const { name, email, password, role, city, state, phoneNumber, pincode } = req.body;
   try {
-    if (!name || !email || !password || !city || !state || !phoneNumber) {
+    if (!name || !email || !password || !city || !state || !phoneNumber || !pincode) {
       return res
         .status(400)
         .json({
           message:
-            'Name, email, password, city, state, and phone number are required',
+            'Name, email, password, city, state, pincode, and phone number are required',
         });
     }
 
@@ -48,7 +48,15 @@ export const RegisterUser = async (req, res) => {
       city,
       state,
       phoneNumber,
+      pincode,
     });
+
+    // Log registration device
+    const userAgent = req.headers['user-agent'] || 'Unknown Device';
+    const ip = req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress || 'Unknown IP';
+    user.devices = [{ userAgent, ip, lastLogin: new Date() }];
+    await user.save();
+
     const token = createToken(user._id);
     setTokenCookie(res, token);
 
@@ -87,6 +95,18 @@ export const LoginUser = async (req, res) => {
 
     const token = createToken(user._id);
     setTokenCookie(res, token);
+
+    // Update logged in devices
+    const userAgent = req.headers['user-agent'] || 'Unknown Device';
+    const ip = req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress || 'Unknown IP';
+    let devicesList = user.devices || [];
+    devicesList = devicesList.filter(d => !(d.userAgent === userAgent && d.ip === ip));
+    devicesList.unshift({ userAgent, ip, lastLogin: new Date() });
+    if (devicesList.length > 10) {
+      devicesList = devicesList.slice(0, 10);
+    }
+    user.devices = devicesList;
+    await user.save();
 
     const userData = user.toObject();
     delete userData.password;

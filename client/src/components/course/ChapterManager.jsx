@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { uploadToImageKit } from "../../utils/imagekitUpload.js";
 
 // ── shared primitives (duplicated from parent for standalone use) ──────────────
 const iStyle = {
@@ -77,42 +78,179 @@ const TypeToggle = ({ value, onChange }) => (
 // ── VideoUploadCell ───────────────────────────────────────────────────────────
 const VideoUploadCell = ({ value, onUploaded }) => {
   const [dragOver, setDragOver] = useState(false);
-  return (
-    <div
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDragOver(true);
-      }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setDragOver(false);
-      }}
-      style={{
-        border: `1px dashed ${dragOver ? "#7c3aed" : "#1e293b"}`,
-        borderRadius: 10,
-        padding: "10px 14px",
-        background: "#0b1120",
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        transition: "border-color 0.15s",
-      }}
-    >
-      <span style={{ fontSize: 16, flexShrink: 0 }}>🎬</span>
-      <input
-        value={value || ""}
-        onChange={(e) => onUploaded(e.target.value)}
-        placeholder="Paste video URL or upload…"
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [errorMsg, setErrorMsg] = useState("");
+  const fileInputRef = useRef(null);
+
+  const uploadFile = async (file) => {
+    setUploading(true);
+    setProgress(0);
+    setErrorMsg("");
+    try {
+      const data = await uploadToImageKit({
+        file,
+        folder: "/skillsphere-videos",
+        onUploadProgress: (e) => {
+          setProgress(Math.round((e.loaded / e.total) * 100));
+        },
+      });
+      onUploaded(data.url);
+    } catch (err) {
+      console.error("Video upload failed:", err);
+      setErrorMsg(err.response?.data?.message || err.message || "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadFile(file);
+  };
+
+  // Uploaded state — show filename/url with a remove button
+  if (value && !uploading) {
+    const displayName = value.split("/").pop() || value;
+    return (
+      <div
         style={{
-          ...iStyle,
-          border: "none",
-          background: "transparent",
-          padding: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "10px 14px",
+          background: "#0b1120",
+          border: "1px solid #1e293b",
+          borderRadius: 10,
         }}
-        onFocus={focus}
-        onBlur={blur}
+      >
+        <span style={{ fontSize: 16 }}>🎬</span>
+        <span
+          style={{
+            fontSize: 12,
+            color: "#a78bfa",
+            flex: 1,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {displayName}
+        </span>
+        <button
+          type="button"
+          onClick={() => onUploaded("")}
+          style={{
+            background: "none",
+            border: "none",
+            color: "#f87171",
+            cursor: "pointer",
+            fontSize: 13,
+            padding: 0,
+            flexShrink: 0,
+          }}
+        >
+          ✕ Remove
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%" }}>
+      <input
+        type="file"
+        accept="video/*"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        style={{ display: "none" }}
       />
+
+      <div
+        onClick={() => !uploading && fileInputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          const file = e.dataTransfer.files?.[0];
+          if (file) uploadFile(file);
+        }}
+        style={{
+          border: `1.5px dashed ${dragOver ? "#7c3aed" : "#1e293b"}`,
+          borderRadius: 12,
+          padding: "28px 20px",
+          background: dragOver ? "#0f0a1e" : "#0b1120",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          cursor: uploading ? "default" : "pointer",
+          transition: "border-color 0.15s, background 0.15s",
+          userSelect: "none",
+        }}
+      >
+        {uploading ? (
+          <>
+            <svg
+              style={{
+                animation: "spin 1s linear infinite",
+                width: 28,
+                height: 28,
+                color: "#7c3aed",
+              }}
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" opacity=".3" />
+              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
+              Uploading… {progress}%
+            </span>
+            <div
+              style={{
+                width: "60%",
+                height: 3,
+                background: "#1e293b",
+                borderRadius: 99,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${progress}%`,
+                  background: "linear-gradient(90deg, #7c3aed, #06b6d4)",
+                  borderRadius: 99,
+                  transition: "width 0.2s",
+                }}
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <span style={{ fontSize: 28 }}>🎬</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
+              Click or drag &amp; drop
+            </span>
+            <span style={{ fontSize: 11, color: "#475569" }}>
+              MP4, WEBM — max 200 MB
+            </span>
+          </>
+        )}
+      </div>
+
+      {errorMsg && (
+        <span style={{ fontSize: 10, color: "#f87171", paddingLeft: 4 }}>
+          ⚠️ {errorMsg}
+        </span>
+      )}
     </div>
   );
 };
@@ -164,7 +302,6 @@ Write clearly for school/college students. Be educational and engaging. Use Mark
 
       if (!res.ok) throw new Error("AI service unavailable");
 
-      // Collect SSE stream
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -183,7 +320,7 @@ Write clearly for school/college students. Be educational and engaging. Use Mark
           try {
             const { text } = JSON.parse(payload);
             if (text) fullText += text;
-          } catch {}
+          } catch { }
         }
       }
 
@@ -205,7 +342,6 @@ Write clearly for school/college students. Be educational and engaging. Use Mark
         background: "#070e1a",
       }}
     >
-      {/* Toolbar */}
       <div
         style={{
           display: "flex",
@@ -271,20 +407,8 @@ Write clearly for school/college students. Be educational and engaging. Use Mark
                   viewBox="0 0 24 24"
                   fill="none"
                 >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="white"
-                    strokeWidth="3"
-                    opacity=".3"
-                  />
-                  <path
-                    d="M12 2a10 10 0 0 1 10 10"
-                    stroke="white"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
+                  <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" opacity=".3" />
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round" />
                 </svg>
                 Generating…
               </>
@@ -295,7 +419,6 @@ Write clearly for school/college students. Be educational and engaging. Use Mark
         </div>
       </div>
 
-      {/* Textarea */}
       <textarea
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
@@ -324,7 +447,6 @@ Write clearly for school/college students. Be educational and engaging. Use Mark
         }}
       />
 
-      {/* Footer */}
       <div
         style={{
           display: "flex",
@@ -411,12 +533,12 @@ export default function ChapterManager({
     const g = groups.map((gr, i) =>
       i === ci
         ? {
-            ...gr,
-            lessons: [
-              ...gr.lessons,
-              { ...EMPTY_LESSON, chapterTitle: gr.title },
-            ],
-          }
+          ...gr,
+          lessons: [
+            ...gr.lessons,
+            { ...EMPTY_LESSON, chapterTitle: gr.title },
+          ],
+        }
         : gr,
     );
     sync(g);
@@ -426,11 +548,11 @@ export default function ChapterManager({
     const g = groups.map((gr, i) =>
       i === ci
         ? {
-            ...gr,
-            lessons: gr.lessons.map((l, j) =>
-              j === li ? { ...l, [key]: value } : l,
-            ),
-          }
+          ...gr,
+          lessons: gr.lessons.map((l, j) =>
+            j === li ? { ...l, [key]: value } : l,
+          ),
+        }
         : gr,
     );
     sync(g);

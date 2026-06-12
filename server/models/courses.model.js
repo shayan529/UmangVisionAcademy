@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 
 const { Schema, model, Types } = mongoose;
 
@@ -71,6 +71,13 @@ const courseSchema = new Schema(
           correctOptionIndex: { type: Number, required: true },
         },
       ],
+    },
+    certificate: {
+      enabled: { type: Boolean, default: false },
+      title: { type: String, default: "Certificate of Completion" },
+      signatoryName: { type: String, default: "" },
+      signatoryTitle: { type: String, default: "" },
+      theme: { type: String, default: "purple" },
     },
   },
   { timestamps: true },

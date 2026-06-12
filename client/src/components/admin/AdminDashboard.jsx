@@ -13,6 +13,7 @@ import AdminStudents from "./AdminStudents";
 import AdminInstructors from "./AdminInstructors";
 import AdminCourses from "./AdminCourses";
 import AdminApplications from "./AdminApplications";
+import AdminDevices from "./AdminDevices";
 
 export default function AdminDashboard() {
   const dispatch = useDispatch();
@@ -176,6 +177,8 @@ export default function AdminDashboard() {
         );
       case "applications":
         return <AdminApplications />;
+      case "devices":
+        return <AdminDevices users={users} loading={usersLoading} />;
       default:
         return null;
     }

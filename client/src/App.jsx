@@ -156,6 +156,7 @@ function App() {
             <Route path="leaderboard" element={<LeaderBoard />} />
             <Route path="sessions" element={<StudentSessions />} />
             <Route path="notifications" element={<StudentNotifications />} />
+            <Route path="certificates" element={<CertificatesSection />} />
           </Route>
 
           {/* ========================= */}

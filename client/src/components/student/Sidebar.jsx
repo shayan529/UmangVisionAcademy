@@ -55,6 +55,11 @@ const Sidebar = ({
         ]
       : []),
     {
+      label: t("studentSidebar.certificates"),
+      to: "/student-dashboard/certificates",
+      icon: GrCertificate,
+    },
+    {
       label: t("studentSidebar.leaderboard"),
       to: "/student-dashboard/leaderboard",
       icon: FaTrophy,
