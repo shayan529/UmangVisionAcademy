@@ -182,7 +182,7 @@ export default function CartPage() {
       key: keyId,
       amount,
       currency: currency ?? "INR",
-      name: "SkillSphere",
+      name: "Umang Vision Academy",
       description: `Enrolling in ${cartItems.length} course${cartItems.length !== 1 ? "s" : ""}`,
       order_id: orderId,
       prefill: { name: user?.name || "", email: user?.email || "" },

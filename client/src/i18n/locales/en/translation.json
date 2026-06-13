@@ -405,7 +405,7 @@
       "tag": "Our Story",
       "headingPrefix": "Built by educators,",
       "highlight": "for every learner.",
-      "description": "SkillSphere started in a small room in Jabalpur with one goal: give every Indian student — regardless of their city, school, or income — access to world-class education. That mission hasn't changed."
+      "description": "Umang Vision Academy started in a small room in Jabalpur with one goal: give every Indian student — regardless of their city, school, or income — access to world-class education. That mission hasn't changed."
     },
     "mission": {
       "tag": "Our Mission",
@@ -474,7 +474,7 @@
     },
     "cta": {
       "title": "Ready to start learning?",
-      "body": "Join 50,000+ students who are already learning smarter with SkillSphere.",
+      "body": "Join 50,000+ students who are already learning smarter with Umang Vision Academy.",
       "getStarted": "Get started free",
       "browseCourses": "Browse courses"
     }
@@ -668,7 +668,17 @@
     "currentlyActive": "Currently Active",
     "categories": "Categories",
     "disclaimerTitle": "Disclaimer:",
-    "disclaimerText": "Scheme details, deadlines, and eligibility are sourced from official government portals and are subject to change. Always verify on the official website before applying. SkillSphere is not affiliated with any government body."
+    "disclaimerText": "Scheme details, deadlines, and eligibility are sourced from official government portals and are subject to change. Always verify on the official website before applying. Umang Vision Academy is not affiliated with any government body.",
+    "backToAll": "← Back to all posts",
+    "writtenBy": "By Umang AI Editor",
+    "originalSource": "Original Source",
+    "readMoreSource": "Read more at the official source",
+    "helpfulQuestion": "Was this article helpful?",
+    "thanksFeedback": "Thank you for your feedback!",
+    "yes": "Yes",
+    "no": "No",
+    "share": "Share",
+    "copied": "Link copied to clipboard!"
   },
 
   "studentSidebar": {

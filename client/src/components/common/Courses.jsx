@@ -4,6 +4,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { fetchPublishedCourses } from "../../redux/slices/courseSlice";
 import CourseCard from "./CourseCard";
+import { FaStar } from "react-icons/fa";
+import axios from "axios";
+import { toast } from "react-hot-toast";
 
 // ── Skeleton card ─────────────────────────────────────────────────────────────
 const SkeletonCard = () => (
@@ -16,6 +19,101 @@ const SkeletonCard = () => (
     </div>
   </div>
 );
+
+// ── Star Rating Modal ─────────────────────────────────────────────────────────
+const RatingModal = ({ course, onClose, onSubmit }) => {
+  const [hovered, setHovered] = useState(0);
+  const [selected, setSelected] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const labels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
+
+  const handleSubmit = async () => {
+    if (!selected) return toast.error("Please select a rating");
+    setSubmitting(true);
+    try {
+      await onSubmit(course._id, selected, comment);
+      onClose();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-[#111827] border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-white font-bold text-lg">Rate this Course</h3>
+            <p className="text-slate-400 text-sm mt-0.5 line-clamp-1">
+              {course.title}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-500 hover:text-white transition-colors text-xl leading-none ml-4"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Stars */}
+        <div className="flex flex-col items-center gap-2 my-6">
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onMouseEnter={() => setHovered(star)}
+                onMouseLeave={() => setHovered(0)}
+                onClick={() => setSelected(star)}
+                className="transition-transform hover:scale-110"
+              >
+                <FaStar
+                  className={`text-3xl transition-colors ${
+                    star <= (hovered || selected)
+                      ? "text-amber-400"
+                      : "text-slate-600"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+          <span className="text-sm font-medium text-amber-400 h-5">
+            {labels[hovered || selected] || ""}
+          </span>
+        </div>
+
+        {/* Comment */}
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Share your experience (optional)…"
+          rows={3}
+          className="w-full bg-[#0B1120] border border-slate-700 rounded-xl px-4 py-3 text-slate-300 text-sm placeholder-slate-600 outline-none focus:border-indigo-500 resize-none transition-colors"
+        />
+
+        {/* Actions */}
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl text-sm font-medium text-slate-400 border border-slate-700 hover:text-white hover:border-slate-500 transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={!selected || submitting}
+            className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {submitting ? "Submitting…" : "Submit Rating"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ALL = "All";
 const ALL_SUBJECTS = "All Subjects";
@@ -37,12 +135,14 @@ const Courses = () => {
   const [selectedClass, setSelectedClass] = useState(ALL);
   const [selectedSubject, setSelectedSubject] = useState(ALL_SUBJECTS);
   const [selectedBoard, setSelectedBoard] = useState(ALL_BOARDS);
+  const [ratingCourse, setRatingCourse] = useState(null); // course being rated
+  const [submittedRatings, setSubmittedRatings] = useState({}); // { courseId: rating }
 
   useEffect(() => {
     dispatch(fetchPublishedCourses());
   }, [dispatch]);
 
-  // ── Derived filter options — recomputed only when courses change ──────────
+  // ── Derived filter options ─────────────────────────────────────────────────
   const dynamicClasses = useMemo(
     () => [...new Set(allCourses.map((c) => c.category).filter(Boolean))],
     [allCourses],
@@ -86,22 +186,62 @@ const Courses = () => {
       }),
     [allCourses, selectedClass, selectedSubject, selectedBoard],
   );
+
   const isEnrolled = (course) => {
     if (!user) return false;
     return course.students?.some((s) => (s._id ?? s) === user._id);
   };
 
+  // A course is "completed" when the student's progress hits 100%.
+  // We check the completedBy array on the course model (add this field if not present),
+  // falling back to a progressMap if your course model tracks it differently.
+  const isCompleted = (course) => {
+    if (!user) return false;
+    // Option A: course has a completedBy array of user IDs
+    if (Array.isArray(course.completedBy)) {
+      return course.completedBy.some((id) => (id._id ?? id) === user._id);
+    }
+    // Option B: course has a progressMap { userId: percentage }
+    if (course.progressMap) {
+      return (course.progressMap[user._id] ?? 0) >= 100;
+    }
+    return false;
+  };
+
+  const hasRated = (course) => {
+    if (!user) return false;
+    // Check submitted in this session
+    if (submittedRatings[course._id]) return true;
+    // Check existing reviews on course
+    if (Array.isArray(course.reviews)) {
+      return course.reviews.some((r) => (r.user?._id ?? r.user) === user._id);
+    }
+    return false;
+  };
+
+  // ── Submit rating ─────────────────────────────────────────────────────────
+  const handleRatingSubmit = async (courseId, rating, comment) => {
+    try {
+      await axios.post(`/api/courses/${courseId}/rate`, { rating, comment });
+      setSubmittedRatings((prev) => ({ ...prev, [courseId]: rating }));
+      toast.success("Thanks for your rating!");
+      dispatch(fetchPublishedCourses()); // refresh to update ratingAverage
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to submit rating");
+      throw err; // let modal handle submitting state
+    }
+  };
+
   // ── Navigation ────────────────────────────────────────────────────────────
   const handleCourseClick = (course) => {
-    // pass full course, not just ID
     if (!user) {
       navigate("/login", { state: { from: "/courses" } });
       return;
     }
     if (isEnrolled(course)) {
-      navigate(`/courses/${course._id}`); // → CoursePage
+      navigate(`/courses/${course._id}`);
     } else {
-      navigate(`/courses/${course._id}/demo`); // → Demo page
+      navigate(`/courses/${course._id}/demo`);
     }
   };
 
@@ -221,30 +361,75 @@ const Courses = () => {
           </div>
         ) : filteredCourses.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {filteredCourses.map((course) => (
-              <div
-                key={course._id}
-                onClick={() => handleCourseClick(course)} // pass full course
-                className="cursor-pointer"
-              >
-                <CourseCard
-                  course={{
-                    title: course.title,
-                    instructor: instructorName(course.instructor),
-                    rating: course.ratingAverage ?? 0,
-                    reviews: course.reviewCount ?? 0,
-                    price:
-                      course.price > 0 ? `₹${course.price}` : t("courses.free"),
-                    image: course.thumbnailUrl ?? null,
-                    board: course.board ?? null,
-                    category: course.category ?? null,
-                    students:
-                      course.students?.length ?? course.enrolledCount ?? 0,
-                    enrolled: isEnrolled(course), // ← new prop
-                  }}
-                />
-              </div>
-            ))}
+            {filteredCourses.map((course) => {
+              const completed = isCompleted(course);
+              const enrolled = isEnrolled(course);
+              const rated = hasRated(course);
+              const sessionRating = submittedRatings[course._id];
+
+              return (
+                <div key={course._id} className="flex flex-col gap-2">
+                  {/* Course card */}
+                  <div
+                    onClick={() => handleCourseClick(course)}
+                    className="cursor-pointer"
+                  >
+                    <CourseCard
+                      course={{
+                        title: course.title,
+                        instructor: instructorName(course.instructor),
+                        rating: course.ratingAverage ?? 0,
+                        reviews: course.reviewCount ?? 0,
+                        price:
+                          course.price > 0
+                            ? `₹${course.price}`
+                            : t("courses.free"),
+                        image: course.thumbnailUrl ?? null,
+                        board: course.board ?? null,
+                        category: course.category ?? null,
+                        students:
+                          course.students?.length ?? course.enrolledCount ?? 0,
+                        enrolled,
+                      }}
+                    />
+                  </div>
+
+                  {/* Rating row — visible for all enrolled courses */}
+                  {enrolled && (
+                    <div className="flex items-center px-1">
+                      {rated ? (
+                        <div className="flex items-center gap-1.5 text-xs text-amber-400 font-medium">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <FaStar
+                              key={s}
+                              className={
+                                s <=
+                                (sessionRating ??
+                                  Math.round(course.ratingAverage))
+                                  ? "text-amber-400"
+                                  : "text-slate-600"
+                              }
+                            />
+                          ))}
+                          <span className="text-slate-400 ml-1">Rated</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRatingCourse(course);
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-semibold hover:bg-amber-500/20 hover:border-amber-500/40 transition-all"
+                        >
+                          <FaStar className="text-[11px]" />
+                          Rate Course
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-20">
@@ -273,6 +458,15 @@ const Courses = () => {
           </div>
         )}
       </div>
+
+      {/* Rating modal */}
+      {ratingCourse && (
+        <RatingModal
+          course={ratingCourse}
+          onClose={() => setRatingCourse(null)}
+          onSubmit={handleRatingSubmit}
+        />
+      )}
     </section>
   );
 };

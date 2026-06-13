@@ -38,6 +38,14 @@ import CertificatesSection from "./components/student/CertificatesSection";
 import SettingsSection from "./components/student/SettingsSection";
 import LeaderBoard from "./components/student/LeaderBoard";
 import StudentNotifications from "./components/student/StudentNotifications";
+import StudentSessions from "./components/student/StudentSessions";
+
+/* Mock Tests */
+import MockTestsLayout from "./components/student/MockTestsIndex";
+import AvailableMockTests from "./components/student/AvailableMockTests";
+import MockTestPlayer from "./components/student/MockTestPlayer";
+import MockTestResultsAnalytics from "./components/student/MockTestResultsAnalytics";
+import MockTestLeaderboard from "./components/student/MockTestLeaderboard";
 
 /* Instructor Dashboard */
 import InstructorDashboard from "./components/instructor/InstructorDashboard";
@@ -49,6 +57,7 @@ import InstructorAnalytics from "./components/instructor/InstructorAnalytics";
 import InstructorAI from "./components/instructor/InstructorAI";
 import InstructorNotifications from "./components/instructor/InstructorNotifications";
 import InstructorSettings from "./components/instructor/InstructorSettings";
+import InstructorMockTests from "./components/instructor/InstructorMockTests";
 
 /* Admin Dashboard */
 import AdminDashboard from "./components/admin/AdminDashboard";
@@ -61,13 +70,13 @@ import AdminLeaderboard from "./components/admin/AdminLeaderboard";
 import InstructorApplicationStatus from "./components/common/InstructorApplicationStatus";
 import PrivacyPolicy from "./components/common/PrivacyPolicy";
 import TermsOfService from "./components/common/TermsOfService";
-import StudentSessions from "./components/student/StudentSessions";
 import CourseDemo from "./components/course/CourseDemo";
 import AboutUs from "./pages/AboutUs";
 import QuestionBank from "./components/common/QuestionBank";
 import Blogs from "./components/common/Blogs";
 import BoardCourses from "./components/Boards/BoardCourses";
 import CoursePage from "./components/course/CoursePage";
+
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -120,7 +129,6 @@ function App() {
           <Route path="blogs" element={<Blogs />} />
           <Route path="courses/:id" element={<CoursePage />} />
           <Route path="boards/:board" element={<BoardCourses />} />
-
           <Route
             path="become-instructor/apply"
             element={<BecomeInstructorApplication />}
@@ -157,7 +165,32 @@ function App() {
             <Route path="sessions" element={<StudentSessions />} />
             <Route path="notifications" element={<StudentNotifications />} />
             <Route path="certificates" element={<CertificatesSection />} />
+
+            {/* ── Mock Tests (nested layout with sub-nav) ── */}
+            <Route path="mock-tests" element={<MockTestsLayout />}>
+              <Route index element={<AvailableMockTests />} />
+              <Route path="results" element={<MockTestResultsAnalytics />} />
+              <Route path="leaderboard" element={<MockTestLeaderboard />} />
+            </Route>
           </Route>
+
+          {/* ── Mock Test full-screen routes (no sidebar sub-nav during test) ── */}
+          <Route
+            path="student-dashboard/mock-tests/take/:testId"
+            element={
+              <ProtectedRoute allowedRoles={["student"]}>
+                <MockTestPlayer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="student-dashboard/mock-tests/result/:attemptId"
+            element={
+              <ProtectedRoute allowedRoles={["student"]}>
+                <MockTestResultsAnalytics />
+              </ProtectedRoute>
+            }
+          />
 
           {/* ========================= */}
           {/* INSTRUCTOR DASHBOARD      */}
@@ -175,7 +208,7 @@ function App() {
             <Route path="students" element={<InstructorStudents />} />
             <Route path="sessions" element={<InstructorSessions />} />
             <Route path="analytics" element={<InstructorAnalytics />} />
-
+            <Route path="mock-tests" element={<InstructorMockTests />} />
             <Route path="ai" element={<InstructorAI />} />
             <Route path="notifications" element={<InstructorNotifications />} />
             <Route path="settings" element={<InstructorSettings />} />

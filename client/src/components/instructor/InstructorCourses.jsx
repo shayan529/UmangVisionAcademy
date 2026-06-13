@@ -390,7 +390,6 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
   const [aiLoading, setAiLoading] = useState(false);
   const [activeIdx, setActiveIdx] = useState(null);
   const questions = quiz?.questions || [];
-  const LABELS = ["A", "B", "C", "D"];
 
   const updateQuestions = (newQs) =>
     onChange({ ...(quiz || { title: "Final Quiz" }), questions: newQs });
@@ -486,7 +485,7 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
             {questions.length} question{questions.length !== 1 ? "s" : ""}
           </span>
         </div>
-        <button
+        {/* <button
           type="button"
           onClick={generateWithAI}
           disabled={aiLoading}
@@ -538,7 +537,7 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
           ) : (
             "✨ Generate with AI"
           )}
-        </button>
+        </button> */}
       </div>
       <div style={{ display: "flex", minHeight: questions.length ? 320 : 120 }}>
         {questions.length > 0 && (
@@ -808,7 +807,7 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
   const signatoryTitle = certificate?.signatoryTitle ?? "";
   const theme = certificate?.theme ?? "purple";
 
-  const updateCert = (field, value) => {
+  const updateCert = (field, value) =>
     onChange({
       ...(certificate || {
         enabled: false,
@@ -819,37 +818,40 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
       }),
       [field]: value,
     });
-  };
 
   const themes = {
     purple: {
       name: "Purple Luxury",
-      colors: ["#4c1d95", "#7c3aed"],
-      accent: "#a78bfa",
+      colors: ["#3b0764", "#6d28d9"],
+      accent: "#c4b5fd",
+      border: "#7c3aed",
     },
     blue: {
       name: "Classic Navy",
-      colors: ["#1e3a8a", "#3b82f6"],
-      accent: "#93c5fd",
+      colors: ["#1e3a8a", "#1d4ed8"],
+      accent: "#bfdbfe",
+      border: "#3b82f6",
     },
     green: {
       name: "Emerald Professional",
-      colors: ["#064e3b", "#10b981"],
-      accent: "#6ee7b7",
+      colors: ["#052e16", "#166534"],
+      accent: "#bbf7d0",
+      border: "#16a34a",
     },
     gold: {
       name: "Royal Gold",
-      colors: ["#78350f", "#d97706"],
-      accent: "#fde047",
+      colors: ["#451a03", "#b45309"],
+      accent: "#fef08a",
+      border: "#d97706",
     },
     dark: {
       name: "Minimalist Slate",
-      colors: ["#0f172a", "#334155"],
-      accent: "#cbd5e1",
+      colors: ["#0f172a", "#1e293b"],
+      accent: "#e2e8f0",
+      border: "#475569",
     },
   };
-
-  const activeTheme = themes[theme] || themes.purple;
+  const at = themes[theme] || themes.purple;
 
   return (
     <div
@@ -878,7 +880,8 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
               Course Certificate
             </div>
             <div style={{ fontSize: 11, color: "#64748b" }}>
-              Award a customized certificate to students who complete this course
+              Award a customized certificate to students who complete this
+              course
             </div>
           </div>
         </div>
@@ -913,7 +916,6 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
           <span
             style={{
               position: "absolute",
-              content: '""',
               height: 16,
               width: 16,
               left: enabled ? 24 : 4,
@@ -937,16 +939,17 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
             borderTop: "1px solid #1e293b",
           }}
         >
-          {/* Certificate Config */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <Field label="Certificate Title" hint="* (e.g. Certificate of Completion)">
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
+          >
+            <Field label="Certificate Title" hint="*">
               <Input
                 value={title}
                 onChange={(e) => updateCert("title", e.target.value)}
                 placeholder="Certificate of Completion"
               />
             </Field>
-            <Field label="Certificate Theme" hint="* (select layout design)">
+            <Field label="Certificate Theme" hint="*">
               <Sel
                 value={theme}
                 onChange={(e) => updateCert("theme", e.target.value)}
@@ -957,8 +960,9 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
               />
             </Field>
           </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
+          >
             <Field label="Signatory Name" hint="(authorized person signing)">
               <Input
                 value={signatoryName}
@@ -966,7 +970,10 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
                 placeholder="e.g. Jane Doe"
               />
             </Field>
-            <Field label="Signatory Title" hint="(e.g. Lead Instructor / Founder)">
+            <Field
+              label="Signatory Title"
+              hint="(e.g. Lead Instructor / Founder)"
+            >
               <Input
                 value={signatoryTitle}
                 onChange={(e) => updateCert("signatoryTitle", e.target.value)}
@@ -975,7 +982,7 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
             </Field>
           </div>
 
-          {/* Certificate Live Preview */}
+          {/* ── A4 Live Preview ── */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div
               style={{
@@ -986,109 +993,281 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
                 letterSpacing: "0.1em",
               }}
             >
-              Live Certificate Preview
+              Live Certificate Preview (A4 Landscape)
             </div>
 
+            {/* A4 landscape ratio 297:210 */}
             <div
               style={{
-                background: `linear-gradient(135deg, ${activeTheme.colors[0]}, ${activeTheme.colors[1]})`,
-                borderRadius: 16,
-                padding: "24px 28px",
+                width: "100%",
+                aspectRatio: "297 / 210",
+                background: `linear-gradient(135deg, ${at.colors[0]}, ${at.colors[1]})`,
+                borderRadius: 12,
                 position: "relative",
                 overflow: "hidden",
-                boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-                border: `1px solid ${activeTheme.accent}33`,
-                minHeight: 180,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
+                fontFamily: "Georgia, serif",
+                border: `1.5px solid ${at.border}44`,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
               }}
             >
-              {/* decorative circles */}
+              {/* decorative rings */}
               <div
                 style={{
                   position: "absolute",
-                  right: -20,
-                  top: -20,
-                  width: 100,
-                  height: 100,
+                  right: -60,
+                  top: -60,
+                  width: 240,
+                  height: 240,
                   borderRadius: "50%",
-                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.08)",
                 }}
               />
               <div
                 style={{
                   position: "absolute",
-                  right: 30,
-                  bottom: -30,
-                  width: 130,
-                  height: 130,
+                  left: -50,
+                  bottom: -50,
+                  width: 200,
+                  height: 200,
                   borderRadius: "50%",
-                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.07)",
                 }}
               />
 
-              {/* Top Row */}
-              <div style={{ display: "flex", justifyBetween: "space-between", justifyContent: "space-between", alignItems: "flex-start", zIndex: 1 }}>
-                <div>
+              {/* outer frame */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: "10px",
+                  border: `1px solid ${at.accent}33`,
+                  borderRadius: 8,
+                  pointerEvents: "none",
+                }}
+              />
+
+              {/* inner layout */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: "18px 22px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  zIndex: 1,
+                }}
+              >
+                {/* top */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "clamp(6px,1vw,9px)",
+                        fontWeight: 800,
+                        color: at.accent,
+                        letterSpacing: "0.15em",
+                        textTransform: "uppercase",
+                        fontFamily: "sans-serif",
+                        marginBottom: 1,
+                      }}
+                    >
+                      AICoaching Platform
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "clamp(5px,0.8vw,7px)",
+                        color: "rgba(255,255,255,0.4)",
+                        fontFamily: "sans-serif",
+                      }}
+                    >
+                      Verify ID: CERT-XXXXXX
+                    </div>
+                  </div>
+                  <div style={{ fontSize: "clamp(18px,2.8vw,32px)" }}>🏅</div>
+                </div>
+
+                {/* middle */}
+                <div style={{ textAlign: "center", padding: "0 4%" }}>
                   <div
                     style={{
-                      fontSize: 9,
-                      fontWeight: 800,
-                      color: activeTheme.accent,
-                      letterSpacing: "0.15em",
+                      fontSize: "clamp(6px,0.9vw,8px)",
+                      fontWeight: 700,
+                      color: at.accent,
+                      letterSpacing: "0.25em",
                       textTransform: "uppercase",
-                      marginBottom: 2,
+                      fontFamily: "sans-serif",
+                      marginBottom: "1%",
                     }}
                   >
                     {title || "Certificate of Completion"}
                   </div>
-                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.5)" }}>
-                    AICoaching Platform · Verify ID: CERT-XXXXXX
+                  <div
+                    style={{
+                      width: "25%",
+                      height: 1,
+                      background: `linear-gradient(90deg,transparent,${at.accent}88,transparent)`,
+                      margin: "0 auto 1.5%",
+                    }}
+                  />
+                  <div
+                    style={{
+                      fontSize: "clamp(5px,0.75vw,7px)",
+                      color: "rgba(255,255,255,0.55)",
+                      fontStyle: "italic",
+                      marginBottom: "0.5%",
+                    }}
+                  >
+                    This is to certify that
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "clamp(13px,2.2vw,26px)",
+                      fontWeight: 700,
+                      color: "#fff",
+                      lineHeight: 1.1,
+                      marginBottom: "0.5%",
+                      textShadow: `0 2px 10px ${at.accent}44`,
+                    }}
+                  >
+                    Student Name
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "clamp(5px,0.75vw,7px)",
+                      color: "rgba(255,255,255,0.55)",
+                      fontStyle: "italic",
+                      marginBottom: "1%",
+                    }}
+                  >
+                    has successfully completed the course
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "clamp(8px,1.4vw,14px)",
+                      fontWeight: 800,
+                      color: at.accent,
+                      fontFamily: "sans-serif",
+                      lineHeight: 1.2,
+                      marginBottom: "0.5%",
+                    }}
+                  >
+                    {courseTitle || "Course Subject / Title"}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "clamp(5px,0.7vw,6px)",
+                      color: "rgba(255,255,255,0.4)",
+                      fontFamily: "sans-serif",
+                    }}
+                  >
+                    on{" "}
+                    {new Date().toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
                   </div>
                 </div>
-                <div style={{ fontSize: 28 }}>🏅</div>
-              </div>
 
-              {/* Middle Section */}
-              <div style={{ margin: "14px 0", zIndex: 1 }}>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", marginBottom: 2 }}>
-                  THIS IS PROUDLY PRESENTED TO A STUDENT FOR SUCCESSFULLY COMPLETING
-                </div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: "#fff", lineHeight: 1.2 }}>
-                  {courseTitle || "Course Subject/Title"}
-                </div>
-              </div>
-
-              {/* Signatory Footer */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-end",
-                  borderTop: "1px solid rgba(255,255,255,0.1)",
-                  paddingTop: 8,
-                  zIndex: 1,
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: "#fff" }}>
-                    {signatoryName || "Authorized Signatory"}
-                  </div>
-                  <div style={{ fontSize: 8, color: "rgba(255,255,255,0.6)" }}>
-                    {signatoryTitle || "Instructor / Platform Admin"}
-                  </div>
-                </div>
+                {/* bottom */}
                 <div
                   style={{
-                    fontFamily: "Georgia, serif",
-                    fontStyle: "italic",
-                    fontSize: 12,
-                    color: activeTheme.accent,
-                    opacity: 0.85,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-end",
+                    borderTop: `1px solid rgba(255,255,255,0.1)`,
+                    paddingTop: "1%",
                   }}
                 >
-                  {signatoryName || "Signature"}
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "clamp(5px,0.7vw,6px)",
+                        color: "rgba(255,255,255,0.35)",
+                        fontFamily: "sans-serif",
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        marginBottom: 1,
+                      }}
+                    >
+                      Credential ID
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "clamp(5px,0.75vw,7px)",
+                        color: at.accent,
+                        fontFamily: "monospace",
+                        fontWeight: 700,
+                      }}
+                    >
+                      CERT-XXXXXX
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <div
+                      style={{
+                        width: "clamp(20px,3vw,32px)",
+                        height: "clamp(20px,3vw,32px)",
+                        borderRadius: "50%",
+                        border: `1.5px solid ${at.accent}66`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        margin: "0 auto 2px",
+                        fontSize: "clamp(9px,1.5vw,16px)",
+                      }}
+                    >
+                      🎓
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "clamp(4px,0.55vw,5px)",
+                        color: "rgba(255,255,255,0.3)",
+                        fontFamily: "sans-serif",
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Official Seal
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div
+                      style={{
+                        fontSize: "clamp(7px,1.1vw,11px)",
+                        fontFamily: "Georgia,serif",
+                        fontStyle: "italic",
+                        color: at.accent,
+                        marginBottom: 2,
+                        opacity: 0.9,
+                      }}
+                    >
+                      {signatoryName || "Authorized Signatory"}
+                    </div>
+                    <div
+                      style={{
+                        width: "clamp(30px,5vw,55px)",
+                        height: 1,
+                        background: `${at.accent}55`,
+                        marginLeft: "auto",
+                        marginBottom: 2,
+                      }}
+                    />
+                    <div
+                      style={{
+                        fontSize: "clamp(4px,0.65vw,6px)",
+                        color: "rgba(255,255,255,0.4)",
+                        fontFamily: "sans-serif",
+                      }}
+                    >
+                      {signatoryTitle || "Instructor / Platform Admin"}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1144,7 +1323,6 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
         </Field>
       </div>
 
-      {/* ── ChapterManager now receives course context for AI generation ── */}
       <ChapterManager
         lessons={form.lessons ?? []}
         onChange={(lessons) => setForm((f) => ({ ...f, lessons }))}
@@ -1185,7 +1363,7 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
           label="Thumbnail"
           hint="JPG, PNG, WEBP"
           accept="image/jpeg,image/png,image/webp,image/gif"
-          folder="skillsphere/thumbnails"
+          folder="Umang Vision Academy/thumbnails"
           icon="🖼️"
           currentUrl={form.thumbnailUrl}
           onUploaded={(url) => setForm((f) => ({ ...f, thumbnailUrl: url }))}
@@ -1194,7 +1372,7 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
           label="Demo Video"
           hint="MP4, WEBM — max 200 MB"
           accept="video/mp4,video/webm,video/quicktime"
-          folder="skillsphere/demos"
+          folder="Umang Vision Academy/demos"
           icon="🎬"
           currentUrl={form.demoVideoUrl}
           onUploaded={(url) => setForm((f) => ({ ...f, demoVideoUrl: url }))}
@@ -1288,10 +1466,10 @@ export default function InstructorCourses({ showToast }) {
   const [expandedId, setExpandedId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [createForm, setCreateForm] = useState(() => {
-    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
-    if (!savedDraft) return EMPTY_FORM;
+    const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!saved) return EMPTY_FORM;
     try {
-      return { ...EMPTY_FORM, ...JSON.parse(savedDraft) };
+      return { ...EMPTY_FORM, ...JSON.parse(saved) };
     } catch {
       localStorage.removeItem(DRAFT_STORAGE_KEY);
       return EMPTY_FORM;
@@ -1307,10 +1485,10 @@ export default function InstructorCourses({ showToast }) {
   }, [dispatch]);
 
   const loadSavedDraft = () => {
-    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
-    if (!savedDraft) return;
+    const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!saved) return;
     try {
-      const parsed = JSON.parse(savedDraft);
+      const parsed = JSON.parse(saved);
       if (isDraftForm(parsed)) setCreateForm({ ...EMPTY_FORM, ...parsed });
     } catch {
       localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -1324,11 +1502,11 @@ export default function InstructorCourses({ showToast }) {
       else localStorage.removeItem(DRAFT_STORAGE_KEY);
     };
     saveDraft();
-    const handleBeforeUnload = (event) => {
+    const handleBeforeUnload = (e) => {
       if (view === "create" && isDraftForm(createForm)) {
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(createForm));
-        event.preventDefault();
-        event.returnValue = "";
+        e.preventDefault();
+        e.returnValue = "";
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -1414,7 +1592,7 @@ export default function InstructorCourses({ showToast }) {
   });
 
   const validateForPublish = (form) => {
-    const requiredFields = [
+    const required = [
       { key: "subject", label: "Subject" },
       { key: "className", label: "Class" },
       { key: "board", label: "Board" },
@@ -1422,9 +1600,9 @@ export default function InstructorCourses({ showToast }) {
       { key: "content", label: "Course Content" },
       { key: "thumbnailUrl", label: "Thumbnail" },
     ];
-    for (const field of requiredFields) {
-      if (!form[field.key]) {
-        showToast?.(`${field.label} is required before submitting for review`);
+    for (const f of required) {
+      if (!form[f.key]) {
+        showToast?.(`${f.label} is required before submitting for review`);
         return false;
       }
     }
@@ -1434,11 +1612,11 @@ export default function InstructorCourses({ showToast }) {
   const handleCreate = async (publish) => {
     if (publish && !validateForPublish(createForm)) return;
     setSaving(true);
-    const resultAction = await dispatch(
+    const result = await dispatch(
       createCourse(buildPayload(createForm, publish)),
     );
     setSaving(false);
-    if (createCourse.fulfilled.match(resultAction)) {
+    if (createCourse.fulfilled.match(result)) {
       setCreateForm(EMPTY_FORM);
       localStorage.removeItem(DRAFT_STORAGE_KEY);
       setView("list");
@@ -1447,8 +1625,7 @@ export default function InstructorCourses({ showToast }) {
       );
     } else {
       showToast?.(
-        resultAction.payload ||
-          "Failed to save course. Your draft is preserved.",
+        result.payload || "Failed to save course. Your draft is preserved.",
       );
     }
   };

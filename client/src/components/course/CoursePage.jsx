@@ -38,6 +38,248 @@ const groupIntoChapters = (lessons = []) => {
   return chapters;
 };
 
+// ── Certificate Earned Modal ──────────────────────────────────────────────────
+function CertificateEarnedModal({ course, onClose, onViewCertificates }) {
+  const themes = {
+    purple: { colors: ["#3b0764", "#6d28d9"], accent: "#c4b5fd" },
+    blue: { colors: ["#1e3a8a", "#1d4ed8"], accent: "#bfdbfe" },
+    green: { colors: ["#052e16", "#166534"], accent: "#bbf7d0" },
+    gold: { colors: ["#451a03", "#b45309"], accent: "#fef08a" },
+    dark: { colors: ["#0f172a", "#1e293b"], accent: "#e2e8f0" },
+  };
+  const cert = course?.certificate;
+  const t = themes[cert?.theme] || themes.purple;
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.75)",
+        zIndex: 200,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+        backdropFilter: "blur(6px)",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#0d1526",
+          border: "1px solid #1e293b",
+          borderRadius: 24,
+          width: "100%",
+          maxWidth: 440,
+          overflow: "hidden",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.7)",
+          animation: "certPop 0.45s cubic-bezier(0.34,1.56,0.64,1)",
+        }}
+      >
+        {/* Gradient banner */}
+        <div
+          style={{
+            background: `linear-gradient(135deg, ${t.colors[0]}, ${t.colors[1]})`,
+            padding: "28px 24px 24px",
+            textAlign: "center",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              right: -30,
+              top: -30,
+              width: 120,
+              height: 120,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.07)",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              left: -20,
+              bottom: -20,
+              width: 90,
+              height: 90,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.05)",
+            }}
+          />
+
+          <div
+            style={{
+              fontSize: 52,
+              marginBottom: 12,
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            🏅
+          </div>
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 800,
+              color: t.accent,
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              fontFamily: "sans-serif",
+              marginBottom: 6,
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            Certificate Earned
+          </div>
+          <div
+            style={{
+              fontSize: 20,
+              fontWeight: 800,
+              color: "#fff",
+              lineHeight: 1.2,
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            {cert?.title || "Certificate of Completion"}
+          </div>
+        </div>
+
+        {/* Body */}
+        <div
+          style={{
+            padding: "22px 24px 24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+          }}
+        >
+          {/* Confetti-style stars row */}
+          <div style={{ textAlign: "center", fontSize: 20, letterSpacing: 4 }}>
+            🌟 🎉 🌟
+          </div>
+
+          <div style={{ textAlign: "center" }}>
+            <p
+              style={{
+                fontSize: 14,
+                color: "#e2e8f0",
+                fontWeight: 600,
+                marginBottom: 6,
+              }}
+            >
+              You've completed
+            </p>
+            <p
+              style={{
+                fontSize: 16,
+                fontWeight: 800,
+                color: "#a78bfa",
+                lineHeight: 1.3,
+                marginBottom: 10,
+              }}
+            >
+              {course?.title}
+            </p>
+            <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.7 }}>
+              Your certificate is ready. Head to your Certificates page to view,
+              download, or share it with the world.
+            </p>
+          </div>
+
+          {/* Certificate mini-preview strip */}
+          <div
+            style={{
+              background: `linear-gradient(135deg, ${t.colors[0]}cc, ${t.colors[1]}cc)`,
+              borderRadius: 12,
+              padding: "12px 16px",
+              border: `1px solid ${t.accent}33`,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <span style={{ fontSize: 24 }}>📜</span>
+            <div style={{ flex: 1 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: t.accent,
+                  marginBottom: 2,
+                }}
+              >
+                {cert?.title || "Certificate of Completion"}
+              </div>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>
+                AICoaching Platform · Issued today
+              </div>
+            </div>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                color: "#4ade80",
+                background: "#052e16",
+                border: "1px solid #166534",
+                padding: "3px 8px",
+                borderRadius: 20,
+              }}
+            >
+              EARNED
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={onClose}
+              style={{
+                flex: 1,
+                padding: "11px",
+                borderRadius: 12,
+                border: "1px solid #334155",
+                background: "transparent",
+                color: "#94a3b8",
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: "pointer",
+              }}
+            >
+              Stay here
+            </button>
+            <button
+              onClick={onViewCertificates}
+              style={{
+                flex: 2,
+                padding: "11px",
+                borderRadius: 12,
+                border: "none",
+                background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+              }}
+            >
+              🎓 View My Certificate
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Rating Modal ──────────────────────────────────────────────────────────────
 function RatingModal({ course, user, onClose, onSubmitted }) {
   const [hovered, setHovered] = useState(0);
@@ -47,7 +289,6 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Pre-fill if user already rated
   const existingRating = useMemo(() => {
     if (!user || !course?.ratings) return null;
     return course.ratings.find(
@@ -73,7 +314,6 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
     setLoading(true);
     setError("");
     try {
-      // POST /api/courses/:id/rate  — adjust endpoint to match your backend
       await api.post(`/courses/${course._id}/rate`, {
         rating: selected,
         review: review.trim(),
@@ -91,7 +331,6 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
   };
 
   return (
-    // Backdrop
     <div
       onClick={onClose}
       style={{
@@ -105,7 +344,6 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
         padding: 16,
       }}
     >
-      {/* Modal card */}
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
@@ -118,7 +356,6 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
           boxShadow: "0 24px 60px rgba(0,0,0,0.6)",
         }}
       >
-        {/* Header */}
         <div
           style={{
             padding: "18px 20px 14px",
@@ -173,8 +410,6 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
             ✕
           </button>
         </div>
-
-        {/* Body */}
         {success ? (
           <div
             style={{
@@ -198,7 +433,6 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
           </div>
         ) : (
           <div style={{ padding: "22px 20px 20px" }}>
-            {/* Stars */}
             <div
               style={{
                 display: "flex",
@@ -234,8 +468,6 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
                 </button>
               ))}
             </div>
-
-            {/* Rating label */}
             <p
               style={{
                 textAlign: "center",
@@ -249,8 +481,6 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
             >
               {active ? labels[active] : "Tap a star to rate"}
             </p>
-
-            {/* Review textarea */}
             <div style={{ marginBottom: 16 }}>
               <label
                 style={{
@@ -299,8 +529,6 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
                 {review.length}/500
               </p>
             </div>
-
-            {/* Error */}
             {error && (
               <p
                 style={{
@@ -315,8 +543,6 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
                 {error}
               </p>
             )}
-
-            {/* Actions */}
             <div style={{ display: "flex", gap: 10 }}>
               <button
                 onClick={onClose}
@@ -402,11 +628,8 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0 }) => {
   const toggle = useCallback(() => {
     const v = ref.current;
     if (!v) return;
-    if (playingRef.current) {
-      v.pause();
-    } else {
-      v.play().catch((e) => console.warn("play() failed:", e));
-    }
+    if (playingRef.current) v.pause();
+    else v.play().catch((e) => console.warn("play() failed:", e));
   }, []);
 
   const onTimeUpdate = useCallback(() => {
@@ -685,7 +908,6 @@ function QuizViewer({
   const questions = quiz?.questions || [];
   const LABELS = ["A", "B", "C", "D"];
   const totalPts = questions.length * 10;
-
   const prevSub = user?.quizSubmissions?.find(
     (s) => s.courseId?.toString() === course._id?.toString(),
   );
@@ -695,7 +917,6 @@ function QuizViewer({
       const lockedProgress = totalLessons
         ? Math.round((completedCount / totalLessons) * 100)
         : 0;
-
       return (
         <div
           style={{
@@ -785,7 +1006,6 @@ function QuizViewer({
         </div>
       );
     }
-
     return (
       <div
         style={{
@@ -812,8 +1032,7 @@ function QuizViewer({
             {quiz.title || "Final Quiz"}
           </h2>
           <p style={{ fontSize: 13, color: "#64748b", maxWidth: 340 }}>
-            Test your knowledge of this course. Each correct answer earns 10
-            points.
+            Test your knowledge. Each correct answer earns 10 points.
           </p>
         </div>
         <div style={{ display: "flex", gap: 12, width: "100%", maxWidth: 360 }}>
@@ -1374,9 +1593,11 @@ export default function CoursePage() {
   const [quizResult, setQuizResult] = useState(null);
   const [quizLoading, setQuizLoading] = useState(false);
 
+  // ── Certificate earned modal ────────────────────────────────────────────────
+  const [showCertModal, setShowCertModal] = useState(false);
+
   // ── Rating state ────────────────────────────────────────────────────────────
   const [showRating, setShowRating] = useState(false);
-  // Optimistic local rating average after user submits
   const [localRatingAvg, setLocalRatingAvg] = useState(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -1408,6 +1629,12 @@ export default function CoursePage() {
           }),
         );
         setQuizStep("result");
+
+        // ── Show certificate popup if course has a certificate enabled ──
+        if (course?.certificate?.enabled) {
+          // Small delay so result screen renders first
+          setTimeout(() => setShowCertModal(true), 1200);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -1428,7 +1655,6 @@ export default function CoursePage() {
 
   const saveTimer = useRef(null);
   const pendingSave = useRef({});
-
   const scheduleSave = useCallback(
     (patch) => {
       Object.assign(pendingSave.current, patch);
@@ -1518,19 +1744,16 @@ export default function CoursePage() {
     [activeIdx, scheduleSave],
   );
 
-  const toggleChapter = (i) => {
+  const toggleChapter = (i) =>
     setExpandedCh((prev) => {
       const next = new Set(prev);
       next.has(i) ? next.delete(i) : next.add(i);
       return next;
     });
-  };
-
   const progressPct = allLessons.length
     ? Math.round((completed.size / allLessons.length) * 100)
     : 0;
 
-  // Derive whether the current user has already rated
   const userExistingRating = useMemo(() => {
     if (!user || !course?.ratings) return null;
     return course.ratings.find(
@@ -1538,7 +1761,6 @@ export default function CoursePage() {
     );
   }, [course, user]);
 
-  // Display rating: prefer local optimistic value, fall back to course data
   const displayRating =
     localRatingAvg ??
     course?.ratingAverage ??
@@ -1606,22 +1828,25 @@ export default function CoursePage() {
       }}
     >
       <style>{`
-        .cp-layout { display: flex; flex: 1; overflow: hidden; }
-        .cp-main   { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 14px 40px; }
-        .cp-sidebar { width: 320px; border-left: 1px solid #1e293b; background: #0d1526; display: flex; flex-direction: column; flex-shrink: 0; position: sticky; top: 57px; height: calc(100vh - 57px); overflow-y: auto; }
-        @media (min-width: 768px) { .cp-main { padding: 24px 24px 40px; } .cp-sidebar { width: 360px; } }
-        @media (max-width: 767px) {
-          .cp-layout  { position: relative; }
-          .cp-sidebar { position: fixed; top: 57px; right: 0; height: calc(100vh - 57px); z-index: 40; width: min(340px, 90vw); box-shadow: -4px 0 24px rgba(0,0,0,0.5); transform: translateX(100%); transition: transform 0.25s ease; }
-          .cp-sidebar.open { transform: translateX(0); }
-          .cp-sidebar-overlay { display: none; position: fixed; inset: 0; top: 57px; background: rgba(0,0,0,0.5); z-index: 39; }
-          .cp-sidebar.open ~ .cp-sidebar-overlay,
-          .cp-sidebar-overlay.show { display: block; }
+        @keyframes certPop {
+          from { opacity:0; transform:scale(0.85) translateY(20px); }
+          to   { opacity:1; transform:scale(1) translateY(0); }
         }
-        .cp-topbar-title { font-size: 14px; font-weight: 700; color: #f1f5f9; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        @media (min-width: 768px) { .cp-topbar-title { font-size: 15px; } }
-        .quiz-btn-hover:hover { background: #111827 !important; }
-        .rate-btn:hover { background: #1e293b !important; }
+        .cp-layout { display:flex; flex:1; overflow:hidden; }
+        .cp-main   { flex:1; min-width:0; overflow-y:auto; padding:16px 14px 40px; }
+        .cp-sidebar { width:320px; border-left:1px solid #1e293b; background:#0d1526; display:flex; flex-direction:column; flex-shrink:0; position:sticky; top:57px; height:calc(100vh - 57px); overflow-y:auto; }
+        @media (min-width:768px) { .cp-main { padding:24px 24px 40px; } .cp-sidebar { width:360px; } }
+        @media (max-width:767px) {
+          .cp-layout { position:relative; }
+          .cp-sidebar { position:fixed; top:57px; right:0; height:calc(100vh - 57px); z-index:40; width:min(340px,90vw); box-shadow:-4px 0 24px rgba(0,0,0,0.5); transform:translateX(100%); transition:transform 0.25s ease; }
+          .cp-sidebar.open { transform:translateX(0); }
+          .cp-sidebar-overlay { display:none; position:fixed; inset:0; top:57px; background:rgba(0,0,0,0.5); z-index:39; }
+          .cp-sidebar.open ~ .cp-sidebar-overlay, .cp-sidebar-overlay.show { display:block; }
+        }
+        .cp-topbar-title { font-size:14px; font-weight:700; color:#f1f5f9; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        @media (min-width:768px) { .cp-topbar-title { font-size:15px; } }
+        .quiz-btn-hover:hover { background:#111827 !important; }
+        .rate-btn:hover { background:#1e293b !important; }
       `}</style>
 
       {/* ── Top bar ── */}
@@ -1707,7 +1932,6 @@ export default function CoursePage() {
       {/* ── Main layout ── */}
       <div className="cp-layout">
         <div className="cp-main">
-          {/* ── Video / Text / Quiz panel ── */}
           {showQuiz ? (
             <div
               style={{
@@ -1752,7 +1976,6 @@ export default function CoursePage() {
             />
           )}
 
-          {/* Lesson info */}
           {!showQuiz && (
             <div style={{ marginTop: 18 }}>
               <div
@@ -1866,7 +2089,6 @@ export default function CoursePage() {
             </div>
           )}
 
-          {/* Prev / Next */}
           {!showQuiz && (
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
               <button
@@ -1924,7 +2146,6 @@ export default function CoursePage() {
             </div>
           )}
 
-          {/* ── About section ── */}
           <div
             style={{
               marginTop: 28,
@@ -1946,8 +2167,6 @@ export default function CoursePage() {
               <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9" }}>
                 About this course
               </h3>
-
-              {/* ── Rate this course button ── */}
               <button
                 className="rate-btn"
                 onClick={() => setShowRating(true)}
@@ -1979,7 +2198,6 @@ export default function CoursePage() {
                 {userExistingRating ? "Edit rating" : "Rate this course"}
               </button>
             </div>
-
             <p
               style={{
                 color: "#94a3b8",
@@ -1990,7 +2208,6 @@ export default function CoursePage() {
             >
               {course?.description || course?.summary}
             </p>
-
             <div
               style={{
                 display: "flex",
@@ -2042,7 +2259,6 @@ export default function CoursePage() {
               {chapters.length} chapters · {allLessons.length} lessons
             </p>
           </div>
-
           <div style={{ flex: 1, overflowY: "auto" }}>
             {chapters.map((chapter, ci) => (
               <div key={ci}>
@@ -2181,20 +2397,10 @@ export default function CoursePage() {
               </div>
             ))}
 
-            {/* Final Quiz entry */}
             {course?.quiz?.questions?.length > 0 && (
               <button
                 className="quiz-btn-hover"
                 onClick={() => {
-                  if (!courseComplete) {
-                    setShowQuiz(true);
-                    setQuizStep("intro");
-                    setSelectedAnswers({});
-                    setCurrentQuestion(0);
-                    setQuizResult(null);
-                    if (window.innerWidth < 768) setSidebarOpen(false);
-                    return;
-                  }
                   setShowQuiz(true);
                   setQuizStep("intro");
                   setSelectedAnswers({});
@@ -2278,7 +2484,6 @@ export default function CoursePage() {
           </div>
         </div>
 
-        {/* Mobile overlay */}
         {sidebarOpen && (
           <div
             className="cp-sidebar-overlay show"
@@ -2287,14 +2492,22 @@ export default function CoursePage() {
         )}
       </div>
 
-      {/* ── Rating Modal (portal-like, rendered at CoursePage root) ── */}
+      {/* ── Certificate Earned Modal ── */}
+      {showCertModal && (
+        <CertificateEarnedModal
+          course={course}
+          onClose={() => setShowCertModal(false)}
+          onViewCertificates={() => navigate("/student-dashboard/certificates")}
+        />
+      )}
+
+      {/* ── Rating Modal ── */}
       {showRating && (
         <RatingModal
           course={course}
           user={user}
           onClose={() => setShowRating(false)}
           onSubmitted={(stars) => {
-            // Optimistic: update displayed rating average locally
             const existing = course?.ratings ?? [];
             const alreadyRated = existing.some(
               (r) => r.user?.toString() === user._id?.toString(),

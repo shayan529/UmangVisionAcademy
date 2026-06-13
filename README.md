@@ -6,22 +6,22 @@ An AI-powered EdTech platform for Indian students (Classes 1–12) featuring liv
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
+| Layer    | Technology                                             |
+| -------- | ------------------------------------------------------ |
 | Frontend | React 18, Redux Toolkit, React Router v6, Tailwind CSS |
-| Backend | Node.js, Express.js |
-| Database | MongoDB (Mongoose) |
-| Auth | JWT  |
-| Payments | Razorpay |
-| Media | ImageKit (thumbnails, demo videos) |
-| State | Redux Toolkit  |
+| Backend  | Node.js, Express.js                                    |
+| Database | MongoDB (Mongoose)                                     |
+| Auth     | JWT                                                    |
+| Payments | Razorpay                                               |
+| Media    | ImageKit (thumbnails, demo videos)                     |
+| State    | Redux Toolkit                                          |
 
 ---
 
 ## Project Structure
 
 ```
-skillsphere/
+Umang Vision Academy/
 ├── client/                          # React frontend
 │   ├── public/
 │   └── src/
@@ -108,13 +108,13 @@ skillsphere/
 
 ### Server — `server/.env`
 
-```env
+````env
 # ── Server ────────────────────────────────────────
 PORT=5000
 NODE_ENV=development
 
 # ── MongoDB ───────────────────────────────────────
-MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/skillsphere
+MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/Umang Vision Academy
 
 # ── JWT ───────────────────────────────────────────
 JWT_SECRET=your_jwt_secret_key_here
@@ -148,8 +148,8 @@ CLIENT_URL=http://localhost:5173
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-org/skillsphere.git
-cd skillsphere
+git clone https://github.com/your-org/Umang Vision Academy.git
+cd Umang Vision Academy
 
 # Install server dependencies
 cd server
@@ -158,7 +158,7 @@ npm install
 # Install client dependencies
 cd ../client
 npm install
-```
+````
 
 ### Running Locally
 
@@ -170,3 +170,4 @@ npm run dev          # runs on http://localhost:5000
 # Terminal 2 — start the frontend
 cd client
 npm run dev          # runs on http://localhost:5173
+```

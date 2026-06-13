@@ -1,8 +1,8 @@
-import ImageKit from 'imagekit';
-import fs from 'fs';
-import fsPromises from 'fs/promises';
-import path from 'path';
-import sharp from 'sharp';
+import ImageKit from "imagekit";
+import fs from "fs";
+import fsPromises from "fs/promises";
+import path from "path";
+import sharp from "sharp";
 
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
@@ -13,11 +13,11 @@ const imagekit = new ImageKit({
 const compressImage = async (sourcePath, targetPath, mimetype) => {
   const pipeline = sharp(sourcePath).withMetadata();
 
-  if (mimetype === 'image/jpeg' || mimetype === 'image/jpg') {
+  if (mimetype === "image/jpeg" || mimetype === "image/jpg") {
     pipeline.jpeg({ quality: 75, mozjpeg: true });
-  } else if (mimetype === 'image/png') {
+  } else if (mimetype === "image/png") {
     pipeline.png({ compressionLevel: 8, adaptiveFiltering: true });
-  } else if (mimetype === 'image/webp') {
+  } else if (mimetype === "image/webp") {
     pipeline.webp({ quality: 75 });
   } else {
     return sourcePath;
@@ -33,10 +33,10 @@ export const uploadFile = async (req, res) => {
   let compressedPath = null;
   try {
     if (!req.file)
-      return res.status(400).json({ message: 'No file provided.' });
+      return res.status(400).json({ message: "No file provided." });
 
-    const folder = req.body.folder || 'skillsphere';
-    const fileName = `${Date.now()}_${req.file.originalname.replace(/\s+/g, '_')}`;
+    const folder = req.body.folder || "Umang Vision Academy";
+    const fileName = `${Date.now()}_${req.file.originalname.replace(/\s+/g, "_")}`;
     const sourcePath = req.file.path;
     const originalExt =
       path.extname(req.file.originalname) || path.extname(sourcePath);
@@ -44,8 +44,8 @@ export const uploadFile = async (req, res) => {
 
     try {
       if (
-        req.file.mimetype.startsWith('image/') &&
-        req.file.mimetype !== 'image/gif'
+        req.file.mimetype.startsWith("image/") &&
+        req.file.mimetype !== "image/gif"
       ) {
         compressedPath = getCompressedPath(sourcePath, originalExt);
         await compressImage(sourcePath, compressedPath, req.file.mimetype);
@@ -53,8 +53,8 @@ export const uploadFile = async (req, res) => {
       }
     } catch (compressionError) {
       console.warn(
-        'Compression failed, falling back to original file:',
-        compressionError.message || compressionError
+        "Compression failed, falling back to original file:",
+        compressionError.message || compressionError,
       );
       uploadPath = sourcePath;
       if (compressedPath && fs.existsSync(compressedPath)) {
@@ -87,8 +87,8 @@ export const uploadFile = async (req, res) => {
     if (compressedPath && fs.existsSync(compressedPath)) {
       await fsPromises.unlink(compressedPath).catch(() => {});
     }
-    console.error('ImageKit upload error:', err);
-    res.status(500).json({ message: err.message || 'Upload failed.' });
+    console.error("ImageKit upload error:", err);
+    res.status(500).json({ message: err.message || "Upload failed." });
   }
 };
 
@@ -102,7 +102,7 @@ export const getUploadSignature = (req, res) => {
       token: authParams.token,
     });
   } catch (err) {
-    console.error('ImageKit signature error:', err);
-    res.status(500).json({ message: 'Failed to generate upload signature.' });
+    console.error("ImageKit signature error:", err);
+    res.status(500).json({ message: "Failed to generate upload signature." });
   }
 };
