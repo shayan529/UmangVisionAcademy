@@ -18,6 +18,7 @@ import settingsRoutes from "./routes/settings.routes.js";
 import emailRoutes from "./routes/emailAuth.route.js";
 import twilioRoutes from "./routes/twilio.routes.js";
 import { registerSessionChat } from "./utils/SessionChatSocket.js";
+import mockTestRoutes from "./routes/mockTest.routes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -67,6 +68,7 @@ app.use("/api", cartRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/auth", emailRoutes);
 app.use("/api/auth", twilioRoutes);
+app.use("/api/mock-tests", mockTestRoutes);
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 ConnectDb();

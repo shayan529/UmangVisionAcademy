@@ -1,6 +1,6 @@
 // controllers/mockTestController.js
-import MockTest from "../models/MockTest.js";
-import MockTestAttempt from "../models/MockTestAttempt.js";
+import MockTest from "../models/mockTest.model.js";
+import MockTestAttempt from "../models/mockTestAttempt.model.js";
 
 // ─── INSTRUCTOR ──────────────────────────────────────────────────────────────
 

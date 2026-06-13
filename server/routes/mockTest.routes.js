@@ -13,8 +13,8 @@ import {
   getMyResults,
   getLeaderboard,
   getStudentAnalytics,
-} from "../controllers/mockTestController.js";
-import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
+} from "../controllers/mockTest.controller.js";
+import { protect, authorizeRoles } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
