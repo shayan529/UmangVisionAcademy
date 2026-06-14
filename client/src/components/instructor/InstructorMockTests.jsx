@@ -1,43 +1,42 @@
 // pages/instructor/InstructorMockTests.jsx
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-hot-toast";
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { toast } from 'react-hot-toast';
 import {
   FaPlus,
   FaTrash,
   FaToggleOn,
   FaToggleOff,
-  FaEdit,
   FaClipboardList,
   FaChevronDown,
   FaChevronUp,
-} from "react-icons/fa";
+} from 'react-icons/fa';
 import {
   fetchInstructorTests,
   createMockTest,
   deleteMockTest,
   togglePublishTest,
-} from "../../redux/slices/mockTestSlice";
+} from '../../redux/slices/mockTestSlice';
 
-const BOARDS = ["CBSE", "ICSE", "MP Board", "All"];
-const DIFFICULTIES = ["Easy", "Medium", "Hard"];
+const BOARDS = ['CBSE', 'ICSE', 'MP Board', 'All'];
+const DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
 const SUBJECTS = [
-  "Mathematics",
-  "Science",
-  "English",
-  "Social Science",
-  "Hindi",
-  "Physics",
-  "Chemistry",
-  "Biology",
+  'Mathematics',
+  'Science',
+  'English',
+  'Social Science',
+  'Hindi',
+  'Physics',
+  'Chemistry',
+  'Biology',
 ];
 const CLASSES = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`);
 
 const emptyQuestion = () => ({
-  questionText: "",
-  options: ["", "", "", ""],
+  questionText: '',
+  options: ['', '', '', ''],
   correctOption: 0,
-  explanation: "",
+  explanation: '',
   marks: 1,
 });
 
@@ -48,16 +47,16 @@ export default function InstructorMockTests() {
   const [showForm, setShowForm] = useState(false);
   const [expandedTest, setExpandedTest] = useState(null);
   const [form, setForm] = useState({
-    title: "",
-    description: "",
-    subject: "Mathematics",
-    class: "Class 10",
-    board: "CBSE",
+    title: '',
+    description: '',
+    subject: 'Mathematics',
+    class: 'Class 10',
+    board: 'CBSE',
     duration: 60,
     totalMarks: 100,
     passingMarks: 33,
-    difficulty: "Medium",
-    tags: "",
+    difficulty: 'Medium',
+    tags: '',
     questions: [emptyQuestion()],
   });
 
@@ -95,58 +94,58 @@ export default function InstructorMockTests() {
     }));
 
   const handleSubmit = async () => {
-    if (!form.title.trim()) return toast.error("Title is required");
+    if (!form.title.trim()) return toast.error('Title is required');
     if (form.questions.some((q) => !q.questionText.trim()))
-      return toast.error("All questions must have text");
+      return toast.error('All questions must have text');
     if (form.questions.some((q) => q.options.some((o) => !o.trim())))
-      return toast.error("All options must be filled");
+      return toast.error('All options must be filled');
 
     const payload = {
       ...form,
       tags: form.tags
-        .split(",")
+        .split(',')
         .map((t) => t.trim())
         .filter(Boolean),
     };
 
     try {
       await dispatch(createMockTest(payload)).unwrap();
-      toast.success("Mock test created!");
+      toast.success('Mock test created!');
       setShowForm(false);
       setForm({
-        title: "",
-        description: "",
-        subject: "Mathematics",
-        class: "Class 10",
-        board: "CBSE",
+        title: '',
+        description: '',
+        subject: 'Mathematics',
+        class: 'Class 10',
+        board: 'CBSE',
         duration: 60,
         totalMarks: 100,
         passingMarks: 33,
-        difficulty: "Medium",
-        tags: "",
+        difficulty: 'Medium',
+        tags: '',
         questions: [emptyQuestion()],
       });
     } catch (err) {
-      toast.error(err || "Failed to create test");
+      toast.error(err || 'Failed to create test');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this mock test?")) return;
+    if (!window.confirm('Delete this mock test?')) return;
     try {
       await dispatch(deleteMockTest(id)).unwrap();
-      toast.success("Test deleted");
+      toast.success('Test deleted');
     } catch (err) {
-      toast.error(err || "Failed to delete");
+      toast.error(err || 'Failed to delete');
     }
   };
 
   const handleToggle = async (id) => {
     try {
       const res = await dispatch(togglePublishTest(id)).unwrap();
-      toast.success(res.isPublished ? "Test published" : "Test unpublished");
+      toast.success(res.isPublished ? 'Test published' : 'Test unpublished');
     } catch (err) {
-      toast.error(err || "Failed to update");
+      toast.error(err || 'Failed to update');
     }
   };
 
@@ -176,12 +175,11 @@ export default function InstructorMockTests() {
             Create Mock Test
           </h2>
 
-          {/* Basic info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Title *">
               <input
                 value={form.title}
-                onChange={(e) => updateForm("title", e.target.value)}
+                onChange={(e) => updateForm('title', e.target.value)}
                 placeholder="e.g. CBSE Class 10 Maths — Chapter 1"
                 className="input-dark"
               />
@@ -189,7 +187,7 @@ export default function InstructorMockTests() {
             <Field label="Subject">
               <select
                 value={form.subject}
-                onChange={(e) => updateForm("subject", e.target.value)}
+                onChange={(e) => updateForm('subject', e.target.value)}
                 className="input-dark"
               >
                 {SUBJECTS.map((s) => (
@@ -202,7 +200,7 @@ export default function InstructorMockTests() {
             <Field label="Class">
               <select
                 value={form.class}
-                onChange={(e) => updateForm("class", e.target.value)}
+                onChange={(e) => updateForm('class', e.target.value)}
                 className="input-dark"
               >
                 {CLASSES.map((c) => (
@@ -215,7 +213,7 @@ export default function InstructorMockTests() {
             <Field label="Board">
               <select
                 value={form.board}
-                onChange={(e) => updateForm("board", e.target.value)}
+                onChange={(e) => updateForm('board', e.target.value)}
                 className="input-dark"
               >
                 {BOARDS.map((b) => (
@@ -230,14 +228,14 @@ export default function InstructorMockTests() {
                 type="number"
                 min={5}
                 value={form.duration}
-                onChange={(e) => updateForm("duration", +e.target.value)}
+                onChange={(e) => updateForm('duration', +e.target.value)}
                 className="input-dark"
               />
             </Field>
             <Field label="Difficulty">
               <select
                 value={form.difficulty}
-                onChange={(e) => updateForm("difficulty", e.target.value)}
+                onChange={(e) => updateForm('difficulty', e.target.value)}
                 className="input-dark"
               >
                 {DIFFICULTIES.map((d) => (
@@ -252,7 +250,7 @@ export default function InstructorMockTests() {
                 type="number"
                 min={1}
                 value={form.totalMarks}
-                onChange={(e) => updateForm("totalMarks", +e.target.value)}
+                onChange={(e) => updateForm('totalMarks', +e.target.value)}
                 className="input-dark"
               />
             </Field>
@@ -261,7 +259,7 @@ export default function InstructorMockTests() {
                 type="number"
                 min={1}
                 value={form.passingMarks}
-                onChange={(e) => updateForm("passingMarks", +e.target.value)}
+                onChange={(e) => updateForm('passingMarks', +e.target.value)}
                 className="input-dark"
               />
             </Field>
@@ -269,7 +267,7 @@ export default function InstructorMockTests() {
           <Field label="Description">
             <textarea
               value={form.description}
-              onChange={(e) => updateForm("description", e.target.value)}
+              onChange={(e) => updateForm('description', e.target.value)}
               rows={2}
               placeholder="Optional brief description"
               className="input-dark resize-none"
@@ -278,7 +276,7 @@ export default function InstructorMockTests() {
           <Field label="Tags (comma separated)">
             <input
               value={form.tags}
-              onChange={(e) => updateForm("tags", e.target.value)}
+              onChange={(e) => updateForm('tags', e.target.value)}
               placeholder="e.g. algebra, cbse, chapter1"
               className="input-dark"
             />
@@ -321,7 +319,7 @@ export default function InstructorMockTests() {
                   <textarea
                     value={q.questionText}
                     onChange={(e) =>
-                      updateQuestion(qIdx, "questionText", e.target.value)
+                      updateQuestion(qIdx, 'questionText', e.target.value)
                     }
                     placeholder="Enter question text…"
                     rows={2}
@@ -336,7 +334,7 @@ export default function InstructorMockTests() {
                           name={`correct-${qIdx}`}
                           checked={q.correctOption === optIdx}
                           onChange={() =>
-                            updateQuestion(qIdx, "correctOption", optIdx)
+                            updateQuestion(qIdx, 'correctOption', optIdx)
                           }
                           className="accent-violet-500 shrink-0"
                           title="Mark as correct answer"
@@ -363,7 +361,7 @@ export default function InstructorMockTests() {
                         min={1}
                         value={q.marks}
                         onChange={(e) =>
-                          updateQuestion(qIdx, "marks", +e.target.value)
+                          updateQuestion(qIdx, 'marks', +e.target.value)
                         }
                         className="input-dark"
                       />
@@ -372,7 +370,7 @@ export default function InstructorMockTests() {
                       <input
                         value={q.explanation}
                         onChange={(e) =>
-                          updateQuestion(qIdx, "explanation", e.target.value)
+                          updateQuestion(qIdx, 'explanation', e.target.value)
                         }
                         placeholder="Why is this correct?"
                         className="input-dark"
@@ -397,7 +395,7 @@ export default function InstructorMockTests() {
               disabled={loading}
               className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-violet-700 hover:bg-violet-600 text-white transition-all disabled:opacity-60"
             >
-              {loading ? "Creating…" : "Create Test"}
+              {loading ? 'Creating…' : 'Create Test'}
             </button>
           </div>
         </div>
@@ -422,32 +420,121 @@ export default function InstructorMockTests() {
               <div className="flex items-center gap-4 px-5 py-4">
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <h3 className="text-slate-100 font-semibold text-sm truncate">
+                  {/* Title + pill on same row, wraps on small screens */}
+                  <div className="flex items-center gap-3 mb-1.5 flex-wrap">
+                    <h3 className="text-slate-100 font-semibold text-sm">
                       {test.title}
                     </h3>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-lg font-semibold shrink-0 ${
-                        test.isPublished
-                          ? "bg-emerald-500/10 text-emerald-400"
-                          : "bg-slate-700/40 text-slate-400"
-                      }`}
+
+                    {/* ── Status pill ── */}
+                    {test.isPublished ? (
+                      <span
+                        className="inline-flex items-center gap-2 rounded-full font-bold whitespace-nowrap shrink-0"
+                        style={{
+                          fontSize: '0.8rem',
+                          padding: '6px 20px',
+                          minWidth: '110px',
+                          justifyContent: 'center',
+                          background: 'rgba(16,185,129,0.15)',
+                          color: '#6ee7b7',
+                          border: '1.5px solid rgba(16,185,129,0.4)',
+                          letterSpacing: '0.02em',
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: '#34d399',
+                            flexShrink: 0,
+                            boxShadow: '0 0 8px #34d399',
+                          }}
+                        />
+                        Published
+                      </span>
+                    ) : (
+                      <span
+                        className="inline-flex items-center gap-2 rounded-full font-bold whitespace-nowrap shrink-0"
+                        style={{
+                          fontSize: '0.8rem',
+                          padding: '6px 20px',
+                          minWidth: '110px',
+                          justifyContent: 'center',
+                          background: 'rgba(100,116,139,0.2)',
+                          color: '#cbd5e1',
+                          border: '1.5px solid rgba(100,116,139,0.4)',
+                          letterSpacing: '0.02em',
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: '#94a3b8',
+                            flexShrink: 0,
+                          }}
+                        />
+                        Draft
+                      </span>
+                    )}
+
+                    {/* ── Publish / Unpublish text button ── */}
+                    <button
+                      onClick={() => handleToggle(test._id)}
+                      className="inline-flex items-center gap-2 rounded-full font-bold whitespace-nowrap shrink-0"
+                      style={{
+                        fontSize: '0.8rem',
+                        padding: '6px 20px',
+                        minWidth: '110px',
+                        justifyContent: 'center',
+                        background: 'rgba(139,92,246,0.15)',
+                        color: '#ffffff',
+                        border: '1.5px solid rgba(139,92,246,0.4)',
+                        letterSpacing: '0.02em',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s, border-color 0.15s',
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.background =
+                          'rgba(139,92,246,0.28)')
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.background =
+                          'rgba(139,92,246,0.15)')
+                      }
                     >
-                      {test.isPublished ? "Published" : "Draft"}
-                    </span>
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: '#a78bfa',
+                          flexShrink: 0,
+                          boxShadow: '0 0 8px #a78bfa',
+                        }}
+                      />
+                      {test.isPublished ? 'Unpublish' : 'Publish'}
+                    </button>
                   </div>
+
                   <p className="text-slate-500 text-xs">
-                    {test.subject} · {test.class} · {test.questions.length}{" "}
+                    {test.subject} · {test.class} · {test.questions.length}{' '}
                     questions · {test.duration} min · {test.attempts} attempts
                   </p>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-3 shrink-0">
                   <button
                     onClick={() => handleToggle(test._id)}
-                    className={`text-xl transition-colors ${test.isPublished ? "text-emerald-400 hover:text-emerald-300" : "text-slate-600 hover:text-slate-400"}`}
-                    title={test.isPublished ? "Unpublish" : "Publish"}
+                    title={test.isPublished ? 'Unpublish' : 'Publish'}
+                    className={`text-2xl transition-colors ${
+                      test.isPublished
+                        ? 'text-emerald-400 hover:text-emerald-300'
+                        : 'text-slate-600 hover:text-slate-400'
+                    }`}
                   >
                     {test.isPublished ? <FaToggleOn /> : <FaToggleOff />}
                   </button>
@@ -460,7 +547,7 @@ export default function InstructorMockTests() {
                   <button
                     onClick={() =>
                       setExpandedTest(
-                        expandedTest === test._id ? null : test._id,
+                        expandedTest === test._id ? null : test._id
                       )
                     }
                     className="text-slate-500 hover:text-slate-300 transition-colors text-sm"
@@ -498,7 +585,7 @@ export default function InstructorMockTests() {
         </div>
       )}
 
-      {/* Shared input style via a style tag */}
+      {/* Shared input style */}
       <style>{`
         .input-dark {
           width: 100%;

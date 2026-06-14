@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   addUserMessage,
   addAiPlaceholder,
@@ -10,82 +10,74 @@ import {
   setStreaming,
   setError,
   setMode,
-} from "../../redux/slices/aiTutorSlice.js";
-
-const QUICK_PROMPTS = [
-  "Explain Newton's laws simply",
-  "Help me with quadratic equations",
-  "What is photosynthesis?",
-  "Explain the water cycle",
-  "What are the types of triangles?",
-  "How does the human digestive system work?",
-];
+} from '../../redux/slices/aiTutorSlice.js';
+import { useTranslation } from 'react-i18next';
 
 // ── Theme tokens ─────────────────────────────────────────────────────────────
 const DARK = {
-  bg: "#000000",
-  bgSidebar: "#0a0a0a",
-  bgTopbar: "#000000",
-  bgInput: "#1a1a1a",
-  bgInputBorder: "#2a2a2a",
-  bgCard: "#111111",
-  bgCardHover: "#1a1a1a",
-  bgActive: "#1e1e1e",
-  bgToggle: "#1a1a1a",
-  bgUserBubble: "#1e1e1e",
-  border: "#1f1f1f",
-  borderActive: "#7c3aed",
-  text: "#ffffff",
-  textMuted: "#888888",
-  textSubtle: "#444444",
-  textCaption: "#333333",
-  sendActive: "linear-gradient(135deg,#7c3aed,#06b6d4)",
-  sendInactive: "#1a1a1a",
-  sendInactiveColor: "#333333",
-  scrollThumb: "#1f1f1f",
-  modeActiveBg: "#7c3aed",
-  modeActiveColor: "#fff",
-  modeInactiveColor: "#666666",
-  historyIcon: "#a78bfa",
-  iconDefault: "#555555",
-  iconHoverBg: "#1a1a1a",
-  errorBg: "#1a0000",
-  errorBorder: "#3a0000",
-  errorText: "#f87171",
-  dotColor: "#333333",
+  bg: '#000000',
+  bgSidebar: '#0a0a0a',
+  bgTopbar: '#000000',
+  bgInput: '#1a1a1a',
+  bgInputBorder: '#2a2a2a',
+  bgCard: '#111111',
+  bgCardHover: '#1a1a1a',
+  bgActive: '#1e1e1e',
+  bgToggle: '#1a1a1a',
+  bgUserBubble: '#1e1e1e',
+  border: '#1f1f1f',
+  borderActive: '#7c3aed',
+  text: '#ffffff',
+  textMuted: '#888888',
+  textSubtle: '#444444',
+  textCaption: '#333333',
+  sendActive: 'linear-gradient(135deg,#7c3aed,#06b6d4)',
+  sendInactive: '#1a1a1a',
+  sendInactiveColor: '#333333',
+  scrollThumb: '#1f1f1f',
+  modeActiveBg: '#7c3aed',
+  modeActiveColor: '#fff',
+  modeInactiveColor: '#666666',
+  historyIcon: '#a78bfa',
+  iconDefault: '#555555',
+  iconHoverBg: '#1a1a1a',
+  errorBg: '#1a0000',
+  errorBorder: '#3a0000',
+  errorText: '#f87171',
+  dotColor: '#333333',
 };
 
 const LIGHT = {
-  bg: "#ffffff",
-  bgSidebar: "#f9f9f9",
-  bgTopbar: "#ffffff",
-  bgInput: "#f4f4f4",
-  bgInputBorder: "#e0e0e0",
-  bgCard: "#f4f4f4",
-  bgCardHover: "#ebebeb",
-  bgActive: "#ebebeb",
-  bgToggle: "#efefef",
-  bgUserBubble: "#efefef",
-  border: "#e8e8e8",
-  borderActive: "#7c3aed",
-  text: "#111111",
-  textMuted: "#555555",
-  textSubtle: "#999999",
-  textCaption: "#bbbbbb",
-  sendActive: "linear-gradient(135deg,#7c3aed,#06b6d4)",
-  sendInactive: "#e8e8e8",
-  sendInactiveColor: "#aaaaaa",
-  scrollThumb: "#dddddd",
-  modeActiveBg: "#7c3aed",
-  modeActiveColor: "#fff",
-  modeInactiveColor: "#888888",
-  historyIcon: "#7c3aed",
-  iconDefault: "#999999",
-  iconHoverBg: "#efefef",
-  errorBg: "#fff0f0",
-  errorBorder: "#ffc0c0",
-  errorText: "#c0392b",
-  dotColor: "#cccccc",
+  bg: '#ffffff',
+  bgSidebar: '#f9f9f9',
+  bgTopbar: '#ffffff',
+  bgInput: '#f4f4f4',
+  bgInputBorder: '#e0e0e0',
+  bgCard: '#f4f4f4',
+  bgCardHover: '#ebebeb',
+  bgActive: '#ebebeb',
+  bgToggle: '#efefef',
+  bgUserBubble: '#efefef',
+  border: '#e8e8e8',
+  borderActive: '#7c3aed',
+  text: '#111111',
+  textMuted: '#555555',
+  textSubtle: '#999999',
+  textCaption: '#bbbbbb',
+  sendActive: 'linear-gradient(135deg,#7c3aed,#06b6d4)',
+  sendInactive: '#e8e8e8',
+  sendInactiveColor: '#aaaaaa',
+  scrollThumb: '#dddddd',
+  modeActiveBg: '#7c3aed',
+  modeActiveColor: '#fff',
+  modeInactiveColor: '#888888',
+  historyIcon: '#7c3aed',
+  iconDefault: '#999999',
+  iconHoverBg: '#efefef',
+  errorBg: '#fff0f0',
+  errorBorder: '#ffc0c0',
+  errorText: '#c0392b',
+  dotColor: '#cccccc',
 };
 
 // ── Markdown-lite renderer ───────────────────────────────────────────────────
@@ -94,16 +86,16 @@ const RenderText = ({ text }) => {
   return (
     <span>
       {parts.map((part, i) =>
-        part.startsWith("**") && part.endsWith("**") ? (
+        part.startsWith('**') && part.endsWith('**') ? (
           <strong key={i}>{part.slice(2, -2)}</strong>
         ) : (
-          part.split("\n").map((line, j, arr) => (
+          part.split('\n').map((line, j, arr) => (
             <React.Fragment key={`${i}-${j}`}>
               {line}
               {j < arr.length - 1 && <br />}
             </React.Fragment>
           ))
-        ),
+        )
       )}
     </span>
   );
@@ -207,14 +199,14 @@ const IconMoon = () => (
 
 // ── Voice Orb ────────────────────────────────────────────────────────────────
 const VoiceOrb = ({ listening, streaming, onClick }) => {
-  const state = listening ? "listening" : streaming ? "thinking" : "idle";
+  const state = listening ? 'listening' : streaming ? 'thinking' : 'idle';
   return (
     <div
       style={{
-        position: "relative",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         width: 200,
         height: 200,
       }}
@@ -232,62 +224,62 @@ const VoiceOrb = ({ listening, streaming, onClick }) => {
           <div
             key={i}
             style={{
-              position: "absolute",
+              position: 'absolute',
               width: 160,
               height: 160,
-              borderRadius: "50%",
-              border: `2px solid ${i === 2 ? "#a78bfa" : "#7c3aed"}`,
+              borderRadius: '50%',
+              border: `2px solid ${i === 2 ? '#a78bfa' : '#7c3aed'}`,
               animation: `ripple 1.4s ease-out ${d}s infinite`,
             }}
           />
         ))}
       <div
         style={{
-          position: "absolute",
+          position: 'absolute',
           width: 160,
           height: 160,
-          borderRadius: "50%",
+          borderRadius: '50%',
           background:
-            state === "listening"
-              ? "radial-gradient(circle,rgba(220,38,38,.3) 0%,transparent 70%)"
-              : state === "thinking"
-                ? "radial-gradient(circle,rgba(6,182,212,.3) 0%,transparent 70%)"
-                : "radial-gradient(circle,rgba(124,58,237,.3) 0%,transparent 70%)",
+            state === 'listening'
+              ? 'radial-gradient(circle,rgba(220,38,38,.3) 0%,transparent 70%)'
+              : state === 'thinking'
+                ? 'radial-gradient(circle,rgba(6,182,212,.3) 0%,transparent 70%)'
+                : 'radial-gradient(circle,rgba(124,58,237,.3) 0%,transparent 70%)',
           animation:
-            state !== "idle"
-              ? "orbGlow 1.5s ease-in-out infinite"
-              : "orbPulse 3s ease-in-out infinite",
+            state !== 'idle'
+              ? 'orbGlow 1.5s ease-in-out infinite'
+              : 'orbPulse 3s ease-in-out infinite',
         }}
       />
       <div
         style={{
-          position: "absolute",
+          position: 'absolute',
           width: 140,
           height: 140,
-          borderRadius: "50%",
+          borderRadius: '50%',
           background:
-            state === "listening"
-              ? "radial-gradient(circle,rgba(220,38,38,.2) 0%,transparent 70%)"
-              : state === "thinking"
-                ? "radial-gradient(circle,rgba(6,182,212,.2) 0%,transparent 70%)"
-                : "radial-gradient(circle,rgba(167,139,250,.2) 0%,transparent 70%)",
+            state === 'listening'
+              ? 'radial-gradient(circle,rgba(220,38,38,.2) 0%,transparent 70%)'
+              : state === 'thinking'
+                ? 'radial-gradient(circle,rgba(6,182,212,.2) 0%,transparent 70%)'
+                : 'radial-gradient(circle,rgba(167,139,250,.2) 0%,transparent 70%)',
           animation:
-            state !== "idle"
-              ? "orbGlow 1.5s ease-in-out .2s infinite"
-              : "orbPulse2 3s ease-in-out .5s infinite",
+            state !== 'idle'
+              ? 'orbGlow 1.5s ease-in-out .2s infinite'
+              : 'orbPulse2 3s ease-in-out .5s infinite',
         }}
       />
-      {state === "thinking" && (
+      {state === 'thinking' && (
         <div
           style={{
-            position: "absolute",
+            position: 'absolute',
             width: 124,
             height: 124,
-            borderRadius: "50%",
-            border: "2px solid transparent",
-            borderTop: "2px solid #06b6d4",
-            borderRight: "2px solid #7c3aed",
-            animation: "thinkSpin 1.2s linear infinite",
+            borderRadius: '50%',
+            border: '2px solid transparent',
+            borderTop: '2px solid #06b6d4',
+            borderRight: '2px solid #7c3aed',
+            animation: 'thinkSpin 1.2s linear infinite',
           }}
         />
       )}
@@ -296,33 +288,33 @@ const VoiceOrb = ({ listening, streaming, onClick }) => {
         style={{
           width: 110,
           height: 110,
-          borderRadius: "50%",
-          border: "none",
-          cursor: "pointer",
-          position: "relative",
+          borderRadius: '50%',
+          border: 'none',
+          cursor: 'pointer',
+          position: 'relative',
           zIndex: 2,
           background:
-            state === "listening"
-              ? "radial-gradient(circle at 35% 35%,#ef4444,#dc2626 60%,#991b1b)"
-              : state === "thinking"
-                ? "radial-gradient(circle at 35% 35%,#22d3ee,#0891b2 60%,#0e7490)"
-                : "radial-gradient(circle at 35% 35%,#a78bfa,#7c3aed 60%,#5b21b6)",
+            state === 'listening'
+              ? 'radial-gradient(circle at 35% 35%,#ef4444,#dc2626 60%,#991b1b)'
+              : state === 'thinking'
+                ? 'radial-gradient(circle at 35% 35%,#22d3ee,#0891b2 60%,#0e7490)'
+                : 'radial-gradient(circle at 35% 35%,#a78bfa,#7c3aed 60%,#5b21b6)',
           boxShadow:
-            state === "listening"
-              ? "0 0 40px rgba(220,38,38,.5),inset 0 2px 4px rgba(255,255,255,.2)"
-              : state === "thinking"
-                ? "0 0 40px rgba(6,182,212,.5),inset 0 2px 4px rgba(255,255,255,.2)"
-                : "0 0 40px rgba(124,58,237,.4),inset 0 2px 4px rgba(255,255,255,.15)",
+            state === 'listening'
+              ? '0 0 40px rgba(220,38,38,.5),inset 0 2px 4px rgba(255,255,255,.2)'
+              : state === 'thinking'
+                ? '0 0 40px rgba(6,182,212,.5),inset 0 2px 4px rgba(255,255,255,.2)'
+                : '0 0 40px rgba(124,58,237,.4),inset 0 2px 4px rgba(255,255,255,.15)',
           animation:
-            state === "idle" ? "orbFloat 4s ease-in-out infinite" : "none",
-          transition: "all .3s ease",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+            state === 'idle' ? 'orbFloat 4s ease-in-out infinite' : 'none',
+          transition: 'all .3s ease',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           fontSize: 36,
         }}
       >
-        {state === "listening" ? "⏹" : state === "thinking" ? "🧠" : "🎙️"}
+        {state === 'listening' ? '⏹' : state === 'thinking' ? '🧠' : '🎙️'}
       </button>
     </div>
   );
@@ -334,15 +326,15 @@ const IconBtn = ({ onClick, title, children, color, t }) => (
     onClick={onClick}
     title={title}
     style={{
-      background: "none",
-      border: "none",
+      background: 'none',
+      border: 'none',
       color: color || t.iconDefault,
-      cursor: "pointer",
+      cursor: 'pointer',
       padding: 7,
       borderRadius: 8,
-      display: "flex",
-      alignItems: "center",
-      transition: "color .15s, background .15s",
+      display: 'flex',
+      alignItems: 'center',
+      transition: 'color .15s, background .15s',
     }}
     onMouseEnter={(e) => {
       e.currentTarget.style.color = t.text;
@@ -350,7 +342,7 @@ const IconBtn = ({ onClick, title, children, color, t }) => (
     }}
     onMouseLeave={(e) => {
       e.currentTarget.style.color = color || t.iconDefault;
-      e.currentTarget.style.background = "none";
+      e.currentTarget.style.background = 'none';
     }}
   >
     {children}
@@ -360,33 +352,34 @@ const IconBtn = ({ onClick, title, children, color, t }) => (
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const dateLabel = (d) => {
   const diff = Math.floor((new Date() - d) / 86400000);
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Yesterday";
-  if (diff < 7) return "Previous 7 Days";
-  if (diff < 30) return "Previous 30 Days";
-  return "Older";
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  if (diff < 7) return 'Previous 7 Days';
+  if (diff < 30) return 'Previous 30 Days';
+  return 'Older';
 };
 const timeStr = (d) =>
-  d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 let _sid = 1;
 const newId = () => `s${_sid++}`;
 const GROUP_ORDER = [
-  "Today",
-  "Yesterday",
-  "Previous 7 Days",
-  "Previous 30 Days",
-  "Older",
+  'Today',
+  'Yesterday',
+  'Previous 7 Days',
+  'Previous 30 Days',
+  'Older',
 ];
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function AITutor() {
   const dispatch = useDispatch();
   const { messages, input, streaming, error, mode } = useSelector(
-    (s) => s.aiTutor,
+    (s) => s.aiTutor
   );
+  const { t: translate } = useTranslation();
 
   const [dark, setDark] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [listening, setListening] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [activeId, setActiveId] = useState(null);
@@ -405,7 +398,7 @@ export default function AITutor() {
       didMount.current = true;
       return;
     }
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages, streaming]);
 
   useEffect(() => {
@@ -416,24 +409,40 @@ export default function AITutor() {
     if (!activeIdRef.current || messages.length === 0) return;
     setSessions((prev) =>
       prev.map((s) =>
-        s.id === activeIdRef.current ? { ...s, messages: [...messages] } : s,
-      ),
+        s.id === activeIdRef.current ? { ...s, messages: [...messages] } : s
+      )
     );
   }, [messages]);
+  // Auto-start a session on first mount
+  useEffect(() => {
+    const id = newId();
+    const created = new Date();
+    setSessions([
+      {
+        id,
+        title: 'New conversation',
+        time: timeStr(created),
+        dateLabel: dateLabel(created),
+        messages: [],
+      },
+    ]);
+    setActiveId(id);
+    activeIdRef.current = id;
+  }, []); // runs once on mount
 
   const startNewChat = useCallback(() => {
     if (messages.length > 0 && activeIdRef.current)
       setSessions((prev) =>
         prev.map((s) =>
-          s.id === activeIdRef.current ? { ...s, messages: [...messages] } : s,
-        ),
+          s.id === activeIdRef.current ? { ...s, messages: [...messages] } : s
+        )
       );
     const id = newId(),
       created = new Date();
     setSessions((prev) => [
       {
         id,
-        title: "New conversation",
+        title: 'New conversation',
         time: timeStr(created),
         dateLabel: dateLabel(created),
         messages: [],
@@ -442,9 +451,9 @@ export default function AITutor() {
     ]);
     setActiveId(id);
     activeIdRef.current = id;
-    dispatch({ type: "aiTutor/clearMessages" });
+    dispatch({ type: 'aiTutor/clearMessages' });
     dispatch(setError(null));
-    dispatch(setInput(""));
+    dispatch(setInput(''));
     setTimeout(() => inputRef.current?.focus(), 50);
   }, [messages, dispatch]);
 
@@ -454,31 +463,29 @@ export default function AITutor() {
       if (messages.length > 0 && activeIdRef.current)
         setSessions((prev) =>
           prev.map((s) =>
-            s.id === activeIdRef.current
-              ? { ...s, messages: [...messages] }
-              : s,
-          ),
+            s.id === activeIdRef.current ? { ...s, messages: [...messages] } : s
+          )
         );
       const session = sessions.find((s) => s.id === id);
       if (!session) return;
       setActiveId(id);
       activeIdRef.current = id;
-      dispatch({ type: "aiTutor/setMessages", payload: session.messages });
+      dispatch({ type: 'aiTutor/setMessages', payload: session.messages });
       dispatch(setError(null));
     },
-    [messages, sessions, dispatch],
+    [messages, sessions, dispatch]
   );
 
   const deleteSession = useCallback(
     (id) => {
       setSessions((prev) => prev.filter((s) => s.id !== id));
       if (id === activeIdRef.current) {
-        dispatch({ type: "aiTutor/clearMessages" });
+        dispatch({ type: 'aiTutor/clearMessages' });
         setActiveId(null);
         activeIdRef.current = null;
       }
     },
-    [dispatch],
+    [dispatch]
   );
 
   const sendMessage = useCallback(
@@ -488,7 +495,7 @@ export default function AITutor() {
       if (!activeIdRef.current) {
         const id = newId(),
           created = new Date();
-        const title = msg.length > 42 ? msg.slice(0, 42) + "…" : msg;
+        const title = msg.length > 42 ? msg.slice(0, 42) + '…' : msg;
         setSessions((prev) => [
           {
             id,
@@ -506,18 +513,18 @@ export default function AITutor() {
           prev.map((s) =>
             s.id !== activeIdRef.current
               ? s
-              : s.title === "New conversation"
+              : s.title === 'New conversation'
                 ? {
                     ...s,
-                    title: msg.length > 42 ? msg.slice(0, 42) + "…" : msg,
+                    title: msg.length > 42 ? msg.slice(0, 42) + '…' : msg,
                   }
-                : s,
-          ),
+                : s
+          )
         );
       }
-      dispatch(setInput(""));
+      dispatch(setInput(''));
       dispatch(setError(null));
-      const userMsg = { role: "user", content: msg };
+      const userMsg = { role: 'user', content: msg };
       dispatch(addUserMessage(userMsg));
       dispatch(addAiPlaceholder());
       dispatch(setStreaming(true));
@@ -526,44 +533,44 @@ export default function AITutor() {
         const ctrl = new AbortController();
         abortRef.current = ctrl;
         const baseUrl =
-          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+          import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
         const res = await fetch(`${baseUrl}/ai/chat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: history }),
           signal: ctrl.signal,
-          credentials: "include",
+          credentials: 'include',
         });
         if (!res.ok) {
           const e = await res.json().catch(() => ({}));
-          throw new Error(e.message || "AI service unavailable.");
+          throw new Error(e.message || 'AI service unavailable.');
         }
         const reader = res.body.getReader();
         const dec = new TextDecoder();
-        let buf = "";
+        let buf = '';
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           buf += dec.decode(value, { stream: true });
-          const lines = buf.split("\n");
-          buf = lines.pop() ?? "";
+          const lines = buf.split('\n');
+          buf = lines.pop() ?? '';
           for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
+            if (!line.startsWith('data: ')) continue;
             const p = line.slice(6).trim();
-            if (p === "[DONE]") break;
+            if (p === '[DONE]') break;
             try {
               const { text: chunk, error: se } = JSON.parse(p);
               if (se) throw new Error(se);
               if (chunk) dispatch(appendAiText(chunk));
             } catch (e) {
-              if (e.name !== "SyntaxError") throw e;
+              if (e.name !== 'SyntaxError') throw e;
             }
           }
         }
       } catch (err) {
-        if (err.name === "AbortError") return;
+        if (err.name === 'AbortError') return;
         dispatch(
-          setError("AI is currently not available. Please try again later."),
+          setError('AI is currently not available. Please try again later.')
         );
         dispatch(removeStreamingPlaceholders());
       } finally {
@@ -573,7 +580,7 @@ export default function AITutor() {
         inputRef.current?.focus();
       }
     },
-    [input, messages, streaming, dispatch],
+    [input, messages, streaming, dispatch]
   );
 
   const cancelStream = () => {
@@ -583,10 +590,10 @@ export default function AITutor() {
 
   const toggleListen = () => {
     if (
-      !("webkitSpeechRecognition" in window) &&
-      !("SpeechRecognition" in window)
+      !('webkitSpeechRecognition' in window) &&
+      !('SpeechRecognition' in window)
     ) {
-      dispatch(setError("Voice input not supported. Try Chrome."));
+      dispatch(setError('Voice input not supported. Try Chrome.'));
       return;
     }
     if (listening) {
@@ -597,7 +604,7 @@ export default function AITutor() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const rec = new SR();
     recRef.current = rec;
-    rec.lang = "en-US";
+    rec.lang = 'en-US';
     rec.interimResults = false;
     rec.maxAlternatives = 1;
     rec.onstart = () => {
@@ -608,11 +615,11 @@ export default function AITutor() {
     rec.onerror = (e) => {
       setListening(false);
       const map = {
-        "not-allowed":
-          "Microphone access denied. Allow mic in browser settings.",
-        "no-speech": "No speech detected.",
-        network: "Network error — voice needs internet.",
-        "audio-capture": "No microphone found.",
+        'not-allowed':
+          'Microphone access denied. Allow mic in browser settings.',
+        'no-speech': 'No speech detected.',
+        network: 'Network error — voice needs internet.',
+        'audio-capture': 'No microphone found.',
         aborted: null,
       };
       const m = map[e.error];
@@ -625,7 +632,7 @@ export default function AITutor() {
     rec.start();
   };
 
-  const orbState = streaming ? "thinking" : listening ? "listening" : "idle";
+  const orbState = streaming ? 'thinking' : listening ? 'listening' : 'idle';
 
   const grouped = sessions.reduce((acc, s) => {
     if (!acc[s.dateLabel]) acc[s.dateLabel] = [];
@@ -636,13 +643,13 @@ export default function AITutor() {
   return (
     <div
       style={{
-        display: "flex",
-        height: "100vh",
-        maxHeight: "100vh",
+        display: 'flex',
+        height: 'calc(100vh - 70px)',
+        maxHeight: 'calc(100vh - 70px)',
         minHeight: 0,
-        overflow: "hidden",
+        overflow: 'hidden',
         background: t.bg,
-        transition: "background .2s, color .2s",
+        transition: 'background .2s, color .2s',
       }}
     >
       <style>{`
@@ -650,7 +657,7 @@ export default function AITutor() {
         @keyframes fadeUp { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
         .ai-msg { animation: fadeUp .18s ease both; }
         .ai-input-el { font-family: inherit; }
-        .ai-input-el::placeholder { color: ${dark ? "#444" : "#aaa"}; }
+        .ai-input-el::placeholder { color: ${dark ? '#444' : '#aaa'}; }
         .grad-border:focus-within { box-shadow: 0 0 0 2px rgba(124,58,237,.35), 0 0 24px rgba(124,58,237,.18) !important; }
         .sess-row:hover { background: ${t.bgCardHover} !important; }
         .sess-row:hover .del-btn { opacity: 1 !important; }
@@ -665,32 +672,32 @@ export default function AITutor() {
         style={{
           width: sidebarOpen ? 260 : 0,
           minWidth: sidebarOpen ? 260 : 0,
-          overflow: "hidden",
-          transition: "width .22s ease, min-width .22s ease",
+          overflow: 'hidden',
+          transition: 'width .22s ease, min-width .22s ease',
           background: t.bgSidebar,
-          borderRight: sidebarOpen ? `1px solid ${t.border}` : "none",
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
+          borderRight: sidebarOpen ? `1px solid ${t.border}` : 'none',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
         }}
       >
         <div
           style={{
             width: 260,
-            display: "flex",
-            flexDirection: "column",
-            height: "100%",
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
             opacity: sidebarOpen ? 1 : 0,
-            transition: "opacity .18s ease",
+            transition: 'opacity .18s ease',
           }}
         >
           {/* Sidebar top */}
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "13px 10px 10px",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '13px 10px 10px',
               flexShrink: 0,
             }}
           >
@@ -707,14 +714,14 @@ export default function AITutor() {
           </div>
 
           {/* Sessions */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "4px 0 16px" }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0 16px' }}>
             {sessions.length === 0 ? (
               <div
                 style={{
-                  padding: "36px 16px",
+                  padding: '36px 16px',
                   color: t.textSubtle,
                   fontSize: 12,
-                  textAlign: "center",
+                  textAlign: 'center',
                   lineHeight: 1.9,
                 }}
               >
@@ -727,12 +734,12 @@ export default function AITutor() {
                 <div key={group}>
                   <div
                     style={{
-                      padding: "12px 14px 4px",
+                      padding: '12px 14px 4px',
                       fontSize: 10,
                       fontWeight: 700,
                       color: t.textSubtle,
-                      letterSpacing: "0.07em",
-                      textTransform: "uppercase",
+                      letterSpacing: '0.07em',
+                      textTransform: 'uppercase',
                     }}
                   >
                     {group}
@@ -743,24 +750,24 @@ export default function AITutor() {
                       className="sess-row"
                       onClick={() => loadSession(s.id)}
                       style={{
-                        position: "relative",
-                        padding: "9px 14px",
-                        margin: "1px 6px",
+                        position: 'relative',
+                        padding: '9px 14px',
+                        margin: '1px 6px',
                         borderRadius: 8,
-                        cursor: "pointer",
+                        cursor: 'pointer',
                         background:
-                          activeId === s.id ? t.bgActive : "transparent",
-                        borderLeft: `2px solid ${activeId === s.id ? t.borderActive : "transparent"}`,
-                        transition: "background .12s",
+                          activeId === s.id ? t.bgActive : 'transparent',
+                        borderLeft: `2px solid ${activeId === s.id ? t.borderActive : 'transparent'}`,
+                        transition: 'background .12s',
                       }}
                     >
                       <div
                         style={{
                           fontSize: 13,
                           color: activeId === s.id ? t.text : t.textMuted,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
                           paddingRight: 22,
                           lineHeight: 1.4,
                         }}
@@ -774,20 +781,20 @@ export default function AITutor() {
                           deleteSession(s.id);
                         }}
                         style={{
-                          position: "absolute",
+                          position: 'absolute',
                           right: 8,
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          background: "none",
-                          border: "none",
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
                           color: t.textSubtle,
-                          cursor: "pointer",
+                          cursor: 'pointer',
                           padding: 3,
                           borderRadius: 4,
                           opacity: 0,
-                          transition: "opacity .12s, color .12s",
-                          display: "flex",
-                          alignItems: "center",
+                          transition: 'opacity .12s, color .12s',
+                          display: 'flex',
+                          alignItems: 'center',
                         }}
                         onMouseEnter={(e) =>
                           (e.currentTarget.style.color = t.errorText)
@@ -811,21 +818,21 @@ export default function AITutor() {
       <div
         style={{
           flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          height: "100vh",
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
           minWidth: 0,
-          overflow: "hidden",
+          overflow: 'hidden',
           background: t.bg,
         }}
       >
         {/* Top bar */}
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 6,
-            padding: "10px 16px",
+            padding: '10px 16px',
             borderBottom: `1px solid ${t.border}`,
             flexShrink: 0,
             background: t.bgTopbar,
@@ -833,7 +840,7 @@ export default function AITutor() {
         >
           {/* Left: hamburger + pencil (only when sidebar closed) */}
           {!sidebarOpen && (
-            <div style={{ display: "flex", gap: 2, marginRight: 4 }}>
+            <div style={{ display: 'flex', gap: 2, marginRight: 4 }}>
               <IconBtn
                 onClick={() => setSidebarOpen(true)}
                 title="Open history"
@@ -854,14 +861,14 @@ export default function AITutor() {
               fontWeight: 700,
               color: t.text,
               flex: 1,
-              userSelect: "none",
+              userSelect: 'none',
             }}
           >
             AI Tutor
           </span>
 
           {/* Right controls */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {/* History toggle */}
             <IconBtn
               onClick={() => setSidebarOpen((v) => !v)}
@@ -875,7 +882,7 @@ export default function AITutor() {
             {/* Sun / Moon */}
             <IconBtn
               onClick={() => setDark((v) => !v)}
-              title={dark ? "Switch to light mode" : "Switch to dark mode"}
+              title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
               t={t}
             >
               {dark ? <IconSun /> : <IconMoon />}
@@ -884,7 +891,7 @@ export default function AITutor() {
             {/* Chat / Voice toggle */}
             <div
               style={{
-                display: "flex",
+                display: 'flex',
                 gap: 2,
                 background: t.bgToggle,
                 padding: 3,
@@ -893,24 +900,24 @@ export default function AITutor() {
               }}
             >
               {[
-                { key: "chat", label: "💬 Chat" },
-                { key: "voice", label: "🎙️ Voice" },
+                { key: 'chat', label: '💬 Chat' },
+                { key: 'voice', label: '🎙️ Voice' },
               ].map((m) => (
                 <button
                   key={m.key}
                   onClick={() => dispatch(setMode(m.key))}
                   style={{
-                    padding: "5px 16px",
+                    padding: '5px 16px',
                     borderRadius: 8,
-                    border: "none",
+                    border: 'none',
                     fontSize: 12,
                     fontWeight: 600,
-                    cursor: "pointer",
-                    background: mode === m.key ? t.modeActiveBg : "transparent",
+                    cursor: 'pointer',
+                    background: mode === m.key ? t.modeActiveBg : 'transparent',
                     color:
                       mode === m.key ? t.modeActiveColor : t.modeInactiveColor,
-                    transition: "all .15s",
-                    whiteSpace: "nowrap",
+                    transition: 'all .15s',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {m.label}
@@ -926,12 +933,12 @@ export default function AITutor() {
             style={{
               background: t.errorBg,
               borderBottom: `1px solid ${t.errorBorder}`,
-              padding: "10px 20px",
+              padding: '10px 20px',
               color: t.errorText,
               fontSize: 13,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               flexShrink: 0,
             }}
           >
@@ -939,10 +946,10 @@ export default function AITutor() {
             <button
               onClick={() => dispatch(setError(null))}
               style={{
-                background: "none",
-                border: "none",
+                background: 'none',
+                border: 'none',
                 color: t.errorText,
-                cursor: "pointer",
+                cursor: 'pointer',
                 fontSize: 16,
                 lineHeight: 1,
               }}
@@ -953,31 +960,31 @@ export default function AITutor() {
         )}
 
         {/* ── Chat mode ── */}
-        {mode === "chat" ? (
+        {mode === 'chat' ? (
           <div
             style={{
               flex: 1,
-              display: "flex",
-              flexDirection: "column",
+              display: 'flex',
+              flexDirection: 'column',
               minHeight: 0,
-              overflow: "hidden",
+              overflow: 'hidden',
             }}
           >
             {/* Messages */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "28px 0 8px" }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '28px 0 8px' }}>
               <div
                 style={{
                   maxWidth: 720,
-                  margin: "0 auto",
-                  padding: "0 20px",
-                  display: "flex",
-                  flexDirection: "column",
+                  margin: '0 auto',
+                  padding: '0 20px',
+                  display: 'flex',
+                  flexDirection: 'column',
                   gap: 2,
                 }}
               >
                 {/* Empty state */}
                 {messages.length === 0 && !streaming && (
-                  <div style={{ textAlign: "center", paddingTop: 56 }}>
+                  <div style={{ textAlign: 'center', paddingTop: 56 }}>
                     <div style={{ fontSize: 34, marginBottom: 10 }}>🤖</div>
                     <div
                       style={{
@@ -987,7 +994,7 @@ export default function AITutor() {
                         marginBottom: 8,
                       }}
                     >
-                      How can I help you today?
+                      {translate('aiTutor.emptyTitle')}
                     </div>
                     <div
                       style={{
@@ -996,36 +1003,37 @@ export default function AITutor() {
                         marginBottom: 32,
                       }}
                     >
-                      Ask anything about your courses — Maths, Science, English,
-                      Hindi, or any subject.
+                      {translate('aiTutor.emptySubtitle')}
                     </div>
                     <div
                       style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
                         gap: 8,
                         maxWidth: 520,
-                        margin: "0 auto",
+                        margin: '0 auto',
                       }}
                     >
-                      {QUICK_PROMPTS.map((p) => (
+                      {translate('aiTutor.quickPrompts', {
+                        returnObjects: true,
+                      }).map((p) => (
                         <button
                           key={p}
                           className="prompt-card"
                           onClick={() => sendMessage(p)}
                           disabled={streaming}
                           style={{
-                            padding: "12px 14px",
+                            padding: '12px 14px',
                             borderRadius: 12,
                             border: `1px solid ${t.border}`,
                             background: t.bgCard,
                             color: t.textMuted,
-                            cursor: "pointer",
+                            cursor: 'pointer',
                             fontSize: 12,
-                            textAlign: "left",
+                            textAlign: 'left',
                             lineHeight: 1.5,
-                            transition: "all .15s",
-                            fontFamily: "inherit",
+                            transition: 'all .15s',
+                            fontFamily: 'inherit',
                           }}
                         >
                           {p}
@@ -1041,31 +1049,31 @@ export default function AITutor() {
                     key={i}
                     className="ai-msg"
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: m.role === "user" ? "flex-end" : "flex-start",
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: m.role === 'user' ? 'flex-end' : 'flex-start',
                       marginBottom: 10,
                     }}
                   >
-                    {m.role === "ai" && (
+                    {m.role === 'ai' && (
                       <div
                         style={{
-                          display: "flex",
-                          alignItems: "flex-start",
+                          display: 'flex',
+                          alignItems: 'flex-start',
                           gap: 12,
-                          maxWidth: "88%",
+                          maxWidth: '88%',
                         }}
                       >
                         <div
                           style={{
                             width: 30,
                             height: 30,
-                            borderRadius: "50%",
+                            borderRadius: '50%',
                             background:
-                              "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                              'linear-gradient(135deg,#7c3aed,#06b6d4)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                             fontSize: 14,
                             flexShrink: 0,
                             marginTop: 1,
@@ -1081,29 +1089,53 @@ export default function AITutor() {
                             paddingTop: 4,
                           }}
                         >
-                          {m.content ? <RenderText text={m.content} /> : null}
-                          {m.streaming && (
-                            <span
-                              style={{
-                                display: "inline-block",
-                                width: 2,
-                                height: 15,
-                                background: "#a78bfa",
-                                marginLeft: 2,
-                                animation: "pulse .8s infinite",
-                                verticalAlign: "middle",
-                              }}
-                            />
+                          {/* Show dots inside the bubble when streaming and content is empty */}
+                          {m.streaming && !m.content ? (
+                            <div
+                              style={{ display: 'flex', gap: 5, paddingTop: 5 }}
+                            >
+                              {[0, 0.2, 0.4].map((d, j) => (
+                                <div
+                                  key={j}
+                                  style={{
+                                    width: 7,
+                                    height: 7,
+                                    borderRadius: '50%',
+                                    background: t.dotColor,
+                                    animation: `pulse 1.2s ${d}s infinite`,
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <>
+                              {m.content ? (
+                                <RenderText text={m.content} />
+                              ) : null}
+                              {m.streaming && (
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    width: 2,
+                                    height: 15,
+                                    background: '#a78bfa',
+                                    marginLeft: 2,
+                                    animation: 'pulse .8s infinite',
+                                    verticalAlign: 'middle',
+                                  }}
+                                />
+                              )}
+                            </>
                           )}
                         </div>
                       </div>
                     )}
-                    {m.role === "user" && (
+                    {m.role === 'user' && (
                       <div
                         style={{
-                          maxWidth: "72%",
-                          padding: "10px 16px",
-                          borderRadius: "18px 18px 4px 18px",
+                          maxWidth: '72%',
+                          padding: '10px 16px',
+                          borderRadius: '18px 18px 4px 18px',
                           background: t.bgUserBubble,
                           color: t.text,
                           fontSize: 14,
@@ -1117,47 +1149,6 @@ export default function AITutor() {
                   </div>
                 ))}
 
-                {/* Thinking dots */}
-                {streaming && messages[messages.length - 1]?.content === "" && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 12,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 30,
-                        height: 30,
-                        borderRadius: "50%",
-                        background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 14,
-                        flexShrink: 0,
-                      }}
-                    >
-                      🤖
-                    </div>
-                    <div style={{ paddingTop: 9, display: "flex", gap: 5 }}>
-                      {[0, 0.2, 0.4].map((d, j) => (
-                        <div
-                          key={j}
-                          style={{
-                            width: 7,
-                            height: 7,
-                            borderRadius: "50%",
-                            background: t.dotColor,
-                            animation: `pulse 1.2s ${d}s infinite`,
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
                 <div ref={bottomRef} />
               </div>
             </div>
@@ -1165,32 +1156,32 @@ export default function AITutor() {
             {/* Input bar */}
             <div
               style={{
-                padding: "10px 20px 14px",
+                padding: '10px 20px 14px',
                 background: t.bg,
                 flexShrink: 0,
               }}
             >
-              <div style={{ maxWidth: 720, margin: "0 auto" }}>
+              <div style={{ maxWidth: 720, margin: '0 auto' }}>
                 {/* Gradient border wrapper */}
                 <div
                   className="grad-border"
                   style={{
-                    position: "relative",
+                    position: 'relative',
                     borderRadius: 15,
                     padding: 1.5,
                     background:
-                      "linear-gradient(135deg, #7c3aed, #06b6d4, #a78bfa)",
+                      'linear-gradient(135deg, #7c3aed, #06b6d4, #a78bfa)',
                     boxShadow: dark
-                      ? "0 0 18px rgba(124,58,237,.18)"
-                      : "0 0 18px rgba(124,58,237,.22)",
+                      ? '0 0 18px rgba(124,58,237,.18)'
+                      : '0 0 18px rgba(124,58,237,.22)',
                   }}
                 >
                   <div
                     style={{
-                      position: "relative",
+                      position: 'relative',
                       borderRadius: 13,
                       background: t.bgInput,
-                      overflow: "hidden",
+                      overflow: 'hidden',
                     }}
                   >
                     <textarea
@@ -1199,12 +1190,12 @@ export default function AITutor() {
                       value={input}
                       onChange={(e) => {
                         dispatch(setInput(e.target.value));
-                        e.target.style.height = "auto";
+                        e.target.style.height = 'auto';
                         e.target.style.height =
-                          Math.min(e.target.scrollHeight, 160) + "px";
+                          Math.min(e.target.scrollHeight, 160) + 'px';
                       }}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
+                        if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
                           sendMessage();
                         }
@@ -1213,25 +1204,25 @@ export default function AITutor() {
                       disabled={streaming}
                       rows={1}
                       style={{
-                        width: "100%",
-                        padding: "13px 52px 13px 16px",
-                        background: "transparent",
-                        border: "none",
+                        width: '100%',
+                        padding: '13px 52px 13px 16px',
+                        background: 'transparent',
+                        border: 'none',
                         color: t.text,
                         fontSize: 14,
-                        outline: "none",
-                        resize: "none",
+                        outline: 'none',
+                        resize: 'none',
                         lineHeight: 1.55,
-                        transition: "none",
-                        boxSizing: "border-box",
-                        overflowY: "hidden",
-                        display: "block",
+                        transition: 'none',
+                        boxSizing: 'border-box',
+                        overflowY: 'hidden',
+                        display: 'block',
                       }}
                     />
                   </div>
                   <div
                     style={{
-                      position: "absolute",
+                      position: 'absolute',
                       right: 9,
                       bottom: 9,
                       zIndex: 2,
@@ -1244,13 +1235,13 @@ export default function AITutor() {
                           width: 34,
                           height: 34,
                           borderRadius: 9,
-                          background: "#7c3aed",
-                          border: "none",
-                          color: "#fff",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          background: '#7c3aed',
+                          border: 'none',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           fontSize: 13,
                         }}
                       >
@@ -1259,22 +1250,26 @@ export default function AITutor() {
                     ) : (
                       <button
                         onClick={() => sendMessage()}
-                        disabled={!input.trim()}
+                        disabled={!String(input || '').trim()}
                         style={{
                           width: 34,
                           height: 34,
                           borderRadius: 9,
-                          background: input.trim()
+                          background: String(input || '').trim()
                             ? t.sendActive
                             : t.sendInactive,
-                          border: "none",
-                          color: input.trim() ? "#fff" : t.sendInactiveColor,
-                          cursor: input.trim() ? "pointer" : "not-allowed",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          border: 'none',
+                          color: String(input || '').trim()
+                            ? '#fff'
+                            : t.sendInactiveColor,
+                          cursor: String(input || '').trim()
+                            ? 'pointer'
+                            : 'not-allowed',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           fontSize: 17,
-                          transition: "all .15s",
+                          transition: 'all .15s',
                         }}
                       >
                         ↑
@@ -1285,7 +1280,7 @@ export default function AITutor() {
               </div>
               <div
                 style={{
-                  textAlign: "center",
+                  textAlign: 'center',
                   fontSize: 11,
                   color: t.textCaption,
                   marginTop: 7,
@@ -1300,12 +1295,12 @@ export default function AITutor() {
           <div
             style={{
               flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
               gap: 28,
-              padding: "0 20px 32px",
+              padding: '0 20px 32px',
               background: t.bg,
             }}
           >
@@ -1314,22 +1309,22 @@ export default function AITutor() {
                 fontSize: 14,
                 fontWeight: 600,
                 color:
-                  orbState === "listening"
-                    ? "#f87171"
-                    : orbState === "thinking"
-                      ? "#22d3ee"
-                      : "#a78bfa",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                transition: "color .3s",
+                  orbState === 'listening'
+                    ? '#f87171'
+                    : orbState === 'thinking'
+                      ? '#22d3ee'
+                      : '#a78bfa',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                transition: 'color .3s',
                 minHeight: 20,
               }}
             >
-              {orbState === "listening"
-                ? "● Listening…"
-                : orbState === "thinking"
-                  ? "◌ Thinking…"
-                  : "Tap to speak"}
+              {orbState === 'listening'
+                ? '● Listening…'
+                : orbState === 'thinking'
+                  ? '◌ Thinking…'
+                  : 'Tap to speak'}
             </div>
             <VoiceOrb
               listening={listening}
@@ -1340,24 +1335,24 @@ export default function AITutor() {
               style={{
                 fontSize: 13,
                 color: t.textMuted,
-                textAlign: "center",
+                textAlign: 'center',
                 maxWidth: 280,
                 lineHeight: 1.7,
                 margin: 0,
               }}
             >
-              {orbState === "listening"
-                ? "Speak clearly — tap the orb to cancel"
-                : orbState === "thinking"
-                  ? "Processing your question…"
-                  : "Ask anything out loud. Supports English & Hindi."}
+              {orbState === 'listening'
+                ? 'Speak clearly — tap the orb to cancel'
+                : orbState === 'thinking'
+                  ? 'Processing your question…'
+                  : 'Ask anything out loud. Supports English & Hindi.'}
             </p>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <div
                 style={{
                   fontSize: 11,
                   color: t.textSubtle,
-                  padding: "4px 10px",
+                  padding: '4px 10px',
                   borderRadius: 8,
                   border: `1px solid ${t.border}`,
                   background: t.bgCard,

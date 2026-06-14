@@ -1,44 +1,45 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { register, clearError } from "../../redux/slices/authSlice";
-import { toast } from "react-hot-toast";
-import { FiEye, FiEyeOff } from "react-icons/fi";
-import axios from "axios";
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { register, clearError } from '../../redux/slices/authSlice';
+import { toast } from 'react-hot-toast';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 
 const indianCitiesByState = {
-  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati"],
-  "Arunachal Pradesh": ["Itanagar", "Tawang", "Naharlagun"],
-  Assam: ["Guwahati", "Dibrugarh", "Jorhat", "Silchar"],
-  Bihar: ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur"],
-  Chhattisgarh: ["Raipur", "Bhilai", "Korba", "Durg"],
-  Goa: ["Panaji", "Margao", "Vasco da Gama"],
-  Gujarat: ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
-  Haryana: ["Gurugram", "Faridabad", "Panipat", "Karnal"],
-  "Himachal Pradesh": ["Shimla", "Dharamshala", "Manali"],
-  Jharkhand: ["Ranchi", "Jamshedpur", "Dhanbad"],
-  Karnataka: ["Bengaluru", "Mysuru", "Mangalore", "Hubli"],
-  Kerala: ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam"],
-  "Madhya Pradesh": ["Bhopal", "Indore", "Gwalior", "Jabalpur"],
-  Maharashtra: ["Mumbai", "Pune", "Nagpur", "Nashik"],
-  Manipur: ["Imphal", "Churachandpur"],
-  Meghalaya: ["Shillong", "Tura"],
-  Mizoram: ["Aizawl", "Lunglei"],
-  Nagaland: ["Kohima", "Dimapur"],
-  Odisha: ["Bhubaneswar", "Cuttack", "Rourkela"],
-  Punjab: ["Chandigarh", "Amritsar", "Ludhiana", "Jalandhar"],
-  Rajasthan: ["Jaipur", "Jodhpur", "Udaipur", "Kota"],
-  Sikkim: ["Gangtok", "Namchi"],
-  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli"],
-  Telangana: ["Hyderabad", "Warangal", "Nizamabad"],
-  Tripura: ["Agartala", "Udaipur"],
-  "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra"],
-  Uttarakhand: ["Dehradun", "Haridwar", "Nainital"],
-  "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Siliguri"],
-  Delhi: ["New Delhi", "Dwarka", "Rohini"],
-  "Jammu & Kashmir": ["Srinagar", "Jammu"],
-  Ladakh: ["Leh", "Kargil"],
-  Puducherry: ["Puducherry", "Karaikal"],
+  'Andhra Pradesh': ['Visakhapatnam', 'Vijayawada', 'Guntur', 'Tirupati'],
+  'Arunachal Pradesh': ['Itanagar', 'Tawang', 'Naharlagun'],
+  Assam: ['Guwahati', 'Dibrugarh', 'Jorhat', 'Silchar'],
+  Bihar: ['Patna', 'Gaya', 'Bhagalpur', 'Muzaffarpur'],
+  Chhattisgarh: ['Raipur', 'Bhilai', 'Korba', 'Durg'],
+  Goa: ['Panaji', 'Margao', 'Vasco da Gama'],
+  Gujarat: ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot'],
+  Haryana: ['Gurugram', 'Faridabad', 'Panipat', 'Karnal'],
+  'Himachal Pradesh': ['Shimla', 'Dharamshala', 'Manali'],
+  Jharkhand: ['Ranchi', 'Jamshedpur', 'Dhanbad'],
+  Karnataka: ['Bengaluru', 'Mysuru', 'Mangalore', 'Hubli'],
+  Kerala: ['Thiruvananthapuram', 'Kochi', 'Kozhikode', 'Kollam'],
+  'Madhya Pradesh': ['Bhopal', 'Indore', 'Gwalior', 'Jabalpur'],
+  Maharashtra: ['Mumbai', 'Pune', 'Nagpur', 'Nashik'],
+  Manipur: ['Imphal', 'Churachandpur'],
+  Meghalaya: ['Shillong', 'Tura'],
+  Mizoram: ['Aizawl', 'Lunglei'],
+  Nagaland: ['Kohima', 'Dimapur'],
+  Odisha: ['Bhubaneswar', 'Cuttack', 'Rourkela'],
+  Punjab: ['Chandigarh', 'Amritsar', 'Ludhiana', 'Jalandhar'],
+  Rajasthan: ['Jaipur', 'Jodhpur', 'Udaipur', 'Kota'],
+  Sikkim: ['Gangtok', 'Namchi'],
+  'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli'],
+  Telangana: ['Hyderabad', 'Warangal', 'Nizamabad'],
+  Tripura: ['Agartala', 'Udaipur'],
+  'Uttar Pradesh': ['Lucknow', 'Kanpur', 'Varanasi', 'Agra'],
+  Uttarakhand: ['Dehradun', 'Haridwar', 'Nainital'],
+  'West Bengal': ['Kolkata', 'Howrah', 'Durgapur', 'Siliguri'],
+  Delhi: ['New Delhi', 'Dwarka', 'Rohini'],
+  'Jammu & Kashmir': ['Srinagar', 'Jammu'],
+  Ladakh: ['Leh', 'Kargil'],
+  Puducherry: ['Puducherry', 'Karaikal'],
 };
 
 /* ── Animated particle canvas ── */
@@ -46,14 +47,14 @@ const ParticleCanvas = () => {
   const canvasRef = useRef(null);
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     let animId;
     const resize = () => {
       canvas.width = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
     };
     resize();
-    window.addEventListener("resize", resize);
+    window.addEventListener('resize', resize);
 
     const NODES = Array.from({ length: 55 }, () => ({
       x: Math.random() * 1400,
@@ -98,7 +99,7 @@ const ParticleCanvas = () => {
     draw();
     return () => {
       cancelAnimationFrame(animId);
-      window.removeEventListener("resize", resize);
+      window.removeEventListener('resize', resize);
     };
   }, []);
   return (
@@ -112,9 +113,10 @@ const ParticleCanvas = () => {
 
 /* ── OTP Step ── */
 const OtpStep = ({ email, payload, onSuccess, onBack }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.auth);
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [verifying, setVerifying] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(30);
   const [resending, setResending] = useState(false);
@@ -126,8 +128,8 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
-    const t = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
   }, [resendCooldown]);
 
   const handleOtpChange = (index, value) => {
@@ -139,16 +141,15 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
   };
 
   const handleOtpKeyDown = (index, e) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
+    if (e.key === 'Backspace' && !otp[index] && index > 0)
       inputsRef.current[index - 1]?.focus();
-    }
   };
 
   const handlePaste = (e) => {
     e.preventDefault();
     const pasted = e.clipboardData
-      .getData("text")
-      .replace(/\D/g, "")
+      .getData('text')
+      .replace(/\D/g, '')
       .slice(0, 6);
     const updated = [...otp];
     for (let i = 0; i < pasted.length; i++) updated[i] = pasted[i];
@@ -157,24 +158,22 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
   };
 
   const handleVerify = async () => {
-    const code = otp.join("");
+    const code = otp.join('');
     if (code.length < 6) {
-      toast.error("Please enter the full 6-digit OTP.");
+      toast.error(t('auth.enterFullOtp'));
       return;
     }
     setVerifying(true);
     try {
-      await axios.post("/api/auth/verify-email-otp", { email, otp: code });
+      await axios.post('/api/auth/verify-email-otp', { email, otp: code });
       const result = await dispatch(register(payload));
       if (register.fulfilled.match(result)) {
-        toast("Account created! Welcome aboard 🎉", { icon: "👋" });
+        toast(t('auth.accountCreated'), { icon: '👋' });
         onSuccess();
       }
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Invalid OTP. Please try again.",
-      );
-      setOtp(["", "", "", "", "", ""]);
+      toast.error(err?.response?.data?.message || t('auth.invalidOtp'));
+      setOtp(['', '', '', '', '', '']);
       inputsRef.current[0]?.focus();
     } finally {
       setVerifying(false);
@@ -184,13 +183,13 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
   const handleResend = async () => {
     setResending(true);
     try {
-      await axios.post("/api/auth/send-otp", { email });
-      toast.success("OTP resent to your email.");
+      await axios.post('/api/auth/send-otp', { email });
+      toast.success(t('auth.otpSentEmail'));
       setResendCooldown(30);
-      setOtp(["", "", "", "", "", ""]);
+      setOtp(['', '', '', '', '', '']);
       inputsRef.current[0]?.focus();
     } catch {
-      toast.error("Failed to resend OTP. Please try again.");
+      toast.error(t('auth.failedResend'));
     } finally {
       setResending(false);
     }
@@ -200,13 +199,12 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
 
   return (
     <div className="text-center">
-      {/* Icon */}
       <div className="flex items-center justify-center mb-5">
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center"
           style={{
-            background: "rgba(14,165,233,0.12)",
-            border: "1px solid rgba(14,165,233,0.2)",
+            background: 'rgba(14,165,233,0.12)',
+            border: '1px solid rgba(14,165,233,0.2)',
           }}
         >
           <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none">
@@ -235,13 +233,14 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
         </div>
       </div>
 
-      <h2 className="df text-3xl font-black text-white mb-2">Verify Email</h2>
-      <p className="text-slate-400 text-sm mb-1">We sent a 6-digit code to</p>
+      <h2 className="df text-3xl font-black text-white mb-2">
+        {t('auth.verifyEmail')}
+      </h2>
+      <p className="text-slate-400 text-sm mb-1">{t('auth.otpSentTo')}</p>
       <p className="text-cyan-400 font-semibold text-sm mb-7 truncate">
         {email}
       </p>
 
-      {/* OTP inputs */}
       <div className="flex gap-2.5 justify-center mb-6">
         {otp.map((digit, i) => (
           <input
@@ -256,23 +255,22 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
             onPaste={i === 0 ? handlePaste : undefined}
             className="w-11 text-center text-xl font-bold text-white rounded-xl outline-none transition-all duration-200"
             style={{
-              height: "52px",
+              height: '52px',
               background: digit
-                ? "rgba(14,165,233,0.12)"
-                : "rgba(255,255,255,0.05)",
+                ? 'rgba(14,165,233,0.12)'
+                : 'rgba(255,255,255,0.05)',
               border: digit
-                ? "1px solid rgba(56,189,248,0.6)"
-                : "1px solid rgba(255,255,255,0.12)",
-              boxShadow: digit ? "0 0 0 3px rgba(34,211,238,0.08)" : "none",
+                ? '1px solid rgba(56,189,248,0.6)'
+                : '1px solid rgba(255,255,255,0.12)',
+              boxShadow: digit ? '0 0 0 3px rgba(34,211,238,0.08)' : 'none',
             }}
           />
         ))}
       </div>
 
-      {/* Verify button */}
       <button
         onClick={handleVerify}
-        disabled={isBusy || otp.join("").length < 6}
+        disabled={isBusy || otp.join('').length < 6}
         className="btn-grad w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2.5 mb-4 disabled:opacity-60"
       >
         {isBusy ? (
@@ -296,11 +294,11 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
                 strokeLinecap="round"
               />
             </svg>
-            Verifying…
+            {t('auth.verifying')}
           </>
         ) : (
           <>
-            Verify & Create Account
+            {t('auth.verifyAndCreate')}
             <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
               <path
                 d="M4 10h12M10 4l6 6-6 6"
@@ -314,15 +312,11 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
         )}
       </button>
 
-      {/* Resend */}
       <div className="flex items-center justify-center gap-1.5 text-sm">
-        <span className="text-slate-500">Didn't receive it?</span>
+        <span className="text-slate-500">{t('auth.didntReceive')}</span>
         {resendCooldown > 0 ? (
           <span className="text-slate-500">
-            Resend in{" "}
-            <span className="text-cyan-400 font-semibold">
-              {resendCooldown}s
-            </span>
+            {t('auth.resendIn', { sec: resendCooldown })}
           </span>
         ) : (
           <button
@@ -330,12 +324,11 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
             disabled={resending}
             className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors disabled:opacity-60"
           >
-            {resending ? "Sending…" : "Resend OTP"}
+            {resending ? t('auth.sending') : t('auth.resendOtp')}
           </button>
         )}
       </div>
 
-      {/* Back */}
       <button
         onClick={onBack}
         className="mt-5 text-slate-500 hover:text-slate-300 text-sm transition-colors flex items-center gap-1.5 mx-auto"
@@ -349,7 +342,7 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Back to sign up
+        {t('auth.backToSignup')}
       </button>
     </div>
   );
@@ -357,24 +350,24 @@ const OtpStep = ({ email, payload, onSuccess, onBack }) => {
 
 /* ── Signup ── */
 const Signup = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
 
-  const [step, setStep] = useState("form"); // "form" | "otp"
+  const [step, setStep] = useState('form');
   const [pendingPayload, setPendingPayload] = useState(null);
   const [sendingOtp, setSendingOtp] = useState(false);
 
-  // ── Phone OTP state ──
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [phoneOtpInputs, setPhoneOtpInputs] = useState([
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
   ]);
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false);
   const [verifyingPhone, setVerifyingPhone] = useState(false);
@@ -382,20 +375,57 @@ const Signup = () => {
   const phoneOtpRefs = useRef([]);
 
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    countryCode: "+91",
-    phoneNumber: "",
-    city: "",
-    state: "",
-    pincode: "",
-    password: "",
-    confirmPassword: "",
+    name: '',
+    email: '',
+    countryCode: '+91',
+    phoneNumber: '',
+    city: '',
+    state: '',
+    pincode: '',
+    password: '',
+    confirmPassword: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [focused, setFocused] = useState("");
+  const [focused, setFocused] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  // ── Password validation ──
+  const passwordRules = [
+    { id: 'len', label: t('auth.passwordRuleLen'), test: (p) => p.length >= 8 },
+    {
+      id: 'upper',
+      label: t('auth.passwordRuleUpper'),
+      test: (p) => /[A-Z]/.test(p),
+    },
+    {
+      id: 'lower',
+      label: t('auth.passwordRuleLower'),
+      test: (p) => /[a-z]/.test(p),
+    },
+    { id: 'num', label: t('auth.passwordRuleNum'), test: (p) => /\d/.test(p) },
+    {
+      id: 'spec',
+      label: t('auth.passwordRuleSpec'),
+      test: (p) => /[^A-Za-z0-9]/.test(p),
+    },
+  ];
+
+  const getStrength = (p) => {
+    const n = passwordRules.filter((r) => r.test(p)).length;
+    if (!p) return null;
+    if (n <= 2)
+      return { label: t('auth.strengthWeak'), color: '#ef4444', width: '25%' };
+    if (n === 3)
+      return { label: t('auth.strengthFair'), color: '#f59e0b', width: '50%' };
+    if (n === 4)
+      return { label: t('auth.strengthGood'), color: '#0ea5e9', width: '75%' };
+    return { label: t('auth.strengthStrong'), color: '#22c55e', width: '100%' };
+  };
+
+  const strength = getStrength(formData.password);
+  const passwordsMatch =
+    formData.confirmPassword && formData.password === formData.confirmPassword;
 
   useEffect(() => {
     if (error) {
@@ -409,57 +439,55 @@ const Signup = () => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-      ...(name === "state" && { city: "" }),
+      ...(name === 'state' && { city: '' }),
     }));
   };
 
   const states = Object.keys(indianCitiesByState);
   const cityOptions = indianCitiesByState[formData.state] || [];
   const countryCodes = [
-    { code: "+91", country: "India" },
-    { code: "+1", country: "USA/Canada" },
-    { code: "+44", country: "United Kingdom" },
-    { code: "+61", country: "Australia" },
-    { code: "+971", country: "UAE" },
-    { code: "+65", country: "Singapore" },
-    { code: "+81", country: "Japan" },
-    { code: "+49", country: "Germany" },
+    { code: '+91', country: 'India' },
+    { code: '+1', country: 'USA/Canada' },
+    { code: '+44', country: 'United Kingdom' },
+    { code: '+61', country: 'Australia' },
+    { code: '+971', country: 'UAE' },
+    { code: '+65', country: 'Singapore' },
+    { code: '+81', country: 'Japan' },
+    { code: '+49', country: 'Germany' },
   ];
 
-  // Phone OTP cooldown ticker
   useEffect(() => {
     if (phoneResendCooldown <= 0) return;
-    const t = setTimeout(() => setPhoneResendCooldown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setPhoneResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
   }, [phoneResendCooldown]);
 
-  // Reset phone verified if the user edits the phone number
   const handlePhoneChange = (e) => {
-    const value = e.target.value.replace(/\D/g, "");
+    const value = e.target.value.replace(/\D/g, '');
     setFormData((prev) => ({ ...prev, phoneNumber: value }));
     if (phoneVerified || phoneOtpSent) {
       setPhoneVerified(false);
       setPhoneOtpSent(false);
-      setPhoneOtpInputs(["", "", "", "", "", ""]);
+      setPhoneOtpInputs(['', '', '', '', '', '']);
     }
   };
 
   const handleSendPhoneOtp = async () => {
     if (!/^[0-9]{10}$/.test(formData.phoneNumber)) {
-      toast.error("Please enter a valid 10-digit phone number.");
+      toast.error(t('auth.invalidPhone'));
       return;
     }
     setSendingPhoneOtp(true);
     try {
-      await axios.post("/api/auth/send-phone-otp", {
+      await axios.post('/api/auth/send-phone-otp', {
         phoneNumber: `${formData.countryCode}${formData.phoneNumber}`,
       });
-      toast.success("OTP sent to your phone!");
+      toast.success(t('auth.otpSentPhone'));
       setPhoneOtpSent(true);
       setPhoneResendCooldown(30);
       setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to send SMS OTP.");
+      toast.error(err?.response?.data?.message || t('auth.failedOtp'));
     } finally {
       setSendingPhoneOtp(false);
     }
@@ -474,16 +502,15 @@ const Signup = () => {
   };
 
   const handlePhoneOtpKeyDown = (index, e) => {
-    if (e.key === "Backspace" && !phoneOtpInputs[index] && index > 0) {
+    if (e.key === 'Backspace' && !phoneOtpInputs[index] && index > 0)
       phoneOtpRefs.current[index - 1]?.focus();
-    }
   };
 
   const handlePhoneOtpPaste = (e) => {
     e.preventDefault();
     const pasted = e.clipboardData
-      .getData("text")
-      .replace(/\D/g, "")
+      .getData('text')
+      .replace(/\D/g, '')
       .slice(0, 6);
     const updated = [...phoneOtpInputs];
     for (let i = 0; i < pasted.length; i++) updated[i] = pasted[i];
@@ -492,23 +519,23 @@ const Signup = () => {
   };
 
   const handleVerifyPhoneOtp = async () => {
-    const code = phoneOtpInputs.join("");
+    const code = phoneOtpInputs.join('');
     if (code.length < 6) {
-      toast.error("Please enter the full 6-digit OTP.");
+      toast.error(t('auth.enterFullOtp'));
       return;
     }
     setVerifyingPhone(true);
     try {
-      await axios.post("/api/auth/verify-phone-otp", {
+      await axios.post('/api/auth/verify-phone-otp', {
         phoneNumber: `${formData.countryCode}${formData.phoneNumber}`,
         otp: code,
       });
       setPhoneVerified(true);
       setPhoneOtpSent(false);
-      toast.success("Phone number verified! ✓");
+      toast.success(t('auth.phoneVerified') + ' ✓');
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Invalid OTP. Try again.");
-      setPhoneOtpInputs(["", "", "", "", "", ""]);
+      toast.error(err?.response?.data?.message || t('auth.invalidOtp'));
+      setPhoneOtpInputs(['', '', '', '', '', '']);
       phoneOtpRefs.current[0]?.focus();
     } finally {
       setVerifyingPhone(false);
@@ -517,25 +544,29 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    const failedRules = passwordRules.filter((r) => !r.test(formData.password));
+    if (failedRules.length > 0) {
+      toast.error(`${t('auth.password')}: ${failedRules[0].label}`);
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match.");
+      toast.error(t('auth.passwordsMismatch'));
       return;
     }
     if (!agreedToTerms) {
-      toast.error("Please agree to the Terms & Conditions.");
+      toast.error(t('auth.agreeTerms'));
       return;
     }
     if (!/^[0-9]{10}$/.test(formData.phoneNumber)) {
-      toast.error("Please enter a valid 10-digit phone number.");
+      toast.error(t('auth.invalidPhone'));
       return;
     }
     if (!phoneVerified) {
-      toast.error("Please verify your phone number before continuing.");
+      toast.error(t('auth.verifyPhoneFirst'));
       return;
     }
     if (!/^[0-9]{6}$/.test(formData.pincode)) {
-      toast.error("Please enter a valid 6-digit pincode.");
+      toast.error(t('auth.invalidPincode'));
       return;
     }
 
@@ -544,14 +575,12 @@ const Signup = () => {
 
     setSendingOtp(true);
     try {
-      await axios.post("/api/auth/send-email-otp", { email: formData.email });
-      toast.success("OTP sent to your email!");
+      await axios.post('/api/auth/send-email-otp', { email: formData.email });
+      toast.success(t('auth.otpSentEmail'));
       setPendingPayload(payload);
-      setStep("otp");
+      setStep('otp');
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Failed to send OTP. Please try again.",
-      );
+      toast.error(err?.response?.data?.message || t('auth.failedOtp'));
     } finally {
       setSendingOtp(false);
     }
@@ -559,15 +588,17 @@ const Signup = () => {
 
   const inputCls = (name) =>
     `w-full border rounded-2xl px-5 py-3.5 text-white text-sm outline-none transition-all duration-300 placeholder-slate-500 ${
-      name === "state" || name === "city" ? "bg-[#1e293b]" : "bg-white/5"
+      name === 'state' || name === 'city' ? 'bg-[#1e293b]' : 'bg-white/5'
     } ${
       focused === name
-        ? "border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]"
-        : "border-white/10 hover:border-white/20"
+        ? 'border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]'
+        : 'border-white/10 hover:border-white/20'
     }`;
 
+  // ── JSX (background + left panel stay identical, only form labels change) ──
   return (
     <div className="min-h-screen bg-[#0B1120] flex flex-col overflow-hidden relative">
+      {/* keep your existing <style> and background JSX unchanged */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=DM+Sans:wght@400;500&display=swap');
         .df { font-family:'Outfit',sans-serif; }
@@ -581,6 +612,7 @@ const Signup = () => {
         @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         @keyframes spin-rev  { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
         @keyframes twinkle { 0%,100%{opacity:.15;transform:scale(.7)} 50%{opacity:1;transform:scale(1.3)} }
+        @keyframes bar-load { from{width:0%} to{width:100%} }
 
         .orb1 { animation:pulse-orb 9s ease-in-out infinite; }
         .orb2 { animation:pulse-orb2 13s ease-in-out infinite 3s; }
@@ -609,8 +641,6 @@ const Signup = () => {
         .btn-grad:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(14,165,233,.45),inset 0 1px 0 rgba(255,255,255,.18); }
         .btn-grad:active { transform:translateY(0); }
       `}</style>
-
-      {/* ── Background ── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#060d1f] via-[#0B1120] to-[#0d1635]" />
         <ParticleCanvas />
@@ -620,32 +650,32 @@ const Signup = () => {
           className="orb1 absolute -top-32 -left-20 w-[520px] h-[520px] rounded-full"
           style={{
             background:
-              "radial-gradient(circle,rgba(56,189,248,.22) 0%,transparent 70%)",
+              'radial-gradient(circle,rgba(56,189,248,.22) 0%,transparent 70%)',
           }}
         />
         <div
           className="orb2 absolute -bottom-36 -right-24 w-[620px] h-[620px] rounded-full"
           style={{
             background:
-              "radial-gradient(circle,rgba(99,102,241,.18) 0%,transparent 70%)",
+              'radial-gradient(circle,rgba(99,102,241,.18) 0%,transparent 70%)',
           }}
         />
         <div
           className="orb3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full"
           style={{
             background:
-              "radial-gradient(circle,rgba(14,165,233,.06) 0%,transparent 70%)",
+              'radial-gradient(circle,rgba(14,165,233,.06) 0%,transparent 70%)',
           }}
         />
 
         {/* Orbit rings */}
         <div
           className="ring1 absolute top-[8%] right-[4%] w-[350px] h-[350px] rounded-full opacity-[0.07]"
-          style={{ border: "1px solid rgba(147,210,255,.9)" }}
+          style={{ border: '1px solid rgba(147,210,255,.9)' }}
         />
         <div
           className="ring2 absolute top-[5%] right-[2%] w-[420px] h-[420px] rounded-full opacity-[0.04]"
-          style={{ border: "1px dashed rgba(147,210,255,.9)" }}
+          style={{ border: '1px dashed rgba(147,210,255,.9)' }}
         />
 
         {/* Grid */}
@@ -673,26 +703,26 @@ const Signup = () => {
 
         {/* Stars */}
         {[
-          { t: "7%", l: "10%", d: "2.8s", del: "0s" },
-          { t: "14%", l: "73%", d: "3.5s", del: ".7s" },
-          { t: "32%", l: "4%", d: "4s", del: "1.2s" },
-          { t: "54%", l: "90%", d: "3.1s", del: ".3s" },
-          { t: "72%", l: "18%", d: "2.5s", del: "1.8s" },
-          { t: "83%", l: "58%", d: "3.8s", del: ".9s" },
-          { t: "46%", l: "48%", d: "5s", del: "2.1s" },
-          { t: "22%", l: "38%", d: "2.2s", del: ".4s" },
+          { t: '7%', l: '10%', d: '2.8s', del: '0s' },
+          { t: '14%', l: '73%', d: '3.5s', del: '.7s' },
+          { t: '32%', l: '4%', d: '4s', del: '1.2s' },
+          { t: '54%', l: '90%', d: '3.1s', del: '.3s' },
+          { t: '72%', l: '18%', d: '2.5s', del: '1.8s' },
+          { t: '83%', l: '58%', d: '3.8s', del: '.9s' },
+          { t: '46%', l: '48%', d: '5s', del: '2.1s' },
+          { t: '22%', l: '38%', d: '2.2s', del: '.4s' },
         ].map((s, i) => (
           <div
             key={i}
             className="star absolute w-1 h-1 rounded-full bg-white"
-            style={{ top: s.t, left: s.l, "--d": s.d, "--del": s.del }}
+            style={{ top: s.t, left: s.l, '--d': s.d, '--del': s.del }}
           />
         ))}
 
         {/* Floating shapes */}
         <div
           className="floaty absolute top-[20%] left-[7%] w-14 h-14 opacity-[.15]"
-          style={{ animationDelay: "1s" }}
+          style={{ animationDelay: '1s' }}
         >
           <svg viewBox="0 0 56 56">
             <polygon
@@ -705,7 +735,7 @@ const Signup = () => {
         </div>
         <div
           className="floaty absolute bottom-[20%] right-[9%] w-10 h-10 opacity-[.12]"
-          style={{ animationDelay: "3s" }}
+          style={{ animationDelay: '3s' }}
         >
           <svg viewBox="0 0 40 40">
             <rect
@@ -722,7 +752,7 @@ const Signup = () => {
         </div>
         <div
           className="floaty absolute top-[62%] left-[2%] w-8 h-8 opacity-[.18]"
-          style={{ animationDelay: "2s" }}
+          style={{ animationDelay: '2s' }}
         >
           <svg viewBox="0 0 32 32">
             <circle
@@ -736,28 +766,26 @@ const Signup = () => {
           </svg>
         </div>
       </div>
-
-      {/* ── Content ── */}
       <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-10">
         <div className="w-full max-w-5xl flex items-center gap-14">
-          {/* Left hero */}
+          {/* Left hero — unchanged */}
           <div
             className="hidden lg:flex flex-col flex-1 gap-8 su"
-            style={{ animationDelay: ".2s" }}
+            style={{ animationDelay: '.2s' }}
           >
             <div className="floaty relative">
               <div
                 className="absolute inset-0 rounded-full blur-3xl opacity-20"
                 style={{
-                  background: "radial-gradient(circle,#38bdf8,transparent 70%)",
+                  background: 'radial-gradient(circle,#38bdf8,transparent 70%)',
                 }}
               />
               <svg viewBox="0 0 300 320" className="w-72 h-72 drop-shadow-2xl">
                 {[
-                  { x: 30, y: 20, f: "#38bdf8", r: 20 },
-                  { x: 200, y: 10, f: "#6366f1", r: 45 },
-                  { x: 250, y: 50, f: "#0ea5e9", r: -15 },
-                  { x: 10, y: 150, f: "#818cf8", r: 30 },
+                  { x: 30, y: 20, f: '#38bdf8', r: 20 },
+                  { x: 200, y: 10, f: '#6366f1', r: 45 },
+                  { x: 250, y: 50, f: '#0ea5e9', r: -15 },
+                  { x: 10, y: 150, f: '#818cf8', r: 30 },
                 ].map((c, i) => (
                   <rect
                     key={i}
@@ -869,14 +897,14 @@ const Signup = () => {
                 Prepare. <span className="shimmer-txt">Succeed.</span>
               </h1>
               <p className="text-slate-400 mt-4 text-sm leading-relaxed max-w-xs">
-                Premier AI coaching for CLAT, CAT, CUET and more — personalised
+                Premier AI coaching for classes 1 to 12 and more — personalised
                 to your pace, designed for your success.
               </p>
               <div className="mt-7 flex items-center gap-7">
                 {[
-                  ["50K+", "Students"],
-                  ["200+", "Courses"],
-                  ["98%", "Pass Rate"],
+                  ['50K+', 'Students'],
+                  ['200+', 'Courses'],
+                  ['98%', 'Pass Rate'],
                 ].map(([n, l]) => (
                   <div key={l}>
                     <p className="df text-xl font-black text-white">{n}</p>
@@ -890,13 +918,13 @@ const Signup = () => {
           {/* Right card */}
           <div
             className="w-full max-w-md su"
-            style={{ animationDelay: ".35s" }}
+            style={{ animationDelay: '.35s' }}
           >
             <div
               className="h-[2px] w-full rounded-t-full mb-[-2px] relative z-10"
               style={{
                 background:
-                  "linear-gradient(90deg,transparent,#38bdf8,#6366f1,transparent)",
+                  'linear-gradient(90deg,transparent,#38bdf8,#6366f1,transparent)',
               }}
             />
 
@@ -904,25 +932,25 @@ const Signup = () => {
               className="card-glow rounded-3xl p-9"
               style={{
                 background:
-                  "linear-gradient(160deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%)",
-                backdropFilter: "blur(24px)",
+                  'linear-gradient(160deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%)',
+                backdropFilter: 'blur(24px)',
               }}
             >
-              {step === "otp" ? (
+              {step === 'otp' ? (
                 <OtpStep
                   email={formData.email}
                   payload={pendingPayload}
-                  onSuccess={() => navigate("/student-dashboard")}
-                  onBack={() => setStep("form")}
+                  onSuccess={() => navigate('/student-dashboard')}
+                  onBack={() => setStep('form')}
                 />
               ) : (
                 <>
                   <div className="text-center mb-7">
                     <h2 className="df text-3xl font-black text-white">
-                      Create Account
+                      {t('auth.signup')}
                     </h2>
                     <p className="text-slate-400 mt-1.5 text-sm">
-                      Join thousands of learners today
+                      {t('auth.joinLearners')}
                     </p>
                   </div>
 
@@ -930,46 +958,44 @@ const Signup = () => {
                     {/* Name */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                        Full Name
+                        {t('auth.name')}
                       </label>
                       <input
                         type="text"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        onFocus={() => setFocused("name")}
-                        onBlur={() => setFocused("")}
-                        placeholder="John Doe"
+                        onFocus={() => setFocused('name')}
+                        onBlur={() => setFocused('')}
+                        placeholder={t('auth.namePlaceholder')}
                         required
-                        className={inputCls("name")}
+                        className={inputCls('name')}
                       />
                     </div>
 
                     {/* Email */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                        Email
+                        {t('auth.email')}
                       </label>
                       <input
                         type="email"
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        onFocus={() => setFocused("email")}
-                        onBlur={() => setFocused("")}
-                        placeholder="you@example.com"
+                        onFocus={() => setFocused('email')}
+                        onBlur={() => setFocused('')}
+                        placeholder={t('auth.emailPlaceholder')}
                         required
-                        className={inputCls("email")}
+                        className={inputCls('email')}
                       />
                     </div>
 
-                    {/* Phone Number */}
+                    {/* Phone */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                        Phone Number
+                        {t('auth.phoneNumber')}
                       </label>
-
-                      {/* Phone input row */}
                       <div className="flex gap-2">
                         <select
                           name="countryCode"
@@ -979,15 +1005,15 @@ const Signup = () => {
                             if (phoneVerified || phoneOtpSent) {
                               setPhoneVerified(false);
                               setPhoneOtpSent(false);
-                              setPhoneOtpInputs(["", "", "", "", "", ""]);
+                              setPhoneOtpInputs(['', '', '', '', '', '']);
                             }
                           }}
                           disabled={phoneVerified}
                           className="w-28 border border-white/10 rounded-2xl px-3 py-3.5 bg-[#1e293b] text-white disabled:opacity-50"
                         >
-                          {countryCodes.map((country) => (
-                            <option key={country.code} value={country.code}>
-                              {country.code}
+                          {countryCodes.map((c) => (
+                            <option key={c.code} value={c.code}>
+                              {c.code}
                             </option>
                           ))}
                         </select>
@@ -998,18 +1024,17 @@ const Signup = () => {
                             name="phoneNumber"
                             value={formData.phoneNumber}
                             onChange={handlePhoneChange}
-                            onFocus={() => setFocused("phoneNumber")}
-                            onBlur={() => setFocused("")}
-                            placeholder="9876543210"
+                            onFocus={() => setFocused('phoneNumber')}
+                            onBlur={() => setFocused('')}
+                            placeholder={t('auth.phonePlaceholder')}
                             required
                             maxLength={10}
                             disabled={phoneVerified}
                             className={
-                              inputCls("phoneNumber") +
-                              " pr-10 disabled:opacity-50"
+                              inputCls('phoneNumber') +
+                              ' pr-10 disabled:opacity-50'
                             }
                           />
-                          {/* Green tick when verified */}
                           {phoneVerified && (
                             <span className="absolute right-3 top-1/2 -translate-y-1/2">
                               <svg
@@ -1037,15 +1062,10 @@ const Signup = () => {
                           )}
                         </div>
 
-                        {/* Send / Resend button */}
                         {!phoneVerified && (
                           <button
                             type="button"
-                            onClick={
-                              phoneOtpSent
-                                ? handleSendPhoneOtp
-                                : handleSendPhoneOtp
-                            }
+                            onClick={handleSendPhoneOtp}
                             disabled={
                               sendingPhoneOtp ||
                               formData.phoneNumber.length < 10 ||
@@ -1054,8 +1074,8 @@ const Signup = () => {
                             className="shrink-0 px-4 py-2 rounded-2xl text-sm font-bold text-white transition-all duration-200 disabled:opacity-50"
                             style={{
                               background:
-                                "linear-gradient(135deg,#0ea5e9,#6366f1)",
-                              boxShadow: "0 4px 14px rgba(14,165,233,.3)",
+                                'linear-gradient(135deg,#0ea5e9,#6366f1)',
+                              boxShadow: '0 4px 14px rgba(14,165,233,.3)',
                             }}
                           >
                             {sendingPhoneOtp ? (
@@ -1081,46 +1101,42 @@ const Signup = () => {
                             ) : phoneResendCooldown > 0 ? (
                               `${phoneResendCooldown}s`
                             ) : phoneOtpSent ? (
-                              "Resend"
+                              t('auth.resend')
                             ) : (
-                              "Send OTP"
+                              t('auth.sendOtp')
                             )}
                           </button>
                         )}
 
-                        {/* Edit button when verified */}
                         {phoneVerified && (
                           <button
                             type="button"
                             onClick={() => {
                               setPhoneVerified(false);
                               setPhoneOtpSent(false);
-                              setPhoneOtpInputs(["", "", "", "", "", ""]);
+                              setPhoneOtpInputs(['', '', '', '', '', '']);
                             }}
                             className="shrink-0 px-4 py-2 rounded-2xl text-sm font-semibold text-slate-400 hover:text-white border border-white/10 hover:border-white/20 transition-all"
                           >
-                            Edit
+                            {t('auth.edit')}
                           </button>
                         )}
                       </div>
 
-                      {/* Inline OTP input — visible after SMS sent, hidden once verified */}
                       {phoneOtpSent && !phoneVerified && (
                         <div
                           className="mt-3 p-4 rounded-2xl"
                           style={{
-                            background: "rgba(14,165,233,0.05)",
-                            border: "1px solid rgba(56,189,248,0.15)",
+                            background: 'rgba(14,165,233,0.05)',
+                            border: '1px solid rgba(56,189,248,0.15)',
                           }}
                         >
                           <p className="text-xs text-slate-400 mb-3 text-center">
-                            Enter the 6-digit code sent to{" "}
+                            {t('auth.otpSentTo')}{' '}
                             <span className="text-cyan-400 font-semibold">
                               {formData.countryCode} {formData.phoneNumber}
                             </span>
                           </p>
-
-                          {/* OTP boxes */}
                           <div className="flex gap-2 justify-center mb-3">
                             {phoneOtpInputs.map((digit, i) => (
                               <input
@@ -1139,34 +1155,32 @@ const Signup = () => {
                                 }
                                 className="w-10 text-center text-lg font-bold text-white rounded-xl outline-none transition-all duration-200"
                                 style={{
-                                  height: "44px",
+                                  height: '44px',
                                   background: digit
-                                    ? "rgba(14,165,233,0.12)"
-                                    : "rgba(255,255,255,0.05)",
+                                    ? 'rgba(14,165,233,0.12)'
+                                    : 'rgba(255,255,255,0.05)',
                                   border: digit
-                                    ? "1px solid rgba(56,189,248,0.6)"
-                                    : "1px solid rgba(255,255,255,0.12)",
+                                    ? '1px solid rgba(56,189,248,0.6)'
+                                    : '1px solid rgba(255,255,255,0.12)',
                                   boxShadow: digit
-                                    ? "0 0 0 3px rgba(34,211,238,0.08)"
-                                    : "none",
+                                    ? '0 0 0 3px rgba(34,211,238,0.08)'
+                                    : 'none',
                                 }}
                               />
                             ))}
                           </div>
-
-                          {/* Verify button */}
                           <button
                             type="button"
                             onClick={handleVerifyPhoneOtp}
                             disabled={
                               verifyingPhone ||
-                              phoneOtpInputs.join("").length < 6
+                              phoneOtpInputs.join('').length < 6
                             }
                             className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all duration-200 disabled:opacity-50"
                             style={{
                               background:
-                                "linear-gradient(135deg,#0ea5e9,#6366f1)",
-                              boxShadow: "0 4px 14px rgba(14,165,233,.25)",
+                                'linear-gradient(135deg,#0ea5e9,#6366f1)',
+                              boxShadow: '0 4px 14px rgba(14,165,233,.25)',
                             }}
                           >
                             {verifyingPhone ? (
@@ -1190,16 +1204,15 @@ const Signup = () => {
                                     strokeLinecap="round"
                                   />
                                 </svg>
-                                Verifying…
+                                {t('auth.verifying')}
                               </span>
                             ) : (
-                              "Verify Phone"
+                              t('auth.verifyPhone')
                             )}
                           </button>
                         </div>
                       )}
 
-                      {/* Verified badge */}
                       {phoneVerified && (
                         <p className="mt-2 text-xs text-emerald-400 flex items-center gap-1.5">
                           <svg
@@ -1223,88 +1236,86 @@ const Signup = () => {
                               strokeLinejoin="round"
                             />
                           </svg>
-                          Phone number verified successfully
+                          {t('auth.phoneVerified')}
                         </p>
                       )}
                     </div>
 
+                    {/* State / City / Pincode */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      {/* State */}
                       <div>
                         <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                          State
+                          {t('auth.state')}
                         </label>
                         <select
                           name="state"
                           value={formData.state}
                           onChange={handleChange}
-                          onFocus={() => setFocused("state")}
-                          onBlur={() => setFocused("")}
+                          onFocus={() => setFocused('state')}
+                          onBlur={() => setFocused('')}
                           required
-                          className={inputCls("state")}
+                          className={inputCls('state')}
                         >
                           <option value="" disabled>
-                            Select state
+                            {t('auth.selectState')}
                           </option>
-                          {states.map((state) => (
-                            <option key={state} value={state}>
-                              {state}
+                          {states.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
                             </option>
                           ))}
                         </select>
                       </div>
-
-                      {/* City */}
                       <div>
                         <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                          City
+                          {t('auth.city')}
                         </label>
                         <select
                           name="city"
                           value={formData.city}
                           onChange={handleChange}
-                          onFocus={() => setFocused("city")}
-                          onBlur={() => setFocused("")}
+                          onFocus={() => setFocused('city')}
+                          onBlur={() => setFocused('')}
                           required
                           className={
-                            inputCls("city") +
+                            inputCls('city') +
                             (!formData.state
-                              ? " cursor-not-allowed opacity-50"
-                              : "")
+                              ? ' cursor-not-allowed opacity-50'
+                              : '')
                           }
                         >
                           <option value="" disabled>
                             {formData.state
-                              ? "Select city"
-                              : "Choose a state first"}
+                              ? t('auth.selectCity')
+                              : t('auth.chooseStateFirst')}
                           </option>
-                          {cityOptions.map((city) => (
-                            <option key={city} value={city}>
-                              {city}
+                          {cityOptions.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
                             </option>
                           ))}
                         </select>
                       </div>
-
-                      {/* Pincode */}
                       <div>
                         <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                          Pincode
+                          {t('auth.pincode')}
                         </label>
                         <input
                           type="text"
                           name="pincode"
                           value={formData.pincode}
                           onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, "").slice(0, 6);
-                            setFormData((prev) => ({ ...prev, pincode: value }));
+                            const v = e.target.value
+                              .replace(/\D/g, '')
+                              .slice(0, 6);
+                            setFormData((p) => ({ ...p, pincode: v }));
                           }}
-                          onFocus={() => setFocused("pincode")}
-                          onBlur={() => setFocused("")}
-                          placeholder="452001"
+                          onFocus={() => setFocused('pincode')}
+                          onBlur={() => setFocused('')}
+                          placeholder={t('auth.pincodePlaceholder')}
                           required
                           maxLength={6}
-                          className={inputCls("pincode")}
+                          className={inputCls('pincode')}
                         />
                       </div>
                     </div>
@@ -1312,19 +1323,19 @@ const Signup = () => {
                     {/* Password */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                        Password
+                        {t('auth.password')}
                       </label>
                       <div className="relative">
                         <input
-                          type={showPassword ? "text" : "password"}
+                          type={showPassword ? 'text' : 'password'}
                           name="password"
                           value={formData.password}
                           onChange={handleChange}
-                          onFocus={() => setFocused("password")}
-                          onBlur={() => setFocused("")}
-                          placeholder="••••••••••"
+                          onFocus={() => setFocused('password')}
+                          onBlur={() => setFocused('')}
+                          placeholder={t('auth.passwordPlaceholder')}
                           required
-                          className={inputCls("password") + " pr-12"}
+                          className={inputCls('password') + ' pr-12'}
                         />
                         <button
                           type="button"
@@ -1338,24 +1349,123 @@ const Signup = () => {
                           )}
                         </button>
                       </div>
+
+                      {/* Strength bar */}
+                      {formData.password && strength && (
+                        <div className="mt-2">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-slate-500">
+                              {t('auth.passwordStrength')}
+                            </span>
+                            <span
+                              className="text-xs font-semibold"
+                              style={{ color: strength.color }}
+                            >
+                              {strength.label}
+                            </span>
+                          </div>
+                          <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: strength.width,
+                                background: strength.color,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Rules */}
+                      {(focused === 'password' || formData.password) && (
+                        <div
+                          className="mt-2.5 p-3 rounded-xl space-y-1.5"
+                          style={{
+                            background: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                          }}
+                        >
+                          {passwordRules.map((rule) => {
+                            const ok = rule.test(formData.password);
+                            return (
+                              <div
+                                key={rule.id}
+                                className="flex items-center gap-2"
+                              >
+                                <span className="flex-shrink-0">
+                                  {ok ? (
+                                    <svg
+                                      viewBox="0 0 16 16"
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                    >
+                                      <circle
+                                        cx="8"
+                                        cy="8"
+                                        r="7"
+                                        fill="rgba(34,197,94,0.15)"
+                                        stroke="#22c55e"
+                                        strokeWidth="1.5"
+                                      />
+                                      <path
+                                        d="M5 8l2.5 2.5L11 5.5"
+                                        stroke="#22c55e"
+                                        strokeWidth="1.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                    </svg>
+                                  ) : (
+                                    <svg
+                                      viewBox="0 0 16 16"
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                    >
+                                      <circle
+                                        cx="8"
+                                        cy="8"
+                                        r="7"
+                                        stroke="rgba(255,255,255,0.2)"
+                                        strokeWidth="1.5"
+                                      />
+                                    </svg>
+                                  )}
+                                </span>
+                                <span
+                                  className={`text-xs transition-colors ${ok ? 'text-emerald-400' : 'text-slate-500'}`}
+                                >
+                                  {rule.label}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
 
                     {/* Confirm Password */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                        Confirm Password
+                        {t('auth.confirmPassword')}
                       </label>
                       <div className="relative">
                         <input
-                          type={showConfirm ? "text" : "password"}
+                          type={showConfirm ? 'text' : 'password'}
                           name="confirmPassword"
                           value={formData.confirmPassword}
                           onChange={handleChange}
-                          onFocus={() => setFocused("confirmPassword")}
-                          onBlur={() => setFocused("")}
-                          placeholder="••••••••••"
+                          onFocus={() => setFocused('confirmPassword')}
+                          onBlur={() => setFocused('')}
+                          placeholder={t('auth.passwordPlaceholder')}
                           required
-                          className={inputCls("confirmPassword") + " pr-12"}
+                          className={
+                            inputCls('confirmPassword') +
+                            ' pr-12' +
+                            (formData.confirmPassword && !passwordsMatch
+                              ? ' !border-red-500/60'
+                              : '') +
+                            (passwordsMatch ? ' !border-emerald-500/60' : '')
+                          }
                         />
                         <button
                           type="button"
@@ -1369,6 +1479,62 @@ const Signup = () => {
                           )}
                         </button>
                       </div>
+                      {formData.confirmPassword && (
+                        <p
+                          className={`mt-1.5 text-xs flex items-center gap-1.5 ${passwordsMatch ? 'text-emerald-400' : 'text-red-400'}`}
+                        >
+                          {passwordsMatch ? (
+                            <>
+                              <svg
+                                viewBox="0 0 16 16"
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                              >
+                                <circle
+                                  cx="8"
+                                  cy="8"
+                                  r="7"
+                                  fill="rgba(34,197,94,0.15)"
+                                  stroke="#22c55e"
+                                  strokeWidth="1.5"
+                                />
+                                <path
+                                  d="M5 8l2.5 2.5L11 5.5"
+                                  stroke="#22c55e"
+                                  strokeWidth="1.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                              {t('auth.passwordsMatch')}
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                viewBox="0 0 16 16"
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                              >
+                                <circle
+                                  cx="8"
+                                  cy="8"
+                                  r="7"
+                                  fill="rgba(239,68,68,0.1)"
+                                  stroke="#ef4444"
+                                  strokeWidth="1.5"
+                                />
+                                <path
+                                  d="M5.5 5.5l5 5M10.5 5.5l-5 5"
+                                  stroke="#ef4444"
+                                  strokeWidth="1.5"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                              {t('auth.passwordsNoMatch')}
+                            </>
+                          )}
+                        </p>
+                      )}
                     </div>
 
                     {/* Terms */}
@@ -1384,13 +1550,13 @@ const Signup = () => {
                         htmlFor="terms"
                         className="text-slate-400 text-sm cursor-pointer leading-relaxed"
                       >
-                        I agree to the{" "}
+                        {t('auth.termsAgree')}{' '}
                         <span className="text-cyan-400 hover:text-cyan-300 transition-colors">
-                          <Link to="/terms">Terms of Service</Link>
-                        </span>{" "}
-                        &amp;{" "}
+                          <Link to="/terms">{t('auth.termsOf')}</Link>
+                        </span>{' '}
+                        {t('auth.and')}{' '}
                         <span className="text-cyan-400 hover:text-cyan-300 transition-colors">
-                          <Link to="/privacy">Privacy Policy</Link>
+                          <Link to="/privacy">{t('auth.privacyPolicy')}</Link>
                         </span>
                       </label>
                     </div>
@@ -1422,11 +1588,11 @@ const Signup = () => {
                               strokeLinecap="round"
                             />
                           </svg>
-                          Sending OTP…
+                          {t('auth.sendingOtp')}
                         </>
                       ) : (
                         <>
-                          Continue
+                          {t('auth.continue')}
                           <svg
                             viewBox="0 0 20 20"
                             className="w-5 h-5"
@@ -1446,12 +1612,12 @@ const Signup = () => {
                   </form>
 
                   <p className="text-center text-slate-500 text-sm mt-6">
-                    Already have an account?{" "}
+                    {t('auth.alreadyHaveAccount')}{' '}
                     <Link
                       to="/login"
                       className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors"
                     >
-                      Sign In
+                      {t('auth.signIn')}
                     </Link>
                   </p>
                 </>

@@ -1,23 +1,25 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { toast } from "react-hot-toast";
-import { FiEye, FiEyeOff } from "react-icons/fi";
-import { useDispatch } from "react-redux";
-import { clearError, login } from "../../redux/slices/authSlice";
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { useDispatch } from 'react-redux';
+import { clearError, login } from '../../redux/slices/authSlice';
+import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 
 /* ── Animated particle canvas ── */
 const ParticleCanvas = () => {
   const canvasRef = useRef(null);
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     let animId;
     const resize = () => {
       canvas.width = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
     };
     resize();
-    window.addEventListener("resize", resize);
+    window.addEventListener('resize', resize);
 
     const NODES = Array.from({ length: 55 }, () => ({
       x: Math.random() * 1400,
@@ -62,7 +64,7 @@ const ParticleCanvas = () => {
     draw();
     return () => {
       cancelAnimationFrame(animId);
-      window.removeEventListener("resize", resize);
+      window.removeEventListener('resize', resize);
     };
   }, []);
   return (
@@ -74,14 +76,739 @@ const ParticleCanvas = () => {
   );
 };
 
+// ── Password Reset Modal ──────────────────────────────────────────────────────
+// step: 'email' | 'otp' | 'password' | 'done'
+const PasswordResetModal = ({ onClose }) => {
+  const [step, setStep] = useState('email');
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [resetToken, setResetToken] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const otpRefs = useRef([]);
+
+  // Cooldown timer
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  const handleSendOtp = async () => {
+    if (!email.trim()) return toast.error('Enter your email');
+    setLoading(true);
+    try {
+      await axios.post('/api/auth/forgot-password', { email: email.trim() });
+      toast.success('OTP sent! Check your inbox.');
+      setStep('otp');
+      setCooldown(60);
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message || err.message || 'Something went wrong'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (cooldown > 0) return;
+    setLoading(true);
+    try {
+      await axios.post('/api/auth/forgot-password', { email: email.trim() });
+      toast.success('OTP resent!');
+      setCooldown(60);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to resend');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // OTP input helpers
+  const handleOtpChange = (idx, val) => {
+    if (!/^\d?$/.test(val)) return;
+    const next = [...otp];
+    next[idx] = val;
+    setOtp(next);
+    if (val && idx < 5) otpRefs.current[idx + 1]?.focus();
+  };
+
+  const handleOtpKeyDown = (idx, e) => {
+    if (e.key === 'Backspace' && !otp[idx] && idx > 0) {
+      otpRefs.current[idx - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    const paste = e.clipboardData
+      .getData('text')
+      .replace(/\D/g, '')
+      .slice(0, 6);
+    if (paste.length === 6) {
+      setOtp(paste.split(''));
+      otpRefs.current[5]?.focus();
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const otpStr = otp.join('');
+    if (otpStr.length < 6) return toast.error('Enter the 6-digit OTP');
+    setLoading(true);
+    try {
+      const { data } = await axios.post('/api/auth/verify-reset-otp', {
+        email: email.trim(),
+        otp: otpStr,
+      });
+      setResetToken(data.resetToken);
+      toast.success('OTP verified!');
+      setStep('password');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Invalid OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (newPassword.length < 6)
+      return toast.error('Password must be at least 6 characters');
+    if (newPassword !== confirmPassword)
+      return toast.error('Passwords do not match');
+    setLoading(true);
+    try {
+      await axios.post('/api/auth/reset-password', {
+        email: email.trim(),
+        resetToken,
+        newPassword,
+      });
+      setStep('done');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to reset password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const strength = (pwd) => {
+    let s = 0;
+    if (pwd.length >= 6) s++;
+    if (pwd.length >= 10) s++;
+    if (/[A-Z]/.test(pwd)) s++;
+    if (/[0-9]/.test(pwd)) s++;
+    if (/[^A-Za-z0-9]/.test(pwd)) s++;
+    return s;
+  };
+  const strengthLabel = [
+    '',
+    'Very Weak',
+    'Weak',
+    'Fair',
+    'Strong',
+    'Very Strong',
+  ];
+  const strengthColor = [
+    '',
+    '#ef4444',
+    '#f97316',
+    '#eab308',
+    '#22c55e',
+    '#10b981',
+  ];
+  const s = strength(newPassword);
+
+  const inputStyle = {
+    width: '100%',
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 14,
+    padding: '12px 18px',
+    color: '#f1f5f9',
+    fontSize: 14,
+    outline: 'none',
+    transition: 'border-color 0.2s',
+    boxSizing: 'border-box',
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 100,
+        background: 'rgba(2,8,23,0.75)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+      }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 420,
+          background:
+            'linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02))',
+          border: '1px solid rgba(99,179,237,.15)',
+          borderRadius: 24,
+          overflow: 'hidden',
+          boxShadow:
+            '0 25px 60px rgba(0,0,0,0.6), 0 0 80px rgba(56,189,248,.05)',
+        }}
+      >
+        {/* Top gradient bar */}
+        <div
+          style={{
+            height: 3,
+            background: 'linear-gradient(90deg,#38bdf8,#6366f1)',
+          }}
+        />
+
+        <div style={{ padding: '32px 32px 28px' }}>
+          {/* Header */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              marginBottom: 24,
+            }}
+          >
+            <div>
+              <p
+                style={{
+                  margin: '0 0 4px',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '.18em',
+                  textTransform: 'uppercase',
+                  color: '#38bdf8',
+                }}
+              >
+                {step === 'email' && 'Step 1 of 3'}
+                {step === 'otp' && 'Step 2 of 3'}
+                {step === 'password' && 'Step 3 of 3'}
+                {step === 'done' && 'Complete'}
+              </p>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: 22,
+                  fontWeight: 900,
+                  color: '#f1f5f9',
+                  fontFamily: 'Outfit,sans-serif',
+                }}
+              >
+                {step === 'email' && 'Forgot Password'}
+                {step === 'otp' && 'Verify OTP'}
+                {step === 'password' && 'New Password'}
+                {step === 'done' && 'All Done!'}
+              </h2>
+            </div>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#64748b',
+                fontSize: 22,
+                cursor: 'pointer',
+                lineHeight: 1,
+                padding: 0,
+                marginTop: 2,
+              }}
+            >
+              ×
+            </button>
+          </div>
+
+          {/* ── Step 1: Email ── */}
+          {step === 'email' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 13,
+                  color: '#94a3b8',
+                  lineHeight: 1.6,
+                }}
+              >
+                Enter your registered email and we'll send you a 6-digit OTP.
+              </p>
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: 6,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: '#cbd5e1',
+                    letterSpacing: '.14em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendOtp()}
+                  placeholder="you@example.com"
+                  style={inputStyle}
+                  onFocus={(e) =>
+                    (e.target.style.borderColor = 'rgba(56,189,248,0.6)')
+                  }
+                  onBlur={(e) =>
+                    (e.target.style.borderColor = 'rgba(255,255,255,0.1)')
+                  }
+                  autoFocus
+                />
+              </div>
+              <button
+                onClick={handleSendOtp}
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  padding: '13px',
+                  borderRadius: 14,
+                  border: 'none',
+                  background: 'linear-gradient(135deg,#0ea5e9,#6366f1)',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.65 : 1,
+                  boxShadow: '0 4px 20px rgba(14,165,233,.3)',
+                  transition: 'opacity 0.2s',
+                }}
+              >
+                {loading ? 'Sending…' : 'Send OTP →'}
+              </button>
+            </div>
+          )}
+
+          {/* ── Step 2: OTP ── */}
+          {step === 'otp' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 13,
+                  color: '#94a3b8',
+                  lineHeight: 1.6,
+                }}
+              >
+                Enter the 6-digit OTP sent to{' '}
+                <strong style={{ color: '#e2e8f0' }}>{email}</strong>. It
+                expires in 10 minutes.
+              </p>
+
+              {/* OTP boxes */}
+              <div
+                style={{ display: 'flex', gap: 8, justifyContent: 'center' }}
+                onPaste={handleOtpPaste}
+              >
+                {otp.map((digit, idx) => (
+                  <input
+                    key={idx}
+                    ref={(el) => (otpRefs.current[idx] = el)}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                    style={{
+                      width: 46,
+                      height: 54,
+                      textAlign: 'center',
+                      fontSize: 22,
+                      fontWeight: 800,
+                      background: 'rgba(14,165,233,0.07)',
+                      border: `2px solid ${digit ? 'rgba(56,189,248,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                      borderRadius: 12,
+                      color: '#38bdf8',
+                      outline: 'none',
+                      transition: 'border-color 0.15s',
+                      fontFamily: 'monospace',
+                    }}
+                    onFocus={(e) =>
+                      (e.target.style.borderColor = 'rgba(56,189,248,0.7)')
+                    }
+                    onBlur={(e) =>
+                      (e.target.style.borderColor = digit
+                        ? 'rgba(56,189,248,0.5)'
+                        : 'rgba(255,255,255,0.1)')
+                    }
+                  />
+                ))}
+              </div>
+
+              <button
+                onClick={handleVerifyOtp}
+                disabled={loading || otp.join('').length < 6}
+                style={{
+                  width: '100%',
+                  padding: '13px',
+                  borderRadius: 14,
+                  border: 'none',
+                  background: 'linear-gradient(135deg,#0ea5e9,#6366f1)',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor:
+                    loading || otp.join('').length < 6
+                      ? 'not-allowed'
+                      : 'pointer',
+                  opacity: loading || otp.join('').length < 6 ? 0.55 : 1,
+                  boxShadow: '0 4px 20px rgba(14,165,233,.3)',
+                  transition: 'opacity 0.2s',
+                }}
+              >
+                {loading ? 'Verifying…' : 'Verify OTP →'}
+              </button>
+
+              {/* Resend */}
+              <p
+                style={{
+                  margin: 0,
+                  textAlign: 'center',
+                  fontSize: 12,
+                  color: '#64748b',
+                }}
+              >
+                Didn't receive it?{' '}
+                <button
+                  onClick={handleResend}
+                  disabled={cooldown > 0 || loading}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    color: cooldown > 0 ? '#475569' : '#38bdf8',
+                    fontWeight: 700,
+                    fontSize: 12,
+                    cursor: cooldown > 0 ? 'default' : 'pointer',
+                    transition: 'color 0.15s',
+                  }}
+                >
+                  {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend OTP'}
+                </button>
+              </p>
+
+              <button
+                onClick={() => setStep('email')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#475569',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                }}
+              >
+                ← Change email
+              </button>
+            </div>
+          )}
+
+          {/* ── Step 3: New Password ── */}
+          {step === 'password' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 13,
+                  color: '#94a3b8',
+                  lineHeight: 1.6,
+                }}
+              >
+                Choose a strong new password for{' '}
+                <strong style={{ color: '#e2e8f0' }}>{email}</strong>.
+              </p>
+
+              {/* New password */}
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: 6,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: '#cbd5e1',
+                    letterSpacing: '.14em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  New Password
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showNew ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Min. 6 characters"
+                    style={{ ...inputStyle, paddingRight: 46 }}
+                    onFocus={(e) =>
+                      (e.target.style.borderColor = 'rgba(56,189,248,0.6)')
+                    }
+                    onBlur={(e) =>
+                      (e.target.style.borderColor = 'rgba(255,255,255,0.1)')
+                    }
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNew((v) => !v)}
+                    style={{
+                      position: 'absolute',
+                      right: 14,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#64748b',
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  >
+                    {showNew ? <FiEyeOff size={17} /> : <FiEye size={17} />}
+                  </button>
+                </div>
+                {/* Strength bar */}
+                {newPassword && (
+                  <div style={{ marginTop: 8 }}>
+                    <div
+                      style={{
+                        height: 4,
+                        borderRadius: 4,
+                        background: 'rgba(255,255,255,0.08)',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: '100%',
+                          width: `${(s / 5) * 100}%`,
+                          borderRadius: 4,
+                          background: strengthColor[s],
+                          transition: 'width 0.3s, background 0.3s',
+                        }}
+                      />
+                    </div>
+                    <p
+                      style={{
+                        margin: '4px 0 0',
+                        fontSize: 11,
+                        color: strengthColor[s],
+                        fontWeight: 600,
+                      }}
+                    >
+                      {strengthLabel[s]}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Confirm password */}
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: 6,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: '#cbd5e1',
+                    letterSpacing: '.14em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Confirm Password
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === 'Enter' && handleResetPassword()
+                    }
+                    placeholder="Re-enter password"
+                    style={{
+                      ...inputStyle,
+                      paddingRight: 46,
+                      borderColor: confirmPassword
+                        ? confirmPassword === newPassword
+                          ? 'rgba(34,197,94,0.5)'
+                          : 'rgba(239,68,68,0.5)'
+                        : 'rgba(255,255,255,0.1)',
+                    }}
+                    onFocus={(e) =>
+                      (e.target.style.borderColor = 'rgba(56,189,248,0.6)')
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm((v) => !v)}
+                    style={{
+                      position: 'absolute',
+                      right: 14,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#64748b',
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  >
+                    {showConfirm ? <FiEyeOff size={17} /> : <FiEye size={17} />}
+                  </button>
+                </div>
+                {confirmPassword && confirmPassword !== newPassword && (
+                  <p
+                    style={{
+                      margin: '4px 0 0',
+                      fontSize: 11,
+                      color: '#ef4444',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Passwords don't match
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={handleResetPassword}
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  padding: '13px',
+                  borderRadius: 14,
+                  border: 'none',
+                  marginTop: 4,
+                  background: 'linear-gradient(135deg,#0ea5e9,#6366f1)',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.65 : 1,
+                  boxShadow: '0 4px 20px rgba(14,165,233,.3)',
+                  transition: 'opacity 0.2s',
+                }}
+              >
+                {loading ? 'Resetting…' : 'Reset Password →'}
+              </button>
+            </div>
+          )}
+
+          {/* ── Step 4: Done ── */}
+          {step === 'done' && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 20,
+                textAlign: 'center',
+              }}
+            >
+              {/* Success icon */}
+              <div
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: '50%',
+                  background: 'rgba(16,185,129,0.15)',
+                  border: '2px solid rgba(16,185,129,0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="34" height="34" fill="none">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="#10b981"
+                    strokeWidth="1.8"
+                  />
+                  <path
+                    d="M7 12.5l3.5 3.5 6.5-7"
+                    stroke="#10b981"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3
+                  style={{
+                    margin: '0 0 8px',
+                    fontSize: 18,
+                    fontWeight: 800,
+                    color: '#f1f5f9',
+                  }}
+                >
+                  Password Reset!
+                </h3>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 13,
+                    color: '#94a3b8',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Your password has been updated successfully. You can now log
+                  in with your new password.
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                style={{
+                  width: '100%',
+                  padding: '13px',
+                  borderRadius: 14,
+                  border: 'none',
+                  background: 'linear-gradient(135deg,#0ea5e9,#6366f1)',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 20px rgba(14,165,233,.3)',
+                }}
+              >
+                Back to Login
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ── Login ── */
 const Login = () => {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
-  const [focused, setFocused] = useState("");
+  const [focused, setFocused] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showReset, setShowReset] = useState(false);
+  const { t } = useTranslation();
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -92,26 +819,23 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      const user = await dispatch(login(formData)).unwrap(); // unwrap throws on rejection
-      toast("Welcome!", { icon: "👋" });
+      const user = await dispatch(login(formData)).unwrap();
+      toast('Welcome!', { icon: '👋' });
 
-      const isAdmin = user?.roles?.includes("admin");
-      const isInstructor = user?.roles?.includes("instructor");
-
+      const isAdmin = user?.roles?.includes('admin');
+      const isInstructor = user?.roles?.includes('instructor');
       const from = location.state?.from;
 
       if (from) {
         navigate(from, { replace: true });
         return;
       }
-
-      if (isAdmin) navigate("/admin-dashboard");
-      else if (isInstructor) navigate("/instructor-dashboard");
-      else navigate("/student-dashboard");
+      if (isAdmin) navigate('/admin-dashboard');
+      else if (isInstructor) navigate('/instructor-dashboard');
+      else navigate('/student-dashboard');
     } catch (error) {
-      toast.error(error); // rejectWithValue already returns the message string
+      toast.error(error);
     } finally {
       setLoading(false);
     }
@@ -120,8 +844,8 @@ const Login = () => {
   const inputCls = (name) =>
     `w-full bg-white/5 border rounded-2xl px-5 py-3.5 text-white text-sm outline-none transition-all duration-300 placeholder-slate-500 ${
       focused === name
-        ? "border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]"
-        : "border-white/10 hover:border-white/20"
+        ? 'border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]'
+        : 'border-white/10 hover:border-white/20'
     }`;
 
   return (
@@ -139,7 +863,6 @@ const Login = () => {
         @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         @keyframes spin-rev  { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
         @keyframes twinkle { 0%,100%{opacity:.15;transform:scale(.7)} 50%{opacity:1;transform:scale(1.3)} }
-        @keyframes bar-load { from{width:0%} to{width:100%} }
 
         .orb1 { animation:pulse-orb 9s ease-in-out infinite; }
         .orb2 { animation:pulse-orb2 13s ease-in-out infinite 3s; }
@@ -150,7 +873,6 @@ const Login = () => {
         .star  { animation:twinkle var(--d,3s) ease-in-out infinite var(--del,0s); }
         .su  { animation:slide-up .65s cubic-bezier(.22,1,.36,1) both; }
         .fi  { animation:fade-in .5s ease both; }
-
         .shimmer-txt {
           background:linear-gradient(90deg,#e2e8f0 0%,#67e8f9 40%,#818cf8 60%,#e2e8f0 100%);
           background-size:200% auto;
@@ -173,41 +895,35 @@ const Login = () => {
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#060d1f] via-[#0B1120] to-[#0d1635]" />
         <ParticleCanvas />
-
-        {/* Glow orbs */}
         <div
           className="orb1 absolute -top-32 -left-20 w-[520px] h-[520px] rounded-full"
           style={{
             background:
-              "radial-gradient(circle,rgba(56,189,248,.22) 0%,transparent 70%)",
+              'radial-gradient(circle,rgba(56,189,248,.22) 0%,transparent 70%)',
           }}
         />
         <div
           className="orb2 absolute -bottom-36 -right-24 w-[620px] h-[620px] rounded-full"
           style={{
             background:
-              "radial-gradient(circle,rgba(99,102,241,.18) 0%,transparent 70%)",
+              'radial-gradient(circle,rgba(99,102,241,.18) 0%,transparent 70%)',
           }}
         />
         <div
           className="orb3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full"
           style={{
             background:
-              "radial-gradient(circle,rgba(14,165,233,.06) 0%,transparent 70%)",
+              'radial-gradient(circle,rgba(14,165,233,.06) 0%,transparent 70%)',
           }}
         />
-
-        {/* Orbit rings */}
         <div
           className="ring1 absolute top-[8%] right-[4%] w-[350px] h-[350px] rounded-full opacity-[0.07]"
-          style={{ border: "1px solid rgba(147,210,255,.9)" }}
+          style={{ border: '1px solid rgba(147,210,255,.9)' }}
         />
         <div
           className="ring2 absolute top-[5%] right-[2%] w-[420px] h-[420px] rounded-full opacity-[0.04]"
-          style={{ border: "1px dashed rgba(147,210,255,.9)" }}
+          style={{ border: '1px dashed rgba(147,210,255,.9)' }}
         />
-
-        {/* Grid */}
         <svg
           className="absolute inset-0 w-full h-full opacity-[0.025]"
           xmlns="http://www.w3.org/2000/svg"
@@ -229,29 +945,25 @@ const Login = () => {
           </defs>
           <rect width="100%" height="100%" fill="url(#g)" />
         </svg>
-
-        {/* Stars */}
         {[
-          { t: "7%", l: "10%", d: "2.8s", del: "0s" },
-          { t: "14%", l: "73%", d: "3.5s", del: ".7s" },
-          { t: "32%", l: "4%", d: "4s", del: "1.2s" },
-          { t: "54%", l: "90%", d: "3.1s", del: ".3s" },
-          { t: "72%", l: "18%", d: "2.5s", del: "1.8s" },
-          { t: "83%", l: "58%", d: "3.8s", del: ".9s" },
-          { t: "46%", l: "48%", d: "5s", del: "2.1s" },
-          { t: "22%", l: "38%", d: "2.2s", del: ".4s" },
+          { t: '7%', l: '10%', d: '2.8s', del: '0s' },
+          { t: '14%', l: '73%', d: '3.5s', del: '.7s' },
+          { t: '32%', l: '4%', d: '4s', del: '1.2s' },
+          { t: '54%', l: '90%', d: '3.1s', del: '.3s' },
+          { t: '72%', l: '18%', d: '2.5s', del: '1.8s' },
+          { t: '83%', l: '58%', d: '3.8s', del: '.9s' },
+          { t: '46%', l: '48%', d: '5s', del: '2.1s' },
+          { t: '22%', l: '38%', d: '2.2s', del: '.4s' },
         ].map((s, i) => (
           <div
             key={i}
             className="star absolute w-1 h-1 rounded-full bg-white"
-            style={{ top: s.t, left: s.l, "--d": s.d, "--del": s.del }}
+            style={{ top: s.t, left: s.l, '--d': s.d, '--del': s.del }}
           />
         ))}
-
-        {/* Floating shapes */}
         <div
           className="floaty absolute top-[20%] left-[7%] w-14 h-14 opacity-[.15]"
-          style={{ animationDelay: "1s" }}
+          style={{ animationDelay: '1s' }}
         >
           <svg viewBox="0 0 56 56">
             <polygon
@@ -264,7 +976,7 @@ const Login = () => {
         </div>
         <div
           className="floaty absolute bottom-[20%] right-[9%] w-10 h-10 opacity-[.12]"
-          style={{ animationDelay: "3s" }}
+          style={{ animationDelay: '3s' }}
         >
           <svg viewBox="0 0 40 40">
             <rect
@@ -281,7 +993,7 @@ const Login = () => {
         </div>
         <div
           className="floaty absolute top-[62%] left-[2%] w-8 h-8 opacity-[.18]"
-          style={{ animationDelay: "2s" }}
+          style={{ animationDelay: '2s' }}
         >
           <svg viewBox="0 0 32 32">
             <circle
@@ -296,53 +1008,27 @@ const Login = () => {
         </div>
       </div>
 
-      {/* ── Navbar ── */}
-      {/* <nav className="fi relative z-20 flex items-center justify-between px-8 py-5 border-b border-white/[0.06]"
-        style={{ backdropFilter:"blur(12px)", animationDelay:".1s" }}>
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background:"linear-gradient(135deg,#0ea5e9,#6366f1)" }}>
-            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <span className="df text-lg font-black text-white tracking-tight">
-            AI<span className="text-cyan-400">Coach</span>
-          </span>
-        </div>
-        <div className="hidden md:flex items-center gap-6 text-sm text-slate-400">
-          {["Courses","Test Series","Resources"].map(n => (
-            <span key={n} className="hover:text-cyan-300 cursor-pointer transition-colors">{n}</span>
-          ))}
-        </div>
-        <Link to="/signup"
-          className="text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors border border-cyan-400/20 hover:border-cyan-400/40 px-4 py-1.5 rounded-xl">
-          Sign Up
-        </Link>
-      </nav> */}
-
       {/* ── Content ── */}
       <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-10">
         <div className="w-full max-w-5xl flex items-center gap-14">
           {/* Left hero */}
           <div
             className="hidden lg:flex flex-col flex-1 gap-8 su"
-            style={{ animationDelay: ".2s" }}
+            style={{ animationDelay: '.2s' }}
           >
             <div className="floaty relative">
               <div
                 className="absolute inset-0 rounded-full blur-3xl opacity-20"
                 style={{
-                  background: "radial-gradient(circle,#38bdf8,transparent 70%)",
+                  background: 'radial-gradient(circle,#38bdf8,transparent 70%)',
                 }}
               />
               <svg viewBox="0 0 300 320" className="w-72 h-72 drop-shadow-2xl">
                 {[
-                  { x: 30, y: 20, f: "#38bdf8", r: 20 },
-                  { x: 200, y: 10, f: "#6366f1", r: 45 },
-                  { x: 250, y: 50, f: "#0ea5e9", r: -15 },
-                  { x: 10, y: 150, f: "#818cf8", r: 30 },
+                  { x: 30, y: 20, f: '#38bdf8', r: 20 },
+                  { x: 200, y: 10, f: '#6366f1', r: 45 },
+                  { x: 250, y: 50, f: '#0ea5e9', r: -15 },
+                  { x: 10, y: 150, f: '#818cf8', r: 30 },
                 ].map((c, i) => (
                   <rect
                     key={i}
@@ -443,7 +1129,6 @@ const Login = () => {
                 <ellipse cx="165" cy="292" rx="18" ry="8" fill="#060d1f" />
               </svg>
             </div>
-
             <div>
               <p className="text-cyan-400/70 text-xs font-semibold tracking-[.2em] uppercase mb-3">
                 AI-Powered Learning
@@ -459,9 +1144,9 @@ const Login = () => {
               </p>
               <div className="mt-7 flex items-center gap-7">
                 {[
-                  ["50K+", "Students"],
-                  ["200+", "Courses"],
-                  ["98%", "Pass Rate"],
+                  ['50K+', 'Students'],
+                  ['200+', 'Courses'],
+                  ['98%', 'Pass Rate'],
                 ].map(([n, l]) => (
                   <div key={l}>
                     <p className="df text-xl font-black text-white">{n}</p>
@@ -475,13 +1160,13 @@ const Login = () => {
           {/* Right card */}
           <div
             className="w-full max-w-md su"
-            style={{ animationDelay: ".35s" }}
+            style={{ animationDelay: '.35s' }}
           >
             <div
               className="h-[2px] w-full rounded-t-full mb-[-2px] relative z-10"
               style={{
                 background:
-                  "linear-gradient(90deg,transparent,#38bdf8,#6366f1,transparent)",
+                  'linear-gradient(90deg,transparent,#38bdf8,#6366f1,transparent)',
               }}
             />
 
@@ -489,23 +1174,16 @@ const Login = () => {
               className="card-glow rounded-3xl p-9"
               style={{
                 background:
-                  "linear-gradient(160deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%)",
-                backdropFilter: "blur(24px)",
+                  'linear-gradient(160deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%)',
+                backdropFilter: 'blur(24px)',
               }}
             >
               <div className="text-center mb-8">
-                {/* <div className="inline-flex w-12 h-12 rounded-2xl items-center justify-center mb-4"
-                  style={{ background:"linear-gradient(135deg,rgba(14,165,233,.2),rgba(99,102,241,.2))", border:"1px solid rgba(56,189,248,.25)" }}>
-                  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
-                    <circle cx="12" cy="8" r="4" stroke="#38bdf8" strokeWidth="1.8"/>
-                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#38bdf8" strokeWidth="1.8" strokeLinecap="round"/>
-                  </svg>
-                </div> */}
                 <h2 className="df text-3xl font-black text-white">
-                  Welcome Back
+                  {t('auth.welcomeBack')}
                 </h2>
                 <p className="text-slate-400 mt-1.5 text-sm">
-                  Continue your learning journey
+                  {t('auth.continueJourney')}
                 </p>
               </div>
 
@@ -513,49 +1191,37 @@ const Login = () => {
                 {/* Email */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                    Email
+                    {t('auth.email')}
                   </label>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    onFocus={() => setFocused("email")}
-                    onBlur={() => setFocused("")}
-                    placeholder="you@example.com"
+                    onFocus={() => setFocused('email')}
+                    onBlur={() => setFocused('')}
+                    placeholder={t('auth.emailPlaceholder')}
                     required
-                    className={inputCls("email")}
+                    className={inputCls('email')}
                   />
                 </div>
-
-                {/* Role */}
-                {/* <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">Role</label>
-                  <select name="role" value={formData.role} onChange={handleChange}
-                    onFocus={() => setFocused("role")} onBlur={() => setFocused("")}
-                    required className={inputCls("role")} style={{ colorScheme:"dark" }}>
-                    <option value="" disabled>Select your role</option>
-                    <option value="student">Student</option>
-                    <option value="instructor">Instructor</option>
-                  </select>
-                </div> */}
 
                 {/* Password */}
                 <div>
                   <label className="text-xs font-semibold text-slate-300 tracking-widest uppercase">
-                    Password
+                    {t('auth.password')}
                   </label>
                   <div className="relative">
                     <input
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      onFocus={() => setFocused("password")}
-                      onBlur={() => setFocused("")}
-                      placeholder="••••••••••"
+                      onFocus={() => setFocused('password')}
+                      onBlur={() => setFocused('')}
+                      placeholder={t('auth.passwordPlaceholder')}
                       required
-                      className={inputCls("password") + " pr-12"}
+                      className={inputCls('password') + ' pr-12'}
                     />
                     <button
                       type="button"
@@ -571,14 +1237,17 @@ const Login = () => {
                   </div>
                 </div>
 
+                {/* Forgot password — now opens modal */}
                 <div className="flex justify-end mb-1.5">
                   <button
                     type="button"
+                    onClick={() => setShowReset(true)}
                     className="text-xs cursor-pointer mb-2 text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
                   >
-                    Forgot Password?
+                    {t('auth.forgotPassword')}
                   </button>
                 </div>
+
                 {/* Submit */}
                 <button
                   type="submit"
@@ -606,11 +1275,11 @@ const Login = () => {
                           strokeLinecap="round"
                         />
                       </svg>
-                      Signing in…
+                      {t('auth.signingIn')}
                     </>
                   ) : (
                     <>
-                      Sign In
+                      {t('auth.login')}
                       <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
                         <path
                           d="M4 10h12M10 4l6 6-6 6"
@@ -626,19 +1295,22 @@ const Login = () => {
               </form>
 
               <p className="text-center text-slate-500 text-sm mt-6">
-                New here?{" "}
+                {t('auth.newHere')}{' '}
                 <Link
                   to="/signup"
                   onClick={() => dispatch(clearError())}
                   className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors"
                 >
-                  Create an account
+                  {t('auth.createAccount')}
                 </Link>
               </p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* ── Password Reset Modal ── */}
+      {showReset && <PasswordResetModal onClose={() => setShowReset(false)} />}
     </div>
   );
 };

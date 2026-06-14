@@ -1,21 +1,15 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  messages: [
-    {
-      role: "ai",
-      content:
-        "Hi! I'm your AI Tutor 🎓 Ask me anything about your courses — Maths, Science, English, Hindi, or any subject. I'm here to help!",
-    },
-  ],
-  input: "",
+  messages: [],
+  input: '',
   streaming: false,
   error: null,
-  mode: "chat",
+  mode: 'chat', // default to chat mode
 };
 
 const aiTutorSlice = createSlice({
-  name: "aiTutor",
+  name: 'aiTutor',
   initialState,
   reducers: {
     setInput: (state, action) => {
@@ -31,7 +25,7 @@ const aiTutorSlice = createSlice({
       state.messages.push(action.payload);
     },
     addAiPlaceholder: (state) => {
-      state.messages.push({ role: "ai", content: "", streaming: true });
+      state.messages.push({ role: 'ai', content: '', streaming: true });
     },
     appendAiText: (state, action) => {
       const lastIndex = state.messages.length - 1;
@@ -45,12 +39,12 @@ const aiTutorSlice = createSlice({
     },
     removeStreamingPlaceholders: (state) => {
       state.messages = state.messages.filter(
-        (message) => !message.streaming || message.content,
+        (message) => !message.streaming || message.content
       );
     },
     markStreamingDone: (state) => {
       state.messages = state.messages.map((message) =>
-        message.streaming ? { ...message, streaming: false } : message,
+        message.streaming ? { ...message, streaming: false } : message
       );
     },
     setStreaming: (state, action) => {
@@ -69,7 +63,7 @@ const aiTutorSlice = createSlice({
       state.messages = initialState.messages;
       state.error = null;
       state.streaming = false;
-      state.input = "";
+      state.input = '';
     },
   },
 });
