@@ -66,7 +66,8 @@ const ParticleCanvas = () => {
     }));
 
     const draw = () => {
-      const W = canvas.width, H = canvas.height;
+      const W = canvas.width,
+        H = canvas.height;
       ctx.clearRect(0, 0, W, H);
       for (let i = 0; i < NODES.length; i++) {
         for (let j = i + 1; j < NODES.length; j++) {
@@ -119,7 +120,14 @@ const Signup = () => {
 
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
-  const [phoneOtpInputs, setPhoneOtpInputs] = useState(['', '', '', '', '', '']);
+  const [phoneOtpInputs, setPhoneOtpInputs] = useState([
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+  ]);
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false);
   const [verifyingPhone, setVerifyingPhone] = useState(false);
   const [phoneResendCooldown, setPhoneResendCooldown] = useState(0);
@@ -145,23 +153,39 @@ const Signup = () => {
   // ── Password validation ──
   const passwordRules = [
     { id: 'len', label: t('auth.passwordRuleLen'), test: (p) => p.length >= 8 },
-    { id: 'upper', label: t('auth.passwordRuleUpper'), test: (p) => /[A-Z]/.test(p) },
-    { id: 'lower', label: t('auth.passwordRuleLower'), test: (p) => /[a-z]/.test(p) },
+    {
+      id: 'upper',
+      label: t('auth.passwordRuleUpper'),
+      test: (p) => /[A-Z]/.test(p),
+    },
+    {
+      id: 'lower',
+      label: t('auth.passwordRuleLower'),
+      test: (p) => /[a-z]/.test(p),
+    },
     { id: 'num', label: t('auth.passwordRuleNum'), test: (p) => /\d/.test(p) },
-    { id: 'spec', label: t('auth.passwordRuleSpec'), test: (p) => /[^A-Za-z0-9]/.test(p) },
+    {
+      id: 'spec',
+      label: t('auth.passwordRuleSpec'),
+      test: (p) => /[^A-Za-z0-9]/.test(p),
+    },
   ];
 
   const getStrength = (p) => {
     const n = passwordRules.filter((r) => r.test(p)).length;
     if (!p) return null;
-    if (n <= 2) return { label: t('auth.strengthWeak'), color: '#ef4444', width: '25%' };
-    if (n === 3) return { label: t('auth.strengthFair'), color: '#f59e0b', width: '50%' };
-    if (n === 4) return { label: t('auth.strengthGood'), color: '#0ea5e9', width: '75%' };
+    if (n <= 2)
+      return { label: t('auth.strengthWeak'), color: '#ef4444', width: '25%' };
+    if (n === 3)
+      return { label: t('auth.strengthFair'), color: '#f59e0b', width: '50%' };
+    if (n === 4)
+      return { label: t('auth.strengthGood'), color: '#0ea5e9', width: '75%' };
     return { label: t('auth.strengthStrong'), color: '#22c55e', width: '100%' };
   };
 
   const strength = getStrength(formData.password);
-  const passwordsMatch = formData.confirmPassword && formData.password === formData.confirmPassword;
+  const passwordsMatch =
+    formData.confirmPassword && formData.password === formData.confirmPassword;
 
   useEffect(() => {
     if (error) {
@@ -181,16 +205,7 @@ const Signup = () => {
 
   const states = Object.keys(indianCitiesByState);
   const cityOptions = indianCitiesByState[formData.state] || [];
-  const countryCodes = [
-    { code: '+91', country: 'India' },
-    { code: '+1', country: 'USA/Canada' },
-    { code: '+44', country: 'United Kingdom' },
-    { code: '+61', country: 'Australia' },
-    { code: '+971', country: 'UAE' },
-    { code: '+65', country: 'Singapore' },
-    { code: '+81', country: 'Japan' },
-    { code: '+49', country: 'Germany' },
-  ];
+  const countryCodes = [{ code: '+91', country: 'India' }];
 
   useEffect(() => {
     if (phoneResendCooldown <= 0) return;
@@ -208,15 +223,29 @@ const Signup = () => {
     }
   };
 
+  const normalizeIndianPhoneNumber = (value) => {
+    const digits = value.replace(/\D/g, '');
+    if (/^\d{10}$/.test(digits)) return `+91${digits}`;
+    if (/^91\d{10}$/.test(digits)) return `+${digits}`;
+    return null;
+  };
+
   const handleSendPhoneOtp = async () => {
-    if (!/^[0-9]{10}$/.test(formData.phoneNumber)) {
-      toast.error(t('auth.invalidPhone'));
+    const normalizedPhoneNumber = normalizeIndianPhoneNumber(
+      `${formData.countryCode}${formData.phoneNumber}`
+    );
+
+    if (!normalizedPhoneNumber) {
+      toast.error(
+        t('auth.invalidPhone') || 'Enter a valid 10-digit Indian mobile number.'
+      );
       return;
     }
+
     setSendingPhoneOtp(true);
     try {
       await axios.post('/api/auth/send-phone-otp', {
-        phoneNumber: `${formData.countryCode}${formData.phoneNumber}`,
+        phoneNumber: normalizedPhoneNumber,
       });
       toast.success(t('auth.otpSentPhone'));
       setPhoneOtpSent(true);
@@ -244,7 +273,10 @@ const Signup = () => {
 
   const handlePhoneOtpPaste = (e) => {
     e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    const pasted = e.clipboardData
+      .getData('text')
+      .replace(/\D/g, '')
+      .slice(0, 6);
     const updated = [...phoneOtpInputs];
     for (let i = 0; i < pasted.length; i++) updated[i] = pasted[i];
     setPhoneOtpInputs(updated);
@@ -253,21 +285,35 @@ const Signup = () => {
 
   const handleVerifyPhoneOtp = async () => {
     const code = phoneOtpInputs.join('');
+    const normalizedPhoneNumber = normalizeIndianPhoneNumber(
+      `${formData.countryCode}${formData.phoneNumber}`
+    );
+
     if (code.length < 6) {
       toast.error(t('auth.enterFullOtp'));
       return;
     }
+
+    if (!normalizedPhoneNumber) {
+      toast.error(
+        t('auth.invalidPhone') || 'Enter a valid 10-digit Indian mobile number.'
+      );
+      return;
+    }
+
     setVerifyingPhone(true);
     try {
       await axios.post('/api/auth/verify-phone-otp', {
-        phoneNumber: `${formData.countryCode}${formData.phoneNumber}`,
+        phoneNumber: normalizedPhoneNumber,
         otp: code,
       });
       setPhoneVerified(true);
       setPhoneOtpSent(false);
       toast.success(t('auth.phoneVerified') + ' ✓');
     } catch (err) {
-      toast.error(err?.response?.data?.message || t('auth.invalidOtp'));
+      toast.error(
+        err?.message || err?.response?.data?.message || t('auth.invalidOtp')
+      );
       setPhoneOtpInputs(['', '', '', '', '', '']);
       phoneOtpRefs.current[0]?.focus();
     } finally {
@@ -320,10 +366,12 @@ const Signup = () => {
   };
 
   const inputCls = (name) =>
-    `w-full border rounded-2xl px-5 py-3.5 text-white text-sm outline-none transition-all duration-300 placeholder-slate-500 ${name === 'state' || name === 'city' ? 'bg-[#1e293b]' : 'bg-white/5'
-    } ${focused === name
-      ? 'border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]'
-      : 'border-white/10 hover:border-white/20'
+    `w-full border rounded-2xl px-5 py-3.5 text-white text-sm outline-none transition-all duration-300 placeholder-slate-500 ${
+      name === 'state' || name === 'city' ? 'bg-[#1e293b]' : 'bg-white/5'
+    } ${
+      focused === name
+        ? 'border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]'
+        : 'border-white/10 hover:border-white/20'
     }`;
 
   return (
@@ -375,22 +423,54 @@ const Signup = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-[#060d1f] via-[#0B1120] to-[#0d1635]" />
         <ParticleCanvas />
 
-        <div className="orb1 absolute -top-32 -left-20 w-[520px] h-[520px] rounded-full"
-          style={{ background: 'radial-gradient(circle,rgba(56,189,248,.22) 0%,transparent 70%)' }} />
-        <div className="orb2 absolute -bottom-36 -right-24 w-[620px] h-[620px] rounded-full"
-          style={{ background: 'radial-gradient(circle,rgba(99,102,241,.18) 0%,transparent 70%)' }} />
-        <div className="orb3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full"
-          style={{ background: 'radial-gradient(circle,rgba(14,165,233,.06) 0%,transparent 70%)' }} />
+        <div
+          className="orb1 absolute -top-32 -left-20 w-[520px] h-[520px] rounded-full"
+          style={{
+            background:
+              'radial-gradient(circle,rgba(56,189,248,.22) 0%,transparent 70%)',
+          }}
+        />
+        <div
+          className="orb2 absolute -bottom-36 -right-24 w-[620px] h-[620px] rounded-full"
+          style={{
+            background:
+              'radial-gradient(circle,rgba(99,102,241,.18) 0%,transparent 70%)',
+          }}
+        />
+        <div
+          className="orb3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full"
+          style={{
+            background:
+              'radial-gradient(circle,rgba(14,165,233,.06) 0%,transparent 70%)',
+          }}
+        />
 
-        <div className="ring1 absolute top-[8%] right-[4%] w-[350px] h-[350px] rounded-full opacity-[0.07]"
-          style={{ border: '1px solid rgba(147,210,255,.9)' }} />
-        <div className="ring2 absolute top-[5%] right-[2%] w-[420px] h-[420px] rounded-full opacity-[0.04]"
-          style={{ border: '1px dashed rgba(147,210,255,.9)' }} />
+        <div
+          className="ring1 absolute top-[8%] right-[4%] w-[350px] h-[350px] rounded-full opacity-[0.07]"
+          style={{ border: '1px solid rgba(147,210,255,.9)' }}
+        />
+        <div
+          className="ring2 absolute top-[5%] right-[2%] w-[420px] h-[420px] rounded-full opacity-[0.04]"
+          style={{ border: '1px dashed rgba(147,210,255,.9)' }}
+        />
 
-        <svg className="absolute inset-0 w-full h-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          className="absolute inset-0 w-full h-full opacity-[0.025]"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <defs>
-            <pattern id="g" width="60" height="60" patternUnits="userSpaceOnUse">
-              <path d="M60 0L0 0 0 60" fill="none" stroke="rgba(147,210,255,1)" strokeWidth=".5" />
+            <pattern
+              id="g"
+              width="60"
+              height="60"
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d="M60 0L0 0 0 60"
+                fill="none"
+                stroke="rgba(147,210,255,1)"
+                strokeWidth=".5"
+              />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#g)" />
@@ -406,30 +486,75 @@ const Signup = () => {
           { t: '46%', l: '48%', d: '5s', del: '2.1s' },
           { t: '22%', l: '38%', d: '2.2s', del: '.4s' },
         ].map((s, i) => (
-          <div key={i} className="star absolute w-1 h-1 rounded-full bg-white"
-            style={{ top: s.t, left: s.l, '--d': s.d, '--del': s.del }} />
+          <div
+            key={i}
+            className="star absolute w-1 h-1 rounded-full bg-white"
+            style={{ top: s.t, left: s.l, '--d': s.d, '--del': s.del }}
+          />
         ))}
 
-        <div className="floaty absolute top-[20%] left-[7%] w-14 h-14 opacity-[.15]" style={{ animationDelay: '1s' }}>
-          <svg viewBox="0 0 56 56"><polygon points="28,4 52,48 4,48" fill="none" stroke="#38bdf8" strokeWidth="1.5" /></svg>
+        <div
+          className="floaty absolute top-[20%] left-[7%] w-14 h-14 opacity-[.15]"
+          style={{ animationDelay: '1s' }}
+        >
+          <svg viewBox="0 0 56 56">
+            <polygon
+              points="28,4 52,48 4,48"
+              fill="none"
+              stroke="#38bdf8"
+              strokeWidth="1.5"
+            />
+          </svg>
         </div>
-        <div className="floaty absolute bottom-[20%] right-[9%] w-10 h-10 opacity-[.12]" style={{ animationDelay: '3s' }}>
-          <svg viewBox="0 0 40 40"><rect x="6" y="6" width="28" height="28" fill="none" stroke="#818cf8" strokeWidth="1.5" transform="rotate(20 20 20)" /></svg>
+        <div
+          className="floaty absolute bottom-[20%] right-[9%] w-10 h-10 opacity-[.12]"
+          style={{ animationDelay: '3s' }}
+        >
+          <svg viewBox="0 0 40 40">
+            <rect
+              x="6"
+              y="6"
+              width="28"
+              height="28"
+              fill="none"
+              stroke="#818cf8"
+              strokeWidth="1.5"
+              transform="rotate(20 20 20)"
+            />
+          </svg>
         </div>
-        <div className="floaty absolute top-[62%] left-[2%] w-8 h-8 opacity-[.18]" style={{ animationDelay: '2s' }}>
-          <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="none" stroke="#38bdf8" strokeWidth="1.5" /></svg>
+        <div
+          className="floaty absolute top-[62%] left-[2%] w-8 h-8 opacity-[.18]"
+          style={{ animationDelay: '2s' }}
+        >
+          <svg viewBox="0 0 32 32">
+            <circle
+              cx="16"
+              cy="16"
+              r="12"
+              fill="none"
+              stroke="#38bdf8"
+              strokeWidth="1.5"
+            />
+          </svg>
         </div>
       </div>
 
       {/* ── Content ── */}
       <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-10">
         <div className="w-full max-w-5xl flex items-center gap-14">
-
           {/* Left hero */}
-          <div className="hidden lg:flex flex-col flex-1 gap-8 su" style={{ animationDelay: '.2s' }}>
+          <div
+            className="hidden lg:flex flex-col flex-1 gap-8 su"
+            style={{ animationDelay: '.2s' }}
+          >
             <div className="floaty relative">
-              <div className="absolute inset-0 rounded-full blur-3xl opacity-20"
-                style={{ background: 'radial-gradient(circle,#38bdf8,transparent 70%)' }} />
+              <div
+                className="absolute inset-0 rounded-full blur-3xl opacity-20"
+                style={{
+                  background: 'radial-gradient(circle,#38bdf8,transparent 70%)',
+                }}
+              />
               <svg viewBox="0 0 300 320" className="w-72 h-72 drop-shadow-2xl">
                 {[
                   { x: 30, y: 20, f: '#38bdf8', r: 20 },
@@ -437,31 +562,101 @@ const Signup = () => {
                   { x: 250, y: 50, f: '#0ea5e9', r: -15 },
                   { x: 10, y: 150, f: '#818cf8', r: 30 },
                 ].map((c, i) => (
-                  <rect key={i} x={c.x} y={c.y} width="9" height="9" fill={c.f}
-                    transform={`rotate(${c.r} ${c.x + 4.5} ${c.y + 4.5})`} rx="1" opacity=".8" />
+                  <rect
+                    key={i}
+                    x={c.x}
+                    y={c.y}
+                    width="9"
+                    height="9"
+                    fill={c.f}
+                    transform={`rotate(${c.r} ${c.x + 4.5} ${c.y + 4.5})`}
+                    rx="1"
+                    opacity=".8"
+                  />
                 ))}
                 <path d="M270 130L278 115 286 130Z" fill="#38bdf8" />
                 <path d="M15 80L22 67 29 80Z" fill="#6366f1" />
-                <path d="M240 70l3 9h9l-7 5 3 9-8-5-8 5 3-9-7-5h9z" fill="#38bdf8" opacity=".9" />
+                <path
+                  d="M240 70l3 9h9l-7 5 3 9-8-5-8 5 3-9-7-5h9z"
+                  fill="#38bdf8"
+                  opacity=".9"
+                />
                 <circle cx="150" cy="180" r="90" fill="rgba(14,165,233,.05)" />
                 <circle cx="150" cy="100" r="35" fill="#0d1f3c" />
                 <circle cx="150" cy="100" r="28" fill="#f5c5a3" />
                 <circle cx="141" cy="96" r="3" fill="#1a1a2e" />
                 <circle cx="159" cy="96" r="3" fill="#1a1a2e" />
-                <path d="M141 108Q150 116 159 108" stroke="#1a1a2e" strokeWidth="2" fill="none" strokeLinecap="round" />
-                <rect x="128" y="72" width="44" height="8" fill="#0d1f3c" rx="1" />
+                <path
+                  d="M141 108Q150 116 159 108"
+                  stroke="#1a1a2e"
+                  strokeWidth="2"
+                  fill="none"
+                  strokeLinecap="round"
+                />
+                <rect
+                  x="128"
+                  y="72"
+                  width="44"
+                  height="8"
+                  fill="#0d1f3c"
+                  rx="1"
+                />
                 <polygon points="150,58 128,72 172,72" fill="#0d1f3c" />
                 <rect x="172" y="74" width="3" height="14" fill="#0d1f3c" />
                 <circle cx="173.5" cy="90" r="5" fill="#38bdf8" />
-                <path d="M110 135Q120 128 150 130Q180 128 190 135L200 240 100 240Z" fill="#0d1f3c" />
-                <path d="M135 130L150 155 165 130" fill="#0ea5e9" opacity=".9" />
-                <path d="M188 145Q210 130 225 110" stroke="#f5c5a3" strokeWidth="14" fill="none" strokeLinecap="round" />
+                <path
+                  d="M110 135Q120 128 150 130Q180 128 190 135L200 240 100 240Z"
+                  fill="#0d1f3c"
+                />
+                <path
+                  d="M135 130L150 155 165 130"
+                  fill="#0ea5e9"
+                  opacity=".9"
+                />
+                <path
+                  d="M188 145Q210 130 225 110"
+                  stroke="#f5c5a3"
+                  strokeWidth="14"
+                  fill="none"
+                  strokeLinecap="round"
+                />
                 <circle cx="225" cy="110" r="10" fill="#f5c5a3" />
-                <rect x="195" y="95" width="32" height="22" fill="#e8f4ff" rx="3" />
-                <path d="M200 102h22M200 108h16M200 114h20" stroke="#aac" strokeWidth="1.5" />
-                <path d="M112 145Q95 175 90 200" stroke="#0d1f3c" strokeWidth="14" fill="none" strokeLinecap="round" />
-                <rect x="125" y="235" width="20" height="55" fill="#0d1f3c" rx="4" />
-                <rect x="155" y="235" width="20" height="55" fill="#0d1f3c" rx="4" />
+                <rect
+                  x="195"
+                  y="95"
+                  width="32"
+                  height="22"
+                  fill="#e8f4ff"
+                  rx="3"
+                />
+                <path
+                  d="M200 102h22M200 108h16M200 114h20"
+                  stroke="#aac"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M112 145Q95 175 90 200"
+                  stroke="#0d1f3c"
+                  strokeWidth="14"
+                  fill="none"
+                  strokeLinecap="round"
+                />
+                <rect
+                  x="125"
+                  y="235"
+                  width="20"
+                  height="55"
+                  fill="#0d1f3c"
+                  rx="4"
+                />
+                <rect
+                  x="155"
+                  y="235"
+                  width="20"
+                  height="55"
+                  fill="#0d1f3c"
+                  rx="4"
+                />
                 <ellipse cx="135" cy="292" rx="18" ry="8" fill="#060d1f" />
                 <ellipse cx="165" cy="292" rx="18" ry="8" fill="#060d1f" />
               </svg>
@@ -471,13 +666,20 @@ const Signup = () => {
                 AI-Powered Learning
               </p>
               <h1 className="df text-5xl font-black leading-[1.1] text-white">
-                Discover.<br />Prepare. <span className="shimmer-txt">Succeed.</span>
+                Discover.
+                <br />
+                Prepare. <span className="shimmer-txt">Succeed.</span>
               </h1>
               <p className="text-slate-400 mt-4 text-sm leading-relaxed max-w-xs">
-                Premier AI coaching for classes 1 to 12 and more — personalised to your pace, designed for your success.
+                Premier AI coaching for classes 1 to 12 and more — personalised
+                to your pace, designed for your success.
               </p>
               <div className="mt-7 flex items-center gap-7">
-                {[['50K+', 'Students'], ['200+', 'Courses'], ['98%', 'Pass Rate']].map(([n, l]) => (
+                {[
+                  ['50K+', 'Students'],
+                  ['200+', 'Courses'],
+                  ['98%', 'Pass Rate'],
+                ].map(([n, l]) => (
                   <div key={l}>
                     <p className="df text-xl font-black text-white">{n}</p>
                     <p className="text-xs text-slate-500 mt-0.5">{l}</p>
@@ -488,22 +690,36 @@ const Signup = () => {
           </div>
 
           {/* Right card */}
-          <div className="w-full max-w-md su" style={{ animationDelay: '.35s' }}>
-            <div className="h-[2px] w-full rounded-t-full mb-[-2px] relative z-10"
-              style={{ background: 'linear-gradient(90deg,transparent,#38bdf8,#6366f1,transparent)' }} />
-
-            <div className="card-glow rounded-3xl p-9"
+          <div
+            className="w-full max-w-md su"
+            style={{ animationDelay: '.35s' }}
+          >
+            <div
+              className="h-[2px] w-full rounded-t-full mb-[-2px] relative z-10"
               style={{
-                background: 'linear-gradient(160deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%)',
+                background:
+                  'linear-gradient(90deg,transparent,#38bdf8,#6366f1,transparent)',
+              }}
+            />
+
+            <div
+              className="card-glow rounded-3xl p-9"
+              style={{
+                background:
+                  'linear-gradient(160deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%)',
                 backdropFilter: 'blur(24px)',
-              }}>
+              }}
+            >
               <div className="text-center mb-7">
-                <h2 className="df text-3xl font-black text-white">{t('auth.signup')}</h2>
-                <p className="text-slate-400 mt-1.5 text-sm">{t('auth.joinLearners')}</p>
+                <h2 className="df text-3xl font-black text-white">
+                  {t('auth.signup')}
+                </h2>
+                <p className="text-slate-400 mt-1.5 text-sm">
+                  {t('auth.joinLearners')}
+                </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-
                 {/* Name */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
@@ -563,7 +779,9 @@ const Signup = () => {
                       className="w-28 border border-white/10 rounded-2xl px-3 py-3.5 bg-[#1e293b] text-white text-sm outline-none disabled:opacity-50"
                     >
                       {countryCodes.map((c) => (
-                        <option key={c.code} value={c.code}>{c.code}</option>
+                        <option key={c.code} value={c.code}>
+                          {c.code}
+                        </option>
                       ))}
                     </select>
 
@@ -579,13 +797,32 @@ const Signup = () => {
                         required
                         maxLength={10}
                         disabled={phoneVerified}
-                        className={inputCls('phoneNumber') + ' pr-10 disabled:opacity-50'}
+                        className={
+                          inputCls('phoneNumber') + ' pr-10 disabled:opacity-50'
+                        }
                       />
                       {phoneVerified && (
                         <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
-                            <circle cx="10" cy="10" r="9" fill="rgba(34,197,94,0.15)" stroke="#22c55e" strokeWidth="1.5" />
-                            <path d="M6 10l3 3 5-5" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <svg
+                            viewBox="0 0 20 20"
+                            className="w-5 h-5"
+                            fill="none"
+                          >
+                            <circle
+                              cx="10"
+                              cy="10"
+                              r="9"
+                              fill="rgba(34,197,94,0.15)"
+                              stroke="#22c55e"
+                              strokeWidth="1.5"
+                            />
+                            <path
+                              d="M6 10l3 3 5-5"
+                              stroke="#22c55e"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
                           </svg>
                         </span>
                       )}
@@ -595,18 +832,44 @@ const Signup = () => {
                       <button
                         type="button"
                         onClick={handleSendPhoneOtp}
-                        disabled={sendingPhoneOtp || formData.phoneNumber.length < 10 || phoneResendCooldown > 0}
+                        disabled={
+                          sendingPhoneOtp ||
+                          formData.phoneNumber.length < 10 ||
+                          phoneResendCooldown > 0
+                        }
                         className="shrink-0 px-4 py-2 rounded-2xl text-sm font-bold text-white transition-all duration-200 disabled:opacity-50"
-                        style={{ background: 'linear-gradient(135deg,#0ea5e9,#6366f1)', boxShadow: '0 4px 14px rgba(14,165,233,.3)' }}
+                        style={{
+                          background: 'linear-gradient(135deg,#0ea5e9,#6366f1)',
+                          boxShadow: '0 4px 14px rgba(14,165,233,.3)',
+                        }}
                       >
                         {sendingPhoneOtp ? (
-                          <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,.3)" strokeWidth="3" />
-                            <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round" />
+                          <svg
+                            className="w-4 h-4 animate-spin"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="rgba(255,255,255,.3)"
+                              strokeWidth="3"
+                            />
+                            <path
+                              d="M12 2a10 10 0 0 1 10 10"
+                              stroke="white"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                            />
                           </svg>
-                        ) : phoneResendCooldown > 0 ? `${phoneResendCooldown}s`
-                          : phoneOtpSent ? t('auth.resend')
-                            : t('auth.sendOtp')}
+                        ) : phoneResendCooldown > 0 ? (
+                          `${phoneResendCooldown}s`
+                        ) : phoneOtpSent ? (
+                          t('auth.resend')
+                        ) : (
+                          t('auth.sendOtp')
+                        )}
                       </button>
                     )}
 
@@ -627,8 +890,13 @@ const Signup = () => {
 
                   {/* Phone OTP box */}
                   {phoneOtpSent && !phoneVerified && (
-                    <div className="mt-3 p-4 rounded-2xl"
-                      style={{ background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(56,189,248,0.15)' }}>
+                    <div
+                      className="mt-3 p-4 rounded-2xl"
+                      style={{
+                        background: 'rgba(14,165,233,0.05)',
+                        border: '1px solid rgba(56,189,248,0.15)',
+                      }}
+                    >
                       <p className="text-xs text-slate-400 mb-3 text-center">
                         {t('auth.otpSentTo')}{' '}
                         <span className="text-cyan-400 font-semibold">
@@ -644,15 +912,23 @@ const Signup = () => {
                             inputMode="numeric"
                             maxLength={1}
                             value={digit}
-                            onChange={(e) => handlePhoneOtpChange(i, e.target.value)}
+                            onChange={(e) =>
+                              handlePhoneOtpChange(i, e.target.value)
+                            }
                             onKeyDown={(e) => handlePhoneOtpKeyDown(i, e)}
                             onPaste={i === 0 ? handlePhoneOtpPaste : undefined}
                             className="w-10 text-center text-lg font-bold text-white rounded-xl outline-none transition-all duration-200"
                             style={{
                               height: '44px',
-                              background: digit ? 'rgba(14,165,233,0.12)' : 'rgba(255,255,255,0.05)',
-                              border: digit ? '1px solid rgba(56,189,248,0.6)' : '1px solid rgba(255,255,255,0.12)',
-                              boxShadow: digit ? '0 0 0 3px rgba(34,211,238,0.08)' : 'none',
+                              background: digit
+                                ? 'rgba(14,165,233,0.12)'
+                                : 'rgba(255,255,255,0.05)',
+                              border: digit
+                                ? '1px solid rgba(56,189,248,0.6)'
+                                : '1px solid rgba(255,255,255,0.12)',
+                              boxShadow: digit
+                                ? '0 0 0 3px rgba(34,211,238,0.08)'
+                                : 'none',
                             }}
                           />
                         ))}
@@ -660,28 +936,67 @@ const Signup = () => {
                       <button
                         type="button"
                         onClick={handleVerifyPhoneOtp}
-                        disabled={verifyingPhone || phoneOtpInputs.join('').length < 6}
+                        disabled={
+                          verifyingPhone || phoneOtpInputs.join('').length < 6
+                        }
                         className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all duration-200 disabled:opacity-50"
-                        style={{ background: 'linear-gradient(135deg,#0ea5e9,#6366f1)', boxShadow: '0 4px 14px rgba(14,165,233,.25)' }}
+                        style={{
+                          background: 'linear-gradient(135deg,#0ea5e9,#6366f1)',
+                          boxShadow: '0 4px 14px rgba(14,165,233,.25)',
+                        }}
                       >
                         {verifyingPhone ? (
                           <span className="flex items-center justify-center gap-2">
-                            <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                              <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,.3)" strokeWidth="3" />
-                              <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round" />
+                            <svg
+                              className="w-4 h-4 animate-spin"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                            >
+                              <circle
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="rgba(255,255,255,.3)"
+                                strokeWidth="3"
+                              />
+                              <path
+                                d="M12 2a10 10 0 0 1 10 10"
+                                stroke="white"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                              />
                             </svg>
                             {t('auth.verifying')}
                           </span>
-                        ) : t('auth.verifyPhone')}
+                        ) : (
+                          t('auth.verifyPhone')
+                        )}
                       </button>
                     </div>
                   )}
 
                   {phoneVerified && (
                     <p className="mt-2 text-xs text-emerald-400 flex items-center gap-1.5">
-                      <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none">
-                        <circle cx="8" cy="8" r="7" fill="rgba(34,197,94,0.15)" stroke="#22c55e" strokeWidth="1.5" />
-                        <path d="M5 8l2.5 2.5L11 6" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <svg
+                        viewBox="0 0 16 16"
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                      >
+                        <circle
+                          cx="8"
+                          cy="8"
+                          r="7"
+                          fill="rgba(34,197,94,0.15)"
+                          stroke="#22c55e"
+                          strokeWidth="1.5"
+                        />
+                        <path
+                          d="M5 8l2.5 2.5L11 6"
+                          stroke="#22c55e"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                       {t('auth.phoneVerified')}
                     </p>
@@ -703,8 +1018,14 @@ const Signup = () => {
                       required
                       className={inputCls('state')}
                     >
-                      <option value="" disabled>{t('auth.selectState')}</option>
-                      {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                      <option value="" disabled>
+                        {t('auth.selectState')}
+                      </option>
+                      {states.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -718,12 +1039,23 @@ const Signup = () => {
                       onFocus={() => setFocused('city')}
                       onBlur={() => setFocused('')}
                       required
-                      className={inputCls('city') + (!formData.state ? ' cursor-not-allowed opacity-50' : '')}
+                      className={
+                        inputCls('city') +
+                        (!formData.state
+                          ? ' cursor-not-allowed opacity-50'
+                          : '')
+                      }
                     >
                       <option value="" disabled>
-                        {formData.state ? t('auth.selectCity') : t('auth.chooseStateFirst')}
+                        {formData.state
+                          ? t('auth.selectCity')
+                          : t('auth.chooseStateFirst')}
                       </option>
-                      {cityOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                      {cityOptions.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -770,43 +1102,96 @@ const Signup = () => {
                       onClick={() => setShowPassword((s) => !s)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-cyan-300 transition-colors"
                     >
-                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      {showPassword ? (
+                        <FiEyeOff size={18} />
+                      ) : (
+                        <FiEye size={18} />
+                      )}
                     </button>
                   </div>
 
                   {formData.password && strength && (
                     <div className="mt-2">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-slate-500">{t('auth.passwordStrength')}</span>
-                        <span className="text-xs font-semibold" style={{ color: strength.color }}>{strength.label}</span>
+                        <span className="text-xs text-slate-500">
+                          {t('auth.passwordStrength')}
+                        </span>
+                        <span
+                          className="text-xs font-semibold"
+                          style={{ color: strength.color }}
+                        >
+                          {strength.label}
+                        </span>
                       </div>
                       <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden">
-                        <div className="h-full rounded-full transition-all duration-500"
-                          style={{ width: strength.width, background: strength.color }} />
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: strength.width,
+                            background: strength.color,
+                          }}
+                        />
                       </div>
                     </div>
                   )}
 
                   {(focused === 'password' || formData.password) && (
-                    <div className="mt-2.5 p-3 rounded-xl space-y-1.5"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div
+                      className="mt-2.5 p-3 rounded-xl space-y-1.5"
+                      style={{
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                      }}
+                    >
                       {passwordRules.map((rule) => {
                         const ok = rule.test(formData.password);
                         return (
-                          <div key={rule.id} className="flex items-center gap-2">
+                          <div
+                            key={rule.id}
+                            className="flex items-center gap-2"
+                          >
                             <span className="flex-shrink-0">
                               {ok ? (
-                                <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none">
-                                  <circle cx="8" cy="8" r="7" fill="rgba(34,197,94,0.15)" stroke="#22c55e" strokeWidth="1.5" />
-                                  <path d="M5 8l2.5 2.5L11 5.5" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                <svg
+                                  viewBox="0 0 16 16"
+                                  className="w-3.5 h-3.5"
+                                  fill="none"
+                                >
+                                  <circle
+                                    cx="8"
+                                    cy="8"
+                                    r="7"
+                                    fill="rgba(34,197,94,0.15)"
+                                    stroke="#22c55e"
+                                    strokeWidth="1.5"
+                                  />
+                                  <path
+                                    d="M5 8l2.5 2.5L11 5.5"
+                                    stroke="#22c55e"
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
                                 </svg>
                               ) : (
-                                <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none">
-                                  <circle cx="8" cy="8" r="7" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
+                                <svg
+                                  viewBox="0 0 16 16"
+                                  className="w-3.5 h-3.5"
+                                  fill="none"
+                                >
+                                  <circle
+                                    cx="8"
+                                    cy="8"
+                                    r="7"
+                                    stroke="rgba(255,255,255,0.2)"
+                                    strokeWidth="1.5"
+                                  />
                                 </svg>
                               )}
                             </span>
-                            <span className={`text-xs transition-colors ${ok ? 'text-emerald-400' : 'text-slate-500'}`}>
+                            <span
+                              className={`text-xs transition-colors ${ok ? 'text-emerald-400' : 'text-slate-500'}`}
+                            >
                               {rule.label}
                             </span>
                           </div>
@@ -834,7 +1219,9 @@ const Signup = () => {
                       className={
                         inputCls('confirmPassword') +
                         ' pr-12' +
-                        (formData.confirmPassword && !passwordsMatch ? ' !border-red-500/60' : '') +
+                        (formData.confirmPassword && !passwordsMatch
+                          ? ' !border-red-500/60'
+                          : '') +
                         (passwordsMatch ? ' !border-emerald-500/60' : '')
                       }
                     />
@@ -843,24 +1230,63 @@ const Signup = () => {
                       onClick={() => setShowConfirm((s) => !s)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-cyan-300 transition-colors"
                     >
-                      {showConfirm ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      {showConfirm ? (
+                        <FiEyeOff size={18} />
+                      ) : (
+                        <FiEye size={18} />
+                      )}
                     </button>
                   </div>
                   {formData.confirmPassword && (
-                    <p className={`mt-1.5 text-xs flex items-center gap-1.5 ${passwordsMatch ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <p
+                      className={`mt-1.5 text-xs flex items-center gap-1.5 ${passwordsMatch ? 'text-emerald-400' : 'text-red-400'}`}
+                    >
                       {passwordsMatch ? (
                         <>
-                          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none">
-                            <circle cx="8" cy="8" r="7" fill="rgba(34,197,94,0.15)" stroke="#22c55e" strokeWidth="1.5" />
-                            <path d="M5 8l2.5 2.5L11 5.5" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          <svg
+                            viewBox="0 0 16 16"
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                          >
+                            <circle
+                              cx="8"
+                              cy="8"
+                              r="7"
+                              fill="rgba(34,197,94,0.15)"
+                              stroke="#22c55e"
+                              strokeWidth="1.5"
+                            />
+                            <path
+                              d="M5 8l2.5 2.5L11 5.5"
+                              stroke="#22c55e"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
                           </svg>
                           {t('auth.passwordsMatch')}
                         </>
                       ) : (
                         <>
-                          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none">
-                            <circle cx="8" cy="8" r="7" fill="rgba(239,68,68,0.1)" stroke="#ef4444" strokeWidth="1.5" />
-                            <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" />
+                          <svg
+                            viewBox="0 0 16 16"
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                          >
+                            <circle
+                              cx="8"
+                              cy="8"
+                              r="7"
+                              fill="rgba(239,68,68,0.1)"
+                              stroke="#ef4444"
+                              strokeWidth="1.5"
+                            />
+                            <path
+                              d="M5.5 5.5l5 5M10.5 5.5l-5 5"
+                              stroke="#ef4444"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                            />
                           </svg>
                           {t('auth.passwordsNoMatch')}
                         </>
@@ -878,7 +1304,10 @@ const Signup = () => {
                     onChange={(e) => setAgreedToTerms(e.target.checked)}
                     className="w-4 h-4 mt-0.5 rounded accent-cyan-400 flex-shrink-0"
                   />
-                  <label htmlFor="terms" className="text-slate-400 text-sm cursor-pointer leading-relaxed">
+                  <label
+                    htmlFor="terms"
+                    className="text-slate-400 text-sm cursor-pointer leading-relaxed"
+                  >
                     {t('auth.termsAgree')}{' '}
                     <span className="text-cyan-400 hover:text-cyan-300 transition-colors">
                       <Link to="/terms">{t('auth.termsOf')}</Link>
@@ -898,9 +1327,24 @@ const Signup = () => {
                 >
                   {loading || submitting ? (
                     <>
-                      <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,.3)" strokeWidth="3" />
-                        <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round" />
+                      <svg
+                        className="w-5 h-5 animate-spin"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="rgba(255,255,255,.3)"
+                          strokeWidth="3"
+                        />
+                        <path
+                          d="M12 2a10 10 0 0 1 10 10"
+                          stroke="white"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
                       </svg>
                       {t('auth.creatingAccount')}
                     </>
@@ -908,7 +1352,13 @@ const Signup = () => {
                     <>
                       {t('auth.createAccount')}
                       <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
-                        <path d="M4 10h12M10 4l6 6-6 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <path
+                          d="M4 10h12M10 4l6 6-6 6"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     </>
                   )}
@@ -917,7 +1367,10 @@ const Signup = () => {
 
               <p className="text-center text-slate-500 text-sm mt-6">
                 {t('auth.alreadyHaveAccount')}{' '}
-                <Link to="/login" className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors">
+                <Link
+                  to="/login"
+                  className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors"
+                >
                   {t('auth.signIn')}
                 </Link>
               </p>

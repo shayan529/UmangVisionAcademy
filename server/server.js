@@ -16,7 +16,7 @@ import aiRoutes from './routes/ai.routes.js';
 import cartRoutes from './routes/cart.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
 import emailRoutes from './routes/emailAuth.route.js';
-import twilioRoutes from './routes/twilio.routes.js';
+import PhoneRoutes from './routes/PhoneOtp.routes.js';
 import { registerSessionChat } from './utils/SessionChatSocket.js';
 import mockTestRoutes from './routes/mockTest.routes.js';
 import passwordResetRoutes from './routes/passwordReset.routes.js';
@@ -37,7 +37,6 @@ const io = new Server(httpServer, {
     methods: ['GET', 'POST'],
   },
 });
-
 
 // ── Middleware ────────────────────────────────────────────────────────────────
 app.use(express.json());
@@ -67,14 +66,10 @@ app.use('/api/ai', aiRoutes);
 app.use('/api', cartRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/auth', emailRoutes);
-app.use('/api/auth', twilioRoutes);
+app.use('/api/auth', PhoneRoutes);
 app.use('/api/mock-tests', mockTestRoutes);
 app.use('/api/auth', passwordResetRoutes);
 app.use('/api/wallet', walletRoutes);
-
-
-
-
 
 // 3. Register session chat handlers
 registerSessionChat(io);
@@ -87,6 +82,6 @@ ConnectDb()
     });
   })
   .catch((err) => {
-    console.error("Error connecting to MongoDB:", err);
+    console.error('Error connecting to MongoDB:', err);
     process.exit(1);
   });
