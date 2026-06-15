@@ -689,20 +689,21 @@ export default function Certificates() {
   const studentName = useSelector(
     (s) => s.auth?.user?.name || s.user?.name || 'Student'
   );
+  const user = useSelector((s) => s.auth?.user);
 
   useEffect(() => {
     dispatch(fetchEnrolledCourses());
   }, [dispatch]);
 
   const copyId = (id) => {
-    navigator.clipboard.writeText(id).catch(() => {});
+    navigator.clipboard.writeText(id).catch(() => { });
     setCopiedId(id);
     setTimeout(() => setCopiedId(''), 2000);
   };
 
   const copyLink = (id) => {
     const link = `${window.location.origin}/certificates/verify/${id}`;
-    navigator.clipboard.writeText(link).catch(() => {});
+    navigator.clipboard.writeText(link).catch(() => { });
     setCopiedLink(id);
     setTimeout(() => setCopiedLink(''), 2000);
   };
@@ -741,31 +742,28 @@ export default function Certificates() {
     return { ...c, totalLessons, progress };
   });
 
-  const earnedCertificates = studentCourses
-    .filter((c) => c.progress >= 100 && c.certificate?.enabled)
-    .map((c) => ({
-      id: `CERT-${c._id.slice(-6).toUpperCase()}`,
-      course: c.title,
-      instructor:
-        c.certificate?.signatoryName || c.instructor?.name || 'Instructor',
-      instructorTitle: c.certificate?.signatoryTitle || 'Lead Instructor',
-      issuedDate: new Date(c.updatedAt || Date.now()).toLocaleDateString(
-        'en-IN',
-        {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        }
-      ),
-      theme: c.certificate?.theme || 'purple',
-      title: c.certificate?.title || 'Certificate of Completion',
-    }));
+  const earnedCertificates = (user?.earnedCertificates ?? []).map((c) => ({
+    id: `CERT-${c.courseId.toString().slice(-6).toUpperCase()}`,
+    course: c.courseTitle,
+    instructor: c.signatoryName || c.instructorName || "Instructor",
+    instructorTitle: c.signatoryTitle || "Lead Instructor",
+    issuedDate: new Date(c.issuedAt).toLocaleDateString("en-IN", {
+      day: "numeric", month: "long", year: "numeric",
+    }),
+    theme: c.theme || "purple",
+    title: c.certificateTitle || "Certificate of Completion",
+  }));
 
-  const inProgressCourses = studentCourses
-    .filter((c) => c.progress < 100)
+  // For in-progress, still use enrolled courses but derive progress from quizSubmissions
+  const earnedCourseIds = new Set(
+    (user?.earnedCertificates ?? []).map((c) => c.courseId.toString())
+  );
+
+  const inProgressCourses = (enrolled ?? [])
+    .filter((c) => !earnedCourseIds.has(c._id?.toString()) && c.certificate?.enabled)
     .map((c) => ({
       title: c.title,
-      progress: c.progress,
+      progress: c.progress ?? 0,
       thumb: categoryEmoji(c.category),
       id: c._id,
     }));

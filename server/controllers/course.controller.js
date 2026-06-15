@@ -227,13 +227,78 @@ export const rejectCourse = async (req, res) => {
 // ── enrolledCourses ───────────────────────────────────────────────────────────
 export const enrolledCourses = async (req, res) => {
   try {
-    const courses = await Course.find({ students: req.user._id })
+    const studentId = req.user._id;
+
+    const courses = await Course.find({ students: studentId })
       .populate("instructor", "name email")
       .lean();
-    res.json(courses);
+
+    const student = await User.findById(studentId).select("quizSubmissions").lean();
+    const quizMap = {};
+    (student?.quizSubmissions ?? []).forEach((s) => {
+      quizMap[s.courseId.toString()] = s.score;
+    });
+
+    const shaped = courses.map((course) => {
+      const totalLessons = course.lessons?.length ?? 0;
+      // No lesson-level completion yet — derive from quiz submission
+      // A course is "completed" if the student has submitted the final quiz
+      const quizScore = quizMap[course._id.toString()];
+      const hasCompletedQuiz = quizScore !== undefined;
+      const progress = hasCompletedQuiz ? 100 : 0;
+
+      return {
+        _id: course._id,
+        title: course.title,
+        summary: course.summary,
+        category: course.category,
+        level: course.level,
+        price: course.price,
+        thumbnailUrl: course.thumbnailUrl,
+        board: course.board,
+        instructor: course.instructor,
+        tags: course.tags,
+        lessons: course.lessons ?? [],
+        totalLessons,
+        completedLessons: hasCompletedQuiz ? totalLessons : 0,
+        progress,
+        quizScore: quizScore ?? null,
+        certificate: course.certificate ?? null,
+        ratingAverage: course.ratingAverage,
+        reviewCount: course.reviewCount,
+      };
+    });
+
+    res.json(shaped);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
+};
+
+const issueCertificateIfEarned = async (studentId, course) => {
+  if (!course.certificate?.enabled) return;
+  const student = await User.findById(studentId);
+  if (!student) return;
+
+  const alreadyIssued = student.earnedCertificates?.some(
+    (c) => c.courseId.toString() === course._id.toString()
+  );
+  if (alreadyIssued) return;
+
+  await User.findByIdAndUpdate(studentId, {
+    $addToSet: {
+      earnedCertificates: {
+        courseId: course._id,
+        courseTitle: course.title,
+        issuedAt: new Date(),
+        theme: course.certificate?.theme || "purple",
+        certificateTitle: course.certificate?.title || "Certificate of Completion",
+        signatoryName: course.certificate?.signatoryName || "",
+        signatoryTitle: course.certificate?.signatoryTitle || "",
+        instructorName: "", // filled below
+      },
+    },
+  });
 };
 
 // ── enrollCourses ─────────────────────────────────────────────────────────────
@@ -459,7 +524,8 @@ export const deleteCourse = async (req, res) => {
 export const submitQuiz = async (req, res) => {
   try {
     const { answers } = req.body;
-    const course = await Course.findById(req.params.id);
+    const course = await Course.findById(req.params.id)
+      .populate("instructor", "name"); // add populate
     if (!course?.quiz?.questions?.length)
       return res.status(404).json({ success: false, message: "No quiz found" });
 
@@ -491,6 +557,27 @@ export const submitQuiz = async (req, res) => {
       prevSub.completedAt = new Date();
     }
     student.score = (student.score || 0) + pointsEarned;
+
+    // ── Issue certificate if not already earned ──────────────────────────
+    if (course.certificate?.enabled) {
+      const alreadyIssued = (student.earnedCertificates ?? []).some(
+        (c) => c.courseId.toString() === course._id.toString()
+      );
+      if (!alreadyIssued) {
+        if (!student.earnedCertificates) student.earnedCertificates = [];
+        student.earnedCertificates.push({
+          courseId: course._id,
+          courseTitle: course.title,
+          issuedAt: new Date(),
+          theme: course.certificate?.theme || "purple",
+          certificateTitle: course.certificate?.title || "Certificate of Completion",
+          signatoryName: course.certificate?.signatoryName || "",
+          signatoryTitle: course.certificate?.signatoryTitle || "",
+          instructorName: course.instructor?.name || "",
+        });
+      }
+    }
+
     await student.save();
 
     return res.json({

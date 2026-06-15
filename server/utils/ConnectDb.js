@@ -1,27 +1,27 @@
 import mongoose from "mongoose";
 import User from "../models/user.model.js";
 
-const adminEmail = "admin@gmail.com";
-const adminPassword = "admin@123";
+const adminPhone = "+910000000000";
+const adminPassword = "000000";
 
 const seedAdminUser = async () => {
   try {
-    const existingAdmin = await User.findOne({ email: adminEmail });
+    const existingAdmin = await User.findOne({ phoneNumber: adminPhone });
     if (existingAdmin) {
-      existingAdmin.role = "admin";
+      existingAdmin.roles = "admin";
       existingAdmin.password = adminPassword;
       await existingAdmin.save();
-      console.log("Admin account ensured:", adminEmail);
+      console.log("Admin account ensured:", adminPhone);
       return;
     }
 
     await User.create({
       name: "Admin User",
-      email: adminEmail,
+      phoneNumber: adminPhone,
       password: adminPassword,
-      roles: "admin",
+      roles: ["admin"]
     });
-    console.log("Admin account created:", adminEmail);
+    console.log("Admin account created:", adminPhone);
   } catch (error) {
     console.error("Error seeding admin user:", error);
   }

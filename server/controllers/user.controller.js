@@ -14,37 +14,46 @@ const createToken = (userId) => {
 const setTokenCookie = (res, token) => {
   res.cookie('token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production' ? true : false,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
     maxAge: 1000 * 60 * 60 * 24 * 7,
   });
 };
 
+// ── Register ──────────────────────────────────────────────────────────────────
 export const RegisterUser = async (req, res) => {
   const { name, email, password, role, city, state, phoneNumber, pincode } = req.body;
+
   try {
-    if (!name || !email || !password || !city || !state || !phoneNumber || !pincode) {
-      return res
-        .status(400)
-        .json({
-          message:
-            'Name, email, password, city, state, pincode, and phone number are required',
-        });
+    // Required field validation
+    if (!name || !password || !city || !state || !phoneNumber || !pincode) {
+      return res.status(400).json({
+        message: 'Name, password, city, state, pincode, and phone number are required',
+      });
+    }
+
+    // Check if phone number already exists
+    const existingPhone = await User.findOne({ phoneNumber });
+    if (existingPhone) {
+      return res.status(400).json({ message: 'Phone number already in use' });
+    }
+
+    // Check if email already exists (only if email is provided)
+    if (email) {
+      const existingEmail = await User.findOne({ email });
+      if (existingEmail) {
+        return res.status(400).json({ message: 'Email already in use' });
+      }
     }
 
     const allowedRoles = ['student', 'instructor'];
     const normalizedRole = allowedRoles.includes(role) ? role : 'student';
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email already in use' });
-    }
-
     const user = await User.create({
       name,
-      email,
+      ...(email && { email }),
       password,
-      role: normalizedRole,
+      roles: [normalizedRole],
       city,
       state,
       phoneNumber,
@@ -53,7 +62,11 @@ export const RegisterUser = async (req, res) => {
 
     // Log registration device
     const userAgent = req.headers['user-agent'] || 'Unknown Device';
-    const ip = req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress || 'Unknown IP';
+    const ip =
+      req.headers['x-forwarded-for'] ||
+      req.ip ||
+      req.socket.remoteAddress ||
+      'Unknown IP';
     user.devices = [{ userAgent, ip, lastLogin: new Date() }];
     await user.save();
 
@@ -74,39 +87,46 @@ export const RegisterUser = async (req, res) => {
   }
 };
 
+// ── Login ─────────────────────────────────────────────────────────────────────
 export const LoginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { phoneNumber, password } = req.body;
+
   try {
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: 'Email and password are required' });
+    if (!phoneNumber || !password) {
+      return res.status(400).json({ message: 'Phone number and password are required' });
     }
 
-    const user = await User.findOne({ email });
+    // Find user by phone number
+    const user = await User.findOne({ phoneNumber });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: 'Invalid phone number or password' });
     }
 
-    const compare = await bcrypt.compare(password, user.password);
-    if (!compare) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid phone number or password' });
     }
+
+    // Update logged-in devices
+    const userAgent = req.headers['user-agent'] || 'Unknown Device';
+    const ip =
+      req.headers['x-forwarded-for'] ||
+      req.ip ||
+      req.socket.remoteAddress ||
+      'Unknown IP';
+
+    let devicesList = user.devices || [];
+    // Remove duplicate entry for same device
+    devicesList = devicesList.filter(
+      (d) => !(d.userAgent === userAgent && d.ip === ip)
+    );
+    devicesList.unshift({ userAgent, ip, lastLogin: new Date() });
+    if (devicesList.length > 10) devicesList = devicesList.slice(0, 10);
+    user.devices = devicesList;
+    await user.save();
 
     const token = createToken(user._id);
     setTokenCookie(res, token);
-
-    // Update logged in devices
-    const userAgent = req.headers['user-agent'] || 'Unknown Device';
-    const ip = req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress || 'Unknown IP';
-    let devicesList = user.devices || [];
-    devicesList = devicesList.filter(d => !(d.userAgent === userAgent && d.ip === ip));
-    devicesList.unshift({ userAgent, ip, lastLogin: new Date() });
-    if (devicesList.length > 10) {
-      devicesList = devicesList.slice(0, 10);
-    }
-    user.devices = devicesList;
-    await user.save();
 
     const userData = user.toObject();
     delete userData.password;
@@ -118,6 +138,7 @@ export const LoginUser = async (req, res) => {
   }
 };
 
+// ── Get All Users ─────────────────────────────────────────────────────────────
 export const getUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password');
@@ -127,6 +148,7 @@ export const getUsers = async (req, res) => {
   }
 };
 
+// ── Get Current User ──────────────────────────────────────────────────────────
 export const getCurrentUser = async (req, res) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Not authenticated' });
@@ -134,6 +156,7 @@ export const getCurrentUser = async (req, res) => {
   res.json(req.user);
 };
 
+// ── Get User By ID ────────────────────────────────────────────────────────────
 export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
@@ -147,6 +170,7 @@ export const getUserById = async (req, res) => {
   }
 };
 
+// ── Update User ───────────────────────────────────────────────────────────────
 export const updateUser = async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
@@ -160,6 +184,7 @@ export const updateUser = async (req, res) => {
   }
 };
 
+// ── Delete User ───────────────────────────────────────────────────────────────
 export const deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
@@ -170,10 +195,11 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+// ── Logout ────────────────────────────────────────────────────────────────────
 export const LogoutUser = (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production' ? true : false,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
   });
   res.json({ message: 'Logged out successfully' });

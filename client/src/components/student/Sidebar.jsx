@@ -1,20 +1,8 @@
 // components/student/Sidebar.jsx
 import { NavLink } from "react-router-dom";
-import { useEffect, useState } from "react";
-import {
-  FaHome,
-  FaBookOpen,
-  FaRobot,
-  FaUsers,
-  FaTrophy,
-  FaCog,
-  FaClipboardList,
-  FaChevronDown,
-  FaChevronUp,
-} from "react-icons/fa";
-import { GrCertificate } from "react-icons/gr";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
+import { useState } from "react";
 
 const mockTestSubNav = [
   { label: "Available Tests", to: "/student-dashboard/mock-tests", end: true },
@@ -22,65 +10,26 @@ const mockTestSubNav = [
   { label: "Leaderboard", to: "/student-dashboard/mock-tests/leaderboard" },
 ];
 
-const Sidebar = ({
-  user,
-  collapsed,
-  setCollapsed,
-  mobileOpen,
-  setMobileOpen,
-}) => {
+const Sidebar = ({ user, collapsed, setCollapsed, mobileOpen, setMobileOpen }) => {
   const { t } = useTranslation();
   const subscription = useSelector((state) => state.billing.subscription);
   const isPremium = subscription?.plan === "premium";
 
   const [mockTestsOpen, setMockTestsOpen] = useState(false);
 
-  // Items ABOVE mock tests
   const navItemsTop = [
-    {
-      label: t("studentSidebar.overview"),
-      to: "/student-dashboard",
-      end: true,
-      icon: FaHome,
-    },
-    {
-      label: t("studentSidebar.myCourses"),
-      to: "/student-dashboard/my-courses",
-      icon: FaBookOpen,
-    },
-    {
-      label: t("studentSidebar.aiTutor"),
-      to: "/student-dashboard/ai-tutor",
-      icon: FaRobot,
-    },
-    ...(isPremium
-      ? [
-          {
-            label: t("studentSidebar.sessions"),
-            to: "/student-dashboard/sessions",
-            icon: FaUsers,
-          },
-        ]
-      : []),
-    {
-      label: t("studentSidebar.certificates"),
-      to: "/student-dashboard/certificates",
-      icon: GrCertificate,
-    },
-    {
-      label: t("studentSidebar.leaderboard"),
-      to: "/student-dashboard/leaderboard",
-      icon: FaTrophy,
-    },
+    { label: t("studentSidebar.overview"), to: "/student-dashboard", end: true, icon: "📊" },
+    { label: t("studentSidebar.myCourses"), to: "/student-dashboard/my-courses", icon: "📚" },
+    { label: t("studentSidebar.aiTutor"), to: "/student-dashboard/ai-tutor", icon: "🤖" },
+    ...(isPremium ? [{ label: t("studentSidebar.sessions"), to: "/student-dashboard/sessions", icon: "🎥" }] : []),
+    { label: t("studentSidebar.certificates"), to: "/student-dashboard/certificates", icon: "🏅" },
+    { label: t("studentSidebar.leaderboard"), to: "/student-dashboard/leaderboard", icon: "🏆" },
+    { label: t("studentSidebar.progress"), to: "/student-dashboard/progress", icon: "📈" },
+    { label: "Wallet", to: "/student-dashboard/wallet", icon: "👛" },
   ];
 
-  // Items BELOW mock tests
   const navItemsBottom = [
-    {
-      label: t("studentSidebar.settings"),
-      to: "/student-dashboard/settings",
-      icon: FaCog,
-    },
+    { label: t("studentSidebar.settings"), to: "/student-dashboard/settings", icon: "⚙️" },
   ];
 
   const activeUser = user;
@@ -103,22 +52,17 @@ const Sidebar = ({
 
   const NavItem = ({ item }) => (
     <NavLink
-      key={item.to}
       to={item.to}
       end={item.end}
       title={collapsed ? item.label : undefined}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 ${
-          collapsed ? "justify-center" : ""
-        } ${
-          isActive
-            ? "bg-[#2e1065] text-[#a78bfa]"
-            : "text-[#64748b] hover:text-white hover:bg-[#1e293b]"
-        }`
+        `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150
+        ${collapsed ? "justify-center" : ""}
+        ${isActive ? "bg-[#2e1065] text-[#a78bfa]" : "text-[#64748b] hover:text-white hover:bg-[#1e293b]"}`
       }
       onClick={() => mobileOpen && setMobileOpen(false)}
     >
-      <item.icon className="shrink-0" />
+      <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{item.icon}</span>
       {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
     </NavLink>
   );
@@ -129,36 +73,25 @@ const Sidebar = ({
         to="/student-dashboard/mock-tests"
         title="Mock Tests"
         className={({ isActive }) =>
-          `flex items-center justify-center px-3 py-2.5 rounded-xl transition-all duration-150 ${
-            isActive
-              ? "bg-[#2e1065] text-[#a78bfa]"
-              : "text-[#64748b] hover:text-white hover:bg-[#1e293b]"
-          }`
+          `flex items-center justify-center px-3 py-2.5 rounded-xl transition-all duration-150
+          ${isActive ? "bg-[#2e1065] text-[#a78bfa]" : "text-[#64748b] hover:text-white hover:bg-[#1e293b]"}`
         }
         onClick={() => mobileOpen && setMobileOpen(false)}
       >
-        <FaClipboardList className="shrink-0" />
+        <span style={{ fontSize: 18, lineHeight: 1 }}>📝</span>
       </NavLink>
     ) : (
       <div>
         <button
           onClick={() => setMockTestsOpen((v) => !v)}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 ${
-            mockTestsOpen
-              ? "bg-[#1e293b] text-slate-200"
-              : "text-[#64748b] hover:text-white hover:bg-[#1e293b]"
-          }`}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150
+            ${mockTestsOpen ? "bg-[#1e293b] text-slate-200" : "text-[#64748b] hover:text-white hover:bg-[#1e293b]"}`}
         >
-          <FaClipboardList className="shrink-0" />
-          <span className="text-sm font-medium flex-1 text-left">
-            Mock Tests
-          </span>
-          {mockTestsOpen ? (
-            <FaChevronUp className="text-[10px] text-slate-500" />
-          ) : (
-            <FaChevronDown className="text-[10px] text-slate-500" />
-          )}
+          <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>📝</span>
+          <span className="text-sm font-medium flex-1 text-left">Mock Tests</span>
+          <span style={{ fontSize: 10, color: "#64748b" }}>{mockTestsOpen ? "▲" : "▼"}</span>
         </button>
+
         {mockTestsOpen && (
           <div className="mt-1 ml-3 pl-3 border-l border-[#2a3a54] flex flex-col gap-0.5">
             {mockTestSubNav.map((sub) => (
@@ -167,11 +100,8 @@ const Sidebar = ({
                 to={sub.to}
                 end={sub.end}
                 className={({ isActive }) =>
-                  `flex items-center px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${
-                    isActive
-                      ? "bg-[#2e1065] text-[#a78bfa]"
-                      : "text-[#64748b] hover:text-white hover:bg-[#1e293b]"
-                  }`
+                  `flex items-center px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150
+                  ${isActive ? "bg-[#2e1065] text-[#a78bfa]" : "text-[#64748b] hover:text-white hover:bg-[#1e293b]"}`
                 }
                 onClick={() => mobileOpen && setMobileOpen(false)}
               >
@@ -186,31 +116,23 @@ const Sidebar = ({
   return (
     <aside className={sidebarClass}>
       {/* User card */}
-      <div
-        className={`flex items-center gap-3 p-3 mb-6 rounded-xl bg-[#1e293b] ${collapsed ? "justify-center" : ""}`}
-      >
+      <div className={`flex items-center gap-3 p-3 mb-4 rounded-xl bg-[#1e293b] ${collapsed ? "justify-center" : ""}`}>
         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600 to-pink-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
           {initials}
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <div className="text-sm font-bold text-slate-100 truncate">
-              {username}
-            </div>
+            <div className="text-sm font-bold text-slate-100 truncate">{username}</div>
           </div>
         )}
       </div>
 
-      <nav className="flex-1 flex flex-col gap-1 overflow-y-auto px-1 pb-4">
-        {/* Top nav items */}
+      {/* Nav items — scrollable middle */}
+      <nav className="flex-1 flex flex-col gap-1 overflow-y-auto px-1">
         {navItemsTop.map((item) => (
           <NavItem key={item.to} item={item} />
         ))}
-
-        {/* Mock Tests (above Settings) */}
         <MockTestsSection />
-
-        {/* Bottom nav items (Settings) */}
         {navItemsBottom.map((item) => (
           <NavItem key={item.to} item={item} />
         ))}

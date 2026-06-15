@@ -18,9 +18,6 @@ const SessionMessage =
 // ─── Socket.IO Handler ───────────────────────────────────────────────────────
 
 function registerSessionChat(io) {
-  // Namespace: /  (uses your default namespace)
-  // All session chat events are prefixed with "session_"
-
   io.on("connection", (socket) => {
     // ── Join a session chat room ────────────────────────────────────────────
     socket.on("join_session_chat", async ({ sessionId }) => {
@@ -65,15 +62,19 @@ function registerSessionChat(io) {
           return;
         }
 
-        // Broadcast to everyone in the room (including sender)
-        io.to(room).emit("session_message", {
+        const payload = {
           _id: saved._id,
           sessionId: saved.sessionId,
           sender: saved.sender,
           senderId: saved.senderId,
           text: saved.text,
           createdAt: saved.createdAt,
-        });
+        };
+
+        // FIX: Broadcast only to OTHER users in the room.
+        // The sender already added their own message optimistically on the
+        // frontend, so sending it back would cause a duplicate.
+        socket.to(room).emit("session_message", payload);
       },
     );
 

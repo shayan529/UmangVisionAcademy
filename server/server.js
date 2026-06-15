@@ -20,6 +20,7 @@ import twilioRoutes from './routes/twilio.routes.js';
 import { registerSessionChat } from './utils/SessionChatSocket.js';
 import mockTestRoutes from './routes/mockTest.routes.js';
 import passwordResetRoutes from './routes/passwordReset.routes.js';
+import walletRoutes from './routes/wallet.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,8 +38,6 @@ const io = new Server(httpServer, {
   },
 });
 
-// 3. Register session chat handlers
-registerSessionChat(io);
 
 // ── Middleware ────────────────────────────────────────────────────────────────
 app.use(express.json());
@@ -71,11 +70,23 @@ app.use('/api/auth', emailRoutes);
 app.use('/api/auth', twilioRoutes);
 app.use('/api/mock-tests', mockTestRoutes);
 app.use('/api/auth', passwordResetRoutes);
+app.use('/api/wallet', walletRoutes);
+
+
+
+
+
+// 3. Register session chat handlers
+registerSessionChat(io);
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-ConnectDb();
-
-// 4. Listen on httpServer, NOT app
-httpServer.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+ConnectDb()
+  .then(() => {
+    httpServer.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Error connecting to MongoDB:", err);
+    process.exit(1);
+  });

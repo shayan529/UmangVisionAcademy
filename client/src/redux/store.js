@@ -10,6 +10,7 @@ import billingReducer from "./slices/billingSlice";
 import aiTutorReducer from "./slices/aiTutorSlice";
 import settingsReducer from "./slices/settingsSlice";
 import mockReducer from "./slices/mockTestSlice";
+import walletReducer from './slices/walletSlice';
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +25,8 @@ export const store = configureStore({
     aiTutor: aiTutorReducer,
     settings: settingsReducer,
     mockTest: mockReducer,
+    wallet: walletReducer,
+
   },
 });
 

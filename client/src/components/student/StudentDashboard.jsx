@@ -10,6 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { fetchSubscription } from '../../redux/slices/billingSlice';
 
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const getOverallProgress = (courses = []) => {
   if (!courses.length) return 0;
@@ -51,6 +52,7 @@ const activityMeta = {
   course: { icon: '🎓', color: '#f472b6', label: 'Course' },
   login: { icon: '🔑', color: '#34d399', label: 'Login' },
   default: { icon: '⚡', color: '#fb923c', label: 'Activity' },
+
 };
 
 const getActivityMeta = (type = '') =>
@@ -460,27 +462,27 @@ export const DashboardHome = () => {
             >
               {coursesLoading
                 ? [...Array(3)].map((_, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        background: '#111827',
-                        border: '1px solid #1e293b',
-                        borderRadius: 14,
-                        padding: '16px 18px',
-                      }}
-                    >
-                      <Skeleton w="65%" h={13} style={{ marginBottom: 10 }} />
-                      <Skeleton w="100%" h={6} radius={4} />
-                    </div>
-                  ))
+                  <div
+                    key={i}
+                    style={{
+                      background: '#111827',
+                      border: '1px solid #1e293b',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                    }}
+                  >
+                    <Skeleton w="65%" h={13} style={{ marginBottom: 10 }} />
+                    <Skeleton w="100%" h={6} radius={4} />
+                  </div>
+                ))
                 : enrolledCourses
-                    .slice(0, 6)
-                    .map((course, i) => (
-                      <CourseProgressCard
-                        key={course._id ?? course.id ?? i}
-                        course={course}
-                      />
-                    ))}
+                  .slice(0, 6)
+                  .map((course, i) => (
+                    <CourseProgressCard
+                      key={course._id ?? course.id ?? i}
+                      course={course}
+                    />
+                  ))}
             </div>
           </section>
         )}

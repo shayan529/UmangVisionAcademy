@@ -39,6 +39,7 @@ import SettingsSection from "./components/student/SettingsSection";
 import LeaderBoard from "./components/student/LeaderBoard";
 import StudentNotifications from "./components/student/StudentNotifications";
 import StudentSessions from "./components/student/StudentSessions";
+import StudentWallet from './components/student/StudentWallet'
 
 /* Mock Tests */
 import MockTestsLayout from "./components/student/MockTestsIndex";
@@ -76,6 +77,7 @@ import QuestionBank from "./components/common/QuestionBank";
 import Blogs from "./components/common/Blogs";
 import BoardCourses from "./components/Boards/BoardCourses";
 import CoursePage from "./components/course/CoursePage";
+import ProgressPage from "./components/student/ProgressPage";
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -165,6 +167,9 @@ function App() {
             <Route path="sessions" element={<StudentSessions />} />
             <Route path="notifications" element={<StudentNotifications />} />
             <Route path="certificates" element={<CertificatesSection />} />
+            <Route path="progress" element={<ProgressPage />} />
+            <Route path="wallet" element={<StudentWallet />} />
+
 
             {/* ── Mock Tests (nested layout with sub-nav) ── */}
             <Route path="mock-tests" element={<MockTestsLayout />}>

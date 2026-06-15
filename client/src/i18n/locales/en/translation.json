@@ -58,13 +58,106 @@
     "logout": "Logout",
     "email": "Email",
     "password": "Password",
+    "confirmPassword": "Confirm Password",
     "name": "Full Name",
     "phone": "Phone Number",
+    "countryCode": "Country Code",
+    "state": "State",
+    "city": "City",
+    "pincode": "Pincode",
     "welcome": "Welcome!",
+    "welcomeBack": "Welcome Back",
+    "continueJourney": "Continue your learning journey",
     "passwordsMismatch": "Passwords do not match.",
     "agreeTerms": "Please agree to the Terms & Conditions.",
     "accountCreated": "Account created! Welcome aboard 🎉",
-    "loginToContinue": "Log in to continue"
+    "loginToContinue": "Log in to continue",
+    "forgotPassword": "Forgot Password?",
+    "newHere": "New here?",
+    "createAccount": "Create an account",
+    "alreadyHaveAccount": "Already have an account?",
+    "signIn": "Sign In",
+    "joinLearners": "Join thousands of learners today",
+    "selectState": "Select state",
+    "selectCity": "Select city",
+    "chooseStateFirst": "Choose a state first",
+    "termsAgree": "I agree to the",
+    "termsOf": "Terms of Service",
+    "and": "&",
+    "privacyPolicy": "Privacy Policy",
+    "continue": "Continue",
+    "sendingOtp": "Sending OTP…",
+    "signingIn": "Signing in…",
+    "verifyEmail": "Verify Email",
+    "otpSentTo": "We sent a 6-digit code to",
+    "verifyAndCreate": "Verify & Create Account",
+    "verifying": "Verifying…",
+    "didntReceive": "Didn't receive it?",
+    "resendIn": "Resend in {{sec}}s",
+    "resendOtp": "Resend OTP",
+    "sending": "Sending…",
+    "backToSignup": "Back to sign up",
+    "phoneNumber": "Phone Number",
+    "sendOtp": "Send OTP",
+    "resend": "Resend",
+    "verifyPhone": "Verify Phone",
+    "phoneVerified": "Phone number verified successfully",
+    "edit": "Edit",
+    "planNote": "Plan / Note",
+    "planNotePlaceholder": "e.g. Pro plan · 40 msg/3hr",
+    "namePlaceholder": "John Doe",
+    "emailPlaceholder": "you@example.com",
+    "phonePlaceholder": "9876543210",
+    "pincodePlaceholder": "452001",
+    "passwordPlaceholder": "••••••••••",
+    "passwordStrength": "Strength",
+    "strengthWeak": "Weak",
+    "strengthFair": "Fair",
+    "strengthGood": "Good",
+    "strengthStrong": "Strong",
+    "passwordRuleLen": "At least 8 characters",
+    "passwordRuleUpper": "One uppercase letter (A–Z)",
+    "passwordRuleLower": "One lowercase letter (a–z)",
+    "passwordRuleNum": "One number (0–9)",
+    "passwordRuleSpec": "One special character (!@#$…)",
+    "passwordsMatch": "Passwords match",
+    "passwordsNoMatch": "Passwords do not match",
+    "invalidPhone": "Please enter a valid 10-digit phone number.",
+    "verifyPhoneFirst": "Please verify your phone number before continuing.",
+    "invalidPincode": "Please enter a valid 6-digit pincode.",
+    "otpSentPhone": "OTP sent to your phone!",
+    "otpSentEmail": "OTP sent to your email!",
+    "invalidOtp": "Invalid OTP. Please try again.",
+    "failedOtp": "Failed to send OTP. Please try again.",
+    "failedResend": "Failed to resend OTP.",
+    "enterFullOtp": "Please enter the full 6-digit OTP."
+  },
+  "wallet": {
+    "title": "My Wallet",
+    "subtitle": "Manage your balance and view transaction history.",
+    "availableBalance": "Available Balance",
+    "totalDeposited": "Total Deposited",
+    "totalSpent": "Total Spent",
+    "transactions": "Transactions",
+    "addMoney": "+ Add Money",
+    "transactionHistory": "Transaction History",
+    "all": "All",
+    "deposit": "Deposit",
+    "purchase": "Purchase",
+    "refund": "Refund",
+    "noTransactions": "No transactions yet. Add money to get started!",
+    "no": "No",
+    "addMoneyTitle": "Add Money to Wallet",
+    "payViaRazorpay": "Pay via Razorpay",
+    "enterCustomAmount": "Enter custom amount",
+    "payButton": "Pay {{amount}} via Razorpay",
+    "processing": "Processing…",
+    "devOnly": "DEV ONLY",
+    "mockDeposit": "Mock Deposit (no payment)",
+    "addMock": "Add Mock",
+    "successMsg": "{{amount}} added to your wallet!",
+    "mockSuccess": "₹{{amount}} added (mock).",
+    "razorpayFailed": "Razorpay failed to load. Check your internet."
   },
   "hero": {
     "tag": "AI Powered Online Learning",
@@ -411,12 +504,18 @@
       "tag": "Our Mission",
       "heading": "Democratise quality education across India",
       "description": "Over 260 million students study in Indian schools. Less than 5% have access to quality coaching. We're using AI, live classes, and personalised learning paths to close that gap — one student at a time.",
-      "founded": { "label": "Founded", "value": "2021 · Jabalpur, MP" },
+      "founded": {
+        "label": "Founded",
+        "value": "2021 · Jabalpur, MP"
+      },
       "supportedClasses": {
         "label": "Supported classes",
         "value": "Class 1 – 12 (CBSE & State)"
       },
-      "languages": { "label": "Languages", "value": "English & Hindi" },
+      "languages": {
+        "label": "Languages",
+        "value": "English & Hindi"
+      },
       "learningModel": {
         "label": "Learning model",
         "value": "Hybrid — live + recorded + AI"
@@ -456,7 +555,6 @@
         "role": "Founder & CEO",
         "bio": "Started the platform to make coaching fairer and more affordable for students across India."
       },
-
       "PS": {
         "name": "Priya Sharma",
         "role": "Head of Curriculum",
@@ -473,7 +571,6 @@
         "bio": "Dedicated to closing the learning gap. Has personally mentored 500+ students from Tier-2 and Tier-3 cities."
       }
     },
-
     "cta": {
       "title": "Ready to start learning?",
       "body": "Join 50,000+ students who are already learning smarter with Umang Vision Academy.",
@@ -495,86 +592,6 @@
       "How does the human digestive system work?"
     ]
   },
-  "auth": {
-    "signup": "Create Account",
-    "login": "Sign In",
-    "logout": "Logout",
-    "email": "Email",
-    "password": "Password",
-    "confirmPassword": "Confirm Password",
-    "name": "Full Name",
-    "phone": "Phone Number",
-    "countryCode": "Country Code",
-    "state": "State",
-    "city": "City",
-    "pincode": "Pincode",
-    "welcome": "Welcome!",
-    "welcomeBack": "Welcome Back",
-    "continueJourney": "Continue your learning journey",
-    "passwordsMismatch": "Passwords do not match.",
-    "agreeTerms": "Please agree to the Terms & Conditions.",
-    "accountCreated": "Account created! Welcome aboard 🎉",
-    "loginToContinue": "Log in to continue",
-    "forgotPassword": "Forgot Password?",
-    "newHere": "New here?",
-    "createAccount": "Create an account",
-    "alreadyHaveAccount": "Already have an account?",
-    "signIn": "Sign In",
-    "joinLearners": "Join thousands of learners today",
-    "selectState": "Select state",
-    "selectCity": "Select city",
-    "chooseStateFirst": "Choose a state first",
-    "termsAgree": "I agree to the",
-    "termsOf": "Terms of Service",
-    "and": "&",
-    "privacyPolicy": "Privacy Policy",
-    "continue": "Continue",
-    "sendingOtp": "Sending OTP…",
-    "signingIn": "Signing in…",
-    "verifyEmail": "Verify Email",
-    "otpSentTo": "We sent a 6-digit code to",
-    "verifyAndCreate": "Verify & Create Account",
-    "verifying": "Verifying…",
-    "didntReceive": "Didn't receive it?",
-    "resendIn": "Resend in {{sec}}s",
-    "resendOtp": "Resend OTP",
-    "sending": "Sending…",
-    "backToSignup": "Back to sign up",
-    "phoneNumber": "Phone Number",
-    "sendOtp": "Send OTP",
-    "resend": "Resend",
-    "verifyPhone": "Verify Phone",
-    "phoneVerified": "Phone number verified successfully",
-    "edit": "Edit",
-    "planNote": "Plan / Note",
-    "planNotePlaceholder": "e.g. Pro plan · 40 msg/3hr",
-    "namePlaceholder": "John Doe",
-    "emailPlaceholder": "you@example.com",
-    "phonePlaceholder": "9876543210",
-    "pincodePlaceholder": "452001",
-    "passwordPlaceholder": "••••••••••",
-    "passwordStrength": "Strength",
-    "strengthWeak": "Weak",
-    "strengthFair": "Fair",
-    "strengthGood": "Good",
-    "strengthStrong": "Strong",
-    "passwordRuleLen": "At least 8 characters",
-    "passwordRuleUpper": "One uppercase letter (A–Z)",
-    "passwordRuleLower": "One lowercase letter (a–z)",
-    "passwordRuleNum": "One number (0–9)",
-    "passwordRuleSpec": "One special character (!@#$…)",
-    "passwordsMatch": "Passwords match",
-    "passwordsNoMatch": "Passwords do not match",
-    "invalidPhone": "Please enter a valid 10-digit phone number.",
-    "verifyPhoneFirst": "Please verify your phone number before continuing.",
-    "invalidPincode": "Please enter a valid 6-digit pincode.",
-    "otpSentPhone": "OTP sent to your phone!",
-    "otpSentEmail": "OTP sent to your email!",
-    "invalidOtp": "Invalid OTP. Please try again.",
-    "failedOtp": "Failed to send OTP. Please try again.",
-    "failedResend": "Failed to resend OTP.",
-    "enterFullOtp": "Please enter the full 6-digit OTP."
-  },
   "contact": {
     "tag": "CONTACT US",
     "headline": "Let’s build the future of",
@@ -585,7 +602,10 @@
         "title": "📧 Email Support",
         "detail": "support@umangvisionacademy.com"
       },
-      "phone": { "title": "📞 Phone Support", "detail": "+91 98765 43210" },
+      "phone": {
+        "title": "📞 Phone Support",
+        "detail": "+91 98765 43210"
+      },
       "business": {
         "title": "🏢 Business Inquiries",
         "detail": "business@umangvisionacademy.com"
@@ -618,7 +638,6 @@
     "helpCenter": "Help Center",
     "faq": "FAQ"
   },
-
   "helpCenter": {
     "tag": "HELP CENTER",
     "headline": "How can we",
@@ -776,7 +795,6 @@
     "share": "Share",
     "copied": "Link copied to clipboard!"
   },
-
   "studentSidebar": {
     "overview": "Overview",
     "myCourses": "My Courses",
@@ -785,7 +803,8 @@
     "certificates": "Certificates",
     "leaderboard": "Leaderboard",
     "settings": "Settings",
-    "student": "Student"
+    "student": "Student",
+    "progress": "Progress"
   },
   "studentDashboard": {
     "dashboard": "Dashboard",
@@ -795,46 +814,33 @@
     "certificates": "Certificates",
     "settings": "Settings",
     "leaderboard": "Leaderboard",
-
     "welcomeBack": "Welcome Back, {{name}} 👋",
     "studentDashboardTitle": "Student Dashboard",
     "heroDescription": "Track your learning progress, jump into your courses, and access AI-powered study tools — all from one place.",
-
     "continueLearning": "Continue Learning →",
-
     "enrolledCourses": "Enrolled Courses",
     "overallProgress": "Overall Progress",
     "leaderboardRank": "Leaderboard Rank",
-
     "nextGoal": "NEXT GOAL",
     "weeklyGoal": "WEEKLY GOAL",
     "communityGoal": "COMMUNITY",
-
     "allCoursesComplete": "All courses complete 🎉",
     "allCoursesCompleteDesc": "Enroll in a new course to keep levelling up.",
-
     "weeklyGoalTitle": "Keep your streak alive",
     "weeklyGoalDesc": "Attend at least one live session and review your latest quiz analytics.",
-
     "communityTitle": "Join the next live event",
     "communityDesc": "Jump into mentorship, Q&A, and group study sessions from the dashboard.",
-
     "recentActivity": "Recent Activity",
     "viewAll": "View all →",
-
     "noActivity": "No recent activity yet.",
     "noActivityDesc": "Start a course to see your progress here.",
-
     "courseProgress": "Course Progress",
     "seeAll": "See all →",
-
     "menu": "Menu",
-
     "minutesAgo": "{{count}}m ago",
     "hoursAgo": "{{count}}h ago",
     "daysAgo": "{{count}}d ago"
   },
-
   "instructorSidebar": {
     "dashboard": "Dashboard",
     "courses": "My Courses",

@@ -13,8 +13,7 @@ const userSchema = new Schema(
     },
     email: {
       type: String,
-      required: true,
-      unique: true,
+      sparse: true,
       lowercase: true,
       trim: true,
     },
@@ -26,7 +25,7 @@ const userSchema = new Schema(
     roles: {
       type: [String],
       enum: ["student", "instructor", "admin"],
-      default: "student",
+      default: ["student"],  // ← array, not string
     },
     bio: {
       type: String,
@@ -41,8 +40,11 @@ const userSchema = new Schema(
     phoneNumber: {
       type: String,
       trim: true,
-      default: "",
+      unique: true,
+      sparse: true,
+      default: null,   // null instead of "" so sparse unique works correctly
     },
+
     city: {
       type: String,
       trim: true,
@@ -83,6 +85,18 @@ const userSchema = new Schema(
           type: Date,
           default: Date.now,
         },
+      },
+    ],
+    earnedCertificates: [
+      {
+        courseId: { type: Types.ObjectId, ref: "Course" },
+        courseTitle: { type: String, default: "" },
+        issuedAt: { type: Date, default: Date.now },
+        theme: { type: String, default: "purple" },
+        certificateTitle: { type: String, default: "Certificate of Completion" },
+        signatoryName: { type: String, default: "" },
+        signatoryTitle: { type: String, default: "" },
+        instructorName: { type: String, default: "" },
       },
     ],
     teachingCourses: [

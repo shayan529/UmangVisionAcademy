@@ -45,6 +45,7 @@ const BecomeInstructorApplication = () => {
       setResumeError(t('becomeInstructorApplication.max5mb'));
       return;
     }
+
     setResumeError('');
     setResumeFile(file);
     setResumeUploading(true);
@@ -63,8 +64,8 @@ const BecomeInstructorApplication = () => {
     } catch (uploadError) {
       setResumeError(
         uploadError.response?.data?.message ||
-          uploadError.message ||
-          'Upload failed. Please try again.'
+        uploadError.message ||
+        'Upload failed. Please try again.'
       );
       setResumeFile(null);
       setResumeUrl('');
@@ -81,7 +82,10 @@ const BecomeInstructorApplication = () => {
       toast.error(t('becomeInstructorApplication.allFieldsRequired'));
       return;
     }
-
+    if (!resumeUrl) {
+      toast.error('Please upload your resume before submitting');
+      return;
+    }
     const payload = new FormData();
     payload.append('name', name);
     payload.append('expertise', expertise);
@@ -162,6 +166,7 @@ const BecomeInstructorApplication = () => {
               <input
                 type="text"
                 name="name"
+                required
                 value={formData.name}
                 onChange={handleChange}
                 placeholder={t('becomeInstructorApplication.namePlaceholder')}
@@ -177,6 +182,7 @@ const BecomeInstructorApplication = () => {
                 type="text"
                 name="expertise"
                 value={formData.expertise}
+                required
                 onChange={handleChange}
                 placeholder={t(
                   'becomeInstructorApplication.expertisePlaceholder'
@@ -193,6 +199,7 @@ const BecomeInstructorApplication = () => {
                 rows="4"
                 name="bio"
                 value={formData.bio}
+                required
                 onChange={handleChange}
                 placeholder={t('becomeInstructorApplication.bioPlaceholder')}
                 className="mt-3 w-full rounded-3xl border border-white/10 bg-slate-950/80 px-4 py-4 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition duration-200"
@@ -207,6 +214,7 @@ const BecomeInstructorApplication = () => {
                 type="url"
                 name="contentLink"
                 value={formData.contentLink}
+                required
                 onChange={handleChange}
                 placeholder={t('becomeInstructorApplication.urlPlaceholder')}
                 className="mt-3 w-full rounded-3xl border border-white/10 bg-slate-950/80 px-4 py-4 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition duration-200"
@@ -216,6 +224,7 @@ const BecomeInstructorApplication = () => {
             <label className="block">
               <span className="text-sm font-semibold text-slate-300">
                 {t('becomeInstructorApplication.resumeLabel')}
+                <span className="text-red-400 ml-0.5">*</span>
                 <span className="text-slate-500 font-normal">
                   {` ${t('becomeInstructorApplication.resumeHint')}`}
                 </span>

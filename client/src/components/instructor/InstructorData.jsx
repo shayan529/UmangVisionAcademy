@@ -153,15 +153,15 @@ export const aiReplies = [
   "I noticed your live sessions have 84% attendance. Sending reminder emails 2 hours before could push that above 90%.",
 ];
 
+// staticData.js
 export const navItems = [
-  { id: "dashboard", label: "📊 Dashboard" },
-  { id: "courses", label: "📚 My Courses" },
-  { id: "students", label: "👥 Students" },
-  { id: "sessions", label: "🎥 Live Sessions" },
-  { id: "analytics", label: "📈 Analytics" },
-
-  { id: "ai", label: "🤖 AI Assistant" },
-  { id: "settings", label: "⚙️ Settings" },
+  { id: "dashboard", icon: "📊", label: "Dashboard" },
+  { id: "courses", icon: "📚", label: "My Courses" },
+  { id: "students", icon: "👥", label: "Students" },
+  { id: "sessions", icon: "🎥", label: "Live Sessions" },
+  { id: "analytics", icon: "📈", label: "Analytics" },
+  { id: "ai", icon: "🤖", label: "AI Assistant" },
+  { id: "settings", icon: "⚙️", label: "Settings" },
 ];
 
 export const sectionTitles = {

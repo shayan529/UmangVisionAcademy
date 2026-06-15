@@ -147,6 +147,33 @@
     "failedResend": "OTP पुनः भेजने में विफल।",
     "enterFullOtp": "कृपया पूरा 6-अंकीय OTP दर्ज करें।"
   },
+  "wallet": {
+    "title": "मेरा वॉलेट",
+    "subtitle": "अपना बैलेंस प्रबंधित करें और लेनदेन इतिहास देखें।",
+    "availableBalance": "उपलब्ध बैलेंस",
+    "totalDeposited": "कुल जमा",
+    "totalSpent": "कुल खर्च",
+    "transactions": "लेनदेन",
+    "addMoney": "+ पैसे जोड़ें",
+    "transactionHistory": "लेनदेन इतिहास",
+    "all": "सभी",
+    "deposit": "जमा",
+    "purchase": "खरीद",
+    "refund": "वापसी",
+    "noTransactions": "अभी तक कोई लेनदेन नहीं। शुरू करने के लिए पैसे जोड़ें!",
+    "no": "कोई",
+    "addMoneyTitle": "वॉलेट में पैसे जोड़ें",
+    "payViaRazorpay": "Razorpay से भुगतान करें",
+    "enterCustomAmount": "कस्टम राशि दर्ज करें",
+    "payButton": "Razorpay से {{amount}} भुगतान करें",
+    "processing": "प्रोसेस हो रहा है…",
+    "devOnly": "केवल डेव",
+    "mockDeposit": "मॉक जमा (बिना भुगतान)",
+    "addMock": "मॉक जोड़ें",
+    "successMsg": "{{amount}} आपके वॉलेट में जोड़ा गया!",
+    "mockSuccess": "₹{{amount}} जोड़ा गया (मॉक)।",
+    "razorpayFailed": "Razorpay लोड नहीं हो सका। अपना इंटरनेट जांचें।"
+  },
   "hero": {
     "tag": "AI संचालित ऑनलाइन लर्निंग",
     "headingLine1": "छात्रों को सशक्त बनाना",
@@ -492,12 +519,18 @@
       "tag": "हमारा मिशन",
       "heading": "भारत में गुणवत्तापूर्ण शिक्षा को लोकतंत्रीकृत करें",
       "description": "260 मिलियन से अधिक छात्र भारतीय स्कूलों में पढ़ते हैं। 5% से कम को गुणवत्ता कोचिंग का लाभ मिलता है। हम इस अंतर को AI, लाइव क्लास, और व्यक्तिगत लर्निंग पाथ के जरिए हर छात्र तक पहुंचा रहे हैं।",
-      "founded": { "label": "स्थापना", "value": "2021 · जबलपुर, एमपी" },
+      "founded": {
+        "label": "स्थापना",
+        "value": "2021 · जबलपुर, एमपी"
+      },
       "supportedClasses": {
         "label": "समर्थित क्लास",
         "value": "कक्षा 1 – 12 (CBSE और राज्य)"
       },
-      "languages": { "label": "भाषाएँ", "value": "अंग्रेजी और हिंदी" },
+      "languages": {
+        "label": "भाषाएँ",
+        "value": "अंग्रेजी और हिंदी"
+      },
       "learningModel": {
         "label": "लर्निंग मॉडल",
         "value": "हाइब्रिड — लाइव + रिकॉर्डेड + AI"
@@ -570,12 +603,18 @@
         "title": "📧 ईमेल सपोर्ट",
         "detail": "support@umangvisionacademy.com"
       },
-      "phone": { "title": "📞 फ़ोन सपोर्ट", "detail": "+91 98765 43210" },
+      "phone": {
+        "title": "📞 फ़ोन सपोर्ट",
+        "detail": "+91 98765 43210"
+      },
       "business": {
         "title": "🏢 व्यावसायिक पूछताछ",
         "detail": "business@umangvisionacademy.com"
       },
-      "hours": { "title": "⏰ कार्य समय", "detail": "सोम - शनि / 9AM - 7PM" }
+      "hours": {
+        "title": "⏰ कार्य समय",
+        "detail": "सोम - शनि / 9AM - 7PM"
+      }
     },
     "form": {
       "title": "एक संदेश भेजें",
@@ -757,7 +796,6 @@
     "share": "साझा करें",
     "copied": "लिंक क्लिपबोर्ड पर कॉपी हो गया!"
   },
-
   "studentSidebar": {
     "overview": "अवलोकन",
     "myCourses": "मेरे कोर्स",
@@ -766,7 +804,8 @@
     "certificates": "प्रमाणपत्र",
     "leaderboard": "लीडरबोर्ड",
     "settings": "सेटिंग्स",
-    "student": "छात्र"
+    "student": "छात्र",
+    "progress": "प्रगति"
   },
   "studentDashboard": {
     "dashboard": "डैशबोर्ड",
@@ -776,46 +815,33 @@
     "certificates": "प्रमाणपत्र",
     "settings": "सेटिंग्स",
     "leaderboard": "लीडरबोर्ड",
-
     "welcomeBack": "वापसी पर स्वागत है, {{name}} 👋",
     "studentDashboardTitle": "छात्र डैशबोर्ड",
     "heroDescription": "अपनी सीखने की प्रगति ट्रैक करें, अपने कोर्स जारी रखें और एआई-संचालित अध्ययन उपकरणों का उपयोग करें — सब कुछ एक ही स्थान पर।",
-
     "continueLearning": "सीखना जारी रखें →",
-
     "enrolledCourses": "नामांकित कोर्स",
     "overallProgress": "कुल प्रगति",
     "leaderboardRank": "लीडरबोर्ड रैंक",
-
     "nextGoal": "अगला लक्ष्य",
     "weeklyGoal": "साप्ताहिक लक्ष्य",
     "communityGoal": "कम्युनिटी",
-
     "allCoursesComplete": "सभी कोर्स पूरे हो गए 🎉",
     "allCoursesCompleteDesc": "अपनी सीख जारी रखने के लिए नए कोर्स में नामांकन करें।",
-
     "weeklyGoalTitle": "अपनी निरंतरता बनाए रखें",
     "weeklyGoalDesc": "कम से कम एक लाइव सत्र में शामिल हों और अपनी नवीनतम क्विज़ रिपोर्ट देखें।",
-
     "communityTitle": "अगले लाइव इवेंट में शामिल हों",
     "communityDesc": "मेंटोरशिप, प्रश्नोत्तर और समूह अध्ययन सत्रों में भाग लें।",
-
     "recentActivity": "हाल की गतिविधि",
     "viewAll": "सभी देखें →",
-
     "noActivity": "अभी तक कोई हाल की गतिविधि नहीं।",
     "noActivityDesc": "अपनी प्रगति देखने के लिए कोई कोर्स शुरू करें।",
-
     "courseProgress": "कोर्स प्रगति",
     "seeAll": "सभी देखें →",
-
     "menu": "मेनू",
-
     "minutesAgo": "{{count}} मिनट पहले",
     "hoursAgo": "{{count}} घंटे पहले",
     "daysAgo": "{{count}} दिन पहले"
   },
-
   "instructorSidebar": {
     "dashboard": "डैशबोर्ड",
     "courses": "मेरे कोर्स",

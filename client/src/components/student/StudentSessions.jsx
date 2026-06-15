@@ -6,12 +6,6 @@ import { io } from "socket.io-client";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-/**
- * Extracts a YouTube video ID from common URL formats:
- *   https://www.youtube.com/watch?v=VIDEO_ID
- *   https://youtu.be/VIDEO_ID
- *   https://www.youtube.com/live/VIDEO_ID
- */
 function extractYouTubeId(url = "") {
   if (!url) return null;
   const patterns = [
@@ -36,36 +30,60 @@ const ChatPanel = ({ sessionId, currentUser }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [connected, setConnected] = useState(false);
+  const [error, setError] = useState(null);
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
 
   useEffect(() => {
-    // Connect to your Socket.IO server
-    // Change the URL to match your backend (e.g. process.env.REACT_APP_SOCKET_URL)
-    const socket = io(
-      import.meta.env.VITE_SOCKET_URL || window.location.origin,
-      {
+    // Determine socket URL — prefer explicit env var, fall back to origin
+    const socketUrl =
+      import.meta.env.VITE_SOCKET_URL ||
+      import.meta.env.VITE_API_URL ||
+      window.location.origin;
+
+    let socket;
+    try {
+      socket = io(socketUrl, {
         withCredentials: true,
-      },
-    );
+        // Reconnect up to 5 times before giving up
+        reconnectionAttempts: 5,
+        timeout: 10000,
+      });
+    } catch (err) {
+      setError("Unable to connect to chat server.");
+      return;
+    }
+
     socketRef.current = socket;
 
     socket.on("connect", () => {
       setConnected(true);
-      // Join the room for this specific session
+      setError(null);
       socket.emit("join_session_chat", { sessionId });
     });
 
-    socket.on("disconnect", () => setConnected(false));
+    socket.on("connect_error", (err) => {
+      setConnected(false);
+      setError("Chat server unreachable. Messages will not be sent.");
+      console.warn("[Chat] connect_error:", err.message);
+    });
 
-    // Listen for incoming chat messages
+    socket.on("disconnect", (reason) => {
+      setConnected(false);
+      if (reason === "io server disconnect") {
+        // Server explicitly disconnected us — try to reconnect
+        socket.connect();
+      }
+    });
+
+    // Incoming message from another user
     socket.on("session_message", (msg) => {
       setMessages((prev) => [...prev, msg]);
     });
 
-    // Receive message history when joining
+    // Full history delivered on join
     socket.on("session_history", (history) => {
-      setMessages(history);
+      if (Array.isArray(history)) setMessages(history);
     });
 
     return () => {
@@ -74,23 +92,32 @@ const ChatPanel = ({ sessionId, currentUser }) => {
     };
   }, [sessionId]);
 
-  // Auto-scroll to latest message
+  // Auto-scroll on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const sendMessage = useCallback(() => {
     const text = input.trim();
-    if (!text || !socketRef.current) return;
+    if (!text || !socketRef.current || !connected) return;
 
-    socketRef.current.emit("session_message", {
+    const msgPayload = {
       sessionId,
       text,
       sender: currentUser?.name || "You",
       senderId: currentUser?._id,
-    });
+      createdAt: new Date().toISOString(),
+    };
+
+    socketRef.current.emit("session_message", msgPayload);
+
+    // Optimistically add own message so it feels instant
+    setMessages((prev) => [
+      ...prev,
+      { ...msgPayload, _id: `local-${Date.now()}` },
+    ]);
     setInput("");
-  }, [input, sessionId, currentUser]);
+  }, [input, sessionId, currentUser, connected]);
 
   const handleKey = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -100,28 +127,33 @@ const ChatPanel = ({ sessionId, currentUser }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-      {/* Chat Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800">
         <h3 className="text-white font-semibold text-sm">Live Chat</h3>
         <span
-          className={`flex items-center gap-1.5 text-xs ${
-            connected ? "text-green-400" : "text-slate-500"
-          }`}
+          className={`flex items-center gap-1.5 text-xs ${connected ? "text-green-400" : "text-slate-500"
+            }`}
         >
           <span
-            className={`w-2 h-2 rounded-full ${
-              connected ? "bg-green-500 animate-pulse" : "bg-slate-600"
-            }`}
+            className={`w-2 h-2 rounded-full ${connected ? "bg-green-500 animate-pulse" : "bg-slate-600"
+              }`}
           />
-          {connected ? "Connected" : "Connecting…"}
+          {connected ? "Connected" : "Disconnected"}
         </span>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+      {/* Error banner */}
+      {error && (
+        <div className="mx-4 mt-3 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+          ⚠️ {error}
+        </div>
+      )}
+
+      {/* Messages — fixed height so it doesn't grow the page */}
+      <div className="h-72 overflow-y-auto px-5 py-4 space-y-3 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
         {messages.length === 0 && (
-          <p className="text-slate-500 text-xs text-center mt-6">
+          <p className="text-slate-500 text-xs text-center mt-8">
             No messages yet. Be the first to say something!
           </p>
         )}
@@ -138,11 +170,10 @@ const ChatPanel = ({ sessionId, currentUser }) => {
                 </span>
               )}
               <div
-                className={`max-w-[85%] px-3 py-2 rounded-xl text-sm leading-relaxed ${
-                  isOwn
+                className={`max-w-[70%] px-3 py-2 rounded-xl text-sm leading-relaxed break-words ${isOwn
                     ? "bg-gradient-to-r from-purple-600 to-cyan-500 text-white rounded-br-sm"
                     : "bg-slate-800 text-slate-200 rounded-bl-sm"
-                }`}
+                  }`}
               >
                 {msg.text}
               </div>
@@ -158,20 +189,21 @@ const ChatPanel = ({ sessionId, currentUser }) => {
       </div>
 
       {/* Input */}
-      <div className="px-3 py-3 border-t border-slate-800 flex gap-2">
+      <div className="px-4 py-3 border-t border-slate-800 flex gap-2">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKey}
-          placeholder="Send a message…"
+          placeholder={connected ? "Send a message…" : "Connecting to chat…"}
           maxLength={500}
-          className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
+          disabled={!connected}
+          className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <button
           onClick={sendMessage}
           disabled={!input.trim() || !connected}
-          className="px-3 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white text-sm font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white text-sm font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition"
         >
           Send
         </button>
@@ -186,16 +218,15 @@ const SessionRoom = ({ session, currentUser, onLeave }) => {
   const videoId = extractYouTubeId(session.url);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)]">
+    <div className="flex flex-col gap-5">
       {/* Top Bar */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             onClick={onLeave}
             className="p-2 rounded-xl border border-slate-700 text-slate-400 hover:bg-slate-800 transition"
             title="Back to sessions"
           >
-            {/* Back arrow */}
             <svg
               className="w-4 h-4"
               fill="none"
@@ -221,59 +252,51 @@ const SessionRoom = ({ session, currentUser, onLeave }) => {
         </div>
 
         <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            session.status === "live"
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${session.status === "live"
               ? "bg-green-500/20 text-green-400 border border-green-500/30"
               : "bg-purple-500/20 text-purple-400 border border-purple-500/30"
-          }`}
+            }`}
         >
           {session.status === "live" ? "🔴 LIVE" : session.status}
         </span>
       </div>
 
-      {/* Main Content */}
-      <div className="flex flex-1 gap-4 min-h-0">
-        {/* Video */}
-        <div className="flex-1 flex flex-col min-w-0">
-          {videoId ? (
-            <div
-              className="relative w-full rounded-2xl overflow-hidden bg-black"
-              style={{ paddingTop: "56.25%" /* 16:9 */ }}
-            >
-              <iframe
-                className="absolute inset-0 w-full h-full"
-                src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
-                title={session.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                allowFullScreen
-              />
-            </div>
-          ) : (
-            <div className="flex-1 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-slate-400 mb-3">
-                  Could not parse a YouTube URL from this session.
-                </p>
-                {session.url && (
-                  <a
-                    href={session.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-purple-400 underline text-sm"
-                  >
-                    Open link manually
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
+      {/* ── Video — full width ── */}
+      {videoId ? (
+        <div
+          className="relative w-full rounded-2xl overflow-hidden bg-black shadow-lg shadow-black/40"
+          style={{ paddingTop: "56.25%" /* 16:9 aspect ratio */ }}
+        >
+          <iframe
+            className="absolute inset-0 w-full h-full"
+            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
+            title={session.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            allowFullScreen
+          />
         </div>
+      ) : (
+        <div className="w-full rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center py-20">
+          <div className="text-center">
+            <p className="text-slate-400 mb-3">
+              Could not parse a YouTube URL from this session.
+            </p>
+            {session.url && (
+              <a
+                href={session.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-400 underline text-sm"
+              >
+                Open link manually
+              </a>
+            )}
+          </div>
+        </div>
+      )}
 
-        {/* Chat */}
-        <div className="w-80 flex-shrink-0 flex flex-col">
-          <ChatPanel sessionId={session._id} currentUser={currentUser} />
-        </div>
-      </div>
+      {/* ── Chat — below the video, full width ── */}
+      <ChatPanel sessionId={session._id} currentUser={currentUser} />
     </div>
   );
 };
@@ -299,19 +322,17 @@ const SessionCard = ({ session, onJoin, showToast }) => {
       <div>
         <div className="flex items-center gap-3 mb-2">
           <div
-            className={`w-3 h-3 rounded-full ${
-              session.status === "live"
+            className={`w-3 h-3 rounded-full ${session.status === "live"
                 ? "bg-green-500 animate-pulse"
                 : "bg-purple-500"
-            }`}
+              }`}
           />
           <h3 className="text-lg font-semibold text-white">{session.title}</h3>
           <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
-              session.status === "live"
+            className={`px-2 py-1 rounded-full text-xs font-medium ${session.status === "live"
                 ? "bg-green-500/20 text-green-400"
                 : "bg-purple-500/20 text-purple-400"
-            }`}
+              }`}
           >
             {session.status}
           </span>
