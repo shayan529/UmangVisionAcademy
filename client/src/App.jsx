@@ -39,7 +39,8 @@ import SettingsSection from "./components/student/SettingsSection";
 import LeaderBoard from "./components/student/LeaderBoard";
 import StudentNotifications from "./components/student/StudentNotifications";
 import StudentSessions from "./components/student/StudentSessions";
-import StudentWallet from './components/student/StudentWallet'
+import StudentWallet from "./components/student/StudentWallet";
+import ReferralPage from "./components/student/ReferralPage";
 
 /* Mock Tests */
 import MockTestsLayout from "./components/student/MockTestsIndex";
@@ -164,12 +165,12 @@ function App() {
             <Route path="community" element={<CommunitySection />} />
             <Route path="settings" element={<SettingsSection />} />
             <Route path="leaderboard" element={<LeaderBoard />} />
+            <Route path="referral" element={<ReferralPage />} />
             <Route path="sessions" element={<StudentSessions />} />
             <Route path="notifications" element={<StudentNotifications />} />
             <Route path="certificates" element={<CertificatesSection />} />
             <Route path="progress" element={<ProgressPage />} />
             <Route path="wallet" element={<StudentWallet />} />
-
 
             {/* ── Mock Tests (nested layout with sub-nav) ── */}
             <Route path="mock-tests" element={<MockTestsLayout />}>

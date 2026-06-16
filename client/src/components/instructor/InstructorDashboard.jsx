@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 // UI primitives & modal
-import { Toast, Btn } from './InstructorUi';
+import { Toast, Btn } from "./InstructorUi";
 
 // Section components
-import InstructorHome from './InstructorHome';
-import InstructorCourses from './InstructorCourses';
-import InstructorStudents from './InstructorStudents';
-import InstructorSessions from './InstructorSessions';
-import InstructorAnalytics from './InstructorAnalytics';
-import InstructorAI from './InstructorAI';
-import InstructorNotifications from './InstructorNotifications';
-import InstructorSettings from './InstructorSettings';
-import InstructorMockTests from './InstructorMockTests';
-import { createCourse } from '../../redux/slices/courseSlice';
-import { useTranslation } from 'react-i18next';
+import InstructorHome from "./InstructorHome";
+import InstructorCourses from "./InstructorCourses";
+import InstructorStudents from "./InstructorStudents";
+import InstructorSessions from "./InstructorSessions";
+import InstructorAnalytics from "./InstructorAnalytics";
+import InstructorAI from "./InstructorAI";
+import InstructorNotifications from "./InstructorNotifications";
+import InstructorSettings from "./InstructorSettings";
+import InstructorMockTests from "./InstructorMockTests";
+import { createCourse } from "../../redux/slices/courseSlice";
+import { useTranslation } from "react-i18next";
 
 import {
   initialSessions,
@@ -22,26 +22,26 @@ import {
   initialSettings,
   navItems,
   sectionTitles,
-} from './InstructorData';
-import { useDispatch, useSelector } from 'react-redux';
+} from "./InstructorData";
+import { useDispatch, useSelector } from "react-redux";
 
 // ── Empty form state ──────────────────────────────────────────────────────────
 const EMPTY_FORM = {
-  subject: '',
-  className: '',
-  description: '',
-  content: '',
-  thumbnailUrl: '',
-  demoVideoUrl: '',
+  subject: "",
+  className: "",
+  description: "",
+  content: "",
+  thumbnailUrl: "",
+  demoVideoUrl: "",
 };
 
 // ─── Main shell ───────────────────────────────────────────────────────────────
 export default function InstructorDashboard() {
-  const [activeSection, setActiveSection] = useState('dashboard');
+  const [activeSection, setActiveSection] = useState("dashboard");
   const [sessions, setSessions] = useState(initialSessions);
   const [notifs, setNotifs] = useState(initialNotifs);
   const [settings, setSettings] = useState(initialSettings);
-  const [toastMsg, setToastMsg] = useState('');
+  const [toastMsg, setToastMsg] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [courseForm, setCourseForm] = useState(EMPTY_FORM);
@@ -54,7 +54,7 @@ export default function InstructorDashboard() {
   // ── Helpers ────────────────────────────────────────────────────────────────
   const showToast = (msg) => {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(''), 2500);
+    setTimeout(() => setToastMsg(""), 2500);
   };
 
   const openModal = () => setShowModal(true);
@@ -65,15 +65,15 @@ export default function InstructorDashboard() {
 
   const addCourse = () => {
     if (!courseForm.subject.trim()) {
-      showToast('Enter a subject');
+      showToast("Enter a subject");
       return;
     }
     if (!courseForm.className) {
-      showToast('Select a class');
+      showToast("Select a class");
       return;
     }
     if (!courseForm.description?.trim()) {
-      showToast('Enter a description');
+      showToast("Enter a description");
       return;
     }
 
@@ -81,17 +81,17 @@ export default function InstructorDashboard() {
       createCourse({
         title: courseForm.subject.trim(),
         summary: courseForm.description.trim(),
-        description: courseForm.content?.trim() || '',
+        description: courseForm.content?.trim() || "",
         category: courseForm.className,
-        level: 'Beginner',
+        level: "Beginner",
         price: 0,
-        thumbnailUrl: courseForm.thumbnailUrl?.trim() || '',
-        demoVideoUrl: courseForm.demoVideoUrl?.trim() || '',
+        thumbnailUrl: courseForm.thumbnailUrl?.trim() || "",
+        demoVideoUrl: courseForm.demoVideoUrl?.trim() || "",
         published: false,
-      })
+      }),
     );
 
-    showToast('Course created!');
+    showToast("Course created!");
     closeModal();
   };
 
@@ -103,11 +103,11 @@ export default function InstructorDashboard() {
   // ── Export CSV ────────────────────────────────────────────────────────────
   const handleExport = () => {
     if (!courses.length) {
-      showToast('No courses to export');
+      showToast("No courses to export");
       return;
     }
     const rows = [
-      ['Title', 'Status', 'Students', 'Revenue ($)', 'Rating'],
+      ["Title", "Status", "Students", "Revenue ($)", "Rating"],
       ...courses.map((c) => [
         `"${c.title}"`,
         c.status,
@@ -116,41 +116,41 @@ export default function InstructorDashboard() {
         c.ratingAverage ?? 0,
       ]),
     ];
-    const csv = rows.map((r) => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const csv = rows.map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `courses-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Report downloaded');
+    showToast("Report downloaded");
   };
 
   // ── Section router ─────────────────────────────────────────────────────────
   const renderSection = () => {
     switch (activeSection) {
-      case 'dashboard':
+      case "dashboard":
         return (
           <InstructorHome showToast={showToast} onNavigate={handleNavClick} />
         );
-      case 'courses':
+      case "courses":
         return (
           <InstructorCourses showToast={showToast} onNewCourse={openModal} />
         );
-      case 'students':
+      case "students":
         return <InstructorStudents />;
-      case 'sessions':
+      case "sessions":
         return <InstructorSessions showToast={showToast} />;
-      case 'analytics':
+      case "analytics":
         return <InstructorAnalytics />;
-      case 'mock-tests':
+      case "mock-tests":
         return <InstructorMockTests />;
-      case 'ai':
+      case "ai":
         return <InstructorAI showToast={showToast} />;
-      case 'notifications':
+      case "notifications":
         return <InstructorNotifications />;
-      case 'settings':
+      case "settings":
         return <InstructorSettings showToast={showToast} />;
       default:
         return null;
@@ -163,13 +163,13 @@ export default function InstructorDashboard() {
     const { t } = useTranslation();
 
     // Merge mock-tests into navItems if not already present in InstructorData
-    const allNavItems = navItems.some((n) => n.id === 'mock-tests')
+    const allNavItems = navItems.some((n) => n.id === "mock-tests")
       ? navItems
       : (() => {
           // Insert mock-tests after "sessions"
-          const idx = navItems.findIndex((n) => n.id === 'sessions');
+          const idx = navItems.findIndex((n) => n.id === "sessions");
           const copy = [...navItems];
-          copy.splice(idx + 1, 0, { id: 'mock-tests', icon: '📝' });
+          copy.splice(idx + 1, 0, { id: "mock-tests", icon: "📝" });
           return copy;
         })();
 
@@ -177,11 +177,11 @@ export default function InstructorDashboard() {
       <>
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 10,
-            padding: '10px',
-            background: '#1e293b',
+            padding: "10px",
+            background: "#1e293b",
             borderRadius: 12,
             marginBottom: 24,
           }}
@@ -190,63 +190,63 @@ export default function InstructorDashboard() {
             style={{
               width: 36,
               height: 36,
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg,#7c3aed,#db2777)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              borderRadius: "50%",
+              background: "linear-gradient(135deg,#7c3aed,#db2777)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               fontSize: 13,
               fontWeight: 700,
               flexShrink: 0,
             }}
           >
-            {user?.name?.charAt(0) || 'I'}
+            {user?.name?.charAt(0) || "I"}
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
               {user?.name}
             </div>
           </div>
         </div>
 
-        <nav style={{ flex: 1, overflowY: 'auto' }}>
+        <nav style={{ flex: 1, overflowY: "auto" }}>
           {allNavItems.map(({ id, icon }) => (
             <button
               key={id}
               onClick={() => handleNavClick(id)}
               style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '10px 12px',
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "10px 12px",
                 borderRadius: 10,
-                border: 'none',
-                textAlign: 'left',
+                border: "none",
+                textAlign: "left",
                 fontSize: 13,
                 fontWeight: 500,
-                cursor: 'pointer',
-                background: activeSection === id ? '#2e1065' : 'transparent',
-                color: activeSection === id ? '#a78bfa' : '#64748b',
+                cursor: "pointer",
+                background: activeSection === id ? "#2e1065" : "transparent",
+                color: activeSection === id ? "#a78bfa" : "#64748b",
                 marginBottom: 2,
-                transition: 'all 0.15s',
+                transition: "all 0.15s",
               }}
             >
               <span>
-                {icon}{' '}
-                {id === 'mock-tests'
-                  ? 'Mock Tests'
+                {icon}{" "}
+                {id === "mock-tests"
+                  ? t("instructorSidebar.mockTests")
                   : t(`instructorSidebar.${id}`)}
               </span>
 
-              {id === 'notifications' && unread > 0 && (
+              {id === "notifications" && unread > 0 && (
                 <span
                   style={{
-                    background: '#7c3aed',
-                    color: '#fff',
+                    background: "#7c3aed",
+                    color: "#fff",
                     fontSize: 10,
                     fontWeight: 700,
-                    padding: '2px 6px',
+                    padding: "2px 6px",
                     borderRadius: 10,
                   }}
                 >
@@ -277,10 +277,10 @@ export default function InstructorDashboard() {
 
       <div
         style={{
-          display: 'flex',
-          minHeight: '100vh',
-          background: '#020817',
-          color: '#f1f5f9',
+          display: "flex",
+          minHeight: "100vh",
+          background: "#020817",
+          color: "#f1f5f9",
           fontFamily: "'Inter','Segoe UI',sans-serif",
         }}
       >
@@ -289,13 +289,13 @@ export default function InstructorDashboard() {
           className="instr-sidebar"
           style={{
             width: 230,
-            background: '#0b1120',
-            borderRight: '1px solid #1e293b',
-            flexDirection: 'column',
-            padding: '24px 12px',
-            position: 'sticky',
+            background: "#0b1120",
+            borderRight: "1px solid #1e293b",
+            flexDirection: "column",
+            padding: "24px 12px",
+            position: "sticky",
             top: 0,
-            height: '100vh',
+            height: "100vh",
             flexShrink: 0,
           }}
         >
@@ -307,11 +307,11 @@ export default function InstructorDashboard() {
           <div
             onClick={() => setSidebarOpen(false)}
             style={{
-              position: 'fixed',
+              position: "fixed",
               inset: 0,
-              background: 'rgba(2,8,23,0.75)',
+              background: "rgba(2,8,23,0.75)",
               zIndex: 40,
-              backdropFilter: 'blur(2px)',
+              backdropFilter: "blur(2px)",
             }}
           />
         )}
@@ -320,29 +320,29 @@ export default function InstructorDashboard() {
         <aside
           className="instr-drawer"
           style={{
-            position: 'fixed',
+            position: "fixed",
             top: 0,
             left: 0,
-            height: '100vh',
+            height: "100vh",
             width: 240,
-            background: '#0b1120',
-            borderRight: '1px solid #1e293b',
-            flexDirection: 'column',
-            padding: '20px 12px 24px',
+            background: "#0b1120",
+            borderRight: "1px solid #1e293b",
+            flexDirection: "column",
+            padding: "20px 12px 24px",
             zIndex: 50,
-            transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
-            transition: 'transform 0.28s cubic-bezier(.4,0,.2,1)',
+            transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
+            transition: "transform 0.28s cubic-bezier(.4,0,.2,1)",
           }}
         >
           <button
             onClick={() => setSidebarOpen(false)}
             style={{
-              alignSelf: 'flex-end',
-              background: 'transparent',
-              border: 'none',
-              color: '#64748b',
+              alignSelf: "flex-end",
+              background: "transparent",
+              border: "none",
+              color: "#64748b",
               fontSize: 22,
-              cursor: 'pointer',
+              cursor: "pointer",
               marginBottom: 12,
               lineHeight: 1,
               padding: 0,
@@ -357,9 +357,9 @@ export default function InstructorDashboard() {
         <div
           style={{
             flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
             minWidth: 0,
           }}
         >
@@ -367,12 +367,12 @@ export default function InstructorDashboard() {
           <div
             className="instr-mob-bar"
             style={{
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '12px 16px',
-              background: '#0b1120',
-              borderBottom: '1px solid #1e293b',
-              position: 'sticky',
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "12px 16px",
+              background: "#0b1120",
+              borderBottom: "1px solid #1e293b",
+              position: "sticky",
               top: 0,
               zIndex: 10,
             }}
@@ -380,22 +380,22 @@ export default function InstructorDashboard() {
             <button
               onClick={() => setSidebarOpen(true)}
               style={{
-                padding: '8px 18px',
+                padding: "8px 18px",
                 borderRadius: 10,
-                border: '1px solid #334155',
-                background: '#1e293b',
-                color: '#f1f5f9',
+                border: "1px solid #334155",
+                background: "#1e293b",
+                color: "#f1f5f9",
                 fontSize: 13,
                 fontWeight: 600,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
+                cursor: "pointer",
+                whiteSpace: "nowrap",
               }}
             >
               ☰ Menu
             </button>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#f1f5f9' }}>
-              {activeSection === 'mock-tests'
-                ? 'Mock Tests'
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#f1f5f9" }}>
+              {activeSection === "mock-tests"
+                ? "Mock Tests"
                 : sectionTitles[activeSection]}
             </div>
             <span style={{ width: 48 }} />
@@ -405,22 +405,22 @@ export default function InstructorDashboard() {
           <div
             className="instr-desk-bar"
             style={{
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '16px 28px',
-              background: '#0b1120',
-              borderBottom: '1px solid #1e293b',
-              position: 'sticky',
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "16px 28px",
+              background: "#0b1120",
+              borderBottom: "1px solid #1e293b",
+              position: "sticky",
               top: 0,
               zIndex: 10,
             }}
           >
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#f1f5f9' }}>
-              {activeSection === 'mock-tests'
-                ? 'Mock Tests'
+            <div style={{ fontSize: 20, fontWeight: 800, color: "#f1f5f9" }}>
+              {activeSection === "mock-tests"
+                ? "Mock Tests"
                 : sectionTitles[activeSection]}
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: "flex", gap: 10 }}>
               <Btn
                 variant="ghost"
                 style={{ fontSize: 12 }}
@@ -429,11 +429,11 @@ export default function InstructorDashboard() {
                 📥 Export
               </Btn>
 
-              {activeSection === 'sessions' && (
+              {activeSection === "sessions" && (
                 <Btn
                   variant="primary"
                   style={{ fontSize: 12 }}
-                  onClick={() => setActiveSection('sessions')}
+                  onClick={() => setActiveSection("sessions")}
                 >
                   📅 Schedule
                 </Btn>
@@ -442,7 +442,7 @@ export default function InstructorDashboard() {
           </div>
 
           {/* Page content */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
+          <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
             {renderSection()}
           </div>
         </div>

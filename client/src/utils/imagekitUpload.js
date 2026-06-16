@@ -1,9 +1,18 @@
 import axios from "axios";
 import api from "../config/api.js";
 
+const sanitizeFolderValue = (folder = "Umang Vision Academy") => {
+  return folder
+    .trim()
+    .replace(/^\/*/, "")
+    .replace(/\\/g, "/")
+    .replace(/\s+/g, "_")
+    .replace(/[^a-zA-Z0-9_\-/]/g, "");
+};
+
 export const uploadToImageKit = async ({
   file,
-  folder = "/Umang Vision Academy",
+  folder = "Umang Vision Academy",
   onUploadProgress,
 }) => {
   const { data: auth } = await api.get("/upload/signature");
@@ -18,7 +27,7 @@ export const uploadToImageKit = async ({
   uploadData.append("signature", auth.signature);
   uploadData.append("expire", auth.expire);
   uploadData.append("token", auth.token);
-  uploadData.append("folder", folder);
+  uploadData.append("folder", sanitizeFolderValue(folder));
   uploadData.append("useUniqueFileName", "true");
 
   const response = await axios.post(

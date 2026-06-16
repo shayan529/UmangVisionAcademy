@@ -803,9 +803,26 @@
     "sessions": "सत्र",
     "certificates": "प्रमाणपत्र",
     "leaderboard": "लीडरबोर्ड",
+    "referral": "रिफ़रल",
     "settings": "सेटिंग्स",
     "student": "छात्र",
-    "progress": "प्रगति"
+    "progress": "प्रगति",
+    "mockTests": "मॉक टेस्ट"
+  },
+  "studentReferral": {
+    "title": "रिफ़रल रिवार्ड्स",
+    "header": "दोस्तों को आमंत्रित करें और कॉइन्स कमाएँ",
+    "description": "अपना अद्वितीय रिफ़रल लिंक साझा करें और आपकी कोड से साइन अप करने पर बोनस कॉइन्स पाएँ।",
+    "summaryTitle": "रिफ़रल सारांश",
+    "summaryCoins": "रिफ़रल से अर्जित कुल कॉइन्स",
+    "referralCode": "आपका रिफ़रल कोड",
+    "referralsCount_one": "{{count}} रिफ़रल अर्जित किया",
+    "referralsCount_other": "{{count}} रिफ़रल अर्जित किए",
+    "share": "लिंक साझा करें",
+    "copyLink": "लिंक कॉपी करें",
+    "linkCopied": "रिफ़रल लिंक कॉपी हो गया!",
+    "copyFailed": "लिंक कॉपी नहीं हो सकी। फिर से प्रयास करें।",
+    "noReferralCode": "अभी कोई रिफ़रल कोड उपलब्ध नहीं है।"
   },
   "studentDashboard": {
     "dashboard": "डैशबोर्ड",
@@ -849,6 +866,7 @@
     "sessions": "लाइव सेशन्स",
     "analytics": "एनालिटिक्स",
     "ai": "AI असिस्टेंट",
-    "settings": "सेटिंग्स"
+    "settings": "सेटिंग्स",
+    "mockTests": "मॉक टेस्ट"
   }
 }

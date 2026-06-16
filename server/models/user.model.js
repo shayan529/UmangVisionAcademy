@@ -25,7 +25,7 @@ const userSchema = new Schema(
     roles: {
       type: [String],
       enum: ["student", "instructor", "admin"],
-      default: ["student"],  // ← array, not string
+      default: ["student"],
     },
     bio: {
       type: String,
@@ -42,8 +42,28 @@ const userSchema = new Schema(
       trim: true,
       unique: true,
       sparse: true,
-      default: null,   // null instead of "" so sparse unique works correctly
+      default: null,
     },
+    coins: { type: Number, default: 0, min: 0 },
+    referralCode: {
+      type: String,
+      unique: true,
+      trim: true,
+      uppercase: true,
+      sparse: true,
+      default: null,
+    },
+    referredBy: {
+      type: Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    referralsCount: { type: Number, default: 0, min: 0 },
+
+    // Tracks the calendar date (IST midnight) of the last coin awarded for login.
+    // Used to ensure only 1 coin is given per calendar day regardless of how
+    // many times the user logs in.
+    lastLoginReward: { type: Date, default: null },
 
     city: {
       type: String,
@@ -93,7 +113,10 @@ const userSchema = new Schema(
         courseTitle: { type: String, default: "" },
         issuedAt: { type: Date, default: Date.now },
         theme: { type: String, default: "purple" },
-        certificateTitle: { type: String, default: "Certificate of Completion" },
+        certificateTitle: {
+          type: String,
+          default: "Certificate of Completion",
+        },
         signatoryName: { type: String, default: "" },
         signatoryTitle: { type: String, default: "" },
         instructorName: { type: String, default: "" },

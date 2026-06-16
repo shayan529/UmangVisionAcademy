@@ -10,7 +10,13 @@ const mockTestSubNav = [
   { label: "Leaderboard", to: "/student-dashboard/mock-tests/leaderboard" },
 ];
 
-const Sidebar = ({ user, collapsed, setCollapsed, mobileOpen, setMobileOpen }) => {
+const Sidebar = ({
+  user,
+  collapsed,
+  setCollapsed,
+  mobileOpen,
+  setMobileOpen,
+}) => {
   const { t } = useTranslation();
   const subscription = useSelector((state) => state.billing.subscription);
   const isPremium = subscription?.plan === "premium";
@@ -18,18 +24,60 @@ const Sidebar = ({ user, collapsed, setCollapsed, mobileOpen, setMobileOpen }) =
   const [mockTestsOpen, setMockTestsOpen] = useState(false);
 
   const navItemsTop = [
-    { label: t("studentSidebar.overview"), to: "/student-dashboard", end: true, icon: "📊" },
-    { label: t("studentSidebar.myCourses"), to: "/student-dashboard/my-courses", icon: "📚" },
-    { label: t("studentSidebar.aiTutor"), to: "/student-dashboard/ai-tutor", icon: "🤖" },
-    ...(isPremium ? [{ label: t("studentSidebar.sessions"), to: "/student-dashboard/sessions", icon: "🎥" }] : []),
-    { label: t("studentSidebar.certificates"), to: "/student-dashboard/certificates", icon: "🏅" },
-    { label: t("studentSidebar.leaderboard"), to: "/student-dashboard/leaderboard", icon: "🏆" },
-    { label: t("studentSidebar.progress"), to: "/student-dashboard/progress", icon: "📈" },
+    {
+      label: t("studentSidebar.overview"),
+      to: "/student-dashboard",
+      end: true,
+      icon: "📊",
+    },
+    {
+      label: t("studentSidebar.myCourses"),
+      to: "/student-dashboard/my-courses",
+      icon: "📚",
+    },
+    {
+      label: t("studentSidebar.aiTutor"),
+      to: "/student-dashboard/ai-tutor",
+      icon: "🤖",
+    },
+    ...(isPremium
+      ? [
+          {
+            label: t("studentSidebar.sessions"),
+            to: "/student-dashboard/sessions",
+            icon: "🎥",
+          },
+        ]
+      : []),
+    {
+      label: t("studentSidebar.certificates"),
+      to: "/student-dashboard/certificates",
+      icon: "🏅",
+    },
+    {
+      label: t("studentSidebar.leaderboard"),
+      to: "/student-dashboard/leaderboard",
+      icon: "🏆",
+    },
+    {
+      label: t("studentSidebar.referral"),
+      to: "/student-dashboard/referral",
+      icon: "🎁",
+    },
+    {
+      label: t("studentSidebar.progress"),
+      to: "/student-dashboard/progress",
+      icon: "📈",
+    },
     { label: "Wallet", to: "/student-dashboard/wallet", icon: "👛" },
   ];
 
   const navItemsBottom = [
-    { label: t("studentSidebar.settings"), to: "/student-dashboard/settings", icon: "⚙️" },
+    {
+      label: t("studentSidebar.settings"),
+      to: "/student-dashboard/settings",
+      icon: "⚙️",
+    },
   ];
 
   const activeUser = user;
@@ -62,7 +110,9 @@ const Sidebar = ({ user, collapsed, setCollapsed, mobileOpen, setMobileOpen }) =
       }
       onClick={() => mobileOpen && setMobileOpen(false)}
     >
-      <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{item.icon}</span>
+      <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>
+        {item.icon}
+      </span>
       {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
     </NavLink>
   );
@@ -88,8 +138,12 @@ const Sidebar = ({ user, collapsed, setCollapsed, mobileOpen, setMobileOpen }) =
             ${mockTestsOpen ? "bg-[#1e293b] text-slate-200" : "text-[#64748b] hover:text-white hover:bg-[#1e293b]"}`}
         >
           <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>📝</span>
-          <span className="text-sm font-medium flex-1 text-left">Mock Tests</span>
-          <span style={{ fontSize: 10, color: "#64748b" }}>{mockTestsOpen ? "▲" : "▼"}</span>
+          <span className="text-sm font-medium flex-1 text-left">
+            {t("studentSidebar.mockTests")}
+          </span>
+          <span style={{ fontSize: 10, color: "#64748b" }}>
+            {mockTestsOpen ? "▲" : "▼"}
+          </span>
         </button>
 
         {mockTestsOpen && (
@@ -116,13 +170,17 @@ const Sidebar = ({ user, collapsed, setCollapsed, mobileOpen, setMobileOpen }) =
   return (
     <aside className={sidebarClass}>
       {/* User card */}
-      <div className={`flex items-center gap-3 p-3 mb-4 rounded-xl bg-[#1e293b] ${collapsed ? "justify-center" : ""}`}>
+      <div
+        className={`flex items-center gap-3 p-3 mb-4 rounded-xl bg-[#1e293b] ${collapsed ? "justify-center" : ""}`}
+      >
         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600 to-pink-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
           {initials}
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <div className="text-sm font-bold text-slate-100 truncate">{username}</div>
+            <div className="text-sm font-bold text-slate-100 truncate">
+              {username}
+            </div>
           </div>
         )}
       </div>

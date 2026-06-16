@@ -802,9 +802,26 @@
     "sessions": "Sessions",
     "certificates": "Certificates",
     "leaderboard": "Leaderboard",
+    "referral": "Referral",
     "settings": "Settings",
     "student": "Student",
-    "progress": "Progress"
+    "progress": "Progress",
+    "mockTests": "Mock Tests"
+  },
+  "studentReferral": {
+    "title": "Referral Rewards",
+    "header": "Earn coins by inviting friends",
+    "description": "Share your unique referral link and get bonus coins when someone signs up using your code.",
+    "summaryTitle": "Referral Summary",
+    "summaryCoins": "Total coins earned from referrals",
+    "referralCode": "Your referral code",
+    "referralsCount_one": "{{count}} referral earned",
+    "referralsCount_other": "{{count}} referrals earned",
+    "share": "Share link",
+    "copyLink": "Copy link",
+    "linkCopied": "Referral link copied!",
+    "copyFailed": "Could not copy link. Try again.",
+    "noReferralCode": "No referral code available yet."
   },
   "studentDashboard": {
     "dashboard": "Dashboard",
@@ -848,6 +865,7 @@
     "sessions": "Live Sessions",
     "analytics": "Analytics",
     "ai": "AI Assistant",
-    "settings": "Settings"
+    "settings": "Settings",
+    "mockTests": "Mock Tests"
   }
 }

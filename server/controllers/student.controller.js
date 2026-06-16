@@ -68,8 +68,8 @@ export const getLeaderboard = async (req, res) => {
     const leaderboard = await User.find({
       roles: { $in: ["student"] },
     })
-      .select("name email avatarUrl score quizSubmissions state city")
-      .sort({ score: -1, updatedAt: -1 })
+      .select("name email avatarUrl coins referralsCount state city")
+      .sort({ coins: -1, updatedAt: -1 })
       .lean();
 
     res.json(leaderboard);
