@@ -235,15 +235,37 @@ const Signup = () => {
     }
   };
 
+  const normalizeIndianPhoneNumber = (value) => {
+    const digits = value.replace(/\D/g, "");
+    if (/^\d{10}$/.test(digits)) return `+91${digits}`;
+    if (/^91\d{10}$/.test(digits)) return `+${digits}`;
+    return null;
+  };
+
+  const normalizeIndianPhoneNumber = (value) => {
+    const digits = value.replace(/\D/g, "");
+    if (/^\d{10}$/.test(digits)) return `+91${digits}`;
+    if (/^91\d{10}$/.test(digits)) return `+${digits}`;
+    return null;
+  };
+
   const handleSendPhoneOtp = async () => {
-    if (!/^[0-9]{10}$/.test(formData.phoneNumber)) {
-      toast.error(t("auth.invalidPhone"));
+    const normalizedPhoneNumber = normalizeIndianPhoneNumber(
+      `${formData.countryCode}${formData.phoneNumber}`,
+    );
+
+    if (!normalizedPhoneNumber) {
+      toast.error(
+        t("auth.invalidPhone") ||
+          "Enter a valid 10-digit Indian mobile number.",
+      );
       return;
     }
+
     setSendingPhoneOtp(true);
     try {
       await axios.post("/api/auth/send-phone-otp", {
-        phoneNumber: `${formData.countryCode}${formData.phoneNumber}`,
+        phoneNumber: normalizedPhoneNumber,
       });
       toast.success(t("auth.otpSentPhone"));
       setPhoneOtpSent(true);
@@ -283,21 +305,36 @@ const Signup = () => {
 
   const handleVerifyPhoneOtp = async () => {
     const code = phoneOtpInputs.join("");
+    const normalizedPhoneNumber = normalizeIndianPhoneNumber(
+      `${formData.countryCode}${formData.phoneNumber}`,
+    );
+
     if (code.length < 6) {
       toast.error(t("auth.enterFullOtp"));
       return;
     }
+
+    if (!normalizedPhoneNumber) {
+      toast.error(
+        t("auth.invalidPhone") ||
+          "Enter a valid 10-digit Indian mobile number.",
+      );
+      return;
+    }
+
     setVerifyingPhone(true);
     try {
       await axios.post("/api/auth/verify-phone-otp", {
-        phoneNumber: `${formData.countryCode}${formData.phoneNumber}`,
+        phoneNumber: normalizedPhoneNumber,
         otp: code,
       });
       setPhoneVerified(true);
       setPhoneOtpSent(false);
       toast.success(t("auth.phoneVerified") + " ✓");
     } catch (err) {
-      toast.error(err?.response?.data?.message || t("auth.invalidOtp"));
+      toast.error(
+        err?.message || err?.response?.data?.message || t("auth.invalidOtp"),
+      );
       setPhoneOtpInputs(["", "", "", "", "", ""]);
       phoneOtpRefs.current[0]?.focus();
     } finally {
@@ -752,12 +789,26 @@ const Signup = () => {
                     {t("auth.phoneNumber")}
                   </label>
                   <div className="flex gap-2">
-                    <div
-                      className="w-28 border border-white/10 rounded-2xl px-3 py-3.5 bg-[#1e293b] text-white text-sm flex items-center justify-center"
-                      style={phoneVerified ? { opacity: 0.65 } : {}}
+                    <select
+                      name="countryCode"
+                      value={formData.countryCode}
+                      onChange={(e) => {
+                        handleChange(e);
+                        if (phoneVerified || phoneOtpSent) {
+                          setPhoneVerified(false);
+                          setPhoneOtpSent(false);
+                          setPhoneOtpInputs(["", "", "", "", "", ""]);
+                        }
+                      }}
+                      disabled={phoneVerified}
+                      className="w-28 border border-white/10 rounded-2xl px-3 py-3.5 bg-[#1e293b] text-white text-sm outline-none disabled:opacity-50"
                     >
-                      +91
-                    </div>
+                      {countryCodes.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.code}
+                        </option>
+                      ))}
+                    </select>
 
                     <div className="relative flex-1">
                       <input
