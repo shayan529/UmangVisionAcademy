@@ -235,15 +235,10 @@ const Signup = () => {
     }
   };
 
-  const normalizeIndianPhoneNumber = (value) => {
-    const digits = value.replace(/\D/g, "");
-    if (/^\d{10}$/.test(digits)) return `+91${digits}`;
-    if (/^91\d{10}$/.test(digits)) return `+${digits}`;
-    return null;
-  };
-
-  const normalizeIndianPhoneNumber = (value) => {
-    const digits = value.replace(/\D/g, "");
+  // FIX: Single declaration. Accepts a raw 10-digit number (without country code)
+  // and returns a normalized E.164 string, or null if invalid.
+  const normalizeIndianPhoneNumber = (phoneNumber) => {
+    const digits = phoneNumber.replace(/\D/g, "");
     if (/^\d{10}$/.test(digits)) return `+91${digits}`;
     if (/^91\d{10}$/.test(digits)) return `+${digits}`;
     return null;
@@ -251,7 +246,7 @@ const Signup = () => {
 
   const handleSendPhoneOtp = async () => {
     const normalizedPhoneNumber = normalizeIndianPhoneNumber(
-      `${formData.countryCode}${formData.phoneNumber}`,
+      formData.phoneNumber,
     );
 
     if (!normalizedPhoneNumber) {
@@ -306,7 +301,7 @@ const Signup = () => {
   const handleVerifyPhoneOtp = async () => {
     const code = phoneOtpInputs.join("");
     const normalizedPhoneNumber = normalizeIndianPhoneNumber(
-      `${formData.countryCode}${formData.phoneNumber}`,
+      formData.phoneNumber,
     );
 
     if (code.length < 6) {

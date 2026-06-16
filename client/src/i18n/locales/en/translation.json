@@ -801,12 +801,15 @@
     "aiTutor": "AI Tutor",
     "sessions": "Sessions",
     "certificates": "Certificates",
+    "achievements": "Achievements",
     "leaderboard": "Leaderboard",
+
     "referral": "Referral",
     "settings": "Settings",
     "student": "Student",
     "progress": "Progress",
-    "mockTests": "Mock Tests"
+    "mockTests": "Mock Tests",
+    "wallet": "Wallet"
   },
   "studentReferral": {
     "title": "Referral Rewards",

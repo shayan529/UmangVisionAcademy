@@ -18,7 +18,9 @@ const Sidebar = ({
   setMobileOpen,
 }) => {
   const { t } = useTranslation();
+  // AFTER
   const subscription = useSelector((state) => state.billing.subscription);
+  const billingLoading = useSelector((state) => state.billing.loading);
   const isPremium = subscription?.plan === "premium";
 
   const [mockTestsOpen, setMockTestsOpen] = useState(false);
@@ -40,7 +42,8 @@ const Sidebar = ({
       to: "/student-dashboard/ai-tutor",
       icon: "🤖",
     },
-    ...(isPremium
+
+    ...(!billingLoading && isPremium
       ? [
           {
             label: t("studentSidebar.sessions"),
@@ -52,7 +55,12 @@ const Sidebar = ({
     {
       label: t("studentSidebar.certificates"),
       to: "/student-dashboard/certificates",
-      icon: "🏅",
+      icon: "📜",
+    },
+    {
+      label: t("studentSidebar.achievements"),
+      to: "/student-dashboard/achievements",
+      icon: "🎖️",
     },
     {
       label: t("studentSidebar.leaderboard"),
@@ -69,7 +77,11 @@ const Sidebar = ({
       to: "/student-dashboard/progress",
       icon: "📈",
     },
-    { label: "Wallet", to: "/student-dashboard/wallet", icon: "👛" },
+    {
+      label: t("studentSidebar.wallet"),
+      to: "/student-dashboard/wallet",
+      icon: "👛",
+    },
   ];
 
   const navItemsBottom = [

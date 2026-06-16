@@ -807,7 +807,9 @@
     "settings": "सेटिंग्स",
     "student": "छात्र",
     "progress": "प्रगति",
-    "mockTests": "मॉक टेस्ट"
+    "mockTests": "मॉक टेस्ट",
+    "wallet": "वॉलेट",
+    "achievements": "उपलब्धियाँ"
   },
   "studentReferral": {
     "title": "रिफ़रल रिवार्ड्स",
@@ -830,6 +832,7 @@
     "aiTutor": "एआई ट्यूटर",
     "community": "कम्युनिटी",
     "certificates": "प्रमाणपत्र",
+    "achievements": "उपलब्धियाँ",
     "settings": "सेटिंग्स",
     "leaderboard": "लीडरबोर्ड",
     "welcomeBack": "वापसी पर स्वागत है, {{name}} 👋",

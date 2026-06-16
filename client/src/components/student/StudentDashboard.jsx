@@ -6,6 +6,7 @@ import {
   fetchLeaderboard,
   fetchStudentActivity,
 } from "../../redux/slices/studentSlice";
+import { fetchSessions } from "../../redux/slices/sessionSlice";
 import { toast } from "react-hot-toast";
 
 import { useTranslation } from "react-i18next";
@@ -90,6 +91,17 @@ export const DashboardHome = () => {
   } = useSelector((s) => s.students);
   const { t } = useTranslation();
 
+  useEffect(() => {
+    // Ensure subscription and sessions are loaded so Sidebar shows premium items
+    dispatch(fetchSubscription());
+    dispatch(fetchSessions());
+  }, [dispatch]);
+
+  useEffect(() => {
+    // Preload live sessions so they're available across student routes
+    dispatch(fetchSessions());
+  }, [dispatch]);
+
   // Enrolled courses: try common slice names
   const enrolledCourses = useSelector(
     (s) => s.courses?.enrolled ?? s.myCourses?.courses ?? [],
@@ -97,12 +109,6 @@ export const DashboardHome = () => {
   const coursesLoading = useSelector(
     (s) => s.courses?.enrolledLoading ?? s.myCourses?.loading ?? false,
   );
-
-  // Fetch on mount
-  useEffect(() => {
-    dispatch(fetchLeaderboard());
-    dispatch(fetchStudentActivity());
-  }, [dispatch]);
 
   const username = user?.email ? user.email.split("@")[0] : "there";
   const userId = user?._id ?? user?.id;
@@ -631,11 +637,16 @@ const CourseProgressCard = ({ course }) => {
 
 // ── Main layout ───────────────────────────────────────────────────────────────
 const StudentDashboard = () => {
+  const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { t } = useTranslation();
+  useEffect(() => {
+    dispatch(fetchSubscription());
+    dispatch(fetchSessions());
+  }, [dispatch]);
 
   const sectionTitles = {
     "/student-dashboard": t("studentDashboard.dashboard"),
@@ -643,8 +654,11 @@ const StudentDashboard = () => {
     "/student-dashboard/ai-tutor": t("studentDashboard.aiTutor"),
     "/student-dashboard/community": t("studentDashboard.community"),
     "/student-dashboard/certificates": t("studentDashboard.certificates"),
+    "/student-dashboard/achievements": t("studentSidebar.achievements"),
     "/student-dashboard/settings": t("studentDashboard.settings"),
     "/student-dashboard/leaderboard": t("studentDashboard.leaderboard"),
+    "/student-dashboard/progress": t("studentDashboard.progress"),
+    "/student-dashboard/wallet": t("studentDashboard.wallet"),
   };
 
   const unreadCount = useSelector(

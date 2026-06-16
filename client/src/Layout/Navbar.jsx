@@ -67,48 +67,35 @@ const Navbar = () => {
     <nav className="w-full sticky top-0 z-50 bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10">
       {/* Keyframes for shimmer effect */}
       <style>{`
-        @keyframes shimmer-gold {
-          0%   { background-position: -200% center; }
-          100% { background-position:  200% center; }
-        }
-        @keyframes shimmer-indigo {
-          0%   { background-position: -200% center; }
-          100% { background-position:  200% center; }
-        }
-        @keyframes shimmer-red {
-          0%   { background-position: -200% center; }
-          100% { background-position:  200% center; }
-        }
-        .btn-gold {
-          background: linear-gradient(
-            105deg,
-            #92400e 0%,
-            #b45309 15%,
-            #fbbf24 30%,
-            #fef08a 45%,
-            #fbbf24 55%,
-            #d97706 70%,
-            #92400e 85%,
-            #fbbf24 100%
-          );
-          background-size: 200% auto;
-          animation: shimmer-gold 5s linear infinite;
-          color: #1c0a00;
-          font-weight: 700;
-          border: 1px solid #fde68a60;
-          box-shadow:
-            0 0 12px rgba(251,191,36,.55),
-            0 0 28px rgba(251,191,36,.25),
-            inset 0 1px 0 rgba(255,255,255,.35);
-          text-shadow: 0 1px 2px rgba(255,255,255,.3);
-        }
-        .btn-gold:hover {
-          box-shadow:
-            0 0 18px rgba(251,191,36,.75),
-            0 0 40px rgba(251,191,36,.35),
-            inset 0 1px 0 rgba(255,255,255,.4);
-          transform: scale(1.045);
-        }
+@keyframes shimmer-rose {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+.btn-rose {
+  background: linear-gradient(
+    105deg,
+    #881337 0%, #be185d 15%, #fb7185 30%,
+    #fecdd3 45%, #fb7185 55%, #e11d48 70%,
+    #881337 85%, #fb7185 100%
+  );
+  background-size: 200% auto;
+  animation: shimmer-rose 5s linear infinite;
+  color: #fff;
+  font-weight: 700;
+  border: 1px solid #fb718540;
+  box-shadow:
+    0 0 12px rgba(251,113,133,.4),
+    0 0 28px rgba(251,113,133,.15),
+    inset 0 1px 0 rgba(255,255,255,.2);
+  text-shadow: 0 1px 2px rgba(0,0,0,.25);
+}
+.btn-rose:hover {
+  box-shadow:
+    0 0 18px rgba(251,113,133,.65),
+    0 0 40px rgba(251,113,133,.25),
+    inset 0 1px 0 rgba(255,255,255,.25);
+  transform: scale(1.045);
+}
         .btn-indigo-shine {
           background: linear-gradient(
             105deg,
@@ -166,7 +153,7 @@ const Navbar = () => {
             inset 0 1px 0 rgba(255,255,255,.25);
           transform: scale(1.045);
         }
-        .btn-gold, .btn-indigo-shine, .btn-red {
+        .btn-rose, .btn-indigo-shine, .btn-red {
           transition: transform .2s ease, box-shadow .2s ease;
           white-space: nowrap;
           border-radius: 0.75rem;
@@ -194,16 +181,28 @@ const Navbar = () => {
 
         {/* ── Desktop nav links ── */}
         <div className="hidden md:flex justify-center flex-1 items-center gap-8 text-[15px] font-medium text-gray-300 mx-8">
-          <Link to="/courses" className="hover:text-indigo-300 transition duration-300">
+          <Link
+            to="/courses"
+            className="hover:text-indigo-300 transition duration-300"
+          >
             {t("nav.courses")}
           </Link>
-          <Link to="/plans" className="hover:text-indigo-300 transition duration-300">
+          <Link
+            to="/plans"
+            className="hover:text-indigo-300 transition duration-300"
+          >
             {t("nav.plans")}
           </Link>
-          <Link to="/question-bank" className="hover:text-indigo-300 transition duration-300">
+          <Link
+            to="/question-bank"
+            className="hover:text-indigo-300 transition duration-300"
+          >
             {t("nav.questionBank")}
           </Link>
-          <Link to="/blogs" className="hover:text-indigo-300 transition duration-300">
+          <Link
+            to="/blogs"
+            className="hover:text-indigo-300 transition duration-300"
+          >
             {t("nav.blogs")}
           </Link>
 
@@ -213,19 +212,43 @@ const Navbar = () => {
               className="flex items-center gap-1 hover:text-indigo-300 transition"
             >
               {t("nav.board")}
-              <ChevronDown size={16} className={`transition-transform ${boardOpen ? "rotate-180" : ""}`} />
+              <ChevronDown
+                size={16}
+                className={`transition-transform ${boardOpen ? "rotate-180" : ""}`}
+              />
             </button>
             {boardOpen && (
               <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
-                <Link to="/boards/cbse" onClick={() => setBoardOpen(false)} className="block px-4 py-3 hover:bg-slate-800">CBSE</Link>
-                <Link to="/boards/mp-board" onClick={() => setBoardOpen(false)} className="block px-4 py-3 hover:bg-slate-800">MP Board</Link>
-                <Link to="/boards/icse" onClick={() => setBoardOpen(false)} className="block px-4 py-3 hover:bg-slate-800">ICSE</Link>
+                <Link
+                  to="/boards/cbse"
+                  onClick={() => setBoardOpen(false)}
+                  className="block px-4 py-3 hover:bg-slate-800"
+                >
+                  CBSE
+                </Link>
+                <Link
+                  to="/boards/mp-board"
+                  onClick={() => setBoardOpen(false)}
+                  className="block px-4 py-3 hover:bg-slate-800"
+                >
+                  MP Board
+                </Link>
+                <Link
+                  to="/boards/icse"
+                  onClick={() => setBoardOpen(false)}
+                  className="block px-4 py-3 hover:bg-slate-800"
+                >
+                  ICSE
+                </Link>
               </div>
             )}
           </div>
 
           {!hasInstructorRole && !hasAdminRole && (
-            <Link to="/become-instructor" className="hover:text-indigo-300 transition duration-300">
+            <Link
+              to="/become-instructor"
+              className="hover:text-indigo-300 transition duration-300"
+            >
               {t("nav.becomeInstructor")}
             </Link>
           )}
@@ -237,12 +260,27 @@ const Navbar = () => {
               className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800 transition"
             >
               {isHindi ? "हिन्दी" : "EN"}
-              <ChevronDown size={16} className={`transition-transform ${langDropdownOpen ? "rotate-180" : ""}`} />
+              <ChevronDown
+                size={16}
+                className={`transition-transform ${langDropdownOpen ? "rotate-180" : ""}`}
+              />
             </button>
             {langDropdownOpen && (
               <div className="absolute right-0 top-full mt-2 w-36 rounded-2xl border border-slate-700 bg-slate-900 shadow-xl">
-                <button type="button" onClick={() => changeLanguage("en")} className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800">English</button>
-                <button type="button" onClick={() => changeLanguage("hi")} className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800">हिंदी</button>
+                <button
+                  type="button"
+                  onClick={() => changeLanguage("en")}
+                  className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800"
+                >
+                  English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => changeLanguage("hi")}
+                  className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800"
+                >
+                  हिंदी
+                </button>
               </div>
             )}
           </div>
@@ -253,30 +291,34 @@ const Navbar = () => {
           {loading ? (
             <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
               <div className="w-4 h-4 rounded-full border-2 border-indigo-500/30 border-t-indigo-500 animate-spin" />
-              <span className="text-xs text-slate-400 font-medium">{t("nav.verifyingSession")}</span>
+              <span className="text-xs text-slate-400 font-medium">
+                {t("nav.verifyingSession")}
+              </span>
             </div>
           ) : !user ? (
             <>
-              <Link to="/login" className="text-white hover:text-indigo-300 transition">
+              <Link
+                to="/login"
+                className="text-white hover:text-indigo-300 transition"
+              >
                 {t("nav.login")}
               </Link>
-              <Link
-                to="/become-instructor"
-                className="btn-gold bg-gradient-to-r from-indigo-400 to-indigo-500 hover:scale-105 transition duration-300 text-black font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20"
-              >
+              <Link to="/become-instructor" className="btn-indigo-shine">
                 {t("nav.getStarted")}
               </Link>
             </>
           ) : (
             <>
               <div className="text-right">
-                <p className="text-white text-sm font-semibold">{t("nav.welcome")}</p>
+                <p className="text-white text-sm font-semibold">
+                  {t("nav.welcome")}
+                </p>
                 <p className="text-slate-400 text-xs">{user?.name}</p>
               </div>
 
               {isMultiRole ? (
-                <Link to={switchTarget} className={goingToInstructor ? "btn-gold" : "btn-indigo-shine"}>
-                  {goingToInstructor ? "✦" : "⟵"} {switchLabel}
+                <Link to={switchTarget} className="btn-indigo-shine">
+                  ⇄ {switchLabel}
                 </Link>
               ) : (
                 <Link
@@ -288,7 +330,10 @@ const Navbar = () => {
               )}
 
               <button
-                onClick={() => { dispatch(logoutUser()); navigate("/"); }}
+                onClick={() => {
+                  dispatch(logoutUser());
+                  navigate("/");
+                }}
                 className="btn-red"
               >
                 {t("nav.logout")}
@@ -308,12 +353,16 @@ const Navbar = () => {
       </div>
 
       {/* ── Mobile menu ── */}
-      <div className={`md:hidden border-t border-white/10 overflow-hidden transition-all duration-300 ${mobileMenuOpen ? "max-h-screen" : "max-h-0"}`}>
+      <div
+        className={`md:hidden border-t border-white/10 overflow-hidden transition-all duration-300 ${mobileMenuOpen ? "max-h-screen" : "max-h-0"}`}
+      >
         <div className="px-4 pt-3 pb-4 space-y-1">
           {[
             { to: "/courses", label: t("nav.courses") },
             { to: "/plans", label: t("nav.plans") },
-            ...(!hasInstructorRole && !hasAdminRole ? [{ to: "/become-instructor", label: t("nav.becomeInstructor") }] : []),
+            ...(!hasInstructorRole && !hasAdminRole
+              ? [{ to: "/become-instructor", label: t("nav.becomeInstructor") }]
+              : []),
             { to: "/question-bank", label: t("nav.questionBank") },
             { to: "/blogs", label: t("nav.blogs") },
           ].map(({ to, label }) => (
@@ -329,7 +378,9 @@ const Navbar = () => {
 
           {/* Language selector */}
           <div className="px-3 py-2">
-            <label htmlFor="mobile-language" className="sr-only">{t("nav.language")}</label>
+            <label htmlFor="mobile-language" className="sr-only">
+              {t("nav.language")}
+            </label>
             <select
               id="mobile-language"
               value={currentLanguage}
@@ -361,7 +412,7 @@ const Navbar = () => {
               <Link
                 to="/become-instructor"
                 onClick={closeMobile}
-                className="btn-gold flex-1 text-center text-sm font-semibold py-2 px-3 rounded-lg bg-gradient-to-r from-indigo-400 to-indigo-500 text-black shadow-md transition"
+                className="btn-rose flex-1 text-center text-sm font-semibold py-2 px-3 rounded-lg bg-gradient-to-r from-indigo-400 to-indigo-500 text-black shadow-md transition"
               >
                 {t("nav.getStarted")}
               </Link>
@@ -374,8 +425,12 @@ const Navbar = () => {
                   {user.name?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-white text-xs font-semibold leading-tight">{user.name}</p>
-                  <p className="text-slate-500 text-[10px] leading-tight">{user.email}</p>
+                  <p className="text-white text-xs font-semibold leading-tight">
+                    {user.name}
+                  </p>
+                  <p className="text-slate-500 text-[10px] leading-tight">
+                    {user.email}
+                  </p>
                 </div>
               </div>
 
@@ -385,7 +440,7 @@ const Navbar = () => {
                   <Link
                     to={switchTarget}
                     onClick={closeMobile}
-                    className={`flex-1 text-center text-xs py-2 px-2 ${goingToInstructor ? "btn-gold" : "btn-indigo-shine"}`}
+                    className="flex-1 text-center text-xs py-2 px-2 btn-indigo-shine"
                     style={{ borderRadius: "0.5rem", padding: "0.5rem 0.5rem" }}
                   >
                     {goingToInstructor ? "✦" : "⟵"} {switchLabel}
@@ -400,7 +455,11 @@ const Navbar = () => {
                   </Link>
                 )}
                 <button
-                  onClick={() => { closeMobile(); dispatch(logoutUser()); navigate("/"); }}
+                  onClick={() => {
+                    closeMobile();
+                    dispatch(logoutUser());
+                    navigate("/");
+                  }}
                   className="btn-red flex-1 text-xs"
                   style={{ borderRadius: "0.5rem", padding: "0.5rem 0.5rem" }}
                 >

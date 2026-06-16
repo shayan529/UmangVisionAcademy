@@ -159,11 +159,12 @@ const A4CertificateCard = ({ cert, studentName }) => {
         <div
           style={{
             display: "flex",
-            justifyContent: "flex-start",
+            justifyContent: "center",
             alignItems: "center",
+            marginBottom: 16,
           }}
         >
-          <div>
+          <div style={{ textAlign: "center" }}>
             <div
               style={{
                 fontSize: "clamp(7px, 1.1vw, 11px)",

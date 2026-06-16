@@ -35,6 +35,7 @@ import MyCoursesSection from "./components/student/MyCoursesSection";
 import AITutor from "./components/student/AITutor";
 import CommunitySection from "./components/student/CommunitySection";
 import CertificatesSection from "./components/student/CertificatesSection";
+import Achievements from "./components/student/Achievements";
 import SettingsSection from "./components/student/SettingsSection";
 import LeaderBoard from "./components/student/LeaderBoard";
 import StudentNotifications from "./components/student/StudentNotifications";
@@ -169,6 +170,7 @@ function App() {
             <Route path="sessions" element={<StudentSessions />} />
             <Route path="notifications" element={<StudentNotifications />} />
             <Route path="certificates" element={<CertificatesSection />} />
+            <Route path="achievements" element={<Achievements />} />
             <Route path="progress" element={<ProgressPage />} />
             <Route path="wallet" element={<StudentWallet />} />
 
