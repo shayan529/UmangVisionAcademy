@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import api from "../../config/api.js";
 import { updateUserScoreAndSubmissions } from "../../redux/slices/authSlice.js";
+import { checkAndAwardAchievements } from "../../redux/slices/achievementSlice.js";
 import TextLessonViewer from "./TextLessonViewer.jsx";
 
 const fmt = (secs) => {
@@ -1622,10 +1623,21 @@ export default function CoursePage() {
       const data = await res.json();
       if (data.success) {
         setQuizResult(data);
+        const isPerfectScore = data.percentage === 100;
         dispatch(
           updateUserScoreAndSubmissions({
             score: data.newTotalScore,
             submission: { courseId: course._id, score: data.percentage },
+          }),
+        );
+        dispatch(
+          checkAndAwardAchievements({
+            perfectQuiz: isPerfectScore,
+            fullMarks: isPerfectScore,
+            lessonsCompleted: completed.size,
+            textLessons: allLessons.filter(
+              (lesson, idx) => completed.has(idx) && lesson?.type === "text",
+            ).length,
           }),
         );
         setQuizStep("result");
@@ -1693,6 +1705,22 @@ export default function CoursePage() {
     setCurrentQuestion(0);
     setQuizResult(null);
   }, [openQuizFromUrl, course]);
+
+  useEffect(() => {
+    if (!course || !user) return;
+
+    const completedLessonCount = completed.size;
+    const textLessonCount = allLessons.filter(
+      (lesson, idx) => completed.has(idx) && lesson?.type === "text",
+    ).length;
+
+    dispatch(
+      checkAndAwardAchievements({
+        lessonsCompleted: completedLessonCount,
+        textLessons: textLessonCount,
+      }),
+    );
+  }, [allLessons, completed, course, dispatch, user]);
 
   useEffect(
     () => () => {

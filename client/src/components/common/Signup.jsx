@@ -744,6 +744,9 @@ const Signup = () => {
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
                     {t("auth.name")}
+                    <span className="normal-case text-xl font-normal text-red-500 tracking-normal">
+                      *
+                    </span>
                   </label>
                   <input
                     type="text"
@@ -762,9 +765,6 @@ const Signup = () => {
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
                     {t("auth.email")}{" "}
-                    <span className="normal-case font-normal text-slate-500 tracking-normal">
-                      (Not Mandatory)
-                    </span>
                   </label>
                   <input
                     type="email"
@@ -782,7 +782,11 @@ const Signup = () => {
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
                     {t("auth.phoneNumber")}
+                    <span className="normal-case text-xl font-normal text-red-500 tracking-normal">
+                      *
+                    </span>
                   </label>
+
                   <div className="flex gap-2">
                     <select
                       name="countryCode"
@@ -1049,6 +1053,9 @@ const Signup = () => {
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
                       {t("auth.state")}
+                      <span className="normal-case text-xl font-normal text-red-500 tracking-normal">
+                        *
+                      </span>
                     </label>
                     <select
                       name="state"
@@ -1072,6 +1079,9 @@ const Signup = () => {
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
                       {t("auth.city")}
+                      <span className="normal-case text-xl font-normal text-red-500 tracking-normal">
+                        *
+                      </span>
                     </label>
                     <select
                       name="city"
@@ -1102,6 +1112,9 @@ const Signup = () => {
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
                       {t("auth.pincode")}
+                      <span className="normal-case text-xl font-normal text-red-500 tracking-normal">
+                        *
+                      </span>
                     </label>
                     <input
                       type="text"
@@ -1125,6 +1138,9 @@ const Signup = () => {
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
                     {t("auth.password")}
+                    <span className="normal-case text-xl font-normal text-red-500 tracking-normal">
+                      *
+                    </span>
                   </label>
                   <div className="relative">
                     <input

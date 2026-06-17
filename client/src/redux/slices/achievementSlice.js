@@ -82,8 +82,12 @@ const achievementSlice = createSlice({
       .addCase(checkAndAwardAchievements.fulfilled, (state, action) => {
         state.checkingAchievements = false;
         state.newAchievements = action.payload?.newAchievements || [];
-        // Refresh achievements after check
-        if (action.payload?.newAchievements?.length > 0) {
+        if (action.payload?.earnedBadges) {
+          state.earnedBadges = action.payload.earnedBadges;
+        }
+        if (typeof action.payload?.totalEarned === "number") {
+          state.totalEarned = action.payload.totalEarned;
+        } else if (action.payload?.newAchievements?.length > 0) {
           state.totalEarned =
             (state.totalEarned || 0) + action.payload.newAchievements.length;
         }

@@ -43,7 +43,7 @@ const ReferralPage = () => {
               {t("studentReferral.summaryTitle")}
             </p>
             <p className="mt-4 text-4xl font-bold text-white">
-              {user?.coins ?? 0}
+              {(user?.referralsCount ?? 0) * 50}
             </p>
             <p className="mt-2 text-sm text-slate-400">
               {t("studentReferral.summaryCoins")}

@@ -88,14 +88,30 @@ export const checkAndAwardAchievements = async (req, res) => {
     if (fullMarks) await awardBadge("full_marks");
 
     // Check for legend (all other badges)
-    const allAchievements = await Achievement.find({ userId });
+    const allAchievements = await Achievement.find({ userId }).sort({
+      earnedAt: -1,
+    });
     if (allAchievements.length >= 11) {
       await awardBadge("legend");
     }
 
+    const updatedAchievements = await Achievement.find({ userId }).sort({
+      earnedAt: -1,
+    });
+    const earnedBadges = {};
+    updatedAchievements.forEach((ach) => {
+      earnedBadges[ach.badgeId] = {
+        earnedAt: ach.earnedAt,
+        viewed: ach.viewed,
+        _id: ach._id,
+      };
+    });
+
     res.json({
       success: true,
       newAchievements,
+      earnedBadges,
+      totalEarned: updatedAchievements.length,
       message:
         newAchievements.length > 0
           ? `${newAchievements.length} new badge(s) unlocked!`

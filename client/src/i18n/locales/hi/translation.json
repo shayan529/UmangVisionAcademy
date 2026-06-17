@@ -145,7 +145,8 @@
     "invalidOtp": "अमान्य OTP। कृपया पुनः प्रयास करें।",
     "failedOtp": "OTP भेजने में विफल। कृपया पुनः प्रयास करें।",
     "failedResend": "OTP पुनः भेजने में विफल।",
-    "enterFullOtp": "कृपया पूरा 6-अंकीय OTP दर्ज करें।"
+    "enterFullOtp": "कृपया पूरा 6-अंकीय OTP दर्ज करें।",
+    "creatingAccount": "खाता बनाया जा रहा है…"
   },
   "wallet": {
     "title": "मेरा वॉलेट",

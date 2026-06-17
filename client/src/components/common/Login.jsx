@@ -6,6 +6,10 @@ import { useDispatch } from "react-redux";
 import { clearError, login } from "../../redux/slices/authSlice";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
+import {
+  checkAndAwardAchievements,
+  fetchAchievements,
+} from "../../redux/slices/achievementSlice";
 
 /* ── Animated particle canvas ── */
 const ParticleCanvas = () => {
@@ -874,6 +878,20 @@ const Login = () => {
         }),
       ).unwrap();
 
+      const now = new Date();
+      const hour = now.getHours();
+      const isEarlyBird = hour < 7;
+      const isNightOwl = hour >= 22;
+
+      await dispatch(
+        checkAndAwardAchievements({
+          firstLogin: true,
+          earlyBird: isEarlyBird,
+          nightStudy: isNightOwl,
+        }),
+      );
+      await dispatch(fetchAchievements());
+
       toast("Welcome!", { icon: "👋" });
 
       const isAdmin = user?.roles?.includes("admin");
@@ -888,7 +906,11 @@ const Login = () => {
       else if (isInstructor) navigate("/instructor-dashboard");
       else navigate("/student-dashboard");
     } catch (error) {
-      toast.error(error);
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        (typeof error === "string" ? error : "Login failed");
+      toast.error(message);
     } finally {
       setLoading(false);
     }

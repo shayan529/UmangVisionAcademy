@@ -8,6 +8,7 @@ import {
   startMockTest,
   submitMockTest,
 } from "../../redux/slices/mockTestSlice";
+import { checkAndAwardAchievements } from "../../redux/slices/achievementSlice";
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60)
@@ -93,13 +94,21 @@ export default function MockTestPlayer() {
     }));
 
     try {
-      await dispatch(
+      const result = await dispatch(
         submitMockTest({
           attemptId: activeTest.attemptId,
           answers: answersArray,
           timeTaken,
         }),
       ).unwrap();
+      dispatch(
+        checkAndAwardAchievements({
+          mockTestsCompleted: 1,
+          leaderboardFirst: result.percentage === 100,
+          perfectQuiz: result.percentage === 100,
+          fullMarks: result.percentage === 100,
+        }),
+      );
       toast.success(
         autoSubmit ? "Time's up! Test submitted." : "Test submitted!",
       );
