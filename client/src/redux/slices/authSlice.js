@@ -1,10 +1,10 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api, { API_ENDPOINTS } from '../../config/api';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import api, { API_ENDPOINTS } from "../../config/api";
 
 // ── Async thunks ──────────────────────────────────────────────────────────────
 
 export const login = createAsyncThunk(
-  'auth/login',
+  "auth/login",
   async (credentials, { rejectWithValue }) => {
     try {
       const { data } = await api.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
@@ -12,11 +12,11 @@ export const login = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
-  }
+  },
 );
 
 export const register = createAsyncThunk(
-  'auth/register',
+  "auth/register",
   async (values, { rejectWithValue }) => {
     try {
       const { data } = await api.post(API_ENDPOINTS.AUTH.REGISTER, values);
@@ -24,11 +24,11 @@ export const register = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
-  }
+  },
 );
 
 export const loadCurrentUser = createAsyncThunk(
-  'auth/loadCurrentUser',
+  "auth/loadCurrentUser",
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await api.get(API_ENDPOINTS.AUTH.ME);
@@ -36,11 +36,11 @@ export const loadCurrentUser = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
-  }
+  },
 );
 
 export const logoutUser = createAsyncThunk(
-  'auth/logout',
+  "auth/logout",
   async (_, { rejectWithValue }) => {
     try {
       await api.post(API_ENDPOINTS.AUTH.LOGOUT);
@@ -48,7 +48,7 @@ export const logoutUser = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
-  }
+  },
 );
 
 // ── Slice ─────────────────────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ const initialState = {
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     clearError: (state) => {
@@ -69,9 +69,30 @@ const authSlice = createSlice({
     },
     updateUserScoreAndSubmissions: (state, action) => {
       if (!state.user) return;
-      state.user.score = action.payload.score ?? state.user.score;
-      state.user.quizSubmissions =
-        action.payload.quizSubmissions ?? state.user.quizSubmissions;
+      const { score, quizSubmissionUpdate, earnedCertificates } =
+        action.payload;
+
+      state.user.score = score ?? state.user.score;
+
+      if (quizSubmissionUpdate) {
+        const subs = state.user.quizSubmissions ?? [];
+        const idx = subs.findIndex(
+          (s) =>
+            s.courseId?.toString() ===
+            quizSubmissionUpdate.courseId?.toString(),
+        );
+        if (idx !== -1) {
+          if (quizSubmissionUpdate.score > subs[idx].score)
+            subs[idx] = { ...subs[idx], ...quizSubmissionUpdate };
+        } else {
+          subs.push(quizSubmissionUpdate);
+        }
+        state.user.quizSubmissions = subs;
+      }
+
+      if (earnedCertificates) {
+        state.user.earnedCertificates = earnedCertificates;
+      }
     },
   },
   extraReducers: (builder) => {

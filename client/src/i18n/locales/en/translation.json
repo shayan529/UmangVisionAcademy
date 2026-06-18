@@ -804,7 +804,7 @@
     "certificates": "Certificates",
     "achievements": "Achievements",
     "leaderboard": "Leaderboard",
-
+    "purchaseHistory": "Purchase History",
     "referral": "Referral",
     "settings": "Settings",
     "student": "Student",
@@ -860,7 +860,8 @@
     "menu": "Menu",
     "minutesAgo": "{{count}}m ago",
     "hoursAgo": "{{count}}h ago",
-    "daysAgo": "{{count}}d ago"
+    "daysAgo": "{{count}}d ago",
+    "purchaseHistory": "Purchase History"
   },
   "instructorSidebar": {
     "dashboard": "Dashboard",

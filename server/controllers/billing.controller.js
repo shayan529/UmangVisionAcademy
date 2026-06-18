@@ -3,6 +3,7 @@ import crypto from "crypto";
 import User from "../models/user.model.js";
 import Course from "../models/courses.model.js";
 import Cart from "../models/cart.model.js";
+import Wallet from "../models/wallet.model.js";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -14,6 +15,28 @@ const PLANS = {
   premium: { id: "premium", label: "Premium", amount: 99900, durationDays: 30 },
 };
 
+const isPlaceholderRazorpayConfig = () => {
+  const keyId = process.env.RAZORPAY_KEY_ID || "";
+  const keySecret = process.env.RAZORPAY_KEY_SECRET || "";
+
+  return (
+    !keyId ||
+    !keySecret ||
+    /xxxx|your_secret|your_razorpay_secret_here/i.test(keyId) ||
+    /xxxx|your_secret|your_razorpay_secret_here/i.test(keySecret)
+  );
+};
+
+// ── Helper: get or create wallet for a user ──────────────────────────────────
+// Used purely as a transaction ledger here — balance is left untouched since
+// these payments go directly through Razorpay, never through wallet funds.
+const getOrCreateWallet = async (userId) => {
+  let wallet = await Wallet.findOne({ userId });
+  if (!wallet)
+    wallet = await Wallet.create({ userId, balance: 0, transactions: [] });
+  return wallet;
+};
+
 // ── GET /billing/subscription ─────────────────────────────────────────────────
 export const getSubscription = async (req, res) => {
   try {
@@ -21,14 +44,18 @@ export const getSubscription = async (req, res) => {
       .select("subscription")
       .lean();
     if (!user) return res.status(404).json({ message: "User not found" });
+
     const sub = user.subscription;
     if (!sub?.plan) return res.json(null);
-    if (sub.endDate && new Date(sub.endDate) < new Date()) {
+
+    const now = new Date();
+    if (sub.endDate && new Date(sub.endDate) < now) {
       await User.findByIdAndUpdate(req.user._id, {
         "subscription.status": "expired",
       });
       return res.json({ ...sub, status: "expired" });
     }
+
     res.json(sub);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -48,8 +75,7 @@ export const createOrder = async (req, res) => {
         .select("price")
         .lean();
       const subtotal = courses.reduce((s, c) => s + (c.price ?? 0), 0);
-      const discount = subtotal > 0 ? 40 : 0;
-      orderAmount = Math.max(0, subtotal - discount) * 100; // paise
+      orderAmount = Math.max(0, subtotal) * 100; // paise
       notes.type = "cart";
       notes.courseIds = courseIds.join(",");
     } else {
@@ -64,6 +90,21 @@ export const createOrder = async (req, res) => {
       return res
         .status(400)
         .json({ message: "Nothing to pay — use free enrol instead." });
+
+    if (
+      process.env.NODE_ENV !== "production" &&
+      isPlaceholderRazorpayConfig()
+    ) {
+      const mockOrderId = `mock_order_${Date.now()}`;
+      return res.json({
+        orderId: mockOrderId,
+        amount: orderAmount,
+        currency: "INR",
+        keyId: "mock",
+        planId: planId ?? "cart",
+        mockMode: true,
+      });
+    }
 
     const order = await razorpay.orders.create({
       amount: orderAmount,
@@ -97,6 +138,7 @@ export const verifyPayment = async (req, res) => {
     } = req.body;
 
     const isMock = razorpay_order_id?.startsWith("mock_");
+    const testSuffix = isMock ? " (Test Payment)" : "";
 
     if (!isMock) {
       const expected = crypto
@@ -109,7 +151,7 @@ export const verifyPayment = async (req, res) => {
           .json({ message: "Payment verification failed." });
     }
 
-    // Subscription plan payment
+    // ── Subscription plan payment ───────────────────────────────────────────
     if (planId && planId !== "cart" && PLANS[planId]) {
       const plan = PLANS[planId];
       const startDate = new Date();
@@ -125,11 +167,30 @@ export const verifyPayment = async (req, res) => {
         razorpayPaymentId: razorpay_payment_id,
       };
       await User.findByIdAndUpdate(req.user._id, { subscription });
+
+      // ── Log it so Purchase History can show it ─────────────────────────────
+      const wallet = await getOrCreateWallet(req.user._id);
+      wallet.transactions.push({
+        type: "subscription",
+        amount: plan.amount / 100,
+        description: `${plan.label} Subscription${testSuffix}`,
+        paymentMethod: "razorpay",
+        planId: plan.id,
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        status: "success",
+      });
+      await wallet.save();
+
       return res.json({ message: "Plan activated.", subscription });
     }
 
-    // Cart course payment — enrol student
+    // ── Cart course payment — enrol student ─────────────────────────────────
     if (Array.isArray(courseIds) && courseIds.length > 0) {
+      const courses = await Course.find({ _id: { $in: courseIds } })
+        .select("price title")
+        .lean();
+
       await Promise.all(
         courseIds.map((id) =>
           Course.findByIdAndUpdate(id, {
@@ -142,8 +203,30 @@ export const verifyPayment = async (req, res) => {
       });
       await Cart.findOneAndUpdate(
         { user: req.user._id },
-        { $pull: { courses: { $in: courseIds } } }
+        { $pull: { courses: { $in: courseIds } } },
       );
+
+      // ── Log it so Purchase History can show it ─────────────────────────────
+      const subtotal = courses.reduce((s, c) => s + (c.price ?? 0), 0);
+      const amountPaid = Math.max(0, subtotal);
+
+      const wallet = await getOrCreateWallet(req.user._id);
+      wallet.transactions.push({
+        type: "purchase",
+        amount: amountPaid,
+        description:
+          (courses.length === 1
+            ? `Course: ${courses[0].title}`
+            : `${courses.length} courses: ${courses.map((c) => c.title).join(", ")}`) +
+          testSuffix,
+        paymentMethod: "razorpay",
+        courseIds,
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        status: "success",
+      });
+      await wallet.save();
+
       return res.json({
         message: "Enrolled successfully.",
         enrolled: courseIds,
@@ -160,10 +243,19 @@ export const verifyPayment = async (req, res) => {
 // ── POST /billing/cancel ──────────────────────────────────────────────────────
 export const cancelSubscription = async (req, res) => {
   try {
+    const user = await User.findById(req.user._id).select("subscription");
+    if (!user?.subscription?.plan) {
+      return res.status(400).json({ message: "No active subscription found." });
+    }
+
     await User.findByIdAndUpdate(req.user._id, {
-      $unset: { subscription: "" },
+      "subscription.status": "cancelled",
     });
-    res.json({ message: "Subscription cancelled." });
+
+    res.json({
+      message:
+        "Subscription cancelled successfully. It will stay active until the current billing period ends.",
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

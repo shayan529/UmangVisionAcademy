@@ -659,6 +659,9 @@ const StudentDashboard = () => {
     "/student-dashboard/leaderboard": t("studentDashboard.leaderboard"),
     "/student-dashboard/progress": t("studentDashboard.progress"),
     "/student-dashboard/wallet": t("studentDashboard.wallet"),
+    "/student-dashboard/purchase-history": t(
+      "studentDashboard.purchaseHistory",
+    ),
   };
 
   const unreadCount = useSelector(

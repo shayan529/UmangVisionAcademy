@@ -24,9 +24,9 @@ const getOrCreateWallet = async (userId) => {
 export const getWallet = async (req, res) => {
   try {
     const wallet = await getOrCreateWallet(req.user._id);
-    const transactions = [...wallet.transactions]
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 50);
+    const transactions = [...wallet.transactions].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+    );
     res.json({ balance: wallet.balance, transactions });
   } catch (err) {
     console.error("[Wallet] getWallet:", err.message);

@@ -2,12 +2,13 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../redux/slices/authSlice";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ShoppingCart } from "lucide-react";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 const Navbar = () => {
   const { user, loading } = useSelector((state) => state.auth);
+  const { cartIds = [] } = useSelector((state) => state.cart || {});
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -21,6 +22,7 @@ const Navbar = () => {
   const hasStudentRole = role?.includes("student");
   const hasAdminRole = role?.includes("admin");
   const isMultiRole = hasInstructorRole && hasStudentRole && !hasAdminRole;
+  const cartCount = cartIds.length;
 
   const dashboardPath = hasAdminRole
     ? "/admin-dashboard"
@@ -168,11 +170,15 @@ const Navbar = () => {
       <div className="w-full px-4 md:px-6 py-4 md:py-5 flex items-center justify-between">
         {/* ── Logo ── */}
         <Link to="/" className="flex items-center gap-3 shrink-0">
-          <div className="w-9 h-9 md:w-11 md:h-11 rounded-2xl bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-black font-bold text-lg md:text-xl shadow-lg shadow-indigo-500/30">
-            <img src="/Logo.png" alt="Logo" className="" />
+          <div className="w-14 h-14 md:w-16 md:h-16 flex items-center justify-center">
+            <img
+              src="/Logo.png"
+              alt="Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-extrabold text-white tracking-wide">
+            <h1 className="text-lg md:text-xl font-extrabold text-white tracking-wide">
               Umang Vision
               <span className="shimmer-txt"> Academy</span>
             </h1>
@@ -287,7 +293,21 @@ const Navbar = () => {
         </div>
 
         {/* ── Desktop right section ── */}
-        <div className="hidden md:flex items-center gap-3 ml-auto">
+        <div className="hidden md:flex items-center gap-3 ml-auto ">
+          <button
+            type="button"
+            onClick={() => navigate("/cart")}
+            className="relative cursor-pointer inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
+            aria-label="Cart"
+          >
+            <ShoppingCart size={18} />
+            {cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                {cartCount}
+              </span>
+            )}
+          </button>
+
           {loading ? (
             <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
               <div className="w-4 h-4 rounded-full border-2 border-indigo-500/30 border-t-indigo-500 animate-spin" />
@@ -342,14 +362,29 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* ── Mobile hamburger ── */}
-        <button
-          type="button"
-          onClick={() => setMobileMenuOpen((prev) => !prev)}
-          className="md:hidden ml-3 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white hover:bg-white/5 transition text-lg"
-        >
-          {mobileMenuOpen ? "✕" : "☰"}
-        </button>
+        {/* ── Mobile actions ── */}
+        <div className="md:hidden ml-3 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate("/cart")}
+            className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
+            aria-label="Cart"
+          >
+            <ShoppingCart size={17} />
+            {cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
+                {cartCount}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white hover:bg-white/5 transition text-lg"
+          >
+            {mobileMenuOpen ? "✕" : "☰"}
+          </button>
+        </div>
       </div>
 
       {/* ── Mobile menu ── */}

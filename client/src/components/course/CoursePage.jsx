@@ -1608,6 +1608,14 @@ export default function CoursePage() {
   const courseComplete =
     totalLessonCount > 0 && completed.size >= totalLessonCount;
 
+  // ── Derived lesson data — must be declared BEFORE any hook that reads it
+  // (e.g. in a dependency array) to avoid a "cannot access before
+  // initialization" TDZ error on render. ──
+  const chapters = groupIntoChapters(course?.lessons ?? []);
+  const allLessons = course?.lessons ?? [];
+  const activeLesson = allLessons[activeIdx];
+  const isTextLesson = activeLesson?.type === "text";
+
   const handleQuizSubmit = async () => {
     setQuizLoading(true);
     try {
@@ -1627,7 +1635,11 @@ export default function CoursePage() {
         dispatch(
           updateUserScoreAndSubmissions({
             score: data.newTotalScore,
-            submission: { courseId: course._id, score: data.percentage },
+            quizSubmissionUpdate: {
+              courseId: course._id,
+              score: data.percentage,
+            },
+            earnedCertificates: data.earnedCertificates,
           }),
         );
         dispatch(
@@ -1729,11 +1741,6 @@ export default function CoursePage() {
     },
     [storageKey],
   );
-
-  const chapters = groupIntoChapters(course?.lessons ?? []);
-  const allLessons = course?.lessons ?? [];
-  const activeLesson = allLessons[activeIdx];
-  const isTextLesson = activeLesson?.type === "text";
 
   const handleLessonEnd = useCallback(() => {
     setCompleted((prev) => {

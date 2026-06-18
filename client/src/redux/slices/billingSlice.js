@@ -148,7 +148,12 @@ const billingSlice = createSlice({
       })
       .addCase(cancelSubscription.fulfilled, (state) => {
         state.loading = false;
-        state.subscription = null;
+        if (state.subscription) {
+          state.subscription = {
+            ...state.subscription,
+            status: "cancelled",
+          };
+        }
       })
       .addCase(cancelSubscription.rejected, (state, { payload }) => {
         state.loading = false;

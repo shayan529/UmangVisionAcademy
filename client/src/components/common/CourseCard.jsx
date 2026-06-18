@@ -8,13 +8,18 @@ const CourseCard = ({ course }) => {
   const { user } = useSelector((state) => state.auth);
 
   const handleEnroll = () => {
+    const courseId = course?._id ?? course?.id;
+
     if (!user) {
       navigate("/login", {
-        state: { from: `/courses/${course._id}/demo` },
+        state: { from: `/courses/${courseId ?? ""}/demo` },
       });
       return;
     }
-    dispatch(addToCart(course._id ?? course.id));
+
+    if (!courseId) return;
+
+    dispatch(addToCart(courseId));
     navigate("/cart");
   };
 

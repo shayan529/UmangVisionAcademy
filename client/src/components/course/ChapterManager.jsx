@@ -289,70 +289,70 @@ const TextLessonEditor = ({
 
   const canGenerate = !!lessonTitle?.trim();
 
-  //   const generateWithAI = async () => {
-  //     setAiGenerating(true);
-  //     setAiError("");
-  //     try {
-  //       const token = localStorage.getItem("token");
-  //       const res = await fetch("/api/ai/chat", {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //         credentials: "include",
-  //         body: JSON.stringify({
-  //           messages: [
-  //             {
-  //               role: "user",
-  //               content: `Write a comprehensive, well-structured educational lesson on: "${lessonTitle}".
-  // ${courseSubject ? `Course subject: ${courseSubject}.` : ""}
-  // ${courseDescription ? `Course description: ${courseDescription}` : ""}
+  const generateWithAI = async () => {
+    setAiGenerating(true);
+    setAiError("");
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          messages: [
+            {
+              role: "user",
+              content: `Write a comprehensive, well-structured educational lesson on: "${lessonTitle}".
+  ${courseSubject ? `Course subject: ${courseSubject}.` : ""}
+  ${courseDescription ? `Course description: ${courseDescription}` : ""}
 
-  // Format in Markdown:
-  // - Brief introduction paragraph
-  // - Key concepts with ## headings
-  // - Concrete examples where helpful
-  // - Short summary at the end
+  Format in Markdown:
+  - Brief introduction paragraph
+  - Key concepts with ## headings
+  - Concrete examples where helpful
+  - Short summary at the end
 
-  // Write clearly for school/college students. Be educational and engaging. Use Markdown formatting throughout.`,
-  //             },
-  //           ],
-  //         }),
-  //       });
+  Write clearly for school/college students. Be educational and engaging. Use Markdown formatting throughout.`,
+            },
+          ],
+        }),
+      });
 
-  //       if (!res.ok) throw new Error("AI service unavailable");
+      if (!res.ok) throw new Error("AI service unavailable");
 
-  //       const reader = res.body.getReader();
-  //       const decoder = new TextDecoder();
-  //       let buffer = "";
-  //       let fullText = "";
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fullText = "";
 
-  //       while (true) {
-  //         const { done, value: chunk } = await reader.read();
-  //         if (done) break;
-  //         buffer += decoder.decode(chunk, { stream: true });
-  //         const lines = buffer.split("\n");
-  //         buffer = lines.pop() ?? "";
-  //         for (const line of lines) {
-  //           if (!line.startsWith("data: ")) continue;
-  //           const payload = line.slice(6).trim();
-  //           if (payload === "[DONE]") break;
-  //           try {
-  //             const { text } = JSON.parse(payload);
-  //             if (text) fullText += text;
-  //           } catch { }
-  //         }
-  //       }
+      while (true) {
+        const { done, value: chunk } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(chunk, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const payload = line.slice(6).trim();
+          if (payload === "[DONE]") break;
+          try {
+            const { text } = JSON.parse(payload);
+            if (text) fullText += text;
+          } catch {}
+        }
+      }
 
-  //       onChange(fullText.trim());
-  //     } catch (err) {
-  //       console.error("AI lesson generation failed:", err);
-  //       setAiError("AI generation failed. Please try again.");
-  //     } finally {
-  //       setAiGenerating(false);
-  //     }
-  //   };
+      onChange(fullText.trim());
+    } catch (err) {
+      console.error("AI lesson generation failed:", err);
+      setAiError("AI generation failed. Please try again.");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
 
   return (
     <div
@@ -386,7 +386,7 @@ const TextLessonEditor = ({
           {aiError && (
             <span style={{ fontSize: 10, color: "#f87171" }}>{aiError}</span>
           )}
-          {/* <button
+          <button
             type="button"
             onClick={generateWithAI}
             disabled={aiGenerating || !canGenerate}
@@ -428,15 +428,27 @@ const TextLessonEditor = ({
                   viewBox="0 0 24 24"
                   fill="none"
                 >
-                  <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" opacity=".3" />
-                  <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round" />
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="white"
+                    strokeWidth="3"
+                    opacity=".3"
+                  />
+                  <path
+                    d="M12 2a10 10 0 0 1 10 10"
+                    stroke="white"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
                 </svg>
                 Generating…
               </>
             ) : (
               "✨ Generate with AI"
             )}
-          </button> */}
+          </button>
         </div>
       </div>
 

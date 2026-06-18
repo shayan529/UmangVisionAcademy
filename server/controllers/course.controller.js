@@ -81,7 +81,10 @@ export const createCourse = async (req, res) => {
       instructor: req.user._id,
       board,
       students: [],
-      certificate: certificate && typeof certificate === "object" ? certificate : undefined,
+      certificate:
+        certificate && typeof certificate === "object"
+          ? certificate
+          : undefined,
     });
 
     res.status(201).json(shapeCourse(course));
@@ -233,7 +236,9 @@ export const enrolledCourses = async (req, res) => {
       .populate("instructor", "name email")
       .lean();
 
-    const student = await User.findById(studentId).select("quizSubmissions").lean();
+    const student = await User.findById(studentId)
+      .select("quizSubmissions")
+      .lean();
     const quizMap = {};
     (student?.quizSubmissions ?? []).forEach((s) => {
       quizMap[s.courseId.toString()] = s.score;
@@ -281,7 +286,7 @@ const issueCertificateIfEarned = async (studentId, course) => {
   if (!student) return;
 
   const alreadyIssued = student.earnedCertificates?.some(
-    (c) => c.courseId.toString() === course._id.toString()
+    (c) => c.courseId.toString() === course._id.toString(),
   );
   if (alreadyIssued) return;
 
@@ -292,7 +297,8 @@ const issueCertificateIfEarned = async (studentId, course) => {
         courseTitle: course.title,
         issuedAt: new Date(),
         theme: course.certificate?.theme || "purple",
-        certificateTitle: course.certificate?.title || "Certificate of Completion",
+        certificateTitle:
+          course.certificate?.title || "Certificate of Completion",
         signatoryName: course.certificate?.signatoryName || "",
         signatoryTitle: course.certificate?.signatoryTitle || "",
         instructorName: "", // filled below
@@ -524,8 +530,10 @@ export const deleteCourse = async (req, res) => {
 export const submitQuiz = async (req, res) => {
   try {
     const { answers } = req.body;
-    const course = await Course.findById(req.params.id)
-      .populate("instructor", "name"); // add populate
+    const course = await Course.findById(req.params.id).populate(
+      "instructor",
+      "name",
+    ); // add populate
     if (!course?.quiz?.questions?.length)
       return res.status(404).json({ success: false, message: "No quiz found" });
 
@@ -561,7 +569,7 @@ export const submitQuiz = async (req, res) => {
     // ── Issue certificate if not already earned ──────────────────────────
     if (course.certificate?.enabled) {
       const alreadyIssued = (student.earnedCertificates ?? []).some(
-        (c) => c.courseId.toString() === course._id.toString()
+        (c) => c.courseId.toString() === course._id.toString(),
       );
       if (!alreadyIssued) {
         if (!student.earnedCertificates) student.earnedCertificates = [];
@@ -570,7 +578,8 @@ export const submitQuiz = async (req, res) => {
           courseTitle: course.title,
           issuedAt: new Date(),
           theme: course.certificate?.theme || "purple",
-          certificateTitle: course.certificate?.title || "Certificate of Completion",
+          certificateTitle:
+            course.certificate?.title || "Certificate of Completion",
           signatoryName: course.certificate?.signatoryName || "",
           signatoryTitle: course.certificate?.signatoryTitle || "",
           instructorName: course.instructor?.name || "",
@@ -588,6 +597,7 @@ export const submitQuiz = async (req, res) => {
       pointsEarned,
       newTotalScore: student.score,
       breakdown,
+      earnedCertificates: student.earnedCertificates,
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

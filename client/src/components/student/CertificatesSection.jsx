@@ -167,7 +167,7 @@ const A4CertificateCard = ({ cert, studentName }) => {
           <div style={{ textAlign: "center" }}>
             <div
               style={{
-                fontSize: "clamp(7px, 1.1vw, 11px)",
+                fontSize: 11,
                 fontWeight: 800,
                 color: t.accent,
                 letterSpacing: "0.2em",
@@ -180,7 +180,7 @@ const A4CertificateCard = ({ cert, studentName }) => {
             </div>
             <div
               style={{
-                fontSize: "clamp(6px, 0.9vw, 9px)",
+                fontSize: 9,
                 color: "rgba(255,255,255,0.45)",
                 fontFamily: "sans-serif",
                 letterSpacing: "0.05em",
@@ -215,13 +215,13 @@ const A4CertificateCard = ({ cert, studentName }) => {
           </div>
           <div
             style={{
-              fontSize: "clamp(8px, 1.2vw, 12px)",
+              fontSize: 12,
               fontWeight: 700,
               color: t.accent,
               letterSpacing: "0.3em",
               textTransform: "uppercase",
               fontFamily: "sans-serif",
-              marginBottom: "1.5%",
+              marginBottom: 8,
             }}
           >
             {cert.title}
@@ -231,30 +231,30 @@ const A4CertificateCard = ({ cert, studentName }) => {
               width: "30%",
               height: 1,
               background: `linear-gradient(90deg, transparent, ${t.accent}88, transparent)`,
-              margin: "0 auto 2%",
+              margin: "0 auto 10px",
             }}
           />
           <div
             style={{
-              fontSize: "clamp(9px, 1.3vw, 13px)",
-              color: "rgba(255,255,255,0.75)",
+              fontSize: 13,
+              color: "rgba(255,255,255,0.78)",
               fontFamily: "Georgia, serif",
-              marginBottom: 12,
-              lineHeight: 1.8,
+              marginBottom: 10,
+              lineHeight: 1.7,
             }}
           >
             This is to certify that{" "}
             <strong>{studentName || "Student Name"}</strong> has exhibited
-            outstanding dedication and successfully completed the course
+            outstanding dedication and successfully completed the course{" "}
             <strong>“{cert.course}”</strong>.
           </div>
           <div
             style={{
-              fontSize: "clamp(9px, 1.3vw, 13px)",
-              color: "rgba(255,255,255,0.75)",
+              fontSize: 13,
+              color: "rgba(255,255,255,0.78)",
               fontFamily: "Georgia, serif",
-              marginBottom: 12,
-              lineHeight: 1.8,
+              marginBottom: 10,
+              lineHeight: 1.7,
             }}
           >
             Awarded on <strong>{cert.issuedDate}</strong>, this certificate
@@ -263,11 +263,11 @@ const A4CertificateCard = ({ cert, studentName }) => {
           </div>
           <div
             style={{
-              fontSize: "clamp(9px, 1.3vw, 13px)",
-              color: "rgba(255,255,255,0.75)",
+              fontSize: 13,
+              color: "rgba(255,255,255,0.78)",
               fontFamily: "Georgia, serif",
-              marginBottom: "1.5%",
-              lineHeight: 1.8,
+              marginBottom: 0,
+              lineHeight: 1.7,
             }}
           >
             Presented by Umang Vision Academy as an official record of
@@ -288,7 +288,7 @@ const A4CertificateCard = ({ cert, studentName }) => {
           <div>
             <div
               style={{
-                fontSize: "clamp(6px, 0.85vw, 8px)",
+                fontSize: 8,
                 color: "rgba(255,255,255,0.4)",
                 fontFamily: "sans-serif",
                 letterSpacing: "0.1em",
@@ -300,7 +300,7 @@ const A4CertificateCard = ({ cert, studentName }) => {
             </div>
             <div
               style={{
-                fontSize: "clamp(6px, 0.9vw, 9px)",
+                fontSize: 9,
                 color: t.accent,
                 fontFamily: "monospace",
                 fontWeight: 700,
@@ -312,22 +312,22 @@ const A4CertificateCard = ({ cert, studentName }) => {
           <div style={{ textAlign: "center" }}>
             <div
               style={{
-                width: "clamp(28px, 4vw, 44px)",
-                height: "clamp(28px, 4vw, 44px)",
+                width: 44,
+                height: 44,
                 borderRadius: "50%",
                 border: `2px solid ${t.accent}88`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 margin: "0 auto 2px",
-                fontSize: "clamp(12px, 2vw, 20px)",
+                fontSize: 18,
               }}
             >
               🎓
             </div>
             <div
               style={{
-                fontSize: "clamp(5px, 0.7vw, 7px)",
+                fontSize: 7,
                 color: "rgba(255,255,255,0.4)",
                 fontFamily: "sans-serif",
                 letterSpacing: "0.15em",
@@ -340,7 +340,7 @@ const A4CertificateCard = ({ cert, studentName }) => {
           <div style={{ textAlign: "right" }}>
             <div
               style={{
-                fontSize: "clamp(9px, 1.4vw, 14px)",
+                fontSize: 14,
                 fontFamily: "Georgia, serif",
                 fontStyle: "italic",
                 color: t.accent,
@@ -352,7 +352,7 @@ const A4CertificateCard = ({ cert, studentName }) => {
             </div>
             <div
               style={{
-                width: "clamp(40px, 6vw, 70px)",
+                width: 70,
                 height: 1,
                 background: `${t.accent}66`,
                 marginLeft: "auto",
@@ -361,7 +361,7 @@ const A4CertificateCard = ({ cert, studentName }) => {
             />
             <div
               style={{
-                fontSize: "clamp(6px, 0.85vw, 8px)",
+                fontSize: 8,
                 color: "rgba(255,255,255,0.5)",
                 fontFamily: "sans-serif",
                 letterSpacing: "0.05em",

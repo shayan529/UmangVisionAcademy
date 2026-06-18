@@ -80,6 +80,7 @@ import Blogs from "./components/common/Blogs";
 import BoardCourses from "./components/Boards/BoardCourses";
 import CoursePage from "./components/course/CoursePage";
 import ProgressPage from "./components/student/ProgressPage";
+import PurchaseHistory from "./components/student/PurchaseHistory";
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -173,6 +174,7 @@ function App() {
             <Route path="achievements" element={<Achievements />} />
             <Route path="progress" element={<ProgressPage />} />
             <Route path="wallet" element={<StudentWallet />} />
+            <Route path="purchase-history" element={<PurchaseHistory />} />
 
             {/* ── Mock Tests (nested layout with sub-nav) ── */}
             <Route path="mock-tests" element={<MockTestsLayout />}>

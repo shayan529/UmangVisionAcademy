@@ -25,6 +25,7 @@ const Sidebar = ({
 
   const [mockTestsOpen, setMockTestsOpen] = useState(false);
 
+  // ── Items rendered BEFORE the Mock Tests section ──────────────────────────
   const navItemsTop = [
     {
       label: t("studentSidebar.overview"),
@@ -42,7 +43,6 @@ const Sidebar = ({
       to: "/student-dashboard/ai-tutor",
       icon: "🤖",
     },
-
     ...(!billingLoading && isPremium
       ? [
           {
@@ -52,6 +52,10 @@ const Sidebar = ({
           },
         ]
       : []),
+  ];
+
+  // ── Items rendered AFTER the Mock Tests section ────────────────────────────
+  const navItemsAfterMockTests = [
     {
       label: t("studentSidebar.certificates"),
       to: "/student-dashboard/certificates",
@@ -81,6 +85,11 @@ const Sidebar = ({
       label: t("studentSidebar.wallet"),
       to: "/student-dashboard/wallet",
       icon: "👛",
+    },
+    {
+      label: t("studentSidebar.purchaseHistory"),
+      to: "/student-dashboard/purchase-history",
+      icon: "📦",
     },
   ];
 
@@ -203,6 +212,9 @@ const Sidebar = ({
           <NavItem key={item.to} item={item} />
         ))}
         <MockTestsSection />
+        {navItemsAfterMockTests.map((item) => (
+          <NavItem key={item.to} item={item} />
+        ))}
         {navItemsBottom.map((item) => (
           <NavItem key={item.to} item={item} />
         ))}

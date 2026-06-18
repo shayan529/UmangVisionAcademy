@@ -386,7 +386,13 @@ const Sel = ({ value, onChange, options }) => (
 );
 
 // ── QuizManager ───────────────────────────────────────────────────────────────
-function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
+function QuizManager({
+  quiz,
+  onChange,
+  courseTitle,
+  courseDescription,
+  showToast,
+}) {
   const [aiLoading, setAiLoading] = useState(false);
   const [activeIdx, setActiveIdx] = useState(null);
   const questions = quiz?.questions || [];
@@ -422,6 +428,10 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
     );
 
   const generateWithAI = async () => {
+    if (!courseTitle?.trim() || !courseDescription?.trim()) {
+      showToast?.("Add a Subject and Description before generating with AI.");
+      return;
+    }
     setAiLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -433,16 +443,28 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
         },
         body: JSON.stringify({
           title: courseTitle,
-          description: courseDescription,
+          summary: courseDescription,
         }),
       });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.message || `Request failed (${res.status})`);
+      }
+
       const data = await res.json();
-      if (data.questions?.length) {
-        updateQuestions(data.questions);
+      const aiQuestions = data.quiz?.questions;
+      if (aiQuestions?.length) {
+        updateQuestions(aiQuestions);
         setActiveIdx(0);
+      } else {
+        showToast?.(
+          "AI didn't return any questions. Try a more detailed description.",
+        );
       }
     } catch (err) {
       console.error("AI quiz generation failed:", err);
+      showToast?.(err.message || "AI quiz generation failed.");
     } finally {
       setAiLoading(false);
     }
@@ -485,7 +507,7 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
             {questions.length} question{questions.length !== 1 ? "s" : ""}
           </span>
         </div>
-        {/* <button
+        <button
           type="button"
           onClick={generateWithAI}
           disabled={aiLoading}
@@ -537,7 +559,7 @@ function QuizManager({ quiz, onChange, courseTitle, courseDescription }) {
           ) : (
             "✨ Generate with AI"
           )}
-        </button> */}
+        </button>
       </div>
       <div style={{ display: "flex", minHeight: questions.length ? 320 : 120 }}>
         {questions.length > 0 && (
@@ -1279,7 +1301,15 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
 }
 
 // ── CourseForm ────────────────────────────────────────────────────────────────
-const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
+const CourseForm = ({
+  form,
+  setForm,
+  onSave,
+  onCancel,
+  saving,
+  mode,
+  showToast,
+}) => {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -1387,6 +1417,7 @@ const CourseForm = ({ form, setForm, onSave, onCancel, saving, mode }) => {
           onChange={(quiz) => setForm((f) => ({ ...f, quiz }))}
           courseTitle={form.subject}
           courseDescription={form.description}
+          showToast={showToast}
         />
       </Field>
       <div
@@ -1750,6 +1781,7 @@ export default function InstructorCourses({ showToast }) {
               onCancel={() => setView("list")}
               saving={saving}
               mode="create"
+              showToast={showToast}
             />
           </div>
         )}
@@ -2162,6 +2194,7 @@ export default function InstructorCourses({ showToast }) {
                             onCancel={closeEdit}
                             saving={saving}
                             mode="edit"
+                            showToast={showToast}
                           />
 
                           <div

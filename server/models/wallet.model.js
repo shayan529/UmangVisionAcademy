@@ -4,20 +4,34 @@ const transactionSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ["deposit", "purchase", "refund", "coin_redeem"],
+      enum: ["deposit", "purchase", "refund", "coin_redeem", "subscription"],
       required: true,
     },
     amount: { type: Number, required: true }, // always positive, in ₹
     description: { type: String, default: "" },
-    // For Razorpay deposits
+    // How the payment was actually made
+    paymentMethod: {
+      type: String,
+      enum: ["wallet", "razorpay", "internal"],
+      default: "wallet",
+    },
+    // For Razorpay deposits / direct course or subscription payments
     razorpayOrderId: { type: String, default: null },
     razorpayPaymentId: { type: String, default: null },
-    // For course purchases
+    // For single-course purchases (wallet flow)
     courseId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Course",
       default: null,
     },
+    // For multi-course cart purchases (Razorpay flow)
+    courseIds: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Course",
+      default: undefined,
+    },
+    // For subscription purchases
+    planId: { type: String, default: null },
     // For coin redemptions
     coinsRedeemed: { type: Number, default: null },
     status: {

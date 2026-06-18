@@ -436,6 +436,9 @@ export default function CourseDemo() {
       });
       return;
     }
+
+    if (!id || id === "undefined") return;
+
     import("../../redux/slices/cartSlice").then(({ addToCart }) => {
       dispatch(addToCart(id));
       setAddedToCart(true);

@@ -116,10 +116,27 @@ export default function BillingPage() {
     }
 
     // 1. Create order on backend
-    const result = await dispatch(createOrder(plan.id));
+    const result = await dispatch(
+      createOrder({
+        planId: plan.id,
+      }),
+    );
     if (createOrder.rejected.match(result)) return;
 
-    const { orderId, amount, currency, keyId } = result.payload;
+    const { orderId, amount, currency, keyId, mockMode } = result.payload;
+
+    if (mockMode) {
+      await dispatch(
+        verifyPayment({
+          razorpay_order_id: orderId,
+          razorpay_payment_id: `mock_pay_${Date.now()}`,
+          razorpay_signature: "mock_signature",
+          planId: plan.id,
+        }),
+      );
+      dispatch(fetchSubscription());
+      return;
+    }
 
     // 2. Open Razorpay checkout
     const options = {
@@ -160,7 +177,10 @@ export default function BillingPage() {
 
   if (!user) return null;
 
-  const activeSub = subscription?.status === "active" ? subscription : null;
+  const activeSub =
+    subscription?.status === "active" || subscription?.status === "cancelled"
+      ? subscription
+      : null;
   const subColor = statusColors[subscription?.status] ?? statusColors.active;
   const accentColor =
     planColors[subscription?.plan ?? selectedPlan?.id] ?? "#7c3aed";
@@ -385,7 +405,8 @@ export default function BillingPage() {
                         {subColor.label}
                       </span>
                       <span style={{ fontSize: 12, color: "#64748b" }}>
-                        {subscription.status === "active"
+                        {subscription.status === "active" ||
+                        subscription.status === "cancelled"
                           ? `${days} day${days !== 1 ? "s" : ""} remaining`
                           : ""}
                       </span>
