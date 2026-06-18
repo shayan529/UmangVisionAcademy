@@ -1,20 +1,27 @@
-import axios from 'axios';
+import axios from "axios";
+
+const getDefaultApiBaseUrl = () => {
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/api`;
+  }
+  return "http://localhost:5000/api";
+};
 
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+  import.meta.env.VITE_API_BASE_URL || getDefaultApiBaseUrl();
 
 export const API_ENDPOINTS = {
   // Auth endpoints
   AUTH: {
-    LOGIN: '/users/login',
-    REGISTER: '/users/register',
-    LOGOUT: '/users/logout',
-    ME: '/users/me',
+    LOGIN: "/users/login",
+    REGISTER: "/users/register",
+    LOGOUT: "/users/logout",
+    ME: "/users/me",
   },
 
   // User endpoints
   USERS: {
-    LIST: '/users',
+    LIST: "/users",
     GET: (id) => `/users/${id}`,
     UPDATE: (id) => `/users/${id}`,
     DELETE: (id) => `/users/${id}`,
@@ -22,51 +29,51 @@ export const API_ENDPOINTS = {
 
   // Course endpoints
   COURSES: {
-    LIST: '/courses',
-    PUBLIC: '/courses/public', // GET — all published courses
-    ENROLLED: '/courses/enrolled', // GET  — courses student is enrolled in
-    ENROLL: '/courses/enroll', // POST — enroll in one or more courses
+    LIST: "/courses",
+    PUBLIC: "/courses/public", // GET — all published courses
+    ENROLLED: "/courses/enrolled", // GET  — courses student is enrolled in
+    ENROLL: "/courses/enroll", // POST — enroll in one or more courses
     GET: (id) => `/courses/${id}`,
-    CREATE: '/courses',
+    CREATE: "/courses",
     UPDATE: (id) => `/courses/${id}`,
     DELETE: (id) => `/courses/${id}`,
   },
 
   // Instructor application endpoints
   INSTRUCTOR_APPLICATIONS: {
-    SUBMIT: '/instructor-applications',
-    ME: '/instructor-applications/me',
-    ALL: '/instructor-applications',
+    SUBMIT: "/instructor-applications",
+    ME: "/instructor-applications/me",
+    ALL: "/instructor-applications",
     APPROVE: (id) => `/instructor-applications/${id}/approve`,
     REJECT: (id) => `/instructor-applications/${id}`,
   },
 
   // Session endpoints  ← new
   SESSIONS: {
-    LIST: '/sessions',
+    LIST: "/sessions",
     GET: (id) => `/sessions/${id}`,
-    CREATE: '/sessions',
+    CREATE: "/sessions",
     UPDATE: (id) => `/sessions/${id}`,
     DELETE: (id) => `/sessions/${id}`,
   },
 
   // Student endpoints  ← new
   STUDENTS: {
-    LIST: '/students',
+    LIST: "/students",
     GET: (id) => `/students/${id}`,
-    ACTIVITY: '/students/activity',
-    LEADERBOARD: '/students/leaderboard',
+    ACTIVITY: "/students/activity",
+    LEADERBOARD: "/students/leaderboard",
   },
   AI: {
-    GENERATE_QUIZ: '/ai/generate-quiz',
+    GENERATE_QUIZ: "/ai/generate-quiz",
   },
 
   // Cart endpoints
   CART: {
-    GET: '/cart',
-    ADD: '/cart/add',
+    GET: "/cart",
+    ADD: "/cart/add",
     REMOVE: (courseId) => `/cart/${courseId}`,
-    CLEAR: '/cart',
+    CLEAR: "/cart",
   },
 };
 
@@ -74,7 +81,7 @@ export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
