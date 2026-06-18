@@ -57,7 +57,7 @@ import InstructorCourses from "./components/instructor/InstructorCourses";
 import InstructorStudents from "./components/instructor/InstructorStudents";
 import InstructorSessions from "./components/instructor/InstructorSessions";
 import InstructorAnalytics from "./components/instructor/InstructorAnalytics";
-import InstructorAI from "./components/instructor/InstructorAI";
+import InstructorAI from "./components/instructor/InstructorAi";
 import InstructorNotifications from "./components/instructor/InstructorNotifications";
 import InstructorSettings from "./components/instructor/InstructorSettings";
 import InstructorMockTests from "./components/instructor/InstructorMockTests";
