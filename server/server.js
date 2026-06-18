@@ -82,7 +82,7 @@ app.use("/api/achievements", achievementRoutes);
 // Serve frontend build in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(CLIENT_BUILD_PATH));
-  app.get("*", (req, res) => {
+  app.get(/.*/, (req, res) => {
     if (req.path.startsWith("/api")) {
       return res.status(404).json({ message: "API route not found" });
     }
