@@ -3,7 +3,7 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { sendOtpEmail } from "../utils/mailer.js"; // adjust path if needed
+import { sendOtpEmail } from "../utils/Mailer.js"; // adjust path if needed
 
 // ── In-memory OTP store (use Redis in production) ────────────────────────────
 // Structure: key → { otp, expiresAt, attempts }
@@ -168,11 +168,9 @@ export const sendEmailOtp = async (req, res) => {
       const elapsed = Date.now() - (current.expiresAt - OTP_TTL_MS);
       if (elapsed < RESEND_COOLDOWN) {
         const wait = Math.ceil((RESEND_COOLDOWN - elapsed) / 1000);
-        return res
-          .status(429)
-          .json({
-            message: `Please wait ${wait}s before requesting a new OTP.`,
-          });
+        return res.status(429).json({
+          message: `Please wait ${wait}s before requesting a new OTP.`,
+        });
       }
     }
 
@@ -248,11 +246,9 @@ export const sendPasswordOtp = async (req, res) => {
       const elapsed = Date.now() - (current.expiresAt - OTP_TTL_MS);
       if (elapsed < RESEND_COOLDOWN) {
         const wait = Math.ceil((RESEND_COOLDOWN - elapsed) / 1000);
-        return res
-          .status(429)
-          .json({
-            message: `Please wait ${wait}s before requesting a new OTP.`,
-          });
+        return res.status(429).json({
+          message: `Please wait ${wait}s before requesting a new OTP.`,
+        });
       }
     }
 
