@@ -1,6 +1,6 @@
 import express from "express";
 import crypto from "crypto";
-import { sendOtpEmail } from "../utils/mailer.js"; // adjust path as needed
+import { sendOtpEmail } from "../utils/Mailer.js"; // adjust path as needed
 import User from "../models/user.model.js"; // adjust path as needed
 
 const router = express.Router();
