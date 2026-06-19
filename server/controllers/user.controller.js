@@ -512,3 +512,89 @@ export const LogoutUser = (req, res) => {
   });
   res.json({ message: "Logged out successfully" });
 };
+
+// ── Admin: Create Student (no session/cookie side effects) ───────────────────
+// Mirrors RegisterUser's validation, referral code assignment, and device
+// stamping, but is intended to be called by an already-authenticated admin
+// on someone else's behalf. Crucially, it does NOT issue a JWT or set the
+// "token" cookie — calling RegisterUser from the admin panel would silently
+// replace the admin's own session with the newly created student's session,
+// logging the admin out and into the new account. This route avoids that.
+export const createStudentByAdmin = async (req, res) => {
+  const {
+    name,
+    email,
+    password,
+    role,
+    city,
+    state,
+    phoneNumber,
+    pincode,
+    referralCode: referralCodeParam,
+  } = req.body;
+
+  try {
+    if (!name || !password || !city || !state || !phoneNumber || !pincode) {
+      return res.status(400).json({
+        message:
+          "Name, password, city, state, pincode, and phone number are required",
+      });
+    }
+
+    const existingPhone = await User.findOne({ phoneNumber });
+    if (existingPhone) {
+      return res.status(400).json({ message: "Phone number already in use" });
+    }
+
+    if (email) {
+      const existingEmail = await User.findOne({ email });
+      if (existingEmail) {
+        return res.status(400).json({ message: "Email already in use" });
+      }
+    }
+
+    const allowedRoles = ["student", "instructor", "admin"];
+    const normalizedRole = allowedRoles.includes(role) ? role : "student";
+
+    const referrer = referralCodeParam
+      ? await User.findOne({
+          referralCode: referralCodeParam.trim().toUpperCase(),
+        })
+      : null;
+
+    const user = await User.create({
+      name,
+      ...(email && { email }),
+      password,
+      roles: [normalizedRole],
+      city,
+      state,
+      phoneNumber,
+      pincode,
+      referralCode: await getUniqueReferralCode(),
+      ...(referrer && { referredBy: referrer._id }),
+    });
+
+    if (referrer) {
+      referrer.coins = (referrer.coins ?? 0) + 50;
+      referrer.referralsCount = (referrer.referralsCount ?? 0) + 1;
+      await referrer.save();
+    }
+
+    // No devices/login stamping here — this account hasn't actually logged
+    // in yet; that will happen naturally the first time the student signs in.
+
+    const userData = user.toObject();
+    delete userData.password;
+
+    // Deliberately no createToken / setTokenCookie call here.
+    res.status(201).json(userData);
+  } catch (error) {
+    const message =
+      error?.errors?.password?.message ||
+      error.message ||
+      "Failed to create student";
+    res.status(400).json({ message });
+    console.error("Error creating student (admin):", error);
+  }
+};

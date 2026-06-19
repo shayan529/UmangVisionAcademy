@@ -24,6 +24,37 @@ const EMPTY_LESSON = {
   description: "",
 };
 
+// ── PDF text extraction (lazy-loaded pdf.js, client-side only) ────────────────
+let pdfjsLibPromise = null;
+const getPdfjs = () => {
+  if (!pdfjsLibPromise) {
+    pdfjsLibPromise = import("pdfjs-dist/build/pdf.mjs").then((lib) => {
+      lib.GlobalWorkerOptions.workerSrc = new URL(
+        "pdfjs-dist/build/pdf.worker.mjs",
+        import.meta.url,
+      ).toString();
+      return lib;
+    });
+  }
+  return pdfjsLibPromise;
+};
+
+const extractTextFromPdf = async (file) => {
+  const pdfjsLib = await getPdfjs();
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  const pageTexts = [];
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items.map((item) => item.str).join(" ");
+    pageTexts.push(pageText.trim());
+  }
+
+  return pageTexts.join("\n\n").trim();
+};
+
 // ── TypeToggle ────────────────────────────────────────────────────────────────
 const TypeToggle = ({ value, onChange }) => (
   <div
@@ -286,6 +317,10 @@ const TextLessonEditor = ({
 }) => {
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiError, setAiError] = useState("");
+  const [pdfParsing, setPdfParsing] = useState(false);
+  const [pdfError, setPdfError] = useState("");
+  const [pdfFileName, setPdfFileName] = useState("");
+  const pdfInputRef = useRef(null);
 
   const canGenerate = !!lessonTitle?.trim();
 
@@ -354,6 +389,42 @@ const TextLessonEditor = ({
     }
   };
 
+  const handlePdfClick = () => pdfInputRef.current?.click();
+
+  const handlePdfChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf" && !/\.pdf$/i.test(file.name)) {
+      setPdfError("Please select a PDF file.");
+      e.target.value = "";
+      return;
+    }
+
+    setPdfParsing(true);
+    setPdfError("");
+    setPdfFileName(file.name);
+
+    try {
+      const text = await extractTextFromPdf(file);
+      if (!text) {
+        setPdfError(
+          "No selectable text found in this PDF (it may be scanned/image-only).",
+        );
+      } else {
+        // Append to existing content if there's already something there,
+        // otherwise replace — keeps behaviour predictable either way.
+        onChange(value?.trim() ? `${value.trim()}\n\n${text}` : text);
+      }
+    } catch (err) {
+      console.error("PDF text extraction failed:", err);
+      setPdfError("Couldn't read that PDF. Please try a different file.");
+    } finally {
+      setPdfParsing(false);
+      e.target.value = "";
+    }
+  };
+
   return (
     <div
       style={{
@@ -371,6 +442,8 @@ const TextLessonEditor = ({
           padding: "8px 12px",
           background: "#0b1120",
           borderBottom: "1px solid #1e293b",
+          flexWrap: "wrap",
+          gap: 8,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -382,14 +455,88 @@ const TextLessonEditor = ({
             Markdown supported
           </span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            flexWrap: "wrap",
+          }}
+        >
           {aiError && (
             <span style={{ fontSize: 10, color: "#f87171" }}>{aiError}</span>
           )}
+          {pdfError && (
+            <span style={{ fontSize: 10, color: "#f87171" }}>{pdfError}</span>
+          )}
+
+          <input
+            type="file"
+            accept="application/pdf,.pdf"
+            ref={pdfInputRef}
+            onChange={handlePdfChange}
+            style={{ display: "none" }}
+          />
+          <button
+            type="button"
+            onClick={handlePdfClick}
+            disabled={pdfParsing || aiGenerating}
+            title="Upload a PDF and extract its text into this lesson"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "5px 12px",
+              borderRadius: 8,
+              border: "1px solid #38bdf840",
+              background: pdfParsing ? "#334155" : "#0c2a3a",
+              color: pdfParsing ? "#475569" : "#38bdf8",
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: pdfParsing || aiGenerating ? "not-allowed" : "pointer",
+              opacity: aiGenerating ? 0.5 : 1,
+              transition: "all 0.15s",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {pdfParsing ? (
+              <>
+                <svg
+                  style={{
+                    animation: "spin 1s linear infinite",
+                    width: 11,
+                    height: 11,
+                    flexShrink: 0,
+                  }}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="#38bdf8"
+                    strokeWidth="3"
+                    opacity=".3"
+                  />
+                  <path
+                    d="M12 2a10 10 0 0 1 10 10"
+                    stroke="#38bdf8"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                Reading {pdfFileName ? `"${pdfFileName}"` : "PDF"}…
+              </>
+            ) : (
+              "📑 Upload PDF"
+            )}
+          </button>
+
           <button
             type="button"
             onClick={generateWithAI}
-            disabled={aiGenerating || !canGenerate}
+            disabled={aiGenerating || !canGenerate || pdfParsing}
             title={
               !canGenerate
                 ? "Enter a lesson title first"
@@ -410,8 +557,11 @@ const TextLessonEditor = ({
               color: !canGenerate ? "#475569" : "#fff",
               fontSize: 11,
               fontWeight: 700,
-              cursor: aiGenerating || !canGenerate ? "not-allowed" : "pointer",
-              opacity: aiGenerating ? 0.75 : 1,
+              cursor:
+                aiGenerating || !canGenerate || pdfParsing
+                  ? "not-allowed"
+                  : "pointer",
+              opacity: aiGenerating || pdfParsing ? 0.75 : 1,
               transition: "all 0.15s",
               whiteSpace: "nowrap",
             }}
@@ -459,16 +609,18 @@ const TextLessonEditor = ({
         placeholder={
           aiGenerating
             ? "AI is writing your lesson…"
-            : !canGenerate
-              ? "Enter a lesson title above, then click ✨ Generate with AI…\n\nOr write your content here using Markdown:\n# Heading\n**bold**, *italic*\n- bullet points\n> blockquotes"
-              : "Write your lesson content here…\n\nOr click ✨ Generate with AI above.\n\nMarkdown:\n# Heading\n**bold**, *italic*\n- bullet points\n> blockquotes"
+            : pdfParsing
+              ? "Extracting text from your PDF…"
+              : !canGenerate
+                ? "Enter a lesson title above, then click ✨ Generate with AI…\n\nOr click 📑 Upload PDF to pull in text from a file.\n\nOr write your content here using Markdown:\n# Heading\n**bold**, *italic*\n- bullet points\n> blockquotes"
+                : "Write your lesson content here…\n\nOr click ✨ Generate with AI, or 📑 Upload PDF, above.\n\nMarkdown:\n# Heading\n**bold**, *italic*\n- bullet points\n> blockquotes"
         }
         style={{
           width: "100%",
           padding: "14px 16px",
           background: "#070e1a",
           border: "none",
-          color: aiGenerating ? "#334155" : "#f1f5f9",
+          color: aiGenerating || pdfParsing ? "#334155" : "#f1f5f9",
           fontSize: 13,
           fontFamily: "monospace",
           resize: "vertical",

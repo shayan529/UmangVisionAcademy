@@ -15,6 +15,7 @@ import AdminCourses from "./AdminCourses";
 import AdminApplications from "./AdminApplications";
 import AdminDevices from "./AdminDevices";
 import AdminBulkImport from "./AdminBulkImport";
+import RoleManager from "./RoleManager";
 
 export default function AdminDashboard() {
   const dispatch = useDispatch();
@@ -181,6 +182,8 @@ export default function AdminDashboard() {
         return <AdminBulkImport refreshUsers={() => dispatch(fetchUsers())} />;
       case "applications":
         return <AdminApplications />;
+      case "roles":
+        return <RoleManager />;
       case "devices":
         return <AdminDevices users={users} loading={usersLoading} />;
       default:

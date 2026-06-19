@@ -9,6 +9,7 @@ import {
   updateUser,
   deleteUser,
   bulkImportStudents,
+  createStudentByAdmin,
 } from "./../controllers/user.controller.js";
 import {
   protect,
@@ -37,5 +38,6 @@ router.get("/me", protect, getCurrentUser);
 router.get("/:id", protect, selfOrAdmin, getUserById);
 router.put("/:id", protect, selfOrAdmin, updateUser);
 router.delete("/:id", protect, selfOrAdmin, deleteUser);
+router.post("/admin-create", protect, adminOnly, createStudentByAdmin);
 
 export default router;

@@ -29,6 +29,22 @@ const EMPTY_FORM = {
   },
 };
 
+const EMPTY_BULK_ITEM = () => ({
+  subject: "",
+  price: "",
+  description: "",
+  content: "",
+  lessons: [],
+  quiz: { title: "Final Quiz", questions: [] },
+  certificate: {
+    enabled: false,
+    title: "Certificate of Completion",
+    signatoryName: "",
+    signatoryTitle: "",
+    theme: "purple",
+  },
+});
+
 const CLASSES = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`);
 const BOARDS = ["CBSE", "ICSE", "MP Board"];
 const DRAFT_STORAGE_KEY = "instructorCourseDraft";
@@ -1488,6 +1504,302 @@ const CourseForm = ({
   );
 };
 
+// ── BulkCourseForm ────────────────────────────────────────────────────────────
+const BulkCourseForm = ({
+  form,
+  setForm,
+  onSave,
+  onCancel,
+  saving,
+  showToast,
+}) => {
+  const setMeta = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const updateItem = (idx, field, value) =>
+    setForm((f) => ({
+      ...f,
+      items: f.items.map((it, i) =>
+        i === idx ? { ...it, [field]: value } : it,
+      ),
+    }));
+
+  const addItem = () =>
+    setForm((f) => ({ ...f, items: [...f.items, EMPTY_BULK_ITEM()] }));
+
+  const removeItem = (idx) =>
+    setForm((f) => ({ ...f, items: f.items.filter((_, i) => i !== idx) }));
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <Field label="Class" hint="* (applies to all courses below)">
+          <Sel
+            value={form.className}
+            onChange={setMeta("className")}
+            options={[
+              { value: "", label: "Select class" },
+              ...CLASSES.map((c) => ({ value: c, label: c })),
+            ]}
+          />
+        </Field>
+        <Field label="Board" hint="* (applies to all courses below)">
+          <Sel
+            value={form.board}
+            onChange={setMeta("board")}
+            options={[
+              { value: "", label: "Select board" },
+              ...BOARDS.map((b) => ({ value: b, label: b })),
+            ]}
+          />
+        </Field>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+          gap: 16,
+        }}
+      >
+        <FileUploader
+          label="Thumbnail"
+          hint="JPG, PNG, WEBP — shared by all courses in this batch"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          folder="Umang Vision Academy/thumbnails"
+          icon="🖼️"
+          currentUrl={form.thumbnailUrl}
+          onUploaded={(url) => setForm((f) => ({ ...f, thumbnailUrl: url }))}
+        />
+        <FileUploader
+          label="Demo Video"
+          hint="MP4, WEBM — shared by all courses in this batch"
+          accept="video/mp4,video/webm,video/quicktime"
+          folder="Umang Vision Academy/demos"
+          icon="🎬"
+          currentUrl={form.demoVideoUrl}
+          onUploaded={(url) => setForm((f) => ({ ...f, demoVideoUrl: url }))}
+        />
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <label
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#94a3b8",
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+            }}
+          >
+            Courses ({form.items.length})
+          </label>
+          <button
+            type="button"
+            onClick={addItem}
+            style={{
+              padding: "6px 14px",
+              borderRadius: 8,
+              border: "1px dashed #334155",
+              background: "transparent",
+              color: "#818cf8",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            + Add Subject
+          </button>
+        </div>
+
+        {form.items.map((item, idx) => (
+          <div
+            key={idx}
+            style={{
+              border: "1px solid #1e293b",
+              borderRadius: 14,
+              padding: 18,
+              background: "#0b1120",
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+              position: "relative",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingBottom: 4,
+                borderBottom: "1px solid #1e293b",
+              }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#a78bfa" }}>
+                Course {idx + 1}
+                {item.subject ? ` — ${item.subject}` : ""}
+              </span>
+              {form.items.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeItem(idx)}
+                  style={{
+                    fontSize: 11,
+                    color: "#f87171",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "2fr 1fr",
+                gap: 12,
+              }}
+            >
+              <Field label="Subject" hint="*">
+                <Input
+                  value={item.subject}
+                  onChange={(e) => updateItem(idx, "subject", e.target.value)}
+                  placeholder="e.g. Mathematics"
+                />
+              </Field>
+              <Field label="Price" hint="(₹ — 0 for free)">
+                <Input
+                  value={item.price}
+                  onChange={(e) => updateItem(idx, "price", e.target.value)}
+                  placeholder="0"
+                  type="number"
+                />
+              </Field>
+            </div>
+
+            <ChapterManager
+              lessons={item.lessons ?? []}
+              onChange={(lessons) => updateItem(idx, "lessons", lessons)}
+              courseSubject={item.subject}
+              courseDescription={item.description}
+            />
+
+            <CertificateManager
+              certificate={item.certificate}
+              onChange={(certificate) =>
+                updateItem(idx, "certificate", certificate)
+              }
+              courseTitle={item.subject}
+            />
+
+            <Field label="Description" hint="* (course summary)">
+              <Textarea
+                value={item.description}
+                onChange={(e) => updateItem(idx, "description", e.target.value)}
+                placeholder="Brief description"
+                rows={3}
+              />
+            </Field>
+            <Field label="Course Content" hint="(chapters, topics)">
+              <Textarea
+                value={item.content}
+                onChange={(e) => updateItem(idx, "content", e.target.value)}
+                placeholder={"Chapter 1: Algebra\nChapter 2: Geometry"}
+                rows={4}
+              />
+            </Field>
+
+            <Field
+              label="Final Quiz"
+              hint="(optional — students take after completing all lessons)"
+            >
+              <QuizManager
+                quiz={item.quiz}
+                onChange={(quiz) => updateItem(idx, "quiz", quiz)}
+                courseTitle={item.subject}
+                courseDescription={item.description}
+                showToast={showToast}
+              />
+            </Field>
+          </div>
+        ))}
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          justifyContent: "flex-end",
+          paddingTop: 8,
+          borderTop: "1px solid #1e293b",
+        }}
+      >
+        <button
+          onClick={onCancel}
+          style={{
+            padding: "10px 20px",
+            borderRadius: 10,
+            border: "1px solid #334155",
+            background: "transparent",
+            color: "#94a3b8",
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: "pointer",
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => onSave(false)}
+          disabled={saving}
+          style={{
+            padding: "10px 20px",
+            borderRadius: 10,
+            border: "1px solid #334155",
+            background: "transparent",
+            color: "#e2e8f0",
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: "pointer",
+            opacity: saving ? 0.6 : 1,
+          }}
+        >
+          Save All as Draft
+        </button>
+        <button
+          onClick={() => onSave(true)}
+          disabled={saving}
+          style={{
+            padding: "10px 20px",
+            borderRadius: 10,
+            border: "none",
+            background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+            color: "#fff",
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: "pointer",
+            opacity: saving ? 0.6 : 1,
+            boxShadow: "0 4px 16px rgba(124,58,237,.25)",
+          }}
+        >
+          {saving
+            ? "Submitting…"
+            : `Submit All ${form.items.length} for Review`}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function InstructorCourses({ showToast }) {
   const dispatch = useDispatch();
@@ -1506,10 +1818,18 @@ export default function InstructorCourses({ showToast }) {
       return EMPTY_FORM;
     }
   });
-  const [saving, setSaving] = useState(false);
-  const [deleteId, setDeleteId] = useState(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [createMode, setCreateMode] = useState("single"); // "single" | "bulk"
+  const [bulkForm, setBulkForm] = useState({
+    className: "",
+    board: "",
+    thumbnailUrl: "",
+    demoVideoUrl: "",
+    items: [EMPTY_BULK_ITEM()],
+  });
+  const [saving, setSaving] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   useEffect(() => {
     dispatch(fetchCourses());
@@ -1661,6 +1981,75 @@ export default function InstructorCourses({ showToast }) {
     }
   };
 
+  const handleBulkCreate = async (publish) => {
+    if (!bulkForm.className || !bulkForm.board) {
+      showToast?.("Select a Class and Board before submitting.");
+      return;
+    }
+    const items = bulkForm.items.filter((it) => it.subject.trim());
+    if (items.length === 0) {
+      showToast?.("Add at least one subject.");
+      return;
+    }
+    if (publish) {
+      if (!bulkForm.thumbnailUrl) {
+        showToast?.("Thumbnail is required before submitting for review.");
+        return;
+      }
+      const missing = items.find(
+        (it) => !it.description.trim() || !it.content.trim(),
+      );
+      if (missing) {
+        showToast?.(
+          "Every course needs a Description and Course Content before submitting for review.",
+        );
+        return;
+      }
+    }
+
+    setSaving(true);
+    let successCount = 0;
+    for (const item of items) {
+      const payload = {
+        title: item.subject.trim(),
+        summary: item.description.trim(),
+        description: item.content?.trim() || "",
+        category: bulkForm.className,
+        board: bulkForm.board,
+        lessons: item.lessons ?? [],
+        price: Number(item.price) || 0,
+        thumbnailUrl: bulkForm.thumbnailUrl || "",
+        demoVideoUrl: bulkForm.demoVideoUrl || "",
+        published: publish,
+        quiz: item.quiz ?? { title: "Final Quiz", questions: [] },
+        certificate: item.certificate ?? {
+          enabled: false,
+          title: "Certificate of Completion",
+          signatoryName: "",
+          signatoryTitle: "",
+          theme: "purple",
+        },
+      };
+      const result = await dispatch(createCourse(payload));
+      if (createCourse.fulfilled.match(result)) successCount++;
+    }
+    setSaving(false);
+
+    if (successCount > 0) {
+      setBulkForm({
+        className: "",
+        board: "",
+        thumbnailUrl: "",
+        demoVideoUrl: "",
+        items: [EMPTY_BULK_ITEM()],
+      });
+      setView("list");
+    }
+    showToast?.(
+      `${successCount}/${items.length} courses ${publish ? "submitted for review" : "saved as draft"}.`,
+    );
+  };
+
   const handleEdit = async (publish) => {
     if (publish && !validateForPublish(editForm)) return;
     setSaving(true);
@@ -1774,15 +2163,63 @@ export default function InstructorCourses({ showToast }) {
               animation: "slideDown 0.3s ease",
             }}
           >
-            <CourseForm
-              form={createForm}
-              setForm={setCreateForm}
-              onSave={handleCreate}
-              onCancel={() => setView("list")}
-              saving={saving}
-              mode="create"
-              showToast={showToast}
-            />
+            <div
+              style={{
+                display: "inline-flex",
+                padding: 4,
+                background: "#0b1120",
+                border: "1px solid #1e293b",
+                borderRadius: 12,
+                marginBottom: 24,
+              }}
+            >
+              {[
+                { key: "single", label: "Single Course" },
+                { key: "bulk", label: "Bulk Upload (Whole Class)" },
+              ].map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setCreateMode(opt.key)}
+                  style={{
+                    padding: "8px 18px",
+                    borderRadius: 9,
+                    border: "none",
+                    background:
+                      createMode === opt.key
+                        ? "linear-gradient(135deg,#7c3aed,#06b6d4)"
+                        : "transparent",
+                    color: createMode === opt.key ? "#fff" : "#94a3b8",
+                    fontWeight: 700,
+                    fontSize: 12,
+                    cursor: "pointer",
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {createMode === "single" ? (
+              <CourseForm
+                form={createForm}
+                setForm={setCreateForm}
+                onSave={handleCreate}
+                onCancel={() => setView("list")}
+                saving={saving}
+                mode="create"
+                showToast={showToast}
+              />
+            ) : (
+              <BulkCourseForm
+                form={bulkForm}
+                setForm={setBulkForm}
+                onSave={handleBulkCreate}
+                onCancel={() => setView("list")}
+                saving={saving}
+                showToast={showToast}
+              />
+            )}
           </div>
         )}
 

@@ -24,6 +24,7 @@ import mockTestRoutes from "./routes/mockTest.routes.js";
 import passwordResetRoutes from "./routes/passwordReset.routes.js";
 import walletRoutes from "./routes/wallet.routes.js";
 import achievementRoutes from "./routes/achievement.routes.js";
+import roleRoutes from "./routes/role.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -78,6 +79,7 @@ app.use("/api/mock-tests", mockTestRoutes);
 app.use("/api/auth", passwordResetRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/achievements", achievementRoutes);
+app.use("/api/admin/roles", roleRoutes);
 
 // Serve frontend build in production
 if (process.env.NODE_ENV === "production") {

@@ -13,6 +13,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logoutUser } from "../../redux/slices/authSlice";
+import { Lock } from "lucide-react";
 
 const AdminSidebar = ({
   tab,
@@ -38,6 +39,7 @@ const AdminSidebar = ({
       icon: CheckCircle,
       badge: applicationsCount,
     },
+    { id: "roles", label: "Roles & Permissions", icon: Lock },
     { id: "devices", label: "Logged In Devices", icon: Shield },
   ];
 

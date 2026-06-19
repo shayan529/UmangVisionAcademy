@@ -20,6 +20,7 @@
     "i18next-browser-languagedetector": "^8.2.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.16.0",
+    "pdfjs-dist": "^4.7.76",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-hot-toast": "^2.6.0",

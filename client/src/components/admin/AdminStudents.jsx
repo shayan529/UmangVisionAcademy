@@ -18,6 +18,10 @@ import {
   Monitor,
   Gift,
   Eye,
+  Pencil,
+  UserPlus,
+  Save,
+  Loader2,
 } from "lucide-react";
 import api from "../../config/api.js";
 
@@ -47,6 +51,8 @@ const fmtDate = (d) => {
     return "—";
   }
 };
+
+const ROLE_OPTIONS = ["student", "instructor", "admin"];
 
 /* ─── Avatar ──────────────────────────────────────────── */
 const Av = ({ name = "?", size = 36 }) => (
@@ -94,8 +100,406 @@ const SectionTitle = ({ icon: Icon, children }) => (
   </div>
 );
 
+/* ─── Form field primitives for Add/Edit modals ──────── */
+const FieldLabel = ({ children }) => (
+  <label className="text-xs uppercase tracking-wider text-slate-500 font-bold block mb-1.5">
+    {children}
+  </label>
+);
+
+const TextField = ({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+  required,
+}) => (
+  <div>
+    <FieldLabel>
+      {label}
+      {required && <span className="text-red-400 ml-1">*</span>}
+    </FieldLabel>
+    <input
+      type={type}
+      value={value ?? ""}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 px-3.5 text-sm text-white placeholder-slate-500 transition duration-150"
+    />
+  </div>
+);
+
+/* ─── Add Student Modal ───────────────────────────────── */
+const AddStudentModal = ({ onClose, onCreated }) => {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phoneNumber: "",
+    password: "",
+    city: "",
+    state: "",
+    pincode: "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const set = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
+
+  const handleSubmit = async () => {
+    const required = [
+      "name",
+      "password",
+      "phoneNumber",
+      "city",
+      "state",
+      "pincode",
+    ];
+    const missing = required.filter((key) => !form[key]?.trim());
+    if (missing.length) {
+      setError(
+        "Name, phone number, password, city, state, and pincode are all required.",
+      );
+      return;
+    }
+    if (form.password.trim().length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      const payload = {
+        name: form.name.trim(),
+        password: form.password,
+        phoneNumber: form.phoneNumber.trim(),
+        city: form.city.trim(),
+        state: form.state.trim(),
+        pincode: form.pincode.trim(),
+        role: "student",
+      };
+      if (form.email.trim()) payload.email = form.email.trim();
+
+      const { data } = await api.post("/users/admin-create", payload);
+      if (onCreated) await onCreated(data);
+      onClose();
+    } catch (err) {
+      setError(
+        err.response?.data?.message || err.message || "Failed to add student.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-5 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
+          <div className="flex items-center gap-2.5">
+            <UserPlus size={20} className="text-indigo-400" />
+            <p className="text-base font-extrabold text-white">Add Student</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex-none p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-6 flex flex-col gap-4">
+          <TextField
+            label="Full Name"
+            value={form.name}
+            onChange={set("name")}
+            placeholder="e.g. Aarav Sharma"
+            required
+          />
+          <TextField
+            label="Email"
+            value={form.email}
+            onChange={set("email")}
+            type="email"
+            placeholder="student@example.com"
+          />
+          <TextField
+            label="Phone Number"
+            value={form.phoneNumber}
+            onChange={set("phoneNumber")}
+            placeholder="10-digit mobile number"
+            required
+          />
+          <TextField
+            label="Password"
+            value={form.password}
+            onChange={set("password")}
+            type="password"
+            placeholder="Minimum 6 characters"
+            required
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              label="City"
+              value={form.city}
+              onChange={set("city")}
+              placeholder="City"
+              required
+            />
+            <TextField
+              label="State"
+              value={form.state}
+              onChange={set("state")}
+              placeholder="State"
+              required
+            />
+          </div>
+          <TextField
+            label="Pincode"
+            value={form.pincode}
+            onChange={set("pincode")}
+            placeholder="6-digit pincode"
+            required
+          />
+
+          {error && (
+            <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-red-300">
+              <AlertCircle size={15} className="mt-0.5 flex-none" />
+              <p className="text-xs">{error}</p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-3 mt-2">
+            <button
+              onClick={onClose}
+              disabled={saving}
+              className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition disabled:opacity-60"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition disabled:opacity-60"
+            >
+              {saving ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <UserPlus size={15} />
+                  Add Student
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─── Edit Student Modal ──────────────────────────────── */
+const EditStudentModal = ({ student, onClose, onSaved }) => {
+  const [form, setForm] = useState({
+    name: student.name || "",
+    email: student.email || "",
+    phoneNumber: student.phoneNumber || "",
+    city: student.city || "",
+    state: student.state || "",
+    pincode: student.pincode || "",
+    coins: typeof student.coins === "number" ? student.coins : 0,
+    roles: student.roles?.length ? student.roles : ["student"],
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const set = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
+
+  const toggleRole = (role) => {
+    setForm((f) => {
+      const has = f.roles.includes(role);
+      const next = has ? f.roles.filter((r) => r !== role) : [...f.roles, role];
+      return { ...f, roles: next.length ? next : ["student"] };
+    });
+  };
+
+  const handleSubmit = async () => {
+    if (!form.name.trim()) {
+      setError("Name is required.");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      const payload = {
+        name: form.name.trim(),
+        city: form.city.trim(),
+        state: form.state.trim(),
+        pincode: form.pincode.trim(),
+        coins: Number(form.coins) || 0,
+        roles: form.roles,
+      };
+      // email and phoneNumber are unique+sparse on the schema. Sending an
+      // empty string (rather than omitting the field) would not be treated
+      // as "no value" by the unique index, and could collide with another
+      // user who also has an empty string there. Only include them if the
+      // admin actually typed something.
+      if (form.email.trim()) payload.email = form.email.trim();
+      if (form.phoneNumber.trim())
+        payload.phoneNumber = form.phoneNumber.trim();
+
+      const { data } = await api.put(`/users/${student._id}`, payload);
+      if (onSaved) await onSaved(data);
+      onClose();
+    } catch (err) {
+      setError(
+        err.response?.data?.message || err.message || "Failed to save changes.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-5 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
+          <div className="flex items-center gap-3 min-w-0">
+            <Av name={student.name} size={40} />
+            <div className="min-w-0">
+              <p className="text-base font-extrabold text-white truncate">
+                Edit Student
+              </p>
+              <p className="text-xs text-slate-500 truncate">{student.email}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex-none p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-6 flex flex-col gap-4">
+          <TextField
+            label="Full Name"
+            value={form.name}
+            onChange={set("name")}
+            required
+          />
+          <TextField
+            label="Email"
+            value={form.email}
+            onChange={set("email")}
+            type="email"
+          />
+          <TextField
+            label="Phone Number"
+            value={form.phoneNumber}
+            onChange={set("phoneNumber")}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <TextField label="City" value={form.city} onChange={set("city")} />
+            <TextField
+              label="State"
+              value={form.state}
+              onChange={set("state")}
+            />
+          </div>
+          <TextField
+            label="Pincode"
+            value={form.pincode}
+            onChange={set("pincode")}
+          />
+          <TextField
+            label="Coin Balance"
+            value={form.coins}
+            onChange={(v) => set("coins")(v.replace(/[^0-9]/g, ""))}
+            type="text"
+          />
+
+          <div>
+            <FieldLabel>Roles</FieldLabel>
+            <div className="flex flex-wrap gap-2">
+              {ROLE_OPTIONS.map((role) => {
+                const active = form.roles.includes(role);
+                return (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => toggleRole(role)}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${
+                      active
+                        ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"
+                        : "bg-slate-900/40 border-slate-700 text-slate-500 hover:border-slate-600"
+                    }`}
+                  >
+                    {role}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {error && (
+            <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-red-300">
+              <AlertCircle size={15} className="mt-0.5 flex-none" />
+              <p className="text-xs">{error}</p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-3 mt-2">
+            <button
+              onClick={onClose}
+              disabled={saving}
+              className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition disabled:opacity-60"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition disabled:opacity-60"
+            >
+              {saving ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save size={15} />
+                  Save Changes
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ─── Student Details Modal ──────────────────────────── */
-const StudentDetailsModal = ({ student, courses = [], onClose }) => {
+const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
   if (!student) return null;
 
   const enrolled = courses.filter((c) =>
@@ -137,12 +541,21 @@ const StudentDetailsModal = ({ student, courses = [], onClose }) => {
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="flex-none p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2 flex-none">
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition"
+            >
+              <Pencil size={14} />
+              Edit
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-none p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="p-6">
@@ -419,6 +832,8 @@ const AdminStudents = ({
   const [importSuccess, setImportSuccess] = useState("");
   const [importStats, setImportStats] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [editingStudent, setEditingStudent] = useState(null);
+  const [addingStudent, setAddingStudent] = useState(false);
 
   const handleImportClick = () => fileInputRef.current?.click();
 
@@ -465,6 +880,13 @@ const AdminStudents = ({
     }
   };
 
+  // Called after a successful add/edit. Prefers a full refresh from the
+  // server (so course counts etc. stay in sync) but falls back gracefully
+  // if no refreshUsers prop was passed in.
+  const handleMutationSuccess = async () => {
+    if (refreshUsers) await refreshUsers();
+  };
+
   return (
     <div className="flex flex-col gap-6 max-w-4xl animate-fadeIn">
       {/* Header section */}
@@ -495,6 +917,15 @@ const AdminStudents = ({
               onChange={(e) => setQ(e.target.value)}
             />
           </div>
+
+          <button
+            type="button"
+            onClick={() => setAddingStudent(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 transition"
+          >
+            <UserPlus size={14} />
+            Add Student
+          </button>
 
           <button
             type="button"
@@ -607,6 +1038,15 @@ const AdminStudents = ({
                   Details
                 </button>
 
+                {/* Edit button */}
+                <button
+                  onClick={() => setEditingStudent(s)}
+                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/20 hover:bg-sky-500/20 hover:border-sky-500/30 transition duration-150"
+                >
+                  <Pencil size={12} />
+                  Edit
+                </button>
+
                 {/* Delete button */}
                 <button
                   onClick={() => {
@@ -646,6 +1086,25 @@ const AdminStudents = ({
           student={selectedStudent}
           courses={courses}
           onClose={() => setSelectedStudent(null)}
+          onEdit={() => {
+            setEditingStudent(selectedStudent);
+            setSelectedStudent(null);
+          }}
+        />
+      )}
+
+      {editingStudent && (
+        <EditStudentModal
+          student={editingStudent}
+          onClose={() => setEditingStudent(null)}
+          onSaved={handleMutationSuccess}
+        />
+      )}
+
+      {addingStudent && (
+        <AddStudentModal
+          onClose={() => setAddingStudent(false)}
+          onCreated={handleMutationSuccess}
         />
       )}
     </div>

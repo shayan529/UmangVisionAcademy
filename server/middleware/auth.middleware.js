@@ -18,7 +18,9 @@ export const protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    const user = await User.findById(decoded.id).select("-password");
+    const user = await User.findById(decoded.id)
+      .select("-password")
+      .populate("assignedRoles");
 
     if (!user) {
       return res.status(401).json({
