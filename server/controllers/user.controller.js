@@ -1,5 +1,7 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import xlsx from "xlsx";
+import mammoth from "mammoth";
 import User from "./../models/user.model.js";
 import bcrypt from "bcryptjs";
 
@@ -33,6 +35,110 @@ const getUniqueReferralCode = async () => {
   } while (existing);
   return code;
 };
+
+const ensureUserReferralCode = async (user) => {
+  if (user.referralCode) return user.referralCode;
+
+  const code = await getUniqueReferralCode();
+  user.referralCode = code;
+  await user.save();
+  return code;
+};
+
+const normalizeString = (value) => {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+};
+
+const pickRowValue = (row, aliases) => {
+  for (const alias of aliases) {
+    if (
+      row?.[alias] !== undefined &&
+      row?.[alias] !== null &&
+      row?.[alias] !== ""
+    ) {
+      return row[alias];
+    }
+    const fallback = row?.[alias.toLowerCase()];
+    if (fallback !== undefined && fallback !== null && fallback !== "") {
+      return fallback;
+    }
+  }
+  return "";
+};
+
+const buildStudentPayload = (row) => {
+  const name = normalizeString(
+    pickRowValue(row, [
+      "name",
+      "fullName",
+      "studentName",
+      "student",
+      "firstName",
+    ]),
+  );
+  const email = normalizeString(pickRowValue(row, ["email", "mail", "eMail"]));
+  const phoneNumber = normalizeString(
+    pickRowValue(row, [
+      "phoneNumber",
+      "phone",
+      "mobile",
+      "mobileNumber",
+      "contactNumber",
+    ]),
+  );
+  const password = normalizeString(
+    pickRowValue(row, ["password", "pass", "defaultPassword"]),
+  );
+  const city = normalizeString(
+    pickRowValue(row, ["city", "district", "location"]),
+  );
+  const state = normalizeString(pickRowValue(row, ["state", "province"]));
+  const pincode = normalizeString(
+    pickRowValue(row, ["pincode", "postalCode", "zip", "zipCode"]),
+  );
+
+  return {
+    name,
+    email,
+    phoneNumber,
+    password,
+    city,
+    state,
+    pincode,
+  };
+};
+
+const parseDelimitedText = (text) => {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.length === 0) return [];
+
+  const delimiter = lines[0].includes("\t") ? "\t" : ",";
+  const headers = lines[0]
+    .split(delimiter)
+    .map((h) => h.trim().replace(/^"|"$/g, ""));
+
+  return lines.slice(1).map((line, index) => {
+    const values = line
+      .split(delimiter)
+      .map((v) => v.trim().replace(/^"|"$/g, ""));
+
+    return headers.reduce(
+      (acc, header, i) => {
+        acc[header] = values[i] ?? "";
+        return acc;
+      },
+      { __rowIndex: index + 2 },
+    );
+  });
+};
+
+const generateStudentPassword = () =>
+  `Student@${Math.random().toString(36).slice(-6).toUpperCase()}`;
 
 // ── Helper: check if two dates fall on the same IST calendar day ──────────────
 // IST = UTC+5:30. We shift both timestamps by 5h30m before comparing dates,
@@ -219,6 +325,134 @@ export const getUsers = async (req, res) => {
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const bulkImportStudents = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded." });
+    }
+
+    const targetRole =
+      req.body.role === "instructor" ? "instructor" : "student";
+
+    let rows = [];
+    let source = "";
+    const ext = req.file.originalname.split(".").pop()?.toLowerCase();
+
+    if (["xlsx", "xls", "csv"].includes(ext || "")) {
+      const workbook = xlsx.read(req.file.buffer, {
+        type: "buffer",
+        cellDates: true,
+      });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      rows = xlsx.utils.sheet_to_json(firstSheet, {
+        defval: "",
+        raw: false,
+      });
+      source = "spreadsheet";
+    } else if (ext === "docx") {
+      const result = await mammoth.extractRawText({ buffer: req.file.buffer });
+      rows = parseDelimitedText(result.value);
+      source = "docx";
+    } else if (ext === "txt") {
+      rows = parseDelimitedText(req.file.buffer.toString("utf8"));
+      source = "text";
+    } else {
+      return res.status(400).json({
+        message: "Unsupported file type. Use CSV, Excel, DOCX, or TXT.",
+      });
+    }
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return res.status(400).json({
+        message: "No valid student records found in the file.",
+      });
+    }
+
+    const created = [];
+    const skipped = [];
+
+    for (const [index, row] of rows.entries()) {
+      const payload = buildStudentPayload(row);
+      const rowNumber = row.__rowIndex ?? index + 2;
+
+      if (!payload.name || !payload.phoneNumber) {
+        skipped.push({
+          row: rowNumber,
+          reason: "Missing required name or phone number",
+        });
+        continue;
+      }
+
+      const cleanPhone = payload.phoneNumber.replace(/[^\d+]/g, "");
+      if (!/^\+?\d{8,15}$/.test(cleanPhone)) {
+        skipped.push({
+          row: rowNumber,
+          reason: "Invalid phone number format",
+        });
+        continue;
+      }
+
+      const normalizedEmail = payload.email ? payload.email.toLowerCase() : "";
+      const finalPassword = payload.password || generateStudentPassword();
+
+      const existing = await User.findOne({
+        $or: [
+          ...(normalizedEmail ? [{ email: normalizedEmail }] : []),
+          { phoneNumber: cleanPhone },
+        ],
+      });
+
+      if (existing) {
+        skipped.push({
+          row: rowNumber,
+          reason: "Duplicate email or phone number already exists",
+        });
+        continue;
+      }
+
+      try {
+        const user = await User.create({
+          name: payload.name,
+          ...(normalizedEmail ? { email: normalizedEmail } : {}),
+          phoneNumber: cleanPhone,
+          password: finalPassword,
+          roles: [targetRole],
+          ...(payload.city ? { city: payload.city } : {}),
+          ...(payload.state ? { state: payload.state } : {}),
+          ...(payload.pincode ? { pincode: payload.pincode } : {}),
+        });
+
+        const referralCode = await ensureUserReferralCode(user);
+
+        created.push({
+          _id: user._id,
+          name: user.name,
+          email: user.email || null,
+          phoneNumber: user.phoneNumber,
+          referralCode,
+        });
+      } catch (error) {
+        skipped.push({
+          row: rowNumber,
+          reason: error.message || "Could not create student",
+        });
+      }
+    }
+
+    res.status(201).json({
+      message: `Imported ${created.length} ${targetRole}s from ${source}`,
+      inserted: created.length,
+      skipped: skipped.length,
+      skippedRows: skipped,
+    });
+  } catch (error) {
+    console.error("Bulk student import failed:", error);
+    res.status(500).json({
+      message: error.message || "Bulk student import failed",
+    });
   }
 };
 

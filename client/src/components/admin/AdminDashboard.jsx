@@ -14,6 +14,7 @@ import AdminInstructors from "./AdminInstructors";
 import AdminCourses from "./AdminCourses";
 import AdminApplications from "./AdminApplications";
 import AdminDevices from "./AdminDevices";
+import AdminBulkImport from "./AdminBulkImport";
 
 export default function AdminDashboard() {
   const dispatch = useDispatch();
@@ -152,6 +153,7 @@ export default function AdminDashboard() {
             setQ={setQ}
             deleteUser={deleteUser}
             loading={usersLoading}
+            refreshUsers={() => dispatch(fetchUsers())}
           />
         );
       case "instructors":
@@ -175,6 +177,8 @@ export default function AdminDashboard() {
             onRetry={() => dispatch(fetchAllCoursesAdmin())}
           />
         );
+      case "bulk-import":
+        return <AdminBulkImport refreshUsers={() => dispatch(fetchUsers())} />;
       case "applications":
         return <AdminApplications />;
       case "devices":

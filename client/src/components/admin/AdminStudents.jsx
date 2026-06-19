@@ -1,5 +1,25 @@
-import React from "react";
-import { Search, Trash2, User } from "lucide-react";
+import React, { useRef, useState } from "react";
+import {
+  Search,
+  Trash2,
+  User,
+  Upload,
+  CheckCircle2,
+  AlertCircle,
+  X,
+  Mail,
+  Phone,
+  MapPin,
+  Coins,
+  BookOpen,
+  Award,
+  CalendarClock,
+  Shield,
+  Monitor,
+  Gift,
+  Eye,
+} from "lucide-react";
+import api from "../../config/api.js";
 
 /* ─── helpers ─────────────────────────────────────────── */
 const hue = (name = "?") => {
@@ -13,6 +33,19 @@ const hue = (name = "?") => {
     "#14b8a6",
   ];
   return palette[name.charCodeAt(0) % palette.length];
+};
+
+const fmtDate = (d) => {
+  if (!d) return "—";
+  try {
+    return new Date(d).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return "—";
+  }
 };
 
 /* ─── Avatar ──────────────────────────────────────────── */
@@ -37,12 +70,400 @@ const Av = ({ name = "?", size = 36 }) => (
   </div>
 );
 
-const AdminStudents = ({ students = [], courses = [], q, setQ, deleteUser }) => {
+/* ─── small presentational bits for the modal (larger fonts) ── */
+const InfoRow = ({ icon: Icon, label, value }) => (
+  <div className="flex items-start gap-3 py-2.5">
+    <Icon size={16} className="text-slate-500 mt-0.5 flex-none" />
+    <div className="min-w-0">
+      <p className="text-xs uppercase tracking-wider text-slate-500 font-bold">
+        {label}
+      </p>
+      <p className="text-sm text-slate-200 font-medium break-words">
+        {value || value === 0 ? value : "—"}
+      </p>
+    </div>
+  </div>
+);
+
+const SectionTitle = ({ icon: Icon, children }) => (
+  <div className="flex items-center gap-2 mb-3 mt-6 first:mt-0">
+    <Icon size={15} className="text-indigo-400" />
+    <h4 className="text-sm font-bold uppercase tracking-wider text-indigo-300">
+      {children}
+    </h4>
+  </div>
+);
+
+/* ─── Student Details Modal ──────────────────────────── */
+const StudentDetailsModal = ({ student, courses = [], onClose }) => {
+  if (!student) return null;
+
+  const enrolled = courses.filter((c) =>
+    c.students?.some((sid) => (sid._id || sid) === student._id),
+  );
+
+  const enrolledFromProfile = (student.enrolledCourses || [])
+    .map((ec) => {
+      const id = ec._id || ec;
+      const title =
+        ec.title || courses.find((c) => c._id === id)?.title || null;
+      return { id, title };
+    })
+    .filter((ec) => ec.title);
+
+  const subscription = student.subscription || {};
+  const coins = typeof student.coins === "number" ? student.coins : 0;
+  const rupeeValue = (coins / 10).toFixed(2);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-5 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
+          <div className="flex items-center gap-3 min-w-0">
+            <Av name={student.name} size={46} />
+            <div className="min-w-0">
+              <p className="text-base font-extrabold text-white truncate">
+                {student.name}
+              </p>
+              <p className="text-xs text-slate-500 truncate">
+                {student.email || "No email on file"}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex-none p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-6">
+          {/* Contact & Location */}
+          <SectionTitle icon={Mail}>Contact & Location</SectionTitle>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 divide-y divide-slate-800/60 sm:divide-y-0">
+            <InfoRow icon={Mail} label="Email" value={student.email} />
+            <InfoRow icon={Phone} label="Phone" value={student.phoneNumber} />
+            <InfoRow
+              icon={MapPin}
+              label="City / State"
+              value={
+                [student.city, student.state].filter(Boolean).join(", ") || null
+              }
+            />
+            <InfoRow icon={MapPin} label="Pincode" value={student.pincode} />
+          </div>
+
+          {/* Account */}
+          <SectionTitle icon={Shield}>Account</SectionTitle>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 divide-y divide-slate-800/60 sm:divide-y-0">
+            <InfoRow
+              icon={Shield}
+              label="Roles"
+              value={(student.roles || ["student"]).join(", ")}
+            />
+            <InfoRow
+              icon={CalendarClock}
+              label="Joined"
+              value={fmtDate(student.createdAt)}
+            />
+            <InfoRow
+              icon={Gift}
+              label="Referral Code"
+              value={student.referralCode}
+            />
+            <InfoRow
+              icon={Gift}
+              label="Referrals Made"
+              value={student.referralsCount ?? 0}
+            />
+          </div>
+
+          {/* Wallet */}
+          <SectionTitle icon={Coins}>Wallet & Rewards</SectionTitle>
+          <div className="flex flex-wrap gap-3">
+            <div className="flex-1 min-w-[140px] rounded-xl border border-amber-500/20 bg-amber-500/10 p-3.5">
+              <p className="text-xs uppercase tracking-wider text-amber-300/80 font-bold">
+                Coin Balance
+              </p>
+              <p className="text-xl font-extrabold text-amber-300 mt-1">
+                {coins} <span className="text-sm font-semibold">coins</span>
+              </p>
+              <p className="text-xs text-amber-200/70 mt-1">
+                ≈ ₹{rupeeValue} redeemable
+              </p>
+            </div>
+            <div className="flex-1 min-w-[140px] rounded-xl border border-slate-800 bg-slate-900/40 p-3.5">
+              <p className="text-xs uppercase tracking-wider text-slate-500 font-bold">
+                Last Login Reward
+              </p>
+              <p className="text-sm font-semibold text-slate-200 mt-2">
+                {fmtDate(student.lastLoginReward)}
+              </p>
+            </div>
+            <div className="flex-1 min-w-[140px] rounded-xl border border-slate-800 bg-slate-900/40 p-3.5">
+              <p className="text-xs uppercase tracking-wider text-slate-500 font-bold">
+                Quiz Score
+              </p>
+              <p className="text-sm font-semibold text-slate-200 mt-2">
+                {student.score ?? 0}
+              </p>
+            </div>
+          </div>
+
+          {/* Subscription */}
+          <SectionTitle icon={Award}>Subscription</SectionTitle>
+          {subscription.plan ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 divide-y divide-slate-800/60 sm:divide-y-0">
+              <InfoRow
+                icon={Award}
+                label="Plan"
+                value={subscription.label || subscription.plan}
+              />
+              <InfoRow
+                icon={Shield}
+                label="Status"
+                value={subscription.status}
+              />
+              <InfoRow
+                icon={CalendarClock}
+                label="Start Date"
+                value={fmtDate(subscription.startDate)}
+              />
+              <InfoRow
+                icon={CalendarClock}
+                label="End Date"
+                value={fmtDate(subscription.endDate)}
+              />
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500 italic">
+              No active subscription.
+            </p>
+          )}
+
+          {/* Courses */}
+          <SectionTitle icon={BookOpen}>
+            Enrolled Courses ({enrolled.length || enrolledFromProfile.length})
+          </SectionTitle>
+          {enrolled.length > 0 ? (
+            <ul className="flex flex-col gap-2">
+              {enrolled.map((c) => (
+                <li
+                  key={c._id}
+                  className="flex items-center gap-2.5 text-sm text-slate-300 bg-slate-900/40 border border-slate-800/70 rounded-lg px-4 py-3"
+                >
+                  <BookOpen size={14} className="text-indigo-400 flex-none" />
+                  <span className="truncate font-medium">{c.title}</span>
+                </li>
+              ))}
+            </ul>
+          ) : enrolledFromProfile.length > 0 ? (
+            <ul className="flex flex-col gap-2">
+              {enrolledFromProfile.map((c) => (
+                <li
+                  key={c.id}
+                  className="flex items-center gap-2.5 text-sm text-slate-300 bg-slate-900/40 border border-slate-800/70 rounded-lg px-4 py-3"
+                >
+                  <BookOpen size={14} className="text-indigo-400 flex-none" />
+                  <span className="truncate font-medium">{c.title}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-slate-500 italic">
+              Not enrolled in any course yet.
+            </p>
+          )}
+
+          {/* Certificates */}
+          <SectionTitle icon={Award}>
+            Certificates ({student.earnedCertificates?.length || 0})
+          </SectionTitle>
+          {student.earnedCertificates?.length > 0 ? (
+            <ul className="flex flex-col gap-2">
+              {student.earnedCertificates.map((cert, i) => (
+                <li
+                  key={i}
+                  className="flex items-center justify-between gap-3 text-sm text-slate-300 bg-slate-900/40 border border-slate-800/70 rounded-lg px-4 py-3"
+                >
+                  <span className="flex items-center gap-2.5 truncate min-w-0">
+                    <Award size={14} className="text-emerald-400 flex-none" />
+                    <span className="truncate font-medium">
+                      {cert.courseTitle || "Certificate"}
+                    </span>
+                  </span>
+                  <span className="text-xs text-slate-500 flex-none">
+                    {fmtDate(cert.issuedAt)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-slate-500 italic">
+              No certificates earned yet.
+            </p>
+          )}
+
+          {/* Quiz Submissions */}
+          <SectionTitle icon={CheckCircle2}>
+            Quiz Submissions ({student.quizSubmissions?.length || 0})
+          </SectionTitle>
+          {student.quizSubmissions?.length > 0 ? (
+            <ul className="flex flex-col gap-2">
+              {student.quizSubmissions.map((qs, i) => (
+                <li
+                  key={i}
+                  className="flex items-center justify-between gap-3 text-sm text-slate-300 bg-slate-900/40 border border-slate-800/70 rounded-lg px-4 py-3"
+                >
+                  <span className="truncate font-medium">
+                    {courses.find(
+                      (c) => c._id === (qs.courseId?._id || qs.courseId),
+                    )?.title || "Course"}
+                  </span>
+                  <span className="text-xs text-slate-400 flex-none">
+                    Score: {qs.score} · {fmtDate(qs.completedAt)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-slate-500 italic">
+              No quiz submissions yet.
+            </p>
+          )}
+
+          {/* Devices */}
+          <SectionTitle icon={Monitor}>
+            Recent Devices ({student.devices?.length || 0})
+          </SectionTitle>
+          {student.devices?.length > 0 ? (
+            <ul className="flex flex-col gap-2">
+              {student.devices
+                .slice()
+                .reverse()
+                .slice(0, 5)
+                .map((d, i) => (
+                  <li
+                    key={i}
+                    className="flex flex-col gap-1 text-sm text-slate-300 bg-slate-900/40 border border-slate-800/70 rounded-lg px-4 py-3"
+                  >
+                    <span className="truncate text-sm font-medium">
+                      {d.userAgent || "Unknown device"}
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      IP: {d.ip || "—"} · {fmtDate(d.lastLogin)}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-slate-500 italic">
+              No device history recorded.
+            </p>
+          )}
+
+          {/* Notification Settings */}
+          {student.notificationSettings && (
+            <>
+              <SectionTitle icon={Shield}>
+                Notification Preferences
+              </SectionTitle>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(student.notificationSettings).map(
+                  ([key, val]) => (
+                    <span
+                      key={key}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${
+                        val
+                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+                          : "bg-slate-800/60 border-slate-700 text-slate-500"
+                      }`}
+                    >
+                      {key.replace(/([A-Z])/g, " $1")}
+                    </span>
+                  ),
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AdminStudents = ({
+  students = [],
+  courses = [],
+  q,
+  setQ,
+  deleteUser,
+  refreshUsers,
+}) => {
   const ql = q.toLowerCase();
   const filtS = students.filter(
     (s) =>
-      s.name?.toLowerCase().includes(ql) || s.email?.toLowerCase().includes(ql)
+      s.name?.toLowerCase().includes(ql) || s.email?.toLowerCase().includes(ql),
   );
+  const fileInputRef = useRef(null);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState("");
+  const [importSuccess, setImportSuccess] = useState("");
+  const [importStats, setImportStats] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+
+  const handleImportClick = () => fileInputRef.current?.click();
+
+  const handleImportFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const accepted = /\.(csv|xlsx|xls|docx|txt)$/i.test(file.name);
+    if (!accepted) {
+      setImportError(
+        "Supported formats: CSV, Excel (.xlsx/.xls), DOCX, or TXT",
+      );
+      event.target.value = "";
+      return;
+    }
+
+    setImporting(true);
+    setImportError("");
+    setImportSuccess("");
+    setImportStats(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const { data } = await api.post("/users/bulk-import", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setImportSuccess(data.message || "Students imported successfully.");
+      setImportStats({
+        inserted: data.inserted || 0,
+        skipped: data.skipped || 0,
+        skippedRows: data.skippedRows || [],
+      });
+      if (refreshUsers) await refreshUsers();
+    } catch (err) {
+      setImportError(
+        err.response?.data?.message || err.message || "Import failed.",
+      );
+    } finally {
+      setImporting(false);
+      event.target.value = "";
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl animate-fadeIn">
@@ -60,27 +481,93 @@ const AdminStudents = ({ students = [], courses = [], q, setQ, deleteUser }) => 
           </h2>
         </div>
 
-        {/* Search Box */}
-        <div className="relative w-full md:w-72 shrink-0">
-          <Search
-            size={14}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
-          />
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <div className="relative w-full md:w-72 shrink-0">
+            <Search
+              size={14}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+            />
+            <input
+              type="text"
+              className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 transition duration-150"
+              placeholder="Search students database..."
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleImportClick}
+            disabled={importing}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60"
+          >
+            <Upload size={14} />
+            {importing ? "Importing..." : "Bulk Import"}
+          </button>
           <input
-            type="text"
-            className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 transition duration-150"
-            placeholder="Search students database..."
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls,.docx,.txt"
+            className="hidden"
+            onChange={handleImportFile}
           />
         </div>
       </div>
+
+      <div className="rounded-2xl border border-slate-800 bg-slate-950/30 p-4 text-xs text-slate-300">
+        <p className="font-semibold text-slate-200 mb-1">Expected columns</p>
+        <p className="text-slate-400">
+          Use any of: <span className="font-medium">name</span>,{" "}
+          <span className="font-medium">email</span>,{" "}
+          <span className="font-medium">phoneNumber</span>,{" "}
+          <span className="font-medium">password</span>,{" "}
+          <span className="font-medium">city</span>,{" "}
+          <span className="font-medium">state</span>,{" "}
+          <span className="font-medium">pincode</span>
+        </p>
+      </div>
+
+      {importError && (
+        <div className="flex items-start gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-red-300">
+          <AlertCircle size={16} className="mt-0.5 flex-none" />
+          <p className="text-xs">{importError}</p>
+        </div>
+      )}
+
+      {importSuccess && (
+        <div className="flex items-start gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-emerald-300">
+          <CheckCircle2 size={16} className="mt-0.5 flex-none" />
+          <div>
+            <p className="text-xs font-semibold">{importSuccess}</p>
+            {importStats && (
+              <p className="text-[11px] text-emerald-200/90 mt-1">
+                Inserted: {importStats.inserted} · Skipped:{" "}
+                {importStats.skipped}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {importStats?.skippedRows?.length > 0 && (
+        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-200">
+          <p className="font-semibold mb-2">Skipped rows</p>
+          <ul className="space-y-1">
+            {importStats.skippedRows.map((item, index) => (
+              <li key={`${item.row}-${index}`}>
+                Row {item.row}: {item.reason}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Grid listing */}
       <div className="flex flex-col gap-3">
         {filtS.map((s) => {
           const studentCoursesCount = courses.filter((c) =>
-            c.students?.some((sid) => (sid._id || sid) === s._id)
+            c.students?.some((sid) => (sid._id || sid) === s._id),
           ).length;
 
           return (
@@ -106,16 +593,26 @@ const AdminStudents = ({ students = [], courses = [], q, setQ, deleteUser }) => 
                   Student
                 </span>
 
-                <span className="text-xs font-semibold text-slate-400 min-w-[70px] text-right">
-                  {studentCoursesCount} course{studentCoursesCount !== 1 ? "s" : ""}
+                <span className="text-xs font-semibold text-slate-400 min-w-[4.375rem] text-right">
+                  {studentCoursesCount} course
+                  {studentCoursesCount !== 1 ? "s" : ""}
                 </span>
+
+                {/* Details button */}
+                <button
+                  onClick={() => setSelectedStudent(s)}
+                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 hover:border-indigo-500/30 transition duration-150"
+                >
+                  <Eye size={12} />
+                  Details
+                </button>
 
                 {/* Delete button */}
                 <button
                   onClick={() => {
                     if (
                       window.confirm(
-                        `Are you sure you want to remove student "${s.name}"?`
+                        `Are you sure you want to remove student "${s.name}"?`,
                       )
                     ) {
                       deleteUser(s._id);
@@ -143,6 +640,14 @@ const AdminStudents = ({ students = [], courses = [], q, setQ, deleteUser }) => 
           </div>
         )}
       </div>
+
+      {selectedStudent && (
+        <StudentDetailsModal
+          student={selectedStudent}
+          courses={courses}
+          onClose={() => setSelectedStudent(null)}
+        />
+      )}
     </div>
   );
 };

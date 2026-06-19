@@ -167,21 +167,27 @@ const Navbar = () => {
         }
       `}</style>
 
-      <div className="w-full px-4 md:px-6 py-4 md:py-5 flex items-center justify-between">
+      <div className="w-full px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 flex items-center justify-between gap-2">
         {/* ── Logo ── */}
-        <Link to="/" className="flex items-center gap-3 shrink-0">
-          <div className="w-14 h-14 md:w-16 md:h-16 flex items-center justify-center">
+        <Link
+          to="/"
+          className="flex items-center shrink-0"
+          aria-label="Go to home"
+        >
+          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex items-center justify-center">
             <img
               src="/Logo.png"
               alt="Logo"
               className="w-full h-full object-contain"
             />
           </div>
-          <div>
-            <h1 className="text-lg md:text-xl font-extrabold text-white tracking-wide">
+          <div className="hidden md:flex items-center ml-2 lg:ml-3">
+            <span className="text-sm lg:text-base xl:text-lg font-extrabold text-white tracking-wide">
               Umang Vision
-              <span className="shimmer-txt"> Academy</span>
-            </h1>
+            </span>
+            <span className="ml-1 shimmer-txt text-sm lg:text-base xl:text-lg font-extrabold tracking-wide">
+              Academy
+            </span>
           </div>
         </Link>
 
@@ -343,7 +349,7 @@ const Navbar = () => {
               ) : (
                 <Link
                   to={dashboardPath}
-                  className="btn-indigo-shine whitespace-nowrap bg-gradient-to-r from-indigo-400 to-indigo-500 hover:scale-105 transition duration-300 text-black font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20"
+                  className="btn-indigo-shine whitespace-nowrap bg-linear-to-r from-indigo-400 to-indigo-500 hover:scale-105 transition duration-300 text-black font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20"
                 >
                   {t("nav.dashboard")}
                 </Link>
@@ -389,7 +395,7 @@ const Navbar = () => {
 
       {/* ── Mobile menu ── */}
       <div
-        className={`md:hidden border-t border-white/10 overflow-hidden transition-all duration-300 ${mobileMenuOpen ? "max-h-screen" : "max-h-0"}`}
+        className={`md:hidden border-t border-white/10 overflow-hidden transition-all duration-300 ${mobileMenuOpen ? "max-h-[85vh] overflow-y-auto" : "max-h-0"}`}
       >
         <div className="px-4 pt-3 pb-4 space-y-1">
           {[
@@ -447,7 +453,7 @@ const Navbar = () => {
               <Link
                 to="/become-instructor"
                 onClick={closeMobile}
-                className="btn-rose flex-1 text-center text-sm font-semibold py-2 px-3 rounded-lg bg-gradient-to-r from-indigo-400 to-indigo-500 text-black shadow-md transition"
+                className="btn-rose flex-1 text-center text-sm font-semibold py-2 px-3 rounded-lg bg-linear-to-r from-indigo-400 to-indigo-500 text-black shadow-md transition"
               >
                 {t("nav.getStarted")}
               </Link>
@@ -456,7 +462,7 @@ const Navbar = () => {
             <>
               {/* User info row */}
               <div className="flex items-center gap-2 px-3 py-2">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-black font-bold text-xs shrink-0">
+                <div className="w-7 h-7 rounded-full bg-linear-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-black font-bold text-xs shrink-0">
                   {user.name?.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -484,7 +490,7 @@ const Navbar = () => {
                   <Link
                     to={dashboardPath}
                     onClick={closeMobile}
-                    className="flex-1 text-center text-xs font-semibold py-2 px-2 rounded-lg bg-gradient-to-r from-indigo-400 to-indigo-500 text-black shadow-md transition"
+                    className="flex-1 text-center text-xs font-semibold py-2 px-2 rounded-lg bg-linear-to-r from-indigo-400 to-indigo-500 text-black shadow-md transition"
                   >
                     {t("nav.dashboard")}
                   </Link>
