@@ -904,6 +904,7 @@ const Login = () => {
       }
       if (isAdmin) navigate("/admin-dashboard");
       else if (isInstructor) navigate("/instructor-dashboard");
+      else if (user?.assignedRoles && user.assignedRoles.length > 0) navigate("/staff-dashboard");
       else navigate("/student-dashboard");
     } catch (error) {
       const message =

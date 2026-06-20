@@ -71,6 +71,38 @@ export const authorizeRoles = (...roles) => {
 // ── adminOnly ─────────────────────────────────────────────────────────────────
 export const adminOnly = authorizeRoles("admin");
 
+// ── requirePermission ─────────────────────────────────────────────────────────
+// Grants access if the user is a full admin, OR if any of their assignedRoles
+// grants the given action on the given module. This mirrors the frontend's
+// hasPermission() helper (used in StaffDashboard.jsx / StaffSidebar.jsx)
+// exactly, so a Staff member who can see a tab in the sidebar will actually
+// be allowed to hit the API routes that tab depends on.
+//
+// Must run after `protect`, since it reads req.user.assignedRoles — protect
+// already calls .populate("assignedRoles") so role.permissions is available
+// here rather than just a bare ObjectId.
+export const requirePermission = (moduleName, actionName = "view") => {
+  return (req, res, next) => {
+    const isAdmin = req.user?.roles?.includes("admin");
+    if (isAdmin) return next();
+
+    const hasGrant = req.user?.assignedRoles?.some((role) =>
+      role.permissions?.some(
+        (p) => p.module === moduleName && p.actions?.includes(actionName),
+      ),
+    );
+
+    if (!hasGrant) {
+      return res.status(403).json({
+        success: false,
+        message: `Access denied — requires admin or '${actionName}' permission on '${moduleName}'`,
+      });
+    }
+
+    next();
+  };
+};
+
 // ── instructorOnly ────────────────────────────────────────────────────────────
 export const instructorOnly = (req, res, next) => {
   const isAdmin = req.user.roles?.includes("admin"); // ✅

@@ -1,5 +1,5 @@
 import React from "react";
-import { BookOpen, Trophy, Medal, Award, Star } from "lucide-react";
+import { BookOpen, Trophy, Medal, Award, Star, ShieldCheck } from "lucide-react";
 
 /* ─── helpers ─────────────────────────────────────────── */
 const fmt = (n) => (n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : `₹${n}`);
@@ -81,7 +81,46 @@ const GoalCard = ({ tag, tagColorClass, title, desc }) => (
   </div>
 );
 
+const MODULE_LABELS = {
+  courses: "Courses",
+  users: "Users",
+  payments: "Payments",
+  moderation: "Moderation",
+};
+
+const ACTION_LABELS = {
+  view: "View",
+  create: "Create",
+  edit: "Edit",
+  delete: "Delete",
+  approve: "Approve",
+  impersonate: "Impersonate",
+  refund: "Refund",
+  export: "Export",
+  flag: "Flag",
+  remove: "Remove",
+  ban: "Ban",
+};
+
+const getGrantedPermissions = (user) => {
+  const grouped = new Map();
+
+  (user?.assignedRoles || []).forEach((role) => {
+    (role.permissions || []).forEach((permission) => {
+      const current = grouped.get(permission.module) || new Set();
+      (permission.actions || []).forEach((action) => current.add(action));
+      grouped.set(permission.module, current);
+    });
+  });
+
+  return [...grouped.entries()].map(([module, actions]) => ({
+    module,
+    actions: [...actions],
+  }));
+};
+
 const AdminOverview = ({
+  user,
   students = [],
   instructors = [],
   courses = [],
@@ -90,6 +129,18 @@ const AdminOverview = ({
   sortedInstructors = [],
 }) => {
   const maxRev = Math.max(...sortedInstructors.map((i) => i.rev), 1);
+
+  // This view is shared by the full admin dashboard and the Staff dashboard's
+  // Overview tab — a Staff member with limited permissions should never see
+  // copy that addresses them as "Admin" or implies abilities (like approving
+  // instructor applications) they may not actually have been granted.
+  const isFullAdmin = user?.roles?.includes("admin");
+  const firstName = user?.name?.split(" ")[0];
+  const greetingName = isFullAdmin ? "Admin" : firstName || "Back";
+  const roleLabel =
+    user?.assignedRoles?.map((r) => r.name).join(", ") ||
+    (isFullAdmin ? "Administrator" : "Staff Member");
+  const grantedPermissions = getGrantedPermissions(user);
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl animate-fadeIn">
@@ -100,15 +151,18 @@ const AdminOverview = ({
 
         <div className="relative z-10">
           <p className="text-xs text-indigo-400 font-bold tracking-wider uppercase mb-2">
-            Umang Vision Academy Administration Workspace
+            Umang Vision Academy{" "}
+            {isFullAdmin
+              ? "Administration Workspace"
+              : `${roleLabel} Workspace`}
           </p>
           <h1 className="text-2xl md:text-3xl font-extrabold text-white leading-tight mb-2">
-            Welcome Back, Admin 👋
+            Welcome Back, {greetingName} 👋
           </h1>
           <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
-            Monitor learning activities, approve new instructor applications,
-            view courses catalog, and manage enrollment metrics across your
-            entire platform.
+            {isFullAdmin
+              ? "Monitor learning activities, approve new instructor applications, view courses catalog, and manage enrollment metrics across your entire platform."
+              : "Monitor learning activities, view courses catalog, and manage enrollment metrics for the areas you've been granted access to."}
           </p>
         </div>
         <div className="relative z-10 shrink-0">
@@ -117,6 +171,37 @@ const AdminOverview = ({
           </span>
         </div>
       </div>
+
+      {!isFullAdmin && grantedPermissions.length > 0 && (
+        <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 shadow-sm">
+          <h3 className="text-sm font-extrabold text-white mb-4 flex items-center gap-2">
+            <ShieldCheck size={16} className="text-emerald-400" />
+            Granted Access
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {grantedPermissions.map((permission) => (
+              <div
+                key={permission.module}
+                className="rounded-xl border border-slate-800 bg-slate-950/30 p-4"
+              >
+                <p className="text-xs font-bold uppercase tracking-wide text-indigo-300">
+                  {MODULE_LABELS[permission.module] || permission.module}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {permission.actions.map((action) => (
+                    <span
+                      key={action}
+                      className="rounded-md border border-emerald-900/40 bg-emerald-950/20 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-300"
+                    >
+                      {ACTION_LABELS[action] || action}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

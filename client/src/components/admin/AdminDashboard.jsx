@@ -35,6 +35,8 @@ export default function AdminDashboard() {
     error: coursesError,
   } = useSelector((state) => state.courses);
 
+  const { user } = useSelector((state) => state.auth);
+
   const students = users.filter((u) => u.roles?.includes("student"));
   const instructors = users.filter((u) => u.roles?.includes("instructor"));
 
@@ -183,9 +185,9 @@ export default function AdminDashboard() {
       case "applications":
         return <AdminApplications />;
       case "roles":
-        return <RoleManager />;
+        return <RoleManager currentUser={user} />;
       case "devices":
-        return <AdminDevices users={users} loading={usersLoading} />;
+        return <AdminDevices users={users} loading={usersLoading} currentUser={user} />;
       default:
         return null;
     }

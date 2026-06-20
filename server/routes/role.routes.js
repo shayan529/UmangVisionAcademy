@@ -7,18 +7,20 @@ import {
   deleteRole,
   setUserRoles,
 } from "../controllers/role.controller.js";
-import { protect, adminOnly } from "../middleware/auth.middleware.js";
+import {
+  protect,
+  adminOnly,
+  requirePermission,
+} from "../middleware/auth.middleware.js";
 import { createStudentByAdmin } from "../controllers/user.controller.js";
 
 const router = express.Router();
 
-router.use(protect, adminOnly); // every route here is admin-only
-
-router.get("/modules", getPermissionModules);
-router.get("/", getRoles);
-router.post("/", createRole);
-router.put("/:id", updateRole);
-router.delete("/:id", deleteRole);
+router.get("/modules", protect, adminOnly, getPermissionModules);
+router.get("/", protect, adminOnly, getRoles);
+router.post("/", protect, adminOnly, createRole);
+router.put("/:id", protect, adminOnly, updateRole);
+router.delete("/:id", protect, adminOnly, deleteRole);
 router.post(
   "/admin-create",
   protect,
@@ -26,6 +28,6 @@ router.post(
   createStudentByAdmin, // new controller, see below
 );
 
-router.put("/assign/:id", setUserRoles); // :id = user ID
+router.put("/assign/:id", protect, adminOnly, setUserRoles); // :id = user ID
 
 export default router;

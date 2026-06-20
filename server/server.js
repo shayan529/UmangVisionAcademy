@@ -91,6 +91,13 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.join(CLIENT_BUILD_PATH, "index.html"));
   });
 }
+io.engine.on("connection_error", (err) => {
+  console.error("[Socket.IO connection_error]");
+  console.error("  req:", err.req?.url);
+  console.error("  code:", err.code);
+  console.error("  message:", err.message);
+  console.error("  context:", err.context);
+});
 
 // 3. Register session chat handlers
 registerSessionChat(io);

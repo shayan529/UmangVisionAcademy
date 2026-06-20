@@ -1,12 +1,13 @@
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { fetchMyApplication } from "../../redux/slices/applicationsSlice";
 
 /* ── Status config ── */
 const STATUS_CONFIG = {
   pending: {
-    badge: "Pending",
+    badgeKey: "instructorApplicationStatus.status.pending.badge",
     badgeCls: "bg-amber-500/15 text-amber-300 border-amber-500/30",
     icon: (
       <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
@@ -26,11 +27,11 @@ const STATUS_CONFIG = {
       </svg>
     ),
     iconCls: "text-amber-300 bg-amber-500/10",
-    headline: "Your application is in the queue",
-    sub: "We've received your application and will begin reviewing it shortly.",
+    headlineKey: "instructorApplicationStatus.status.pending.headline",
+    subKey: "instructorApplicationStatus.status.pending.sub",
   },
   under_review: {
-    badge: "Under Review",
+    badgeKey: "instructorApplicationStatus.status.under_review.badge",
     badgeCls: "bg-indigo-500/15 text-indigo-300 border-indigo-500/30",
     icon: (
       <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
@@ -50,11 +51,11 @@ const STATUS_CONFIG = {
       </svg>
     ),
     iconCls: "text-indigo-300 bg-indigo-500/10",
-    headline: "We're reviewing your application",
-    sub: "Our team is carefully evaluating your expertise and sample content.",
+    headlineKey: "instructorApplicationStatus.status.under_review.headline",
+    subKey: "instructorApplicationStatus.status.under_review.sub",
   },
   approved: {
-    badge: "Approved",
+    badgeKey: "instructorApplicationStatus.status.approved.badge",
     badgeCls: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
     icon: (
       <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
@@ -68,11 +69,11 @@ const STATUS_CONFIG = {
       </svg>
     ),
     iconCls: "text-emerald-300 bg-emerald-500/10",
-    headline: "Congratulations! You've been approved",
-    sub: "Welcome to the instructor community. You can now create and publish courses.",
+    headlineKey: "instructorApplicationStatus.status.approved.headline",
+    subKey: "instructorApplicationStatus.status.approved.sub",
   },
   rejected: {
-    badge: "Not Approved",
+    badgeKey: "instructorApplicationStatus.status.rejected.badge",
     badgeCls: "bg-rose-500/15 text-rose-300 border-rose-500/30",
     icon: (
       <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
@@ -92,8 +93,8 @@ const STATUS_CONFIG = {
       </svg>
     ),
     iconCls: "text-rose-300 bg-rose-500/10",
-    headline: "Application not approved this time",
-    sub: "Don't be discouraged — you can reapply after 30 days with an updated profile.",
+    headlineKey: "instructorApplicationStatus.status.rejected.headline",
+    subKey: "instructorApplicationStatus.status.rejected.sub",
   },
 };
 
@@ -125,28 +126,28 @@ const Dot = ({ done, active }) => (
 );
 
 /* ── Build timeline steps from live status ── */
-const buildSteps = (status) => [
+const buildSteps = (status, t) => [
   {
     key: "submitted",
-    label: "Application Submitted",
+    label: t("instructorApplicationStatus.steps.submitted"),
     done: true,
     active: false,
   },
   {
     key: "under_review",
-    label: "Under Review",
+    label: t("instructorApplicationStatus.steps.underReview"),
     done: ["approved", "rejected"].includes(status),
     active: status === "under_review",
   },
   {
     key: "decision",
-    label: "Decision Made",
+    label: t("instructorApplicationStatus.steps.decision"),
     done: ["approved", "rejected"].includes(status),
     active: false,
   },
   {
     key: "onboarding",
-    label: "Onboarding",
+    label: t("instructorApplicationStatus.steps.onboarding"),
     done: status === "approved",
     active: false,
   },
@@ -156,6 +157,7 @@ const buildSteps = (status) => [
 const InstructorApplicationStatus = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t, i18n } = useTranslation();
 
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const { myApplication, loading, error } = useSelector(
@@ -170,12 +172,14 @@ const InstructorApplicationStatus = () => {
     dispatch(fetchMyApplication());
   }, [isAuthenticated, dispatch, navigate]);
 
-  const fmtDate = (iso) =>
-    new Date(iso).toLocaleDateString("en-IN", {
+  const fmtDate = (iso) => {
+    const locale = i18n.language?.startsWith("hi") ? "hi-IN" : "en-IN";
+    return new Intl.DateTimeFormat(locale, {
       day: "numeric",
       month: "long",
       year: "numeric",
-    });
+    }).format(new Date(iso));
+  };
 
   /* ── Loading ── */
   if (loading)
@@ -207,28 +211,37 @@ const InstructorApplicationStatus = () => {
   if (!myApplication || error)
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4 text-slate-400">
-        <p>{error ?? "No application found."}</p>
+        <p>{error ?? t("instructorApplicationStatus.errors.noApplication")}</p>
         <button
           onClick={() => navigate("/become-instructor/apply")}
           className="rounded-3xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-6 py-3 text-sm font-semibold text-slate-950"
         >
-          Apply Now
+          {t("instructorApplicationStatus.errors.applyNow")}
         </button>
       </div>
     );
 
   const status = myApplication.status ?? "pending";
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
-  const steps = buildSteps(status);
+  const steps = buildSteps(status, t);
 
   const details = [
-    { label: "Applicant", value: user?.name ?? myApplication.name ?? "—" },
-    { label: "Expertise", value: myApplication.expertise ?? "—" },
     {
-      label: "Submitted",
+      label: t("instructorApplicationStatus.details.applicant"),
+      value: user?.name ?? myApplication.name ?? "—",
+    },
+    {
+      label: t("instructorApplicationStatus.details.expertise"),
+      value: myApplication.expertise ?? "—",
+    },
+    {
+      label: t("instructorApplicationStatus.details.submitted"),
       value: myApplication.createdAt ? fmtDate(myApplication.createdAt) : "—",
     },
-    { label: "Est. Response", value: "within 24 hours" },
+    {
+      label: t("instructorApplicationStatus.details.response"),
+      value: t("instructorApplicationStatus.details.responseValue"),
+    },
   ];
 
   return (
@@ -247,10 +260,10 @@ const InstructorApplicationStatus = () => {
         {/* ── Header ── */}
         <div className="su space-y-1" style={{ animationDelay: ".05s" }}>
           <p className="text-xs uppercase tracking-[.25em] text-indigo-300 font-semibold">
-            Instructor Portal
+            {t("instructorApplicationStatus.portal")}
           </p>
           <h1 className="df text-4xl font-extrabold text-white">
-            Application Status
+            {t("instructorApplicationStatus.title")}
           </h1>
         </div>
 
@@ -271,15 +284,15 @@ const InstructorApplicationStatus = () => {
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-3 mb-1">
               <h2 className="df text-xl font-bold text-white">
-                {cfg.headline}
+                {t(cfg.headlineKey)}
               </h2>
               <span
                 className={`inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-semibold ${cfg.badgeCls}`}
               >
-                {cfg.badge}
+                {t(cfg.badgeKey)}
               </span>
             </div>
-            <p className="text-slate-400 text-sm leading-6">{cfg.sub}</p>
+            <p className="text-slate-400 text-sm leading-6">{t(cfg.subKey)}</p>
           </div>
         </div>
 
@@ -297,7 +310,7 @@ const InstructorApplicationStatus = () => {
             }}
           >
             <p className="text-xs uppercase tracking-[.25em] text-indigo-300 font-semibold mb-6">
-              Progress
+              {t("instructorApplicationStatus.progress")}
             </p>
             <ol className="space-y-0">
               {steps.map((step, i) => (
@@ -319,7 +332,7 @@ const InstructorApplicationStatus = () => {
                     </p>
                     {step.active && (
                       <p className="text-xs text-slate-500 -mt-3">
-                        In progress…
+                        {t("instructorApplicationStatus.steps.inProgress")}
                       </p>
                     )}
                   </div>
@@ -338,7 +351,7 @@ const InstructorApplicationStatus = () => {
           >
             <div>
               <p className="text-xs uppercase tracking-[.25em] text-indigo-300 font-semibold mb-4">
-                Application Details
+                {t("instructorApplicationStatus.details.title")}
               </p>
               <dl className="space-y-4">
                 {details.map(({ label, value }) => (
@@ -360,7 +373,7 @@ const InstructorApplicationStatus = () => {
             {myApplication.reviewNote && (
               <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-5">
                 <p className="text-xs uppercase tracking-widest text-indigo-300 font-semibold mb-2">
-                  Note from our team
+                  {t("instructorApplicationStatus.details.note")}
                 </p>
                 <p className="text-sm text-slate-300 leading-6">
                   {myApplication.reviewNote}
@@ -380,7 +393,7 @@ const InstructorApplicationStatus = () => {
               onClick={() => navigate("/instructor-dashboard")}
               className="inline-flex items-center gap-2 rounded-3xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-7 py-3.5 text-sm font-semibold text-slate-950 shadow-lg shadow-indigo-500/20 transition hover:scale-[1.02] active:scale-[.98]"
             >
-              Go to Dashboard
+              {t("instructorApplicationStatus.cta.dashboard")}
               <svg viewBox="0 0 20 20" className="w-4 h-4" fill="none">
                 <path
                   d="M4 10h12M10 4l6 6-6 6"
@@ -397,23 +410,23 @@ const InstructorApplicationStatus = () => {
               onClick={() => navigate("/become-instructor/apply")}
               className="inline-flex items-center gap-2 rounded-3xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-7 py-3.5 text-sm font-semibold text-slate-950 shadow-lg shadow-indigo-500/20 transition hover:scale-[1.02] active:scale-[.98]"
             >
-              Reapply
+              {t("instructorApplicationStatus.cta.reapply")}
             </button>
           )}
           <button
             onClick={() => navigate("/")}
             className="inline-flex items-center gap-2 rounded-3xl border border-white/10 bg-white/5 px-7 py-3.5 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:border-white/20"
           >
-            Back to Home
+            {t("instructorApplicationStatus.cta.backHome")}
           </button>
           {(status === "pending" || status === "under_review") && (
             <p className="text-xs text-slate-600 ml-auto">
-              Questions?{" "}
+              {t("instructorApplicationStatus.cta.questions")}{" "}
               <Link
                 to="/contact"
                 className="text-indigo-400 hover:text-indigo-300 transition-colors"
               >
-                Contact support
+                {t("instructorApplicationStatus.cta.contactSupport")}
               </Link>
             </p>
           )}

@@ -8,7 +8,6 @@ export const PERMISSION_MODULES = {
   courses: ["view", "create", "edit", "delete", "approve"],
   users: ["view", "create", "edit", "delete", "impersonate"],
   payments: ["view", "refund", "export"],
-  settings: ["view", "edit"],
   moderation: ["view", "flag", "remove", "ban"],
 };
 

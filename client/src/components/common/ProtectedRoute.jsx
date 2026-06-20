@@ -62,14 +62,17 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   // Check access
   const hasAccess =
     allowedRoles.length === 0 ||
-    allowedRoles.some((allowedRole) => roles.includes(allowedRole));
+    allowedRoles.some((allowedRole) => roles.includes(allowedRole)) ||
+    (allowedRoles.includes("staff") && (roles.includes("admin") || (user?.assignedRoles && user.assignedRoles.length > 0)));
 
   if (!hasAccess) {
     const fallback = roles.includes("admin")
       ? "/admin-dashboard"
       : roles.includes("instructor")
         ? "/instructor-dashboard"
-        : "/student-dashboard";
+        : (user?.assignedRoles && user.assignedRoles.length > 0)
+          ? "/staff-dashboard"
+          : "/student-dashboard";
 
     return <Navigate to={fallback} replace />;
   }

@@ -405,6 +405,60 @@
     "submitting": "Submitting...",
     "submitButton": "Submit Application"
   },
+  "instructorApplicationStatus": {
+    "portal": "Instructor Portal",
+    "title": "Application Status",
+    "progress": "Progress",
+    "steps": {
+      "submitted": "Application Submitted",
+      "underReview": "Under Review",
+      "decision": "Decision Made",
+      "onboarding": "Onboarding",
+      "inProgress": "In progress…"
+    },
+    "details": {
+      "title": "Application Details",
+      "applicant": "Applicant",
+      "expertise": "Expertise",
+      "submitted": "Submitted",
+      "response": "Est. Response",
+      "responseValue": "within 24 hours",
+      "note": "Note from our team"
+    },
+    "status": {
+      "pending": {
+        "badge": "Pending",
+        "headline": "Your application is in the queue",
+        "sub": "We've received your application and will begin reviewing it shortly."
+      },
+      "under_review": {
+        "badge": "Under Review",
+        "headline": "We're reviewing your application",
+        "sub": "Our team is carefully evaluating your expertise and sample content."
+      },
+      "approved": {
+        "badge": "Approved",
+        "headline": "Congratulations! You've been approved",
+        "sub": "Welcome to the instructor community. You can now create and publish courses."
+      },
+      "rejected": {
+        "badge": "Not Approved",
+        "headline": "Application not approved this time",
+        "sub": "Don't be discouraged — you can reapply after 30 days with an updated profile."
+      }
+    },
+    "cta": {
+      "dashboard": "Go to Dashboard",
+      "reapply": "Reapply",
+      "backHome": "Back to Home",
+      "questions": "Questions?",
+      "contactSupport": "Contact support"
+    },
+    "errors": {
+      "noApplication": "No application found.",
+      "applyNow": "Apply Now"
+    }
+  },
   "termsOfService": {
     "title": "Terms of Service",
     "sections": {

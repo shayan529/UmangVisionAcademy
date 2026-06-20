@@ -1,5 +1,5 @@
 import express from "express";
-import { protect, authorizeRoles } from "../middleware/auth.middleware.js";
+import { protect, requirePermission } from "../middleware/auth.middleware.js";
 import {
   submitApplication,
   getMyApplication,
@@ -13,13 +13,13 @@ const router = express.Router();
 
 router.post("/", protect, uploadResume, submitApplication);
 router.get("/me", protect, getMyApplication); // ← key route for status page
-router.get("/", protect, authorizeRoles("admin"), getAllApplications);
+router.get("/", protect, requirePermission("moderation", "view"), getAllApplications);
 router.put(
   "/:id/approve",
   protect,
-  authorizeRoles("admin"),
+  requirePermission("moderation", "remove"),
   approveApplication,
 );
-router.delete("/:id", protect, authorizeRoles("admin"), rejectApplication);
+router.delete("/:id", protect, requirePermission("moderation", "remove"), rejectApplication);
 
 export default router;

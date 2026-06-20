@@ -64,6 +64,7 @@ import InstructorMockTests from "./components/instructor/InstructorMockTests";
 
 /* Admin Dashboard */
 import AdminDashboard from "./components/admin/AdminDashboard";
+import StaffDashboard from "./components/admin/StaffDashboard";
 import AdminOverview from "./components/admin/AdminOverview";
 import AdminStudents from "./components/admin/AdminStudents";
 import AdminInstructors from "./components/admin/AdminInstructors";
@@ -242,6 +243,18 @@ function App() {
             <Route path="courses" element={<AdminCourses />} />
             <Route path="leaderboard" element={<AdminLeaderboard />} />
           </Route>
+
+          {/* ========================= */}
+          {/* STAFF DASHBOARD           */}
+          {/* ========================= */}
+          <Route
+            path="staff-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["staff"]}>
+                <StaffDashboard />
+              </ProtectedRoute>
+            }
+          />
 
           {/* ── Legacy redirects ── */}
           <Route

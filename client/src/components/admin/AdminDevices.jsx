@@ -86,7 +86,7 @@ const parseUA = (userAgent) => {
   return { browser, os, isMobile };
 };
 
-const AdminDevices = ({ users = [], loading = false }) => {
+const AdminDevices = ({ users = [], loading = false, currentUser }) => {
   const [q, setQ] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [expandedUserAgents, setExpandedUserAgents] = useState({});
@@ -98,7 +98,10 @@ const AdminDevices = ({ users = [], loading = false }) => {
     }));
   };
 
-  const filteredUsers = users.filter((u) => {
+  const currentIsAdmin = currentUser?.roles?.includes("admin");
+  const visibleUsers = currentIsAdmin ? users : users.filter((u) => !u.roles?.includes("admin"));
+
+  const filteredUsers = visibleUsers.filter((u) => {
     // 1. Filter by search query
     const ql = q.toLowerCase();
     const matchesQuery =
@@ -122,8 +125,8 @@ const AdminDevices = ({ users = [], loading = false }) => {
     return matchesQuery;
   });
 
-  const studentsCount = users.filter((u) => u.roles?.includes("student")).length;
-  const instructorsCount = users.filter((u) => u.roles?.includes("instructor")).length;
+  const studentsCount = visibleUsers.filter((u) => u.roles?.includes("student")).length;
+  const instructorsCount = visibleUsers.filter((u) => u.roles?.includes("instructor")).length;
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl animate-fadeIn">
@@ -167,7 +170,7 @@ const AdminDevices = ({ users = [], loading = false }) => {
               : "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-white"
           }`}
         >
-          All Users ({users.length})
+          All Users ({visibleUsers.length})
         </button>
         <button
           onClick={() => setRoleFilter("students")}

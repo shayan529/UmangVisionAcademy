@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Search,
   Trash2,
   BookOpen,
   Star,
   GraduationCap,
+  Upload,
+  CheckCircle2,
   X,
   Mail,
   Phone,
@@ -737,8 +739,65 @@ const AdminInstructors = ({
   const [editingInstructor, setEditingInstructor] = useState(null);
   const [addingInstructor, setAddingInstructor] = useState(false);
 
+  // ── Bulk import state ──────────────────────────────────────────────────
+  const fileInputRef = useRef(null);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState("");
+  const [importSuccess, setImportSuccess] = useState("");
+  const [importStats, setImportStats] = useState(null);
+
   const handleMutationSuccess = async () => {
     if (refreshUsers) await refreshUsers();
+  };
+
+  const handleImportClick = () => fileInputRef.current?.click();
+
+  const handleImportFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const accepted = /\.(csv|xlsx|xls|docx|txt)$/i.test(file.name);
+    if (!accepted) {
+      setImportError(
+        "Supported formats: CSV, Excel (.xlsx/.xls), DOCX, or TXT",
+      );
+      event.target.value = "";
+      return;
+    }
+
+    setImporting(true);
+    setImportError("");
+    setImportSuccess("");
+    setImportStats(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    // The backend's bulkImportStudents reads req.body.role and falls back
+    // to "student" for anything else — sending "instructor" here is what
+    // makes every row in this file get created with roles: ["instructor"]
+    // instead of the default.
+    formData.append("role", "instructor");
+
+    try {
+      const { data } = await api.post("/users/bulk-import", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setImportSuccess(data.message || "Instructors imported successfully.");
+      setImportStats({
+        inserted: data.inserted || 0,
+        skipped: data.skipped || 0,
+        skippedRows: data.skippedRows || [],
+      });
+      if (refreshUsers) await refreshUsers();
+    } catch (err) {
+      setImportError(
+        err.response?.data?.message || err.message || "Import failed.",
+      );
+    } finally {
+      setImporting(false);
+      event.target.value = "";
+    }
   };
 
   return (
@@ -781,8 +840,77 @@ const AdminInstructors = ({
             <UserPlus size={14} />
             Add Instructor
           </button>
+
+          <button
+            type="button"
+            onClick={handleImportClick}
+            disabled={importing}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60"
+          >
+            <Upload size={14} />
+            {importing ? "Importing..." : "Bulk Import"}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls,.docx,.txt"
+            className="hidden"
+            onChange={handleImportFile}
+          />
         </div>
       </div>
+
+      <div className="rounded-2xl border border-slate-800 bg-slate-950/30 p-4 text-xs text-slate-300">
+        <p className="font-semibold text-slate-200 mb-1">Expected columns</p>
+        <p className="text-slate-400">
+          Use any of: <span className="font-medium">name</span>,{" "}
+          <span className="font-medium">email</span>,{" "}
+          <span className="font-medium">phoneNumber</span>,{" "}
+          <span className="font-medium">password</span>,{" "}
+          <span className="font-medium">city</span>,{" "}
+          <span className="font-medium">state</span>,{" "}
+          <span className="font-medium">pincode</span>
+        </p>
+        <p className="text-slate-500 mt-1.5">
+          Specialization and bio aren't part of bulk import — add those
+          afterward via Edit if needed.
+        </p>
+      </div>
+
+      {importError && (
+        <div className="flex items-start gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-red-300">
+          <AlertCircle size={16} className="mt-0.5 flex-none" />
+          <p className="text-xs">{importError}</p>
+        </div>
+      )}
+
+      {importSuccess && (
+        <div className="flex items-start gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-emerald-300">
+          <CheckCircle2 size={16} className="mt-0.5 flex-none" />
+          <div>
+            <p className="text-xs font-semibold">{importSuccess}</p>
+            {importStats && (
+              <p className="text-[11px] text-emerald-200/90 mt-1">
+                Inserted: {importStats.inserted} · Skipped:{" "}
+                {importStats.skipped}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {importStats?.skippedRows?.length > 0 && (
+        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-200">
+          <p className="font-semibold mb-2">Skipped rows</p>
+          <ul className="space-y-1">
+            {importStats.skippedRows.map((item, index) => (
+              <li key={`${item.row}-${index}`}>
+                Row {item.row}: {item.reason}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Grid listing */}
       <div className="flex flex-col gap-4">

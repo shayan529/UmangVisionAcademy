@@ -1,4 +1,4 @@
-﻿import express from "express";
+import express from "express";
 import {
   createCourse,
   getCourses,
@@ -15,7 +15,7 @@ import {
   approveCourse,
   rejectCourse,
 } from "../controllers/course.controller.js";
-import { protect, adminOnly } from "../middleware/auth.middleware.js";
+import { protect, adminOnly, requirePermission } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
@@ -24,7 +24,7 @@ router.get("/public", getPublishedCourses);
 router.get("/public/:id", getCourseByIdPublic);
 
 // ── Protected: specific paths BEFORE /:id ────────────────────────────────────
-router.get("/admin/all", protect, adminOnly, getAllCoursesAdmin);
+router.get("/admin/all", protect, requirePermission("courses", "view"), getAllCoursesAdmin);
 router.get("/enrolled", protect, enrolledCourses);
 router.post("/enroll", protect, enrollCourses);
 
@@ -35,8 +35,8 @@ router.post("/:id/quiz/submit", protect, submitQuiz);
 router.post("/:id/rate", protect, rateCourse);
 
 // ── Admin approval actions ────────────────────────────────────────────────────
-router.post("/:id/approve", protect, adminOnly, approveCourse);
-router.post("/:id/reject", protect, adminOnly, rejectCourse);
+router.post("/:id/approve", protect, requirePermission("courses", "approve"), approveCourse);
+router.post("/:id/reject", protect, requirePermission("courses", "approve"), rejectCourse);
 
 router.get("/:id", protect, getCourseById);
 router.put("/:id", protect, updateCourse);

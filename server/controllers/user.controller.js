@@ -50,6 +50,33 @@ const normalizeString = (value) => {
   return String(value).trim();
 };
 
+const normalizeIndianPhoneNumber = (value) => {
+  const raw = normalizeString(value);
+  const digits = raw.replace(/\D/g, "");
+
+  if (/^\d{10}$/.test(digits)) return `+91${digits}`;
+  if (/^91\d{10}$/.test(digits)) return `+${digits}`;
+  if (/^\+\d{8,15}$/.test(raw.replace(/[^\d+]/g, ""))) {
+    return raw.replace(/[^\d+]/g, "");
+  }
+
+  return raw;
+};
+
+const getPhoneLookupValues = (value) => {
+  const normalized = normalizeIndianPhoneNumber(value);
+  const digits = normalizeString(value).replace(/\D/g, "");
+  const values = new Set([normalizeString(value), normalized]);
+
+  if (/^\d{10}$/.test(digits)) values.add(digits);
+  if (/^91\d{10}$/.test(digits)) {
+    values.add(digits.slice(2));
+    values.add(`+${digits}`);
+  }
+
+  return [...values].filter(Boolean);
+};
+
 const pickRowValue = (row, aliases) => {
   for (const alias of aliases) {
     if (
@@ -165,14 +192,18 @@ export const RegisterUser = async (req, res) => {
   } = req.body;
 
   try {
-    if (!name || !password || !city || !state || !phoneNumber || !pincode) {
+    const normalizedPhoneNumber = normalizeIndianPhoneNumber(phoneNumber);
+
+    if (!name || !password || !city || !state || !normalizedPhoneNumber || !pincode) {
       return res.status(400).json({
         message:
           "Name, password, city, state, pincode, and phone number are required",
       });
     }
 
-    const existingPhone = await User.findOne({ phoneNumber });
+    const existingPhone = await User.findOne({
+      phoneNumber: { $in: getPhoneLookupValues(normalizedPhoneNumber) },
+    });
     if (existingPhone) {
       return res.status(400).json({ message: "Phone number already in use" });
     }
@@ -200,7 +231,7 @@ export const RegisterUser = async (req, res) => {
       roles: [normalizedRole],
       city,
       state,
-      phoneNumber,
+      phoneNumber: normalizedPhoneNumber,
       pincode,
       referralCode: await getUniqueReferralCode(),
       ...(referrer && { referredBy: referrer._id }),
@@ -224,6 +255,8 @@ export const RegisterUser = async (req, res) => {
     const token = createToken(user._id);
     setTokenCookie(res, token);
 
+    await user.populate("assignedRoles");
+
     const userData = user.toObject();
     delete userData.password;
 
@@ -243,13 +276,17 @@ export const LoginUser = async (req, res) => {
   const { phoneNumber, password } = req.body;
 
   try {
-    if (!phoneNumber || !password) {
+    const phoneLookupValues = getPhoneLookupValues(phoneNumber);
+
+    if (phoneLookupValues.length === 0 || !password) {
       return res
         .status(400)
         .json({ message: "Phone number and password are required" });
     }
 
-    const user = await User.findOne({ phoneNumber });
+    const user = await User.findOne({
+      phoneNumber: { $in: phoneLookupValues },
+    }).populate("assignedRoles");
     if (!user) {
       return res
         .status(401)
@@ -321,7 +358,7 @@ export const LoginUser = async (req, res) => {
 // ── Get All Users ─────────────────────────────────────────────────────────────
 export const getUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const users = await User.find().select("-password").populate("assignedRoles");
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -386,7 +423,7 @@ export const bulkImportStudents = async (req, res) => {
         continue;
       }
 
-      const cleanPhone = payload.phoneNumber.replace(/[^\d+]/g, "");
+      const cleanPhone = normalizeIndianPhoneNumber(payload.phoneNumber);
       if (!/^\+?\d{8,15}$/.test(cleanPhone)) {
         skipped.push({
           row: rowNumber,
@@ -401,7 +438,7 @@ export const bulkImportStudents = async (req, res) => {
       const existing = await User.findOne({
         $or: [
           ...(normalizedEmail ? [{ email: normalizedEmail }] : []),
-          { phoneNumber: cleanPhone },
+          { phoneNumber: { $in: getPhoneLookupValues(cleanPhone) } },
         ],
       });
 
@@ -484,7 +521,9 @@ export const updateUser = async (req, res) => {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-    }).select("-password");
+    })
+      .select("-password")
+      .populate("assignedRoles");
     if (!user) return res.status(404).json({ message: "User not found" });
     res.json(user);
   } catch (error) {
@@ -526,6 +565,8 @@ export const createStudentByAdmin = async (req, res) => {
     email,
     password,
     role,
+    roles,
+    assignedRoles,
     city,
     state,
     phoneNumber,
@@ -534,14 +575,18 @@ export const createStudentByAdmin = async (req, res) => {
   } = req.body;
 
   try {
-    if (!name || !password || !city || !state || !phoneNumber || !pincode) {
+    const normalizedPhoneNumber = normalizeIndianPhoneNumber(phoneNumber);
+
+    if (!name || !password || !normalizedPhoneNumber) {
       return res.status(400).json({
         message:
-          "Name, password, city, state, pincode, and phone number are required",
+          "Name, password, and phone number are required",
       });
     }
 
-    const existingPhone = await User.findOne({ phoneNumber });
+    const existingPhone = await User.findOne({
+      phoneNumber: { $in: getPhoneLookupValues(normalizedPhoneNumber) },
+    });
     if (existingPhone) {
       return res.status(400).json({ message: "Phone number already in use" });
     }
@@ -555,6 +600,9 @@ export const createStudentByAdmin = async (req, res) => {
 
     const allowedRoles = ["student", "instructor", "admin"];
     const normalizedRole = allowedRoles.includes(role) ? role : "student";
+    const finalRoles = Array.isArray(roles) && roles.length > 0
+      ? roles.filter((r) => allowedRoles.includes(r))
+      : [normalizedRole];
 
     const referrer = referralCodeParam
       ? await User.findOne({
@@ -566,11 +614,12 @@ export const createStudentByAdmin = async (req, res) => {
       name,
       ...(email && { email }),
       password,
-      roles: [normalizedRole],
-      city,
-      state,
-      phoneNumber,
-      pincode,
+      roles: finalRoles,
+      assignedRoles: assignedRoles || [],
+      city: city || "",
+      state: state || "",
+      phoneNumber: normalizedPhoneNumber,
+      pincode: pincode || "",
       referralCode: await getUniqueReferralCode(),
       ...(referrer && { referredBy: referrer._id }),
     });

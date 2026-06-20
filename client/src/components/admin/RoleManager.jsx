@@ -10,16 +10,19 @@ import {
   Users as UsersIcon,
   Lock,
   Loader2,
+  UserPlus,
+  Eye,
+  EyeOff,
 } from "lucide-react";
+import apiClient from "../../config/api";
 
-const API_BASE = "/api/admin/roles";
-const USERS_API = "/api/users";
+const API_BASE = "/admin/roles";
+const USERS_API = "/users/admin-create";
 
 const MODULE_LABELS = {
   courses: "Courses",
   users: "Users",
   payments: "Payments",
-  settings: "Settings",
   moderation: "Moderation",
 };
 
@@ -37,16 +40,112 @@ const ACTION_LABELS = {
   ban: "Ban",
 };
 
+// ── Preset organizational roles (grouped) ─────────────────────────────────────
+// This is just a curated menu so admins pick a consistent, recognizable role
+// name instead of free-typing variants ("HR Manager" vs "Hr manager" vs "HRM").
+// "Other (custom)" still falls back to a free-text field for anything not listed.
+const ROLE_TEMPLATES = {
+  "Leadership / Strategy": [
+    "Founder / CEO",
+    "COO (Operations)",
+    "CTO / Head of Engineering",
+    "CFO / Finance Head",
+  ],
+  Operations: [
+    "Operations Manager",
+    "Admissions / Onboarding Coordinator",
+    "Customer Support Lead",
+    "Support Agent",
+  ],
+  "HR & People": [
+    "HR Manager",
+    "HR Operations Manager",
+    "Recruiter",
+    "Payroll Admin",
+  ],
+  "Academic / Content": [
+    "Academic Head / Curriculum Lead",
+    "Content Reviewer / Course Approver",
+    "Teaching Assistant",
+    "Quality / Moderation Reviewer",
+  ],
+  "Sales & Marketing": [
+    "Sales Manager",
+    "Marketing Manager",
+    "Growth / Performance Marketer",
+  ],
+  "Finance & Compliance": [
+    "Accountant",
+    "Billing / Payments Admin",
+    "Compliance Officer",
+  ],
+  Technical: ["Engineering Manager", "Support Engineer", "Data Analyst"],
+};
+
+const OTHER_OPTION = "__other__";
 const EMPTY_ROLE = { name: "", description: "", permissions: [] };
 
+// Base account types every user must have one of, independent of any
+// custom role layered on top via assignedRoles (e.g. a "student" can also
+// hold the "HR Manager" custom role, as seen elsewhere in this app).
+const BASE_ROLE_OPTIONS = [
+  { value: "student", label: "Student" },
+  { value: "instructor", label: "Instructor" },
+];
+
+// State → city lookup used to drive the cascading State / City selects in
+// the Add User modal below.
+const INDIAN_CITIES_BY_STATE = {
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati"],
+  "Arunachal Pradesh": ["Itanagar", "Tawang", "Naharlagun"],
+  Assam: ["Guwahati", "Dibrugarh", "Jorhat", "Silchar"],
+  Bihar: ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur"],
+  Chhattisgarh: ["Raipur", "Bhilai", "Korba", "Durg"],
+  Goa: ["Panaji", "Margao", "Vasco da Gama"],
+  Gujarat: ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
+  Haryana: ["Gurugram", "Faridabad", "Panipat", "Karnal"],
+  "Himachal Pradesh": ["Shimla", "Dharamshala", "Manali"],
+  Jharkhand: ["Ranchi", "Jamshedpur", "Dhanbad"],
+  Karnataka: ["Bengaluru", "Mysuru", "Mangalore", "Hubli"],
+  Kerala: ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam"],
+  "Madhya Pradesh": ["Bhopal", "Indore", "Gwalior", "Jabalpur"],
+  Maharashtra: ["Mumbai", "Pune", "Nagpur", "Nashik"],
+  Manipur: ["Imphal", "Churachandpur"],
+  Meghalaya: ["Shillong", "Tura"],
+  Mizoram: ["Aizawl", "Lunglei"],
+  Nagaland: ["Kohima", "Dimapur"],
+  Odisha: ["Bhubaneswar", "Cuttack", "Rourkela"],
+  Punjab: ["Chandigarh", "Amritsar", "Ludhiana", "Jalandhar"],
+  Rajasthan: ["Jaipur", "Jodhpur", "Udaipur", "Kota"],
+  Sikkim: ["Gangtok", "Namchi"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli"],
+  Telangana: ["Hyderabad", "Warangal", "Nizamabad"],
+  Tripura: ["Agartala", "Udaipur"],
+  "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra"],
+  Uttarakhand: ["Dehradun", "Haridwar", "Nainital"],
+  "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Siliguri"],
+  Delhi: ["New Delhi", "Dwarka", "Rohini"],
+  "Jammu & Kashmir": ["Srinagar", "Jammu"],
+  Ladakh: ["Leh", "Kargil"],
+  Puducherry: ["Puducherry", "Karaikal"],
+};
+const INDIAN_STATES = Object.keys(INDIAN_CITIES_BY_STATE);
+
+const normalizeIndianPhoneNumber = (value) => {
+  const digits = value.replace(/\D/g, "");
+  if (/^\d{10}$/.test(digits)) return `+91${digits}`;
+  if (/^91\d{10}$/.test(digits)) return `+${digits}`;
+  return value.trim();
+};
+
 const api = async (url, options = {}) => {
-  const res = await fetch(url, {
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    ...options,
+  const { method = "GET", body, ...config } = options;
+  const { data } = await apiClient.request({
+    url,
+    method,
+    data: body ? JSON.parse(body) : undefined,
+    ...config,
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || "Request failed");
   return data;
 };
 
@@ -128,12 +227,84 @@ const PermissionMatrix = ({ modules, value, onChange }) => {
   );
 };
 
+// ── Reusable checklist of custom roles (shared by add-user / assign-roles) ───
+const RoleChecklist = ({ roles, selected, onToggle, emptyHint }) => {
+  if (roles.length === 0) {
+    return <p className="text-xs text-slate-500">{emptyHint}</p>;
+  }
+  return (
+    <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+      {roles.map((role) => {
+        const checked = selected.includes(role._id);
+        return (
+          <button
+            key={role._id}
+            type="button"
+            onClick={() => onToggle(role._id)}
+            className={`flex items-center justify-between rounded-xl border px-4 py-2.5 text-left transition-colors ${
+              checked
+                ? "border-indigo-500 bg-indigo-950/30"
+                : "border-slate-800 bg-[#0b1120] hover:border-slate-600"
+            }`}
+          >
+            <div>
+              <div className="text-sm font-semibold text-white">
+                {role.name}
+              </div>
+              {role.description && (
+                <div className="text-[11px] text-slate-500">
+                  {role.description}
+                </div>
+              )}
+            </div>
+            <div
+              className={`h-5 w-5 rounded-md border flex items-center justify-center shrink-0 ${
+                checked ? "bg-indigo-600 border-indigo-500" : "border-slate-600"
+              }`}
+            >
+              {checked && <Check size={12} className="text-white" />}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
 // ── Role create/edit modal ────────────────────────────────────────────────────
 const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
   const [form, setForm] = useState(initial || EMPTY_ROLE);
   const [saving, setSaving] = useState(false);
   const isEdit = Boolean(initial?._id);
   const isSystem = Boolean(initial?.isSystem);
+
+  // Does the current name match one of the preset templates? If not (e.g.
+  // editing an older custom-typed role, or a brand-new role), default the
+  // select to "Other (custom)" and show the free-text field.
+  const allTemplateNames = Object.values(ROLE_TEMPLATES).flat();
+  const initialIsPreset = allTemplateNames.includes(form.name);
+  const [selectedTemplate, setSelectedTemplate] = useState(
+    initialIsPreset ? form.name : form.name ? OTHER_OPTION : "",
+  );
+  const [customName, setCustomName] = useState(
+    initialIsPreset ? "" : form.name,
+  );
+
+  const handleTemplateChange = (e) => {
+    const value = e.target.value;
+    setSelectedTemplate(value);
+    if (value === OTHER_OPTION) {
+      setForm((f) => ({ ...f, name: customName }));
+    } else {
+      setForm((f) => ({ ...f, name: value }));
+    }
+  };
+
+  const handleCustomNameChange = (e) => {
+    const value = e.target.value;
+    setCustomName(value);
+    setForm((f) => ({ ...f, name: value }));
+  };
 
   const handleSave = async () => {
     if (!form.name.trim()) {
@@ -184,17 +355,39 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                Role Name {isSystem && "(locked)"}
+                Role {isSystem && "(locked)"}
               </label>
-              <input
-                value={form.name}
+              <select
+                value={selectedTemplate}
                 disabled={isSystem}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, name: e.target.value }))
-                }
-                placeholder="e.g. Content Moderator"
+                onChange={handleTemplateChange}
                 className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500 disabled:opacity-50"
-              />
+              >
+                <option value="" disabled>
+                  Select a role…
+                </option>
+                {Object.entries(ROLE_TEMPLATES).map(([group, names]) => (
+                  <optgroup key={group} label={group}>
+                    {names.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+                <option value={OTHER_OPTION}>Other (custom)…</option>
+              </select>
+
+              {selectedTemplate === OTHER_OPTION && (
+                <input
+                  value={customName}
+                  disabled={isSystem}
+                  onChange={handleCustomNameChange}
+                  placeholder="Type a custom role name"
+                  className="mt-1.5 rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500 disabled:opacity-50"
+                  autoFocus
+                />
+              )}
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
@@ -246,7 +439,7 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
   );
 };
 
-// ── Assign roles to a user modal ──────────────────────────────────────────────
+// ── Assign roles to an existing user modal ────────────────────────────────────
 const AssignRolesModal = ({ user, roles, onClose, onSaved, showToast }) => {
   const [selected, setSelected] = useState(
     (user.assignedRoles || []).map((r) => (typeof r === "string" ? r : r._id)),
@@ -287,47 +480,13 @@ const AssignRolesModal = ({ user, roles, onClose, onSaved, showToast }) => {
           {user.name} · {user.phoneNumber}
         </p>
 
-        <div className="flex flex-col gap-2 mb-6 max-h-72 overflow-y-auto">
-          {roles.length === 0 && (
-            <p className="text-xs text-slate-500">
-              No custom roles yet — create one first.
-            </p>
-          )}
-          {roles.map((role) => {
-            const checked = selected.includes(role._id);
-            return (
-              <button
-                key={role._id}
-                type="button"
-                onClick={() => toggleRole(role._id)}
-                className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors ${
-                  checked
-                    ? "border-indigo-500 bg-indigo-950/30"
-                    : "border-slate-800 bg-[#0b1120] hover:border-slate-600"
-                }`}
-              >
-                <div>
-                  <div className="text-sm font-semibold text-white">
-                    {role.name}
-                  </div>
-                  {role.description && (
-                    <div className="text-[11px] text-slate-500">
-                      {role.description}
-                    </div>
-                  )}
-                </div>
-                <div
-                  className={`h-5 w-5 rounded-md border flex items-center justify-center shrink-0 ${
-                    checked
-                      ? "bg-indigo-600 border-indigo-500"
-                      : "border-slate-600"
-                  }`}
-                >
-                  {checked && <Check size={12} className="text-white" />}
-                </div>
-              </button>
-            );
-          })}
+        <div className="mb-6">
+          <RoleChecklist
+            roles={roles}
+            selected={selected}
+            onToggle={toggleRole}
+            emptyHint="No custom roles yet — create one first."
+          />
         </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
@@ -351,31 +510,311 @@ const AssignRolesModal = ({ user, roles, onClose, onSaved, showToast }) => {
   );
 };
 
+// ── Add a brand new user: base account type + optional custom role ───────────
+const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phoneNumber: "",
+    password: "",
+    city: "",
+    state: "",
+    pincode: "",
+    baseRole: "student",
+  });
+  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const toggleRole = (id) =>
+    setSelectedRoles((prev) =>
+      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id],
+    );
+
+  const handleChange = (field) => (e) =>
+    setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.replace(/[^\d+\s-]/g, "");
+    setForm((f) => ({ ...f, phoneNumber: value }));
+  };
+
+  // Changing state resets city, since the previously picked city may not
+  // belong to the newly selected state.
+  const handleStateChange = (e) => {
+    const value = e.target.value;
+    setForm((f) => ({ ...f, state: value, city: "" }));
+  };
+
+  const cityOptions = INDIAN_CITIES_BY_STATE[form.state] || [];
+
+  const handleSave = async () => {
+    setError("");
+    const normalizedPhoneNumber = normalizeIndianPhoneNumber(form.phoneNumber);
+    if (
+      !form.name.trim() ||
+      !form.city.trim() ||
+      !form.state.trim() ||
+      !form.pincode.trim() ||
+      !normalizedPhoneNumber ||
+      !form.password.trim()
+    ) {
+      const message =
+        "Name, city, state, pincode, phone, and password are required.";
+      setError(message);
+      showToast?.(message);
+      return;
+    }
+    setSaving(true);
+    try {
+      await api(USERS_API, {
+        method: "POST",
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phoneNumber: normalizedPhoneNumber,
+          password: form.password,
+          city: form.city,
+          state: form.state,
+          pincode: form.pincode,
+          roles: [form.baseRole],
+          assignedRoles: selectedRoles,
+        }),
+      });
+      showToast?.(`${form.name} added.`);
+      onSaved();
+    } catch (err) {
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Failed to add user.";
+      setError(message);
+      showToast?.(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-700 bg-[#111827] p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-lg font-bold text-white">Add User</h3>
+          <button onClick={onClose} className="text-slate-500 hover:text-white">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              Full Name
+            </label>
+            <input
+              value={form.name}
+              onChange={handleChange("name")}
+              placeholder="Jane Doe"
+              className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                Email
+              </label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={handleChange("email")}
+                placeholder="jane@example.com"
+                className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                Phone Number
+              </label>
+              <input
+                value={form.phoneNumber}
+                onChange={handlePhoneChange}
+                maxLength={16}
+                placeholder="9876543210 or +91..."
+                className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={handleChange("password")}
+                placeholder="Enter password"
+                className="w-full rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 pr-10 text-sm text-white outline-none focus:border-indigo-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((s) => !s)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+              >
+                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                State
+              </label>
+              <select
+                value={form.state}
+                onChange={handleStateChange}
+                className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+              >
+                <option value="" disabled>
+                  Select a state…
+                </option>
+                {INDIAN_STATES.map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                City
+              </label>
+              <select
+                value={form.city}
+                onChange={handleChange("city")}
+                disabled={!form.state}
+                className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500 disabled:opacity-50"
+              >
+                <option value="" disabled>
+                  {form.state ? "Select a city…" : "Select a state first"}
+                </option>
+                {cityOptions.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              Pincode
+            </label>
+            <input
+              value={form.pincode}
+              onChange={handleChange("pincode")}
+              required
+              className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              Account Type
+            </label>
+            <select
+              value={form.baseRole}
+              onChange={handleChange("baseRole")}
+              className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+            >
+              {BASE_ROLE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              Custom Role (optional)
+            </label>
+            <RoleChecklist
+              roles={roles}
+              selected={selectedRoles}
+              onToggle={toggleRole}
+              emptyHint="No custom roles yet — you can assign one later from Roles & Permissions."
+            />
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-900/50 bg-red-950/20 px-3 py-2 text-xs font-semibold text-red-200">
+            {error}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-slate-700 text-slate-300 text-sm font-semibold hover:bg-slate-900"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold disabled:opacity-60 flex items-center gap-2"
+          >
+            {saving && <Loader2 size={14} className="animate-spin" />}
+            Add User
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Main ───────────────────────────────────────────────────────────────────────
-const RoleManager = ({ showToast }) => {
+const RoleManager = ({ showToast, currentUser }) => {
   const [tab, setTab] = useState("roles"); // "roles" | "users"
   const [modules, setModules] = useState({});
   const [roles, setRoles] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState(""); // "" = all, "__none__" = unassigned, else role._id
   const [roleModal, setRoleModal] = useState(null); // null | {} (create) | role (edit)
   const [assignTarget, setAssignTarget] = useState(null); // user being assigned
   const [deleteTarget, setDeleteTarget] = useState(null); // role being deleted
+  const [addUserOpen, setAddUserOpen] = useState(false); // add-user modal
 
   const loadAll = useCallback(async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const [modulesRes, rolesRes, usersRes] = await Promise.all([
         api(`${API_BASE}/modules`),
         api(API_BASE),
-        api(USERS_API),
+        api("/users"),
       ]);
       setModules(modulesRes.modules || {});
       setRoles(rolesRes || []);
       setUsers(usersRes || []);
     } catch (err) {
-      showToast?.(err.message || "Failed to load role data.");
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Failed to load role data.";
+      setLoadError(message);
+      showToast?.(message);
     } finally {
       setLoading(false);
     }
@@ -397,13 +836,37 @@ const RoleManager = ({ showToast }) => {
   };
 
   const filteredUsers = users.filter((u) => {
+    const currentIsAdmin = currentUser?.roles?.includes("admin");
+    if (!currentIsAdmin && u.roles?.includes("admin")) {
+      return false;
+    }
+
     const q = search.toLowerCase();
-    return (
+    const matchesSearch =
       u.name?.toLowerCase().includes(q) ||
       u.phoneNumber?.toLowerCase().includes(q) ||
-      u.email?.toLowerCase().includes(q)
+      u.email?.toLowerCase().includes(q);
+
+    if (!matchesSearch) return false;
+
+    if (!roleFilter) return true;
+    const assignedIds = (u.assignedRoles || []).map((r) =>
+      typeof r === "string" ? r : r._id,
     );
+    if (roleFilter === "__none__") return assignedIds.length === 0;
+    return assignedIds.includes(roleFilter);
   });
+
+  const usersForRole = (roleId) =>
+    users.filter((u) => {
+      const isAssigned = (u.assignedRoles || []).some(
+        (r) => (typeof r === "string" ? r : r._id) === roleId,
+      );
+      if (!isAssigned) return false;
+      const currentIsAdmin = currentUser?.roles?.includes("admin");
+      if (!currentIsAdmin && u.roles?.includes("admin")) return false;
+      return true;
+    });
 
   const permissionCount = (role) =>
     role.permissions?.reduce((sum, p) => sum + (p.actions?.length || 0), 0) ??
@@ -428,6 +891,15 @@ const RoleManager = ({ showToast }) => {
           >
             <Plus size={16} />
             New Role
+          </button>
+        )}
+        {tab === "users" && (
+          <button
+            onClick={() => setAddUserOpen(true)}
+            className="flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/20"
+          >
+            <UserPlus size={16} />
+            Add User
           </button>
         )}
       </div>
@@ -456,7 +928,20 @@ const RoleManager = ({ showToast }) => {
         })}
       </div>
 
-      {loading ? (
+      {loadError ? (
+        <div className="rounded-2xl border border-red-900/50 bg-red-950/20 p-5">
+          <p className="text-sm font-semibold text-red-200">
+            Could not load roles and users.
+          </p>
+          <p className="mt-1 text-xs text-red-300/80">{loadError}</p>
+          <button
+            onClick={loadAll}
+            className="mt-4 rounded-lg border border-red-500/30 px-4 py-2 text-xs font-bold text-red-100 hover:bg-red-500/10"
+          >
+            Retry
+          </button>
+        </div>
+      ) : loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[...Array(4)].map((_, i) => (
             <div
@@ -534,23 +1019,67 @@ const RoleManager = ({ showToast }) => {
                   {permissionCount(role)} permission
                   {permissionCount(role) !== 1 ? "s" : ""} granted
                 </div>
+
+                {/* Users assigned this role */}
+                <div className="pt-2 border-t border-slate-800">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-2">
+                    Assigned Users · {usersForRole(role._id).length}
+                  </p>
+                  {usersForRole(role._id).length === 0 ? (
+                    <p className="text-[11px] text-slate-600">
+                      No one holds this role yet.
+                    </p>
+                  ) : (
+                    <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto">
+                      {usersForRole(role._id).map((u) => (
+                        <div
+                          key={u._id}
+                          className="flex items-center justify-between gap-2 rounded-lg bg-[#0b1120] border border-slate-800 px-3 py-1.5"
+                        >
+                          <span className="text-xs font-semibold text-white truncate">
+                            {u.name}
+                          </span>
+                          <span className="text-[11px] text-slate-500 shrink-0">
+                            {u.phoneNumber}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         )
       ) : (
         <div className="flex flex-col gap-4">
-          <div className="relative max-w-sm">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
-            />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search users by name, phone, or email…"
-              className="w-full rounded-lg bg-[#0b1120] border border-slate-700 pl-9 pr-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
-            />
+          <div className="flex flex-wrap gap-3">
+            <div className="relative max-w-sm flex-1 min-w-[220px]">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+              />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search users by name, phone, or email…"
+                className="w-full rounded-lg bg-[#0b1120] border border-slate-700 pl-9 pr-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+            >
+              <option value="">All roles</option>
+              <option value="__none__">No custom role assigned</option>
+              {roles.map((role) => (
+                <option key={role._id} value={role._id}>
+                  {role.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -627,6 +1156,18 @@ const RoleManager = ({ showToast }) => {
           onClose={() => setAssignTarget(null)}
           onSaved={() => {
             setAssignTarget(null);
+            loadAll();
+          }}
+          showToast={showToast}
+        />
+      )}
+
+      {addUserOpen && (
+        <AddUserModal
+          roles={roles}
+          onClose={() => setAddUserOpen(false)}
+          onSaved={() => {
+            setAddUserOpen(false);
             loadAll();
           }}
           showToast={showToast}
