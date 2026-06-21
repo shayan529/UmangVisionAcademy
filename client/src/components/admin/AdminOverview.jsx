@@ -1,38 +1,45 @@
-import React from "react";
-import { BookOpen, Trophy, Medal, Award, Star, ShieldCheck } from "lucide-react";
+import React from 'react';
+import {
+  BookOpen,
+  Trophy,
+  Medal,
+  Award,
+  Star,
+  ShieldCheck,
+} from 'lucide-react';
 
 /* ─── helpers ─────────────────────────────────────────── */
 const fmt = (n) => (n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : `₹${n}`);
 const pct = (n, max) => Math.min(100, Math.round((n / (max || 1)) * 100));
-const hue = (name = "?") => {
+const hue = (name = '?') => {
   const palette = [
-    "#7c3aed",
-    "#0ea5e9",
-    "#10b981",
-    "#f59e0b",
-    "#ec4899",
-    "#8b5cf6",
-    "#14b8a6",
+    '#7c3aed',
+    '#0ea5e9',
+    '#10b981',
+    '#f59e0b',
+    '#ec4899',
+    '#8b5cf6',
+    '#14b8a6',
   ];
   return palette[name.charCodeAt(0) % palette.length];
 };
 
 /* ─── Avatar ──────────────────────────────────────────── */
-const Av = ({ name = "?", size = 32 }) => (
+const Av = ({ name = '?', size = 32 }) => (
   <div
     style={{
       width: size,
       height: size,
-      borderRadius: "50%",
+      borderRadius: '50%',
       background: hue(name),
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       fontSize: size * 0.38,
       fontWeight: 800,
-      color: "#fff",
+      color: '#fff',
       flexShrink: 0,
-      letterSpacing: "-0.02em",
+      letterSpacing: '-0.02em',
     }}
   >
     {name.slice(0, 2).toUpperCase()}
@@ -82,24 +89,24 @@ const GoalCard = ({ tag, tagColorClass, title, desc }) => (
 );
 
 const MODULE_LABELS = {
-  courses: "Courses",
-  users: "Users",
-  payments: "Payments",
-  moderation: "Moderation",
+  courses: 'Courses',
+  users: 'Users',
+  payments: 'Payments',
+  moderation: 'Moderation',
 };
 
 const ACTION_LABELS = {
-  view: "View",
-  create: "Create",
-  edit: "Edit",
-  delete: "Delete",
-  approve: "Approve",
-  impersonate: "Impersonate",
-  refund: "Refund",
-  export: "Export",
-  flag: "Flag",
-  remove: "Remove",
-  ban: "Ban",
+  view: 'View',
+  create: 'Create',
+  edit: 'Edit',
+  delete: 'Delete',
+  approve: 'Approve',
+  impersonate: 'Impersonate',
+  refund: 'Refund',
+  export: 'Export',
+  flag: 'Flag',
+  remove: 'Remove',
+  ban: 'Ban',
 };
 
 const getGrantedPermissions = (user) => {
@@ -134,12 +141,12 @@ const AdminOverview = ({
   // Overview tab — a Staff member with limited permissions should never see
   // copy that addresses them as "Admin" or implies abilities (like approving
   // instructor applications) they may not actually have been granted.
-  const isFullAdmin = user?.roles?.includes("admin");
-  const firstName = user?.name?.split(" ")[0];
-  const greetingName = isFullAdmin ? "Admin" : firstName || "Back";
+  const isFullAdmin = user?.roles?.includes('admin');
+  const firstName = user?.name?.split(' ')[0];
+  const greetingName = isFullAdmin ? 'Admin' : firstName || 'Admin';
   const roleLabel =
-    user?.assignedRoles?.map((r) => r.name).join(", ") ||
-    (isFullAdmin ? "Administrator" : "Staff Member");
+    user?.assignedRoles?.map((r) => r.name).join(', ') ||
+    (isFullAdmin ? 'Administrator' : 'Staff Member');
   const grantedPermissions = getGrantedPermissions(user);
 
   return (
@@ -151,9 +158,9 @@ const AdminOverview = ({
 
         <div className="relative z-10">
           <p className="text-xs text-indigo-400 font-bold tracking-wider uppercase mb-2">
-            Umang Vision Academy{" "}
+            Umang Vision Academy{' '}
             {isFullAdmin
-              ? "Administration Workspace"
+              ? 'Administration Workspace'
               : `${roleLabel} Workspace`}
           </p>
           <h1 className="text-2xl md:text-3xl font-extrabold text-white leading-tight mb-2">
@@ -161,7 +168,7 @@ const AdminOverview = ({
           </h1>
           <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
             {isFullAdmin
-              ? "Monitor learning activities, approve new instructor applications, view courses catalog, and manage enrollment metrics across your entire platform."
+              ? 'Monitor learning activities, approve new instructor applications, view courses catalog, and manage enrollment metrics across your entire platform.'
               : "Monitor learning activities, view courses catalog, and manage enrollment metrics for the areas you've been granted access to."}
           </p>
         </div>
@@ -307,10 +314,10 @@ const AdminOverview = ({
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-200 truncate">
-                      {c.title || "Untitled Course"}
+                      {c.title || 'Untitled Course'}
                     </p>
                     <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                      By {c.instructor?.name || "Anonymous"} ·{" "}
+                      By {c.instructor?.name || 'Anonymous'} ·{' '}
                       {c.students?.length || 0} students
                     </p>
                   </div>
