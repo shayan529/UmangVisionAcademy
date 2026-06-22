@@ -11,6 +11,76 @@ const razorpay = new Razorpay({
 
 // Conversion rate: 25 coins = ₹1
 const COINS_PER_RUPEE = 25;
+const REFUNDABLE_TYPES = new Set(["purchase", "subscription"]);
+
+const escapeCsv = (value) => {
+  const text = value === null || value === undefined ? "" : String(value);
+  return `"${text.replace(/"/g, '""')}"`;
+};
+
+const serializeTransaction = (wallet, transaction) => ({
+  _id: transaction._id,
+  user: wallet.userId
+    ? {
+        _id: wallet.userId._id,
+        name: wallet.userId.name,
+        email: wallet.userId.email,
+        phoneNumber: wallet.userId.phoneNumber,
+      }
+    : null,
+  type: transaction.type,
+  amount: transaction.amount,
+  description: transaction.description,
+  paymentMethod: transaction.paymentMethod,
+  razorpayOrderId: transaction.razorpayOrderId,
+  razorpayPaymentId: transaction.razorpayPaymentId,
+  courseId: transaction.courseId,
+  courseIds: transaction.courseIds,
+  planId: transaction.planId,
+  status: transaction.status,
+  refundStatus: transaction.refundStatus || "none",
+  refundReason: transaction.refundReason || "",
+  refundRequestedAt: transaction.refundRequestedAt,
+  refundedAt: transaction.refundedAt,
+  createdAt: transaction.createdAt,
+});
+
+const getAdminTransactions = async (query = {}) => {
+  const wallets = await Wallet.find()
+    .populate("userId", "name email phoneNumber")
+    .lean();
+  const search = String(query.search || "").trim().toLowerCase();
+  const type = String(query.type || "all");
+  const status = String(query.status || "all");
+  const refundStatus = String(query.refundStatus || "all");
+
+  return wallets
+    .flatMap((wallet) =>
+      (wallet.transactions || []).map((transaction) =>
+        serializeTransaction(wallet, transaction),
+      ),
+    )
+    .filter((transaction) => {
+      if (type !== "all" && transaction.type !== type) return false;
+      if (status !== "all" && transaction.status !== status) return false;
+      if (
+        refundStatus !== "all" &&
+        transaction.refundStatus !== refundStatus
+      ) {
+        return false;
+      }
+      if (!search) return true;
+
+      return [
+        transaction.user?.name,
+        transaction.user?.email,
+        transaction.user?.phoneNumber,
+        transaction.description,
+        transaction.razorpayPaymentId,
+      ].some((value) => String(value || "").toLowerCase().includes(search));
+    })
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+};
 
 // ── Helper: get or create wallet for a user ──────────────────────────────────
 const getOrCreateWallet = async (userId) => {
@@ -31,6 +101,191 @@ export const getWallet = async (req, res) => {
   } catch (err) {
     console.error("[Wallet] getWallet:", err.message);
     res.status(500).json({ message: "Failed to fetch wallet." });
+  }
+};
+
+export const requestRefund = async (req, res) => {
+  try {
+    const { transactionId } = req.params;
+    const reason = String(req.body.reason || "").trim();
+    const wallet = await getOrCreateWallet(req.user._id);
+    const transaction = wallet.transactions.id(transactionId);
+
+    if (!transaction) {
+      return res.status(404).json({ message: "Payment not found." });
+    }
+    if (
+      !REFUNDABLE_TYPES.has(transaction.type) ||
+      transaction.status !== "success"
+    ) {
+      return res.status(400).json({ message: "This payment is not refundable." });
+    }
+    if (transaction.refundStatus !== "none") {
+      return res.status(409).json({
+        message: `Refund is already ${transaction.refundStatus}.`,
+      });
+    }
+
+    transaction.refundStatus = "pending";
+    transaction.refundReason = reason;
+    transaction.refundRequestedAt = new Date();
+    await wallet.save();
+
+    res.json({ message: "Refund request submitted.", transaction });
+  } catch (err) {
+    console.error("[Wallet] requestRefund:", err.message);
+    res.status(500).json({ message: "Failed to request refund." });
+  }
+};
+
+export const getPaymentTransactions = async (req, res) => {
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 25));
+    const transactions = await getAdminTransactions(req.query);
+    const start = (page - 1) * limit;
+
+    res.json({
+      transactions: transactions.slice(start, start + limit),
+      pagination: {
+        page,
+        limit,
+        total: transactions.length,
+        pages: Math.max(1, Math.ceil(transactions.length / limit)),
+      },
+      summary: {
+        totalVolume: transactions
+          .filter((transaction) => transaction.status === "success")
+          .reduce((sum, transaction) => sum + transaction.amount, 0),
+        successful: transactions.filter(
+          (transaction) => transaction.status === "success",
+        ).length,
+        pendingRefunds: transactions.filter(
+          (transaction) => transaction.refundStatus === "pending",
+        ).length,
+        refunded: transactions.filter(
+          (transaction) => transaction.refundStatus === "refunded",
+        ).length,
+      },
+    });
+  } catch (err) {
+    console.error("[Wallet] getPaymentTransactions:", err.message);
+    res.status(500).json({ message: "Failed to fetch payments." });
+  }
+};
+
+export const getRefundQueue = async (req, res) => {
+  req.query.refundStatus = "pending";
+  return getPaymentTransactions(req, res);
+};
+
+export const processRefund = async (req, res) => {
+  try {
+    const { transactionId } = req.params;
+    const wallet = await Wallet.findOne({
+      "transactions._id": transactionId,
+    });
+    const transaction = wallet?.transactions.id(transactionId);
+
+    if (!wallet || !transaction) {
+      return res.status(404).json({ message: "Payment not found." });
+    }
+    if (transaction.refundStatus !== "pending") {
+      return res.status(409).json({
+        message: "Only pending refund requests can be processed.",
+      });
+    }
+    if (!REFUNDABLE_TYPES.has(transaction.type)) {
+      return res.status(400).json({ message: "This payment is not refundable." });
+    }
+
+    wallet.balance += transaction.amount;
+    transaction.refundStatus = "refunded";
+    transaction.refundedAt = new Date();
+    transaction.refundedBy = req.user._id;
+    wallet.transactions.push({
+      type: "refund",
+      amount: transaction.amount,
+      description: `Refund: ${transaction.description}`,
+      paymentMethod: "internal",
+      status: "success",
+      refundedTransactionId: transaction._id,
+    });
+    await wallet.save();
+
+    const courseIds = [
+      ...(transaction.courseId ? [transaction.courseId] : []),
+      ...(transaction.courseIds || []),
+    ];
+    if (courseIds.length > 0) {
+      await Promise.all([
+        Course.updateMany(
+          { _id: { $in: courseIds } },
+          { $pull: { students: wallet.userId } },
+        ),
+        User.findByIdAndUpdate(wallet.userId, {
+          $pull: { enrolledCourses: { $in: courseIds } },
+        }),
+      ]);
+    }
+    if (transaction.type === "subscription") {
+      await User.findByIdAndUpdate(wallet.userId, {
+        "subscription.status": "cancelled",
+      });
+    }
+
+    res.json({
+      message: "Refund credited to the user's wallet.",
+      balance: wallet.balance,
+    });
+  } catch (err) {
+    console.error("[Wallet] processRefund:", err.message);
+    res.status(500).json({ message: "Failed to process refund." });
+  }
+};
+
+export const exportPaymentTransactions = async (req, res) => {
+  try {
+    const transactions = await getAdminTransactions(req.query);
+    const rows = [
+      [
+        "Date",
+        "Customer",
+        "Email",
+        "Phone",
+        "Type",
+        "Amount (INR)",
+        "Method",
+        "Status",
+        "Refund Status",
+        "Description",
+        "Payment ID",
+      ],
+      ...transactions.map((transaction) => [
+        new Date(transaction.createdAt).toISOString(),
+        transaction.user?.name,
+        transaction.user?.email,
+        transaction.user?.phoneNumber,
+        transaction.type,
+        transaction.amount,
+        transaction.paymentMethod,
+        transaction.status,
+        transaction.refundStatus,
+        transaction.description,
+        transaction.razorpayPaymentId,
+      ]),
+    ];
+    const csv = rows.map((row) => row.map(escapeCsv).join(",")).join("\n");
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="payments-${new Date().toISOString().slice(0, 10)}.csv"`,
+    );
+    res.send(`\uFEFF${csv}`);
+  } catch (err) {
+    console.error("[Wallet] exportPaymentTransactions:", err.message);
+    res.status(500).json({ message: "Failed to export payments." });
   }
 };
 

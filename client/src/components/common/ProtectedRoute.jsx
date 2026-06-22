@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { hasAssignedPermissions } from "../../utils/permissions";
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
@@ -63,14 +64,14 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const hasAccess =
     allowedRoles.length === 0 ||
     allowedRoles.some((allowedRole) => roles.includes(allowedRole)) ||
-    (allowedRoles.includes("staff") && (roles.includes("admin") || (user?.assignedRoles && user.assignedRoles.length > 0)));
+    (allowedRoles.includes("staff") && hasAssignedPermissions(user));
 
   if (!hasAccess) {
     const fallback = roles.includes("admin")
       ? "/admin-dashboard"
       : roles.includes("instructor")
         ? "/instructor-dashboard"
-        : (user?.assignedRoles && user.assignedRoles.length > 0)
+        : hasAssignedPermissions(user)
           ? "/staff-dashboard"
           : "/student-dashboard";
 

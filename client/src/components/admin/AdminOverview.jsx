@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   BookOpen,
   Trophy,
@@ -7,6 +6,7 @@ import {
   Star,
   ShieldCheck,
 } from 'lucide-react';
+import { hasPermission } from '../../utils/permissions';
 
 /* ─── helpers ─────────────────────────────────────────── */
 const fmt = (n) => (n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : `₹${n}`);
@@ -131,7 +131,6 @@ const AdminOverview = ({
   students = [],
   instructors = [],
   courses = [],
-  totalRevenue = 0,
   totalEnrollments = 0,
   sortedInstructors = [],
 }) => {
@@ -148,6 +147,8 @@ const AdminOverview = ({
     user?.assignedRoles?.map((r) => r.name).join(', ') ||
     (isFullAdmin ? 'Administrator' : 'Staff Member');
   const grantedPermissions = getGrantedPermissions(user);
+  const canViewUsers = hasPermission(user, 'users', 'view');
+  const canViewCourses = hasPermission(user, 'courses', 'view');
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl animate-fadeIn">
@@ -210,6 +211,8 @@ const AdminOverview = ({
         </div>
       )}
 
+      {(canViewUsers || canViewCourses) && (
+        <>
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -348,6 +351,8 @@ const AdminOverview = ({
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

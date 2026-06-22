@@ -518,7 +518,19 @@ export const getUserById = async (req, res) => {
 // ── Update User ───────────────────────────────────────────────────────────────
 export const updateUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+    const updates = { ...req.body };
+    const isAdmin = req.user?.roles?.includes("admin");
+
+    if (!isAdmin) {
+      delete updates.roles;
+      delete updates.assignedRoles;
+      delete updates.isActive;
+      delete updates.password;
+      delete updates.referralCode;
+      delete updates.referredBy;
+    }
+
+    const user = await User.findByIdAndUpdate(req.params.id, updates, {
       new: true,
       runValidators: true,
     })

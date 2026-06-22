@@ -17,6 +17,10 @@ import {
 } from "../../redux/slices/usersSlice";
 import { fetchAllCoursesAdmin } from "../../redux/slices/courseSlice";
 import { logoutUser } from "../../redux/slices/authSlice";
+import {
+  hasAnyPermission,
+  hasPermission,
+} from "../../utils/permissions";
 
 import AdminOverview from "./AdminOverview";
 import AdminStudents from "./AdminStudents";
@@ -39,35 +43,23 @@ const StaffSidebar = ({
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const hasPermission = (moduleName, actionName = "view") => {
-    if (user?.roles?.includes("admin")) return true;
-    return (
-      user?.assignedRoles?.some((role) =>
-        role.permissions?.some(
-          (p) => p.module === moduleName && p.actions?.includes(actionName),
-        ),
-      ) || false
-    );
-  };
-
   const navItems = [
     { id: "overview", label: "Overview", icon: BarChart2 },
-    ...(hasPermission("courses", "view")
+    ...(hasPermission(user, "courses", "view")
       ? [{ id: "courses", label: "Courses", icon: BookOpen }]
       : []),
-    ...(hasPermission("users", "view")
+    ...(hasPermission(user, "users", "view")
       ? [
           { id: "students", label: "Students", icon: Users },
           { id: "instructors", label: "Instructors", icon: GraduationCap },
         ]
       : []),
-    ...(hasPermission("payments", "view") ||
-    hasPermission("payments", "refund") ||
-    hasPermission("payments", "export")
+    ...(hasPermission(user, "payments", "view") ||
+    hasPermission(user, "payments", "refund") ||
+    hasPermission(user, "payments", "export")
       ? [{ id: "payments", label: "Payments", icon: CreditCard }]
       : []),
-    ...(hasPermission("courses", "approve") ||
-    hasPermission("moderation", "view")
+    ...(hasPermission(user, "moderation", "view")
       ? [
           {
             id: "applications",
@@ -253,43 +245,23 @@ export default function StaffDashboard() {
   const students = users.filter((u) => u.roles?.includes("student"));
   const instructors = users.filter((u) => u.roles?.includes("instructor"));
 
-  // Helper to check granular permissions
-  const hasPermission = (moduleName, actionName = "view") => {
-    if (user?.roles?.includes("admin")) return true;
-    return (
-      user?.assignedRoles?.some((role) =>
-        role.permissions?.some(
-          (p) => p.module === moduleName && p.actions?.includes(actionName),
-        ),
-      ) || false
-    );
-  };
-
-  const hasAnyPermission = (moduleName, actions = ["view"]) =>
-    actions.some((action) => hasPermission(moduleName, action));
-
   // ── UI state ───────────────────────────────────────────────────────────────
   const [tab, setTab] = useState("overview");
   const [q, setQ] = useState("");
-  const [sortBy, setSortBy] = useState("revenue");
-  const [sortDir, setSortDir] = useState("desc");
+  const sortBy = "revenue";
+  const sortDir = "desc";
   const [sideOpen, setSideOpen] = useState(false);
   const [sideCollapsed, setSideCollapsed] = useState(false);
 
   // ── Fetch on mount ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (hasPermission("users", "view")) {
+    if (hasPermission(user, "users", "view")) {
       dispatch(fetchUsers());
     }
-    if (hasPermission("courses", "view")) {
+    if (hasPermission(user, "courses", "view")) {
       dispatch(fetchAllCoursesAdmin());
     }
   }, [dispatch, user]);
-
-  // Reset search when switching tabs
-  useEffect(() => {
-    setQ("");
-  }, [tab]);
 
   const deleteUser = (id) => dispatch(deleteUserThunk(id));
 
@@ -328,14 +300,16 @@ export default function StaffDashboard() {
   });
 
   const isInitialLoad =
-    (usersLoading && users.length === 0 && hasPermission("users", "view")) ||
+    (usersLoading &&
+      users.length === 0 &&
+      hasPermission(user, "users", "view")) ||
     (coursesLoading &&
       courses.length === 0 &&
-      hasPermission("courses", "view"));
+      hasPermission(user, "courses", "view"));
 
   const globalError =
-    (hasPermission("users", "view") ? usersError : null) ||
-    (hasPermission("courses", "view") ? coursesError : null);
+    (hasPermission(user, "users", "view") ? usersError : null) ||
+    (hasPermission(user, "courses", "view") ? coursesError : null);
 
   // ── Tab renderer ───────────────────────────────────────────────────────────
   const renderTabContent = () => {
@@ -348,8 +322,8 @@ export default function StaffDashboard() {
           <p className="text-red-400 font-semibold text-sm">{globalError}</p>
           <button
             onClick={() => {
-              if (hasPermission("users", "view")) dispatch(fetchUsers());
-              if (hasPermission("courses", "view"))
+              if (hasPermission(user, "users", "view")) dispatch(fetchUsers());
+              if (hasPermission(user, "courses", "view"))
                 dispatch(fetchAllCoursesAdmin());
             }}
             className="rounded-xl border border-red-500/20 bg-red-500/10 px-5 py-2.5 text-sm text-red-300 hover:bg-red-500/20 transition"
@@ -374,7 +348,7 @@ export default function StaffDashboard() {
           />
         );
       case "courses":
-        return hasPermission("courses", "view") ? (
+        return hasPermission(user, "courses", "view") ? (
           <AdminCourses
             courses={courses}
             q={q}
@@ -382,10 +356,11 @@ export default function StaffDashboard() {
             loading={coursesLoading}
             error={coursesError}
             onRetry={() => dispatch(fetchAllCoursesAdmin())}
+            canApprove={hasPermission(user, "courses", "approve")}
           />
         ) : null;
       case "students":
-        return hasPermission("users", "view") ? (
+        return hasPermission(user, "users", "view") ? (
           <AdminStudents
             students={students}
             courses={courses}
@@ -394,32 +369,50 @@ export default function StaffDashboard() {
             deleteUser={deleteUser}
             loading={usersLoading}
             refreshUsers={() => dispatch(fetchUsers())}
+            canCreate={hasPermission(user, "users", "create")}
+            canEdit={hasPermission(user, "users", "edit")}
+            canDelete={hasPermission(user, "users", "delete")}
           />
         ) : null;
       case "instructors":
-        return hasPermission("users", "view") ? (
+        return hasPermission(user, "users", "view") ? (
           <AdminInstructors
             enrichedInstructors={sortedInstructors}
             q={q}
             setQ={setQ}
             deleteUser={deleteUser}
             loading={usersLoading || coursesLoading}
+            refreshUsers={() => dispatch(fetchUsers())}
+            canCreate={hasPermission(user, "users", "create")}
+            canEdit={hasPermission(user, "users", "edit")}
+            canDelete={hasPermission(user, "users", "delete")}
           />
         ) : null;
       case "applications":
-        return hasPermission("courses", "approve") ||
-          hasPermission("moderation", "view") ? (
-          <AdminApplications />
+        // Gated solely on the "moderation" module — kept independent of
+        // courses.approve so that course-approval rights don't implicitly
+        // grant visibility into the (unrelated) instructor-application queue.
+        return hasPermission(user, "moderation", "view") ? (
+          <AdminApplications
+            canModerate={hasPermission(user, "moderation", "remove")}
+          />
         ) : null;
       case "payments":
-        return hasAnyPermission("payments", ["view", "refund", "export"]) ? (
+        return hasAnyPermission(user, [
+          ["payments", "view"],
+          ["payments", "refund"],
+          ["payments", "export"],
+        ]) ? (
           <StaffPayments user={user} />
         ) : null;
       case "roles":
         // Hard admin-only gate, matching the sidebar — never reachable by
         // typing the tab id manually if you're not a base admin.
         return user?.roles?.includes("admin") ? (
-          <RoleManager showToast={(msg) => console.log(msg)} />
+          <RoleManager
+            currentUser={user}
+            showToast={(msg) => console.log(msg)}
+          />
         ) : null;
       default:
         return null;
@@ -438,7 +431,10 @@ export default function StaffDashboard() {
       <StaffSidebar
         user={user}
         tab={tab}
-        setTab={setTab}
+        setTab={(nextTab) => {
+          setTab(nextTab);
+          setQ("");
+        }}
         collapsed={sideCollapsed}
         setCollapsed={setSideCollapsed}
         mobileOpen={sideOpen}

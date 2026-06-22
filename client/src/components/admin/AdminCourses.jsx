@@ -224,7 +224,7 @@ function IKVideoPlayer({ src }) {
           setStatus("error");
           setErrorMsg("HLS is not supported in this browser.");
         }
-      } catch (e) {
+      } catch {
         setStatus("error");
         setErrorMsg("Failed to load video player library.");
       }
@@ -1034,7 +1034,7 @@ function CourseDrawer({ course, onClose, onApprove, onReject, actioning }) {
         )}
 
         {/* Action buttons — pending */}
-        {course.approvalStatus === "pending" && (
+        {onApprove && onReject && course.approvalStatus === "pending" && (
           <div
             style={{
               display: "flex",
@@ -1085,7 +1085,7 @@ function CourseDrawer({ course, onClose, onApprove, onReject, actioning }) {
         )}
 
         {/* Revoke approved */}
-        {course.approvalStatus === "approved" && (
+        {onReject && course.approvalStatus === "approved" && (
           <div
             style={{
               display: "flex",
@@ -1142,6 +1142,7 @@ export default function AdminCourses({
   loading,
   error,
   onRetry,
+  canApprove = true,
 }) {
   const dispatch = useDispatch();
   const [filterStatus, setFilterStatus] = useState("pending");
@@ -1491,7 +1492,7 @@ export default function AdminCourses({
                     )}
                   </div>
                 </div>
-                {course.approvalStatus === "pending" && (
+                {canApprove && course.approvalStatus === "pending" && (
                   <div
                     style={{ display: "flex", gap: 8, flexShrink: 0 }}
                     onClick={(e) => e.stopPropagation()}
@@ -1549,13 +1550,13 @@ export default function AdminCourses({
         <CourseDrawer
           course={selected}
           onClose={() => setSelected(null)}
-          onApprove={handleApprove}
-          onReject={(c) => setRejectTarget(c)}
+          onApprove={canApprove ? handleApprove : undefined}
+          onReject={canApprove ? (c) => setRejectTarget(c) : undefined}
           actioning={actioning}
         />
       )}
 
-      {rejectTarget && (
+      {canApprove && rejectTarget && (
         <RejectModal
           course={rejectTarget}
           onClose={() => setRejectTarget(null)}

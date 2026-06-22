@@ -140,3 +140,24 @@ export const selfOrAdmin = (req, res, next) => {
   }
   next();
 };
+
+export const selfOrPermission = (moduleName, actionName) => {
+  return (req, res, next) => {
+    const isSelf = req.user?._id?.toString() === req.params.id;
+    const isAdmin = req.user?.roles?.includes("admin");
+    const hasGrant = req.user?.assignedRoles?.some((role) =>
+      role.permissions?.some(
+        (permission) =>
+          permission.module === moduleName &&
+          permission.actions?.includes(actionName),
+      ),
+    );
+
+    if (isSelf || isAdmin || hasGrant) return next();
+
+    return res.status(403).json({
+      success: false,
+      message: `Access denied - requires '${actionName}' permission on '${moduleName}'`,
+    });
+  };
+};

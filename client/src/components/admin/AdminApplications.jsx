@@ -44,7 +44,7 @@ const Av = ({ name = "?", size = 44 }) => (
   </div>
 );
 
-const AdminApplications = () => {
+const AdminApplications = ({ canModerate = true }) => {
   const dispatch = useDispatch();
   const { applications, loading, error } = useSelector(
     (state) => state.applications,
@@ -205,20 +205,20 @@ const AdminApplications = () => {
                       Resume
                     </a>
                   )}
-                  <button
+                  {canModerate && <button
                     onClick={() => handleApprove(app)}
                     className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/30 transition duration-150"
                   >
                     <CheckCircle size={12} />
                     Approve
-                  </button>
-                  <button
+                  </button>}
+                  {canModerate && <button
                     onClick={() => handleReject(app)}
                     className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/30 transition duration-150"
                   >
                     <XCircle size={12} />
                     Reject
-                  </button>
+                  </button>}
                 </div>
               </div>
             </div>

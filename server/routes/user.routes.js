@@ -13,9 +13,8 @@ import {
 } from "./../controllers/user.controller.js";
 import {
   protect,
-  selfOrAdmin,
-  adminOnly,
   requirePermission,
+  selfOrPermission,
 } from "../middleware/auth.middleware.js";
 import { uploadStudentsImport } from "../middleware/upload.middleware.js";
 
@@ -41,14 +40,19 @@ router.post("/logout", LogoutUser);
 
 router.get("/me", protect, getCurrentUser);
 
-router.get("/:id", protect, selfOrAdmin, getUserById);
-router.put("/:id", protect, selfOrAdmin, updateUser);
-router.delete("/:id", protect, selfOrAdmin, deleteUser);
+router.get("/:id", protect, selfOrPermission("users", "view"), getUserById);
+router.put("/:id", protect, selfOrPermission("users", "edit"), updateUser);
+router.delete("/:id", protect, selfOrPermission("users", "delete"), deleteUser);
 
 // NOTE: left as adminOnly intentionally — creating new accounts on someone
 // else's behalf is a higher-stakes action than just viewing the list. If you
 // want Staff with a "users":"create" permission to be able to do this too,
 // swap this the same way: requirePermission("users", "create").
-router.post("/admin-create", protect, adminOnly, createStudentByAdmin);
+router.post(
+  "/admin-create",
+  protect,
+  requirePermission("users", "create"),
+  createStudentByAdmin,
+);
 
 export default router;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import api from "../../config/api.js";
 
 // ── Type metadata ─────────────────────────────────────────────────────────────
@@ -99,10 +99,15 @@ const Skeleton = ({ w = "100%", h = 18, radius = 8, style = {} }) => (
 );
 
 // ── Transaction row ────────────────────────────────────────────────────────────
-const TransactionRow = ({ txn }) => {
+const TransactionRow = ({ txn, onRequestRefund, requesting }) => {
   const meta = getMeta(txn.type);
   const isSuccess = (txn.status ?? "success") === "success";
   const methodLabel = PAYMENT_METHOD_LABEL[txn.paymentMethod] ?? null;
+  const refundStatus = txn.refundStatus || "none";
+  const canRequestRefund =
+    isSuccess &&
+    ["purchase", "subscription"].includes(txn.type) &&
+    refundStatus === "none";
 
   return (
     <div
@@ -198,6 +203,42 @@ const TransactionRow = ({ txn }) => {
       >
         {meta.sign}
         {formatRupees(txn.amount)}
+        {refundStatus !== "none" && (
+          <div
+            style={{
+              marginTop: 6,
+              color: refundStatus === "refunded" ? "#34d399" : "#fbbf24",
+              fontSize: 10,
+              fontWeight: 700,
+              textAlign: "right",
+              textTransform: "uppercase",
+            }}
+          >
+            Refund {refundStatus}
+          </div>
+        )}
+        {canRequestRefund && (
+          <button
+            onClick={() => onRequestRefund(txn)}
+            disabled={requesting}
+            style={{
+              display: "block",
+              marginTop: 7,
+              marginLeft: "auto",
+              padding: "5px 9px",
+              borderRadius: 7,
+              border: "1px solid #7c3aed",
+              background: "#1e1b4b",
+              color: "#c4b5fd",
+              fontSize: 10,
+              fontWeight: 700,
+              cursor: requesting ? "not-allowed" : "pointer",
+              opacity: requesting ? 0.6 : 1,
+            }}
+          >
+            {requesting ? "Requesting..." : "Request refund"}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -210,6 +251,7 @@ export default function PurchaseHistory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
+  const [requestingId, setRequestingId] = useState("");
 
   const loadHistory = () => {
     setLoading(true);
@@ -271,6 +313,29 @@ export default function PurchaseHistory() {
     activeFilter === "all"
       ? transactions
       : transactions.filter((t) => t.type === activeFilter);
+
+  const requestRefund = async (transaction) => {
+    const reason = window.prompt(
+      "Why are you requesting a refund? This will be reviewed by staff.",
+      "",
+    );
+    if (reason === null) return;
+
+    setRequestingId(transaction._id);
+    setError("");
+    try {
+      await api.post(`/wallet/refunds/${transaction._id}/request`, {
+        reason: reason.trim(),
+      });
+      loadHistory();
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Failed to submit refund request.",
+      );
+    } finally {
+      setRequestingId("");
+    }
+  };
 
   return (
     <div>
@@ -478,6 +543,8 @@ export default function PurchaseHistory() {
               <TransactionRow
                 key={txn._id ?? `${txn.type}-${txn.createdAt}`}
                 txn={txn}
+                onRequestRefund={requestRefund}
+                requesting={requestingId === txn._id}
               />
             ))}
           </div>

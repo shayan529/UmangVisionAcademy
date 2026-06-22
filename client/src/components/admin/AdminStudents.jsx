@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   Search,
   Trash2,
@@ -542,13 +542,13 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-none">
-            <button
+            {onEdit && <button
               onClick={onEdit}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition"
             >
               <Pencil size={14} />
               Edit
-            </button>
+            </button>}
             <button
               onClick={onClose}
               className="flex-none p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
@@ -820,6 +820,9 @@ const AdminStudents = ({
   setQ,
   deleteUser,
   refreshUsers,
+  canCreate = true,
+  canEdit = true,
+  canDelete = true,
 }) => {
   const ql = q.toLowerCase();
   const filtS = students.filter(
@@ -918,16 +921,16 @@ const AdminStudents = ({
             />
           </div>
 
-          <button
+          {canCreate && <button
             type="button"
             onClick={() => setAddingStudent(true)}
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 transition"
           >
             <UserPlus size={14} />
             Add Student
-          </button>
+          </button>}
 
-          <button
+          {canCreate && <button
             type="button"
             onClick={handleImportClick}
             disabled={importing}
@@ -935,7 +938,7 @@ const AdminStudents = ({
           >
             <Upload size={14} />
             {importing ? "Importing..." : "Bulk Import"}
-          </button>
+          </button>}
           <input
             ref={fileInputRef}
             type="file"
@@ -1039,16 +1042,16 @@ const AdminStudents = ({
                 </button>
 
                 {/* Edit button */}
-                <button
+                {canEdit && <button
                   onClick={() => setEditingStudent(s)}
                   className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/20 hover:bg-sky-500/20 hover:border-sky-500/30 transition duration-150"
                 >
                   <Pencil size={12} />
                   Edit
-                </button>
+                </button>}
 
                 {/* Delete button */}
-                <button
+                {canDelete && <button
                   onClick={() => {
                     if (
                       window.confirm(
@@ -1062,7 +1065,7 @@ const AdminStudents = ({
                 >
                   <Trash2 size={12} />
                   Remove
-                </button>
+                </button>}
               </div>
             </div>
           );
@@ -1086,10 +1089,14 @@ const AdminStudents = ({
           student={selectedStudent}
           courses={courses}
           onClose={() => setSelectedStudent(null)}
-          onEdit={() => {
-            setEditingStudent(selectedStudent);
-            setSelectedStudent(null);
-          }}
+          onEdit={
+            canEdit
+              ? () => {
+                  setEditingStudent(selectedStudent);
+                  setSelectedStudent(null);
+                }
+              : null
+          }
         />
       )}
 

@@ -39,6 +39,23 @@ const transactionSchema = new mongoose.Schema(
       enum: ["pending", "success", "failed"],
       default: "success",
     },
+    refundStatus: {
+      type: String,
+      enum: ["none", "pending", "refunded", "rejected"],
+      default: "none",
+    },
+    refundReason: { type: String, default: "" },
+    refundRequestedAt: { type: Date, default: null },
+    refundedAt: { type: Date, default: null },
+    refundedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    refundedTransactionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
   },
   { timestamps: true },
 );
