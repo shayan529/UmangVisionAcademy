@@ -8,6 +8,7 @@ import {
   getInstructorSessions,
 } from "../controllers/session.controller.js";
 import { protect } from "../middleware/auth.middleware.js";
+import { hasBaseRole } from "../utils/userRoles.js";
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ router.use(protect);
 
 router.get("/", (req, res, next) => {
   res.set("Cache-Control", "no-store");
-  if (req.user.roles?.includes("instructor") || req.user.role === "instructor")
+  if (hasBaseRole(req.user, "instructor") || req.user.role === "instructor")
     return getInstructorSessions(req, res);
   return getStudentSessions(req, res);
 });

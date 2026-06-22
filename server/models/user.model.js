@@ -23,19 +23,10 @@ const userSchema = new Schema(
       minlength: [6, "Password must be at least 6 characters"],
     },
     roles: {
-      type: [String],
-      enum: ["student", "instructor", "admin"],
+      type: [Schema.Types.Mixed],
       default: ["student"],
     },
-    // Custom RBAC roles created by admins (granular, per-module permissions).
     // Independent of `roles` above — a user can be `roles: ["instructor"]`
-    // AND hold a custom "Content Moderator" role at the same time.
-    assignedRoles: [
-      {
-        type: Types.ObjectId,
-        ref: "Role",
-      },
-    ],
     bio: {
       type: String,
       trim: true,

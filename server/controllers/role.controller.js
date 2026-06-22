@@ -1,5 +1,10 @@
 import Role, { PERMISSION_MODULES } from "../models/role.model.js";
 import User from "../models/user.model.js";
+import {
+  hydrateUserRoles,
+  isBaseRole,
+  mergeBaseAndCustomRoles,
+} from "../utils/userRoles.js";
 
 // ── List available modules/actions (for building the UI matrix) ─────────────
 export const getPermissionModules = async (req, res) => {
@@ -78,10 +83,11 @@ export const deleteRole = async (req, res) => {
       return res.status(400).json({ message: "System roles can't be deleted" });
     }
 
-    // Unassign from all users first
+    // Unassign from all users first. Pulling assignedRoles also cleans up old
+    // documents that haven't been touched since the storage unification.
     await User.updateMany(
-      { assignedRoles: role._id },
-      { $pull: { assignedRoles: role._id } },
+      { $or: [{ roles: role._id }, { assignedRoles: role._id }] },
+      { $pull: { roles: role._id, assignedRoles: role._id } },
     );
 
     await role.deleteOne();
@@ -106,16 +112,19 @@ export const setUserRoles = async (req, res) => {
         .json({ message: "One or more role IDs are invalid" });
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { assignedRoles: roleIds },
-      { new: true },
-    )
-      .select("-password")
-      .populate("assignedRoles");
+    const user = await User.findById(req.params.id).select("-password");
 
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.json(user);
+
+    const baseRoles = (user.roles || []).filter(isBaseRole);
+    user.roles = mergeBaseAndCustomRoles(baseRoles, roleIds);
+    await user.save();
+    await User.collection.updateOne(
+      { _id: user._id },
+      { $unset: { assignedRoles: "" } },
+    );
+
+    res.json(await hydrateUserRoles(user, { migrate: false }));
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

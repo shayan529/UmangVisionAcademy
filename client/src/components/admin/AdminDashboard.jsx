@@ -13,9 +13,11 @@ import AdminStudents from "./AdminStudents";
 import AdminInstructors from "./AdminInstructors";
 import AdminCourses from "./AdminCourses";
 import AdminApplications from "./AdminApplications";
+
 import AdminDevices from "./AdminDevices";
 import AdminBulkImport from "./AdminBulkImport";
 import RoleManager from "./RoleManager";
+import AdminQuestionPapers from "./AdminQuestionPapers";
 
 export default function AdminDashboard() {
   const dispatch = useDispatch();
@@ -94,6 +96,10 @@ export default function AdminDashboard() {
     if (sortBy === "rating") return v * (parseFloat(a.avg) - parseFloat(b.avg));
     return 0;
   });
+
+  const applicationsCount = users.filter(
+    (u) => u.instructorApplication?.status === "pending",
+  ).length;
 
   // Global loading — show spinner on first load when both slices are empty
   const isInitialLoad =
@@ -180,6 +186,8 @@ export default function AdminDashboard() {
             onRetry={() => dispatch(fetchAllCoursesAdmin())}
           />
         );
+      case "question-papers":
+        return <AdminQuestionPapers />;
       case "bulk-import":
         return <AdminBulkImport refreshUsers={() => dispatch(fetchUsers())} />;
       case "applications":
@@ -187,7 +195,14 @@ export default function AdminDashboard() {
       case "roles":
         return <RoleManager currentUser={user} />;
       case "devices":
-        return <AdminDevices users={users} loading={usersLoading} currentUser={user} />;
+        return (
+          <AdminDevices
+            users={users}
+            loading={usersLoading}
+            currentUser={user}
+          />
+        );
+
       default:
         return null;
     }
@@ -209,6 +224,7 @@ export default function AdminDashboard() {
         setCollapsed={setSideCollapsed}
         mobileOpen={sideOpen}
         setMobileOpen={setSideOpen}
+        applicationsCount={applicationsCount}
       />
 
       <div className="flex-1 min-w-0 flex flex-col">

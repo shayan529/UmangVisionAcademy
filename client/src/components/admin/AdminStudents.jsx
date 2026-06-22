@@ -54,6 +54,15 @@ const fmtDate = (d) => {
 
 const ROLE_OPTIONS = ["student", "instructor", "admin"];
 
+// user.roles is a MIXED array post-migration: base role strings
+// ("student", "admin") alongside embedded custom-role objects
+// ({ _id, name, permissions, ... }). Anywhere we need a human-readable
+// label for a role entry — display text, .join(), etc. — use this so a
+// custom-role object never gets coerced into "[object Object]" by
+// Array.prototype.join() or rendered directly.
+const roleLabel = (role) =>
+  role && typeof role === "object" ? role.name || "Custom Role" : role;
+
 /* ─── Avatar ──────────────────────────────────────────── */
 const Av = ({ name = "?", size = 36 }) => (
   <div
@@ -318,7 +327,12 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
     state: student.state || "",
     pincode: student.pincode || "",
     coins: typeof student.coins === "number" ? student.coins : 0,
-    roles: student.roles?.length ? student.roles : ["student"],
+    // Only base roles are editable here — custom roles (objects) are
+    // managed from Roles & Permissions, not this dropdown, so they're
+    // filtered out of the editable set rather than passed through.
+    roles: student.roles?.filter((r) => typeof r === "string").length
+      ? student.roles.filter((r) => typeof r === "string")
+      : ["student"],
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -542,13 +556,15 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-none">
-            {onEdit && <button
-              onClick={onEdit}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition"
-            >
-              <Pencil size={14} />
-              Edit
-            </button>}
+            {onEdit && (
+              <button
+                onClick={onEdit}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition"
+              >
+                <Pencil size={14} />
+                Edit
+              </button>
+            )}
             <button
               onClick={onClose}
               className="flex-none p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
@@ -580,7 +596,10 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
             <InfoRow
               icon={Shield}
               label="Roles"
-              value={(student.roles || ["student"]).join(", ")}
+              value={(student.roles || ["student"])
+                .map(roleLabel)
+                .filter(Boolean)
+                .join(", ")}
             />
             <InfoRow
               icon={CalendarClock}
@@ -921,24 +940,28 @@ const AdminStudents = ({
             />
           </div>
 
-          {canCreate && <button
-            type="button"
-            onClick={() => setAddingStudent(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 transition"
-          >
-            <UserPlus size={14} />
-            Add Student
-          </button>}
+          {canCreate && (
+            <button
+              type="button"
+              onClick={() => setAddingStudent(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 transition"
+            >
+              <UserPlus size={14} />
+              Add Student
+            </button>
+          )}
 
-          {canCreate && <button
-            type="button"
-            onClick={handleImportClick}
-            disabled={importing}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60"
-          >
-            <Upload size={14} />
-            {importing ? "Importing..." : "Bulk Import"}
-          </button>}
+          {canCreate && (
+            <button
+              type="button"
+              onClick={handleImportClick}
+              disabled={importing}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60"
+            >
+              <Upload size={14} />
+              {importing ? "Importing..." : "Bulk Import"}
+            </button>
+          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -1042,30 +1065,34 @@ const AdminStudents = ({
                 </button>
 
                 {/* Edit button */}
-                {canEdit && <button
-                  onClick={() => setEditingStudent(s)}
-                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/20 hover:bg-sky-500/20 hover:border-sky-500/30 transition duration-150"
-                >
-                  <Pencil size={12} />
-                  Edit
-                </button>}
+                {canEdit && (
+                  <button
+                    onClick={() => setEditingStudent(s)}
+                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/20 hover:bg-sky-500/20 hover:border-sky-500/30 transition duration-150"
+                  >
+                    <Pencil size={12} />
+                    Edit
+                  </button>
+                )}
 
                 {/* Delete button */}
-                {canDelete && <button
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        `Are you sure you want to remove student "${s.name}"?`,
-                      )
-                    ) {
-                      deleteUser(s._id);
-                    }
-                  }}
-                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/30 transition duration-150"
-                >
-                  <Trash2 size={12} />
-                  Remove
-                </button>}
+                {canDelete && (
+                  <button
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Are you sure you want to remove student "${s.name}"?`,
+                        )
+                      ) {
+                        deleteUser(s._id);
+                      }
+                    }}
+                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/30 transition duration-150"
+                  >
+                    <Trash2 size={12} />
+                    Remove
+                  </button>
+                )}
               </div>
             </div>
           );

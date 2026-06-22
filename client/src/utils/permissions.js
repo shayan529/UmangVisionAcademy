@@ -1,8 +1,19 @@
+const BASE_ROLES = new Set(["student", "instructor", "admin"]);
+
+export const isBaseRole = (role) =>
+  typeof role === "string" && BASE_ROLES.has(role);
+
+export const hasBaseRole = (user, roleName) =>
+  Boolean(user?.roles?.some((role) => role === roleName));
+
+export const getCustomRoles = (user) =>
+  (user?.roles || []).filter((role) => role && typeof role === "object");
+
 export const hasPermission = (user, moduleName, actionName = "view") => {
-  if (user?.roles?.includes("admin")) return true;
+  if (hasBaseRole(user, "admin")) return true;
 
   return Boolean(
-    user?.assignedRoles?.some((role) =>
+    getCustomRoles(user).some((role) =>
       role.permissions?.some(
         (permission) =>
           permission.module === moduleName &&
@@ -24,8 +35,8 @@ export const hasAllPermissions = (user, checks = []) =>
 
 export const hasAssignedPermissions = (user) =>
   Boolean(
-    user?.roles?.includes("admin") ||
-      user?.assignedRoles?.some((role) =>
+    hasBaseRole(user, "admin") ||
+      getCustomRoles(user).some((role) =>
         role.permissions?.some((permission) => permission.actions?.length > 0),
       ),
   );

@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   Shield,
   UploadCloud,
+  FileQuestion,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -32,6 +33,7 @@ const AdminSidebar = ({
     { id: "students", label: "Students", icon: Users },
     { id: "instructors", label: "Instructors", icon: GraduationCap },
     { id: "courses", label: "Courses", icon: BookOpen },
+    { id: "question-papers", label: "Question Papers", icon: FileQuestion }, // ← new
     { id: "bulk-import", label: "Bulk Import", icon: UploadCloud },
     {
       id: "applications",

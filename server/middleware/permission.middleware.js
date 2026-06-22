@@ -1,4 +1,8 @@
 import { PERMISSION_MODULES } from "../models/role.model.js";
+import {
+  hasBaseRole,
+  hasPermissionGrant,
+} from "../utils/userRoles.js";
 
 // ── requirePermission ────────────────────────────────────────────────────────
 // Usage: requirePermission("courses", "delete")
@@ -19,15 +23,10 @@ export const requirePermission = (module, action) => {
       });
     }
 
-    const isAdmin = req.user.roles?.includes("admin");
+    const isAdmin = hasBaseRole(req.user, "admin");
     if (isAdmin) return next();
 
-    const assignedRoles = req.user.assignedRoles || [];
-    const hasPermission = assignedRoles.some((role) =>
-      role.permissions?.some(
-        (p) => p.module === module && p.actions?.includes(action),
-      ),
-    );
+    const hasPermission = hasPermissionGrant(req.user, module, action);
 
     if (!hasPermission) {
       return res.status(403).json({
@@ -50,16 +49,11 @@ export const requireAnyPermission = (checks) => {
       });
     }
 
-    const isAdmin = req.user.roles?.includes("admin");
+    const isAdmin = hasBaseRole(req.user, "admin");
     if (isAdmin) return next();
 
-    const assignedRoles = req.user.assignedRoles || [];
     const hasAny = checks.some(([module, action]) =>
-      assignedRoles.some((role) =>
-        role.permissions?.some(
-          (p) => p.module === module && p.actions?.includes(action),
-        ),
-      ),
+      hasPermissionGrant(req.user, module, action),
     );
 
     if (!hasAny) {

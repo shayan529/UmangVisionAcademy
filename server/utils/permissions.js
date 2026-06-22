@@ -12,12 +12,14 @@
  */
 export const hasPermission = (user, moduleName, actionName = "view") => {
   if (!user) return false;
-  if (user.roles?.includes("admin")) return true; // admin always passes
+  if (user.roles?.some((role) => role === "admin")) return true;
   return (
-    user.assignedRoles?.some((role) =>
-      role.permissions?.some(
-        (p) => p.module === moduleName && p.actions?.includes(actionName),
-      ),
+    user.roles?.some(
+      (role) =>
+        typeof role === "object" &&
+        role.permissions?.some(
+          (p) => p.module === moduleName && p.actions?.includes(actionName),
+        ),
     ) || false
   );
 };

@@ -4,6 +4,12 @@ import xlsx from "xlsx";
 import mammoth from "mammoth";
 import User from "./../models/user.model.js";
 import bcrypt from "bcryptjs";
+import {
+  hasBaseRole,
+  hydrateUserRoles,
+  hydrateUsersRoles,
+  mergeBaseAndCustomRoles,
+} from "../utils/userRoles.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -255,10 +261,7 @@ export const RegisterUser = async (req, res) => {
     const token = createToken(user._id);
     setTokenCookie(res, token);
 
-    await user.populate("assignedRoles");
-
-    const userData = user.toObject();
-    delete userData.password;
+    const userData = await hydrateUserRoles(user);
 
     res.status(201).json(userData);
   } catch (error) {
@@ -286,7 +289,7 @@ export const LoginUser = async (req, res) => {
 
     const user = await User.findOne({
       phoneNumber: { $in: phoneLookupValues },
-    }).populate("assignedRoles");
+    });
     if (!user) {
       return res
         .status(401)
@@ -344,8 +347,7 @@ export const LoginUser = async (req, res) => {
     const token = createToken(user._id);
     setTokenCookie(res, token);
 
-    const userData = user.toObject();
-    delete userData.password;
+    const userData = await hydrateUserRoles(user);
 
     // Tell the frontend whether a coin was awarded so it can show a toast
     res.json({ ...userData, loginCoinAwarded });
@@ -358,8 +360,8 @@ export const LoginUser = async (req, res) => {
 // ── Get All Users ─────────────────────────────────────────────────────────────
 export const getUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password").populate("assignedRoles");
-    res.json(users);
+    const users = await User.find().select("-password");
+    res.json(await hydrateUsersRoles(users));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -509,7 +511,7 @@ export const getUserById = async (req, res) => {
       .populate("enrolledCourses", "title summary")
       .populate("teachingCourses", "title summary");
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.json(user);
+    res.json(await hydrateUserRoles(user));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -519,7 +521,7 @@ export const getUserById = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const updates = { ...req.body };
-    const isAdmin = req.user?.roles?.includes("admin");
+    const isAdmin = hasBaseRole(req.user, "admin");
 
     if (!isAdmin) {
       delete updates.roles;
@@ -533,11 +535,9 @@ export const updateUser = async (req, res) => {
     const user = await User.findByIdAndUpdate(req.params.id, updates, {
       new: true,
       runValidators: true,
-    })
-      .select("-password")
-      .populate("assignedRoles");
+    }).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.json(user);
+    res.json(await hydrateUserRoles(user));
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -579,6 +579,7 @@ export const createStudentByAdmin = async (req, res) => {
     role,
     roles,
     assignedRoles,
+    customRoleIds,
     city,
     state,
     phoneNumber,
@@ -612,9 +613,12 @@ export const createStudentByAdmin = async (req, res) => {
 
     const allowedRoles = ["student", "instructor", "admin"];
     const normalizedRole = allowedRoles.includes(role) ? role : "student";
-    const finalRoles = Array.isArray(roles) && roles.length > 0
+    const finalBaseRoles = Array.isArray(roles) && roles.length > 0
       ? roles.filter((r) => allowedRoles.includes(r))
       : [normalizedRole];
+    const finalCustomRoleIds = Array.isArray(customRoleIds)
+      ? customRoleIds
+      : assignedRoles || [];
 
     const referrer = referralCodeParam
       ? await User.findOne({
@@ -626,8 +630,7 @@ export const createStudentByAdmin = async (req, res) => {
       name,
       ...(email && { email }),
       password,
-      roles: finalRoles,
-      assignedRoles: assignedRoles || [],
+      roles: mergeBaseAndCustomRoles(finalBaseRoles, finalCustomRoleIds),
       city: city || "",
       state: state || "",
       phoneNumber: normalizedPhoneNumber,
@@ -645,8 +648,7 @@ export const createStudentByAdmin = async (req, res) => {
     // No devices/login stamping here — this account hasn't actually logged
     // in yet; that will happen naturally the first time the student signs in.
 
-    const userData = user.toObject();
-    delete userData.password;
+    const userData = await hydrateUserRoles(user, { migrate: false });
 
     // Deliberately no createToken / setTokenCookie call here.
     res.status(201).json(userData);

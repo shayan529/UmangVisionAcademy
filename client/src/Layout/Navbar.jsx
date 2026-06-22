@@ -5,6 +5,7 @@ import { logoutUser } from "../redux/slices/authSlice";
 import { ChevronDown, ShoppingCart } from "lucide-react";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { getCustomRoles, hasBaseRole } from "../utils/permissions";
 
 const Navbar = () => {
   const { user, loading } = useSelector((state) => state.auth);
@@ -17,18 +18,33 @@ const Navbar = () => {
 
   const isInstructorDashboard = pathname.startsWith("/instructor-dashboard");
 
-  const role = user?.roles;
-  const hasInstructorRole = role?.includes("instructor");
-  const hasStudentRole = role?.includes("student");
-  const hasAdminRole = role?.includes("admin");
+  const hasInstructorRole = hasBaseRole(user, "instructor");
+  const hasStudentRole = hasBaseRole(user, "student");
+  const hasAdminRole = hasBaseRole(user, "admin");
   const isMultiRole = hasInstructorRole && hasStudentRole && !hasAdminRole;
   const cartCount = cartIds.length;
 
+  // Custom roles (e.g. "HR Manager") are embedded as objects inside
+  // user.roles after hydrateUserRoles() runs on the backend — they are
+  // NOT kept in a separate `assignedRoles` field anymore (that field is
+  // migrated away on first hydration). Detect them the same way
+  // permissions.js does, so dashboard routing stays in sync with the
+  // sidebar/permission checks instead of silently falling through to
+  // the student dashboard for every custom-role staff member.
+  const hasCustomRole = getCustomRoles(user).length > 0;
+
+  // Base admins and any custom-role staff member (HR Manager, Operations
+  // Manager, etc.) work out of the Staff/Admin dashboards, not the public
+  // course catalog — hide the storefront "Courses" link for them.
+  const isStaffOrAdmin = hasAdminRole || hasCustomRole;
+
   const dashboardPath = hasAdminRole
     ? "/admin-dashboard"
-    : hasInstructorRole
-      ? "/instructor-dashboard"
-      : "/student-dashboard";
+    : hasCustomRole
+      ? "/staff-dashboard"
+      : hasInstructorRole
+        ? "/instructor-dashboard"
+        : "/student-dashboard";
 
   const dropdownRef = useRef(null);
   const languageRef = useRef(null);
@@ -193,12 +209,14 @@ const Navbar = () => {
 
         {/* ── Desktop nav links ── */}
         <div className="hidden md:flex justify-center flex-1 items-center gap-8 text-[15px] font-medium text-gray-300 mx-8">
-          <Link
-            to="/courses"
-            className="hover:text-indigo-300 transition duration-300"
-          >
-            {t("nav.courses")}
-          </Link>
+          {!isStaffOrAdmin && (
+            <Link
+              to="/courses"
+              className="hover:text-indigo-300 transition duration-300"
+            >
+              {t("nav.courses")}
+            </Link>
+          )}
           <Link
             to="/plans"
             className="hover:text-indigo-300 transition duration-300"
@@ -218,43 +236,45 @@ const Navbar = () => {
             {t("nav.blogs")}
           </Link>
 
-          <div ref={dropdownRef} className="relative">
-            <button
-              onClick={() => setBoardOpen((prev) => !prev)}
-              className="flex items-center gap-1 hover:text-indigo-300 transition"
-            >
-              {t("nav.board")}
-              <ChevronDown
-                size={16}
-                className={`transition-transform ${boardOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-            {boardOpen && (
-              <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
-                <Link
-                  to="/boards/cbse"
-                  onClick={() => setBoardOpen(false)}
-                  className="block px-4 py-3 hover:bg-slate-800"
-                >
-                  CBSE
-                </Link>
-                <Link
-                  to="/boards/mp-board"
-                  onClick={() => setBoardOpen(false)}
-                  className="block px-4 py-3 hover:bg-slate-800"
-                >
-                  MP Board
-                </Link>
-                <Link
-                  to="/boards/icse"
-                  onClick={() => setBoardOpen(false)}
-                  className="block px-4 py-3 hover:bg-slate-800"
-                >
-                  ICSE
-                </Link>
-              </div>
-            )}
-          </div>
+          {!isStaffOrAdmin && (
+            <div ref={dropdownRef} className="relative">
+              <button
+                onClick={() => setBoardOpen((prev) => !prev)}
+                className="flex items-center gap-1 hover:text-indigo-300 transition"
+              >
+                {t("nav.board")}
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform ${boardOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+              {boardOpen && (
+                <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
+                  <Link
+                    to="/boards/cbse"
+                    onClick={() => setBoardOpen(false)}
+                    className="block px-4 py-3 hover:bg-slate-800"
+                  >
+                    CBSE
+                  </Link>
+                  <Link
+                    to="/boards/mp-board"
+                    onClick={() => setBoardOpen(false)}
+                    className="block px-4 py-3 hover:bg-slate-800"
+                  >
+                    MP Board
+                  </Link>
+                  <Link
+                    to="/boards/icse"
+                    onClick={() => setBoardOpen(false)}
+                    className="block px-4 py-3 hover:bg-slate-800"
+                  >
+                    ICSE
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
 
           {!hasInstructorRole && !hasAdminRole && (
             <Link
@@ -399,7 +419,9 @@ const Navbar = () => {
       >
         <div className="px-4 pt-3 pb-4 space-y-1">
           {[
-            { to: "/courses", label: t("nav.courses") },
+            ...(!isStaffOrAdmin
+              ? [{ to: "/courses", label: t("nav.courses") }]
+              : []),
             { to: "/plans", label: t("nav.plans") },
             ...(!hasInstructorRole && !hasAdminRole
               ? [{ to: "/become-instructor", label: t("nav.becomeInstructor") }]

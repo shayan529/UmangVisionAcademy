@@ -1,11 +1,18 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../redux/slices/cartSlice.js";
+import { hasBaseRole } from "../../utils/permissions";
 
 const CourseCard = ({ course }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+
+  // Only base "student" or "instructor" accounts can enroll / add to cart.
+  // Custom-role staff (HR Manager, etc.) and base "admin" only ever get
+  // View Demo — they're not meant to be purchasing or enrolling in courses.
+  const canEnroll =
+    hasBaseRole(user, "student") || hasBaseRole(user, "instructor");
 
   const handleEnroll = () => {
     const courseId = course?._id ?? course?.id;
@@ -77,7 +84,7 @@ const CourseCard = ({ course }) => {
                 Continue Learning →
               </button>
             </Link>
-          ) : (
+          ) : canEnroll ? (
             <div className="flex gap-3 mt-4">
               <Link to={`/courses/${course._id}/demo`} className="flex-1">
                 <button className="w-full border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition py-2 rounded-lg font-medium">
@@ -91,6 +98,14 @@ const CourseCard = ({ course }) => {
               >
                 Enroll Now
               </button>
+            </div>
+          ) : (
+            <div className="mt-4">
+              <Link to={`/courses/${course._id}/demo`} className="block">
+                <button className="w-full border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition py-2 rounded-lg font-medium">
+                  View Demo
+                </button>
+              </Link>
             </div>
           )}
         </div>

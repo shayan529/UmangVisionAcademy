@@ -15,6 +15,11 @@ import {
   EyeOff,
 } from "lucide-react";
 import apiClient from "../../config/api";
+import {
+  getCustomRoles,
+  hasBaseRole,
+  isBaseRole,
+} from "../../utils/permissions";
 
 const API_BASE = "/admin/roles";
 const USERS_API = "/users/admin-create";
@@ -85,9 +90,11 @@ const ROLE_TEMPLATES = {
 const OTHER_OPTION = "__other__";
 const EMPTY_ROLE = { name: "", description: "", permissions: [] };
 
+const getCustomRoleIds = (user) =>
+  getCustomRoles(user).map((role) => role._id || role).filter(Boolean);
+
 // Base account types every user must have one of, independent of any
-// custom role layered on top via assignedRoles (e.g. a "student" can also
-// hold the "HR Manager" custom role, as seen elsewhere in this app).
+// custom role layered on top in the unified `roles` array.
 const BASE_ROLE_OPTIONS = [
   { value: "student", label: "Student" },
   { value: "instructor", label: "Instructor" },
@@ -441,9 +448,7 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
 
 // ── Assign roles to an existing user modal ────────────────────────────────────
 const AssignRolesModal = ({ user, roles, onClose, onSaved, showToast }) => {
-  const [selected, setSelected] = useState(
-    (user.assignedRoles || []).map((r) => (typeof r === "string" ? r : r._id)),
-  );
+  const [selected, setSelected] = useState(getCustomRoleIds(user));
   const [saving, setSaving] = useState(false);
 
   const toggleRole = (id) =>
@@ -579,7 +584,7 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
           state: form.state,
           pincode: form.pincode,
           roles: [form.baseRole],
-          assignedRoles: selectedRoles,
+          customRoleIds: selectedRoles,
         }),
       });
       showToast?.(`${form.name} added.`);
@@ -836,8 +841,8 @@ const RoleManager = ({ showToast, currentUser }) => {
   };
 
   const filteredUsers = users.filter((u) => {
-    const currentIsAdmin = currentUser?.roles?.includes("admin");
-    if (!currentIsAdmin && u.roles?.includes("admin")) {
+    const currentIsAdmin = hasBaseRole(currentUser, "admin");
+    if (!currentIsAdmin && hasBaseRole(u, "admin")) {
       return false;
     }
 
@@ -850,21 +855,17 @@ const RoleManager = ({ showToast, currentUser }) => {
     if (!matchesSearch) return false;
 
     if (!roleFilter) return true;
-    const assignedIds = (u.assignedRoles || []).map((r) =>
-      typeof r === "string" ? r : r._id,
-    );
+    const assignedIds = getCustomRoleIds(u);
     if (roleFilter === "__none__") return assignedIds.length === 0;
     return assignedIds.includes(roleFilter);
   });
 
   const usersForRole = (roleId) =>
     users.filter((u) => {
-      const isAssigned = (u.assignedRoles || []).some(
-        (r) => (typeof r === "string" ? r : r._id) === roleId,
-      );
+      const isAssigned = getCustomRoleIds(u).includes(roleId);
       if (!isAssigned) return false;
-      const currentIsAdmin = currentUser?.roles?.includes("admin");
-      if (!currentIsAdmin && u.roles?.includes("admin")) return false;
+      const currentIsAdmin = hasBaseRole(currentUser, "admin");
+      if (!currentIsAdmin && hasBaseRole(u, "admin")) return false;
       return true;
     });
 
@@ -1093,7 +1094,7 @@ const RoleManager = ({ showToast, currentUser }) => {
                     <span className="text-sm font-semibold text-white truncate">
                       {u.name}
                     </span>
-                    {u.roles?.map((r) => (
+                    {(u.roles || []).filter(isBaseRole).map((r) => (
                       <span
                         key={r}
                         className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-800 text-slate-400"
@@ -1106,9 +1107,9 @@ const RoleManager = ({ showToast, currentUser }) => {
                     {u.phoneNumber}
                     {u.email ? ` · ${u.email}` : ""}
                   </div>
-                  {u.assignedRoles?.length > 0 && (
+                  {getCustomRoles(u).length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1.5">
-                      {u.assignedRoles.map((r) => (
+                      {getCustomRoles(u).map((r) => (
                         <span
                           key={r._id || r}
                           className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-950/40 text-indigo-300 border border-indigo-900/40"

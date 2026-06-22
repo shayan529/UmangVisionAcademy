@@ -7,6 +7,7 @@ import CourseCard from "./CourseCard";
 import { FaStar } from "react-icons/fa";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { hasBaseRole } from "../../utils/permissions";
 
 // ── Skeleton card ─────────────────────────────────────────────────────────────
 const SkeletonCard = () => (
@@ -125,6 +126,13 @@ const Courses = () => {
   const navigate = useNavigate();
   const { user } = useSelector((s) => s.auth);
 
+  // Only base "student" or "instructor" accounts can enroll / add to cart.
+  // Custom-role staff (e.g. HR Manager) and base "admin" can only ever View
+  // Demo — this mirrors the gate inside CourseCard so the card's own buttons
+  // and the card-click navigation here stay consistent with each other.
+  const canEnroll =
+    hasBaseRole(user, "student") || hasBaseRole(user, "instructor");
+
   // ── Redux state ──────────────────────────────────────────────────────────
   const {
     courses: allCourses = [],
@@ -189,6 +197,7 @@ const Courses = () => {
 
   const isEnrolled = (course) => {
     if (!user) return false;
+    if (!canEnroll) return false;
     return course.students?.some((s) => (s._id ?? s) === user._id);
   };
 
@@ -236,6 +245,12 @@ const Courses = () => {
   const handleCourseClick = (course) => {
     if (!user) {
       navigate("/login", { state: { from: "/courses" } });
+      return;
+    }
+    // Custom-role staff / admins always go to the demo page, regardless of
+    // enrollment status — they're not meant to land on the full course view.
+    if (!canEnroll) {
+      navigate(`/courses/${course._id}/demo`);
       return;
     }
     if (isEnrolled(course)) {

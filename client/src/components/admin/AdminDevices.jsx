@@ -49,7 +49,8 @@ const Av = ({ name = "?", size = 42 }) => (
 
 /* ─── User Agent Parser ─────────────────────────────── */
 const parseUA = (userAgent) => {
-  if (!userAgent) return { browser: "Unknown Browser", os: "Unknown OS", isMobile: false };
+  if (!userAgent)
+    return { browser: "Unknown Browser", os: "Unknown OS", isMobile: false };
   const ua = userAgent.toLowerCase();
   let browser = "Unknown Browser";
   let os = "Unknown OS";
@@ -99,7 +100,9 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
   };
 
   const currentIsAdmin = currentUser?.roles?.includes("admin");
-  const visibleUsers = currentIsAdmin ? users : users.filter((u) => !u.roles?.includes("admin"));
+  const visibleUsers = currentIsAdmin
+    ? users
+    : users.filter((u) => !u.roles?.includes("admin"));
 
   const filteredUsers = visibleUsers.filter((u) => {
     // 1. Filter by search query
@@ -125,8 +128,12 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
     return matchesQuery;
   });
 
-  const studentsCount = visibleUsers.filter((u) => u.roles?.includes("student")).length;
-  const instructorsCount = visibleUsers.filter((u) => u.roles?.includes("instructor")).length;
+  const studentsCount = visibleUsers.filter((u) =>
+    u.roles?.includes("student"),
+  ).length;
+  const instructorsCount = visibleUsers.filter((u) =>
+    u.roles?.includes("instructor"),
+  ).length;
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl animate-fadeIn">
@@ -210,7 +217,24 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
                     <p className="text-sm font-bold text-slate-200 truncate">
                       {user.name}
                     </p>
-                    {user.roles?.map((r) => {
+                    {user.roles?.map((r, i) => {
+                      // Post-migration, user.roles is a MIXED array: base
+                      // role strings ("student", "admin") alongside embedded
+                      // custom-role objects ({ _id, name, permissions, ... }).
+                      // Rendering `r` directly crashes React the moment a
+                      // user has a custom role assigned — render the
+                      // object's .name instead, and skip a bare string key.
+                      if (r && typeof r === "object") {
+                        return (
+                          <span
+                            key={r._id || `custom-${i}`}
+                            className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-violet-500/10 border-violet-500/20 text-violet-400"
+                          >
+                            {r.name}
+                          </span>
+                        );
+                      }
+
                       let roleClass =
                         "bg-indigo-500/10 border-indigo-500/20 text-indigo-400";
                       if (r === "instructor") {
@@ -291,7 +315,9 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
                                 onClick={() => toggleUA(deviceId)}
                                 className="text-[9px] text-indigo-400 hover:text-indigo-300 font-semibold underline text-left block transition duration-100"
                               >
-                                {isExpanded ? "Hide raw details" : "Show raw user-agent"}
+                                {isExpanded
+                                  ? "Hide raw details"
+                                  : "Show raw user-agent"}
                               </button>
                             </div>
                           </div>
@@ -322,7 +348,8 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
                               Raw User-Agent String:
                             </p>
                             <p className="font-mono text-[9px] text-slate-400 bg-slate-950/40 border border-slate-900/60 rounded p-2 overflow-x-auto select-all leading-normal whitespace-pre-wrap">
-                              {device.userAgent || "No user-agent details provided"}
+                              {device.userAgent ||
+                                "No user-agent details provided"}
                             </p>
                           </div>
                         )}

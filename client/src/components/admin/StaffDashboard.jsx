@@ -18,7 +18,9 @@ import {
 import { fetchAllCoursesAdmin } from "../../redux/slices/courseSlice";
 import { logoutUser } from "../../redux/slices/authSlice";
 import {
+  getCustomRoles,
   hasAnyPermission,
+  hasBaseRole,
   hasPermission,
 } from "../../utils/permissions";
 
@@ -73,7 +75,7 @@ const StaffSidebar = ({
     // only — never on a custom permission. Granting "manage roles" through
     // the permission matrix itself would let a custom role escalate its
     // own access (e.g. assign itself more permissions).
-    ...(user?.roles?.includes("admin")
+    ...(hasBaseRole(user, "admin")
       ? [{ id: "roles", label: "Roles & Permissions", icon: Lock }]
       : []),
   ];
@@ -94,7 +96,7 @@ const StaffSidebar = ({
 
   const username = user?.name || user?.email?.split("@")[0] || "Staff Member";
   const customRoleNames =
-    user?.assignedRoles?.map((r) => r.name).join(", ") || "Staff";
+    getCustomRoles(user).map((r) => r.name).join(", ") || "Staff";
 
   return (
     <aside className={sidebarClass}>
@@ -242,8 +244,8 @@ export default function StaffDashboard() {
     error: coursesError,
   } = useSelector((state) => state.courses);
 
-  const students = users.filter((u) => u.roles?.includes("student"));
-  const instructors = users.filter((u) => u.roles?.includes("instructor"));
+  const students = users.filter((u) => hasBaseRole(u, "student"));
+  const instructors = users.filter((u) => hasBaseRole(u, "instructor"));
 
   // ── UI state ───────────────────────────────────────────────────────────────
   const [tab, setTab] = useState("overview");
@@ -408,7 +410,7 @@ export default function StaffDashboard() {
       case "roles":
         // Hard admin-only gate, matching the sidebar — never reachable by
         // typing the tab id manually if you're not a base admin.
-        return user?.roles?.includes("admin") ? (
+        return hasBaseRole(user, "admin") ? (
           <RoleManager
             currentUser={user}
             showToast={(msg) => console.log(msg)}

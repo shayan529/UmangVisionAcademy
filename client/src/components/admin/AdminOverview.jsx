@@ -6,7 +6,11 @@ import {
   Star,
   ShieldCheck,
 } from 'lucide-react';
-import { hasPermission } from '../../utils/permissions';
+import {
+  getCustomRoles,
+  hasBaseRole,
+  hasPermission,
+} from '../../utils/permissions';
 
 /* ─── helpers ─────────────────────────────────────────── */
 const fmt = (n) => (n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : `₹${n}`);
@@ -112,7 +116,7 @@ const ACTION_LABELS = {
 const getGrantedPermissions = (user) => {
   const grouped = new Map();
 
-  (user?.assignedRoles || []).forEach((role) => {
+  getCustomRoles(user).forEach((role) => {
     (role.permissions || []).forEach((permission) => {
       const current = grouped.get(permission.module) || new Set();
       (permission.actions || []).forEach((action) => current.add(action));
@@ -140,11 +144,11 @@ const AdminOverview = ({
   // Overview tab — a Staff member with limited permissions should never see
   // copy that addresses them as "Admin" or implies abilities (like approving
   // instructor applications) they may not actually have been granted.
-  const isFullAdmin = user?.roles?.includes('admin');
+  const isFullAdmin = hasBaseRole(user, 'admin');
   const firstName = user?.name?.split(' ')[0];
   const greetingName = isFullAdmin ? 'Admin' : firstName || 'Admin';
   const roleLabel =
-    user?.assignedRoles?.map((r) => r.name).join(', ') ||
+    getCustomRoles(user).map((r) => r.name).join(', ') ||
     (isFullAdmin ? 'Administrator' : 'Staff Member');
   const grantedPermissions = getGrantedPermissions(user);
   const canViewUsers = hasPermission(user, 'users', 'view');

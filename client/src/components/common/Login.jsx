@@ -10,6 +10,7 @@ import {
   checkAndAwardAchievements,
   fetchAchievements,
 } from "../../redux/slices/achievementSlice";
+import { getCustomRoles, hasBaseRole } from "../../utils/permissions";
 
 /* ── Animated particle canvas ── */
 const ParticleCanvas = () => {
@@ -894,8 +895,16 @@ const Login = () => {
 
       toast("Welcome!", { icon: "👋" });
 
-      const isAdmin = user?.roles?.includes("admin");
-      const isInstructor = user?.roles?.includes("instructor");
+      const isAdmin = hasBaseRole(user, "admin");
+      // Custom-role staff (HR Manager, Payroll Admin, etc.) are detected by
+      // PRESENCE of a custom role on the account, not by whether any of
+      // their granted permissions happen to be non-empty. A custom-role
+      // user with zero permissions assigned should still land on the staff
+      // panel (where they'll simply see nothing they can't access) rather
+      // than silently falling through to the student dashboard.
+      const isStaff = !isAdmin && getCustomRoles(user).length > 0;
+      const isInstructor =
+        !isAdmin && !isStaff && hasBaseRole(user, "instructor");
       const from = location.state?.from;
 
       if (from) {
@@ -903,8 +912,8 @@ const Login = () => {
         return;
       }
       if (isAdmin) navigate("/admin-dashboard");
+      else if (isStaff) navigate("/staff-dashboard");
       else if (isInstructor) navigate("/instructor-dashboard");
-      else if (user?.assignedRoles && user.assignedRoles.length > 0) navigate("/staff-dashboard");
       else navigate("/student-dashboard");
     } catch (error) {
       const message =

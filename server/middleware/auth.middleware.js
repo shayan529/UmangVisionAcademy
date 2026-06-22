@@ -1,5 +1,10 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
+import {
+  hasBaseRole,
+  hasPermissionGrant,
+  hydrateUserRoles,
+} from "../utils/userRoles.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 
@@ -18,9 +23,7 @@ export const protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    const user = await User.findById(decoded.id)
-      .select("-password")
-      .populate("assignedRoles");
+    const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
       return res.status(401).json({
@@ -36,7 +39,7 @@ export const protect = async (req, res, next) => {
       });
     }
 
-    req.user = user;
+    req.user = await hydrateUserRoles(user);
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
@@ -56,7 +59,7 @@ export const protect = async (req, res, next) => {
 // ── authorizeRoles ────────────────────────────────────────────────────────────
 export const authorizeRoles = (...roles) => {
   return (req, res, next) => {
-    const hasRole = roles.some((r) => req.user.roles?.includes(r)); // ✅ array check
+    const hasRole = roles.some((r) => hasBaseRole(req.user, r));
 
     if (!hasRole) {
       return res.status(403).json({
@@ -83,14 +86,7 @@ export const adminOnly = authorizeRoles("admin");
 // here rather than just a bare ObjectId.
 export const requirePermission = (moduleName, actionName = "view") => {
   return (req, res, next) => {
-    const isAdmin = req.user?.roles?.includes("admin");
-    if (isAdmin) return next();
-
-    const hasGrant = req.user?.assignedRoles?.some((role) =>
-      role.permissions?.some(
-        (p) => p.module === moduleName && p.actions?.includes(actionName),
-      ),
-    );
+    const hasGrant = hasPermissionGrant(req.user, moduleName, actionName);
 
     if (!hasGrant) {
       return res.status(403).json({
@@ -105,8 +101,8 @@ export const requirePermission = (moduleName, actionName = "view") => {
 
 // ── instructorOnly ────────────────────────────────────────────────────────────
 export const instructorOnly = (req, res, next) => {
-  const isAdmin = req.user.roles?.includes("admin"); // ✅
-  const isInstructor = req.user.roles?.includes("instructor"); // ✅
+  const isAdmin = hasBaseRole(req.user, "admin");
+  const isInstructor = hasBaseRole(req.user, "instructor");
 
   if (isAdmin) return next();
 
@@ -130,7 +126,7 @@ export const instructorOnly = (req, res, next) => {
 // ── selfOrAdmin ───────────────────────────────────────────────────────────────
 export const selfOrAdmin = (req, res, next) => {
   const isSelf = req.user._id.toString() === req.params.id;
-  const isAdmin = req.user.roles?.includes("admin"); // ✅
+  const isAdmin = hasBaseRole(req.user, "admin");
 
   if (!isSelf && !isAdmin) {
     return res.status(403).json({
@@ -144,14 +140,8 @@ export const selfOrAdmin = (req, res, next) => {
 export const selfOrPermission = (moduleName, actionName) => {
   return (req, res, next) => {
     const isSelf = req.user?._id?.toString() === req.params.id;
-    const isAdmin = req.user?.roles?.includes("admin");
-    const hasGrant = req.user?.assignedRoles?.some((role) =>
-      role.permissions?.some(
-        (permission) =>
-          permission.module === moduleName &&
-          permission.actions?.includes(actionName),
-      ),
-    );
+    const isAdmin = hasBaseRole(req.user, "admin");
+    const hasGrant = hasPermissionGrant(req.user, moduleName, actionName);
 
     if (isSelf || isAdmin || hasGrant) return next();
 
