@@ -24,18 +24,7 @@ const Navbar = () => {
   const isMultiRole = hasInstructorRole && hasStudentRole && !hasAdminRole;
   const cartCount = cartIds.length;
 
-  // Custom roles (e.g. "HR Manager") are embedded as objects inside
-  // user.roles after hydrateUserRoles() runs on the backend — they are
-  // NOT kept in a separate `assignedRoles` field anymore (that field is
-  // migrated away on first hydration). Detect them the same way
-  // permissions.js does, so dashboard routing stays in sync with the
-  // sidebar/permission checks instead of silently falling through to
-  // the student dashboard for every custom-role staff member.
   const hasCustomRole = getCustomRoles(user).length > 0;
-
-  // Base admins and any custom-role staff member (HR Manager, Operations
-  // Manager, etc.) work out of the Staff/Admin dashboards, not the public
-  // course catalog — hide the storefront "Courses" link for them.
   const isStaffOrAdmin = hasAdminRole || hasCustomRole;
 
   const dashboardPath = hasAdminRole
@@ -72,116 +61,123 @@ const Navbar = () => {
     setLangDropdownOpen(false);
   };
 
-  // ── Switch-role button: golden when going TO instructor, indigo when going TO student
   const switchTarget = isInstructorDashboard
     ? "/student-dashboard"
     : "/instructor-dashboard";
   const switchLabel = isInstructorDashboard
     ? t("nav.goToStudentDashboard")
     : t("nav.goToInstructorDashboard");
-  const goingToInstructor = !isInstructorDashboard; // about to switch TO instructor
+  const goingToInstructor = !isInstructorDashboard;
 
   return (
     <nav className="w-full sticky top-0 z-50 bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10">
-      {/* Keyframes for shimmer effect */}
       <style>{`
-@keyframes shimmer-rose {
+@keyframes shimmer-navy {
   0%   { background-position: -200% center; }
   100% { background-position:  200% center; }
 }
-.btn-rose {
+@keyframes shimmer-indigo {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+@keyframes shimmer-red {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+.btn-navy {
   background: linear-gradient(
     105deg,
-    #881337 0%, #be185d 15%, #fb7185 30%,
-    #fecdd3 45%, #fb7185 55%, #e11d48 70%,
-    #881337 85%, #fb7185 100%
+    #0f172a 0%, #1e3a5f 15%, #1d4ed8 30%,
+    #93c5fd 45%, #1d4ed8 55%, #1e3a5f 70%,
+    #0f172a 85%, #1d4ed8 100%
   );
   background-size: 200% auto;
-  animation: shimmer-rose 5s linear infinite;
+  animation: shimmer-navy 5s linear infinite;
   color: #fff;
   font-weight: 700;
-  border: 1px solid #fb718540;
+  border: 1px solid #1d4ed840;
   box-shadow:
-    0 0 12px rgba(251,113,133,.4),
-    0 0 28px rgba(251,113,133,.15),
+    0 0 12px rgba(29,78,216,.4),
+    0 0 28px rgba(29,78,216,.15),
     inset 0 1px 0 rgba(255,255,255,.2);
-  text-shadow: 0 1px 2px rgba(0,0,0,.25);
+  text-shadow: 0 1px 2px rgba(0,0,0,.35);
 }
-.btn-rose:hover {
+.btn-navy:hover {
   box-shadow:
-    0 0 18px rgba(251,113,133,.65),
-    0 0 40px rgba(251,113,133,.25),
+    0 0 18px rgba(29,78,216,.65),
+    0 0 40px rgba(29,78,216,.25),
     inset 0 1px 0 rgba(255,255,255,.25);
   transform: scale(1.045);
 }
-        .btn-indigo-shine {
-          background: linear-gradient(
-            105deg,
-            #3730a3 0%,
-            #4f46e5 20%,
-            #818cf8 40%,
-            #c7d2fe 50%,
-            #818cf8 60%,
-            #4f46e5 80%,
-            #3730a3 100%
-          );
-          background-size: 200% auto;
-          animation: shimmer-indigo 5s linear infinite;
-          color: #fff;
-          font-weight: 700;
-          border: 1px solid #818cf840;
-          box-shadow:
-            0 0 10px rgba(99,102,241,.5),
-            0 0 24px rgba(99,102,241,.2),
-            inset 0 1px 0 rgba(255,255,255,.2);
-        }
-        .btn-indigo-shine:hover {
-          box-shadow:
-            0 0 16px rgba(99,102,241,.7),
-            0 0 36px rgba(99,102,241,.3),
-            inset 0 1px 0 rgba(255,255,255,.25);
-          transform: scale(1.045);
-        }
-        .btn-red {
-          background: linear-gradient(
-            105deg,
-            #7f1d1d 0%,
-            #b91c1c 15%,
-            #ef4444 30%,
-            #fca5a5 45%,
-            #ef4444 55%,
-            #dc2626 70%,
-            #7f1d1d 85%,
-            #ef4444 100%
-          );
-          background-size: 200% auto;
-          animation: shimmer-red 5s linear infinite;
-          color: #fff;
-          font-weight: 700;
-          border: 1px solid #fca5a540;
-          box-shadow:
-            0 0 12px rgba(239,68,68,.55),
-            0 0 28px rgba(239,68,68,.25),
-            inset 0 1px 0 rgba(255,255,255,.2);
-        }
-        .btn-red:hover {
-          box-shadow:
-            0 0 18px rgba(239,68,68,.75),
-            0 0 40px rgba(239,68,68,.35),
-            inset 0 1px 0 rgba(255,255,255,.25);
-          transform: scale(1.045);
-        }
-        .btn-rose, .btn-indigo-shine, .btn-red {
-          transition: transform .2s ease, box-shadow .2s ease;
-          white-space: nowrap;
-          border-radius: 0.75rem;
-          padding: 0.625rem 1.25rem;
-          font-size: 0.875rem;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-        }
-      `}</style>
+.btn-indigo-shine {
+  background: linear-gradient(
+    105deg,
+    #3730a3 0%,
+    #4f46e5 20%,
+    #818cf8 40%,
+    #c7d2fe 50%,
+    #818cf8 60%,
+    #4f46e5 80%,
+    #3730a3 100%
+  );
+  background-size: 200% auto;
+  animation: shimmer-indigo 5s linear infinite;
+  color: #fff;
+  font-weight: 700;
+  border: 1px solid #818cf840;
+  box-shadow:
+    0 0 10px rgba(99,102,241,.5),
+    0 0 24px rgba(99,102,241,.2),
+    inset 0 1px 0 rgba(255,255,255,.2);
+}
+.btn-indigo-shine:hover {
+  box-shadow:
+    0 0 16px rgba(99,102,241,.7),
+    0 0 36px rgba(99,102,241,.3),
+    inset 0 1px 0 rgba(255,255,255,.25);
+  transform: scale(1.045);
+}
+.btn-red {
+  background: linear-gradient(
+    105deg,
+    #7f1d1d 0%,
+    #b91c1c 15%,
+    #ef4444 30%,
+    #fca5a5 45%,
+    #ef4444 55%,
+    #dc2626 70%,
+    #7f1d1d 85%,
+    #ef4444 100%
+  );
+  background-size: 200% auto;
+  animation: shimmer-red 5s linear infinite;
+  color: #fff;
+  font-weight: 700;
+  border: 1px solid #fca5a540;
+  box-shadow:
+    0 0 12px rgba(239,68,68,.55),
+    0 0 28px rgba(239,68,68,.25),
+    inset 0 1px 0 rgba(255,255,255,.2);
+}
+.btn-red:hover {
+  box-shadow:
+    0 0 18px rgba(239,68,68,.75),
+    0 0 40px rgba(239,68,68,.35),
+    inset 0 1px 0 rgba(255,255,255,.25);
+  transform: scale(1.045);
+}
+.btn-navy, .btn-indigo-shine, .btn-red {
+  transition: transform .2s ease, box-shadow .2s ease;
+  white-space: nowrap;
+  border-radius: 0.75rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+`}</style>
 
       <div className="w-full px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 flex items-center justify-between gap-2">
         {/* ── Logo ── */}
@@ -349,7 +345,8 @@ const Navbar = () => {
               >
                 {t("nav.login")}
               </Link>
-              <Link to="/become-instructor" className="btn-indigo-shine">
+              {/* ── FIX: was btn-indigo-shine, now btn-navy ── */}
+              <Link to="/become-instructor" className="btn-navy">
                 {t("nav.getStarted")}
               </Link>
             </>
@@ -367,10 +364,7 @@ const Navbar = () => {
                   ⇄ {switchLabel}
                 </Link>
               ) : (
-                <Link
-                  to={dashboardPath}
-                  className="btn-indigo-shine whitespace-nowrap bg-linear-to-r from-indigo-400 to-indigo-500 hover:scale-105 transition duration-300 text-black font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20"
-                >
+                <Link to={dashboardPath} className="btn-indigo-shine">
                   {t("nav.dashboard")}
                 </Link>
               )}
@@ -475,7 +469,12 @@ const Navbar = () => {
               <Link
                 to="/become-instructor"
                 onClick={closeMobile}
-                className="btn-rose flex-1 text-center text-sm font-semibold py-2 px-3 rounded-lg bg-linear-to-r from-indigo-400 to-indigo-500 text-black shadow-md transition"
+                className="btn-navy flex-1 text-center"
+                style={{
+                  borderRadius: "0.5rem",
+                  padding: "0.5rem 0.75rem",
+                  display: "flex",
+                }}
               >
                 {t("nav.getStarted")}
               </Link>
@@ -504,7 +503,11 @@ const Navbar = () => {
                     to={switchTarget}
                     onClick={closeMobile}
                     className="flex-1 text-center text-xs py-2 px-2 btn-indigo-shine"
-                    style={{ borderRadius: "0.5rem", padding: "0.5rem 0.5rem" }}
+                    style={{
+                      borderRadius: "0.5rem",
+                      padding: "0.5rem 0.5rem",
+                      display: "flex",
+                    }}
                   >
                     {goingToInstructor ? "✦" : "⟵"} {switchLabel}
                   </Link>
@@ -512,19 +515,29 @@ const Navbar = () => {
                   <Link
                     to={dashboardPath}
                     onClick={closeMobile}
-                    className="flex-1 text-center text-xs font-semibold py-2 px-2 rounded-lg bg-linear-to-r from-indigo-400 to-indigo-500 text-black shadow-md transition"
+                    className="flex-1 text-center text-xs py-2 px-2 btn-indigo-shine"
+                    style={{
+                      borderRadius: "0.5rem",
+                      padding: "0.5rem 0.5rem",
+                      display: "flex",
+                    }}
                   >
                     {t("nav.dashboard")}
                   </Link>
                 )}
+                {/* ── FIX: was btn-navy, now btn-red to match desktop logout ── */}
                 <button
                   onClick={() => {
                     closeMobile();
                     dispatch(logoutUser());
                     navigate("/");
                   }}
-                  className="btn-red flex-1 text-xs"
-                  style={{ borderRadius: "0.5rem", padding: "0.5rem 0.5rem" }}
+                  className="btn-red flex-1 text-xs text-center"
+                  style={{
+                    borderRadius: "0.5rem",
+                    padding: "0.5rem 0.5rem",
+                    display: "flex",
+                  }}
                 >
                   {t("nav.logout")}
                 </button>
