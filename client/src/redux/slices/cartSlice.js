@@ -8,12 +8,10 @@ export const fetchAvailableCourses = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await api.get(API_ENDPOINTS.COURSES.PUBLIC);
-      console.log("COURSES API RESPONSE:", data);
       const raw = Array.isArray(data)
         ? data
         : (data.courses ?? data.data ?? []);
       return raw.filter(Boolean);
-      console.log("RAW:", raw);
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }

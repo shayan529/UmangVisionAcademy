@@ -393,16 +393,16 @@ export default function InstructorDashboard() {
             >
               ☰ Menu
             </button>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#f1f5f9" }}>
+            {/* <div style={{ fontSize: 16, fontWeight: 800, color: "#f1f5f9" }}>
               {activeSection === "mock-tests"
                 ? "Mock Tests"
                 : sectionTitles[activeSection]}
-            </div>
+            </div> */}
             <span style={{ width: 48 }} />
           </div>
 
           {/* Desktop top bar */}
-          <div
+          {/* <div
             className="instr-desk-bar"
             style={{
               alignItems: "center",
@@ -439,7 +439,7 @@ export default function InstructorDashboard() {
                 </Btn>
               )}
             </div>
-          </div>
+          </div> */}
 
           {/* Page content */}
           <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>

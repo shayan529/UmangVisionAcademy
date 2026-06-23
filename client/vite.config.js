@@ -17,4 +17,24 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("jspdf") || id.includes("html2canvas")) {
+              return "jspdf";
+            }
+            if (id.includes("pdfjs-dist")) {
+              return "pdfjs";
+            }
+            if (id.includes("lucide-react")) {
+              return "lucide";
+            }
+            return "vendor";
+          }
+        },
+      },
+    },
+  },
 });

@@ -83,7 +83,6 @@ const sessionSlice = createSlice({
       .addCase(fetchSessions.fulfilled, (state, action) => {
         state.loading = false;
         const payload = action.payload;
-        console.log("✅ sessions payload:", action.payload);
 
         // Handle: [], { sessions: [] }, { data: [] }, { data: { sessions: [] } }
         if (Array.isArray(payload)) {

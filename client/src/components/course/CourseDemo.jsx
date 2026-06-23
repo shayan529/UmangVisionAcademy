@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../../config/api.js";
+import { addToCart } from "../../redux/slices/cartSlice";
 
 // ── Local state ───────────────────────────────────────────────────────────────
 const useCourseDemo = (id) => {
@@ -439,10 +440,8 @@ export default function CourseDemo() {
 
     if (!id || id === "undefined") return;
 
-    import("../../redux/slices/cartSlice").then(({ addToCart }) => {
-      dispatch(addToCart(id));
-      setAddedToCart(true);
-    });
+    dispatch(addToCart(id));
+    setAddedToCart(true);
   };
 
   const enrollCardProps = {

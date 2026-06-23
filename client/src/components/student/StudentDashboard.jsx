@@ -110,7 +110,7 @@ export const DashboardHome = () => {
     (s) => s.courses?.enrolledLoading ?? s.myCourses?.loading ?? false,
   );
 
-  const username = user?.email ? user.email.split("@")[0] : "there";
+  const username = user?.email ? user.email.split("@")[0] : "User";
   const userId = user?._id ?? user?.id;
 
   const overallProgress = getOverallProgress(enrolledCourses);

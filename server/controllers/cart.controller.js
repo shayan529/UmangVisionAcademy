@@ -2,7 +2,7 @@ import Cart from "../models/cart.model.js";
 
 export const addToCart = async (req, res) => {
   const { courseId } = req.body;
-  const userId = req.user.id;
+  const userId = req.user._id;
 
   if (!courseId) {
     return res.status(400).json({ message: "Course ID is required" });
@@ -32,7 +32,7 @@ export const addToCart = async (req, res) => {
 
 export const getCart = async (req, res) => {
   const cart = await Cart.findOne({
-    user: req.user.id,
+    user: req.user._id,
   }).populate("courses");
 
   if (!cart) {
@@ -47,7 +47,7 @@ export const removeFromCart = async (req, res) => {
   const { courseId } = req.params;
 
   const cart = await Cart.findOne({
-    user: req.user.id,
+    user: req.user._id,
   });
 
   if (!cart) {
@@ -66,7 +66,7 @@ export const removeFromCart = async (req, res) => {
 };
 
 export const clearCart = async (req, res) => {
-  await Cart.findOneAndUpdate({ user: req.user.id }, { courses: [] });
+  await Cart.findOneAndUpdate({ user: req.user._id }, { courses: [] });
 
   res.json({
     message: "Cart cleared",
