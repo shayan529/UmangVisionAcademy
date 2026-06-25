@@ -56,6 +56,21 @@ export default function AdminDashboard() {
     dispatch(fetchAllCoursesAdmin());
   }, [dispatch]);
 
+  useEffect(() => {
+    const handleNavbarMenuOpen = () => {
+      setSideOpen(false);
+    };
+
+    window.addEventListener("navbar-mobile-menu-open", handleNavbarMenuOpen);
+
+    return () => {
+      window.removeEventListener(
+        "navbar-mobile-menu-open",
+        handleNavbarMenuOpen,
+      );
+    };
+  }, []);
+
   // Reset search when switching tabs
   useEffect(() => {
     setQ("");
@@ -239,6 +254,7 @@ export default function AdminDashboard() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                window.dispatchEvent(new CustomEvent("dashboard-sidebar-open"));
                 setSideOpen(true);
               }}
               className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:border-white/20"

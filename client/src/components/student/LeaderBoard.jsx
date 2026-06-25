@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchLeaderboard } from "../../redux/slices/studentSlice";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 
 const LeaderBoard = () => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const { leaderboard, leaderboardLoading } = useSelector((s) => s.students);
   const { user } = useSelector((s) => s.auth);
 
@@ -60,21 +62,21 @@ const LeaderBoard = () => {
   const COIN_ACTIVITIES = [
     {
       icon: "📅",
-      label: "Daily Login",
+      label: t("studentLeaderboard.dailyLogin"),
       coins: 1,
-      desc: "Log in every day to keep your streak",
+      desc: t("studentLeaderboard.dailyLoginDesc"),
     },
     {
       icon: "📚",
-      label: "Complete a Course",
+      label: t("studentLeaderboard.completeCourse"),
       coins: 25,
-      desc: "Finish all lessons in a course",
+      desc: t("studentLeaderboard.completeCourseDesc"),
     },
     {
       icon: "🏆",
-      label: "Earn a Certificate",
+      label: t("studentLeaderboard.earnCertificate"),
       coins: 25,
-      desc: "Receive your course completion certificate",
+      desc: t("studentLeaderboard.earnCertificateDesc"),
     },
   ];
 
@@ -107,7 +109,7 @@ const LeaderBoard = () => {
               margin: 0,
             }}
           >
-            🏆 Student Leaderboard
+            🏆 {t("studentLeaderboard.title")}
           </h2>
           <p
             style={{
@@ -117,7 +119,7 @@ const LeaderBoard = () => {
               margin: "6px 0 0",
             }}
           >
-            Earn coins by learning and climb the rankings.
+            {t("studentLeaderboard.subtitle")}
           </p>
         </div>
 
@@ -210,7 +212,9 @@ const LeaderBoard = () => {
               >
                 ?
               </button>
-              Your Rank: {currentRank > 0 ? currentRank : "—"}
+              {t("studentLeaderboard.yourRank", {
+                rank: currentRank > 0 ? currentRank : "—",
+              })}
             </div>
 
             {/* Info modal */}
@@ -258,7 +262,7 @@ const LeaderBoard = () => {
                             color: "#f8fafc",
                           }}
                         >
-                          🪙 How Coins Are Earned
+                          🪙 {t("studentLeaderboard.howCoinsEarned")}
                         </h3>
                         <p
                           style={{
@@ -267,8 +271,7 @@ const LeaderBoard = () => {
                             color: "#64748b",
                           }}
                         >
-                          Complete activities to earn coins and climb the
-                          rankings
+                          {t("studentLeaderboard.completeActivities")}
                         </p>
                       </div>
                       <button
@@ -373,7 +376,7 @@ const LeaderBoard = () => {
                           fontWeight: 700,
                         }}
                       >
-                        💡 25 coins = ₹1 wallet balance
+                        💡 {t("studentLeaderboard.coinsConversion")}
                       </p>
                       <p
                         style={{
@@ -382,7 +385,7 @@ const LeaderBoard = () => {
                           color: "#7c3aed",
                         }}
                       >
-                        Coins can be redeemed in your Wallet tab
+                        {t("studentLeaderboard.coinsRedeemHint")}
                       </p>
                     </div>
                   </div>
@@ -412,7 +415,7 @@ const LeaderBoard = () => {
             minWidth: 180,
           }}
         >
-          <option value="">All States</option>
+          <option value="">{t("studentLeaderboard.allStates")}</option>
           {states.map((state) => (
             <option key={state} value={state}>
               {state}
@@ -432,7 +435,7 @@ const LeaderBoard = () => {
             minWidth: 180,
           }}
         >
-          <option value="">All Cities</option>
+          <option value="">{t("studentLeaderboard.allCities")}</option>
           {cities.map((city) => (
             <option key={city} value={city}>
               {city}
@@ -443,9 +446,11 @@ const LeaderBoard = () => {
 
       {/* Leaderboard list */}
       {leaderboardLoading ? (
-        <div style={{ color: "#94a3b8" }}>Loading leaderboard...</div>
+        <div style={{ color: "#94a3b8" }}>
+          {t("studentLeaderboard.loading")}
+        </div>
       ) : sorted.length === 0 ? (
-        <div style={{ color: "#94a3b8" }}>No leaderboard data found.</div>
+        <div style={{ color: "#94a3b8" }}>{t("studentLeaderboard.empty")}</div>
       ) : (
         sorted.map((student, index) => {
           const rank = index + 1;
@@ -505,7 +510,7 @@ const LeaderBoard = () => {
                   </p>
                   <p style={{ margin: 0, color: "#64748b", fontSize: 12 }}>
                     {[student.city, student.state].filter(Boolean).join(", ") ||
-                      "Student"}
+                      t("studentLeaderboard.student")}
                   </p>
                 </div>
               </div>

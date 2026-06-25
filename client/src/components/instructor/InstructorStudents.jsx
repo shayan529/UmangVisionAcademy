@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import {
   fetchStudents,
   fetchStudentActivity,
@@ -19,6 +20,7 @@ const tagStyle = (tag) => {
 };
 
 const InstructorStudents = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { students, activity, loading, activityLoading } = useSelector(
     (s) => s.students,
@@ -57,22 +59,22 @@ const InstructorStudents = () => {
         }}
       >
         <StatCard
-          label="Total Enrolled"
+          label={t("instructorStudents.totalEnrolled")}
           value={loading ? "…" : totalEnrolled.toLocaleString()}
           color="#a78bfa"
         />
         <StatCard
-          label="Active This Week"
+          label={t("instructorStudents.activeThisWeek")}
           value={loading ? "…" : activeThisWeek.toLocaleString()}
           color="#34d399"
         />
         <StatCard
-          label="Completed a Course"
+          label={t("instructorStudents.completedCourse")}
           value={loading ? "…" : completed.toLocaleString()}
           color="#4ade80"
         />
         <StatCard
-          label="Avg Completion"
+          label={t("instructorStudents.avgCompletion")}
           value={loading ? "…" : `${avgCompletion}%`}
           color="#fbbf24"
         />
@@ -81,7 +83,7 @@ const InstructorStudents = () => {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         {/* Top learners */}
         <Card>
-          <SectionHeader title="Top Learners" />
+          <SectionHeader title={t("instructorStudents.topLearners")} />
 
           {loading && (
             <div
@@ -92,7 +94,7 @@ const InstructorStudents = () => {
                 fontSize: 13,
               }}
             >
-              Loading students…
+              {t("instructorStudents.loadingStudents")}
             </div>
           )}
 
@@ -105,7 +107,7 @@ const InstructorStudents = () => {
                 fontSize: 13,
               }}
             >
-              No student data yet.
+              {t("instructorStudents.noStudentData")}
             </div>
           )}
 
@@ -173,7 +175,7 @@ const InstructorStudents = () => {
 
         {/* Recent activity */}
         <Card>
-          <SectionHeader title="Recent Activity" />
+          <SectionHeader title={t("instructorStudents.recentActivity")} />
 
           {activityLoading && (
             <div
@@ -184,7 +186,7 @@ const InstructorStudents = () => {
                 fontSize: 13,
               }}
             >
-              Loading activity…
+              {t("instructorStudents.loadingActivity")}
             </div>
           )}
 
@@ -197,7 +199,7 @@ const InstructorStudents = () => {
                 fontSize: 13,
               }}
             >
-              No recent activity.
+              {t("instructorStudents.noRecentActivity")}
             </div>
           )}
 

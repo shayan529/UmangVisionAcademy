@@ -17,14 +17,20 @@ const Navbar = () => {
   const [boardOpen, setBoardOpen] = useState(false);
 
   const isInstructorDashboard = pathname.startsWith("/instructor-dashboard");
+  const isDashboardRoute =
+    pathname.startsWith("/student-dashboard") ||
+    pathname.startsWith("/instructor-dashboard") ||
+    pathname.startsWith("/admin-dashboard") ||
+    pathname.startsWith("/staff-dashboard");
 
   const hasInstructorRole = hasBaseRole(user, "instructor");
   const hasStudentRole = hasBaseRole(user, "student");
   const hasAdminRole = hasBaseRole(user, "admin");
-  const isMultiRole = hasInstructorRole && hasStudentRole && !hasAdminRole;
+  const hasCustomRole = getCustomRoles(user).length > 0;
+  const isMultiRole =
+    hasInstructorRole && hasStudentRole && !hasAdminRole && !hasCustomRole;
   const cartCount = cartIds.length;
 
-  const hasCustomRole = getCustomRoles(user).length > 0;
   const isStaffOrAdmin = hasAdminRole || hasCustomRole;
 
   const dashboardPath = hasAdminRole
@@ -59,6 +65,24 @@ const Navbar = () => {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const handleDashboardSidebarOpen = () => {
+      setMobileMenuOpen(false);
+    };
+
+    window.addEventListener(
+      "dashboard-sidebar-open",
+      handleDashboardSidebarOpen,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "dashboard-sidebar-open",
+        handleDashboardSidebarOpen,
+      );
+    };
   }, []);
 
   const closeMobile = () => setMobileMenuOpen(false);
@@ -325,19 +349,21 @@ const Navbar = () => {
 
         {/* ── Desktop right section ── */}
         <div className="hidden md:flex items-center gap-4 ml-auto ">
-          <button
-            type="button"
-            onClick={() => navigate("/cart")}
-            className="relative cursor-pointer inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
-            aria-label="Cart"
-          >
-            <ShoppingCart size={18} />
-            {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-                {cartCount}
-              </span>
-            )}
-          </button>
+          {!isStaffOrAdmin && (
+            <button
+              type="button"
+              onClick={() => navigate("/cart")}
+              className="relative cursor-pointer inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
+              aria-label="Cart"
+            >
+              <ShoppingCart size={18} />
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          )}
 
           {loading ? (
             <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
@@ -425,22 +451,34 @@ const Navbar = () => {
             )}
           </div>
 
+          {!isStaffOrAdmin && (
+            <button
+              type="button"
+              onClick={() => navigate("/cart")}
+              className="relative cursor-pointer inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
+              aria-label="Cart"
+            >
+              <ShoppingCart size={18} />
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => navigate("/cart")}
-            className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
-            aria-label="Cart"
-          >
-            <ShoppingCart size={17} />
-            {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
-                {cartCount}
-              </span>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            onClick={() =>
+              setMobileMenuOpen((prev) => {
+                const next = !prev;
+                if (next && isDashboardRoute) {
+                  window.dispatchEvent(
+                    new CustomEvent("navbar-mobile-menu-open"),
+                  );
+                }
+                return next;
+              })
+            }
             className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white hover:bg-white/5 transition text-lg"
           >
             {mobileMenuOpen ? "✕" : "☰"}

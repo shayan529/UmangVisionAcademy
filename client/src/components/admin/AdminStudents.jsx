@@ -590,6 +590,46 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
             <InfoRow icon={MapPin} label="Pincode" value={student.pincode} />
           </div>
 
+          {/* Student extra details */}
+          <SectionTitle icon={Shield}>Student Details</SectionTitle>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 divide-y divide-slate-800/60 sm:divide-y-0">
+            <InfoRow
+              icon={Shield}
+              label="Father's Name"
+              value={student.fatherName}
+            />
+            <InfoRow
+              icon={Shield}
+              label="Mother's Name"
+              value={student.motherName}
+            />
+            <InfoRow
+              icon={Phone}
+              label="Father's Mobile"
+              value={student.fatherMobileNumber}
+            />
+            <InfoRow
+              icon={Shield}
+              label="Social Media Account"
+              value={student.socialMediaAccount}
+            />
+            <InfoRow
+              icon={Shield}
+              label="Reference"
+              value={student.reference}
+            />
+            <InfoRow
+              icon={Shield}
+              label="Vidhansabha"
+              value={student.vidhansabha}
+            />
+          </div>
+          <InfoRow
+            icon={MapPin}
+            label="Full Address"
+            value={student.fullAddress}
+          />
+
           {/* Account */}
           <SectionTitle icon={Shield}>Account</SectionTitle>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 divide-y divide-slate-800/60 sm:divide-y-0">

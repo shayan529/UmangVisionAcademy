@@ -14,6 +14,7 @@ import {
   fetchAvailableTests,
   fetchLeaderboard,
 } from "../../redux/slices/mockTestSlice";
+import { useTranslation } from "react-i18next";
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
@@ -42,6 +43,7 @@ const RANK_STYLES = {
 export default function MockTestLeaderboard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { availableTests, leaderboard, loading } = useSelector(
     (s) => s.mockTest,
   );
@@ -64,10 +66,10 @@ export default function MockTestLeaderboard() {
       dispatch(fetchLeaderboard(selectedTestId))
         .unwrap()
         .catch((err) => {
-          toast.error(err || "Could not load leaderboard");
+          toast.error(err || t("studentMockTests.couldNotLoadLeaderboard"));
         });
     }
-  }, [selectedTestId, dispatch]);
+  }, [selectedTestId, dispatch, t]);
 
   const currentTest = availableTests.find((t) => t._id === selectedTestId);
 
@@ -87,16 +89,19 @@ export default function MockTestLeaderboard() {
         </button>
         <div>
           <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <FaTrophy className="text-amber-400" /> Leaderboard
+            <FaTrophy className="text-amber-400" />
+            {t("studentMockTests.leaderboard")}
           </h1>
-          <p className="text-slate-400 text-sm">Top performers per test</p>
+          <p className="text-slate-400 text-sm">
+            {t("studentMockTests.topPerformers")}
+          </p>
         </div>
       </div>
 
       {/* Test selector */}
       <div className="bg-[#0b1628] border border-[#1a2e48] rounded-2xl p-4 mb-5">
         <p className="text-xs text-slate-500 font-medium mb-2 uppercase tracking-wider">
-          Select Test
+          {t("studentMockTests.selectTest")}
         </p>
         <div className="flex flex-wrap gap-2">
           {availableTests.map((t) => (
@@ -123,7 +128,8 @@ export default function MockTestLeaderboard() {
               {currentTest.title}
             </h2>
             <p className="text-slate-500 text-xs">
-              {currentTest.subject} · {leaderboard.length} participants
+              {currentTest.subject} · {leaderboard.length}{" "}
+              {t("studentMockTests.participants")}
             </p>
           </div>
 
@@ -132,7 +138,7 @@ export default function MockTestLeaderboard() {
             <FaSearch className="text-slate-500 text-xs" />
             <input
               type="text"
-              placeholder="Search name…"
+              placeholder={t("studentMockTests.searchName")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="bg-transparent text-slate-300 text-xs outline-none w-28 placeholder-slate-600"
@@ -205,8 +211,8 @@ export default function MockTestLeaderboard() {
           <FaTrophy className="text-4xl text-slate-700 mx-auto mb-3" />
           <p className="text-slate-500 text-sm">
             {search
-              ? "No matching participants"
-              : "No attempts yet for this test"}
+              ? t("studentMockTests.noMatchingParticipants")
+              : t("studentMockTests.noAttemptsYet")}
           </p>
         </div>
       ) : (
@@ -214,10 +220,14 @@ export default function MockTestLeaderboard() {
           {/* Header */}
           <div className="grid grid-cols-12 px-4 py-2 text-xs text-slate-600 font-semibold uppercase tracking-wider">
             <span className="col-span-1">#</span>
-            <span className="col-span-5">Name</span>
-            <span className="col-span-2 text-right">Score</span>
+            <span className="col-span-5">{t("studentMockTests.name")}</span>
+            <span className="col-span-2 text-right">
+              {t("studentMockTests.score")}
+            </span>
             <span className="col-span-2 text-right">%</span>
-            <span className="col-span-2 text-right">Time</span>
+            <span className="col-span-2 text-right">
+              {t("studentMockTests.time")}
+            </span>
           </div>
 
           {filtered.map((entry) => {

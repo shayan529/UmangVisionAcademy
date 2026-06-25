@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchEnrolledCourses } from "../../redux/slices/courseSlice";
 import { Link } from "react-router-dom";
 import api from "../../config/api.js";
+import { useTranslation } from "react-i18next";
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const statusConfig = {
@@ -149,6 +150,8 @@ export default function MyCourses() {
     inProgress: enrolled.filter((c) => c.status === "in-progress").length,
   };
 
+  const { t } = useTranslation();
+
   return (
     <>
       <style>{`
@@ -178,7 +181,7 @@ export default function MyCourses() {
       >
         <div>
           <h2 style={{ fontSize: 26, fontWeight: 800, color: "#f1f5f9" }}>
-            My Courses
+            {t("studentDashboard.myCourses")}
           </h2>
           <p style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
             {enrolledLoading

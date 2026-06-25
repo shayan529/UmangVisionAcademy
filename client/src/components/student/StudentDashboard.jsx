@@ -8,10 +8,12 @@ import {
 } from "../../redux/slices/studentSlice";
 import { fetchSessions } from "../../redux/slices/sessionSlice";
 import { toast } from "react-hot-toast";
-
 import { useTranslation } from "react-i18next";
 import { fetchSubscription } from "../../redux/slices/billingSlice";
+import { fetchProfile, updateProfile } from "../../redux/slices/settingsSlice";
+import api from "../../config/api";
 import { useState } from "react";
+import { X } from "lucide-react";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const getOverallProgress = (courses = []) => {
@@ -31,23 +33,14 @@ const getLeaderboardRank = (students = [], currentUserId) => {
 
 const formatActivityTime = (dateStr, t) => {
   if (!dateStr) return "";
-
   const diff = Date.now() - new Date(dateStr).getTime();
-
   const mins = Math.floor(diff / 60000);
-
   if (mins < 60) return t("studentDashboard.minutesAgo", { count: mins });
-
   const hrs = Math.floor(mins / 60);
-
   if (hrs < 24) return t("studentDashboard.hoursAgo", { count: hrs });
-
-  return t("studentDashboard.daysAgo", {
-    count: Math.floor(hrs / 24),
-  });
+  return t("studentDashboard.daysAgo", { count: Math.floor(hrs / 24) });
 };
 
-// ── Activity type → icon/color map ───────────────────────────────────────────
 const activityMeta = {
   quiz: { icon: "📝", color: "#818cf8", label: "Quiz" },
   lesson: { icon: "📖", color: "#22d3ee", label: "Lesson" },
@@ -59,7 +52,6 @@ const activityMeta = {
 const getActivityMeta = (type = "") =>
   activityMeta[type.toLowerCase()] ?? activityMeta.default;
 
-// ── Skeleton loader ───────────────────────────────────────────────────────────
 const Skeleton = ({ w = "100%", h = 18, radius = 8, style = {} }) => (
   <div
     style={{
@@ -74,15 +66,401 @@ const Skeleton = ({ w = "100%", h = 18, radius = 8, style = {} }) => (
   />
 );
 
+const studentDetailsDefaults = {
+  fatherName: "",
+  motherName: "",
+  fullAddress: "",
+  socialMediaAccount: "",
+  fatherMobileNumber: "",
+  reference: "",
+  vidhansabha: "",
+};
+
+// ── Check if student details are empty (to auto-show on login) ────────────────
+const isStudentDetailsEmpty = (profile) => {
+  if (!profile) return false;
+  const fields = [
+    "fatherName",
+    "motherName",
+    "fullAddress",
+    "fatherMobileNumber",
+  ];
+  return fields.every((f) => !profile[f]);
+};
+
+const SESSION_KEY = "student_details_prompted";
+
+// ── Student Details Modal (cream theme) ───────────────────────────────────────
+const StudentDetailsFormModal = ({
+  open,
+  form,
+  onChange,
+  onClose,
+  onSubmit,
+  saving,
+  references = [],
+  referencesLoading = false,
+  isAutoPrompt = false,
+}) => {
+  if (!open) return null;
+
+  const fields = [
+    {
+      key: "fatherName",
+      label: "Father's Name",
+      placeholder: "Enter father's name",
+    },
+    {
+      key: "motherName",
+      label: "Mother's Name",
+      placeholder: "Enter mother's name",
+    },
+    {
+      key: "fatherMobileNumber",
+      label: "Father's Mobile",
+      placeholder: "e.g. 9876543210",
+    },
+    {
+      key: "socialMediaAccount",
+      label: "Social Media",
+      placeholder: "Instagram / Facebook URL",
+    },
+    {
+      key: "vidhansabha",
+      label: "Vidhansabha",
+      placeholder: "Enter vidhansabha",
+    },
+  ];
+
+  const hasCurrentReference =
+    !!form.reference &&
+    !references.some((item) => item.name === form.reference);
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+      style={{ background: "rgba(10,14,26,0.75)", backdropFilter: "blur(6px)" }}
+    >
+      <div
+        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
+        style={{
+          background: "#fdf8f0",
+          borderRadius: 20,
+          border: "1px solid #e8d9c0",
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            padding: "24px 24px 16px",
+            borderBottom: "1px solid #e8d9c0",
+            background: "#faf3e8",
+            borderRadius: "20px 20px 0 0",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                marginBottom: 4,
+              }}
+            >
+              <span style={{ fontSize: 22 }}>📋</span>
+              <h3
+                style={{
+                  fontSize: 18,
+                  fontWeight: 800,
+                  color: "#3b2a14",
+                  margin: 0,
+                }}
+              >
+                Student Details
+              </h3>
+            </div>
+            <p
+              style={{
+                fontSize: 13,
+                color: "#8a6a3a",
+                margin: 0,
+                lineHeight: 1.5,
+              }}
+            >
+              {isAutoPrompt
+                ? "Complete your profile to help us serve you better."
+                : "All fields are optional. You can update them anytime."}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: "#ede3d4",
+              border: "none",
+              borderRadius: 10,
+              width: 32,
+              height: 32,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "#8a6a3a",
+              flexShrink: 0,
+              marginLeft: 12,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#e0d0bb";
+              e.currentTarget.style.color = "#3b2a14";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#ede3d4";
+              e.currentTarget.style.color = "#8a6a3a";
+            }}
+          >
+            <X size={15} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div
+          style={{
+            padding: "20px 24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: 14,
+            }}
+          >
+            {fields.map(({ key, label, placeholder }) => (
+              <div
+                key={key}
+                style={{ display: "flex", flexDirection: "column", gap: 5 }}
+              >
+                <label
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    color: "#8a6a3a",
+                  }}
+                >
+                  {label}
+                </label>
+                <input
+                  value={form[key] ?? ""}
+                  onChange={(e) => onChange(key, e.target.value)}
+                  placeholder={placeholder}
+                  style={{
+                    background: "#fff8ed",
+                    border: "1px solid #d9c4a0",
+                    borderRadius: 10,
+                    padding: "9px 12px",
+                    fontSize: 13,
+                    color: "#3b2a14",
+                    outline: "none",
+                    width: "100%",
+                    boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.border = "1px solid #c49a4a";
+                    e.target.style.boxShadow =
+                      "0 0 0 3px rgba(196,154,74,0.15)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.border = "1px solid #d9c4a0";
+                    e.target.style.boxShadow = "none";
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            <label
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "#8a6a3a",
+              }}
+            >
+              Reference
+            </label>
+            <select
+              value={form.reference ?? ""}
+              onChange={(e) => onChange("reference", e.target.value)}
+              style={{
+                background: "#fff8ed",
+                border: "1px solid #d9c4a0",
+                borderRadius: 10,
+                padding: "9px 12px",
+                fontSize: 13,
+                color: "#3b2a14",
+                outline: "none",
+                width: "100%",
+                boxSizing: "border-box",
+              }}
+              onFocus={(e) => {
+                e.target.style.border = "1px solid #c49a4a";
+                e.target.style.boxShadow = "0 0 0 3px rgba(196,154,74,0.15)";
+              }}
+              onBlur={(e) => {
+                e.target.style.border = "1px solid #d9c4a0";
+                e.target.style.boxShadow = "none";
+              }}
+            >
+              <option value="">
+                {referencesLoading
+                  ? "Loading references..."
+                  : "Select reference"}
+              </option>
+              {hasCurrentReference && (
+                <option value={form.reference}>{form.reference}</option>
+              )}
+              {references.map((item) => (
+                <option key={item._id ?? item.name} value={item.name}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Address full-width */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            <label
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "#8a6a3a",
+              }}
+            >
+              Full Address
+            </label>
+            <textarea
+              rows={3}
+              value={form.fullAddress ?? ""}
+              onChange={(e) => onChange("fullAddress", e.target.value)}
+              placeholder="House no., street, city, state, pincode"
+              style={{
+                background: "#fff8ed",
+                border: "1px solid #d9c4a0",
+                borderRadius: 10,
+                padding: "9px 12px",
+                fontSize: 13,
+                color: "#3b2a14",
+                outline: "none",
+                resize: "none",
+                width: "100%",
+                boxSizing: "border-box",
+                fontFamily: "inherit",
+              }}
+              onFocus={(e) => {
+                e.target.style.border = "1px solid #c49a4a";
+                e.target.style.boxShadow = "0 0 0 3px rgba(196,154,74,0.15)";
+              }}
+              onBlur={(e) => {
+                e.target.style.border = "1px solid #d9c4a0";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 10,
+            padding: "14px 24px 22px",
+            borderTop: "1px solid #e8d9c0",
+          }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            style={{
+              background: "transparent",
+              border: "1px solid #d9c4a0",
+              borderRadius: 10,
+              padding: "9px 18px",
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#8a6a3a",
+              cursor: saving ? "not-allowed" : "pointer",
+            }}
+          >
+            {isAutoPrompt ? "Skip for now" : "Cancel"}
+          </button>
+          <button
+            type="button"
+            onClick={onSubmit}
+            disabled={saving}
+            style={{
+              background: "linear-gradient(135deg, #c49a4a, #a67c35)",
+              border: "none",
+              borderRadius: 10,
+              padding: "9px 22px",
+              fontSize: 13,
+              fontWeight: 700,
+              color: "#fff",
+              cursor: saving ? "not-allowed" : "pointer",
+              opacity: saving ? 0.7 : 1,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              boxShadow: "0 4px 14px rgba(196,154,74,0.35)",
+            }}
+          >
+            {saving && (
+              <span
+                style={{
+                  width: 13,
+                  height: 13,
+                  borderRadius: "50%",
+                  border: "2px solid rgba(255,255,255,0.3)",
+                  borderTopColor: "#fff",
+                  animation: "spin 0.7s linear infinite",
+                  display: "inline-block",
+                }}
+              />
+            )}
+            {saving ? "Saving..." : "Save Details"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── DashboardHome ─────────────────────────────────────────────────────────────
 export const DashboardHome = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
+  const { profile: settingsProfile } = useSelector((s) => s.settings);
+  const [showStudentDetailsModal, setShowStudentDetailsModal] = useState(false);
+  const [isAutoPrompt, setIsAutoPrompt] = useState(false);
+  const [savingStudentDetails, setSavingStudentDetails] = useState(false);
+  const [references, setReferences] = useState([]);
+  const [referencesLoading, setReferencesLoading] = useState(false);
+  const [studentDetailsForm, setStudentDetailsForm] = useState(
+    studentDetailsDefaults,
+  );
 
-  useEffect(() => {
-    dispatch(fetchSubscription());
-  }, [dispatch]);
-  // ── Redux state ──
   const {
     leaderboard: students,
     activity,
@@ -92,17 +470,54 @@ export const DashboardHome = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    // Ensure subscription and sessions are loaded so Sidebar shows premium items
     dispatch(fetchSubscription());
     dispatch(fetchSessions());
+    dispatch(fetchLeaderboard());
+    dispatch(fetchStudentActivity());
+    dispatch(fetchProfile());
   }, [dispatch]);
 
   useEffect(() => {
-    // Preload live sessions so they're available across student routes
-    dispatch(fetchSessions());
-  }, [dispatch]);
+    const loadReferences = async () => {
+      setReferencesLoading(true);
+      try {
+        const { data } = await api.get("/references");
+        setReferences(Array.isArray(data) ? data : []);
+      } catch {
+        setReferences([]);
+      } finally {
+        setReferencesLoading(false);
+      }
+    };
 
-  // Enrolled courses: try common slice names
+    loadReferences();
+  }, []);
+
+  // ── Auto-prompt once per login session ──
+  useEffect(() => {
+    if (!settingsProfile) return;
+    if (sessionStorage.getItem(SESSION_KEY)) return;
+    if (isStudentDetailsEmpty(settingsProfile)) {
+      setIsAutoPrompt(true);
+      setShowStudentDetailsModal(true);
+      sessionStorage.setItem(SESSION_KEY, "1");
+    }
+  }, [settingsProfile]);
+
+  // ── Sync form with loaded profile ──
+  useEffect(() => {
+    if (!settingsProfile) return;
+    setStudentDetailsForm({
+      fatherName: settingsProfile.fatherName ?? "",
+      motherName: settingsProfile.motherName ?? "",
+      fullAddress: settingsProfile.fullAddress ?? "",
+      socialMediaAccount: settingsProfile.socialMediaAccount ?? "",
+      fatherMobileNumber: settingsProfile.fatherMobileNumber ?? "",
+      reference: settingsProfile.reference ?? "",
+      vidhansabha: settingsProfile.vidhansabha ?? "",
+    });
+  }, [settingsProfile]);
+
   const enrolledCourses = useSelector(
     (s) => s.courses?.enrolled ?? s.myCourses?.courses ?? [],
   );
@@ -117,17 +532,47 @@ export const DashboardHome = () => {
   const rank = getLeaderboardRank(students, userId);
   const recentActivity = [...(activity ?? [])].slice(0, 5);
 
-  // ── Next incomplete course ──
-  const nextCourse = enrolledCourses.find((c) => (c.progress ?? 0) < 100);
+  const handleStudentDetailChange = (key, value) => {
+    setStudentDetailsForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleStudentDetailsSave = async () => {
+    if (!settingsProfile) {
+      toast.error("Profile not loaded yet. Please try again.");
+      return;
+    }
+    setSavingStudentDetails(true);
+    try {
+      await dispatch(
+        updateProfile({
+          name: settingsProfile.name ?? user?.name ?? "",
+          email: settingsProfile.email ?? user?.email ?? "",
+          phoneNumber: settingsProfile.phoneNumber ?? user?.phoneNumber ?? "",
+          city: settingsProfile.city ?? "",
+          state: settingsProfile.state ?? "",
+          avatarUrl: settingsProfile.avatarUrl ?? "",
+          notificationSettings: settingsProfile.notificationSettings,
+          ...studentDetailsForm,
+        }),
+      ).unwrap();
+      toast.success("Student details saved");
+      setShowStudentDetailsModal(false);
+      setIsAutoPrompt(false);
+    } catch (error) {
+      toast.error(error?.message || "Failed to save student details");
+    } finally {
+      setSavingStudentDetails(false);
+    }
+  };
 
   return (
     <>
-      {/* Shimmer keyframe injected once */}
       <style>{`
         @keyframes shimmer {
           0%   { background-position: 200% 0; }
           100% { background-position: -200% 0; }
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
@@ -185,27 +630,49 @@ export const DashboardHome = () => {
               {t("studentDashboard.heroDescription")}
             </p>
           </div>
-          <Link
-            to="my-courses"
-            style={{ color: "inherit", textDecoration: "none" }}
-          >
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <button
+              type="button"
+              onClick={() => {
+                setIsAutoPrompt(false);
+                setShowStudentDetailsModal(true);
+              }}
               style={{
-                background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                color: "#fff",
-                border: "none",
+                background: "#1e293b",
+                color: "#e2e8f0",
+                border: "1px solid #334155",
                 borderRadius: 14,
-                padding: "12px 24px",
+                padding: "12px 16px",
                 fontWeight: 700,
-                fontSize: 14,
+                fontSize: 13,
                 cursor: "pointer",
-                boxShadow: "0 8px 24px rgba(124,58,237,.35)",
                 whiteSpace: "nowrap",
               }}
             >
-              {t("studentDashboard.continueLearning")}
+              Add Student Details
             </button>
-          </Link>
+            <Link
+              to="my-courses"
+              style={{ color: "inherit", textDecoration: "none" }}
+            >
+              <button
+                style={{
+                  background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 14,
+                  padding: "12px 24px",
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: "pointer",
+                  boxShadow: "0 8px 24px rgba(124,58,237,.35)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {t("studentDashboard.continueLearning")}
+              </button>
+            </Link>
+          </div>
         </section>
 
         {/* ── Stat cards ── */}
@@ -217,14 +684,12 @@ export const DashboardHome = () => {
             gap: 14,
           }}
         >
-          {/* Enrolled */}
           <StatCard
             loading={coursesLoading}
             value={enrolledCourses.length || "—"}
             label={t("studentDashboard.enrolledCourses")}
             color="#818cf8"
           />
-          {/* Progress */}
           <StatCard
             loading={coursesLoading}
             value={enrolledCourses.length ? `${overallProgress}%` : "—"}
@@ -254,7 +719,6 @@ export const DashboardHome = () => {
               )
             }
           />
-          {/* Rank */}
           <StatCard
             loading={studentsLoading}
             value={rank ? `#${rank}` : "—"}
@@ -263,7 +727,7 @@ export const DashboardHome = () => {
           />
         </div>
 
-        {/* ── Goal cards + Activity ── */}
+        {/* ── Activity ── */}
         <div
           className="dash-section"
           style={{
@@ -272,9 +736,6 @@ export const DashboardHome = () => {
             gap: 14,
           }}
         >
-          {/* Goal cards */}
-
-          {/* Recent Activity feed */}
           <div
             style={{
               background: "#111827",
@@ -364,7 +825,6 @@ export const DashboardHome = () => {
                         cursor: "default",
                       }}
                     >
-                      {/* Icon bubble */}
                       <div
                         style={{
                           width: 36,
@@ -380,7 +840,6 @@ export const DashboardHome = () => {
                       >
                         {meta.icon}
                       </div>
-                      {/* Text */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p
                           style={{
@@ -412,7 +871,6 @@ export const DashboardHome = () => {
                           </p>
                         )}
                       </div>
-                      {/* Time */}
                       <span
                         style={{
                           fontSize: 11,
@@ -493,6 +951,21 @@ export const DashboardHome = () => {
           </section>
         )}
       </div>
+
+      <StudentDetailsFormModal
+        open={showStudentDetailsModal}
+        form={studentDetailsForm}
+        onChange={handleStudentDetailChange}
+        onClose={() => {
+          setShowStudentDetailsModal(false);
+          setIsAutoPrompt(false);
+        }}
+        onSubmit={handleStudentDetailsSave}
+        saving={savingStudentDetails}
+        references={references}
+        referencesLoading={referencesLoading}
+        isAutoPrompt={isAutoPrompt}
+      />
     </>
   );
 };
@@ -519,54 +992,6 @@ const StatCard = ({ loading, value, label, color, extra }) => (
           {label}
         </div>
         {extra}
-      </>
-    )}
-  </div>
-);
-
-const GoalCard = ({ tag, tagColor, title, desc, loading }) => (
-  <div
-    style={{
-      background: "#111827",
-      border: "1px solid #1e293b",
-      borderRadius: 18,
-      padding: "20px 22px",
-    }}
-  >
-    <p
-      style={{
-        fontSize: 11,
-        fontWeight: 700,
-        letterSpacing: "0.12em",
-        color: tagColor,
-        marginBottom: 8,
-        textTransform: "uppercase",
-      }}
-    >
-      {tag}
-    </p>
-    {loading ? (
-      <>
-        <Skeleton w="80%" h={18} style={{ marginBottom: 10 }} />
-        <Skeleton w="100%" h={12} />
-        <Skeleton w="60%" h={12} style={{ marginTop: 4 }} />
-      </>
-    ) : (
-      <>
-        <h3
-          style={{
-            fontSize: 17,
-            fontWeight: 800,
-            color: "#f1f5f9",
-            marginBottom: 8,
-            lineHeight: 1.3,
-          }}
-        >
-          {title}
-        </h3>
-        <p style={{ color: "#64748b", fontSize: 13, lineHeight: 1.7 }}>
-          {desc}
-        </p>
       </>
     )}
   </div>
@@ -643,10 +1068,26 @@ const StudentDashboard = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { t } = useTranslation();
+
   useEffect(() => {
     dispatch(fetchSubscription());
     dispatch(fetchSessions());
   }, [dispatch]);
+
+  useEffect(() => {
+    const handleNavbarMenuOpen = () => {
+      setMobileOpen(false);
+    };
+
+    window.addEventListener("navbar-mobile-menu-open", handleNavbarMenuOpen);
+
+    return () => {
+      window.removeEventListener(
+        "navbar-mobile-menu-open",
+        handleNavbarMenuOpen,
+      );
+    };
+  }, []);
 
   const sectionTitles = {
     "/student-dashboard": t("studentDashboard.dashboard"),
@@ -657,6 +1098,7 @@ const StudentDashboard = () => {
     "/student-dashboard/achievements": t("studentSidebar.achievements"),
     "/student-dashboard/settings": t("studentDashboard.settings"),
     "/student-dashboard/leaderboard": t("studentDashboard.leaderboard"),
+    "/student-dashboard/references": "References",
     "/student-dashboard/progress": t("studentDashboard.progress"),
     "/student-dashboard/wallet": t("studentDashboard.wallet"),
     "/student-dashboard/purchase-history": t(
@@ -706,6 +1148,7 @@ const StudentDashboard = () => {
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                window.dispatchEvent(new CustomEvent("dashboard-sidebar-open"));
                 setMobileOpen(true);
               }}
               className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:border-white/20"

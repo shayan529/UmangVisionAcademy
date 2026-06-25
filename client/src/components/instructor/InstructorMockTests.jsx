@@ -1,7 +1,8 @@
 // pages/instructor/InstructorMockTests.jsx
-import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { toast } from 'react-hot-toast';
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
+import { toast } from "react-hot-toast";
 import {
   FaPlus,
   FaTrash,
@@ -10,53 +11,54 @@ import {
   FaClipboardList,
   FaChevronDown,
   FaChevronUp,
-} from 'react-icons/fa';
+} from "react-icons/fa";
 import {
   fetchInstructorTests,
   createMockTest,
   deleteMockTest,
   togglePublishTest,
-} from '../../redux/slices/mockTestSlice';
+} from "../../redux/slices/mockTestSlice";
 
-const BOARDS = ['CBSE', 'ICSE', 'MP Board', 'All'];
-const DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
+const BOARDS = ["CBSE", "ICSE", "MP Board", "All"];
+const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 const SUBJECTS = [
-  'Mathematics',
-  'Science',
-  'English',
-  'Social Science',
-  'Hindi',
-  'Physics',
-  'Chemistry',
-  'Biology',
+  "Mathematics",
+  "Science",
+  "English",
+  "Social Science",
+  "Hindi",
+  "Physics",
+  "Chemistry",
+  "Biology",
 ];
 const CLASSES = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`);
 
 const emptyQuestion = () => ({
-  questionText: '',
-  options: ['', '', '', ''],
+  questionText: "",
+  options: ["", "", "", ""],
   correctOption: 0,
-  explanation: '',
+  explanation: "",
   marks: 1,
 });
 
 export default function InstructorMockTests() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { instructorTests, loading } = useSelector((s) => s.mockTest);
 
   const [showForm, setShowForm] = useState(false);
   const [expandedTest, setExpandedTest] = useState(null);
   const [form, setForm] = useState({
-    title: '',
-    description: '',
-    subject: 'Mathematics',
-    class: 'Class 10',
-    board: 'CBSE',
+    title: "",
+    description: "",
+    subject: "Mathematics",
+    class: "Class 10",
+    board: "CBSE",
     duration: 60,
     totalMarks: 100,
     passingMarks: 33,
-    difficulty: 'Medium',
-    tags: '',
+    difficulty: "Medium",
+    tags: "",
     questions: [emptyQuestion()],
   });
 
@@ -94,58 +96,63 @@ export default function InstructorMockTests() {
     }));
 
   const handleSubmit = async () => {
-    if (!form.title.trim()) return toast.error('Title is required');
+    if (!form.title.trim())
+      return toast.error(t("instructorMockTests.titleRequired"));
     if (form.questions.some((q) => !q.questionText.trim()))
-      return toast.error('All questions must have text');
+      return toast.error(t("instructorMockTests.questionsTextRequired"));
     if (form.questions.some((q) => q.options.some((o) => !o.trim())))
-      return toast.error('All options must be filled');
+      return toast.error(t("instructorMockTests.optionsRequired"));
 
     const payload = {
       ...form,
       tags: form.tags
-        .split(',')
+        .split(",")
         .map((t) => t.trim())
         .filter(Boolean),
     };
 
     try {
       await dispatch(createMockTest(payload)).unwrap();
-      toast.success('Mock test created!');
+      toast.success(t("instructorMockTests.created"));
       setShowForm(false);
       setForm({
-        title: '',
-        description: '',
-        subject: 'Mathematics',
-        class: 'Class 10',
-        board: 'CBSE',
+        title: "",
+        description: "",
+        subject: "Mathematics",
+        class: "Class 10",
+        board: "CBSE",
         duration: 60,
         totalMarks: 100,
         passingMarks: 33,
-        difficulty: 'Medium',
-        tags: '',
+        difficulty: "Medium",
+        tags: "",
         questions: [emptyQuestion()],
       });
     } catch (err) {
-      toast.error(err || 'Failed to create test');
+      toast.error(err || t("instructorMockTests.failedCreate"));
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this mock test?')) return;
+    if (!window.confirm(t("instructorMockTests.confirmDelete"))) return;
     try {
       await dispatch(deleteMockTest(id)).unwrap();
-      toast.success('Test deleted');
+      toast.success(t("instructorMockTests.deleted"));
     } catch (err) {
-      toast.error(err || 'Failed to delete');
+      toast.error(err || t("instructorMockTests.failedDelete"));
     }
   };
 
   const handleToggle = async (id) => {
     try {
       const res = await dispatch(togglePublishTest(id)).unwrap();
-      toast.success(res.isPublished ? 'Test published' : 'Test unpublished');
+      toast.success(
+        res.isPublished
+          ? t("instructorMockTests.published")
+          : t("instructorMockTests.unpublished"),
+      );
     } catch (err) {
-      toast.error(err || 'Failed to update');
+      toast.error(err || t("instructorMockTests.failedUpdate"));
     }
   };
 
@@ -154,9 +161,13 @@ export default function InstructorMockTests() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Mock Tests</h1>
+          <h1 className="text-2xl font-bold text-slate-100">
+            {t("instructorMockTests.title")}
+          </h1>
           <p className="text-slate-400 text-sm mt-0.5">
-            {instructorTests.length} tests created
+            {t("instructorMockTests.testsCreated", {
+              count: instructorTests.length,
+            })}
           </p>
         </div>
         <button
@@ -164,7 +175,7 @@ export default function InstructorMockTests() {
           className="flex items-center gap-2 bg-violet-700 hover:bg-violet-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all"
         >
           <FaPlus className="text-xs" />
-          New Test
+          {t("instructorMockTests.newTest")}
         </button>
       </div>
 
@@ -172,22 +183,22 @@ export default function InstructorMockTests() {
       {showForm && (
         <div className="bg-[#0b1628] border border-[#1a2e48] rounded-2xl p-6 mb-6 space-y-5">
           <h2 className="text-slate-200 font-semibold text-base mb-1">
-            Create Mock Test
+            {t("instructorMockTests.createMockTest")}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Title *">
+            <Field label={t("instructorMockTests.titleLabel")}>
               <input
                 value={form.title}
-                onChange={(e) => updateForm('title', e.target.value)}
-                placeholder="e.g. CBSE Class 10 Maths — Chapter 1"
+                onChange={(e) => updateForm("title", e.target.value)}
+                placeholder={t("instructorMockTests.titlePlaceholder")}
                 className="input-dark"
               />
             </Field>
-            <Field label="Subject">
+            <Field label={t("instructorMockTests.subject")}>
               <select
                 value={form.subject}
-                onChange={(e) => updateForm('subject', e.target.value)}
+                onChange={(e) => updateForm("subject", e.target.value)}
                 className="input-dark"
               >
                 {SUBJECTS.map((s) => (
@@ -197,10 +208,10 @@ export default function InstructorMockTests() {
                 ))}
               </select>
             </Field>
-            <Field label="Class">
+            <Field label={t("instructorMockTests.class")}>
               <select
                 value={form.class}
-                onChange={(e) => updateForm('class', e.target.value)}
+                onChange={(e) => updateForm("class", e.target.value)}
                 className="input-dark"
               >
                 {CLASSES.map((c) => (
@@ -210,10 +221,10 @@ export default function InstructorMockTests() {
                 ))}
               </select>
             </Field>
-            <Field label="Board">
+            <Field label={t("instructorMockTests.board")}>
               <select
                 value={form.board}
-                onChange={(e) => updateForm('board', e.target.value)}
+                onChange={(e) => updateForm("board", e.target.value)}
                 className="input-dark"
               >
                 {BOARDS.map((b) => (
@@ -223,19 +234,19 @@ export default function InstructorMockTests() {
                 ))}
               </select>
             </Field>
-            <Field label="Duration (minutes)">
+            <Field label={t("instructorMockTests.duration")}>
               <input
                 type="number"
                 min={5}
                 value={form.duration}
-                onChange={(e) => updateForm('duration', +e.target.value)}
+                onChange={(e) => updateForm("duration", +e.target.value)}
                 className="input-dark"
               />
             </Field>
-            <Field label="Difficulty">
+            <Field label={t("instructorMockTests.difficulty")}>
               <select
                 value={form.difficulty}
-                onChange={(e) => updateForm('difficulty', e.target.value)}
+                onChange={(e) => updateForm("difficulty", e.target.value)}
                 className="input-dark"
               >
                 {DIFFICULTIES.map((d) => (
@@ -245,39 +256,39 @@ export default function InstructorMockTests() {
                 ))}
               </select>
             </Field>
-            <Field label="Total Marks">
+            <Field label={t("instructorMockTests.totalMarks")}>
               <input
                 type="number"
                 min={1}
                 value={form.totalMarks}
-                onChange={(e) => updateForm('totalMarks', +e.target.value)}
+                onChange={(e) => updateForm("totalMarks", +e.target.value)}
                 className="input-dark"
               />
             </Field>
-            <Field label="Passing Marks">
+            <Field label={t("instructorMockTests.passingMarks")}>
               <input
                 type="number"
                 min={1}
                 value={form.passingMarks}
-                onChange={(e) => updateForm('passingMarks', +e.target.value)}
+                onChange={(e) => updateForm("passingMarks", +e.target.value)}
                 className="input-dark"
               />
             </Field>
           </div>
-          <Field label="Description">
+          <Field label={t("instructorMockTests.description")}>
             <textarea
               value={form.description}
-              onChange={(e) => updateForm('description', e.target.value)}
+              onChange={(e) => updateForm("description", e.target.value)}
               rows={2}
-              placeholder="Optional brief description"
+              placeholder={t("instructorMockTests.descriptionPlaceholder")}
               className="input-dark resize-none"
             />
           </Field>
-          <Field label="Tags (comma separated)">
+          <Field label={t("instructorMockTests.tags")}>
             <input
               value={form.tags}
-              onChange={(e) => updateForm('tags', e.target.value)}
-              placeholder="e.g. algebra, cbse, chapter1"
+              onChange={(e) => updateForm("tags", e.target.value)}
+              placeholder={t("instructorMockTests.tagsPlaceholder")}
               className="input-dark"
             />
           </Field>
@@ -286,13 +297,16 @@ export default function InstructorMockTests() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <p className="text-slate-300 font-semibold text-sm">
-                Questions ({form.questions.length})
+                {t("instructorMockTests.questions", {
+                  count: form.questions.length,
+                })}
               </p>
               <button
                 onClick={addQuestion}
                 className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors font-medium"
               >
-                <FaPlus className="text-[10px]" /> Add Question
+                <FaPlus className="text-[10px]" />{" "}
+                {t("instructorMockTests.addQuestion")}
               </button>
             </div>
 
@@ -319,9 +333,9 @@ export default function InstructorMockTests() {
                   <textarea
                     value={q.questionText}
                     onChange={(e) =>
-                      updateQuestion(qIdx, 'questionText', e.target.value)
+                      updateQuestion(qIdx, "questionText", e.target.value)
                     }
-                    placeholder="Enter question text…"
+                    placeholder={t("instructorMockTests.enterQuestionText")}
                     rows={2}
                     className="input-dark resize-none w-full"
                   />
@@ -334,10 +348,10 @@ export default function InstructorMockTests() {
                           name={`correct-${qIdx}`}
                           checked={q.correctOption === optIdx}
                           onChange={() =>
-                            updateQuestion(qIdx, 'correctOption', optIdx)
+                            updateQuestion(qIdx, "correctOption", optIdx)
                           }
                           className="accent-violet-500 shrink-0"
-                          title="Mark as correct answer"
+                          title={t("instructorMockTests.markCorrect")}
                         />
                         <input
                           value={opt}
@@ -351,28 +365,30 @@ export default function InstructorMockTests() {
                     ))}
                   </div>
                   <p className="text-xs text-slate-500">
-                    ● Select the radio button next to the correct answer
+                    {t("instructorMockTests.selectCorrectAnswer")}
                   </p>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <Field label="Marks">
+                    <Field label={t("instructorMockTests.marks")}>
                       <input
                         type="number"
                         min={1}
                         value={q.marks}
                         onChange={(e) =>
-                          updateQuestion(qIdx, 'marks', +e.target.value)
+                          updateQuestion(qIdx, "marks", +e.target.value)
                         }
                         className="input-dark"
                       />
                     </Field>
-                    <Field label="Explanation (optional)">
+                    <Field label={t("instructorMockTests.explanationOptional")}>
                       <input
                         value={q.explanation}
                         onChange={(e) =>
-                          updateQuestion(qIdx, 'explanation', e.target.value)
+                          updateQuestion(qIdx, "explanation", e.target.value)
                         }
-                        placeholder="Why is this correct?"
+                        placeholder={t(
+                          "instructorMockTests.explanationPlaceholder",
+                        )}
                         className="input-dark"
                       />
                     </Field>
@@ -388,14 +404,16 @@ export default function InstructorMockTests() {
               onClick={() => setShowForm(false)}
               className="flex-1 py-2.5 rounded-xl text-sm font-medium text-slate-400 border border-[#1a2e48] hover:text-white transition-all"
             >
-              Cancel
+              {t("instructorMockTests.cancel")}
             </button>
             <button
               onClick={handleSubmit}
               disabled={loading}
               className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-violet-700 hover:bg-violet-600 text-white transition-all disabled:opacity-60"
             >
-              {loading ? 'Creating…' : 'Create Test'}
+              {loading
+                ? t("instructorMockTests.creating")
+                : t("instructorMockTests.createTest")}
             </button>
           </div>
         </div>
@@ -405,9 +423,11 @@ export default function InstructorMockTests() {
       {instructorTests.length === 0 && !showForm ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <FaClipboardList className="text-5xl text-slate-700 mb-4" />
-          <p className="text-slate-400 font-medium">No mock tests yet</p>
+          <p className="text-slate-400 font-medium">
+            {t("instructorMockTests.noMockTests")}
+          </p>
           <p className="text-slate-600 text-sm mt-1">
-            Click "New Test" to create your first mock test
+            {t("instructorMockTests.noMockTestsHint")}
           </p>
         </div>
       ) : (
@@ -431,52 +451,52 @@ export default function InstructorMockTests() {
                       <span
                         className="inline-flex items-center gap-2 rounded-full font-bold whitespace-nowrap shrink-0"
                         style={{
-                          fontSize: '0.8rem',
-                          padding: '6px 20px',
-                          minWidth: '110px',
-                          justifyContent: 'center',
-                          background: 'rgba(16,185,129,0.15)',
-                          color: '#6ee7b7',
-                          border: '1.5px solid rgba(16,185,129,0.4)',
-                          letterSpacing: '0.02em',
+                          fontSize: "0.8rem",
+                          padding: "6px 20px",
+                          minWidth: "110px",
+                          justifyContent: "center",
+                          background: "rgba(16,185,129,0.15)",
+                          color: "#6ee7b7",
+                          border: "1.5px solid rgba(16,185,129,0.4)",
+                          letterSpacing: "0.02em",
                         }}
                       >
                         <span
                           style={{
                             width: 8,
                             height: 8,
-                            borderRadius: '50%',
-                            background: '#34d399',
+                            borderRadius: "50%",
+                            background: "#34d399",
                             flexShrink: 0,
-                            boxShadow: '0 0 8px #34d399',
+                            boxShadow: "0 0 8px #34d399",
                           }}
                         />
-                        Published
+                        {t("instructorMockTests.publishedState")}
                       </span>
                     ) : (
                       <span
                         className="inline-flex items-center gap-2 rounded-full font-bold whitespace-nowrap shrink-0"
                         style={{
-                          fontSize: '0.8rem',
-                          padding: '6px 20px',
-                          minWidth: '110px',
-                          justifyContent: 'center',
-                          background: 'rgba(100,116,139,0.2)',
-                          color: '#cbd5e1',
-                          border: '1.5px solid rgba(100,116,139,0.4)',
-                          letterSpacing: '0.02em',
+                          fontSize: "0.8rem",
+                          padding: "6px 20px",
+                          minWidth: "110px",
+                          justifyContent: "center",
+                          background: "rgba(100,116,139,0.2)",
+                          color: "#cbd5e1",
+                          border: "1.5px solid rgba(100,116,139,0.4)",
+                          letterSpacing: "0.02em",
                         }}
                       >
                         <span
                           style={{
                             width: 8,
                             height: 8,
-                            borderRadius: '50%',
-                            background: '#94a3b8',
+                            borderRadius: "50%",
+                            background: "#94a3b8",
                             flexShrink: 0,
                           }}
                         />
-                        Draft
+                        {t("instructorMockTests.draftState")}
                       </span>
                     )}
 
@@ -485,43 +505,49 @@ export default function InstructorMockTests() {
                       onClick={() => handleToggle(test._id)}
                       className="inline-flex items-center gap-2 rounded-full font-bold whitespace-nowrap shrink-0"
                       style={{
-                        fontSize: '0.8rem',
-                        padding: '6px 20px',
-                        minWidth: '110px',
-                        justifyContent: 'center',
-                        background: 'rgba(139,92,246,0.15)',
-                        color: '#ffffff',
-                        border: '1.5px solid rgba(139,92,246,0.4)',
-                        letterSpacing: '0.02em',
-                        cursor: 'pointer',
-                        transition: 'background 0.15s, border-color 0.15s',
+                        fontSize: "0.8rem",
+                        padding: "6px 20px",
+                        minWidth: "110px",
+                        justifyContent: "center",
+                        background: "rgba(139,92,246,0.15)",
+                        color: "#ffffff",
+                        border: "1.5px solid rgba(139,92,246,0.4)",
+                        letterSpacing: "0.02em",
+                        cursor: "pointer",
+                        transition: "background 0.15s, border-color 0.15s",
                       }}
                       onMouseEnter={(e) =>
                         (e.currentTarget.style.background =
-                          'rgba(139,92,246,0.28)')
+                          "rgba(139,92,246,0.28)")
                       }
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.background =
-                          'rgba(139,92,246,0.15)')
+                          "rgba(139,92,246,0.15)")
                       }
                     >
                       <span
                         style={{
                           width: 8,
                           height: 8,
-                          borderRadius: '50%',
-                          background: '#a78bfa',
+                          borderRadius: "50%",
+                          background: "#a78bfa",
                           flexShrink: 0,
-                          boxShadow: '0 0 8px #a78bfa',
+                          boxShadow: "0 0 8px #a78bfa",
                         }}
                       />
-                      {test.isPublished ? 'Unpublish' : 'Publish'}
+                      {test.isPublished
+                        ? t("instructorMockTests.unpublish")
+                        : t("instructorMockTests.publish")}
                     </button>
                   </div>
 
                   <p className="text-slate-500 text-xs">
-                    {test.subject} · {test.class} · {test.questions.length}{' '}
-                    questions · {test.duration} min · {test.attempts} attempts
+                    {test.subject} · {test.class} · {test.questions.length}{" "}
+                    {t("instructorMockTests.meta", {
+                      count: test.questions.length,
+                      duration: test.duration,
+                      attempts: test.attempts,
+                    })}
                   </p>
                 </div>
 
@@ -529,11 +555,15 @@ export default function InstructorMockTests() {
                 <div className="flex items-center gap-3 shrink-0">
                   <button
                     onClick={() => handleToggle(test._id)}
-                    title={test.isPublished ? 'Unpublish' : 'Publish'}
+                    title={
+                      test.isPublished
+                        ? t("instructorMockTests.unpublish")
+                        : t("instructorMockTests.publish")
+                    }
                     className={`text-2xl transition-colors ${
                       test.isPublished
-                        ? 'text-emerald-400 hover:text-emerald-300'
-                        : 'text-slate-600 hover:text-slate-400'
+                        ? "text-emerald-400 hover:text-emerald-300"
+                        : "text-slate-600 hover:text-slate-400"
                     }`}
                   >
                     {test.isPublished ? <FaToggleOn /> : <FaToggleOff />}
@@ -547,7 +577,7 @@ export default function InstructorMockTests() {
                   <button
                     onClick={() =>
                       setExpandedTest(
-                        expandedTest === test._id ? null : test._id
+                        expandedTest === test._id ? null : test._id,
                       )
                     }
                     className="text-slate-500 hover:text-slate-300 transition-colors text-sm"
@@ -565,7 +595,7 @@ export default function InstructorMockTests() {
               {expandedTest === test._id && (
                 <div className="border-t border-[#1a2e48] px-5 py-4 space-y-3">
                   <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
-                    Questions Preview
+                    {t("instructorMockTests.questionsPreview")}
                   </p>
                   {test.questions.map((q, i) => (
                     <div

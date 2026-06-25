@@ -4,12 +4,6 @@ import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { useState } from "react";
 
-const mockTestSubNav = [
-  { label: "Available Tests", to: "/student-dashboard/mock-tests", end: true },
-  { label: "Results & Analytics", to: "/student-dashboard/mock-tests/results" },
-  { label: "Leaderboard", to: "/student-dashboard/mock-tests/leaderboard" },
-];
-
 const Sidebar = ({
   user,
   collapsed,
@@ -18,6 +12,21 @@ const Sidebar = ({
   setMobileOpen,
 }) => {
   const { t } = useTranslation();
+  const mockTestSubNav = [
+    {
+      label: t("studentMockTests.availableTests"),
+      to: "/student-dashboard/mock-tests",
+      end: true,
+    },
+    {
+      label: t("studentMockTests.resultsAnalytics"),
+      to: "/student-dashboard/mock-tests/results",
+    },
+    {
+      label: t("studentMockTests.leaderboard"),
+      to: "/student-dashboard/mock-tests/leaderboard",
+    },
+  ];
   // AFTER
   const subscription = useSelector((state) => state.billing.subscription);
   const billingLoading = useSelector((state) => state.billing.loading);
@@ -75,6 +84,11 @@ const Sidebar = ({
       label: t("studentSidebar.referral"),
       to: "/student-dashboard/referral",
       icon: "🎁",
+    },
+    {
+      label: t("studentSidebar.references"),
+      to: "/student-dashboard/references",
+      icon: "🗂️",
     },
     {
       label: t("studentSidebar.progress"),

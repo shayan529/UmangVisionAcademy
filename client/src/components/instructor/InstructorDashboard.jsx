@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 // UI primitives & modal
 import { Toast, Btn } from "./InstructorUi";
@@ -37,6 +37,7 @@ const EMPTY_FORM = {
 
 // ─── Main shell ───────────────────────────────────────────────────────────────
 export default function InstructorDashboard() {
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState("dashboard");
   const [sessions, setSessions] = useState(initialSessions);
   const [notifs, setNotifs] = useState(initialNotifs);
@@ -50,6 +51,21 @@ export default function InstructorDashboard() {
   const { courses } = useSelector((s) => s.courses);
 
   const unread = notifs.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    const handleNavbarMenuOpen = () => {
+      setSidebarOpen(false);
+    };
+
+    window.addEventListener("navbar-mobile-menu-open", handleNavbarMenuOpen);
+
+    return () => {
+      window.removeEventListener(
+        "navbar-mobile-menu-open",
+        handleNavbarMenuOpen,
+      );
+    };
+  }, []);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   const showToast = (msg) => {
@@ -65,15 +81,15 @@ export default function InstructorDashboard() {
 
   const addCourse = () => {
     if (!courseForm.subject.trim()) {
-      showToast("Enter a subject");
+      showToast(t("instructorDashboard.enterSubject"));
       return;
     }
     if (!courseForm.className) {
-      showToast("Select a class");
+      showToast(t("instructorDashboard.selectClass"));
       return;
     }
     if (!courseForm.description?.trim()) {
-      showToast("Enter a description");
+      showToast(t("instructorDashboard.enterDescription"));
       return;
     }
 
@@ -91,7 +107,7 @@ export default function InstructorDashboard() {
       }),
     );
 
-    showToast("Course created!");
+    showToast(t("instructorDashboard.courseCreated"));
     closeModal();
   };
 
@@ -103,7 +119,7 @@ export default function InstructorDashboard() {
   // ── Export CSV ────────────────────────────────────────────────────────────
   const handleExport = () => {
     if (!courses.length) {
-      showToast("No courses to export");
+      showToast(t("instructorDashboard.noCoursesToExport"));
       return;
     }
     const rows = [
@@ -124,7 +140,7 @@ export default function InstructorDashboard() {
     a.download = `courses-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast("Report downloaded");
+    showToast(t("instructorDashboard.reportDownloaded"));
   };
 
   // ── Section router ─────────────────────────────────────────────────────────
@@ -149,7 +165,9 @@ export default function InstructorDashboard() {
       case "ai":
         return <InstructorAI showToast={showToast} />;
       case "notifications":
-        return <InstructorNotifications />;
+        return (
+          <InstructorNotifications notifs={notifs} setNotifs={setNotifs} />
+        );
       case "settings":
         return <InstructorSettings showToast={showToast} />;
       default:
@@ -378,7 +396,10 @@ export default function InstructorDashboard() {
             }}
           >
             <button
-              onClick={() => setSidebarOpen(true)}
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent("dashboard-sidebar-open"));
+                setSidebarOpen(true);
+              }}
               style={{
                 padding: "8px 18px",
                 borderRadius: 10,
@@ -391,7 +412,7 @@ export default function InstructorDashboard() {
                 whiteSpace: "nowrap",
               }}
             >
-              ☰ Menu
+              {t("instructorDashboard.menu")}
             </button>
             {/* <div style={{ fontSize: 16, fontWeight: 800, color: "#f1f5f9" }}>
               {activeSection === "mock-tests"

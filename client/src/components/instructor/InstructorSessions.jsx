@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import {
   fetchSessions,
   createSession,
@@ -11,6 +12,7 @@ import {
 import { Card, SectionHeader, Btn } from "./InstructorUi";
 
 const InstructorSessions = ({ showToast }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { sessions, loading, success, error } = useSelector((s) => s.sessions);
   const [form, setForm] = useState({ title: "", date: "", time: "", url: "" });
@@ -50,22 +52,22 @@ const InstructorSessions = ({ showToast }) => {
 
   useEffect(() => {
     if (error) {
-      showToast(`Error: ${error}`);
+      showToast(`${t("instructorSessions.error")}: ${error}`);
       dispatch(clearSessionError());
     }
-  }, [error, dispatch, showToast]);
+  }, [error, dispatch, showToast, t]);
 
   const copySessionLink = async (url) => {
     if (!url) {
-      showToast("No session URL available");
+      showToast(t("instructorSessions.noSessionUrl"));
       return;
     }
 
     try {
       await navigator.clipboard.writeText(url);
-      showToast("Session link copied");
+      showToast(t("instructorSessions.sessionLinkCopied"));
     } catch (error) {
-      showToast("Failed to copy link");
+      showToast(t("instructorSessions.failedToCopy"));
     }
   };
 
@@ -77,12 +79,12 @@ const InstructorSessions = ({ showToast }) => {
       !form.date.trim() ||
       !form.time.trim()
     ) {
-      showToast("Enter all session details");
+      showToast(t("instructorSessions.enterAllDetails"));
       return;
     }
 
     if (form.url && !/^https?:\/\/.+/i.test(form.url)) {
-      showToast("Enter a valid URL starting with http:// or https://");
+      showToast(t("instructorSessions.invalidUrl"));
       return;
     }
 
@@ -128,12 +130,12 @@ const InstructorSessions = ({ showToast }) => {
       !editForm.date.trim() ||
       !editForm.time.trim()
     ) {
-      showToast("Enter all session details");
+      showToast(t("instructorSessions.enterAllDetails"));
       return;
     }
 
     if (editForm.url && !/^https?:\/\/.+/i.test(editForm.url)) {
-      showToast("Enter a valid URL starting with http:// or https://");
+      showToast(t("instructorSessions.invalidUrl"));
       return;
     }
 
@@ -168,7 +170,7 @@ const InstructorSessions = ({ showToast }) => {
     <>
       {/* Schedule form */}
       <Card style={{ marginBottom: 16 }}>
-        <SectionHeader title="Schedule New Session" />
+        <SectionHeader title={t("instructorSessions.scheduleNewSession")} />
 
         <div
           style={{
@@ -188,11 +190,11 @@ const InstructorSessions = ({ showToast }) => {
                 color: "#94a3b8",
               }}
             >
-              Session Title
+              {t("instructorSessions.sessionTitle")}
             </label>
             <input
               type="text"
-              placeholder="Enter session title"
+              placeholder={t("instructorSessions.enterSessionTitle")}
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               style={inputStyle}
@@ -210,7 +212,7 @@ const InstructorSessions = ({ showToast }) => {
                 color: "#94a3b8",
               }}
             >
-              Date
+              {t("instructorSessions.date")}
             </label>
             <input
               type="date"
@@ -231,7 +233,7 @@ const InstructorSessions = ({ showToast }) => {
                 color: "#94a3b8",
               }}
             >
-              Time
+              {t("instructorSessions.time")}
             </label>
             <input
               required
@@ -252,12 +254,12 @@ const InstructorSessions = ({ showToast }) => {
                 color: "#94a3b8",
               }}
             >
-              Meeting URL
+              {t("instructorSessions.meetingUrl")}
             </label>
             <input
               required
               type="url"
-              placeholder="https://meet.google.com/..."
+              placeholder={t("instructorSessions.meetingUrlPlaceholder")}
               value={form.url}
               onChange={(e) => setForm({ ...form, url: e.target.value })}
               style={inputStyle}
@@ -266,12 +268,14 @@ const InstructorSessions = ({ showToast }) => {
         </div>
 
         <Btn variant="primary" onClick={schedule} disabled={loading}>
-          {loading ? "Scheduling..." : "📅 Schedule Session"}
+          {loading
+            ? t("instructorSessions.scheduling")
+            : t("instructorSessions.scheduleSession")}
         </Btn>
       </Card>
       {/* Session list */}
       <Card>
-        <SectionHeader title="All Sessions" />
+        <SectionHeader title={t("instructorSessions.allSessions")} />
 
         {loading && (
           <div
@@ -282,7 +286,7 @@ const InstructorSessions = ({ showToast }) => {
               padding: "20px 0",
             }}
           >
-            Loading sessions…
+            {t("instructorSessions.loadingSessions")}
           </div>
         )}
 
@@ -295,7 +299,7 @@ const InstructorSessions = ({ showToast }) => {
               padding: "20px 0",
             }}
           >
-            No sessions scheduled yet.
+            {t("instructorSessions.noSessions")}
           </div>
         )}
 
@@ -333,7 +337,9 @@ const InstructorSessions = ({ showToast }) => {
                       setEditForm({ ...editForm, title: e.target.value })
                     }
                     style={inputStyle}
-                    placeholder="Session title"
+                    placeholder={t(
+                      "instructorSessions.sessionTitlePlaceholder",
+                    )}
                   />
                   <div
                     style={{
@@ -366,7 +372,7 @@ const InstructorSessions = ({ showToast }) => {
                       setEditForm({ ...editForm, url: e.target.value })
                     }
                     style={inputStyle}
-                    placeholder="Meeting URL"
+                    placeholder={t("instructorSessions.meetingUrl")}
                   />
                 </div>
               ) : (
@@ -385,7 +391,13 @@ const InstructorSessions = ({ showToast }) => {
                     {s.time ? ` — ${s.time}` : ""}
                   </div>
                   <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
-                    {s.status === "ended" ? "Ended" : s.status}
+                    {s.status === "ended"
+                      ? t("instructorSessions.ended")
+                      : s.status === "live"
+                        ? t("instructorSessions.live")
+                        : s.status === "upcoming"
+                          ? t("instructorSessions.upcoming")
+                          : s.status}
                   </div>
                 </div>
               )}
@@ -397,14 +409,14 @@ const InstructorSessions = ({ showToast }) => {
                       style={{ fontSize: 12 }}
                       onClick={() => saveEdit(s._id)}
                     >
-                      Save
+                      {t("instructorSessions.save")}
                     </Btn>
                     <Btn
                       variant="ghost"
                       style={{ fontSize: 12 }}
                       onClick={cancelEditing}
                     >
-                      Cancel
+                      {t("instructorSessions.cancel")}
                     </Btn>
                   </>
                 ) : (
@@ -420,7 +432,7 @@ const InstructorSessions = ({ showToast }) => {
                         style={{ fontSize: 12 }}
                         onClick={() => startSession(s._id)}
                       >
-                        ▶ Start Session
+                        {t("instructorSessions.startSession")}
                       </Btn>
                     )}
 
@@ -433,14 +445,14 @@ const InstructorSessions = ({ showToast }) => {
                       style={{ fontSize: 12 }}
                       onClick={() => {
                         if (!s.url) {
-                          showToast("No session URL available");
+                          showToast(t("instructorSessions.noSessionUrl"));
                           return;
                         }
 
                         window.open(s.url, "_blank");
                       }}
                     >
-                      Preview
+                      {t("instructorSessions.preview")}
                     </Btn>
 
                     <Btn
@@ -448,7 +460,7 @@ const InstructorSessions = ({ showToast }) => {
                       style={{ fontSize: 12 }}
                       onClick={() => startEditing(s)}
                     >
-                      Edit
+                      {t("instructorSessions.edit")}
                     </Btn>
 
                     {/* End Session — only relevant once a session is live
@@ -460,7 +472,7 @@ const InstructorSessions = ({ showToast }) => {
                         style={{ fontSize: 12 }}
                         onClick={() => endSession(s._id)}
                       >
-                        End
+                        {t("instructorSessions.end")}
                       </Btn>
                     )}
 
@@ -469,7 +481,7 @@ const InstructorSessions = ({ showToast }) => {
                       style={{ fontSize: 12 }}
                       onClick={() => copySessionLink(s.url)}
                     >
-                      Copy
+                      {t("instructorSessions.copy")}
                     </Btn>
 
                     <Btn

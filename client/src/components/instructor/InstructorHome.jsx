@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { fetchCourses } from "../../redux/slices/courseSlice";
 import { fetchSessions } from "../../redux/slices/sessionSlice";
 import {
@@ -11,6 +12,7 @@ import {
 } from "./InstructorUi";
 
 const InstructorHome = ({ showToast, onNavigate }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { courses, loading: coursesLoading } = useSelector((s) => s.courses);
   const { sessions, loading: sessionsLoading } = useSelector((s) => s.sessions);
@@ -62,17 +64,17 @@ const InstructorHome = ({ showToast, onNavigate }) => {
         }}
       >
         <StatCard
-          label="Total Courses"
+          label={t("instructorHome.totalCourses")}
           value={coursesLoading ? "…" : String(courses.length)}
           color="#a78bfa"
         />
         <StatCard
-          label="Total Students"
+          label={t("instructorHome.totalStudents")}
           value={coursesLoading ? "…" : totalStudents.toLocaleString()}
           color="#34d399"
         />
         <StatCard
-          label="Instructor Rating"
+          label={t("instructorHome.instructorRating")}
           value={coursesLoading ? "…" : `${avgRating} ★`}
           color="#4ade80"
         />
@@ -82,14 +84,14 @@ const InstructorHome = ({ showToast, onNavigate }) => {
         {/* Active courses */}
         <Card>
           <SectionHeader
-            title="Active Courses"
+            title={t("instructorHome.activeCourses")}
             action={
               <Btn
                 variant="ghost"
                 style={{ fontSize: 12, padding: "5px 10px" }}
                 onClick={() => onNavigate("courses")}
               >
-                View all
+                {t("instructorHome.viewAll")}
               </Btn>
             }
           />
@@ -103,7 +105,7 @@ const InstructorHome = ({ showToast, onNavigate }) => {
                 fontSize: 13,
               }}
             >
-              Loading courses…
+              {t("instructorHome.loadingCourses")}
             </div>
           )}
 
@@ -116,7 +118,7 @@ const InstructorHome = ({ showToast, onNavigate }) => {
                 fontSize: 13,
               }}
             >
-              No courses yet.
+              {t("instructorHome.noCourses")}
             </div>
           )}
 
@@ -173,13 +175,18 @@ const InstructorHome = ({ showToast, onNavigate }) => {
                       {c.title}
                     </div>
                     <div style={{ fontSize: 11, color: "#64748b" }}>
-                      {c.enrolledCount ?? 0} students · ${c.revenue ?? 0}
+                      {t("instructorHome.studentsRevenue", {
+                        count: c.enrolledCount ?? 0,
+                        revenue: c.revenue ?? 0,
+                      })}
                     </div>
                     <ProgressBar value={c.avgCompletion ?? 0} />
                     <div
                       style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}
                     >
-                      {c.avgCompletion ?? 0}% avg completion
+                      {t("instructorHome.avgCompletion", {
+                        value: c.avgCompletion ?? 0,
+                      })}
                     </div>
                   </div>
                 </div>
@@ -191,14 +198,14 @@ const InstructorHome = ({ showToast, onNavigate }) => {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Card>
             <SectionHeader
-              title="Upcoming Sessions"
+              title={t("instructorHome.upcomingSessions")}
               action={
                 <Btn
                   variant="ghost"
                   style={{ fontSize: 12, padding: "5px 10px" }}
                   onClick={() => onNavigate("sessions")}
                 >
-                  Manage
+                  {t("instructorHome.manage")}
                 </Btn>
               }
             />
@@ -212,7 +219,7 @@ const InstructorHome = ({ showToast, onNavigate }) => {
                   fontSize: 13,
                 }}
               >
-                Loading sessions…
+                {t("instructorHome.loadingSessions")}
               </div>
             )}
 
@@ -225,7 +232,7 @@ const InstructorHome = ({ showToast, onNavigate }) => {
                   fontSize: 13,
                 }}
               >
-                No upcoming sessions.
+                {t("instructorHome.noUpcomingSessions")}
               </div>
             )}
 
@@ -261,7 +268,7 @@ const InstructorHome = ({ showToast, onNavigate }) => {
                       {s.title}
                     </div>
                     <div style={{ fontSize: 11, color: "#64748b" }}>
-                      {s.date !== "TBD" ? s.date : "Date TBD"}
+                      {s.date !== "TBD" ? s.date : t("instructorHome.dateTbd")}
                       {s.time && s.time !== "TBD" ? ` — ${s.time}` : ""}
                     </div>
                   </div>
@@ -271,12 +278,14 @@ const InstructorHome = ({ showToast, onNavigate }) => {
                     onClick={() =>
                       showToast(
                         s.status === "live"
-                          ? "Joining session..."
-                          : "Session link copied",
+                          ? t("instructorHome.joiningSession")
+                          : t("instructorHome.sessionLinkCopied"),
                       )
                     }
                   >
-                    {s.status === "live" ? "Join" : "Link"}
+                    {s.status === "live"
+                      ? t("instructorHome.join")
+                      : t("instructorHome.link")}
                   </Btn>
                 </div>
               ))}

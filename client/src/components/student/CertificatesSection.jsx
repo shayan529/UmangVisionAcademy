@@ -4,6 +4,7 @@ import { fetchEnrolledCourses } from "../../redux/slices/courseSlice";
 import { Link } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import { useTranslation } from "react-i18next";
 
 const getLocalProgress = (courseId, totalLessons) => {
   if (!courseId || !totalLessons) return { progress: 0, completedLessons: 0 };
@@ -693,6 +694,7 @@ const CertificateModal = ({
 
 // ── Main Certificates page ────────────────────────────────────────────────────
 export default function Certificates() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const [copiedId, setCopiedId] = useState("");
   const [copiedLink, setCopiedLink] = useState("");
@@ -810,12 +812,15 @@ export default function Certificates() {
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: 26, fontWeight: 800, color: "#f1f5f9" }}>
-          Certificates
+          {t("studentCertificates.title")}
         </h2>
         <p style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
           {enrolledLoading
-            ? "Loading…"
-            : `${earnedCertificates.length} certificate${earnedCertificates.length !== 1 ? "s" : ""} earned · ${inProgressCourses.length} in progress`}
+            ? t("studentCertificates.loading")
+            : t("studentCertificates.summary", {
+                earned: earnedCertificates.length,
+                progress: inProgressCourses.length,
+              })}
         </p>
       </div>
 
@@ -831,12 +836,12 @@ export default function Certificates() {
             letterSpacing: "0.08em",
           }}
         >
-          🏅 Earned Certificates
+          🏅 {t("studentCertificates.earned")}
         </h3>
 
         {enrolledLoading ? (
           <div style={{ color: "#64748b", fontSize: 13 }}>
-            Loading certificates…
+            {t("studentCertificates.loadingCertificates")}
           </div>
         ) : earnedCertificates.length === 0 ? (
           <div
@@ -858,11 +863,10 @@ export default function Certificates() {
                 marginBottom: 4,
               }}
             >
-              No Certificates Earned Yet
+              {t("studentCertificates.noneEarnedTitle")}
             </div>
             <div style={{ fontSize: 12, maxWidth: 360, margin: "0 auto" }}>
-              Complete all lessons in a course that offers a certificate to
-              unlock your achievement here!
+              {t("studentCertificates.noneEarnedDesc")}
             </div>
           </div>
         ) : (
@@ -897,12 +901,12 @@ export default function Certificates() {
             letterSpacing: "0.08em",
           }}
         >
-          ⏳ In Progress — Complete to earn
+          ⏳ {t("studentCertificates.inProgress")}
         </h3>
 
         {enrolledLoading ? (
           <div style={{ color: "#64748b", fontSize: 13 }}>
-            Loading active courses…
+            {t("studentCertificates.loadingActive")}
           </div>
         ) : inProgressCourses.length === 0 ? (
           <div
@@ -916,7 +920,7 @@ export default function Certificates() {
               textAlign: "center",
             }}
           >
-            No courses currently in progress.
+            {t("studentCertificates.noProgress")}
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

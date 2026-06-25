@@ -81,23 +81,43 @@ export const updateProfile = async (req, res) => {
       avatarUrl,
       specialization,
       notificationSettings,
+      fatherName,
+      motherName,
+      fullAddress,
+      socialMediaAccount,
+      fatherMobileNumber,
+      reference,
+      vidhansabha,
+      vidhansaba,
     } = req.body;
 
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      {
-        name,
-        email,
-        bio,
-        phoneNumber,
-        city,
-        state,
-        avatarUrl,
-        specialization,
-        notificationSettings,
-      },
-      { new: true, runValidators: true },
-    ).select("-password");
+    const updates = {
+      name,
+      email,
+      bio,
+      phoneNumber,
+      city,
+      state,
+      avatarUrl,
+      specialization,
+      notificationSettings,
+      fatherName,
+      motherName,
+      fullAddress,
+      socialMediaAccount,
+      fatherMobileNumber,
+      reference,
+      vidhansabha: vidhansabha ?? vidhansaba,
+    };
+
+    const definedUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([, value]) => value !== undefined),
+    );
+
+    const user = await User.findByIdAndUpdate(req.user._id, definedUpdates, {
+      new: true,
+      runValidators: true,
+    }).select("-password");
 
     res.json(user);
   } catch (error) {

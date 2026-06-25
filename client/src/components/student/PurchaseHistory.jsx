@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import api from "../../config/api.js";
+import { useTranslation } from "react-i18next";
 
 // ── Type metadata ─────────────────────────────────────────────────────────────
 const TYPE_META = {
@@ -75,13 +76,7 @@ const formatDate = (d) => {
 const formatRupees = (n) =>
   `₹${Number(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 
-const FILTERS = [
-  { key: "all", label: "All" },
-  { key: "purchase", label: "Course Purchases" },
-  { key: "subscription", label: "Subscriptions" },
-  { key: "deposit", label: "Top-ups" },
-  { key: "coin_redeem", label: "Coin Redemptions" },
-];
+const FILTERS = ["all", "purchase", "subscription", "deposit", "coin_redeem"];
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
 const Skeleton = ({ w = "100%", h = 18, radius = 8, style = {} }) => (
@@ -100,6 +95,7 @@ const Skeleton = ({ w = "100%", h = 18, radius = 8, style = {} }) => (
 
 // ── Transaction row ────────────────────────────────────────────────────────────
 const TransactionRow = ({ txn, onRequestRefund, requesting }) => {
+  const { t } = useTranslation();
   const meta = getMeta(txn.type);
   const isSuccess = (txn.status ?? "success") === "success";
   const methodLabel = PAYMENT_METHOD_LABEL[txn.paymentMethod] ?? null;
@@ -174,11 +170,11 @@ const TransactionRow = ({ txn, onRequestRefund, requesting }) => {
               letterSpacing: "0.04em",
             }}
           >
-            {meta.label}
+            {t(`studentPurchaseHistory.type.${txn.type || "default"}`)}
           </span>
           {methodLabel && (
             <span style={{ fontSize: 11, color: "#475569" }}>
-              via {methodLabel}
+              {t("studentPurchaseHistory.via")} {methodLabel}
             </span>
           )}
           <span style={{ fontSize: 11, color: "#64748b" }}>
@@ -214,7 +210,7 @@ const TransactionRow = ({ txn, onRequestRefund, requesting }) => {
               textTransform: "uppercase",
             }}
           >
-            Refund {refundStatus}
+            {t("studentPurchaseHistory.refundStatus", { status: refundStatus })}
           </div>
         )}
         {canRequestRefund && (
@@ -236,7 +232,9 @@ const TransactionRow = ({ txn, onRequestRefund, requesting }) => {
               opacity: requesting ? 0.6 : 1,
             }}
           >
-            {requesting ? "Requesting..." : "Request refund"}
+            {requesting
+              ? t("studentPurchaseHistory.requesting")
+              : t("studentPurchaseHistory.requestRefund")}
           </button>
         )}
       </div>
@@ -246,6 +244,7 @@ const TransactionRow = ({ txn, onRequestRefund, requesting }) => {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function PurchaseHistory() {
+  const { t } = useTranslation();
   const [transactions, setTransactions] = useState([]);
   const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -265,7 +264,7 @@ export default function PurchaseHistory() {
       })
       .catch((err) => {
         setError(
-          err.response?.data?.message || "Failed to load purchase history.",
+          err.response?.data?.message || t("studentPurchaseHistory.failedLoad"),
         );
         setLoading(false);
       });
@@ -315,10 +314,7 @@ export default function PurchaseHistory() {
       : transactions.filter((t) => t.type === activeFilter);
 
   const requestRefund = async (transaction) => {
-    const reason = window.prompt(
-      "Why are you requesting a refund? This will be reviewed by staff.",
-      "",
-    );
+    const reason = window.prompt(t("studentPurchaseHistory.refundPrompt"), "");
     if (reason === null) return;
 
     setRequestingId(transaction._id);
@@ -330,7 +326,7 @@ export default function PurchaseHistory() {
       loadHistory();
     } catch (err) {
       setError(
-        err.response?.data?.message || "Failed to submit refund request.",
+        err.response?.data?.message || t("studentPurchaseHistory.failedRefund"),
       );
     } finally {
       setRequestingId("");
@@ -348,14 +344,16 @@ export default function PurchaseHistory() {
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
         <h2 style={{ fontSize: 26, fontWeight: 800, color: "#f1f5f9" }}>
-          Purchase History
+          {t("studentPurchaseHistory.title")}
         </h2>
         <p style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
           {loading
-            ? "Loading…"
+            ? t("studentPurchaseHistory.loading")
             : balance !== null
-              ? `Current wallet balance: ${formatRupees(balance)}`
-              : "Every amount you've paid on the platform, in one place"}
+              ? t("studentPurchaseHistory.currentBalance", {
+                  balance: formatRupees(balance),
+                })
+              : t("studentPurchaseHistory.subtitle")}
         </p>
       </div>
 
@@ -371,18 +369,22 @@ export default function PurchaseHistory() {
         >
           {[
             {
-              label: "Spent on Courses",
+              label: t("studentPurchaseHistory.spentCourses"),
               value: totals.spentOnCourses,
               color: "#f87171",
             },
             {
-              label: "Spent on Subscriptions",
+              label: t("studentPurchaseHistory.spentSubscriptions"),
               value: totals.spentOnSubscriptions,
               color: "#fbbf24",
             },
-            { label: "Added to Wallet", value: totals.added, color: "#4ade80" },
             {
-              label: "From Coin Redemptions",
+              label: t("studentPurchaseHistory.addedWallet"),
+              value: totals.added,
+              color: "#4ade80",
+            },
+            {
+              label: t("studentPurchaseHistory.coinRedemptions"),
               value: totals.redeemed,
               color: "#22d3ee",
             },
@@ -417,12 +419,12 @@ export default function PurchaseHistory() {
         }}
       >
         {FILTERS.map((f) => {
-          const active = activeFilter === f.key;
+          const active = activeFilter === f;
           return (
             <button
-              key={f.key}
+              key={f}
               className="ph-tab"
-              onClick={() => setActiveFilter(f.key)}
+              onClick={() => setActiveFilter(f)}
               style={{
                 padding: "8px 14px",
                 borderRadius: 10,
@@ -436,10 +438,10 @@ export default function PurchaseHistory() {
                 transition: "background 0.15s",
               }}
             >
-              {f.label}
+              {t(`studentPurchaseHistory.filter.${f}`)}
               {!loading && (
                 <span style={{ marginLeft: 6, opacity: 0.6 }}>
-                  {counts[f.key] ?? 0}
+                  {counts[f] ?? 0}
                 </span>
               )}
             </button>
@@ -505,7 +507,7 @@ export default function PurchaseHistory() {
               cursor: "pointer",
             }}
           >
-            Retry
+            {t("studentPurchaseHistory.retry")}
           </button>
         </div>
       ) : filtered.length === 0 ? (
@@ -528,12 +530,12 @@ export default function PurchaseHistory() {
               marginBottom: 4,
             }}
           >
-            No transactions yet
+            {t("studentPurchaseHistory.noTransactions")}
           </div>
           <div style={{ fontSize: 12, maxWidth: 360, margin: "0 auto" }}>
             {activeFilter === "all"
-              ? "Your purchases, subscriptions, top-ups, and redemptions will show up here."
-              : "Nothing matches this filter yet."}
+              ? t("studentPurchaseHistory.noTransactionsAll")
+              : t("studentPurchaseHistory.noTransactionsFiltered")}
           </div>
         </div>
       ) : (
@@ -556,8 +558,9 @@ export default function PurchaseHistory() {
               marginTop: 16,
             }}
           >
-            Showing your most recent {transactions.length} transaction
-            {transactions.length !== 1 ? "s" : ""}.
+            {t("studentPurchaseHistory.showingRecent", {
+              count: transactions.length,
+            })}
           </p>
         </>
       )}

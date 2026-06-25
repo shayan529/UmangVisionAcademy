@@ -8,6 +8,7 @@ import {
 } from "../../redux/slices/billingSlice";
 import { logoutUser } from "../../redux/slices/authSlice";
 import api from "../../config/api";
+import { useTranslation } from "react-i18next";
 
 // ── Indian states & cities ────────────────────────────────────────────────────
 const indianCitiesByState = {
@@ -48,6 +49,7 @@ const ALL_STATES = Object.keys(indianCitiesByState).sort();
 
 // ── Shared OTP Modal ──────────────────────────────────────────────────────────
 function OtpModal({ title, subtitle, onVerify, onResend, onClose }) {
+  const { t } = useTranslation();
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
   const [verifying, setVerifying] = useState(false);
   const [cooldown, setCooldown] = useState(30);
@@ -303,10 +305,10 @@ function OtpModal({ title, subtitle, onVerify, onResend, onClose }) {
                   strokeLinecap="round"
                 />
               </svg>
-              Verifying…
+              {t("studentSettings.verifying")}
             </>
           ) : (
-            "Verify Code"
+            t("studentSettings.verifyCode")
           )}
         </button>
 
@@ -320,7 +322,7 @@ function OtpModal({ title, subtitle, onVerify, onResend, onClose }) {
         >
           {cooldown > 0 ? (
             <>
-              Resend in{" "}
+              {t("studentSettings.resendIn")}{" "}
               <span style={{ color: "#a78bfa", fontWeight: 600 }}>
                 {cooldown}s
               </span>
@@ -338,7 +340,9 @@ function OtpModal({ title, subtitle, onVerify, onResend, onClose }) {
                 fontSize: 12,
               }}
             >
-              {resending ? "Sending…" : "Resend OTP"}
+              {resending
+                ? t("studentSettings.sending")
+                : t("studentSettings.resendOtp")}
             </button>
           )}
         </div>
@@ -354,7 +358,7 @@ function OtpModal({ title, subtitle, onVerify, onResend, onClose }) {
             cursor: "pointer",
           }}
         >
-          Cancel
+          {t("studentSettings.cancel")}
         </button>
       </div>
     </div>
@@ -419,6 +423,7 @@ const Toggle = ({ checked, onChange }) => (
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function Settings() {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const { profile: userProfile } = useSelector((state) => state.settings);
   const { user } = useSelector((state) => state.auth);
   const { subscription } = useSelector((state) => state.billing);
@@ -430,6 +435,13 @@ export default function Settings() {
     city: "",
     state: "",
     avatarUrl: "",
+    fatherName: "",
+    motherName: "",
+    fullAddress: "",
+    socialMediaAccount: "",
+    fatherMobileNumber: "",
+    reference: "",
+    vidhansabha: "",
   });
   const [notifications, setNotifications] = useState({
     liveClass: true,
@@ -439,6 +451,8 @@ export default function Settings() {
   const [isEditing, setIsEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [references, setReferences] = useState([]);
+  const [referencesLoading, setReferencesLoading] = useState(false);
 
   // ── Email change state ──
   const [emailForm, setEmailForm] = useState({ newEmail: "" });
@@ -463,6 +477,22 @@ export default function Settings() {
   }, [dispatch]);
 
   useEffect(() => {
+    const loadReferences = async () => {
+      setReferencesLoading(true);
+      try {
+        const { data } = await api.get("/references");
+        setReferences(Array.isArray(data) ? data : []);
+      } catch {
+        setReferences([]);
+      } finally {
+        setReferencesLoading(false);
+      }
+    };
+
+    loadReferences();
+  }, []);
+
+  useEffect(() => {
     if (userProfile) {
       setProfile({
         name: userProfile.name || "",
@@ -471,6 +501,13 @@ export default function Settings() {
         city: userProfile.city || "",
         state: userProfile.state || "",
         avatarUrl: userProfile.avatarUrl || "",
+        fatherName: userProfile.fatherName || "",
+        motherName: userProfile.motherName || "",
+        fullAddress: userProfile.fullAddress || "",
+        socialMediaAccount: userProfile.socialMediaAccount || "",
+        fatherMobileNumber: userProfile.fatherMobileNumber || "",
+        reference: userProfile.reference || "",
+        vidhansabha: userProfile.vidhansabha || "",
       });
       if (userProfile.notificationSettings) {
         setNotifications({
@@ -483,8 +520,11 @@ export default function Settings() {
   }, [userProfile]);
 
   const cityOptions = indianCitiesByState[profile.state] || [];
+  const hasCurrentReference =
+    !!profile.reference &&
+    !references.some((item) => item.name === profile.reference);
 
-  // ── Profile save (name, state, city only) ──
+  // ── Profile save ──
   const saveProfile = async () => {
     try {
       await dispatch(
@@ -507,6 +547,13 @@ export default function Settings() {
         city: userProfile.city || "",
         state: userProfile.state || "",
         avatarUrl: userProfile.avatarUrl || "",
+        fatherName: userProfile.fatherName || "",
+        motherName: userProfile.motherName || "",
+        fullAddress: userProfile.fullAddress || "",
+        socialMediaAccount: userProfile.socialMediaAccount || "",
+        fatherMobileNumber: userProfile.fatherMobileNumber || "",
+        reference: userProfile.reference || "",
+        vidhansabha: userProfile.vidhansabha || "",
       });
     }
     setIsEditing(false);
@@ -559,16 +606,22 @@ export default function Settings() {
   // ── Email change ──
   const sendEmailOtp = async () => {
     if (!emailForm.newEmail) {
-      setEmailMsg({ text: "Enter a new email address", ok: false });
+      setEmailMsg({
+        text: t("studentSettings.enterNewEmailAddress"),
+        ok: false,
+      });
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailForm.newEmail)) {
-      setEmailMsg({ text: "Enter a valid email address", ok: false });
+      setEmailMsg({
+        text: t("studentSettings.enterValidEmailAddress"),
+        ok: false,
+      });
       return;
     }
     if (emailForm.newEmail === profile.email) {
       setEmailMsg({
-        text: "New email is the same as current email",
+        text: t("studentSettings.sameCurrentEmail"),
         ok: false,
       });
       return;
@@ -583,7 +636,8 @@ export default function Settings() {
       setEmailMsg({ text: "", ok: false });
     } catch (err) {
       setEmailMsg({
-        text: err.response?.data?.message || "Failed to send OTP",
+        text:
+          err.response?.data?.message || t("studentSettings.failedToSendOtp"),
         ok: false,
       });
 
@@ -608,10 +662,12 @@ export default function Settings() {
       setEmailForm({ newEmail: "" });
       setEmailStep("idle");
       setShowEmailOtp(false);
-      setEmailMsg({ text: "Email updated successfully ✓", ok: true });
+      setEmailMsg({ text: t("studentSettings.emailUpdated"), ok: true });
       setTimeout(() => setEmailMsg({ text: "", ok: false }), 5000);
     } catch (err) {
-      throw new Error(err.response?.data?.message || "Invalid OTP");
+      throw new Error(
+        err.response?.data?.message || t("studentSettings.invalidOtp"),
+      );
     }
   };
 
@@ -627,14 +683,14 @@ export default function Settings() {
     const e164 = normalizeIndianPhoneNumber(phoneForm.newPhone);
     if (!e164) {
       setPhoneMsg({
-        text: "Only Indian mobile numbers are supported for OTP",
+        text: t("studentSettings.indianMobileOnly"),
         ok: false,
       });
       return;
     }
     if (e164 === profile.phoneNumber) {
       setPhoneMsg({
-        text: "New number is the same as current number",
+        text: t("studentSettings.sameCurrentNumber"),
         ok: false,
       });
       return;
@@ -647,7 +703,8 @@ export default function Settings() {
       setPhoneMsg({ text: "", ok: false });
     } catch (err) {
       setPhoneMsg({
-        text: err.response?.data?.message || "Failed to send OTP",
+        text:
+          err.response?.data?.message || t("studentSettings.failedToSendOtp"),
         ok: false,
       });
       setPhoneStep("idle");
@@ -657,7 +714,7 @@ export default function Settings() {
   const verifyPhoneOtp = async (code) => {
     const e164 = normalizeIndianPhoneNumber(phoneForm.newPhone);
     if (!e164) {
-      throw new Error("Only Indian mobile numbers are supported for OTP");
+      throw new Error(t("studentSettings.indianMobileOnly"));
     }
     try {
       await api.post("/auth/verify-phone-otp", {
@@ -675,28 +732,30 @@ export default function Settings() {
       setPhoneForm({ newPhone: "" });
       setPhoneStep("idle");
       setShowPhoneOtp(false);
-      setPhoneMsg({ text: "Phone number updated successfully ✓", ok: true });
+      setPhoneMsg({ text: t("studentSettings.phoneUpdated"), ok: true });
       setTimeout(() => setPhoneMsg({ text: "", ok: false }), 5000);
     } catch (err) {
-      throw new Error(err.response?.data?.message || "Invalid OTP");
+      throw new Error(
+        err.response?.data?.message || t("studentSettings.invalidOtp"),
+      );
     }
   };
 
   // ── Password change ──
   const sendPasswordOtp = async () => {
     if (!pwForm.current) {
-      setPwMsg({ text: "Enter your current password", ok: false });
+      setPwMsg({ text: t("studentSettings.enterCurrentPassword"), ok: false });
       return;
     }
     if (pwForm.next.length < 6) {
       setPwMsg({
-        text: "New password must be at least 6 characters",
+        text: t("studentSettings.passwordMin6"),
         ok: false,
       });
       return;
     }
     if (pwForm.next !== pwForm.confirm) {
-      setPwMsg({ text: "Passwords do not match", ok: false });
+      setPwMsg({ text: t("studentSettings.passwordsDoNotMatch"), ok: false });
       return;
     }
     try {
@@ -705,7 +764,8 @@ export default function Settings() {
       setPwMsg({ text: "", ok: false });
     } catch (err) {
       setPwMsg({
-        text: err.response?.data?.message || "Failed to send OTP",
+        text:
+          err.response?.data?.message || t("studentSettings.failedToSendOtp"),
         ok: false,
       });
     }
@@ -718,12 +778,14 @@ export default function Settings() {
         currentPassword: pwForm.current,
         newPassword: pwForm.next,
       });
-      setPwMsg({ text: "Password changed successfully ✓", ok: true });
+      setPwMsg({ text: t("studentSettings.passwordChanged"), ok: true });
       setPwForm({ current: "", next: "", confirm: "" });
       setShowPwOtp(false);
       setTimeout(() => setPwMsg({ text: "", ok: false }), 4000);
     } catch (err) {
-      throw new Error(err.response?.data?.message || "Invalid OTP");
+      throw new Error(
+        err.response?.data?.message || t("studentSettings.invalidOtp"),
+      );
     }
   };
 
@@ -736,23 +798,22 @@ export default function Settings() {
         updateProfile({ ...profile, notificationSettings: updated }),
       ).unwrap();
     } catch (err) {
-      console.error("Failed to update notifications", err);
+      console.error(t("studentSettings.failedToUpdateNotifications"), err);
     }
   };
 
   // ── Delete account ──
   const deleteAccount = async () => {
-    if (
-      window.confirm(
-        "WARNING: Are you sure you want to delete your account? This will permanently delete all your data and enrollment records. This action cannot be undone.",
-      )
-    ) {
+    if (window.confirm(t("studentSettings.deleteAccountWarning"))) {
       try {
         await api.delete(`/users/${user?._id ?? user?.id}`);
         await dispatch(logoutUser()).unwrap();
         window.location.href = "/";
       } catch (err) {
-        alert(err.response?.data?.message || "Failed to delete account");
+        alert(
+          err.response?.data?.message ||
+            t("studentSettings.failedToDeleteAccount"),
+        );
       }
     }
   };
@@ -805,15 +866,15 @@ export default function Settings() {
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <h2 style={{ fontSize: 26, fontWeight: 800, color: "#f1f5f9" }}>
-            Settings
+            {t("studentSettings.title")}
           </h2>
           <p style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
-            Manage your account and preferences
+            {t("studentSettings.subtitle")}
           </p>
         </div>
 
         {/* ── Profile ── */}
-        <SectionCard title="Profile">
+        <SectionCard title={t("studentSettings.profile")}>
           {/* Avatar */}
           <div
             style={{
@@ -851,7 +912,9 @@ export default function Settings() {
                     display: "inline-block",
                   }}
                 >
-                  {uploading ? "Uploading..." : "Upload photo"}
+                  {uploading
+                    ? t("studentSettings.uploading")
+                    : t("studentSettings.uploadPhoto")}
                   <input
                     type="file"
                     accept="image/*"
@@ -872,7 +935,7 @@ export default function Settings() {
                       cursor: "pointer",
                     }}
                   >
-                    Remove
+                    {t("studentSettings.remove")}
                   </button>
                 )}
               </div>
@@ -889,7 +952,7 @@ export default function Settings() {
             }}
           >
             <div>
-              <label style={labelStyle}>Full name</label>
+              <label style={labelStyle}>{t("studentSettings.fullName")}</label>
               <input
                 value={profile.name}
                 onChange={(e) =>
@@ -900,7 +963,9 @@ export default function Settings() {
               />
             </div>
             <div>
-              <label style={labelStyle}>Phone Number</label>
+              <label style={labelStyle}>
+                {t("studentSettings.phoneNumber")}
+              </label>
               <div style={{ position: "relative" }}>
                 <input
                   value={profile.phoneNumber}
@@ -926,7 +991,7 @@ export default function Settings() {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  Change below
+                  {t("studentSettings.changeBelow")}
                 </span>
               </div>
             </div>
@@ -942,7 +1007,7 @@ export default function Settings() {
             }}
           >
             <div>
-              <label style={labelStyle}>State</label>
+              <label style={labelStyle}>{t("studentSettings.state")}</label>
               <select
                 value={profile.state}
                 onChange={(e) =>
@@ -951,7 +1016,7 @@ export default function Settings() {
                 disabled={!isEditing}
                 style={{ ...selectStyle, opacity: !isEditing ? 0.6 : 1 }}
               >
-                <option value="">Select state</option>
+                <option value="">{t("studentSettings.selectState")}</option>
                 {ALL_STATES.map((s) => (
                   <option key={s} value={s}>
                     {s}
@@ -960,7 +1025,7 @@ export default function Settings() {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>City</label>
+              <label style={labelStyle}>{t("studentSettings.city")}</label>
               <select
                 value={profile.city}
                 onChange={(e) =>
@@ -975,7 +1040,9 @@ export default function Settings() {
                 }}
               >
                 <option value="">
-                  {profile.state ? "Select city" : "Choose a state first"}
+                  {profile.state
+                    ? t("studentSettings.selectCity")
+                    : t("studentSettings.chooseStateFirst")}
                 </option>
                 {cityOptions.map((c) => (
                   <option key={c} value={c}>
@@ -984,6 +1051,129 @@ export default function Settings() {
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Student Details */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 14,
+              marginBottom: 14,
+            }}
+          >
+            <div>
+              <label style={labelStyle}>
+                {t("studentSettings.fatherName")}
+              </label>
+              <input
+                value={profile.fatherName}
+                onChange={(e) =>
+                  setProfile({ ...profile, fatherName: e.target.value })
+                }
+                style={inputStyle}
+                disabled={!isEditing}
+                placeholder={t("studentSettings.fatherNamePlaceholder")}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>
+                {t("studentSettings.motherName")}
+              </label>
+              <input
+                value={profile.motherName}
+                onChange={(e) =>
+                  setProfile({ ...profile, motherName: e.target.value })
+                }
+                style={inputStyle}
+                disabled={!isEditing}
+                placeholder={t("studentSettings.motherNamePlaceholder")}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>
+                {t("studentSettings.fatherMobile")}
+              </label>
+              <input
+                value={profile.fatherMobileNumber}
+                onChange={(e) =>
+                  setProfile({ ...profile, fatherMobileNumber: e.target.value })
+                }
+                style={inputStyle}
+                disabled={!isEditing}
+                placeholder={t("studentSettings.fatherMobilePlaceholder")}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>
+                {t("studentSettings.socialMedia")}
+              </label>
+              <input
+                value={profile.socialMediaAccount}
+                onChange={(e) =>
+                  setProfile({ ...profile, socialMediaAccount: e.target.value })
+                }
+                style={inputStyle}
+                disabled={!isEditing}
+                placeholder={t("studentSettings.socialMediaPlaceholder")}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>{t("studentSettings.reference")}</label>
+              <select
+                value={profile.reference}
+                onChange={(e) =>
+                  setProfile({ ...profile, reference: e.target.value })
+                }
+                style={{
+                  ...selectStyle,
+                  opacity: !isEditing ? 0.6 : 1,
+                  cursor: !isEditing ? "not-allowed" : "pointer",
+                }}
+                disabled={!isEditing}
+              >
+                <option value="">
+                  {referencesLoading
+                    ? t("studentSettings.loadingReferences")
+                    : t("studentSettings.selectReference")}
+                </option>
+                {hasCurrentReference && (
+                  <option value={profile.reference}>{profile.reference}</option>
+                )}
+                {references.map((item) => (
+                  <option key={item._id ?? item.name} value={item.name}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>
+                {t("studentSettings.vidhansabha")}
+              </label>
+              <input
+                value={profile.vidhansabha}
+                onChange={(e) =>
+                  setProfile({ ...profile, vidhansabha: e.target.value })
+                }
+                style={inputStyle}
+                disabled={!isEditing}
+                placeholder={t("studentSettings.vidhansabhaPlaceholder")}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 18 }}>
+            <label style={labelStyle}>{t("studentSettings.fullAddress")}</label>
+            <textarea
+              value={profile.fullAddress}
+              onChange={(e) =>
+                setProfile({ ...profile, fullAddress: e.target.value })
+              }
+              style={{ ...inputStyle, resize: "vertical", minHeight: 86 }}
+              disabled={!isEditing}
+              placeholder={t("studentSettings.fullAddressPlaceholder")}
+            />
           </div>
 
           {!isEditing ? (
@@ -1000,7 +1190,7 @@ export default function Settings() {
                 cursor: "pointer",
               }}
             >
-              Edit Profile
+              {t("studentSettings.editProfile")}
             </button>
           ) : (
             <div style={{ display: "flex", gap: 10 }}>
@@ -1019,7 +1209,9 @@ export default function Settings() {
                   cursor: "pointer",
                 }}
               >
-                {saved ? "✓ Saved!" : "Save Changes"}
+                {saved
+                  ? t("studentSettings.saved")
+                  : t("studentSettings.saveChanges")}
               </button>
               <button
                 onClick={handleCancelEdit}
@@ -1034,16 +1226,16 @@ export default function Settings() {
                   cursor: "pointer",
                 }}
               >
-                Cancel
+                {t("studentSettings.cancel")}
               </button>
             </div>
           )}
         </SectionCard>
 
         {/* ── Change Email ── */}
-        <SectionCard title="Change Email">
+        <SectionCard title={t("studentSettings.changeEmail")}>
           <p style={{ fontSize: 12, color: "#64748b", marginBottom: 14 }}>
-            Current email:{" "}
+            {t("studentSettings.currentEmail")}:{" "}
             <span style={{ color: "#a78bfa", fontWeight: 600 }}>
               {profile.email}
             </span>
@@ -1058,7 +1250,9 @@ export default function Settings() {
             }}
           >
             <div>
-              <label style={labelStyle}>New email address</label>
+              <label style={labelStyle}>
+                {t("studentSettings.newEmailAddress")}
+              </label>
               <input
                 type="email"
                 value={emailForm.newEmail}
@@ -1066,7 +1260,7 @@ export default function Settings() {
                   setEmailForm({ newEmail: e.target.value });
                   if (emailMsg.text) setEmailMsg({ text: "", ok: false });
                 }}
-                placeholder="Enter new email"
+                placeholder={t("studentSettings.enterNewEmail")}
                 style={inputStyle}
                 disabled={emailStep === "sending"}
               />
@@ -1078,7 +1272,9 @@ export default function Settings() {
                 emailStep === "sending" || !emailForm.newEmail,
               )}
             >
-              {emailStep === "sending" ? "Sending…" : "Send OTP"}
+              {emailStep === "sending"
+                ? t("studentSettings.sending")
+                : t("studentSettings.sendOtp")}
             </button>
           </div>
           {emailMsg.text && (
@@ -1094,9 +1290,9 @@ export default function Settings() {
         </SectionCard>
 
         {/* ── Change Phone ── */}
-        <SectionCard title="Change Phone Number">
+        <SectionCard title={t("studentSettings.changePhoneNumber")}>
           <p style={{ fontSize: 12, color: "#64748b", marginBottom: 14 }}>
-            Current number:{" "}
+            {t("studentSettings.currentNumber")}:{" "}
             <span style={{ color: "#a78bfa", fontWeight: 600 }}>
               {profile.phoneNumber || "—"}
             </span>
@@ -1111,7 +1307,9 @@ export default function Settings() {
             }}
           >
             <div>
-              <label style={labelStyle}>New phone number</label>
+              <label style={labelStyle}>
+                {t("studentSettings.newPhoneNumber")}
+              </label>
               <input
                 type="tel"
                 value={phoneForm.newPhone}
@@ -1119,7 +1317,7 @@ export default function Settings() {
                   setPhoneForm({ newPhone: e.target.value });
                   if (phoneMsg.text) setPhoneMsg({ text: "", ok: false });
                 }}
-                placeholder="+91 98765 43210"
+                placeholder={t("studentSettings.newPhonePlaceholder")}
                 style={inputStyle}
                 disabled={phoneStep === "sending"}
               />
@@ -1131,7 +1329,9 @@ export default function Settings() {
                 phoneStep === "sending" || !phoneForm.newPhone,
               )}
             >
-              {phoneStep === "sending" ? "Sending…" : "Send OTP"}
+              {phoneStep === "sending"
+                ? t("studentSettings.sending")
+                : t("studentSettings.sendOtp")}
             </button>
           </div>
           {phoneMsg.text && (
@@ -1147,7 +1347,7 @@ export default function Settings() {
         </SectionCard>
 
         {/* ── Subscription ── */}
-        <SectionCard title="Subscription & Billing">
+        <SectionCard title={t("studentSettings.subscriptionAndBilling")}>
           {subscription?.status === "active" ||
           subscription?.status === "cancelled" ? (
             <div
@@ -1178,10 +1378,12 @@ export default function Settings() {
                     marginBottom: 8,
                   }}
                 >
-                  {subscription.label || subscription.plan} Plan
+                  {t("studentSettings.planLabel", {
+                    plan: subscription.label || subscription.plan,
+                  })}
                 </div>
                 <h4 style={{ fontSize: 18, fontWeight: 800, color: "#f1f5f9" }}>
-                  Status:{" "}
+                  {t("studentSettings.status")}:{" "}
                   <span
                     style={{
                       color:
@@ -1191,16 +1393,16 @@ export default function Settings() {
                     }}
                   >
                     {subscription.status === "cancelled"
-                      ? "Cancelling"
-                      : "Active"}
+                      ? t("studentSettings.cancelling")
+                      : t("studentSettings.active")}
                   </span>
                 </h4>
                 <p style={{ color: "#94a3b8", fontSize: 12, marginTop: 6 }}>
-                  Active since{" "}
+                  {t("studentSettings.activeSince")}{" "}
                   {new Date(subscription.startDate).toLocaleDateString()}
                 </p>
                 <p style={{ color: "#94a3b8", fontSize: 12, marginTop: 2 }}>
-                  Renews/Expires on{" "}
+                  {t("studentSettings.renewsOn")}{" "}
                   {new Date(subscription.endDate).toLocaleDateString()}
                 </p>
               </div>
@@ -1208,15 +1410,17 @@ export default function Settings() {
                 onClick={async () => {
                   if (
                     window.confirm(
-                      "Are you sure you want to cancel your subscription?",
+                      t("studentSettings.confirmCancelSubscription"),
                     )
                   ) {
                     try {
                       await dispatch(cancelSubscription()).unwrap();
-                      alert("Subscription cancelled successfully.");
+                      alert(t("studentSettings.subscriptionCancelled"));
                       dispatch(fetchSubscription());
                     } catch (err) {
-                      alert(err || "Failed to cancel subscription");
+                      alert(
+                        err || t("studentSettings.failedCancelSubscription"),
+                      );
                     }
                   }
                 }}
@@ -1231,7 +1435,7 @@ export default function Settings() {
                   cursor: "pointer",
                 }}
               >
-                Cancel Subscription
+                {t("studentSettings.cancelSubscription")}
               </button>
             </div>
           ) : (
@@ -1250,11 +1454,10 @@ export default function Settings() {
             >
               <div>
                 <h4 style={{ fontSize: 16, fontWeight: 700, color: "#f1f5f9" }}>
-                  Free Tier / No Subscription
+                  {t("studentSettings.freeTier")}
                 </h4>
                 <p style={{ color: "#64748b", fontSize: 12, marginTop: 4 }}>
-                  Upgrade to a premium plan to unlock full access to AI tools,
-                  live coaching, and certification.
+                  {t("studentSettings.freeTierDesc")}
                 </p>
               </div>
               <Link
@@ -1270,14 +1473,14 @@ export default function Settings() {
                   textDecoration: "none",
                 }}
               >
-                Upgrade Plan
+                {t("studentSettings.upgradePlan")}
               </Link>
             </div>
           )}
         </SectionCard>
 
         {/* ── Change Password ── */}
-        <SectionCard title="Change Password">
+        <SectionCard title={t("studentSettings.changePassword")}>
           <div
             style={{
               display: "grid",
@@ -1287,7 +1490,9 @@ export default function Settings() {
             }}
           >
             <div>
-              <label style={labelStyle}>Current password</label>
+              <label style={labelStyle}>
+                {t("studentSettings.currentPassword")}
+              </label>
               <input
                 type="password"
                 value={pwForm.current}
@@ -1299,17 +1504,21 @@ export default function Settings() {
               />
             </div>
             <div>
-              <label style={labelStyle}>New password</label>
+              <label style={labelStyle}>
+                {t("studentSettings.newPassword")}
+              </label>
               <input
                 type="password"
                 value={pwForm.next}
                 onChange={(e) => setPwForm({ ...pwForm, next: e.target.value })}
                 style={inputStyle}
-                placeholder="Min 6 characters"
+                placeholder={t("studentSettings.min6Characters")}
               />
             </div>
             <div>
-              <label style={labelStyle}>Confirm new password</label>
+              <label style={labelStyle}>
+                {t("studentSettings.confirmNewPassword")}
+              </label>
               <input
                 type="password"
                 value={pwForm.confirm}
@@ -1317,7 +1526,7 @@ export default function Settings() {
                   setPwForm({ ...pwForm, confirm: e.target.value })
                 }
                 style={inputStyle}
-                placeholder="Repeat password"
+                placeholder={t("studentSettings.repeatPassword")}
               />
             </div>
           </div>
@@ -1345,27 +1554,27 @@ export default function Settings() {
               cursor: "pointer",
             }}
           >
-            Update Password
+            {t("studentSettings.updatePassword")}
           </button>
         </SectionCard>
 
         {/* ── Notifications ── */}
-        <SectionCard title="Notification Preferences">
+        <SectionCard title={t("studentSettings.notificationPreferences")}>
           {[
             {
               key: "liveClass",
-              label: "Live class reminders",
-              desc: "Get reminded 1 hour before a live session starts",
+              label: t("studentSettings.liveClassReminders"),
+              desc: t("studentSettings.liveClassRemindersDesc"),
             },
             {
               key: "newCourse",
-              label: "New course alerts",
-              desc: "When an instructor you follow publishes a new course",
+              label: t("studentSettings.newCourseAlerts"),
+              desc: t("studentSettings.newCourseAlertsDesc"),
             },
             {
               key: "community",
-              label: "Community replies",
-              desc: "When someone replies to your post",
+              label: t("studentSettings.communityReplies"),
+              desc: t("studentSettings.communityRepliesDesc"),
             },
           ].map((item) => (
             <div
@@ -1397,7 +1606,7 @@ export default function Settings() {
         </SectionCard>
 
         {/* ── Danger Zone ── */}
-        <SectionCard title="Danger Zone">
+        <SectionCard title={t("studentSettings.dangerZone")}>
           <div
             style={{
               display: "flex",
@@ -1407,11 +1616,10 @@ export default function Settings() {
           >
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: "#f87171" }}>
-                Delete account
+                {t("studentSettings.deleteAccount")}
               </div>
               <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
-                This will permanently delete all your data. This cannot be
-                undone.
+                {t("studentSettings.deleteAccountDesc")}
               </div>
             </div>
             <button
@@ -1427,7 +1635,7 @@ export default function Settings() {
                 cursor: "pointer",
               }}
             >
-              Delete Account
+              {t("studentSettings.deleteAccountCta")}
             </button>
           </div>
         </SectionCard>
@@ -1436,8 +1644,10 @@ export default function Settings() {
       {/* ── Email OTP Modal ── */}
       {showEmailOtp && (
         <OtpModal
-          title="Verify New Email"
-          subtitle={`Enter the 6-digit code sent to ${emailForm.newEmail}`}
+          title={t("studentSettings.verifyNewEmail")}
+          subtitle={t("studentSettings.verifyNewEmailSubtitle", {
+            email: emailForm.newEmail,
+          })}
           onVerify={verifyEmailOtp}
           onResend={sendEmailOtp}
           onClose={() => {
@@ -1450,8 +1660,10 @@ export default function Settings() {
       {/* ── Phone OTP Modal ── */}
       {showPhoneOtp && (
         <OtpModal
-          title="Verify New Phone Number"
-          subtitle={`Enter the 6-digit code sent via SMS to ${phoneForm.newPhone}`}
+          title={t("studentSettings.verifyNewPhoneNumber")}
+          subtitle={t("studentSettings.verifyNewPhoneSubtitle", {
+            phone: phoneForm.newPhone,
+          })}
           onVerify={verifyPhoneOtp}
           onResend={sendPhoneOtp}
           onClose={() => {
@@ -1464,8 +1676,10 @@ export default function Settings() {
       {/* ── Password OTP Modal ── */}
       {showPwOtp && (
         <OtpModal
-          title="Verify Password Change"
-          subtitle={`Enter the 6-digit code sent to ${profile.email} to confirm this change`}
+          title={t("studentSettings.verifyPasswordChange")}
+          subtitle={t("studentSettings.verifyPasswordChangeSubtitle", {
+            email: profile.email,
+          })}
           onVerify={verifyPasswordOtp}
           onResend={() => api.post("/settings/send-password-otp")}
           onClose={() => setShowPwOtp(false)}

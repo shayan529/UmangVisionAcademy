@@ -15,8 +15,14 @@ import {
   fetchAvailableTests,
   startMockTest,
 } from "../../redux/slices/mockTestSlice";
+import { useTranslation } from "react-i18next";
 
-const DIFFICULTIES = ["All", "Easy", "Medium", "Hard"];
+const DIFFICULTIES = [
+  { value: "All", key: "studentMockTests.difficultyAll" },
+  { value: "Easy", key: "studentMockTests.difficultyEasy" },
+  { value: "Medium", key: "studentMockTests.difficultyMedium" },
+  { value: "Hard", key: "studentMockTests.difficultyHard" },
+];
 const SUBJECTS = [
   "All",
   "Mathematics",
@@ -35,6 +41,7 @@ const difficultyColor = {
 export default function AvailableMockTests() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { availableTests, loading } = useSelector((s) => s.mockTest);
 
   const [diffFilter, setDiffFilter] = useState("All");
@@ -57,7 +64,7 @@ export default function AvailableMockTests() {
       await dispatch(startMockTest(testId)).unwrap();
       navigate(`/student-dashboard/mock-tests/take/${testId}`);
     } catch (err) {
-      toast.error(err || "Failed to start test");
+      toast.error(err || t("studentMockTests.failedStart"));
     } finally {
       setStarting(null);
     }
@@ -68,10 +75,10 @@ export default function AvailableMockTests() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-100 mb-1">
-          Available Mock Tests
+          {t("studentMockTests.availableMockTests")}
         </h1>
         <p className="text-slate-400 text-sm">
-          {filtered.length} test{filtered.length !== 1 ? "s" : ""} available
+          {t("studentMockTests.testsAvailable", { count: filtered.length })}
         </p>
       </div>
 
@@ -80,27 +87,29 @@ export default function AvailableMockTests() {
         <div className="flex items-center gap-2 bg-[#0f1c30] border border-[#1e3a5f] rounded-xl px-3 py-2">
           <FaFilter className="text-slate-500 text-xs" />
           <span className="text-slate-400 text-xs font-medium">
-            Difficulty:
+            {t("studentMockTests.difficultyLabel")}
           </span>
           <div className="flex gap-1">
             {DIFFICULTIES.map((d) => (
               <button
-                key={d}
-                onClick={() => setDiffFilter(d)}
+                key={d.value}
+                onClick={() => setDiffFilter(d.value)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                  diffFilter === d
+                  diffFilter === d.value
                     ? "bg-violet-600 text-white"
                     : "text-slate-400 hover:text-white"
                 }`}
               >
-                {d}
+                {t(d.key)}
               </button>
             ))}
           </div>
         </div>
 
         <div className="flex items-center gap-2 bg-[#0f1c30] border border-[#1e3a5f] rounded-xl px-3 py-2">
-          <span className="text-slate-400 text-xs font-medium">Subject:</span>
+          <span className="text-slate-400 text-xs font-medium">
+            {t("studentMockTests.subjectLabel")}
+          </span>
           <select
             value={subjectFilter}
             onChange={(e) => setSubjectFilter(e.target.value)}
@@ -128,9 +137,11 @@ export default function AvailableMockTests() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <FaClipboardList className="text-5xl text-slate-700 mb-4" />
-          <p className="text-slate-400 font-medium">No tests available</p>
+          <p className="text-slate-400 font-medium">
+            {t("studentMockTests.noTestsAvailable")}
+          </p>
           <p className="text-slate-600 text-sm mt-1">
-            Check back later or adjust your filters
+            {t("studentMockTests.noTestsHint")}
           </p>
         </div>
       ) : (
@@ -153,7 +164,8 @@ export default function AvailableMockTests() {
                       </span>
                       {attempted && (
                         <span className="flex items-center gap-1 text-xs font-semibold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-lg">
-                          <FaCheckCircle className="text-[10px]" /> Attempted
+                          <FaCheckCircle className="text-[10px]" />
+                          {t("studentMockTests.attempted")}
                         </span>
                       )}
                     </div>
@@ -200,7 +212,8 @@ export default function AvailableMockTests() {
                 {/* Instructor */}
                 <div className="flex items-center justify-between mt-auto pt-1">
                   <span className="text-xs text-slate-600">
-                    by {test.instructor?.name || "Instructor"}
+                    {t("studentMockTests.by")}{" "}
+                    {test.instructor?.name || t("studentMockTests.instructor")}
                   </span>
                   <button
                     onClick={() => handleStart(test._id)}
@@ -208,10 +221,10 @@ export default function AvailableMockTests() {
                     className="flex items-center gap-1.5 bg-violet-700 hover:bg-violet-600 disabled:opacity-60 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all"
                   >
                     {starting === test._id
-                      ? "Starting…"
+                      ? t("studentMockTests.starting")
                       : attempted
-                        ? "Retake"
-                        : "Start Test"}
+                        ? t("studentMockTests.retake")
+                        : t("studentMockTests.startTest")}
                     <FaChevronRight className="text-[10px]" />
                   </button>
                 </div>

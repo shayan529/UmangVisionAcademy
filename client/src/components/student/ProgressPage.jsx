@@ -3,9 +3,11 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchEnrolledCourses } from "../../redux/slices/courseSlice";
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const ProgressPage = () => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const user = useSelector((s) => s.auth.user);
   const { enrolled, enrolledLoading } = useSelector((s) => s.courses);
   useEffect(() => {
@@ -62,7 +64,7 @@ const ProgressPage = () => {
 
   const summaryCards = [
     {
-      label: "Enrolled Courses",
+      label: t("studentProgress.enrolledCourses"),
       value: totalEnrolled,
       color: "#22d3ee",
       icon: "📚",
@@ -70,7 +72,7 @@ const ProgressPage = () => {
       border: "#164e63",
     },
     {
-      label: "Completed",
+      label: t("studentProgress.completed"),
       value: completedCourses,
       color: "#4ade80",
       icon: "✅",
@@ -78,7 +80,7 @@ const ProgressPage = () => {
       border: "#14532d",
     },
     {
-      label: "In Progress",
+      label: t("studentProgress.inProgress"),
       value: inProgress,
       color: "#a78bfa",
       icon: "▶️",
@@ -86,7 +88,7 @@ const ProgressPage = () => {
       border: "#3b1f6e",
     },
     {
-      label: "Not Started",
+      label: t("studentProgress.notStarted"),
       value: notStarted,
       color: "#94a3b8",
       icon: "⏸️",
@@ -94,7 +96,7 @@ const ProgressPage = () => {
       border: "#1e293b",
     },
     {
-      label: "Certificates",
+      label: t("studentProgress.certificates"),
       value: certificates,
       color: "#facc15",
       icon: "🏅",
@@ -102,7 +104,7 @@ const ProgressPage = () => {
       border: "#713f12",
     },
     {
-      label: "Quizzes Taken",
+      label: t("studentProgress.quizzesTaken"),
       value: quizzesTaken,
       color: "#f472b6",
       icon: "📝",
@@ -110,7 +112,7 @@ const ProgressPage = () => {
       border: "#831843",
     },
     {
-      label: "Total Points",
+      label: t("studentProgress.totalPoints"),
       value: totalScore,
       color: "#fb923c",
       icon: "⭐",
@@ -122,7 +124,7 @@ const ProgressPage = () => {
   if (enrolledLoading) {
     return (
       <div style={{ padding: 40, color: "#94a3b8", fontSize: 14 }}>
-        Loading your progress...
+        {t("studentProgress.loading")}
       </div>
     );
   }
@@ -134,10 +136,10 @@ const ProgressPage = () => {
         <h1
           style={{ fontSize: 26, fontWeight: 800, color: "#f8fafc", margin: 0 }}
         >
-          📈 My Progress
+          📈 {t("studentProgress.title")}
         </h1>
         <p style={{ color: "#64748b", marginTop: 6, fontSize: 14 }}>
-          A full overview of your learning journey
+          {t("studentProgress.subtitle")}
         </p>
       </div>
 
@@ -190,7 +192,7 @@ const ProgressPage = () => {
                 {overallProgress}%
               </span>
               <span style={{ fontSize: 9, color: "#475569", marginTop: 2 }}>
-                overall
+                {t("studentProgress.overall")}
               </span>
             </div>
           </div>
@@ -206,7 +208,7 @@ const ProgressPage = () => {
             }}
           >
             <span style={{ fontSize: 15, fontWeight: 700, color: "#f8fafc" }}>
-              Overall Course Progress
+              {t("studentProgress.overallCourseProgress")}
             </span>
             <span style={{ fontSize: 14, fontWeight: 700, color: "#a78bfa" }}>
               {overallProgress}%
@@ -232,7 +234,10 @@ const ProgressPage = () => {
             />
           </div>
           <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>
-            {completedCourses} of {totalEnrolled} courses completed
+            {t("studentProgress.completedOutOf", {
+              completed: completedCourses,
+              total: totalEnrolled,
+            })}
           </p>
         </div>
       </div>
@@ -291,17 +296,17 @@ const ProgressPage = () => {
             margin: "0 0 18px",
           }}
         >
-          Course Breakdown
+          {t("studentProgress.courseBreakdown")}
         </h2>
 
         {enrolled.length === 0 ? (
           <div style={{ color: "#475569", fontSize: 14 }}>
-            You haven't enrolled in any courses yet.{" "}
+            {t("studentProgress.noCoursesYet")}{" "}
             <NavLink
               to="/student-dashboard/my-courses"
               style={{ color: "#a78bfa" }}
             >
-              Browse courses →
+              {t("studentProgress.browseCourses")}
             </NavLink>
           </div>
         ) : (
@@ -322,10 +327,10 @@ const ProgressPage = () => {
               prog === 100 ? "#4ade80" : prog > 0 ? "#a78bfa" : "#64748b";
             const statusLabel =
               prog === 100
-                ? "Completed"
+                ? t("studentProgress.completed")
                 : prog > 0
-                  ? "In Progress"
-                  : "Not Started";
+                  ? t("studentProgress.inProgress")
+                  : t("studentProgress.notStarted");
 
             return (
               <div
@@ -388,7 +393,7 @@ const ProgressPage = () => {
                         maxWidth: "70%",
                       }}
                     >
-                      {course.title ?? "Untitled Course"}
+                      {course.title ?? t("studentProgress.untitledCourse")}
                     </span>
                     <span
                       style={{

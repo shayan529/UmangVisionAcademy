@@ -80,6 +80,41 @@ const userSchema = new Schema(
       trim: true,
       default: "",
     },
+    fatherName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    motherName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    fullAddress: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    socialMediaAccount: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    fatherMobileNumber: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    reference: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    vidhansabha: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     enrolledCourses: [
       {
         type: Types.ObjectId,

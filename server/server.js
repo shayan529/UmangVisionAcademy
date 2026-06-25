@@ -26,6 +26,7 @@ import walletRoutes from "./routes/wallet.routes.js";
 import achievementRoutes from "./routes/achievement.routes.js";
 import roleRoutes from "./routes/role.routes.js";
 import questionPaperRoutes from "./routes/questionPaper.routes.js";
+import referenceRoutes from "./routes/reference.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,6 +95,7 @@ app.use("/api/wallet", walletRoutes);
 app.use("/api/achievements", achievementRoutes);
 app.use("/api/admin/roles", roleRoutes);
 app.use("/api/question-papers", questionPaperRoutes);
+app.use("/api/references", referenceRoutes);
 
 // Serve frontend build in production
 if (process.env.NODE_ENV === "production") {

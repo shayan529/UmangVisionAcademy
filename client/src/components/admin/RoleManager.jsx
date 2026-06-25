@@ -45,63 +45,18 @@ const ACTION_LABELS = {
   ban: "Ban",
 };
 
-// ── Preset organizational roles (grouped) ─────────────────────────────────────
-// This is just a curated menu so admins pick a consistent, recognizable role
-// name instead of free-typing variants ("HR Manager" vs "Hr manager" vs "HRM").
-// "Other (custom)" still falls back to a free-text field for anything not listed.
-const ROLE_TEMPLATES = {
-  "Leadership / Strategy": [
-    "Founder / CEO",
-    "COO (Operations)",
-    "CTO / Head of Engineering",
-    "CFO / Finance Head",
-  ],
-  Operations: [
-    "Operations Manager",
-    "Admissions / Onboarding Coordinator",
-    "Customer Support Lead",
-    "Support Agent",
-  ],
-  "HR & People": [
-    "HR Manager",
-    "HR Operations Manager",
-    "Recruiter",
-    "Payroll Admin",
-  ],
-  "Academic / Content": [
-    "Academic Head / Curriculum Lead",
-    "Content Reviewer / Course Approver",
-    "Teaching Assistant",
-    "Quality / Moderation Reviewer",
-  ],
-  "Sales & Marketing": [
-    "Sales Manager",
-    "Marketing Manager",
-    "Growth / Performance Marketer",
-  ],
-  "Finance & Compliance": [
-    "Accountant",
-    "Billing / Payments Admin",
-    "Compliance Officer",
-  ],
-  Technical: ["Engineering Manager", "Support Engineer", "Data Analyst"],
-};
-
-const OTHER_OPTION = "__other__";
 const EMPTY_ROLE = { name: "", description: "", permissions: [] };
 
 const getCustomRoleIds = (user) =>
-  getCustomRoles(user).map((role) => role._id || role).filter(Boolean);
+  getCustomRoles(user)
+    .map((role) => role._id || role)
+    .filter(Boolean);
 
-// Base account types every user must have one of, independent of any
-// custom role layered on top in the unified `roles` array.
 const BASE_ROLE_OPTIONS = [
   { value: "student", label: "Student" },
   { value: "instructor", label: "Instructor" },
 ];
 
-// State → city lookup used to drive the cascading State / City selects in
-// the Add User modal below.
 const INDIAN_CITIES_BY_STATE = {
   "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati"],
   "Arunachal Pradesh": ["Itanagar", "Tawang", "Naharlagun"],
@@ -156,7 +111,7 @@ const api = async (url, options = {}) => {
   return data;
 };
 
-// ── Permission matrix (shared by create/edit modal) ──────────────────────────
+// ── Permission matrix ─────────────────────────────────────────────────────────
 const PermissionMatrix = ({ modules, value, onChange }) => {
   const getActions = (mod) =>
     value.find((p) => p.module === mod)?.actions || [];
@@ -234,7 +189,7 @@ const PermissionMatrix = ({ modules, value, onChange }) => {
   );
 };
 
-// ── Reusable checklist of custom roles (shared by add-user / assign-roles) ───
+// ── Reusable role checklist ───────────────────────────────────────────────────
 const RoleChecklist = ({ roles, selected, onToggle, emptyHint }) => {
   if (roles.length === 0) {
     return <p className="text-xs text-slate-500">{emptyHint}</p>;
@@ -285,34 +240,6 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
   const isEdit = Boolean(initial?._id);
   const isSystem = Boolean(initial?.isSystem);
 
-  // Does the current name match one of the preset templates? If not (e.g.
-  // editing an older custom-typed role, or a brand-new role), default the
-  // select to "Other (custom)" and show the free-text field.
-  const allTemplateNames = Object.values(ROLE_TEMPLATES).flat();
-  const initialIsPreset = allTemplateNames.includes(form.name);
-  const [selectedTemplate, setSelectedTemplate] = useState(
-    initialIsPreset ? form.name : form.name ? OTHER_OPTION : "",
-  );
-  const [customName, setCustomName] = useState(
-    initialIsPreset ? "" : form.name,
-  );
-
-  const handleTemplateChange = (e) => {
-    const value = e.target.value;
-    setSelectedTemplate(value);
-    if (value === OTHER_OPTION) {
-      setForm((f) => ({ ...f, name: customName }));
-    } else {
-      setForm((f) => ({ ...f, name: value }));
-    }
-  };
-
-  const handleCustomNameChange = (e) => {
-    const value = e.target.value;
-    setCustomName(value);
-    setForm((f) => ({ ...f, name: value }));
-  };
-
   const handleSave = async () => {
     if (!form.name.trim()) {
       showToast?.("Role name is required.");
@@ -360,42 +287,23 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
 
         <div className="flex flex-col gap-4 mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* ── Plain text input instead of dropdown ── */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                Role {isSystem && "(locked)"}
+                Role Name {isSystem && "(locked)"}
               </label>
-              <select
-                value={selectedTemplate}
+              <input
+                value={form.name}
                 disabled={isSystem}
-                onChange={handleTemplateChange}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, name: e.target.value }))
+                }
+                placeholder="e.g. Content Reviewer"
                 className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500 disabled:opacity-50"
-              >
-                <option value="" disabled>
-                  Select a role…
-                </option>
-                {Object.entries(ROLE_TEMPLATES).map(([group, names]) => (
-                  <optgroup key={group} label={group}>
-                    {names.map((name) => (
-                      <option key={name} value={name}>
-                        {name}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-                <option value={OTHER_OPTION}>Other (custom)…</option>
-              </select>
-
-              {selectedTemplate === OTHER_OPTION && (
-                <input
-                  value={customName}
-                  disabled={isSystem}
-                  onChange={handleCustomNameChange}
-                  placeholder="Type a custom role name"
-                  className="mt-1.5 rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500 disabled:opacity-50"
-                  autoFocus
-                />
-              )}
+                autoFocus={!isEdit}
+              />
             </div>
+
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
                 Description
@@ -446,7 +354,7 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
   );
 };
 
-// ── Assign roles to an existing user modal ────────────────────────────────────
+// ── Assign roles modal ────────────────────────────────────────────────────────
 const AssignRolesModal = ({ user, roles, onClose, onSaved, showToast }) => {
   const [selected, setSelected] = useState(getCustomRoleIds(user));
   const [saving, setSaving] = useState(false);
@@ -515,7 +423,7 @@ const AssignRolesModal = ({ user, roles, onClose, onSaved, showToast }) => {
   );
 };
 
-// ── Add a brand new user: base account type + optional custom role ───────────
+// ── Add user modal ────────────────────────────────────────────────────────────
 const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
   const [form, setForm] = useState({
     name: "",
@@ -545,8 +453,6 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
     setForm((f) => ({ ...f, phoneNumber: value }));
   };
 
-  // Changing state resets city, since the previously picked city may not
-  // belong to the newly selected state.
   const handleStateChange = (e) => {
     const value = e.target.value;
     setForm((f) => ({ ...f, state: value, city: "" }));
@@ -787,18 +693,18 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
 
 // ── Main ───────────────────────────────────────────────────────────────────────
 const RoleManager = ({ showToast, currentUser }) => {
-  const [tab, setTab] = useState("roles"); // "roles" | "users"
+  const [tab, setTab] = useState("roles");
   const [modules, setModules] = useState({});
   const [roles, setRoles] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState(""); // "" = all, "__none__" = unassigned, else role._id
-  const [roleModal, setRoleModal] = useState(null); // null | {} (create) | role (edit)
-  const [assignTarget, setAssignTarget] = useState(null); // user being assigned
-  const [deleteTarget, setDeleteTarget] = useState(null); // role being deleted
-  const [addUserOpen, setAddUserOpen] = useState(false); // add-user modal
+  const [roleFilter, setRoleFilter] = useState("");
+  const [roleModal, setRoleModal] = useState(null);
+  const [assignTarget, setAssignTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [addUserOpen, setAddUserOpen] = useState(false);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -842,9 +748,7 @@ const RoleManager = ({ showToast, currentUser }) => {
 
   const filteredUsers = users.filter((u) => {
     const currentIsAdmin = hasBaseRole(currentUser, "admin");
-    if (!currentIsAdmin && hasBaseRole(u, "admin")) {
-      return false;
-    }
+    if (!currentIsAdmin && hasBaseRole(u, "admin")) return false;
 
     const q = search.toLowerCase();
     const matchesSearch =
@@ -853,7 +757,6 @@ const RoleManager = ({ showToast, currentUser }) => {
       u.email?.toLowerCase().includes(q);
 
     if (!matchesSearch) return false;
-
     if (!roleFilter) return true;
     const assignedIds = getCustomRoleIds(u);
     if (roleFilter === "__none__") return assignedIds.length === 0;
@@ -1021,7 +924,6 @@ const RoleManager = ({ showToast, currentUser }) => {
                   {permissionCount(role) !== 1 ? "s" : ""} granted
                 </div>
 
-                {/* Users assigned this role */}
                 <div className="pt-2 border-t border-slate-800">
                   <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-2">
                     Assigned Users · {usersForRole(role._id).length}

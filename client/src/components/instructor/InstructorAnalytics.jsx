@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { fetchCourses } from "../../redux/slices/courseSlice";
 import { StatCard, Card, SectionHeader, ProgressBar } from "./InstructorUi";
 
@@ -173,15 +174,26 @@ const styles = {
   },
 };
 
-function StatusBadge({ value }) {
-  if (value >= 70) return <span style={styles.badgeHigh}>On track</span>;
-  if (value >= 45) return <span style={styles.badgeMid}>Average</span>;
-  return <span style={styles.badgeLow}>Needs attention</span>;
+function StatusBadge({ value, t }) {
+  if (value >= 70)
+    return (
+      <span style={styles.badgeHigh}>{t("instructorAnalytics.onTrack")}</span>
+    );
+  if (value >= 45)
+    return (
+      <span style={styles.badgeMid}>{t("instructorAnalytics.average")}</span>
+    );
+  return (
+    <span style={styles.badgeLow}>
+      {t("instructorAnalytics.needsAttention")}
+    </span>
+  );
 }
 
 // ─── main component ───────────────────────────────────────────────────────────
 
 const InstructorAnalytics = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { courses, loading } = useSelector((s) => s.courses);
 
@@ -255,37 +267,53 @@ const InstructorAnalytics = () => {
       {/* ── stat strip ────────────────────────────────────────────────────── */}
       <div style={styles.statGrid}>
         <div style={styles.statBox}>
-          <div style={styles.statLabel}>💰 Total revenue</div>
+          <div style={styles.statLabel}>
+            💰 {t("instructorAnalytics.totalRevenue")}
+          </div>
           <div style={styles.statValue}>{dash ?? fmt(totalRevenue)}</div>
-          <div style={styles.statSub}>{courses.length} courses</div>
+          <div style={styles.statSub}>
+            {t("instructorAnalytics.coursesCount", { count: courses.length })}
+          </div>
         </div>
 
         <div style={styles.statBox}>
-          <div style={styles.statLabel}>👥 Students</div>
+          <div style={styles.statLabel}>
+            👥 {t("instructorAnalytics.students")}
+          </div>
           <div style={styles.statValue}>
             {dash ?? totalStudents.toLocaleString("en-IN")}
           </div>
-          <div style={styles.statSub}>total enrolled</div>
-        </div>
-
-        <div style={styles.statBox}>
-          <div style={styles.statLabel}>⭐ Avg rating</div>
-          <div style={styles.statValue}>{dash ?? `${avgRating} ★`}</div>
-          <div style={styles.statSub}>out of 5.0</div>
-        </div>
-
-        <div style={styles.statBox}>
-          <div style={styles.statLabel}>📈 Avg completion</div>
-          <div style={styles.statValue}>{dash ?? `${avgCompletion}%`}</div>
           <div style={styles.statSub}>
-            quiz pass: {dash ?? `${avgQuizPass}%`}
+            {t("instructorAnalytics.totalEnrolled")}
           </div>
         </div>
 
         <div style={styles.statBox}>
-          <div style={styles.statLabel}>🎙 Live attendance</div>
+          <div style={styles.statLabel}>
+            ⭐ {t("instructorAnalytics.avgRating")}
+          </div>
+          <div style={styles.statValue}>{dash ?? `${avgRating} ★`}</div>
+          <div style={styles.statSub}>{t("instructorAnalytics.outOfFive")}</div>
+        </div>
+
+        <div style={styles.statBox}>
+          <div style={styles.statLabel}>
+            📈 {t("instructorAnalytics.avgCompletion")}
+          </div>
+          <div style={styles.statValue}>{dash ?? `${avgCompletion}%`}</div>
+          <div style={styles.statSub}>
+            {t("instructorAnalytics.quizPass")}: {dash ?? `${avgQuizPass}%`}
+          </div>
+        </div>
+
+        <div style={styles.statBox}>
+          <div style={styles.statLabel}>
+            🎙 {t("instructorAnalytics.liveAttendance")}
+          </div>
           <div style={styles.statValue}>{dash ?? `${avgAttendance}%`}</div>
-          <div style={styles.statSub}>avg across sessions</div>
+          <div style={styles.statSub}>
+            {t("instructorAnalytics.avgAcrossSessions")}
+          </div>
         </div>
       </div>
 
@@ -293,11 +321,11 @@ const InstructorAnalytics = () => {
       <div style={styles.grid2}>
         {/* Revenue overview */}
         <Card>
-          <SectionHeader title="Revenue Overview" />
+          <SectionHeader title={t("instructorAnalytics.revenueOverview")} />
 
           <div style={{ marginBottom: 24 }}>
             <div style={{ color: "#94a3b8", fontSize: 13, marginBottom: 8 }}>
-              Total revenue
+              {t("instructorAnalytics.totalRevenue")}
             </div>
             <div style={{ fontSize: 42, fontWeight: 800, color: "#a78bfa" }}>
               {dash ?? fmt(totalRevenue)}
@@ -314,9 +342,18 @@ const InstructorAnalytics = () => {
             }}
           >
             {[
-              { label: "This week", value: fmt(thisWeekRevenue) },
-              { label: "This month", value: fmt(thisMonthRevenue) },
-              { label: "Avg / course", value: fmt(avgRevPerCourse) },
+              {
+                label: t("instructorAnalytics.thisWeek"),
+                value: fmt(thisWeekRevenue),
+              },
+              {
+                label: t("instructorAnalytics.thisMonth"),
+                value: fmt(thisMonthRevenue),
+              },
+              {
+                label: t("instructorAnalytics.avgPerCourse"),
+                value: fmt(avgRevPerCourse),
+              },
             ].map(({ label, value }) => (
               <div key={label}>
                 <div
@@ -336,7 +373,7 @@ const InstructorAnalytics = () => {
 
         {/* Enrollment trend */}
         <Card>
-          <SectionHeader title="Enrollment Trend (last 7 courses)" />
+          <SectionHeader title={t("instructorAnalytics.enrollmentTrend")} />
 
           <div style={styles.barWrap}>
             {enrollmentTrend.map((v, i) => (
@@ -358,7 +395,7 @@ const InstructorAnalytics = () => {
           {topCourse ? (
             <div style={styles.topCourseBox}>
               <div style={{ fontSize: 11, color: "#64748b", marginBottom: 3 }}>
-                Top performing course
+                {t("instructorAnalytics.topPerformingCourse")}
               </div>
               <div style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9" }}>
                 {topCourse.title}
@@ -373,19 +410,23 @@ const InstructorAnalytics = () => {
                 {completion(topCourse)}% completion ·{" "}
                 {courseRating(topCourse) > 0
                   ? `${courseRating(topCourse)}★`
-                  : "No rating yet"}
+                  : t("instructorAnalytics.noRatingYet")}
               </div>
               <ProgressBar value={completion(topCourse)} color="#10b981" />
             </div>
           ) : (
-            !loading && <div style={styles.empty}>No course data yet.</div>
+            !loading && (
+              <div style={styles.empty}>
+                {t("instructorAnalytics.noCourseData")}
+              </div>
+            )
           )}
         </Card>
       </div>
 
       {/* ── revenue per course (bar chart) ────────────────────────────────── */}
       <Card style={styles.sectionFull}>
-        <SectionHeader title="Revenue Per Course" />
+        <SectionHeader title={t("instructorAnalytics.revenuePerCourse")} />
 
         {revenueData.length > 0 ? (
           <div style={styles.revBars}>
@@ -438,24 +479,36 @@ const InstructorAnalytics = () => {
             })}
           </div>
         ) : (
-          <div style={styles.empty}>No revenue data available.</div>
+          <div style={styles.empty}>
+            {t("instructorAnalytics.noRevenueData")}
+          </div>
         )}
       </Card>
 
       {/* ── course performance table ──────────────────────────────────────── */}
       <Card style={styles.sectionFull}>
-        <SectionHeader title="Course Performance" />
+        <SectionHeader title={t("instructorAnalytics.coursePerformance")} />
 
         {sortedCourses.length > 0 ? (
           <table style={styles.table}>
             <thead>
               <tr>
-                <th style={styles.th}>Course</th>
-                <th style={styles.thRight}>Students</th>
-                <th style={styles.thRight}>Revenue</th>
-                <th style={styles.thRight}>Completion</th>
-                <th style={styles.thRight}>Quiz pass</th>
-                <th style={styles.thRight}>Rating</th>
+                <th style={styles.th}>{t("instructorAnalytics.course")}</th>
+                <th style={styles.thRight}>
+                  {t("instructorAnalytics.students")}
+                </th>
+                <th style={styles.thRight}>
+                  {t("instructorAnalytics.revenue")}
+                </th>
+                <th style={styles.thRight}>
+                  {t("instructorAnalytics.completion")}
+                </th>
+                <th style={styles.thRight}>
+                  {t("instructorAnalytics.quizPass")}
+                </th>
+                <th style={styles.thRight}>
+                  {t("instructorAnalytics.rating")}
+                </th>
                 {/* <th style={styles.thRight}>Status</th> */}
               </tr>
             </thead>
@@ -494,7 +547,9 @@ const InstructorAnalytics = () => {
           </table>
         ) : (
           <div style={styles.empty}>
-            {loading ? "Loading courses…" : "No courses found."}
+            {loading
+              ? t("instructorAnalytics.loadingCourses")
+              : t("instructorAnalytics.noCoursesFound")}
           </div>
         )}
       </Card>

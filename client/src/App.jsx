@@ -42,6 +42,7 @@ import StudentNotifications from "./components/student/StudentNotifications";
 import StudentSessions from "./components/student/StudentSessions";
 import StudentWallet from "./components/student/StudentWallet";
 import ReferralPage from "./components/student/ReferralPage";
+import StudentReferences from "./components/student/StudentReferences";
 
 /* Mock Tests */
 import MockTestsLayout from "./components/student/MockTestsIndex";
@@ -169,6 +170,7 @@ function App() {
             <Route path="settings" element={<SettingsSection />} />
             <Route path="leaderboard" element={<LeaderBoard />} />
             <Route path="referral" element={<ReferralPage />} />
+            <Route path="references" element={<StudentReferences />} />
             <Route path="sessions" element={<StudentSessions />} />
             <Route path="notifications" element={<StudentNotifications />} />
             <Route path="certificates" element={<CertificatesSection />} />
