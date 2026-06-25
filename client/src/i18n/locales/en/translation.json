@@ -915,7 +915,9 @@
     "minutesAgo": "{{count}}m ago",
     "hoursAgo": "{{count}}h ago",
     "daysAgo": "{{count}}d ago",
-    "purchaseHistory": "Purchase History"
+    "purchaseHistory": "Purchase History",
+    "wallet": "Wallet",
+    "progress": "Progress"
   },
   "instructorSidebar": {
     "dashboard": "Dashboard",

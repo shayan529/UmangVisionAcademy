@@ -916,7 +916,8 @@
     "menu": "मेन्यू",
     "minutesAgo": "{{count}} मिनट पहले",
     "hoursAgo": "{{count}} घंटे पहले",
-    "daysAgo": "{{count}} दिन पहले"
+    "daysAgo": "{{count}} दिन पहले",
+    "wallet": "बटुआ"
   },
   "instructorSidebar": {
     "dashboard": "नियंत्रण-पटल",

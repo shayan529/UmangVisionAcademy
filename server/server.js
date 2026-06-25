@@ -31,9 +31,28 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
-const CLIENT_URL =
-  process.env.CLIENT_URL || process.env.FRONTEND_URL || "http://localhost:5173";
 const CLIENT_BUILD_PATH = path.resolve(__dirname, "../client/dist");
+
+// ── Allowed origins: always include localhost for dev, production URL when set ──
+const ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "http://localhost:5174", // Vite sometimes uses 5174 as fallback
+];
+
+if (process.env.CLIENT_URL) ALLOWED_ORIGINS.push(process.env.CLIENT_URL);
+if (process.env.FRONTEND_URL) ALLOWED_ORIGINS.push(process.env.FRONTEND_URL);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Postman, server-to-server)
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin '${origin}' not allowed`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
 // 1. Create HTTP server from Express app
 const httpServer = createServer(app);
@@ -41,7 +60,7 @@ const httpServer = createServer(app);
 // 2. Attach Socket.IO to the HTTP server
 const io = new Server(httpServer, {
   cors: {
-    origin: CLIENT_URL,
+    origin: ALLOWED_ORIGINS,
     credentials: true,
     methods: ["GET", "POST"],
   },
@@ -50,13 +69,6 @@ const io = new Server(httpServer, {
 // ── Middleware ────────────────────────────────────────────────────────────────
 app.use(express.json());
 app.use(cookieParser());
-
-const corsOptions = {
-  origin: CLIENT_URL,
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
 app.use(cors(corsOptions));
 
 // ── Routes ────────────────────────────────────────────────────────────────────
@@ -93,6 +105,7 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.join(CLIENT_BUILD_PATH, "index.html"));
   });
 }
+
 io.engine.on("connection_error", (err) => {
   console.error("[Socket.IO connection_error]");
   console.error("  req:", err.req?.url);
@@ -109,6 +122,7 @@ ConnectDb()
   .then(() => {
     httpServer.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
+      console.log(`Allowed CORS origins: ${ALLOWED_ORIGINS.join(", ")}`);
     });
   })
   .catch((err) => {

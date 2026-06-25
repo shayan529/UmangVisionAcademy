@@ -37,8 +37,10 @@ const Navbar = () => {
 
   const dropdownRef = useRef(null);
   const languageRef = useRef(null);
+  const mobileLangRef = useRef(null);
   const { t, i18n } = useTranslation();
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [mobileLangDropdownOpen, setMobileLangDropdownOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -47,6 +49,12 @@ const Navbar = () => {
       }
       if (languageRef.current && !languageRef.current.contains(event.target)) {
         setLangDropdownOpen(false);
+      }
+      if (
+        mobileLangRef.current &&
+        !mobileLangRef.current.contains(event.target)
+      ) {
+        setMobileLangDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -59,6 +67,7 @@ const Navbar = () => {
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
     setLangDropdownOpen(false);
+    setMobileLangDropdownOpen(false);
   };
 
   const switchTarget = isInstructorDashboard
@@ -193,7 +202,7 @@ const Navbar = () => {
               className="w-full h-full object-contain"
             />
           </div>
-          <div className="hidden md:flex items-center ml-2 lg:ml-3">
+          <div className=" md:flex items-center ml-2 lg:ml-3">
             <span className="text-sm lg:text-base xl:text-lg font-extrabold text-white tracking-wide">
               Umang Vision
             </span>
@@ -345,7 +354,6 @@ const Navbar = () => {
               >
                 {t("nav.login")}
               </Link>
-              {/* ── FIX: was btn-indigo-shine, now btn-navy ── */}
               <Link to="/become-instructor" className="btn-navy">
                 {t("nav.getStarted")}
               </Link>
@@ -383,7 +391,40 @@ const Navbar = () => {
         </div>
 
         {/* ── Mobile actions ── */}
-        <div className="md:hidden ml-3 flex items-center gap-2">
+        <div className="md:hidden ml-auto flex items-center gap-2">
+          {/* Language selector in mobile navbar */}
+          <div ref={mobileLangRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setMobileLangDropdownOpen((prev) => !prev)}
+              className="inline-flex h-9 items-center gap-0.5 rounded-xl border border-white/10 bg-white/5 px-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition"
+            >
+              {isHindi ? "हि" : "EN"}
+              <ChevronDown
+                size={12}
+                className={`transition-transform ${mobileLangDropdownOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+            {mobileLangDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-32 rounded-xl border border-slate-700 bg-slate-900 shadow-xl z-50">
+                <button
+                  type="button"
+                  onClick={() => changeLanguage("en")}
+                  className="w-full px-4 py-2.5 text-left text-sm text-slate-200 hover:bg-slate-800 rounded-t-xl"
+                >
+                  English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => changeLanguage("hi")}
+                  className="w-full px-4 py-2.5 text-left text-sm text-slate-200 hover:bg-slate-800 rounded-b-xl"
+                >
+                  हिंदी
+                </button>
+              </div>
+            )}
+          </div>
+
           <button
             type="button"
             onClick={() => navigate("/cart")}
@@ -412,6 +453,8 @@ const Navbar = () => {
         className={`md:hidden border-t border-white/10 overflow-hidden transition-all duration-300 ${mobileMenuOpen ? "max-h-[85vh] overflow-y-auto" : "max-h-0"}`}
       >
         <div className="px-4 pt-3 pb-4 space-y-1">
+          {/* ── Branding header ── */}
+
           {[
             ...(!isStaffOrAdmin
               ? [{ to: "/courses", label: t("nav.courses") }]
@@ -432,22 +475,6 @@ const Navbar = () => {
               {label}
             </Link>
           ))}
-
-          {/* Language selector */}
-          <div className="px-3 py-2">
-            <label htmlFor="mobile-language" className="sr-only">
-              {t("nav.language")}
-            </label>
-            <select
-              id="mobile-language"
-              value={currentLanguage}
-              onChange={(e) => changeLanguage(e.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-            >
-              <option value="en">English</option>
-              <option value="hi">हिंदी</option>
-            </select>
-          </div>
 
           <div className="border-t border-white/10 my-2" />
 
@@ -525,7 +552,6 @@ const Navbar = () => {
                     {t("nav.dashboard")}
                   </Link>
                 )}
-                {/* ── FIX: was btn-navy, now btn-red to match desktop logout ── */}
                 <button
                   onClick={() => {
                     closeMobile();
