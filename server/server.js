@@ -115,7 +115,22 @@ app.use("/api/references", referenceRoutes);
 
 // Serve frontend build in production
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(CLIENT_BUILD_PATH));
+  app.use(
+    express.static(CLIENT_BUILD_PATH, {
+      maxAge: "1y",
+      etag: true,
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith(".html")) {
+          res.setHeader(
+            "Cache-Control",
+            "no-store, no-cache, must-revalidate, proxy-revalidate"
+          );
+        } else {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        }
+      },
+    })
+  );
   app.get(/.*/, (req, res) => {
     if (req.path.startsWith("/api")) {
       return res.status(404).json({ message: "API route not found" });

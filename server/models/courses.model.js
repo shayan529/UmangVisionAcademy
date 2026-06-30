@@ -94,4 +94,6 @@ courseSchema.methods.recalcRatings = function () {
       : 0;
 };
 
+courseSchema.index({ approvalStatus: 1, published: 1, createdAt: -1 });
+
 export default model("Course", courseSchema);
