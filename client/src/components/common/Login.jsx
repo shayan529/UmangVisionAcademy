@@ -84,6 +84,7 @@ const ParticleCanvas = () => {
 // ── Password Reset Modal ──────────────────────────────────────────────────────
 // step: 'phone' | 'otp' | 'password' | 'done'
 const PasswordResetModal = ({ onClose }) => {
+  const { t } = useTranslation();
   const [step, setStep] = useState("phone");
   const [countryCode, setCountryCode] = useState("+91");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -110,27 +111,30 @@ const PasswordResetModal = ({ onClose }) => {
 
   useEffect(() => {
     if (cooldown <= 0) return;
-    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
+    const tm = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(tm);
   }, [cooldown]);
 
   const fullPhone = `${countryCode}${phoneNumber}`;
+  const displayPhone = `${countryCode} ${phoneNumber}`;
 
   const handleSendOtp = async () => {
     if (!/^[0-9]{10}$/.test(phoneNumber))
-      return toast.error("Enter a valid 10-digit phone number");
+      return toast.error(t("passwordReset.toast.invalidPhone"));
     setLoading(true);
     try {
       await axios.post("/api/auth/forgot-password-phone", {
         phoneNumber: fullPhone,
       });
-      toast.success("OTP sent to your phone!");
+      toast.success(t("passwordReset.toast.otpSentPhone"));
       setStep("otp");
       setCooldown(60);
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
     } catch (err) {
       toast.error(
-        err.response?.data?.message || err.message || "Something went wrong",
+        err.response?.data?.message ||
+          err.message ||
+          t("passwordReset.toast.failedSendOtp"),
       );
     } finally {
       setLoading(false);
@@ -144,10 +148,12 @@ const PasswordResetModal = ({ onClose }) => {
       await axios.post("/api/auth/forgot-password-phone", {
         phoneNumber: fullPhone,
       });
-      toast.success("OTP resent!");
+      toast.success(t("passwordReset.toast.otpResent"));
       setCooldown(60);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to resend");
+      toast.error(
+        err.response?.data?.message || t("passwordReset.toast.failedResend"),
+      );
     } finally {
       setLoading(false);
     }
@@ -179,7 +185,8 @@ const PasswordResetModal = ({ onClose }) => {
 
   const handleVerifyOtp = async () => {
     const otpStr = otp.join("");
-    if (otpStr.length < 6) return toast.error("Enter the 6-digit OTP");
+    if (otpStr.length < 6)
+      return toast.error(t("passwordReset.toast.enterFullOtp"));
     setLoading(true);
     try {
       const { data } = await axios.post("/api/auth/verify-reset-phone-otp", {
@@ -187,10 +194,12 @@ const PasswordResetModal = ({ onClose }) => {
         otp: otpStr,
       });
       setResetToken(data.resetToken);
-      toast.success("OTP verified!");
+      toast.success(t("passwordReset.toast.otpVerified"));
       setStep("password");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Invalid OTP");
+      toast.error(
+        err.response?.data?.message || t("passwordReset.toast.invalidOtp"),
+      );
     } finally {
       setLoading(false);
     }
@@ -198,9 +207,9 @@ const PasswordResetModal = ({ onClose }) => {
 
   const handleResetPassword = async () => {
     if (newPassword.length < 6)
-      return toast.error("Password must be at least 6 characters");
+      return toast.error(t("passwordReset.toast.passwordMin6"));
     if (newPassword !== confirmPassword)
-      return toast.error("Passwords do not match");
+      return toast.error(t("passwordReset.toast.passwordsDoNotMatch"));
     setLoading(true);
     try {
       await axios.post("/api/auth/reset-password", {
@@ -210,7 +219,10 @@ const PasswordResetModal = ({ onClose }) => {
       });
       setStep("done");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to reset password");
+      toast.error(
+        err.response?.data?.message ||
+          t("passwordReset.toast.failedResetPassword"),
+      );
     } finally {
       setLoading(false);
     }
@@ -227,11 +239,11 @@ const PasswordResetModal = ({ onClose }) => {
   };
   const strengthLabel = [
     "",
-    "Very Weak",
-    "Weak",
-    "Fair",
-    "Strong",
-    "Very Strong",
+    t("passwordReset.strength.veryWeak"),
+    t("passwordReset.strength.weak"),
+    t("passwordReset.strength.fair"),
+    t("passwordReset.strength.strong"),
+    t("passwordReset.strength.veryStrong"),
   ];
   const strengthColor = [
     "",
@@ -312,10 +324,10 @@ const PasswordResetModal = ({ onClose }) => {
                   color: "#38bdf8",
                 }}
               >
-                {step === "phone" && "Step 1 of 3"}
-                {step === "otp" && "Step 2 of 3"}
-                {step === "password" && "Step 3 of 3"}
-                {step === "done" && "Complete"}
+                {step === "phone" && t("passwordReset.step1of3")}
+                {step === "otp" && t("passwordReset.step2of3")}
+                {step === "password" && t("passwordReset.step3of3")}
+                {step === "done" && t("passwordReset.complete")}
               </p>
               <h2
                 style={{
@@ -326,10 +338,10 @@ const PasswordResetModal = ({ onClose }) => {
                   fontFamily: "Outfit,sans-serif",
                 }}
               >
-                {step === "phone" && "Forgot Password"}
-                {step === "otp" && "Verify OTP"}
-                {step === "password" && "New Password"}
-                {step === "done" && "All Done!"}
+                {step === "phone" && t("passwordReset.titlePhone")}
+                {step === "otp" && t("passwordReset.titleOtp")}
+                {step === "password" && t("passwordReset.titlePassword")}
+                {step === "done" && t("passwordReset.titleDone")}
               </h2>
             </div>
             <button
@@ -360,8 +372,7 @@ const PasswordResetModal = ({ onClose }) => {
                   lineHeight: 1.6,
                 }}
               >
-                Enter your registered phone number and we'll send you a 6-digit
-                OTP.
+                {t("passwordReset.phoneStepDesc")}
               </p>
               <div>
                 <label
@@ -375,7 +386,7 @@ const PasswordResetModal = ({ onClose }) => {
                     textTransform: "uppercase",
                   }}
                 >
-                  Phone Number
+                  {t("passwordReset.phoneNumberLabel")}
                 </label>
                 <div style={{ display: "flex", gap: 8 }}>
                   <select
@@ -404,7 +415,7 @@ const PasswordResetModal = ({ onClose }) => {
                       )
                     }
                     onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
-                    placeholder="10-digit mobile number"
+                    placeholder={t("passwordReset.mobilePlaceholder")}
                     maxLength={10}
                     style={{ ...inputStyle, flex: 1 }}
                     onFocus={(e) =>
@@ -435,7 +446,9 @@ const PasswordResetModal = ({ onClose }) => {
                   transition: "opacity 0.2s",
                 }}
               >
-                {loading ? "Sending…" : "Send OTP →"}
+                {loading
+                  ? t("passwordReset.sending")
+                  : t("passwordReset.sendOtp")}
               </button>
             </div>
           )}
@@ -451,11 +464,9 @@ const PasswordResetModal = ({ onClose }) => {
                   lineHeight: 1.6,
                 }}
               >
-                Enter the 6-digit OTP sent to{" "}
-                <strong style={{ color: "#e2e8f0" }}>
-                  {countryCode} {phoneNumber}
-                </strong>
-                . It expires in 10 minutes.
+                {t("passwordReset.otpStepDesc", {
+                  phone: displayPhone,
+                })}
               </p>
 
               <div
@@ -519,7 +530,9 @@ const PasswordResetModal = ({ onClose }) => {
                   transition: "opacity 0.2s",
                 }}
               >
-                {loading ? "Verifying…" : "Verify OTP →"}
+                {loading
+                  ? t("passwordReset.verifying")
+                  : t("passwordReset.verifyOtp")}
               </button>
 
               <p
@@ -530,7 +543,7 @@ const PasswordResetModal = ({ onClose }) => {
                   color: "#64748b",
                 }}
               >
-                Didn't receive it?{" "}
+                {t("passwordReset.didntReceive")}{" "}
                 <button
                   onClick={handleResend}
                   disabled={cooldown > 0 || loading}
@@ -545,7 +558,9 @@ const PasswordResetModal = ({ onClose }) => {
                     transition: "color 0.15s",
                   }}
                 >
-                  {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend OTP"}
+                  {cooldown > 0
+                    ? t("passwordReset.resendIn", { sec: cooldown })
+                    : t("passwordReset.resendOtp")}
                 </button>
               </p>
 
@@ -563,7 +578,7 @@ const PasswordResetModal = ({ onClose }) => {
                   textAlign: "center",
                 }}
               >
-                ← Change phone number
+                {t("passwordReset.changePhoneNumber")}
               </button>
             </div>
           )}
@@ -579,11 +594,9 @@ const PasswordResetModal = ({ onClose }) => {
                   lineHeight: 1.6,
                 }}
               >
-                Choose a strong new password for{" "}
-                <strong style={{ color: "#e2e8f0" }}>
-                  {countryCode} {phoneNumber}
-                </strong>
-                .
+                {t("passwordReset.passwordStepDesc", {
+                  phone: displayPhone,
+                })}
               </p>
 
               <div>
@@ -598,14 +611,14 @@ const PasswordResetModal = ({ onClose }) => {
                     textTransform: "uppercase",
                   }}
                 >
-                  New Password
+                  {t("passwordReset.newPasswordLabel")}
                 </label>
                 <div style={{ position: "relative" }}>
                   <input
                     type={showNew ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Min. 6 characters"
+                    placeholder={t("passwordReset.newPasswordPlaceholder")}
                     style={{ ...inputStyle, paddingRight: 46 }}
                     onFocus={(e) =>
                       (e.target.style.borderColor = "rgba(56,189,248,0.6)")
@@ -679,7 +692,7 @@ const PasswordResetModal = ({ onClose }) => {
                     textTransform: "uppercase",
                   }}
                 >
-                  Confirm Password
+                  {t("passwordReset.confirmPasswordLabel")}
                 </label>
                 <div style={{ position: "relative" }}>
                   <input
@@ -689,7 +702,7 @@ const PasswordResetModal = ({ onClose }) => {
                     onKeyDown={(e) =>
                       e.key === "Enter" && handleResetPassword()
                     }
-                    placeholder="Re-enter password"
+                    placeholder={t("passwordReset.confirmPasswordPlaceholder")}
                     style={{
                       ...inputStyle,
                       paddingRight: 46,
@@ -730,7 +743,7 @@ const PasswordResetModal = ({ onClose }) => {
                       fontWeight: 600,
                     }}
                   >
-                    Passwords don't match
+                    {t("passwordReset.passwordsDontMatch")}
                   </p>
                 )}
               </div>
@@ -754,7 +767,9 @@ const PasswordResetModal = ({ onClose }) => {
                   transition: "opacity 0.2s",
                 }}
               >
-                {loading ? "Resetting…" : "Reset Password →"}
+                {loading
+                  ? t("passwordReset.resetting")
+                  : t("passwordReset.resetPassword")}
               </button>
             </div>
           )}
@@ -808,7 +823,7 @@ const PasswordResetModal = ({ onClose }) => {
                     color: "#f1f5f9",
                   }}
                 >
-                  Password Reset!
+                  {t("passwordReset.doneTitle")}
                 </h3>
                 <p
                   style={{
@@ -818,8 +833,7 @@ const PasswordResetModal = ({ onClose }) => {
                     lineHeight: 1.6,
                   }}
                 >
-                  Your password has been updated successfully. You can now log
-                  in with your new password.
+                  {t("passwordReset.doneDesc")}
                 </p>
               </div>
               <button
@@ -837,7 +851,7 @@ const PasswordResetModal = ({ onClose }) => {
                   boxShadow: "0 4px 20px rgba(14,165,233,.3)",
                 }}
               >
-                Back to Login
+                {t("passwordReset.backToLogin")}
               </button>
             </div>
           )}
@@ -867,7 +881,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!/^[0-9]{10}$/.test(formData.phoneNumber)) {
-      toast.error("Enter a valid 10-digit phone number");
+      toast.error(t("auth.invalidPhone"));
       return;
     }
     setLoading(true);
@@ -893,7 +907,7 @@ const Login = () => {
       );
       await dispatch(fetchAchievements());
 
-      toast("Welcome!", { icon: "👋" });
+      toast(t("auth.welcomeToast"), { icon: "👋" });
 
       const isAdmin = hasBaseRole(user, "admin");
       // Custom-role staff (HR Manager, Payroll Admin, etc.) are detected by
@@ -919,7 +933,7 @@ const Login = () => {
       const message =
         error?.response?.data?.message ||
         error?.message ||
-        (typeof error === "string" ? error : "Login failed");
+        (typeof error === "string" ? error : t("auth.loginFailed"));
       toast.error(message);
     } finally {
       setLoading(false);
@@ -1216,22 +1230,24 @@ const Login = () => {
             </div>
             <div>
               <p className="text-cyan-400/70 text-xs font-semibold tracking-[.2em] uppercase mb-3">
-                AI-Powered Learning
+                {t("authHero.tag")}
               </p>
               <h1 className="df text-5xl font-black leading-[1.1] text-white">
-                Discover.
+                {t("authHero.headingLine1")}
                 <br />
-                Prepare. <span className="shimmer-txt">Succeed.</span>
+                {t("authHero.headingLine2")}{" "}
+                <span className="shimmer-txt">
+                  {t("authHero.headingHighlight")}
+                </span>
               </h1>
               <p className="text-slate-400 mt-4 text-sm leading-relaxed max-w-xs">
-                Premier AI coaching for classes 1 to 12 and more — personalised
-                to your pace, designed for your success.
+                {t("authHero.description")}
               </p>
               <div className="mt-7 flex items-center gap-7">
                 {[
-                  ["50K+", "Students"],
-                  ["200+", "Courses"],
-                  ["98%", "Pass Rate"],
+                  ["50K+", t("authHero.stats.students")],
+                  ["200+", t("authHero.stats.courses")],
+                  ["98%", t("authHero.stats.passRate")],
                 ].map(([n, l]) => (
                   <div key={l}>
                     <p className="df text-xl font-black text-white">{n}</p>
@@ -1276,7 +1292,7 @@ const Login = () => {
                 {/* Phone Number */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                    Phone Number
+                    {t("auth.phoneNumber")}
                   </label>
                   <div className="flex gap-2">
                     <div
@@ -1306,7 +1322,7 @@ const Login = () => {
                       }
                       onFocus={() => setFocused("phoneNumber")}
                       onBlur={() => setFocused("")}
-                      placeholder="10-digit mobile number"
+                      placeholder={t("auth.mobilePlaceholder")}
                       required
                       maxLength={10}
                       className={inputCls("phoneNumber") + " flex-1"}

@@ -683,22 +683,24 @@ const Signup = () => {
             </div>
             <div>
               <p className="text-cyan-400/70 text-xs font-semibold tracking-[.2em] uppercase mb-3">
-                AI-Powered Learning
+                {t("authHero.tag")}
               </p>
               <h1 className="df text-5xl font-black leading-[1.1] text-white">
-                Discover.
+                {t("authHero.headingLine1")}
                 <br />
-                Prepare. <span className="shimmer-txt">Succeed.</span>
+                {t("authHero.headingLine2")}{" "}
+                <span className="shimmer-txt">
+                  {t("authHero.headingHighlight")}
+                </span>
               </h1>
               <p className="text-slate-400 mt-4 text-sm leading-relaxed max-w-xs">
-                Premier AI coaching for classes 1 to 12 and more — personalised
-                to your pace, designed for your success.
+                {t("authHero.description")}
               </p>
               <div className="mt-7 flex items-center gap-7">
                 {[
-                  ["50K+", "Students"],
-                  ["200+", "Courses"],
-                  ["98%", "Pass Rate"],
+                  ["50K+", t("authHero.stats.students")],
+                  ["200+", t("authHero.stats.courses")],
+                  ["98%", t("authHero.stats.passRate")],
                 ].map(([n, l]) => (
                   <div key={l}>
                     <p className="df text-xl font-black text-white">{n}</p>

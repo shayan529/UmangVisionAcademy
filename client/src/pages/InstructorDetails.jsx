@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   GraduationCap,
   Users,
@@ -15,41 +16,38 @@ import {
 import { Link } from "react-router-dom";
 
 const InstructorDetails = () => {
+  const { t } = useTranslation();
+
   const benefits = [
     {
       icon: DollarSign,
-      title: "Earn Revenue",
-      description:
-        "Generate income by selling your courses to thousands of students worldwide.",
+      title: t("instructorDetails.benefits.earnRevenue.title"),
+      description: t("instructorDetails.benefits.earnRevenue.description"),
     },
     {
       icon: Map,
-      title: "Nationwide Presence",
-      description:
-        "Teach students across India and establish yourself as a trusted educator.",
+      title: t("instructorDetails.benefits.nationwidePresence.title"),
+      description: t(
+        "instructorDetails.benefits.nationwidePresence.description",
+      ),
     },
     {
       icon: Award,
-      title: "Instructor Recognition",
-      description:
-        "Become a verified instructor and grow your reputation in your field.",
+      title: t("instructorDetails.benefits.instructorRecognition.title"),
+      description: t(
+        "instructorDetails.benefits.instructorRecognition.description",
+      ),
     },
     {
       icon: Brain,
-      title: "AI Teaching Tools",
-      description:
-        "Use AI-powered tools to create quizzes, notes and personalized learning.",
+      title: t("instructorDetails.benefits.aiTeachingTools.title"),
+      description: t("instructorDetails.benefits.aiTeachingTools.description"),
     },
   ];
 
-  const features = [
-    "Upload video courses and learning materials",
-    "Create quizzes and assignments",
-    "Host live mentorship sessions",
-    "Track student progress analytics",
-    "Build your instructor profile",
-    "Earn certificates and badges",
-  ];
+  const features = t("instructorDetails.featuresSection.items", {
+    returnObjects: true,
+  });
 
   return (
     <div className="min-h-screen bg-[#020817] text-white">
@@ -63,20 +61,18 @@ const InstructorDetails = () => {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-300">
                 <GraduationCap size={16} />
-                Become an Instructor
+                {t("instructorDetails.tag")}
               </div>
 
               <h1 className="mt-8 text-5xl md:text-6xl font-black leading-tight">
-                Share your knowledge
+                {t("instructorDetails.heroTitleLine1")}
                 <span className="block text-emerald-300">
-                  and inspire learners
+                  {t("instructorDetails.heroTitleLine2")}
                 </span>
               </h1>
 
               <p className="mt-6 text-lg leading-8 text-slate-300 max-w-2xl">
-                Join our growing instructor community and teach students from
-                around the world. Create engaging courses, host live classes,
-                and earn revenue while building your personal brand.
+                {t("instructorDetails.heroDescription")}
               </p>
 
               {/* BUTTONS */}
@@ -86,7 +82,7 @@ const InstructorDetails = () => {
                   className="bg-emerald-300 hover:bg-emerald-400 transition duration-300 px-8 py-4 rounded-full text-slate-950 font-semibold shadow-xl shadow-emerald-300/20 inline-flex items-center justify-center"
                 >
                   <button className="inline-flex items-center gap-3 rounded-full bg-emerald-300 px-8 py-4 text-slate-950 font-bold transition hover:scale-[1.02]">
-                    Apply as Instructor
+                    {t("instructorDetails.applyAsInstructor")}
                     <ArrowRight size={20} />
                   </button>
                 </Link>
@@ -98,14 +94,16 @@ const InstructorDetails = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm uppercase tracking-[0.25em] text-slate-500">
-                    Instructor Dashboard
+                    {t("instructorDetails.dashboardLabel")}
                   </p>
 
-                  <h2 className="mt-3 text-3xl font-bold">Teach Smarter</h2>
+                  <h2 className="mt-3 text-3xl font-bold">
+                    {t("instructorDetails.teachSmarter")}
+                  </h2>
                 </div>
 
                 <div className="rounded-full bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-300">
-                  Live
+                  {t("instructorDetails.live")}
                 </div>
               </div>
 
@@ -113,7 +111,9 @@ const InstructorDetails = () => {
               <div className="grid grid-cols-2 gap-5 mt-10">
                 <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
                   <p className="text-3xl font-bold text-emerald-300">120K+</p>
-                  <p className="mt-2 text-slate-400">Active Students</p>
+                  <p className="mt-2 text-slate-400">
+                    {t("instructorDetails.activeStudents")}
+                  </p>
                 </div>
               </div>
 
@@ -122,9 +122,11 @@ const InstructorDetails = () => {
                 <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
                   <Video className="text-emerald-300" size={22} />
                   <div>
-                    <h3 className="font-semibold">Upload Video Lessons</h3>
+                    <h3 className="font-semibold">
+                      {t("instructorDetails.uploadVideoLessons")}
+                    </h3>
                     <p className="text-sm text-slate-400">
-                      Create engaging high quality video courses
+                      {t("instructorDetails.uploadVideoLessonsDesc")}
                     </p>
                   </div>
                 </div>
@@ -132,9 +134,11 @@ const InstructorDetails = () => {
                 <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
                   <Users className="text-sky-300" size={22} />
                   <div>
-                    <h3 className="font-semibold">Live Mentorship</h3>
+                    <h3 className="font-semibold">
+                      {t("instructorDetails.liveMentorship")}
+                    </h3>
                     <p className="text-sm text-slate-400">
-                      Conduct live sessions and interact with students
+                      {t("instructorDetails.liveMentorshipDesc")}
                     </p>
                   </div>
                 </div>
@@ -142,9 +146,11 @@ const InstructorDetails = () => {
                 <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
                   <BookOpen className="text-pink-300" size={22} />
                   <div>
-                    <h3 className="font-semibold">Course Analytics</h3>
+                    <h3 className="font-semibold">
+                      {t("instructorDetails.courseAnalytics")}
+                    </h3>
                     <p className="text-sm text-slate-400">
-                      Track enrollments and student performance
+                      {t("instructorDetails.courseAnalyticsDesc")}
                     </p>
                   </div>
                 </div>
@@ -157,11 +163,12 @@ const InstructorDetails = () => {
       {/* BENEFITS */}
       <section className="max-w-7xl mx-auto px-6 py-20">
         <div className="text-center max-w-3xl mx-auto">
-          <h2 className="text-5xl font-black">Why become an instructor?</h2>
+          <h2 className="text-5xl font-black">
+            {t("instructorDetails.benefits.heading")}
+          </h2>
 
           <p className="mt-5 text-lg text-slate-400 leading-8">
-            Empower students while growing your career and income through our
-            AI-powered learning platform.
+            {t("instructorDetails.benefits.subtitle")}
           </p>
         </div>
 
@@ -196,13 +203,14 @@ const InstructorDetails = () => {
             {/* LEFT */}
             <div>
               <h2 className="text-5xl font-black leading-tight">
-                Everything you need
-                <span className="block text-emerald-300">to teach online</span>
+                {t("instructorDetails.featuresSection.headingLine1")}
+                <span className="block text-emerald-300">
+                  {t("instructorDetails.featuresSection.headingLine2")}
+                </span>
               </h2>
 
               <p className="mt-6 text-lg leading-8 text-slate-400">
-                Our platform provides all the tools you need to create, manage
-                and grow your online teaching business.
+                {t("instructorDetails.featuresSection.subtitle")}
               </p>
             </div>
 

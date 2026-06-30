@@ -54,6 +54,8 @@
   },
   "auth": {
     "signup": "Create Account",
+    "mobilePlaceholder": "10-digit mobile number",
+    "welcomeToast": "Welcome!",
     "login": "Sign In",
     "logout": "Logout",
     "email": "Email",
@@ -244,6 +246,18 @@
     "view": "View",
     "questionPaper": "Question Paper",
     "noResults": "No papers found for the selected filters."
+  },
+  "authHero": {
+    "tag": "AI-Powered Learning",
+    "headingLine1": "Discover.",
+    "headingLine2": "Prepare.",
+    "headingHighlight": "Succeed.",
+    "description": "Premier AI coaching for classes 9 to 12 and more — personalised to your pace, designed for your success.",
+    "stats": {
+      "students": "Students",
+      "courses": "Courses",
+      "passRate": "Pass Rate"
+    }
   },
   "community": {
     "tag": "Interactive Learning Experience",
@@ -1422,5 +1436,55 @@
     "unpublished": "Test unpublished",
     "failedUpdate": "Failed to update",
     "meta": "questions · {{duration}} min · {{attempts}} attempts"
+  },
+  "instructorDetails": {
+    "tag": "Become an Instructor",
+    "heroTitleLine1": "Share your knowledge",
+    "heroTitleLine2": "and inspire learners",
+    "heroDescription": "Join our growing instructor community and teach students from around the world. Create engaging courses, host live classes, and earn revenue while building your personal brand.",
+    "applyAsInstructor": "Apply as Instructor",
+    "dashboardLabel": "Instructor Dashboard",
+    "teachSmarter": "Teach Smarter",
+    "live": "Live",
+    "activeStudents": "Active Students",
+    "uploadVideoLessons": "Upload Video Lessons",
+    "uploadVideoLessonsDesc": "Create engaging high quality video courses",
+    "liveMentorship": "Live Mentorship",
+    "liveMentorshipDesc": "Conduct live sessions and interact with students",
+    "courseAnalytics": "Course Analytics",
+    "courseAnalyticsDesc": "Track enrollments and student performance",
+    "benefits": {
+      "heading": "Why become an instructor?",
+      "subtitle": "Empower students while growing your career and income through our AI-powered learning platform.",
+      "earnRevenue": {
+        "title": "Earn Revenue",
+        "description": "Generate income by selling your courses to thousands of students worldwide."
+      },
+      "nationwidePresence": {
+        "title": "Nationwide Presence",
+        "description": "Teach students across India and establish yourself as a trusted educator."
+      },
+      "instructorRecognition": {
+        "title": "Instructor Recognition",
+        "description": "Become a verified instructor and grow your reputation in your field."
+      },
+      "aiTeachingTools": {
+        "title": "AI Teaching Tools",
+        "description": "Use AI-powered tools to create quizzes, notes and personalized learning."
+      }
+    },
+    "featuresSection": {
+      "headingLine1": "Everything you need",
+      "headingLine2": "to teach online",
+      "subtitle": "Our platform provides all the tools you need to create, manage and grow your online teaching business.",
+      "items": [
+        "Upload video courses and learning materials",
+        "Create quizzes and assignments",
+        "Host live mentorship sessions",
+        "Track student progress analytics",
+        "Build your instructor profile",
+        "Earn certificates and badges"
+      ]
+    }
   }
 }
