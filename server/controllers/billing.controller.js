@@ -104,7 +104,7 @@ export const createOrder = async (req, res) => {
         });
       } else {
         return res.status(400).json({
-          message: "Payment gateway setup is incomplete. Please configure valid Razorpay credentials (RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET) in the environment settings.",
+          message: "Something went wrong.",
         });
       }
     }

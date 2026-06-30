@@ -303,7 +303,7 @@ export const createDepositOrder = async (req, res) => {
     const isPlaceholder = !keyId || !keySecret || /xxxx|your_secret|your_razorpay_secret_here/i.test(keyId) || /xxxx|your_secret|your_razorpay_secret_here/i.test(keySecret);
     if (isPlaceholder) {
       return res.status(400).json({
-        message: "Wallet deposit is not configured. Please configure valid Razorpay credentials (RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET) in the environment settings.",
+        message: "Something went wrong.",
       });
     }
 
