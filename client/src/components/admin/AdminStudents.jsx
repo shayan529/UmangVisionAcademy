@@ -1084,7 +1084,7 @@ const AdminStudents = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 shrink-0 justify-end w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 shrink-0 justify-start sm:justify-end w-full sm:w-auto">
                 {/* Custom tags */}
                 <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full">
                   Student

@@ -649,7 +649,7 @@ export const DashboardHome = () => {
                 whiteSpace: "nowrap",
               }}
             >
-              Add Complete Details
+              {t("studentDashboard.addCompleteDetails")}
             </button>
             <Link
               to="my-courses"

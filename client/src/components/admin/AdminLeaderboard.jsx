@@ -113,105 +113,109 @@ const AdminLeaderboard = ({
 
       {/* Responsive Leaderboard Table */}
       <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl overflow-hidden shadow-sm">
-        {/* Table Head */}
-        <div className="grid grid-cols-[50px_1fr_80px_90px_80px_100px] gap-4 px-5 py-4 border-b border-slate-800 bg-slate-950/20">
-          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
-            #
-          </span>
-          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
-            Instructor Name
-          </span>
-          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
-            Courses
-          </span>
-          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
-            Students
-          </span>
-          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
-            Avg Rating
-          </span>
-          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-right">
-            Revenue
-          </span>
-        </div>
+        <div className="overflow-x-auto">
+          <div className="min-w-[600px]">
+            {/* Table Head */}
+            <div className="grid grid-cols-[50px_1fr_80px_90px_80px_100px] gap-4 px-5 py-4 border-b border-slate-800 bg-slate-950/20">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
+                #
+              </span>
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                Instructor Name
+              </span>
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
+                Courses
+              </span>
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
+                Students
+              </span>
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
+                Avg Rating
+              </span>
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-right">
+                Revenue
+              </span>
+            </div>
 
-        {/* Table Body */}
-        <div className="divide-y divide-slate-800/60">
-          {sortedInstructors.map((inst, i) => {
-            // Apply special golden, silver, bronze rows
-            const bgClass =
-              i === 0
-                ? "bg-amber-500/[0.02]"
-                : i === 1
-                  ? "bg-slate-400/[0.01]"
-                  : i === 2
-                    ? "bg-amber-700/[0.01]"
-                    : "hover:bg-slate-950/20";
-            const borderClass =
-              i === 0
-                ? "border-l-2 border-l-amber-500"
-                : i === 1
-                  ? "border-l-2 border-l-slate-400"
-                  : i === 2
-                    ? "border-l-2 border-l-amber-700"
-                    : "border-l-2 border-l-transparent";
+            {/* Table Body */}
+            <div className="divide-y divide-slate-800/60">
+              {sortedInstructors.map((inst, i) => {
+                // Apply special golden, silver, bronze rows
+                const bgClass =
+                  i === 0
+                    ? "bg-amber-500/[0.02]"
+                    : i === 1
+                      ? "bg-slate-400/[0.01]"
+                      : i === 2
+                        ? "bg-amber-700/[0.01]"
+                        : "hover:bg-slate-950/20";
+                const borderClass =
+                  i === 0
+                    ? "border-l-2 border-l-amber-500"
+                    : i === 1
+                      ? "border-l-2 border-l-slate-400"
+                      : i === 2
+                        ? "border-l-2 border-l-amber-700"
+                        : "border-l-2 border-l-transparent";
 
-            return (
-              <div
-                key={inst._id}
-                className={`grid grid-cols-[50px_1fr_80px_90px_80px_100px] gap-4 items-center px-5 py-3.5 transition duration-150 ${bgClass} ${borderClass}`}
-              >
-                {/* Ranking Badge */}
-                <div className="flex justify-center">
-                  <Rank r={i + 1} />
-                </div>
+                return (
+                  <div
+                    key={inst._id}
+                    className={`grid grid-cols-[50px_1fr_80px_90px_80px_100px] gap-4 items-center px-5 py-3.5 transition duration-150 ${bgClass} ${borderClass}`}
+                  >
+                    {/* Ranking Badge */}
+                    <div className="flex justify-center">
+                      <Rank r={i + 1} />
+                    </div>
 
-                {/* Profile detail */}
-                <div className="flex items-center gap-3 min-w-0">
-                  <Av name={inst.name} size={30} />
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-200 truncate">
-                      {inst.name}
+                    {/* Profile detail */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Av name={inst.name} size={30} />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-200 truncate">
+                          {inst.name}
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate mt-0.5">
+                          {inst.email}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Courses count */}
+                    <p className="text-xs font-bold text-slate-300 text-center">
+                      {inst.mc?.length || 0}
                     </p>
-                    <p className="text-[10px] text-slate-500 truncate mt-0.5">
-                      {inst.email}
+
+                    {/* Students count */}
+                    <p className="text-xs font-bold text-slate-300 text-center">
+                      {inst.stu || 0}
+                    </p>
+
+                    {/* Rating */}
+                    <div className="flex items-center justify-center gap-1">
+                      <Star size={11} className="text-amber-500 fill-amber-500 shrink-0" />
+                      <span className="text-xs font-extrabold text-amber-500">
+                        {inst.avg || "—"}
+                      </span>
+                    </div>
+
+                    {/* Revenue */}
+                    <p className="text-xs font-extrabold text-emerald-400 text-right">
+                      {fmt(inst.rev)}
                     </p>
                   </div>
+                );
+              })}
+
+              {sortedInstructors.length === 0 && (
+                <div className="py-12 text-center">
+                  <p className="text-sm text-slate-500">
+                    No rankings database available.
+                  </p>
                 </div>
-
-                {/* Courses count */}
-                <p className="text-xs font-bold text-slate-300 text-center">
-                  {inst.mc?.length || 0}
-                </p>
-
-                {/* Students count */}
-                <p className="text-xs font-bold text-slate-300 text-center">
-                  {inst.stu || 0}
-                </p>
-
-                {/* Rating */}
-                <div className="flex items-center justify-center gap-1">
-                  <Star size={11} className="text-amber-500 fill-amber-500 shrink-0" />
-                  <span className="text-xs font-extrabold text-amber-500">
-                    {inst.avg || "—"}
-                  </span>
-                </div>
-
-                {/* Revenue */}
-                <p className="text-xs font-extrabold text-emerald-400 text-right">
-                  {fmt(inst.rev)}
-                </p>
-              </div>
-            );
-          })}
-
-          {sortedInstructors.length === 0 && (
-            <div className="py-12 text-center">
-              <p className="text-sm text-slate-500">
-                No rankings database available.
-              </p>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

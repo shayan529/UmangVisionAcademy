@@ -213,7 +213,7 @@ const TransactionRow = ({ txn, onRequestRefund, requesting }) => {
             {t("studentPurchaseHistory.refundStatus", { status: refundStatus })}
           </div>
         )}
-        {canRequestRefund && (
+        {/* {canRequestRefund && (
           <button
             onClick={() => onRequestRefund(txn)}
             disabled={requesting}
@@ -236,7 +236,7 @@ const TransactionRow = ({ txn, onRequestRefund, requesting }) => {
               ? t("studentPurchaseHistory.requesting")
               : t("studentPurchaseHistory.requestRefund")}
           </button>
-        )}
+        )} */}
       </div>
     </div>
   );
