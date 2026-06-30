@@ -37,7 +37,8 @@
     "noPublished": "No published courses yet. Check back soon!",
     "tryDifferent": "Try selecting a different class, subject, or board.",
     "clearFilters": "Clear filters",
-    "free": "Free"
+    "free": "Free",
+    "viewAll": "View All Courses"
   },
   "demo": {
     "add_to_cart": "Add to Cart",

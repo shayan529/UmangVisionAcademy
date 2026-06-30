@@ -129,7 +129,7 @@ const Courses = () => {
             {!loading && allCourses.length > 0 && (
               <p className="text-slate-400 text-sm mt-2">
                 {t("courses.availableCourses", {
-                  count: filteredCourses.length,
+                  count: Math.min(filteredCourses.length, 4),
                 })}
               </p>
             )}
@@ -221,7 +221,7 @@ const Courses = () => {
           </div>
         ) : filteredCourses.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {filteredCourses.map((course) => (
+            {filteredCourses.slice(0, 4).map((course) => (
               <div
                 key={course._id}
                 onClick={() => handleCourseClick(course)} // pass full course
@@ -270,6 +270,17 @@ const Courses = () => {
                 {t("courses.clearFilters")}
               </button>
             )}
+          </div>
+        )}
+
+        {filteredCourses.length > 4 && (
+          <div className="flex justify-center mt-12">
+            <button
+              onClick={() => navigate("/courses")}
+              className="px-8 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xl shadow-indigo-600/10 hover:shadow-indigo-600/20 hover:-translate-y-0.5 transition duration-300 cursor-pointer"
+            >
+              {t("courses.viewAll")}
+            </button>
           </div>
         )}
       </div>
