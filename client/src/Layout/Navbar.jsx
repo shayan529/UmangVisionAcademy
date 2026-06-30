@@ -105,102 +105,11 @@ const Navbar = () => {
   return (
     <nav className="w-full sticky top-0 z-50 bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10">
       <style>{`
-@keyframes shimmer-navy {
-  0%   { background-position: -200% center; }
-  100% { background-position:  200% center; }
-}
-@keyframes shimmer-indigo {
-  0%   { background-position: -200% center; }
-  100% { background-position:  200% center; }
-}
-@keyframes shimmer-red {
-  0%   { background-position: -200% center; }
-  100% { background-position:  200% center; }
-}
-.btn-navy {
-  background: linear-gradient(
-    105deg,
-    #0f172a 0%, #1e3a5f 15%, #1d4ed8 30%,
-    #93c5fd 45%, #1d4ed8 55%, #1e3a5f 70%,
-    #0f172a 85%, #1d4ed8 100%
-  );
-  background-size: 200% auto;
-  animation: shimmer-navy 5s linear infinite;
-  color: #fff;
-  font-weight: 700;
-  border: 1px solid #1d4ed840;
-  box-shadow:
-    0 0 12px rgba(29,78,216,.4),
-    0 0 28px rgba(29,78,216,.15),
-    inset 0 1px 0 rgba(255,255,255,.2);
-  text-shadow: 0 1px 2px rgba(0,0,0,.35);
-}
-.btn-navy:hover {
-  box-shadow:
-    0 0 18px rgba(29,78,216,.65),
-    0 0 40px rgba(29,78,216,.25),
-    inset 0 1px 0 rgba(255,255,255,.25);
-  transform: scale(1.045);
-}
-.btn-indigo-shine {
-  background: linear-gradient(
-    105deg,
-    #3730a3 0%,
-    #4f46e5 20%,
-    #818cf8 40%,
-    #c7d2fe 50%,
-    #818cf8 60%,
-    #4f46e5 80%,
-    #3730a3 100%
-  );
-  background-size: 200% auto;
-  animation: shimmer-indigo 5s linear infinite;
-  color: #fff;
-  font-weight: 700;
-  border: 1px solid #818cf840;
-  box-shadow:
-    0 0 10px rgba(99,102,241,.5),
-    0 0 24px rgba(99,102,241,.2),
-    inset 0 1px 0 rgba(255,255,255,.2);
-}
-.btn-indigo-shine:hover {
-  box-shadow:
-    0 0 16px rgba(99,102,241,.7),
-    0 0 36px rgba(99,102,241,.3),
-    inset 0 1px 0 rgba(255,255,255,.25);
-  transform: scale(1.045);
-}
+.btn-navy,
+.btn-indigo-shine,
 .btn-red {
-  background: linear-gradient(
-    105deg,
-    #7f1d1d 0%,
-    #b91c1c 15%,
-    #ef4444 30%,
-    #fca5a5 45%,
-    #ef4444 55%,
-    #dc2626 70%,
-    #7f1d1d 85%,
-    #ef4444 100%
-  );
-  background-size: 200% auto;
-  animation: shimmer-red 5s linear infinite;
-  color: #fff;
-  font-weight: 700;
-  border: 1px solid #fca5a540;
-  box-shadow:
-    0 0 12px rgba(239,68,68,.55),
-    0 0 28px rgba(239,68,68,.25),
-    inset 0 1px 0 rgba(255,255,255,.2);
-}
-.btn-red:hover {
-  box-shadow:
-    0 0 18px rgba(239,68,68,.75),
-    0 0 40px rgba(239,68,68,.35),
-    inset 0 1px 0 rgba(255,255,255,.25);
-  transform: scale(1.045);
-}
-.btn-navy, .btn-indigo-shine, .btn-red {
-  transition: transform .2s ease, box-shadow .2s ease;
+  cursor: pointer;
+  transition: box-shadow .2s ease, transform .2s ease;
   white-space: nowrap;
   border-radius: 0.75rem;
   padding: 0.625rem 1.25rem;
@@ -209,6 +118,49 @@ const Navbar = () => {
   align-items: center;
   justify-content: center;
   gap: 6px;
+}
+
+.btn-navy {
+  background: linear-gradient(120deg, #7c3aed 0%, #6366f1 45%, #1e3a8a 100%);
+  color: #fff;
+  font-weight: 700;
+  border: 1px solid #6366f140;
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
+}
+.btn-navy:hover {
+  box-shadow: 0 0 22px rgba(99, 102, 241, 0.5);
+}
+
+.btn-indigo-shine {
+  background: linear-gradient(120deg, #7c3aed 0%, #6366f1 45%, #1e3a8a 100%);
+  color: #fff;
+  font-weight: 700;
+  border: 1px solid #6366f140;
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
+}
+.btn-indigo-shine:hover {
+  box-shadow: 0 0 22px rgba(99, 102, 241, 0.5);
+}
+
+.btn-red {
+  background: linear-gradient(120deg, #fb7185 0%, #be123c 45%, #4c0519 100%);
+  color: #fff;
+  font-weight: 700;
+  border: 1px solid #be123c40;
+  box-shadow: 0 0 16px rgba(190, 18, 60, 0.35);
+}
+button.btn-red:hover,
+.btn-red:hover {
+  box-shadow:
+    0 0 10px rgba(190, 18, 60, 0.7),
+    0 0 25px rgba(190, 18, 60, 0.5),
+    0 0 40px rgba(190, 18, 60, 0.3);
+}
+
+.btn-navy:active,
+.btn-indigo-shine:active,
+.btn-red:active {
+  transform: scale(0.97);
 }
 `}</style>
 
@@ -246,12 +198,14 @@ const Navbar = () => {
               {t("nav.courses")}
             </Link>
           )}
-          <Link
-            to="/plans"
-            className="hover:text-indigo-300 transition duration-300"
-          >
-            {t("nav.plans")}
-          </Link>
+          {!isStaffOrAdmin && (
+            <Link
+              to="/plans"
+              className="hover:text-indigo-300 transition duration-300"
+            >
+              {t("nav.plans")}
+            </Link>
+          )}
           <Link
             to="/question-bank"
             className="hover:text-indigo-300 transition duration-300"
@@ -495,9 +449,11 @@ const Navbar = () => {
 
           {[
             ...(!isStaffOrAdmin
-              ? [{ to: "/courses", label: t("nav.courses") }]
+              ? [
+                  { to: "/courses", label: t("nav.courses") },
+                  { to: "/plans", label: t("nav.plans") },
+                ]
               : []),
-            { to: "/plans", label: t("nav.plans") },
             ...(!hasInstructorRole && !hasAdminRole
               ? [{ to: "/become-instructor", label: t("nav.becomeInstructor") }]
               : []),

@@ -200,7 +200,14 @@ export const RegisterUser = async (req, res) => {
   try {
     const normalizedPhoneNumber = normalizeIndianPhoneNumber(phoneNumber);
 
-    if (!name || !password || !city || !state || !normalizedPhoneNumber || !pincode) {
+    if (
+      !name ||
+      !password ||
+      !city ||
+      !state ||
+      !normalizedPhoneNumber ||
+      !pincode
+    ) {
       return res.status(400).json({
         message:
           "Name, password, city, state, pincode, and phone number are required",
@@ -367,6 +374,14 @@ export const getUsers = async (req, res) => {
   }
 };
 
+// ── Bulk Import (Students / Instructors) ──────────────────────────────────────
+// Two-step flow to prevent an admin from importing the wrong file under the
+// wrong role:
+//   1. POST /users/bulk-import            -> dry run. Parses the file, returns
+//      a preview (sample rows + total count) under the requested role.
+//      Nothing is written to the database.
+//   2. POST /users/bulk-import?confirm=true -> actually inserts users, using
+//      the same file re-uploaded by the frontend after admin confirmation.
 export const bulkImportStudents = async (req, res) => {
   try {
     if (!req.file) {
@@ -409,6 +424,36 @@ export const bulkImportStudents = async (req, res) => {
         message: "No valid student records found in the file.",
       });
     }
+
+    // ── Dry-run preview ──────────────────────────────────────────────────────
+    // Without ?confirm=true, return a sample of parsed rows so the frontend
+    // can show the admin what's about to be imported (and under which role)
+    // before anything touches the database. This is the main guard against
+    // an admin uploading the wrong file under the wrong role toggle, since
+    // student and instructor rows currently share the exact same shape.
+    const isConfirmed = req.query.confirm === "true";
+
+    if (!isConfirmed) {
+      const previewRows = rows.slice(0, 5).map((row, index) => {
+        const payload = buildStudentPayload(row);
+        return {
+          row: row.__rowIndex ?? index + 2,
+          name: payload.name || null,
+          email: payload.email || null,
+          phoneNumber: payload.phoneNumber || null,
+          city: payload.city || null,
+        };
+      });
+
+      return res.status(200).json({
+        preview: true,
+        targetRole,
+        totalRows: rows.length,
+        sample: previewRows,
+        message: `Found ${rows.length} row(s) parsed from ${source}. Confirm to import as ${targetRole}.`,
+      });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     const created = [];
     const skipped = [];
@@ -592,8 +637,7 @@ export const createStudentByAdmin = async (req, res) => {
 
     if (!name || !password || !normalizedPhoneNumber) {
       return res.status(400).json({
-        message:
-          "Name, password, and phone number are required",
+        message: "Name, password, and phone number are required",
       });
     }
 
@@ -613,9 +657,10 @@ export const createStudentByAdmin = async (req, res) => {
 
     const allowedRoles = ["student", "instructor", "admin"];
     const normalizedRole = allowedRoles.includes(role) ? role : "student";
-    const finalBaseRoles = Array.isArray(roles) && roles.length > 0
-      ? roles.filter((r) => allowedRoles.includes(r))
-      : [normalizedRole];
+    const finalBaseRoles =
+      Array.isArray(roles) && roles.length > 0
+        ? roles.filter((r) => allowedRoles.includes(r))
+        : [normalizedRole];
     const finalCustomRoleIds = Array.isArray(customRoleIds)
       ? customRoleIds
       : assignedRoles || [];

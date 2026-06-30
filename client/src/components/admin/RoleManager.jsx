@@ -996,14 +996,19 @@ const RoleManager = ({ showToast, currentUser }) => {
                     <span className="text-sm font-semibold text-white truncate">
                       {u.name}
                     </span>
-                    {(u.roles || []).filter(isBaseRole).map((r) => (
-                      <span
-                        key={r}
-                        className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-800 text-slate-400"
-                      >
-                        {r}
-                      </span>
-                    ))}
+                    {(u.roles || []).filter(isBaseRole).map((r) => {
+                      const label =
+                        typeof r === "string" ? r : r?.name || "role";
+                      const k = typeof r === "string" ? r : r?._id || label;
+                      return (
+                        <span
+                          key={k}
+                          className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-800 text-slate-400"
+                        >
+                          {label}
+                        </span>
+                      );
+                    })}
                   </div>
                   <div className="text-xs text-slate-500">
                     {u.phoneNumber}

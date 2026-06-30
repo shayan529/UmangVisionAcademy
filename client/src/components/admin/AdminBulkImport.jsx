@@ -21,7 +21,16 @@ export default function AdminBulkImport({ refreshUsers }) {
   const [importSuccess, setImportSuccess] = useState("");
   const [importStats, setImportStats] = useState(null);
 
+  // Holds the file + preview while awaiting admin confirmation
+  const [pendingFile, setPendingFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+
   const handleImportClick = () => fileInputRef.current?.click();
+
+  const resetPending = () => {
+    setPendingFile(null);
+    setPreview(null);
+  };
 
   const handleImportFile = async (event) => {
     const file = event.target.files?.[0];
@@ -40,23 +49,22 @@ export default function AdminBulkImport({ refreshUsers }) {
     setImportError("");
     setImportSuccess("");
     setImportStats(null);
+    resetPending();
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("role", role);
 
     try {
+      // Step 1: dry run — no ?confirm, backend returns a preview only
       const { data } = await api.post("/users/bulk-import", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setImportSuccess(data.message || "Import completed successfully.");
-      setImportStats({
-        inserted: data.inserted || 0,
-        skipped: data.skipped || 0,
-        skippedRows: data.skippedRows || [],
-      });
-      if (refreshUsers) await refreshUsers();
+      if (data.preview) {
+        setPendingFile(file);
+        setPreview(data);
+      }
     } catch (err) {
       setImportError(
         err.response?.data?.message || err.message || "Import failed.",
@@ -65,6 +73,45 @@ export default function AdminBulkImport({ refreshUsers }) {
       setImporting(false);
       event.target.value = "";
     }
+  };
+
+  const handleConfirmImport = async () => {
+    if (!pendingFile) return;
+
+    setImporting(true);
+    setImportError("");
+
+    const formData = new FormData();
+    formData.append("file", pendingFile);
+    formData.append("role", role);
+
+    try {
+      const { data } = await api.post(
+        "/users/bulk-import?confirm=true",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+
+      setImportSuccess(data.message || "Import completed successfully.");
+      setImportStats({
+        inserted: data.inserted || 0,
+        skipped: data.skipped || 0,
+        skippedRows: data.skippedRows || [],
+      });
+      resetPending();
+      if (refreshUsers) await refreshUsers();
+    } catch (err) {
+      setImportError(
+        err.response?.data?.message || err.message || "Import failed.",
+      );
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleCancelPending = () => {
+    resetPending();
+    setImportError("");
   };
 
   return (
@@ -88,12 +135,16 @@ export default function AdminBulkImport({ refreshUsers }) {
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setRole(option.value)}
+                onClick={() => {
+                  setRole(option.value);
+                  resetPending();
+                }}
+                disabled={!!pendingFile}
                 className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
                   selected
                     ? "border-indigo-500/40 bg-indigo-500/10 text-indigo-200"
                     : "border-slate-800 bg-slate-900/40 text-slate-300 hover:border-slate-700"
-                }`}
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 <Icon size={14} />
                 {option.label}
@@ -116,11 +167,11 @@ export default function AdminBulkImport({ refreshUsers }) {
           <button
             type="button"
             onClick={handleImportClick}
-            disabled={importing}
+            disabled={importing || !!pendingFile}
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-2.5 text-sm font-semibold text-indigo-200 hover:bg-indigo-500/20 transition disabled:opacity-60"
           >
             <Upload size={16} />
-            {importing ? "Importing..." : "Upload File"}
+            {importing ? "Working..." : "Upload File"}
           </button>
           <input
             ref={fileInputRef}
@@ -131,6 +182,63 @@ export default function AdminBulkImport({ refreshUsers }) {
           />
         </div>
       </div>
+
+      {/* Confirmation step — shows a sample of parsed rows under the chosen role
+          before anything is written to the database. */}
+      {preview && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+          <p className="text-sm font-semibold text-amber-200 mb-2">
+            Confirm import: {preview.totalRows} row(s) as{" "}
+            <span className="uppercase">{preview.targetRole}</span>
+          </p>
+          <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 mb-3 overflow-x-auto">
+            <table className="text-xs text-slate-300 w-full">
+              <thead>
+                <tr className="text-slate-500 text-left">
+                  <th className="pr-4 py-1">Row</th>
+                  <th className="pr-4 py-1">Name</th>
+                  <th className="pr-4 py-1">Email</th>
+                  <th className="pr-4 py-1">Phone</th>
+                </tr>
+              </thead>
+              <tbody>
+                {preview.sample.map((r) => (
+                  <tr key={r.row}>
+                    <td className="pr-4 py-1">{r.row}</td>
+                    <td className="pr-4 py-1">{r.name || "—"}</td>
+                    <td className="pr-4 py-1">{r.email || "—"}</td>
+                    <td className="pr-4 py-1">{r.phoneNumber || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-amber-200/80 mb-3">
+            Double-check these look like {preview.targetRole} records before
+            importing.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleConfirmImport}
+              disabled={importing}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-500/20 border border-emerald-500/40 px-3 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/30 transition disabled:opacity-60"
+            >
+              {importing
+                ? "Importing..."
+                : `Confirm Import as ${preview.targetRole}`}
+            </button>
+            <button
+              type="button"
+              onClick={handleCancelPending}
+              disabled={importing}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-300 hover:border-slate-600 transition disabled:opacity-60"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-2xl border border-slate-800 bg-slate-950/30 p-4 text-xs text-slate-300">
         <p className="font-semibold text-slate-200 mb-1">Expected columns</p>
