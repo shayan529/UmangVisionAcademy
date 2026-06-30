@@ -1,0 +1,6 @@
+{
+  "appId": "com.umangvisionacademy.app",
+  "appName": "Umang Vision Academy",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

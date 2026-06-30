@@ -6,8 +6,12 @@ import { fetchCart } from "./redux/slices/cartSlice";
 
 import Navbar from "./Layout/Navbar";
 import Footer from "./Layout/Footer";
+import MobileBottomBar from "./Layout/MobileBottomBar";
 
 import Home from "./pages/Home";
+import MobileChat from "./components/mobile/MobileChat";
+import MobileNotes from "./components/mobile/MobileNotes";
+import MobileReels from "./components/mobile/MobileReels";
 import Contact from "./pages/Contact";
 import HelpCenter from "./pages/HelpCenter";
 import Faq from "./pages/Faq";
@@ -93,9 +97,12 @@ const ScrollToTop = () => {
 };
 
 const Layout = () => (
-  <div className="bg-slate-950 text-slate-100 min-h-screen">
+  <div className="bg-slate-950 text-slate-100 min-h-screen pb-20 md:pb-0">
     <Navbar />
-    <Outlet />
+    <div className="pb-8">
+      <Outlet />
+    </div>
+    <MobileBottomBar />
     <Footer />
   </div>
 );
@@ -119,6 +126,11 @@ function App() {
       <ScrollToTop />
       <Routes>
         <Route element={<Layout />}>
+          {/* ── Mobile-Only Navigation Views ── */}
+          <Route path="mobile/chat" element={<MobileChat />} />
+          <Route path="mobile/notes" element={<MobileNotes />} />
+          <Route path="mobile/reels" element={<MobileReels />} />
+
           {/* ── Public ── */}
           <Route index element={<Home />} />
           <Route path="login" element={<Login />} />
