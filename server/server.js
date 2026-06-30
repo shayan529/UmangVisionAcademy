@@ -48,7 +48,23 @@ const corsOptions = {
     // Allow requests with no origin (mobile apps, curl, Postman, server-to-server)
     if (!origin) return callback(null, true);
     if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS: origin '${origin}' not allowed`));
+    
+    // Automatically allow requests from the deployment domain on Render
+    try {
+      const originUrl = new URL(origin);
+      if (
+        originUrl.hostname === "umangvisionacademy.onrender.com" ||
+        originUrl.hostname.endsWith(".onrender.com")
+      ) {
+        return callback(null, true);
+      }
+    } catch (e) {
+      // Ignore invalid URL
+    }
+
+    // Instead of throwing an Error (which causes Express to return a 500 error),
+    // return callback(null, false) to deny CORS headers gracefully.
+    callback(null, false);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -104,6 +120,13 @@ if (process.env.NODE_ENV === "production") {
     if (req.path.startsWith("/api")) {
       return res.status(404).json({ message: "API route not found" });
     }
+    // If the request is for an asset (e.g. starts with /assets/ or has a file extension)
+    // but wasn't served by express.static, return a proper 404 instead of serving index.html.
+    if (req.path.startsWith("/assets/") || /\.[a-zA-Z0-9]+$/.test(req.path)) {
+      return res.status(404).send("Not Found");
+    }
+    // Set headers to prevent caching of index.html so users always get the latest asset references
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     res.sendFile(path.join(CLIENT_BUILD_PATH, "index.html"));
   });
 }
