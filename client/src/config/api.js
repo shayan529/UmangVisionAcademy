@@ -85,4 +85,25 @@ export const api = axios.create({
   },
 });
 
+// Global interceptor to sanitize 5xx (Internal Server Errors) and handle network errors cleanly on the frontend
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      const status = error.response.status;
+      // In production, sanitize 5xx (Server) errors to keep it clean and friendly for UI toasts
+      if (status >= 500) {
+        error.response.data = {
+          ...error.response.data,
+          message: "An unexpected server error occurred. Please try again later.",
+        };
+      }
+    } else if (error.request) {
+      // Network error (no response received)
+      error.message = "Unable to connect to the server. Please check your internet connection.";
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

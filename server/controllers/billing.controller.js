@@ -91,19 +91,22 @@ export const createOrder = async (req, res) => {
         .status(400)
         .json({ message: "Nothing to pay — use free enrol instead." });
 
-    if (
-      process.env.NODE_ENV !== "production" &&
-      isPlaceholderRazorpayConfig()
-    ) {
-      const mockOrderId = `mock_order_${Date.now()}`;
-      return res.json({
-        orderId: mockOrderId,
-        amount: orderAmount,
-        currency: "INR",
-        keyId: "mock",
-        planId: planId ?? "cart",
-        mockMode: true,
-      });
+    if (isPlaceholderRazorpayConfig()) {
+      if (process.env.NODE_ENV !== "production") {
+        const mockOrderId = `mock_order_${Date.now()}`;
+        return res.json({
+          orderId: mockOrderId,
+          amount: orderAmount,
+          currency: "INR",
+          keyId: "mock",
+          planId: planId ?? "cart",
+          mockMode: true,
+        });
+      } else {
+        return res.status(400).json({
+          message: "Payment gateway setup is incomplete. Please configure valid Razorpay credentials (RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET) in the environment settings.",
+        });
+      }
     }
 
     const order = await razorpay.orders.create({
