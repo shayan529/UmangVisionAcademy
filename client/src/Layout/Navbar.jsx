@@ -226,7 +226,7 @@ const Navbar = () => {
               className="w-full h-full object-contain"
             />
           </div>
-          <div className=" md:flex items-center ml-2 lg:ml-3">
+          <div className="hidden md:flex items-center ml-2 lg:ml-3">
             <span className="text-sm lg:text-base xl:text-lg font-extrabold text-white tracking-wide">
               Umang Vision
             </span>
