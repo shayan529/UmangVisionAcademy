@@ -1,6 +1,13 @@
 import Course from "./../models/courses.model.js";
 import User from "./../models/user.model.js";
 import Cart from "./../models/cart.model.js";
+import {
+  cacheResponse,
+  deleteKeys,
+  getJson,
+  invalidateCache,
+  setJson,
+} from "../utils/redisClient.js";
 
 // ── shared shape helper ───────────────────────────────────────────────────────
 const shapeCourse = (c) => ({
@@ -34,6 +41,13 @@ const shapeCourse = (c) => ({
     theme: "purple",
   },
 });
+
+const invalidateCourseCache = async (courseId) => {
+  await Promise.all([
+    invalidateCache("courses:published*"),
+    deleteKeys([`course:public:${courseId}`]),
+  ]);
+};
 
 // ── createCourse ──────────────────────────────────────────────────────────────
 export const createCourse = async (req, res) => {
@@ -108,13 +122,16 @@ export const getCourses = async (req, res) => {
 // ── getPublishedCourses (public — only admin-approved) ────────────────────────
 export const getPublishedCourses = async (req, res) => {
   try {
-    const courses = await Course.find({
-      approvalStatus: "approved",
-      published: true,
-    })
-      .populate("instructor", "name email")
-      .sort({ createdAt: -1 })
-      .lean();
+    const cacheKey = "courses:published";
+    const courses = await cacheResponse(cacheKey, 30, async () => {
+      return await Course.find({
+        approvalStatus: "approved",
+        published: true,
+      })
+        .populate("instructor", "name email")
+        .sort({ createdAt: -1 })
+        .lean();
+    });
     res.json(courses);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -124,6 +141,10 @@ export const getPublishedCourses = async (req, res) => {
 // ── getCourseByIdPublic ───────────────────────────────────────────────────────
 export const getCourseByIdPublic = async (req, res) => {
   try {
+    const cacheKey = `course:public:${req.params.id}`;
+    const cached = await getJson(cacheKey);
+    if (cached !== null) return res.json(cached);
+
     const course = await Course.findOne({
       _id: req.params.id,
       approvalStatus: "approved",
@@ -134,7 +155,7 @@ export const getCourseByIdPublic = async (req, res) => {
 
     if (!course) return res.status(404).json({ message: "Course not found" });
 
-    res.json({
+    const shaped = {
       _id: course._id,
       title: course.title,
       summary: course.summary,
@@ -158,7 +179,10 @@ export const getCourseByIdPublic = async (req, res) => {
         durationMinutes: l.durationMinutes,
         type: l.type ?? "video",
       })),
-    });
+    };
+
+    await setJson(cacheKey, shaped, 30);
+    res.json(shaped);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -191,6 +215,7 @@ export const approveCourse = async (req, res) => {
       { new: true },
     );
     if (!course) return res.status(404).json({ message: "Course not found" });
+    await invalidateCourseCache(course._id);
     res.json({
       success: true,
       message: "Course approved and published.",
@@ -217,6 +242,7 @@ export const rejectCourse = async (req, res) => {
       { new: true },
     );
     if (!course) return res.status(404).json({ message: "Course not found" });
+    await invalidateCourseCache(course._id);
     res.json({
       success: true,
       message: "Course rejected.",
@@ -456,6 +482,7 @@ export const updateCourse = async (req, res) => {
       { new: true, runValidators: true },
     );
 
+    await invalidateCourseCache(course._id);
     res.json(shapeCourse(course));
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -520,6 +547,7 @@ export const deleteCourse = async (req, res) => {
       instructor: req.user._id,
     });
     if (!course) return res.status(404).json({ message: "Course not found" });
+    await invalidateCourseCache(req.params.id);
     res.json({ message: "Course deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -14,6 +14,13 @@ export const protect = async (req, res, next) => {
   try {
     const token = req.cookies?.token;
 
+    console.log(
+      "[protect] Checking auth - token exists:",
+      !!token,
+      "path:",
+      req.path,
+    );
+
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -31,6 +38,15 @@ export const protect = async (req, res, next) => {
         message: "User no longer exists",
       });
     }
+
+    console.log(
+      "[protect] User found:",
+      user._id,
+      "username:",
+      user.username,
+      "path:",
+      req.path,
+    );
 
     if (user.isActive === false) {
       return res.status(403).json({
@@ -110,13 +126,6 @@ export const instructorOnly = (req, res, next) => {
     return res.status(403).json({
       success: false,
       message: "Access denied — instructors only",
-    });
-  }
-
-  if (!req.user.instructorProfile?.isVerified) {
-    return res.status(403).json({
-      success: false,
-      message: "Your instructor application is still pending approval",
     });
   }
 

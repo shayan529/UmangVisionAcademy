@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   Users,
   GraduationCap,
@@ -10,6 +11,7 @@ import {
   Shield,
   UploadCloud,
   FileQuestion,
+  Film,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -25,24 +27,27 @@ const AdminSidebar = ({
   mobileOpen,
   setMobileOpen,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const navItems = [
-    { id: "overview", label: "Overview", icon: BarChart2 },
-    { id: "leaderboard", label: "Leaderboard", icon: Trophy },
-    { id: "students", label: "Students", icon: Users },
-    { id: "instructors", label: "Instructors", icon: GraduationCap },
-    { id: "courses", label: "Courses", icon: BookOpen },
-    { id: "question-papers", label: "Question Papers", icon: FileQuestion },
-    { id: "bulk-import", label: "Bulk Import", icon: UploadCloud },
+    { id: "overview", label: t("adminSidebar.overview"), icon: BarChart2 },
+    { id: "leaderboard", label: t("adminSidebar.leaderboard"), icon: Trophy },
+    { id: "students", label: t("adminSidebar.students"), icon: Users },
+    { id: "instructors", label: t("adminSidebar.instructors"), icon: GraduationCap },
+    { id: "courses", label: t("adminSidebar.courses"), icon: BookOpen },
+    { id: "question-papers", label: t("adminSidebar.questionPapers"), icon: FileQuestion },
+    { id: "bulk-import", label: t("adminSidebar.bulkImport"), icon: UploadCloud },
+    { id: "notes", label: t("adminSidebar.notes"), icon: BookOpen },
+    { id: "reels", label: t("adminSidebar.reels"), icon: Film },
     {
       id: "applications",
-      label: "Applications",
+      label: t("adminSidebar.applications"),
       icon: CheckCircle,
       badge: applicationsCount,
     },
-    { id: "roles", label: "Roles & Permissions", icon: Lock },
-    { id: "devices", label: "Logged In Devices", icon: Shield },
+    { id: "roles", label: t("adminSidebar.roles"), icon: Lock },
+    { id: "devices", label: t("adminSidebar.devices"), icon: Shield },
   ];
 
   return (
@@ -60,7 +65,7 @@ const AdminSidebar = ({
           ${collapsed ? "w-[68px] min-w-[68px]" : "w-[220px] min-w-[220px]"}
           ${
             mobileOpen
-              ? "fixed inset-y-0 left-0 h-screen shadow-2xl"
+              ? "fixed top-0 bottom-[82px] left-0 shadow-2xl"
               : "hidden md:flex md:relative md:h-auto"
           }
         `}
@@ -74,7 +79,7 @@ const AdminSidebar = ({
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase mt-0.5">
-                  Admin Panel
+                  {t("adminSidebar.panel")}
                 </span>
               </div>
             </div>

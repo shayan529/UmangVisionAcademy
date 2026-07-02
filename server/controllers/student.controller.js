@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import Course from "../models/courses.model.js";
+import { cacheResponse } from "../utils/redisClient.js";
 
 // ── Helper: get all course IDs taught by this instructor ─────────────────────
 const getInstructorCourseIds = async (instructorId) => {
@@ -65,12 +66,18 @@ export const getStudents = async (req, res) => {
 
 export const getLeaderboard = async (req, res) => {
   try {
-    const leaderboard = await User.find({
-      roles: { $in: ["student"] },
-    })
-      .select("name email avatarUrl coins referralsCount state city")
-      .sort({ coins: -1, updatedAt: -1 })
-      .lean();
+    const leaderboard = await cacheResponse(
+      "students:leaderboard",
+      15,
+      async () => {
+        return await User.find({
+          roles: { $in: ["student"] },
+        })
+          .select("name email avatarUrl coins referralsCount state city")
+          .sort({ coins: -1, updatedAt: -1 })
+          .lean();
+      },
+    );
 
     res.json(leaderboard);
   } catch (error) {

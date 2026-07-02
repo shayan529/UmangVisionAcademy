@@ -926,27 +926,27 @@ export const DashboardHome = () => {
             >
               {coursesLoading
                 ? [...Array(3)].map((_, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      background: "#111827",
-                      border: "1px solid #1e293b",
-                      borderRadius: 14,
-                      padding: "16px 18px",
-                    }}
-                  >
-                    <Skeleton w="65%" h={13} style={{ marginBottom: 10 }} />
-                    <Skeleton w="100%" h={6} radius={4} />
-                  </div>
-                ))
+                    <div
+                      key={i}
+                      style={{
+                        background: "#111827",
+                        border: "1px solid #1e293b",
+                        borderRadius: 14,
+                        padding: "16px 18px",
+                      }}
+                    >
+                      <Skeleton w="65%" h={13} style={{ marginBottom: 10 }} />
+                      <Skeleton w="100%" h={6} radius={4} />
+                    </div>
+                  ))
                 : enrolledCourses
-                  .slice(0, 6)
-                  .map((course, i) => (
-                    <CourseProgressCard
-                      key={course._id ?? course.id ?? i}
-                      course={course}
-                    />
-                  ))}
+                    .slice(0, 6)
+                    .map((course, i) => (
+                      <CourseProgressCard
+                        key={course._id ?? course.id ?? i}
+                        course={course}
+                      />
+                    ))}
             </div>
           </section>
         )}
@@ -1123,7 +1123,7 @@ const StudentDashboard = () => {
     <div className="min-h-screen bg-[#0b1120] text-[#f1f5f9] md:flex">
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -1136,7 +1136,7 @@ const StudentDashboard = () => {
         setMobileOpen={setMobileOpen}
       />
 
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0  flex flex-col">
         <main
           className="flex-1 px-4 py-4 md:px-7 md:py-6"
           onClick={() => {
@@ -1175,7 +1175,7 @@ const StudentDashboard = () => {
             )}
           </div>
 
-          <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+          <div className="flex-1 overflow-hidden min-w-0 flex flex-col min-h-0">
             <Outlet />
           </div>
         </main>

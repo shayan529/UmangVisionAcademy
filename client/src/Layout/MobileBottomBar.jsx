@@ -1,10 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { Home, MessageSquare, FileText, Play, User } from "lucide-react";
 
 export default function MobileBottomBar() {
   const { pathname } = useLocation();
   const { user } = useSelector((state) => state.auth);
+  const { t } = useTranslation();
 
   // Determine dashboard link based on role
   const getProfileLink = () => {
@@ -23,18 +25,37 @@ export default function MobileBottomBar() {
   };
 
   const navItems = [
-    { path: "/", label: "Home", icon: Home },
-    { path: "/mobile/chat", label: "Chat", icon: MessageSquare },
-    { path: "/mobile/notes", label: "Notes", icon: FileText },
-    { path: "/mobile/reels", label: "Reels", icon: Play },
-    { path: getProfileLink(), label: "Profile", icon: User },
+    { path: "/", label: t("bottomBar.home", "Home"), icon: Home },
+    { path: "/mobile/chat", label: t("bottomBar.chat", "Chat"), icon: MessageSquare },
+    { path: "/mobile/notes", label: t("bottomBar.notes", "Notes"), icon: FileText },
+    { path: "/mobile/reels", label: t("bottomBar.reels", "Reels"), icon: Play },
+    { path: getProfileLink(), label: t("bottomBar.profile", "Profile"), icon: User },
   ];
 
+  // Remove accidental duplicate entries (same label+path)
+  const uniqueNavItems = navItems.filter(
+    (item, idx, arr) =>
+      arr.findIndex((i) => i.label === item.label && i.path === item.path) ===
+      idx,
+  );
+  // Debug log to help diagnose duplicate renders in runtime
+  if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+    // eslint-disable-next-line no-console
+    console.debug(
+      "MobileBottomBar navItems:",
+      navItems,
+      "unique:",
+      uniqueNavItems,
+    );
+  }
+
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50">
-      <div className="w-full rounded-t-2xl border-t border-white/10 bg-slate-950/85 p-2 pb-safe-offset shadow-2xl backdrop-blur-xl flex items-center justify-around">
-        {navItems.map((item) => {
-          const isActive = pathname === item.path || (item.path !== "/" && pathname.startsWith(item.path));
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-30">
+      <div className="w-full rounded-t-2xl border-t border-white/10 bg-slate-950/95 p-2 pb-safe-offset shadow-2xl backdrop-blur-xl flex items-center justify-around">
+        {uniqueNavItems.map((item) => {
+          const isActive =
+            pathname === item.path ||
+            (item.path !== "/" && pathname.startsWith(item.path));
           const Icon = item.icon;
 
           return (
@@ -54,7 +75,9 @@ export default function MobileBottomBar() {
               </div>
               <span
                 className={`text-[10px] mt-1 font-bold tracking-wide transition-all duration-300 ${
-                  isActive ? "text-indigo-300 opacity-100 scale-105" : "text-slate-500 opacity-80"
+                  isActive
+                    ? "text-indigo-300 opacity-100 scale-105"
+                    : "text-slate-500 opacity-80"
                 }`}
               >
                 {item.label}

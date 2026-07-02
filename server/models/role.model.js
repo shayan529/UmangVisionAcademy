@@ -9,6 +9,8 @@ export const PERMISSION_MODULES = {
   users: ["view", "create", "edit", "delete", "impersonate"],
   payments: ["view", "refund", "export"],
   moderation: ["view", "flag", "remove", "ban"],
+  notes: ["view", "approve", "reject", "delete"],
+  reels: ["view", "approve", "reject", "delete"],
 };
 
 const permissionSchema = new Schema(

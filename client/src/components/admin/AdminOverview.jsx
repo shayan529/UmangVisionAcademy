@@ -6,6 +6,7 @@ import {
   Star,
   ShieldCheck,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   getCustomRoles,
   hasBaseRole,
@@ -138,6 +139,7 @@ const AdminOverview = ({
   totalEnrollments = 0,
   sortedInstructors = [],
 }) => {
+  const { t } = useTranslation();
   const maxRev = Math.max(...sortedInstructors.map((i) => i.rev), 1);
 
   // This view is shared by the full admin dashboard and the Staff dashboard's
@@ -165,21 +167,21 @@ const AdminOverview = ({
           <p className="text-xs text-indigo-400 font-bold tracking-wider uppercase mb-2">
             Umang Vision Academy{' '}
             {isFullAdmin
-              ? 'Administration Workspace'
-              : `${roleLabel} Workspace`}
+              ? t("adminOverview.workspaceAdmin")
+              : `${roleLabel} ${t("adminOverview.workspaceStaff")}`}
           </p>
           <h1 className="text-2xl md:text-3xl font-extrabold text-white leading-tight mb-2">
-            Welcome Back, {greetingName} 👋
+            {t("adminOverview.welcomeBack", { name: greetingName })}
           </h1>
           <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
             {isFullAdmin
-              ? 'Monitor learning activities, approve new instructor applications, view courses catalog, and manage enrollment metrics across your entire platform.'
-              : "Monitor learning activities, view courses catalog, and manage enrollment metrics for the areas you've been granted access to."}
+              ? t("adminOverview.adminDesc")
+              : t("adminOverview.staffDesc")}
           </p>
         </div>
         <div className="relative z-10 shrink-0">
           <span className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:scale-[1.02] transition duration-200 text-white font-bold text-xs px-5 py-3 shadow-lg shadow-indigo-500/20">
-            System Workspace Active
+            {t("adminOverview.systemWorkspaceActive")}
           </span>
         </div>
       </div>
@@ -188,7 +190,7 @@ const AdminOverview = ({
         <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 shadow-sm">
           <h3 className="text-sm font-extrabold text-white mb-4 flex items-center gap-2">
             <ShieldCheck size={16} className="text-emerald-400" />
-            Granted Access
+            {t("adminOverview.grantedAccess")}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {grantedPermissions.map((permission) => (
@@ -221,17 +223,17 @@ const AdminOverview = ({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           value={students.length}
-          label="Enrolled Students"
+          label={t("adminOverview.enrolledStudents")}
           accentColorClass="text-indigo-400"
         />
         <StatCard
           value={`${Math.round(totalEnrollments / (courses.length || 1))}`}
-          label="Avg Enrollments / Course"
+          label={t("adminOverview.avgEnrollments")}
           accentColorClass="text-cyan-400"
         />
         <StatCard
           value={instructors.length}
-          label="Active Instructors"
+          label={t("adminOverview.activeInstructors")}
           accentColorClass="text-pink-400"
         />
       </div>
@@ -239,22 +241,22 @@ const AdminOverview = ({
       {/* Goal Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <GoalCard
-          tag="Next Milestone"
+          tag={t("adminOverview.nextMilestone")}
           tagColorClass="text-indigo-400"
-          title={`Scale to ${students.length + 10} Students`}
-          desc="Expand student outreach by approving curated instructor applications and onboarding top learning programs."
+          title={t("adminOverview.scaleToStudents", { count: students.length + 10 })}
+          desc={t("adminOverview.expandStudentOutreach")}
         />
         <GoalCard
-          tag="Pending Actions"
+          tag={t("adminOverview.pendingActions")}
           tagColorClass="text-cyan-400"
-          title="Review Registrations"
-          desc="Monitor signups and transition new instructors organically as they register."
+          title={t("adminOverview.reviewRegistrations")}
+          desc={t("adminOverview.monitorSignups")}
         />
         <GoalCard
-          tag="Catalog Size"
+          tag={t("adminOverview.catalogSize")}
           tagColorClass="text-pink-400"
-          title={`${courses.length} Live Courses`}
-          desc="Track enrollment distribution, courses rating, and platform revenue metrics."
+          title={t("adminOverview.liveCourses", { count: courses.length })}
+          desc={t("adminOverview.trackEnrollment")}
         />
       </div>
 
@@ -264,7 +266,7 @@ const AdminOverview = ({
         <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 shadow-sm">
           <h3 className="text-sm font-extrabold text-white mb-4 flex items-center gap-2">
             <Trophy size={16} className="text-amber-500" />
-            Top Instructors
+            {t("adminOverview.topInstructors")}
           </h3>
           <div className="flex flex-col gap-3">
             {sortedInstructors.slice(0, 5).map((inst, i) => (
@@ -297,7 +299,7 @@ const AdminOverview = ({
             ))}
             {sortedInstructors.length === 0 && (
               <p className="text-slate-500 text-xs py-4 text-center">
-                No instructor rankings data yet.
+                {t("adminOverview.noInstructorRankings")}
               </p>
             )}
           </div>
@@ -307,13 +309,13 @@ const AdminOverview = ({
         <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 shadow-sm">
           <h3 className="text-sm font-extrabold text-white mb-4 flex items-center gap-2">
             <BookOpen size={16} className="text-indigo-400" />
-            Recent Courses
+            {t("adminOverview.recentCourses")}
           </h3>
           <div className="flex flex-col gap-2.5">
             {courses.slice(0, 5).map((c) => (
               <div
                 key={c._id}
-                className="flex items-center justify-between gap-4 p-2 bg-slate-950/40 border border-slate-900 rounded-xl transition duration-150 hover:border-slate-800"
+                className="flex items-between justify-between gap-4 p-2 bg-slate-950/40 border border-slate-900 rounded-xl transition duration-150 hover:border-slate-800"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 border border-indigo-500/20">
@@ -349,7 +351,7 @@ const AdminOverview = ({
             ))}
             {courses.length === 0 && (
               <p className="text-slate-500 text-xs py-4 text-center">
-                No courses launched yet.
+                {t("adminOverview.noCoursesLaunched")}
               </p>
             )}
           </div>

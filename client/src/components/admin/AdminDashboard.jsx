@@ -18,6 +18,8 @@ import AdminDevices from "./AdminDevices";
 import AdminBulkImport from "./AdminBulkImport";
 import RoleManager from "./RoleManager";
 import AdminQuestionPapers from "./AdminQuestionPapers";
+import AdminNotes from "./AdminNotes";
+import AdminReels from "./AdminReels";
 
 export default function AdminDashboard() {
   const dispatch = useDispatch();
@@ -209,6 +211,10 @@ export default function AdminDashboard() {
         return <AdminApplications />;
       case "roles":
         return <RoleManager currentUser={user} />;
+      case "notes":
+        return <AdminNotes user={user} />;
+      case "reels":
+        return <AdminReels />;
       case "devices":
         return (
           <AdminDevices

@@ -111,13 +111,13 @@ const CoinRedeemModal = ({ onClose, currentUser, onRedeem }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
     >
-      <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[92dvh] flex flex-col">
         {/* Header */}
         <div
-          className="flex items-center justify-between px-6 py-4 border-b border-slate-800"
+          className="flex items-center justify-between px-6 py-4 border-b border-slate-800 shrink-0"
           style={{ background: "rgba(234,179,8,0.08)" }}
         >
           <div>
@@ -134,7 +134,7 @@ const CoinRedeemModal = ({ onClose, currentUser, onRedeem }) => {
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-5 sm:p-6 space-y-5 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
           {/* Available coins banner */}
           <div
             className="flex items-center justify-between px-4 py-3 rounded-xl"
@@ -174,7 +174,7 @@ const CoinRedeemModal = ({ onClose, currentUser, onRedeem }) => {
               <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
                 Quick redeem
               </p>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {QUICK_COINS.map((c) => (
                   <button
                     key={c}
@@ -208,6 +208,7 @@ const CoinRedeemModal = ({ onClose, currentUser, onRedeem }) => {
               </span>
               <input
                 type="number"
+                inputMode="numeric"
                 value={coinsToRedeem}
                 onChange={(e) => setCoinsToRedeem(e.target.value)}
                 placeholder={`Min ${COINS_PER_RUPEE} coins`}
@@ -221,7 +222,7 @@ const CoinRedeemModal = ({ onClose, currentUser, onRedeem }) => {
           {/* Live preview */}
           {numCoins > 0 && (
             <div
-              className="flex items-center justify-between px-4 py-3 rounded-xl"
+              className="flex items-center justify-between px-4 py-3 rounded-xl flex-wrap gap-2"
               style={{
                 background: "rgba(124,58,237,0.1)",
                 border: "1px solid rgba(124,58,237,0.4)",
@@ -347,12 +348,12 @@ const DepositModal = ({ onClose, currentUser }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
     >
-      <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[92dvh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 shrink-0">
           <h2 className="text-white font-bold text-lg">
             {t("wallet.addMoneyTitle")}
           </h2>
@@ -364,7 +365,7 @@ const DepositModal = ({ onClose, currentUser }) => {
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-5 sm:p-6 space-y-5 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
           {successMsg && (
             <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm">
               <span className="text-lg">✓</span> {successMsg}
@@ -386,7 +387,7 @@ const DepositModal = ({ onClose, currentUser }) => {
             <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
               {t("wallet.payViaRazorpay")}
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {QUICK_AMOUNTS.map((q) => (
                 <button
                   key={q}
@@ -407,6 +408,7 @@ const DepositModal = ({ onClose, currentUser }) => {
               </span>
               <input
                 type="number"
+                inputMode="numeric"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder={t("wallet.enterCustomAmount")}
@@ -449,6 +451,7 @@ const DepositModal = ({ onClose, currentUser }) => {
                     </span>
                     <input
                       type="number"
+                      inputMode="numeric"
                       value={mockAmount}
                       onChange={(e) => setMockAmount(e.target.value)}
                       min={1}
@@ -480,26 +483,28 @@ const TxRow = ({ tx }) => {
 
   return (
     <div
-      className={`flex items-center gap-4 p-4 rounded-xl border ${meta.bg} ${meta.border} transition hover:brightness-110`}
+      className={`w-full flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border ${meta.bg} ${meta.border} transition hover:brightness-110`}
     >
       <div
-        className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${meta.bg} border ${meta.border} ${meta.color} shrink-0`}
+        className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-base sm:text-lg font-bold ${meta.bg} border ${meta.border} ${meta.color} shrink-0`}
       >
         {meta.icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-white text-sm font-semibold truncate">
+        <p className="text-white text-xs sm:text-sm font-semibold truncate break-words">
           {tx.description || meta.label}
         </p>
-        <p className="text-slate-500 text-xs mt-0.5">{fmtDate(tx.createdAt)}</p>
+        <p className="text-slate-500 text-[10px] sm:text-xs mt-0.5 break-words">
+          {fmtDate(tx.createdAt)}
+        </p>
       </div>
-      <div className="text-right shrink-0">
-        <p className={`font-bold text-sm ${meta.color}`}>
+      <div className="w-full sm:w-auto text-right self-stretch sm:self-auto flex flex-col items-start sm:items-end gap-1 min-w-0">
+        <p className={`font-bold text-xs sm:text-sm ${meta.color} break-words`}>
           {isCredit ? "+" : "−"}
           {fmt(tx.amount)}
         </p>
         <span
-          className={`text-xs px-2 py-0.5 rounded-full border ${meta.bg} ${meta.border} ${meta.color}`}
+          className={`text-[9px] sm:text-xs px-2 py-0.5 rounded-full border ${meta.bg} ${meta.border} ${meta.color}`}
         >
           {meta.label}
         </span>
@@ -523,6 +528,17 @@ const StudentWallet = ({ showToast }) => {
   useEffect(() => {
     dispatch(fetchWallet());
   }, [dispatch]);
+
+  // Lock body scroll while a modal is open (mobile bottom-sheet feel)
+  useEffect(() => {
+    if (depositOpen || redeemOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [depositOpen, redeemOpen]);
 
   const filtered =
     filter === "all"
@@ -555,7 +571,7 @@ const StudentWallet = ({ showToast }) => {
   );
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="w-full max-w-full min-w-0 p-4 sm:p-6 sm:max-w-3xl mx-auto space-y-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] overflow-x-hidden overflow-hidden">
       {depositOpen && (
         <DepositModal
           onClose={() => {
@@ -578,13 +594,17 @@ const StudentWallet = ({ showToast }) => {
 
       {/* Page title */}
       <div>
-        <h1 className="text-3xl font-bold text-white">{t("wallet.title")}</h1>
-        <p className="text-slate-400 mt-1 text-sm">{t("wallet.subtitle")}</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">
+          {t("wallet.title")}
+        </h1>
+        <p className="text-slate-400 mt-1 text-xs sm:text-sm">
+          {t("wallet.subtitle")}
+        </p>
       </div>
 
       {/* ── Coin Balance Card ── */}
       <div
-        className="relative rounded-2xl p-5 overflow-hidden"
+        className="relative rounded-2xl p-4 sm:p-5 overflow-hidden min-w-0 w-full"
         style={{
           background:
             "linear-gradient(135deg, #1c1a0e 0%, #292205 40%, #0f172a 100%)",
@@ -600,27 +620,27 @@ const StudentWallet = ({ showToast }) => {
           }}
         />
 
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0">
+          <div className="min-w-0">
             <p className="text-yellow-700 text-xs font-semibold uppercase tracking-wider mb-1">
               Your Coins
             </p>
-            <div className="flex items-baseline gap-3">
-              <span className="text-4xl font-extrabold text-yellow-400">
+            <div className="flex items-baseline gap-2 sm:gap-3 flex-wrap">
+              <span className="text-3xl sm:text-4xl font-extrabold text-yellow-400">
                 🪙 {availableCoins.toLocaleString("en-IN")}
               </span>
-              <span className="text-yellow-700 text-sm">
+              <span className="text-yellow-700 text-xs sm:text-sm shrink-0">
                 ≈ {fmt(coinsToRupees(availableCoins))}
               </span>
             </div>
-            <p className="text-yellow-800 text-xs mt-1">
+            <p className="text-yellow-800 text-[10px] sm:text-xs mt-1">
               25 coins = ₹1 wallet balance
             </p>
           </div>
           <button
             onClick={() => setRedeemOpen(true)}
             disabled={availableCoins < COINS_PER_RUPEE}
-            className="px-5 py-2.5 rounded-xl font-bold text-sm transition hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-sm transition hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-center"
             style={{
               background: "linear-gradient(135deg, #ca8a04, #eab308)",
               color: "#1c1917",
@@ -631,14 +651,14 @@ const StudentWallet = ({ showToast }) => {
         </div>
 
         {/* How to earn */}
-        <div className="flex gap-4 mt-4 pt-4 border-t border-yellow-900/40 flex-wrap">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-4 pt-4 border-t border-yellow-900/40">
           {[
             { icon: "📅", label: "Daily login", val: "+1 coin" },
             { icon: "📚", label: "Course done", val: "+25 coins" },
             { icon: "🏆", label: "Certificate", val: "+25 coins" },
           ].map(({ icon, label, val }) => (
-            <div key={label} className="flex items-center gap-2">
-              <span className="text-base">{icon}</span>
+            <div key={label} className="flex items-center gap-3">
+              <span className="text-xl sm:text-base shrink-0">{icon}</span>
               <div>
                 <p className="text-yellow-800 text-xs">{label}</p>
                 <p className="text-yellow-500 text-xs font-bold">{val}</p>
@@ -650,7 +670,7 @@ const StudentWallet = ({ showToast }) => {
 
       {/* ── Wallet Balance Card ── */}
       <div
-        className="relative rounded-2xl p-6 overflow-hidden"
+        className="relative rounded-2xl p-5 sm:p-6 overflow-hidden min-w-0 w-full"
         style={{
           background:
             "linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #0f172a 100%)",
@@ -666,35 +686,39 @@ const StudentWallet = ({ showToast }) => {
           }}
         />
 
-        <p className="text-slate-400 text-sm font-medium mb-1">
+        <p className="text-slate-400 text-xs sm:text-sm font-medium mb-1">
           {t("wallet.availableBalance")}
         </p>
         {loading ? (
-          <div className="h-12 w-40 bg-slate-700/50 rounded-xl animate-pulse" />
+          <div className="h-10 sm:h-12 w-32 sm:w-40 bg-slate-700/50 rounded-xl animate-pulse" />
         ) : (
-          <p className="text-5xl font-extrabold text-white tracking-tight">
+          <p className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">
             {fmt(balance)}
           </p>
         )}
 
-        <div className="flex gap-6 mt-5 pt-5 border-t border-white/10">
-          <div>
-            <p className="text-slate-400 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5 pt-5 border-t border-white/10">
+          <div className="min-w-0">
+            <p className="text-slate-400 text-[10px] sm:text-xs">
               {t("wallet.totalDeposited")}
             </p>
-            <p className="text-green-400 font-bold text-sm mt-0.5">
+            <p className="text-green-400 font-bold text-xs sm:text-sm mt-0.5">
               {fmt(totalDeposited)}
             </p>
           </div>
           <div>
-            <p className="text-slate-400 text-xs">{t("wallet.totalSpent")}</p>
-            <p className="text-red-400 font-bold text-sm mt-0.5">
+            <p className="text-slate-400 text-[10px] sm:text-xs">
+              {t("wallet.totalSpent")}
+            </p>
+            <p className="text-red-400 font-bold text-xs sm:text-sm mt-0.5">
               {fmt(totalSpent)}
             </p>
           </div>
           <div>
-            <p className="text-slate-400 text-xs">{t("wallet.transactions")}</p>
-            <p className="text-slate-200 font-bold text-sm mt-0.5">
+            <p className="text-slate-400 text-[10px] sm:text-xs">
+              {t("wallet.transactions")}
+            </p>
+            <p className="text-slate-200 font-bold text-xs sm:text-sm mt-0.5">
               {transactions.length}
             </p>
           </div>
@@ -702,7 +726,7 @@ const StudentWallet = ({ showToast }) => {
 
         <button
           onClick={() => setDepositOpen(true)}
-          className="mt-5 px-6 py-2.5 rounded-xl font-bold text-sm transition hover:scale-105 active:scale-95"
+          className="mt-5 w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-sm transition hover:scale-105 active:scale-95 text-center"
           style={{
             background: "linear-gradient(135deg, #7c3aed, #06b6d4)",
             color: "#fff",
@@ -714,27 +738,32 @@ const StudentWallet = ({ showToast }) => {
       </div>
 
       {/* ── Transaction history ── */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden w-full">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-b border-slate-800">
           <h2 className="text-white font-bold">
             {t("wallet.transactionHistory")}
           </h2>
-          <div className="flex gap-1 bg-slate-800 p-1 rounded-xl flex-wrap">
-            {["all", "deposit", "purchase", "refund", "coin_redeem"].map(
-              (f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition ${
-                    filter === f
-                      ? "bg-purple-600 text-white"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  {f === "coin_redeem" ? "Coins" : f}
-                </button>
-              ),
-            )}
+          <div className="relative -mx-1 sm:mx-0 w-full sm:w-auto">
+            <div
+              className="flex flex-wrap gap-1 bg-slate-800 p-1 rounded-xl overflow-x-auto max-w-full scroll-smooth"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {["all", "deposit", "purchase", "refund", "coin_redeem"].map(
+                (f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition ${
+                      filter === f
+                        ? "bg-purple-600 text-white"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {f === "coin_redeem" ? "Coins" : f}
+                  </button>
+                ),
+              )}
+            </div>
           </div>
         </div>
 

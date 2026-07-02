@@ -13,6 +13,8 @@ import InstructorAI from "./InstructorAI";
 import InstructorNotifications from "./InstructorNotifications";
 import InstructorSettings from "./InstructorSettings";
 import InstructorMockTests from "./InstructorMockTests";
+import InstructorNotes from "./InstructorNotes";
+import MyReels from "../reels/MyReels";
 import { createCourse } from "../../redux/slices/courseSlice";
 import { useTranslation } from "react-i18next";
 
@@ -160,6 +162,10 @@ export default function InstructorDashboard() {
         return <InstructorSessions showToast={showToast} />;
       case "analytics":
         return <InstructorAnalytics />;
+      case "notes":
+        return <InstructorNotes showToast={showToast} />;
+      case "reels":
+        return <MyReels />;
       case "mock-tests":
         return <InstructorMockTests />;
       case "ai":
@@ -193,39 +199,7 @@ export default function InstructorDashboard() {
 
     return (
       <>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "10px",
-            background: "#1e293b",
-            borderRadius: 12,
-            marginBottom: 24,
-          }}
-        >
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg,#7c3aed,#db2777)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 13,
-              fontWeight: 700,
-              flexShrink: 0,
-            }}
-          >
-            {user?.name?.charAt(0) || "I"}
-          </div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
-              {user?.name}
-            </div>
-          </div>
-        </div>
+
 
         <nav style={{ flex: 1, overflowY: "auto" }}>
           {allNavItems.map(({ id, icon }) => (
@@ -336,21 +310,13 @@ export default function InstructorDashboard() {
 
         {/* Mobile drawer */}
         <aside
-          className="instr-drawer"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            height: "100vh",
-            width: 240,
-            background: "#0b1120",
-            borderRight: "1px solid #1e293b",
-            flexDirection: "column",
-            padding: "20px 12px 24px",
-            zIndex: 50,
-            transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
-            transition: "transform 0.28s cubic-bezier(.4,0,.2,1)",
-          }}
+          className={`bg-[#0b1120] border-r border-slate-800 flex-col transition-all duration-300 z-40 p-5 md:hidden
+            ${
+              sidebarOpen
+                ? "fixed top-[73px] bottom-[82px] left-0 w-[220px] shadow-2xl flex"
+                : "hidden"
+            }
+          `}
         >
           <button
             onClick={() => setSidebarOpen(false)}

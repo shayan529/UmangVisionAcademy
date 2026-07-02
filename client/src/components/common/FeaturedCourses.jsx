@@ -5,14 +5,15 @@ import { useTranslation } from "react-i18next";
 import { fetchPublishedCourses } from "../../redux/slices/courseSlice";
 import CourseCard from "./CourseCard";
 
-// ── Skeleton card ─────────────────────────────────────────────────────────────
 const SkeletonCard = () => (
-  <div className="rounded-2xl overflow-hidden border border-slate-800 bg-[#111827] animate-pulse">
-    <div className="h-44 bg-slate-700/50" />
-    <div className="p-4 space-y-3">
-      <div className="h-4 bg-slate-700/50 rounded w-3/4" />
-      <div className="h-3 bg-slate-700/40 rounded w-1/2" />
-      <div className="h-3 bg-slate-700/40 rounded w-1/3" />
+  <div className="rounded-2xl overflow-hidden border border-slate-800 bg-[#111827] animate-pulse flex flex-row md:flex-col h-[150px] md:h-auto p-2.5 md:p-0 gap-3 md:gap-0">
+    <div className="w-32 h-full md:w-full md:h-44 bg-slate-700/50 rounded-md md:rounded-none shrink-0" />
+    <div className="flex-1 p-2 md:p-4 space-y-3 flex flex-col justify-between">
+      <div>
+        <div className="h-4 bg-slate-700/50 rounded w-3/4" />
+        <div className="h-3 bg-slate-700/40 rounded w-1/2 mt-2" />
+      </div>
+      <div className="h-3 bg-slate-700/40 rounded w-1/3 mt-auto" />
     </div>
   </div>
 );
@@ -214,13 +215,13 @@ const Courses = () => {
 
         {/* Grid */}
         {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
             {[...Array(8)].map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
         ) : filteredCourses.length > 0 ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
             {filteredCourses.slice(0, 4).map((course) => (
               <div
                 key={course._id}

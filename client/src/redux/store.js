@@ -12,6 +12,7 @@ import settingsReducer from "./slices/settingsSlice";
 import mockReducer from "./slices/mockTestSlice";
 import walletReducer from "./slices/walletSlice";
 import achievementReducer from "./slices/achievementSlice";
+import reelsReducer from "./slices/reelsSlice";
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +29,7 @@ export const store = configureStore({
     mockTest: mockReducer,
     wallet: walletReducer,
     achievements: achievementReducer,
+    reels: reelsReducer,
   },
 });
 

@@ -29,6 +29,8 @@ const MODULE_LABELS = {
   users: "Users",
   payments: "Payments",
   moderation: "Moderation",
+  notes: "Notes Moderation",
+  reels: "Reels Moderation",
 };
 
 const ACTION_LABELS = {
@@ -37,6 +39,7 @@ const ACTION_LABELS = {
   edit: "Edit",
   delete: "Delete",
   approve: "Approve",
+  reject: "Reject",
   impersonate: "Impersonate",
   refund: "Refund",
   export: "Export",

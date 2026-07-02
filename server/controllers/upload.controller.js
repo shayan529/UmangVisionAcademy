@@ -35,7 +35,8 @@ export const uploadFile = async (req, res) => {
     if (!req.file)
       return res.status(400).json({ message: "No file provided." });
 
-    const folder = req.body.folder || "Umang Vision Academy";
+    const rawFolder = req.body.folder || "Umang Vision Academy";
+    const folder = "/" + rawFolder.trim().replace(/[^a-zA-Z0-9_\-\/]/g, "_").replace(/\/+/g, "/");
     const fileName = `${Date.now()}_${req.file.originalname.replace(/\s+/g, "_")}`;
     const sourcePath = req.file.path;
     const originalExt =

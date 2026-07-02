@@ -128,9 +128,9 @@ const Sidebar = ({
     border-r border-[#1e293b]
     flex flex-col
     p-3
-    z-40
+    transition-all duration-300
     ${collapsed ? "w-[68px] min-w-[68px]" : "w-[230px] min-w-[230px]"}
-    ${mobileOpen ? "fixed top-0 left-0 h-screen shadow-2xl" : "hidden md:flex"}
+    ${mobileOpen ? "fixed top-[73px] bottom-[82px] left-0 w-[220px] shadow-2xl z-40" : "hidden md:flex z-40 md:relative md:h-auto"}
   `;
 
   const NavItem = ({ item }) => (
@@ -204,24 +204,9 @@ const Sidebar = ({
 
   return (
     <aside className={sidebarClass}>
-      {/* User card */}
-      <div
-        className={`flex items-center gap-3 p-3 mb-4 rounded-xl bg-[#1e293b] ${collapsed ? "justify-center" : ""}`}
-      >
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600 to-pink-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-          {initials}
-        </div>
-        {!collapsed && (
-          <div className="min-w-0">
-            <div className="text-sm font-bold text-slate-100 truncate">
-              {username}
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Nav items — scrollable middle */}
-      <nav className="flex-1 flex flex-col gap-1 overflow-y-auto px-1">
+      <nav className="flex-1 flex flex-col gap-1 overflow-y-auto px-1 pb-24 md:pb-4">
         {navItemsTop.map((item) => (
           <NavItem key={item.to} item={item} />
         ))}

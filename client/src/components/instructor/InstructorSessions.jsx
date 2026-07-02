@@ -29,7 +29,6 @@ const InstructorSessions = ({ showToast }) => {
   }, [dispatch]);
 
   const sessionsState = useSelector((s) => s.sessions);
-  console.log("sessions state:", sessionsState);
 
   const inputStyle = {
     width: "100%",

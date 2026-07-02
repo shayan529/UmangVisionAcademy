@@ -10,9 +10,6 @@ const ProgressPage = () => {
   const { t } = useTranslation();
   const user = useSelector((s) => s.auth.user);
   const { enrolled, enrolledLoading } = useSelector((s) => s.courses);
-  useEffect(() => {
-    console.log("enrolled courses:", enrolled);
-  }, [enrolled]);
 
   useEffect(() => {
     dispatch(fetchEnrolledCourses());

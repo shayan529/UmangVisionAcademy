@@ -2,6 +2,7 @@
 import QuestionPaper from "../models/questionPaper.model.js";
 import ImageKit from "imagekit";
 import streamifier from "streamifier";
+import { cacheResponse, invalidateCache } from "../utils/redisClient.js";
 
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
@@ -46,6 +47,7 @@ export const uploadQuestionPaper = async (req, res) => {
       { upsert: true, new: true },
     );
 
+    await invalidateCache("questionPapers:public*");
     res.status(200).json({ message: "Uploaded successfully.", paper });
   } catch (err) {
     console.error("[uploadQuestionPaper]", err);
@@ -73,6 +75,7 @@ export const deleteQuestionPaper = async (req, res) => {
     }
 
     await paper.deleteOne();
+    await invalidateCache("questionPapers:public*");
     res.json({ message: "Deleted." });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -85,7 +88,14 @@ export const getQuestionPapers = async (req, res) => {
     const filter = {};
     if (board && board !== "All") filter.board = board;
     if (cls && cls !== "All") filter.class = cls;
-    const papers = await QuestionPaper.find(filter);
+    const keyBoard =
+      board && board !== "All" ? board.replace(/\s+/g, "_") : "All";
+    const keyClass =
+      cls && cls !== "All" ? String(cls).replace(/\s+/g, "_") : "All";
+    const cacheKey = `questionPapers:public:${keyBoard}:${keyClass}`;
+    const papers = await cacheResponse(cacheKey, 30, async () => {
+      return await QuestionPaper.find(filter).lean();
+    });
     res.json(papers);
   } catch (err) {
     res.status(500).json({ message: err.message });

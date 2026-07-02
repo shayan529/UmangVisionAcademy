@@ -1,6 +1,12 @@
 import express from "express";
 import twilio from "twilio";
 import User from "../models/user.model.js";
+import {
+  deleteOtpRecord,
+  getOtpRecord,
+  setOtpRecord,
+  updateOtpRecord,
+} from "../utils/otpStore.js";
 
 const router = express.Router();
 
@@ -10,8 +16,6 @@ const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
 const twilioClient =
   accountSid && authToken ? twilio(accountSid, authToken) : null;
 
-// ── In-memory attempt store (swap for Redis in production) ───────────────────
-const sessionStore = new Map();
 const SESSION_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const MAX_ATTEMPTS = 5;
 
@@ -38,7 +42,7 @@ router.post("/send-phone-otp", async (req, res) => {
     }
 
     // ── Rate limiting ─────────────────────────────────────────────────────────
-    const existingSession = sessionStore.get(phoneNumber);
+    const existingSession = await getOtpRecord(phoneNumber);
     if (existingSession?.attempts >= MAX_ATTEMPTS) {
       const elapsed = Date.now() - existingSession.createdAt;
       if (elapsed < SESSION_TTL_MS) {
@@ -62,10 +66,14 @@ router.post("/send-phone-otp", async (req, res) => {
         channel: "sms",
       });
 
-    sessionStore.set(phoneNumber, {
-      createdAt: Date.now(),
-      attempts: 0,
-    });
+    await setOtpRecord(
+      phoneNumber,
+      {
+        createdAt: Date.now(),
+        attempts: 0,
+      },
+      SESSION_TTL_MS,
+    );
 
     return res.status(200).json({
       success: true,
@@ -90,7 +98,7 @@ router.post("/verify-phone-otp", async (req, res) => {
         .json({ message: "Phone number and OTP are required." });
     }
 
-    const record = sessionStore.get(phoneNumber);
+    const record = await getOtpRecord(phoneNumber);
 
     if (!record) {
       return res
@@ -100,7 +108,7 @@ router.post("/verify-phone-otp", async (req, res) => {
 
     // ── Expired ───────────────────────────────────────────────────────────────
     if (Date.now() - record.createdAt > SESSION_TTL_MS) {
-      sessionStore.delete(phoneNumber);
+      await deleteOtpRecord(phoneNumber);
       return res
         .status(400)
         .json({ message: "OTP has expired. Please request a new one." });
@@ -108,7 +116,7 @@ router.post("/verify-phone-otp", async (req, res) => {
 
     // ── Too many wrong attempts ───────────────────────────────────────────────
     if (record.attempts >= MAX_ATTEMPTS) {
-      sessionStore.delete(phoneNumber);
+      await deleteOtpRecord(phoneNumber);
       return res.status(429).json({
         message: "Too many incorrect attempts. Please request a new OTP.",
       });
@@ -129,16 +137,17 @@ router.post("/verify-phone-otp", async (req, res) => {
       });
 
     if (verification.status !== "approved") {
-      record.attempts += 1;
-      sessionStore.set(phoneNumber, record);
+      await updateOtpRecord(phoneNumber, {
+        attempts: (record.attempts || 0) + 1,
+      });
       return res.status(400).json({
         success: false,
-        message: `Invalid OTP. ${MAX_ATTEMPTS - record.attempts} attempts remaining.`,
+        message: `Invalid OTP. ${MAX_ATTEMPTS - (record.attempts || 0) - 1} attempts remaining.`,
       });
     }
 
     // ── Success ───────────────────────────────────────────────────────────────
-    sessionStore.delete(phoneNumber);
+    await deleteOtpRecord(phoneNumber);
     return res.status(200).json({
       success: true,
       message: "Phone number verified successfully.",

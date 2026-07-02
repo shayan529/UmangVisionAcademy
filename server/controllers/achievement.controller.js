@@ -1,4 +1,5 @@
 import Achievement from "../models/achievement.model.js";
+import { cacheResponse, deleteKey } from "../utils/redisClient.js";
 
 // ── Fetch user's achievements with earned badges ──
 export const getUserAchievements = async (req, res) => {
@@ -8,24 +9,31 @@ export const getUserAchievements = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const achievements = await Achievement.find({ userId }).sort({
-      earnedAt: -1,
-    });
+    const cacheKey = `user:achievements:${userId}`;
+    const cachedData = await cacheResponse(cacheKey, 300, async () => {
+      const achievements = await Achievement.find({ userId }).sort({
+        earnedAt: -1,
+      });
 
-    // Map to frontend format
-    const earnedBadges = {};
-    achievements.forEach((ach) => {
-      earnedBadges[ach.badgeId] = {
-        earnedAt: ach.earnedAt,
-        viewed: ach.viewed,
-        _id: ach._id,
+      // Map to frontend format
+      const earnedBadges = {};
+      achievements.forEach((ach) => {
+        earnedBadges[ach.badgeId] = {
+          earnedAt: ach.earnedAt,
+          viewed: ach.viewed,
+          _id: ach._id,
+        };
+      });
+
+      return {
+        earnedBadges,
+        totalEarned: achievements.length,
       };
     });
 
     res.json({
       success: true,
-      earnedBadges,
-      totalEarned: achievements.length,
+      ...cachedData,
     });
   } catch (error) {
     console.error("❌ getUserAchievements error:", error.message);
@@ -98,6 +106,10 @@ export const checkAndAwardAchievements = async (req, res) => {
     const updatedAchievements = await Achievement.find({ userId }).sort({
       earnedAt: -1,
     });
+
+    // Invalidate achievements cache
+    await deleteKey(`user:achievements:${userId}`);
+
     const earnedBadges = {};
     updatedAchievements.forEach((ach) => {
       earnedBadges[ach.badgeId] = {
@@ -144,6 +156,9 @@ export const markAchievementsViewed = async (req, res) => {
       { userId, badgeId: { $in: badgeIds } },
       { viewed: true },
     );
+
+    // Invalidate achievements cache
+    await deleteKey(`user:achievements:${userId}`);
 
     res.json({
       success: true,

@@ -1,6 +1,7 @@
 // controllers/mockTestController.js
 import MockTest from "../models/mockTest.model.js";
 import MockTestAttempt from "../models/mockTestAttempt.model.js";
+import { cacheResponse, invalidateCache } from "../utils/redisClient.js";
 
 // ─── INSTRUCTOR ──────────────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ export const createMockTest = async (req, res) => {
       isPublished: false,
     });
 
+    await invalidateCache("mocktests:available*");
     res.status(201).json({ success: true, mockTest });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -63,6 +65,7 @@ export const togglePublish = async (req, res) => {
 
     test.isPublished = !test.isPublished;
     await test.save();
+    await invalidateCache("mocktests:available*");
     res.json({ success: true, isPublished: test.isPublished });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -93,6 +96,8 @@ export const updateMockTest = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "Test not found" });
+    await invalidateCache("mocktests:available*");
+    await invalidateCache(`mocktests:leaderboard:${req.params.id}`);
     res.json({ success: true, test });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -110,6 +115,8 @@ export const deleteMockTest = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "Test not found" });
+    await invalidateCache("mocktests:available*");
+    await invalidateCache(`mocktests:leaderboard:${req.params.id}`);
     res.json({ success: true, message: "Test deleted" });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -128,10 +135,19 @@ export const getAvailableTests = async (req, res) => {
     if (board) filter.board = { $in: [board, "All"] };
     if (difficulty) filter.difficulty = difficulty;
 
-    const tests = await MockTest.find(filter)
-      .select("-questions.correctOption -questions.explanation") // hide answers
-      .populate("instructor", "name")
-      .sort({ createdAt: -1 });
+    const boardKey = board ? board.replace(/\s+/g, "_") : "All";
+    const classKey = className ? String(className).replace(/\s+/g, "_") : "All";
+    const subjectKey = subject ? subject.replace(/\s+/g, "_") : "All";
+    const difficultyKey = difficulty ? difficulty.replace(/\s+/g, "_") : "All";
+    const cacheKey = `mocktests:available:${subjectKey}:${classKey}:${boardKey}:${difficultyKey}`;
+
+    const tests = await cacheResponse(cacheKey, 30, async () => {
+      return await MockTest.find(filter)
+        .select("-questions.correctOption -questions.explanation") // hide answers
+        .populate("instructor", "name")
+        .sort({ createdAt: -1 })
+        .lean();
+    });
 
     // Attach student's attempt status for each test
     const testIds = tests.map((t) => t._id);
@@ -147,7 +163,7 @@ export const getAvailableTests = async (req, res) => {
     });
 
     const testsWithStatus = tests.map((t) => ({
-      ...t.toObject(),
+      ...t,
       attemptInfo: attemptMap[t._id.toString()] || null,
     }));
 
@@ -259,6 +275,7 @@ export const submitTest = async (req, res) => {
 
     // Increment test attempt counter
     await MockTest.findByIdAndUpdate(test._id, { $inc: { attempts: 1 } });
+    await invalidateCache(`mocktests:leaderboard:${test._id}`);
 
     res.json({
       success: true,
@@ -348,24 +365,27 @@ export const getMyResults = async (req, res) => {
 // GET /api/mock-tests/:testId/leaderboard
 export const getLeaderboard = async (req, res) => {
   try {
-    const attempts = await MockTestAttempt.find({
-      mockTest: req.params.testId,
-      status: "completed",
-    })
-      .populate("student", "name email")
-      .sort({ score: -1, timeTaken: 1 }) // highest score, fastest first
-      .limit(50);
+    const cacheKey = `mocktests:leaderboard:${req.params.testId}`;
+    const leaderboard = await cacheResponse(cacheKey, 30, async () => {
+      const attempts = await MockTestAttempt.find({
+        mockTest: req.params.testId,
+        status: "completed",
+      })
+        .populate("student", "name email")
+        .sort({ score: -1, timeTaken: 1 }) // highest score, fastest first
+        .limit(50);
 
-    const leaderboard = attempts.map((a, i) => ({
-      rank: i + 1,
-      studentName:
-        a.student?.name || a.student?.email?.split("@")[0] || "Student",
-      score: a.score,
-      totalMarks: a.totalMarks,
-      percentage: a.percentage,
-      timeTaken: a.timeTaken,
-      passed: a.passed,
-    }));
+      return attempts.map((a, i) => ({
+        rank: i + 1,
+        studentName:
+          a.student?.name || a.student?.email?.split("@")[0] || "Student",
+        score: a.score,
+        totalMarks: a.totalMarks,
+        percentage: a.percentage,
+        timeTaken: a.timeTaken,
+        passed: a.passed,
+      }));
+    });
 
     res.json({ success: true, leaderboard });
   } catch (err) {

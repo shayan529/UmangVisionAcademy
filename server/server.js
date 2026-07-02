@@ -4,8 +4,9 @@ import { fileURLToPath } from "url";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cookieParser from "cookie-parser";
-import ConnectDb from "./utils/ConnectDb.js";
 import "dotenv/config";
+import ConnectDb from "./utils/ConnectDb.js";
+import { connectRedis } from "./utils/redisClient.js";
 import userRoutes from "./routes/user.routes.js";
 import courseRoutes from "./routes/course.routes.js";
 import instructorApplicationRoutes from "./routes/instructorApplication.routes.js";
@@ -27,6 +28,8 @@ import achievementRoutes from "./routes/achievement.routes.js";
 import roleRoutes from "./routes/role.routes.js";
 import questionPaperRoutes from "./routes/questionPaper.routes.js";
 import referenceRoutes from "./routes/reference.routes.js";
+import reelRoutes from "./routes/reel.routes.js";
+import noteRoutes from "./routes/note.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,7 +51,7 @@ const corsOptions = {
     // Allow requests with no origin (mobile apps, curl, Postman, server-to-server)
     if (!origin) return callback(null, true);
     if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-    
+
     // Automatically allow requests from the deployment domain on Render
     try {
       const originUrl = new URL(origin);
@@ -112,6 +115,8 @@ app.use("/api/achievements", achievementRoutes);
 app.use("/api/admin/roles", roleRoutes);
 app.use("/api/question-papers", questionPaperRoutes);
 app.use("/api/references", referenceRoutes);
+app.use("/api/reels", reelRoutes);
+app.use("/api/notes", noteRoutes);
 
 // Serve frontend build in production
 if (process.env.NODE_ENV === "production") {
@@ -123,13 +128,13 @@ if (process.env.NODE_ENV === "production") {
         if (filePath.endsWith(".html")) {
           res.setHeader(
             "Cache-Control",
-            "no-store, no-cache, must-revalidate, proxy-revalidate"
+            "no-store, no-cache, must-revalidate, proxy-revalidate",
           );
         } else {
           res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
         }
       },
-    })
+    }),
   );
   app.get(/.*/, (req, res) => {
     if (req.path.startsWith("/api")) {
@@ -141,7 +146,10 @@ if (process.env.NODE_ENV === "production") {
       return res.status(404).send("Not Found");
     }
     // Set headers to prevent caching of index.html so users always get the latest asset references
-    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate",
+    );
     res.sendFile(path.join(CLIENT_BUILD_PATH, "index.html"));
   });
 }
@@ -159,7 +167,8 @@ registerSessionChat(io);
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 ConnectDb()
-  .then(() => {
+  .then(async () => {
+    await connectRedis().catch(() => undefined);
     httpServer.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
       console.log(`Allowed CORS origins: ${ALLOWED_ORIGINS.join(", ")}`);

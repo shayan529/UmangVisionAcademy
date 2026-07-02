@@ -7,11 +7,13 @@ import { fetchCart } from "./redux/slices/cartSlice";
 import Navbar from "./Layout/Navbar";
 import Footer from "./Layout/Footer";
 import MobileBottomBar from "./Layout/MobileBottomBar";
+import { isNativeApp } from "./utils/appEnvironment";
 
 import Home from "./pages/Home";
 import MobileChat from "./components/mobile/MobileChat";
 import MobileNotes from "./components/mobile/MobileNotes";
 import MobileReels from "./components/mobile/MobileReels";
+import ReelsFeed from "./components/reels/ReelsFeed";
 import Contact from "./pages/Contact";
 import HelpCenter from "./pages/HelpCenter";
 import Faq from "./pages/Faq";
@@ -76,6 +78,8 @@ import AdminInstructors from "./components/admin/AdminInstructors";
 import AdminApplications from "./components/admin/AdminApplications";
 import AdminCourses from "./components/admin/AdminCourses";
 import AdminLeaderboard from "./components/admin/AdminLeaderboard";
+import AdminReels from "./components/admin/AdminReels";
+import MyReels from "./components/reels/MyReels";
 import InstructorApplicationStatus from "./components/common/InstructorApplicationStatus";
 import PrivacyPolicy from "./components/common/PrivacyPolicy";
 import TermsOfService from "./components/common/TermsOfService";
@@ -96,16 +100,23 @@ const ScrollToTop = () => {
   return null;
 };
 
-const Layout = () => (
-  <div className="bg-slate-950 text-slate-100 min-h-screen pb-20 md:pb-0">
-    <Navbar />
-    <div className="pb-8">
-      <Outlet />
+const Layout = () => {
+  const nativeApp = isNativeApp();
+  const isMobileViewport =
+    typeof window !== "undefined" && window.innerWidth < 768;
+  const showMobileBottomBar = nativeApp || isMobileViewport;
+
+  return (
+    <div className="bg-slate-950 text-slate-100 min-h-screen pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
+      <Navbar />
+      <div className="pb-8">
+        <Outlet />
+      </div>
+      {showMobileBottomBar && <MobileBottomBar />}
+      <Footer />
     </div>
-    <MobileBottomBar />
-    <Footer />
-  </div>
-);
+  );
+};
 
 function App() {
   const dispatch = useDispatch();
@@ -121,15 +132,25 @@ function App() {
     }
   }, [user, dispatch]);
 
+  const nativeApp = isNativeApp();
+  const isMobileViewport =
+    typeof window !== "undefined" && window.innerWidth < 768;
+  const showMobileNav = nativeApp || isMobileViewport;
+
   return (
     <>
       <ScrollToTop />
       <Routes>
         <Route element={<Layout />}>
           {/* ── Mobile-Only Navigation Views ── */}
-          <Route path="mobile/chat" element={<MobileChat />} />
-          <Route path="mobile/notes" element={<MobileNotes />} />
-          <Route path="mobile/reels" element={<MobileReels />} />
+          {showMobileNav && (
+            <>
+              <Route path="mobile/chat" element={<MobileChat />} />
+              <Route path="mobile/notes" element={<MobileNotes />} />
+              <Route path="mobile/reels" element={<MobileReels />} />
+              <Route path="reels" element={<ReelsFeed />} />
+            </>
+          )}
 
           {/* ── Public ── */}
           <Route index element={<Home />} />
@@ -189,6 +210,8 @@ function App() {
             <Route path="achievements" element={<Achievements />} />
             <Route path="progress" element={<ProgressPage />} />
             <Route path="wallet" element={<StudentWallet />} />
+            <Route path="reels" element={<ReelsFeed />} />
+            <Route path="my-reels" element={<MyReels />} />
             <Route path="purchase-history" element={<PurchaseHistory />} />
 
             {/* ── Mock Tests (nested layout with sub-nav) ── */}
@@ -255,6 +278,7 @@ function App() {
             <Route path="instructors" element={<AdminInstructors />} />
             <Route path="applications" element={<AdminApplications />} />
             <Route path="courses" element={<AdminCourses />} />
+            <Route path="reels" element={<AdminReels />} />
             <Route path="leaderboard" element={<AdminLeaderboard />} />
           </Route>
 

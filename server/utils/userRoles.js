@@ -20,7 +20,15 @@ export const roleIdString = (role) => {
 
 export const hasBaseRole = (user, roleName) =>
   Array.isArray(user?.roles) &&
-  user.roles.some((role) => role === roleName);
+  user.roles.some((role) => {
+    if (typeof role === "string") {
+      return role.toLowerCase() === roleName.toLowerCase();
+    }
+    if (role && typeof role === "object" && role.name) {
+      return role.name.toLowerCase() === roleName.toLowerCase();
+    }
+    return false;
+  });
 
 export const customRoleIdsFromRoles = (roles = []) =>
   roles.map(roleIdString).filter((id) => Types.ObjectId.isValid(id));

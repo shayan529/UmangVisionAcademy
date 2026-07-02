@@ -4,10 +4,12 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { sendOtpEmail } from "../utils/Mailer.js"; // adjust path if needed
-
-// ── In-memory OTP store (use Redis in production) ────────────────────────────
-// Structure: key → { otp, expiresAt, attempts }
-const otpStore = new Map();
+import {
+  deleteOtpRecord,
+  getOtpRecord,
+  setOtpRecord,
+  updateOtpRecord,
+} from "../utils/otpStore.js";
 
 const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const MAX_ATTEMPTS = 5;
@@ -15,16 +17,8 @@ const RESEND_COOLDOWN = 60 * 1000; // 60 seconds between resends
 
 const generateOtp = () => crypto.randomInt(100000, 999999).toString();
 
-const storeOtp = (key, otp) => {
-  otpStore.set(key, {
-    otp,
-    expiresAt: Date.now() + OTP_TTL_MS,
-    attempts: 0,
-  });
-};
-
-const verifyStoredOtp = (key, otp) => {
-  const record = otpStore.get(key);
+const verifyStoredOtp = async (key, otp) => {
+  const record = await getOtpRecord(key);
 
   if (!record) {
     return {
@@ -33,26 +27,26 @@ const verifyStoredOtp = (key, otp) => {
     };
   }
   if (Date.now() > record.expiresAt) {
-    otpStore.delete(key);
+    await deleteOtpRecord(key);
     return { ok: false, message: "OTP has expired. Please request a new one." };
   }
   if (record.attempts >= MAX_ATTEMPTS) {
-    otpStore.delete(key);
+    await deleteOtpRecord(key);
     return {
       ok: false,
       message: "Too many incorrect attempts. Please request a new OTP.",
     };
   }
   if (record.otp !== otp) {
-    record.attempts += 1;
-    const remaining = MAX_ATTEMPTS - record.attempts;
+    await updateOtpRecord(key, { attempts: record.attempts + 1 });
+    const remaining = MAX_ATTEMPTS - (record.attempts + 1);
     return {
       ok: false,
       message: `Invalid OTP. ${remaining} attempt${remaining === 1 ? "" : "s"} remaining.`,
     };
   }
 
-  otpStore.delete(key); // one-time use
+  await deleteOtpRecord(key); // one-time use
   return { ok: true };
 };
 
@@ -183,7 +177,7 @@ export const sendEmailOtp = async (req, res) => {
 
     // Resend cooldown — key is userId:email-change:newEmail
     const storeKey = `${req.user._id}:email-change:${newEmail}`;
-    const current = otpStore.get(storeKey);
+    const current = await getOtpRecord(storeKey);
     if (current) {
       const elapsed = Date.now() - (current.expiresAt - OTP_TTL_MS);
       if (elapsed < RESEND_COOLDOWN) {
@@ -195,7 +189,15 @@ export const sendEmailOtp = async (req, res) => {
     }
 
     const otp = generateOtp();
-    storeOtp(storeKey, otp);
+    await setOtpRecord(
+      storeKey,
+      {
+        otp,
+        attempts: 0,
+        lastSentAt: Date.now(),
+      },
+      OTP_TTL_MS,
+    );
 
     await sendOtpEmail(newEmail, otp); // sends branded email via nodemailer
 
@@ -225,7 +227,7 @@ export const verifyEmailOtp = async (req, res) => {
     }
 
     const storeKey = `${req.user._id}:email-change:${newEmail}`;
-    const result = verifyStoredOtp(storeKey, otp);
+    const result = await verifyStoredOtp(storeKey, otp);
 
     if (!result.ok) {
       return res.status(400).json({ message: result.message });
@@ -261,7 +263,7 @@ export const sendPasswordOtp = async (req, res) => {
 
     // Resend cooldown — key is userId:password-change
     const storeKey = `${req.user._id}:password-change`;
-    const current = otpStore.get(storeKey);
+    const current = await getOtpRecord(storeKey);
     if (current) {
       const elapsed = Date.now() - (current.expiresAt - OTP_TTL_MS);
       if (elapsed < RESEND_COOLDOWN) {
@@ -273,7 +275,15 @@ export const sendPasswordOtp = async (req, res) => {
     }
 
     const otp = generateOtp();
-    storeOtp(storeKey, otp);
+    await setOtpRecord(
+      storeKey,
+      {
+        otp,
+        attempts: 0,
+        lastSentAt: Date.now(),
+      },
+      OTP_TTL_MS,
+    );
 
     await sendOtpEmail(user.email, otp);
 
@@ -302,7 +312,7 @@ export const verifyPasswordOtp = async (req, res) => {
     }
 
     const storeKey = `${req.user._id}:password-change`;
-    const result = verifyStoredOtp(storeKey, otp);
+    const result = await verifyStoredOtp(storeKey, otp);
 
     if (!result.ok) {
       return res.status(400).json({ message: result.message });
