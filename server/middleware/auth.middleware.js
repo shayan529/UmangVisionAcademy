@@ -12,11 +12,23 @@ const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 // Verifies the JWT and attaches req.user
 export const protect = async (req, res, next) => {
   try {
-    const token = req.cookies?.token;
+    // Prefer the httpOnly cookie (used by the website). Fall back to a
+    // Bearer token in the Authorization header — this is what the Capacitor
+    // Android app sends, since cross-origin cookies from the native WebView
+    // (origin "capacitor://localhost" / "http://localhost" talking to
+    // umangvisionacademy.onrender.com) aren't reliably sent or accepted
+    // across Android WebView versions even with SameSite=None.
+    let token = req.cookies?.token;
+
+    if (!token && req.headers.authorization?.startsWith("Bearer ")) {
+      token = req.headers.authorization.split(" ")[1];
+    }
 
     console.log(
       "[protect] Checking auth - token exists:",
       !!token,
+      "source:",
+      req.cookies?.token ? "cookie" : token ? "bearer" : "none",
       "path:",
       req.path,
     );

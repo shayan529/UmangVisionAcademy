@@ -41,6 +41,14 @@ const CLIENT_BUILD_PATH = path.resolve(__dirname, "../client/dist");
 const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://localhost:5174", // Vite sometimes uses 5174 as fallback
+  // Capacitor's Android WebView sends one of these as its Origin header
+  // depending on androidScheme config — without these, every request from
+  // the installed APK gets silently CORS-blocked even though the server
+  // itself responds fine (shows up client-side as a generic network error,
+  // and repeated failed/retried requests are also what makes the app feel slow).
+  "https://localhost",
+  "http://localhost",
+  "capacitor://localhost",
 ];
 
 if (process.env.CLIENT_URL) ALLOWED_ORIGINS.push(process.env.CLIENT_URL);
@@ -48,7 +56,7 @@ if (process.env.FRONTEND_URL) ALLOWED_ORIGINS.push(process.env.FRONTEND_URL);
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, Postman, server-to-server)
+    // Allow requests with no origin (curl, Postman, server-to-server)
     if (!origin) return callback(null, true);
     if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
 

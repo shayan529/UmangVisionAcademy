@@ -12,6 +12,7 @@ import {
   setMode,
 } from "../../redux/slices/aiTutorSlice.js";
 import { useTranslation } from "react-i18next";
+import { API_BASE_URL } from "../../config/api.js";
 
 // ── Theme tokens ─────────────────────────────────────────────────────────────
 const DARK = {
@@ -621,8 +622,7 @@ export default function AITutor() {
       dispatch(setError(null));
 
       try {
-        const baseUrl =
-          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const baseUrl = API_BASE_URL;
         const res = await fetch(
           `${baseUrl}/ai/history/${encodeURIComponent(id)}`,
           {
@@ -668,8 +668,7 @@ export default function AITutor() {
         activeIdRef.current = null;
       }
 
-      const baseUrl =
-        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const baseUrl = API_BASE_URL;
       fetch(`${baseUrl}/ai/history/${encodeURIComponent(id)}`, {
         method: "DELETE",
         credentials: "include",
@@ -754,8 +753,7 @@ export default function AITutor() {
       try {
         const ctrl = new AbortController();
         abortRef.current = ctrl;
-        const baseUrl =
-          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const baseUrl = API_BASE_URL;
         const requestedLanguage =
           mode === "voice"
             ? voiceLang === "hi-IN"

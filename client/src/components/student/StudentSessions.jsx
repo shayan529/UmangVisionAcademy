@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSessions } from "../../redux/slices/sessionSlice";
 import { io } from "socket.io-client";
+import { SOCKET_URL } from "../../config/api.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -34,10 +35,7 @@ const ChatPanel = ({ sessionId, currentUser }) => {
   const chatContainerRef = useRef(null);
 
   useEffect(() => {
-    const socketUrl =
-      import.meta.env.VITE_SOCKET_URL ||
-      import.meta.env.VITE_API_URL ||
-      window.location.origin;
+    const socketUrl = SOCKET_URL;
 
     let socket;
     try {

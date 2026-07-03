@@ -60,6 +60,21 @@ const initialState = {
   isAuthenticated: false,
 };
 
+// Login/Register responses now come back as { user, token } — the cookie is
+// still set server-side for browser sessions, but we also persist the token
+// locally so the axios interceptor (see config/api.js) can send it as a
+// Bearer header. This is required for the Capacitor Android app, where
+// cross-origin cookies from the native WebView aren't reliably sent/accepted.
+const persistToken = (payload) => {
+  if (payload?.token) {
+    localStorage.setItem("authToken", payload.token);
+  }
+};
+
+const clearPersistedToken = () => {
+  localStorage.removeItem("authToken");
+};
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -104,8 +119,9 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload;
+        state.user = action.payload.user ?? action.payload;
         state.isAuthenticated = true;
+        persistToken(action.payload);
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -120,8 +136,9 @@ const authSlice = createSlice({
       })
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload;
+        state.user = action.payload.user ?? action.payload;
         state.isAuthenticated = true;
+        persistToken(action.payload);
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
@@ -136,14 +153,15 @@ const authSlice = createSlice({
       })
       .addCase(loadCurrentUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload;
+        state.user = action.payload.user ?? action.payload;
         state.isAuthenticated = true;
       })
       .addCase(loadCurrentUser.rejected, (state) => {
-        // Session expired or no cookie — user must log in again
+        // Session expired or no cookie/token — user must log in again
         state.loading = false;
         state.user = null;
         state.isAuthenticated = false;
+        clearPersistedToken();
       });
 
     // ── Logout ─────────────────────────────────────────────────────────────
@@ -152,6 +170,7 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       state.error = null;
+      clearPersistedToken();
     });
 
     // ── Profile Updates ──────────────────────────────────────────────────

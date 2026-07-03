@@ -206,14 +206,14 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
         {filteredUsers.map((user) => (
           <div
             key={user._id}
-            className="flex flex-col bg-slate-900/20 border border-slate-800/90 rounded-2xl p-5 hover:border-slate-700/50 transition duration-200"
+            className="flex flex-col bg-slate-900/20 border border-slate-800/90 rounded-2xl p-4 sm:p-5 hover:border-slate-700/50 transition duration-200"
           >
             {/* User Meta Information */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800/50 pb-4 mb-4">
               <div className="flex gap-4 items-center min-w-0">
                 <Av name={user.name} size={42} />
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <p className="text-sm font-bold text-slate-200 truncate">
                       {user.name}
                     </p>
@@ -296,11 +296,11 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
                     return (
                       <div
                         key={deviceId}
-                        className="bg-slate-900/40 border border-slate-800/60 rounded-xl p-3 hover:border-slate-800 transition duration-150"
+                        className="bg-slate-900/40 border border-slate-800/60 rounded-xl p-3 sm:p-4 hover:border-slate-800 transition duration-150"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800/80 text-indigo-400">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800/80 text-indigo-400 shrink-0">
                               {parsed.isMobile ? (
                                 <Smartphone size={16} />
                               ) : (
@@ -322,15 +322,15 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-4 text-xs text-slate-400 sm:text-right shrink-0">
-                            <div className="flex items-center gap-1.5 bg-slate-900/80 border border-slate-800/60 px-2 py-1 rounded-md">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-slate-400 sm:justify-end shrink-0">
+                            <div className="flex items-center gap-1.5 bg-slate-900/80 border border-slate-800/60 px-2 py-1 rounded-md shrink-0">
                               <Globe size={11} className="text-slate-500" />
                               <span className="font-mono text-[10px] text-slate-300">
                                 {device.ip || "Unknown IP"}
                               </span>
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-slate-400 font-medium">
+                            <div className="flex items-center gap-1.5 text-slate-400 font-medium shrink-0">
                               <Calendar size={11} className="text-slate-500" />
                               <span className="text-[10px]">
                                 {device.lastLogin

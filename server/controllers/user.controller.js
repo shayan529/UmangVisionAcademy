@@ -233,8 +233,8 @@ export const RegisterUser = async (req, res) => {
 
     const referrer = referralCodeParam
       ? await User.findOne({
-          referralCode: referralCodeParam.trim().toUpperCase(),
-        })
+        referralCode: referralCodeParam.trim().toUpperCase(),
+      })
       : null;
 
     const user = await User.create({
@@ -270,7 +270,12 @@ export const RegisterUser = async (req, res) => {
 
     const userData = await hydrateUserRoles(user);
 
-    res.status(201).json(userData);
+    // `token` is included here alongside the cookie so the Capacitor Android
+    // app (which can't reliably rely on the cross-origin cookie inside its
+    // WebView) can store it and send it back as an Authorization: Bearer
+    // header on subsequent requests. The website continues to use the cookie
+    // and can simply ignore this field.
+    res.status(201).json({ ...userData, token });
   } catch (error) {
     const message =
       error?.errors?.password?.message ||
@@ -356,8 +361,13 @@ export const LoginUser = async (req, res) => {
 
     const userData = await hydrateUserRoles(user);
 
+    // `token` is included here alongside the cookie so the Capacitor Android
+    // app (which can't reliably rely on the cross-origin cookie inside its
+    // WebView) can store it and send it back as an Authorization: Bearer
+    // header on subsequent requests. The website continues to use the cookie
+    // and can simply ignore this field.
     // Tell the frontend whether a coin was awarded so it can show a toast
-    res.json({ ...userData, loginCoinAwarded });
+    res.json({ ...userData, loginCoinAwarded, token });
   } catch (error) {
     res.status(500).json({ error: error.message });
     console.error("Error logging in user:", error);
@@ -667,8 +677,8 @@ export const createStudentByAdmin = async (req, res) => {
 
     const referrer = referralCodeParam
       ? await User.findOne({
-          referralCode: referralCodeParam.trim().toUpperCase(),
-        })
+        referralCode: referralCodeParam.trim().toUpperCase(),
+      })
       : null;
 
     const user = await User.create({

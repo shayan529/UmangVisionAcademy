@@ -2,5 +2,9 @@
   "appId": "com.umangvisionacademy.app",
   "appName": "Umang Vision Academy",
   "webDir": "dist",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://umangvisionacademy.onrender.com",
+    "cleartext": false
+  }
 }
