@@ -109,6 +109,11 @@ const authSlice = createSlice({
         state.user.earnedCertificates = earnedCertificates;
       }
     },
+    setSelectedClass: (state, action) => {
+      if (state.user) {
+        state.user.selectedClass = action.payload;
+      }
+    },
   },
   extraReducers: (builder) => {
     // ── Login ──────────────────────────────────────────────────────────────
@@ -180,5 +185,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, updateUserScoreAndSubmissions } = authSlice.actions;
+export const { clearError, updateUserScoreAndSubmissions, setSelectedClass } = authSlice.actions;
 export default authSlice.reducer;

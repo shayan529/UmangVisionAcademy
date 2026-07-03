@@ -181,34 +181,18 @@
     "mostPopular": "Most Popular",
     "loginToContinue": "Log in to continue",
     "base": {
-      "title": "Base Plan",
-      "price": "₹499",
+      "title": "Academy Access Plan",
+      "price": "₹100",
       "period": "month",
-      "desc": "Everything you need to start learning — structured courses, AI tools, and progress tracking.",
+      "desc": "Get full access to all courses of your selected class (Class 9 to 12).",
       "features": [
-        "Classes 1–12 Courses",
-        "Recorded Classes & Resources",
-        "AI Tutor Assistance",
-        "Practice Quizzes & Tests",
-        "Assignment Grading",
-        "Student Progress Tracking"
+        "Select one Class (Class 9 to 12)",
+        "Access all courses of that class",
+        "Recorded Lessons & Resources",
+        "AI Tutor & Quizzes",
+        "Progress Tracking"
       ],
-      "button": "Get Started"
-    },
-    "premium": {
-      "title": "Premium",
-      "price": "₹999",
-      "period": "month",
-      "desc": "Unlimited access to courses, quizzes, assignments and AI-powered learning.",
-      "features": [
-        "Classes 1–12 Courses",
-        "AI Tutor Assistance",
-        "Recorded Classes & Resources",
-        "Practice Quizzes & Tests",
-        "Personalized Learning Paths",
-        "Live Interactive Classes"
-      ],
-      "button": "Start Learning"
+      "button": "Choose Plan"
     }
   },
   "courseCard": {
@@ -1064,6 +1048,8 @@
     "subtitle": "Manage your account and preferences",
     "profile": "Profile",
     "fullName": "Full name",
+    "emailAddress": "Email Address",
+    "enterEmailPlaceholder": "e.g. name@example.com",
     "phoneNumber": "Phone Number",
     "changeBelow": "Change below",
     "state": "State",
@@ -1126,7 +1112,7 @@
     "subscriptionAndBilling": "Subscription & Billing",
     "planLabel": "{{plan}} Plan",
     "status": "Status",
-    "cancelling": "Cancelling",
+    "cancelled": "Cancelled",
     "active": "Active",
     "activeSince": "Active since",
     "renewsOn": "Renews/Expires on",

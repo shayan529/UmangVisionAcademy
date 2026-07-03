@@ -234,6 +234,7 @@ const EnrollCard = ({
   isInCart,
   addedToCart,
   onEnroll,
+  onViewDemo,
   navigate,
 }) => (
   <div
@@ -319,10 +320,28 @@ const EnrollCard = ({
           >
             {isInCart || addedToCart
               ? "✓ Added to Cart"
-              : user
-                ? "Add to Cart"
+              : course?.price > 0
+                ? "Buy Now"
                 : "Enroll Now"}
           </button>
+          {/* 
+          <button
+            onClick={onViewDemo}
+            style={{
+              width: "100%",
+              padding: "12px",
+              borderRadius: 14,
+              border: "1px solid #334155",
+              background: "transparent",
+              color: "#94a3b8",
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: "pointer",
+              marginBottom: 12,
+            }}
+          >
+            View Demo
+          </button> */}
 
           {(isInCart || addedToCart) && (
             <button
@@ -380,7 +399,7 @@ const EnrollCard = ({
             {[
               course.lessonCount > 0 && `${course.lessonCount} lessons`,
               course.durationHours > 0 &&
-                `${course.durationHours} hours of content`,
+              `${course.durationHours} hours of content`,
               "Lifetime access",
               "Certificate of completion",
             ]
@@ -416,6 +435,7 @@ export default function CourseDemo() {
   const { course, loading, error } = useCourseDemo(id);
   const [addedToCart, setAddedToCart] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const videoSectionRef = useRef(null);
 
   const cartIds = useSelector((s) => s.cart?.cartIds ?? []);
   const isInCart = cartIds.includes(id);
@@ -444,6 +464,15 @@ export default function CourseDemo() {
     setAddedToCart(true);
   };
 
+  const handleViewDemoClick = () => {
+    if (videoSectionRef.current) {
+      videoSectionRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  };
+
   const enrollCardProps = {
     course,
     loading,
@@ -451,6 +480,7 @@ export default function CourseDemo() {
     isInCart,
     addedToCart,
     onEnroll: handleEnrollClick,
+    onViewDemo: handleViewDemoClick,
     navigate,
   };
 
@@ -726,7 +756,7 @@ export default function CourseDemo() {
                     }}
                   />
                 ) : course.demoVideoUrl ? (
-                  <div>
+                  <div ref={videoSectionRef}>
                     <p
                       style={{
                         fontSize: 12,

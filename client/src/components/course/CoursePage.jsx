@@ -1602,7 +1602,7 @@ export default function CoursePage() {
   const [localRatingAvg, setLocalRatingAvg] = useState(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [expandedCh, setExpandedCh] = useState(new Set([0]));
+  const [collapsedCh, setCollapsedCh] = useState(new Set());
   const openQuizFromUrl = searchParams.get("quiz") === "1";
   const totalLessonCount = course?.lessons?.length ?? 0;
   const courseComplete =
@@ -1780,7 +1780,7 @@ export default function CoursePage() {
   );
 
   const toggleChapter = (i) =>
-    setExpandedCh((prev) => {
+    setCollapsedCh((prev) => {
       const next = new Set(prev);
       next.has(i) ? next.delete(i) : next.add(i);
       return next;
@@ -2336,11 +2336,11 @@ export default function CoursePage() {
                       {chapter.lessons.length}
                     </span>
                     <span style={{ color: "#64748b", fontSize: 11 }}>
-                      {expandedCh.has(ci) ? "▲" : "▼"}
+                      {!collapsedCh.has(ci) ? "▲" : "▼"}
                     </span>
                   </div>
                 </button>
-                {expandedCh.has(ci) &&
+                {!collapsedCh.has(ci) &&
                   chapter.lessons.map((lesson) => {
                     const isActive =
                       lesson.globalIdx === activeIdx && !showQuiz;

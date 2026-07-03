@@ -71,25 +71,6 @@ export const getReel = async (req, res) => {
   }
 };
 
-export const toggleLike = async (req, res) => {
-  try {
-    const reel = await Reel.findById(req.params.id);
-    if (!reel) return res.status(404).json({ message: "Not found" });
-
-    const userId = req.user._id.toString();
-    const already = reel.likes.some((l) => l.toString() === userId);
-    if (already) {
-      reel.likes = reel.likes.filter((l) => l.toString() !== userId);
-    } else {
-      reel.likes.push(req.user._id);
-    }
-    await reel.save();
-    res.json({ likes: reel.likes.length, liked: !already });
-  } catch (err) {
-    console.error("toggleLike", err);
-    res.status(500).json({ message: err.message || "Failed to toggle like" });
-  }
-};
 
 export const approveReel = async (req, res) => {
   try {

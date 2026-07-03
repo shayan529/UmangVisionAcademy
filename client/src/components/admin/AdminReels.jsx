@@ -468,7 +468,6 @@ const AdminReels = () => {
                     {r.status === "approved" && (
                       <div className="flex items-center gap-3 mt-1.5 text-[11px]" style={{ color: "#9CA3D4" }}>
                         <span className="flex items-center gap-1"><Eye size={11} /> {r.views ?? 0}</span>
-                        <span className="flex items-center gap-1"><Heart size={11} /> {Array.isArray(r.likes) ? r.likes.length : (r.likes ?? 0)}</span>
                       </div>
                     )}
                   </div>

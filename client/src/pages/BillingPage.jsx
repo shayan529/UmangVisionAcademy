@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import {
   fetchSubscription,
   createOrder,
@@ -68,6 +69,7 @@ export default function BillingPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   // Plan passed from Plans page via navigate state
   const selectedPlan = location.state?.plan ?? null;
@@ -503,43 +505,20 @@ export default function BillingPage() {
               </p>
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))",
+                  display: "flex",
+                  justifyContent: "center",
                   gap: 16,
                 }}
               >
                 {[
                   {
                     id: "base",
-                    title: "Base Plan",
-                    price: "₹499",
-                    period: "month",
-                    amount: 49900,
-                    features: [
-                      "Classes 1–12 Courses",
-                      "Recorded Classes",
-                      "AI Tutor",
-                      "Practice Quizzes",
-                      "Assignment Grading",
-                      "Progress Tracking",
-                    ],
+                    title: t("plans.base.title"),
+                    price: t("plans.base.price"),
+                    period: t("plans.base.period"),
+                    amount: 10000,
+                    features: t("plans.base.features", { returnObjects: true }) || [],
                     color: "#6366f1",
-                  },
-                  {
-                    id: "premium",
-                    title: "Premium",
-                    price: "₹999",
-                    period: "month",
-                    amount: 99900,
-                    features: [
-                      "Everything in Base plan",
-                      "Personalized Learning",
-                      "More AI Limits",
-                      "Live Interactive Classes",
-                      "24x7 Support",
-                      "Priority Support",
-                    ],
-                    color: "#a78bfa",
                     popular: true,
                   },
                 ].map((plan) => {

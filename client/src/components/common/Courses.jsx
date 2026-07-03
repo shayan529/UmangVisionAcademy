@@ -198,7 +198,15 @@ const Courses = () => {
   const isEnrolled = (course) => {
     if (!user) return false;
     if (!canEnroll) return false;
-    return course.students?.some((s) => (s._id ?? s) === user._id);
+    
+    const directlyEnrolled = course.students?.some((s) => (s._id ?? s) === user._id);
+    if (directlyEnrolled) return true;
+
+    const hasActiveSubscription = user.subscription?.status === "active";
+    const matchesClass = user.selectedClass && course.category && 
+      user.selectedClass.toLowerCase().trim() === course.category.toLowerCase().trim();
+      
+    return !!(hasActiveSubscription && matchesClass);
   };
 
   // A course is "completed" when the student's progress hits 100%.
@@ -243,8 +251,9 @@ const Courses = () => {
 
   // ── Navigation ────────────────────────────────────────────────────────────
   const handleCourseClick = (course) => {
+    // Non-logged-in users go straight to the demo page
     if (!user) {
-      navigate("/login", { state: { from: "/courses" } });
+      navigate(`/courses/${course._id}/demo`);
       return;
     }
     // Custom-role staff / admins always go to the demo page, regardless of
@@ -391,6 +400,7 @@ const Courses = () => {
                   >
                     <CourseCard
                       course={{
+                        _id: course._id,
                         title: course.title,
                         instructor: instructorName(course.instructor),
                         rating: course.ratingAverage ?? 0,

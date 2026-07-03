@@ -11,8 +11,7 @@ const razorpay = new Razorpay({
 });
 
 const PLANS = {
-  base: { id: "base", label: "Base Plan", amount: 49900, durationDays: 30 },
-  premium: { id: "premium", label: "Premium", amount: 99900, durationDays: 30 },
+  base: { id: "base", label: "Academy Access Plan", amount: 10000, durationDays: 30 },
 };
 
 const isPlaceholderRazorpayConfig = () => {

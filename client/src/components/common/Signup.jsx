@@ -111,6 +111,17 @@ const ParticleCanvas = () => {
   );
 };
 
+/* ── Helper for sessionStorage persistence ── */
+const getSessionValue = (key, defaultValue) => {
+  try {
+    const saved = sessionStorage.getItem(key);
+    if (saved !== null) return JSON.parse(saved);
+  } catch (e) {
+    console.error("Error reading sessionStorage", e);
+  }
+  return defaultValue;
+};
+
 /* ── Signup ── */
 const Signup = () => {
   const { t } = useTranslation();
@@ -119,22 +130,15 @@ const Signup = () => {
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
 
-  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
-  const [phoneVerified, setPhoneVerified] = useState(false);
-  const [phoneOtpInputs, setPhoneOtpInputs] = useState([
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-  ]);
+  const [phoneOtpSent, setPhoneOtpSent] = useState(() => getSessionValue("signup_phoneOtpSent", false));
+  const [phoneVerified, setPhoneVerified] = useState(() => getSessionValue("signup_phoneVerified", false));
+  const [phoneOtpInputs, setPhoneOtpInputs] = useState(() => getSessionValue("signup_phoneOtpInputs", ["", "", "", "", "", ""]));
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false);
   const [verifyingPhone, setVerifyingPhone] = useState(false);
   const [phoneResendCooldown, setPhoneResendCooldown] = useState(0);
   const phoneOtpRefs = useRef([]);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => getSessionValue("signup_formData", {
     name: "",
     email: "",
     countryCode: "+91",
@@ -145,12 +149,33 @@ const Signup = () => {
     password: "",
     confirmPassword: "",
     referralCode: "",
-  });
+  }));
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [focused, setFocused] = useState("");
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(() => getSessionValue("signup_agreedToTerms", false));
   const [submitting, setSubmitting] = useState(false);
+
+  // Sync state changes with sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem("signup_phoneOtpSent", JSON.stringify(phoneOtpSent));
+  }, [phoneOtpSent]);
+
+  useEffect(() => {
+    sessionStorage.setItem("signup_phoneVerified", JSON.stringify(phoneVerified));
+  }, [phoneVerified]);
+
+  useEffect(() => {
+    sessionStorage.setItem("signup_phoneOtpInputs", JSON.stringify(phoneOtpInputs));
+  }, [phoneOtpInputs]);
+
+  useEffect(() => {
+    sessionStorage.setItem("signup_agreedToTerms", JSON.stringify(agreedToTerms));
+  }, [agreedToTerms]);
+
+  useEffect(() => {
+    sessionStorage.setItem("signup_formData", JSON.stringify(formData));
+  }, [formData]);
 
   // ── Password validation ──
   const passwordRules = [
@@ -226,7 +251,7 @@ const Signup = () => {
   }, [phoneResendCooldown]);
 
   const handlePhoneChange = (e) => {
-    const value = e.target.value.replace(/\D/g, "");
+    const value = e.target.value.replace(/\D/g, "").slice(0, 10);
     setFormData((prev) => ({ ...prev, phoneNumber: value }));
     if (phoneVerified || phoneOtpSent) {
       setPhoneVerified(false);
@@ -259,7 +284,7 @@ const Signup = () => {
 
     setSendingPhoneOtp(true);
     try {
-      await axios.post("/api/auth/send-phone-otp", {
+      await axios.post("/auth/send-phone-otp", {
         phoneNumber: normalizedPhoneNumber,
       });
       toast.success(t("auth.otpSentPhone"));
@@ -319,7 +344,7 @@ const Signup = () => {
 
     setVerifyingPhone(true);
     try {
-      await axios.post("/api/auth/verify-phone-otp", {
+      await axios.post("/auth/verify-phone-otp", {
         phoneNumber: normalizedPhoneNumber,
         otp: code,
       });
@@ -328,7 +353,7 @@ const Signup = () => {
       toast.success(t("auth.phoneVerified") + " ✓");
     } catch (err) {
       toast.error(
-        err?.message || err?.response?.data?.message || t("auth.invalidOtp"),
+        err?.response?.data?.message || err?.message || t("auth.invalidOtp"),
       );
       setPhoneOtpInputs(["", "", "", "", "", ""]);
       phoneOtpRefs.current[0]?.focus();
@@ -378,6 +403,11 @@ const Signup = () => {
       const result = await dispatch(register(payload));
       if (register.fulfilled.match(result)) {
         toast(t("auth.accountCreated"), { icon: "👋" });
+        sessionStorage.removeItem("signup_phoneOtpSent");
+        sessionStorage.removeItem("signup_phoneVerified");
+        sessionStorage.removeItem("signup_phoneOtpInputs");
+        sessionStorage.removeItem("signup_agreedToTerms");
+        sessionStorage.removeItem("signup_formData");
         navigate("/student-dashboard");
       }
     } finally {
@@ -789,69 +819,64 @@ const Signup = () => {
                     </span>
                   </label>
 
-                  <div className="flex gap-2">
-                    <select
-                      name="countryCode"
-                      value={formData.countryCode}
-                      onChange={(e) => {
-                        handleChange(e);
-                        if (phoneVerified || phoneOtpSent) {
-                          setPhoneVerified(false);
-                          setPhoneOtpSent(false);
-                          setPhoneOtpInputs(["", "", "", "", "", ""]);
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
+                    <div className="flex gap-2 flex-1">
+                      <div
+                        className="border border-white/10 rounded-2xl px-5 py-3.5 bg-white/5 text-slate-400 text-sm font-semibold flex items-center justify-center transition-all duration-300"
+                        style={
+                          focused === "countryCode"
+                            ? {
+                                borderColor: "rgba(34,211,238,0.7)",
+                                boxShadow: "0 0 0 3px rgba(34,211,238,0.1)",
+                              }
+                            : {}
                         }
-                      }}
-                      disabled={phoneVerified}
-                      className="w-28 border border-white/10 rounded-2xl px-3 py-3.5 bg-[#1e293b] text-white text-sm outline-none disabled:opacity-50"
-                    >
-                      {countryCodes.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.code}
-                        </option>
-                      ))}
-                    </select>
+                      >
+                        +91
+                      </div>
 
-                    <div className="relative flex-1">
-                      <input
-                        type="tel"
-                        name="phoneNumber"
-                        value={formData.phoneNumber}
-                        onChange={handlePhoneChange}
-                        onFocus={() => setFocused("phoneNumber")}
-                        onBlur={() => setFocused("")}
-                        placeholder={t("auth.phonePlaceholder")}
-                        required
-                        maxLength={10}
-                        disabled={phoneVerified}
-                        className={
-                          inputCls("phoneNumber") + " pr-10 disabled:opacity-50"
-                        }
-                      />
-                      {phoneVerified && (
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <svg
-                            viewBox="0 0 20 20"
-                            className="w-5 h-5"
-                            fill="none"
-                          >
-                            <circle
-                              cx="10"
-                              cy="10"
-                              r="9"
-                              fill="rgba(34,197,94,0.15)"
-                              stroke="#22c55e"
-                              strokeWidth="1.5"
-                            />
-                            <path
-                              d="M6 10l3 3 5-5"
-                              stroke="#22c55e"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </span>
-                      )}
+                      <div className="relative flex-1">
+                        <input
+                          type="tel"
+                          name="phoneNumber"
+                          value={formData.phoneNumber}
+                          onChange={handlePhoneChange}
+                          onFocus={() => setFocused("phoneNumber")}
+                          onBlur={() => setFocused("")}
+                          placeholder={t("auth.phonePlaceholder")}
+                          required
+                          maxLength={10}
+                          disabled={phoneVerified}
+                          className={
+                            inputCls("phoneNumber") + " pr-10 disabled:opacity-50"
+                          }
+                        />
+                        {phoneVerified && (
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <svg
+                              viewBox="0 0 20 20"
+                              className="w-5 h-5"
+                              fill="none"
+                            >
+                              <circle
+                                cx="10"
+                                cy="10"
+                                r="9"
+                                fill="rgba(34,197,94,0.15)"
+                                stroke="#22c55e"
+                                strokeWidth="1.5"
+                              />
+                              <path
+                                d="M6 10l3 3 5-5"
+                                stroke="#22c55e"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {!phoneVerified && (
@@ -863,7 +888,7 @@ const Signup = () => {
                           formData.phoneNumber.length < 10 ||
                           phoneResendCooldown > 0
                         }
-                        className="shrink-0 px-4 py-2 rounded-2xl text-sm font-bold text-white transition-all duration-200 disabled:opacity-50"
+                        className="w-full sm:w-auto shrink-0 px-6 py-3.5 rounded-2xl text-sm font-bold text-white transition-all duration-200 disabled:opacity-50"
                         style={{
                           background: "linear-gradient(135deg,#0ea5e9,#6366f1)",
                           boxShadow: "0 4px 14px rgba(14,165,233,.3)",
@@ -871,7 +896,7 @@ const Signup = () => {
                       >
                         {sendingPhoneOtp ? (
                           <svg
-                            className="w-4 h-4 animate-spin"
+                            className="w-4 h-4 animate-spin mx-auto"
                             viewBox="0 0 24 24"
                             fill="none"
                           >
@@ -907,7 +932,7 @@ const Signup = () => {
                           setPhoneOtpSent(false);
                           setPhoneOtpInputs(["", "", "", "", "", ""]);
                         }}
-                        className="shrink-0 px-4 py-2 rounded-2xl text-sm font-semibold text-slate-400 hover:text-white border border-white/10 hover:border-white/20 transition-all"
+                        className="w-full sm:w-auto shrink-0 px-6 py-3.5 rounded-2xl text-sm font-semibold text-slate-400 hover:text-white border border-white/10 hover:border-white/20 transition-all"
                       >
                         {t("auth.edit")}
                       </button>

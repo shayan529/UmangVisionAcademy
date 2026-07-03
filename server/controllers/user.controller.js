@@ -716,3 +716,33 @@ export const createStudentByAdmin = async (req, res) => {
     console.error("Error creating student (admin):", error);
   }
 };
+
+// ── Select Class (Subscribed Students Only) ──────────────────────────────────
+export const selectClass = async (req, res) => {
+  try {
+    const { selectedClass } = req.body;
+    const validClasses = ["Class 9", "Class 10", "Class 11", "Class 12"];
+
+    if (selectedClass !== null && !validClasses.includes(selectedClass)) {
+      return res.status(400).json({
+        message: "Invalid class selection. Please choose from Class 9 to 12.",
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    if (user.subscription?.status !== "active") {
+      return res.status(403).json({
+        message: "An active subscription plan is required to select a class.",
+      });
+    }
+
+    user.selectedClass = selectedClass;
+    await user.save();
+
+    res.json(await hydrateUserRoles(user));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

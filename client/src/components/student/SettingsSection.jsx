@@ -997,6 +997,20 @@ export default function Settings() {
             </div>
           </div>
 
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>{t("studentSettings.emailAddress")}</label>
+            <input
+              type="email"
+              value={profile.email}
+              onChange={(e) =>
+                setProfile({ ...profile, email: e.target.value })
+              }
+              style={inputStyle}
+              disabled={!isEditing}
+              placeholder={t("studentSettings.enterEmailPlaceholder")}
+            />
+          </div>
+
           {/* State + City */}
           <div
             style={{
@@ -1232,62 +1246,6 @@ export default function Settings() {
           )}
         </SectionCard>
 
-        {/* ── Change Email ── */}
-        <SectionCard title={t("studentSettings.changeEmail")}>
-          <p style={{ fontSize: 12, color: "#64748b", marginBottom: 14 }}>
-            {t("studentSettings.currentEmail")}:{" "}
-            <span style={{ color: "#a78bfa", fontWeight: 600 }}>
-              {profile.email}
-            </span>
-          </p>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr auto",
-              gap: 10,
-              alignItems: "flex-end",
-              marginBottom: 10,
-            }}
-          >
-            <div>
-              <label style={labelStyle}>
-                {t("studentSettings.newEmailAddress")}
-              </label>
-              <input
-                type="email"
-                value={emailForm.newEmail}
-                onChange={(e) => {
-                  setEmailForm({ newEmail: e.target.value });
-                  if (emailMsg.text) setEmailMsg({ text: "", ok: false });
-                }}
-                placeholder={t("studentSettings.enterNewEmail")}
-                style={inputStyle}
-                disabled={emailStep === "sending"}
-              />
-            </div>
-            <button
-              onClick={sendEmailOtp}
-              disabled={emailStep === "sending" || !emailForm.newEmail}
-              style={sendOtpBtnStyle(
-                emailStep === "sending" || !emailForm.newEmail,
-              )}
-            >
-              {emailStep === "sending"
-                ? t("studentSettings.sending")
-                : t("studentSettings.sendOtp")}
-            </button>
-          </div>
-          {emailMsg.text && (
-            <p
-              style={{
-                fontSize: 12,
-                color: emailMsg.ok ? "#4ade80" : "#f87171",
-              }}
-            >
-              {emailMsg.text}
-            </p>
-          )}
-        </SectionCard>
 
         {/* ── Change Phone ── */}
         <SectionCard title={t("studentSettings.changePhoneNumber")}>
@@ -1378,9 +1336,13 @@ export default function Settings() {
                     marginBottom: 8,
                   }}
                 >
-                  {t("studentSettings.planLabel", {
-                    plan: subscription.label || subscription.plan,
-                  })}
+                  {(() => {
+                    const label = subscription.label || subscription.plan || "";
+                    if (label.toLowerCase().endsWith("plan") || label.toLowerCase().endsWith("प्लान")) {
+                      return label;
+                    }
+                    return t("studentSettings.planLabel", { plan: label });
+                  })()}
                 </div>
                 <h4 style={{ fontSize: 18, fontWeight: 800, color: "#f1f5f9" }}>
                   {t("studentSettings.status")}:{" "}
@@ -1393,7 +1355,7 @@ export default function Settings() {
                     }}
                   >
                     {subscription.status === "cancelled"
-                      ? t("studentSettings.cancelling")
+                      ? t("studentSettings.cancelled")
                       : t("studentSettings.active")}
                   </span>
                 </h4>
@@ -1406,37 +1368,39 @@ export default function Settings() {
                   {new Date(subscription.endDate).toLocaleDateString()}
                 </p>
               </div>
-              <button
-                onClick={async () => {
-                  if (
-                    window.confirm(
-                      t("studentSettings.confirmCancelSubscription"),
-                    )
-                  ) {
-                    try {
-                      await dispatch(cancelSubscription()).unwrap();
-                      alert(t("studentSettings.subscriptionCancelled"));
-                      dispatch(fetchSubscription());
-                    } catch (err) {
-                      alert(
-                        err || t("studentSettings.failedCancelSubscription"),
-                      );
+              {subscription.status !== "cancelled" && (
+                <button
+                  onClick={async () => {
+                    if (
+                      window.confirm(
+                        t("studentSettings.confirmCancelSubscription"),
+                      )
+                    ) {
+                      try {
+                        await dispatch(cancelSubscription()).unwrap();
+                        alert(t("studentSettings.subscriptionCancelled"));
+                        dispatch(fetchSubscription());
+                      } catch (err) {
+                        alert(
+                          err || t("studentSettings.failedCancelSubscription"),
+                        );
+                      }
                     }
-                  }
-                }}
-                style={{
-                  padding: "8px 16px",
-                  background: "#450a0a",
-                  border: "1px solid #7f1d1d",
-                  borderRadius: 10,
-                  color: "#f87171",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                {t("studentSettings.cancelSubscription")}
-              </button>
+                  }}
+                  style={{
+                    padding: "8px 16px",
+                    background: "#450a0a",
+                    border: "1px solid #7f1d1d",
+                    borderRadius: 10,
+                    color: "#f87171",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {t("studentSettings.cancelSubscription")}
+                </button>
+              )}
             </div>
           ) : (
             <div
@@ -1641,21 +1605,6 @@ export default function Settings() {
         </SectionCard>
       </div>
 
-      {/* ── Email OTP Modal ── */}
-      {showEmailOtp && (
-        <OtpModal
-          title={t("studentSettings.verifyNewEmail")}
-          subtitle={t("studentSettings.verifyNewEmailSubtitle", {
-            email: emailForm.newEmail,
-          })}
-          onVerify={verifyEmailOtp}
-          onResend={sendEmailOtp}
-          onClose={() => {
-            setShowEmailOtp(false);
-            setEmailStep("idle");
-          }}
-        />
-      )}
 
       {/* ── Phone OTP Modal ── */}
       {showPhoneOtp && (

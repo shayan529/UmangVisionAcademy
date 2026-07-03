@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchReels, likeReel } from "../../redux/slices/reelsSlice";
+import { fetchReels } from "../../redux/slices/reelsSlice";
 import InstructorUploadReel from "../instructor/InstructorUploadReel";
 
 const ReelsFeed = () => {
@@ -15,9 +15,6 @@ const ReelsFeed = () => {
     dispatch(fetchReels());
   }, [dispatch]);
 
-  const handleLike = (id) => {
-    dispatch(likeReel(id));
-  };
 
   return (
     <div className="min-h-screen p-4 max-w-3xl mx-auto">
@@ -63,14 +60,6 @@ const ReelsFeed = () => {
 
               <div className="flex items-center justify-between">
                 <div className="text-sm">{r.title}</div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => handleLike(r._id)}
-                    className="px-3 py-1 rounded bg-slate-800"
-                  >
-                    👍 {r.likes?.length || 0}
-                  </button>
-                </div>
               </div>
             </div>
           ))}

@@ -5,7 +5,6 @@ import {
   createReel,
   listReels,
   getReel,
-  toggleLike,
   approveReel,
   rejectReel,
   unapproveReel,
@@ -50,9 +49,6 @@ router.get("/:id", getReel);
 
 // Instructor upload (protected)
 router.post("/", protect, instructorOnly, createReel);
-
-// Like (protected)
-router.post("/:id/like", protect, toggleLike);
 
 // Admin / Moderator review
 router.put("/:id/approve", protect, requirePermission("reels", "approve"), approveReel);

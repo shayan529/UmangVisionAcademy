@@ -14,6 +14,7 @@ import { fetchProfile, updateProfile } from "../../redux/slices/settingsSlice";
 import api from "../../config/api";
 import { useState } from "react";
 import { X } from "lucide-react";
+import { setSelectedClass } from "../../redux/slices/authSlice";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const getOverallProgress = (courses = []) => {
@@ -1071,6 +1072,33 @@ const StudentDashboard = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { t } = useTranslation();
+  const [selectingClass, setSelectingClass] = useState(false);
+
+  const handleSelectClass = async (cls) => {
+    setSelectingClass(true);
+    try {
+      const res = await fetch("/api/users/select-class", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+        body: JSON.stringify({ selectedClass: cls }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        dispatch(setSelectedClass(cls));
+        toast.success(`Successfully selected ${cls}! All courses unlocked.`);
+      } else {
+        toast.error(data.message || "Failed to select class.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong");
+    } finally {
+      setSelectingClass(false);
+    }
+  };
 
   useEffect(() => {
     dispatch(fetchSubscription());
@@ -1197,6 +1225,38 @@ const StudentDashboard = () => {
           </div>
         </main>
       </div>
+      {user?.subscription?.status === "active" && !user?.selectedClass && (
+        <div className="fixed inset-0 z-50 bg-[#070b13]/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl animate-fadeIn">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-3xl mx-auto mb-5">
+              🎓
+            </div>
+            <h3 className="text-xl sm:text-2xl font-extrabold text-white">
+              Choose Your Class
+            </h3>
+            <p className="text-slate-400 text-sm mt-2 mb-6">
+              Your Academy Access Plan is active! Select a class below to unlock all courses of that class.
+            </p>
+            <div className="flex flex-col gap-3">
+              {["Class 9", "Class 10", "Class 11", "Class 12"].map((cls) => (
+                <button
+                  key={cls}
+                  onClick={() => handleSelectClass(cls)}
+                  disabled={selectingClass}
+                  className="w-full bg-slate-800/50 hover:bg-indigo-600 hover:text-white transition-all duration-200 border border-slate-700/60 rounded-2xl py-3.5 text-slate-200 text-sm font-bold cursor-pointer disabled:opacity-50"
+                >
+                  {cls}
+                </button>
+              ))}
+            </div>
+            {selectingClass && (
+              <p className="text-xs text-indigo-400 mt-4 animate-pulse">
+                Unlocking your courses...
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

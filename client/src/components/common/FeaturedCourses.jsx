@@ -89,14 +89,22 @@ const Courses = () => {
   );
   const isEnrolled = (course) => {
     if (!user) return false;
-    return course.students?.some((s) => (s._id ?? s) === user._id);
+    
+    const directlyEnrolled = course.students?.some((s) => (s._id ?? s) === user._id);
+    if (directlyEnrolled) return true;
+
+    const hasActiveSubscription = user.subscription?.status === "active";
+    const matchesClass = user.selectedClass && course.category && 
+      user.selectedClass.toLowerCase().trim() === course.category.toLowerCase().trim();
+      
+    return !!(hasActiveSubscription && matchesClass);
   };
 
   // ── Navigation ────────────────────────────────────────────────────────────
   const handleCourseClick = (course) => {
-    // pass full course, not just ID
+    // Non-logged-in users go straight to the demo page
     if (!user) {
-      navigate("/login", { state: { from: "/courses" } });
+      navigate(`/courses/${course._id}/demo`);
       return;
     }
     if (isEnrolled(course)) {
@@ -230,6 +238,7 @@ const Courses = () => {
               >
                 <CourseCard
                   course={{
+                    _id: course._id,
                     title: course.title,
                     instructor: instructorName(course.instructor),
                     rating: course.ratingAverage ?? 0,
@@ -241,7 +250,7 @@ const Courses = () => {
                     category: course.category ?? null,
                     students:
                       course.students?.length ?? course.enrolledCount ?? 0,
-                    enrolled: isEnrolled(course), // ← new prop
+                    enrolled: isEnrolled(course),
                   }}
                 />
               </div>

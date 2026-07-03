@@ -23,13 +23,13 @@ const CourseCard = ({ course }) => {
   const canEnroll =
     hasBaseRole(user, "student") || hasBaseRole(user, "instructor");
 
-  const handleEnroll = () => {
+  const handleBuy = (e) => {
+    e.stopPropagation();
     const courseId = course?._id ?? course?.id;
 
     if (!user) {
-      navigate("/login", {
-        state: { from: `/courses/${courseId ?? ""}/demo` },
-      });
+      // Send unauthenticated users to demo page; they can sign up from there
+      navigate(`/courses/${courseId ?? ""}/demo`);
       return;
     }
 
@@ -58,7 +58,9 @@ const CourseCard = ({ course }) => {
           </h3>
 
           {/* Instructor */}
-          <p className="text-[11px] md:text-sm text-gray-500 mt-0.5 md:mt-1 truncate">{course.instructor}</p>
+          <p className="text-[11px] md:text-sm text-gray-500 mt-0.5 md:mt-1 truncate">
+            {course.instructor}
+          </p>
 
           {/* Class & Board */}
           <div className="flex flex-wrap gap-1.5 md:gap-2 mt-1.5 md:mt-3">
@@ -90,7 +92,9 @@ const CourseCard = ({ course }) => {
             </div>
 
             {/* Price */}
-            <h2 className="text-sm md:text-xl font-bold text-gray-800">{course.price}</h2>
+            <h2 className="text-sm md:text-xl font-bold text-gray-800">
+              {course.price}
+            </h2>
           </div>
 
           <div className="mt-2">
@@ -100,25 +104,31 @@ const CourseCard = ({ course }) => {
                   Continue Learning →
                 </button>
               </Link>
-            ) : canEnroll ? (
+            ) : canEnroll || !user ? (
               <div className="flex gap-2">
                 <Link to={`/courses/${course._id}/demo`} className="flex-1">
-                  <button className="w-full border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center">
-                    Demo
+                  <button
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center"
+                  >
+                    View Demo
                   </button>
                 </Link>
 
                 <button
-                  onClick={handleEnroll}
+                  onClick={handleBuy}
                   className="flex-1 bg-indigo-600 hover:bg-indigo-700 transition text-white py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center"
                 >
-                  Enroll
+                  {course.price > 0 ? "Buy Now" : "Enroll Now"}
                 </button>
               </div>
             ) : (
               <div>
                 <Link to={`/courses/${course._id}/demo`} className="block">
-                  <button className="w-full border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center">
+                  <button
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center"
+                  >
                     View Demo
                   </button>
                 </Link>

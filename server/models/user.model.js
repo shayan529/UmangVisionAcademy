@@ -176,6 +176,7 @@ const userSchema = new Schema(
       razorpayOrderId: { type: String, default: "" },
       razorpayPaymentId: { type: String, default: "" },
     },
+    selectedClass: { type: String, default: null },
     specialization: {
       type: String,
       trim: true,

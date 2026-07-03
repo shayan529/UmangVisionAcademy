@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Heart, Eye, Music, Flame, Star, Loader2 } from "lucide-react";
-import { fetchReels, likeReel } from "../../redux/slices/reelsSlice";
+import { fetchReels } from "../../redux/slices/reelsSlice";
 import api from "../../config/api";
 
 export default function MobileReels() {
   const dispatch = useDispatch();
-  const { items: reels, loading } = useSelector((state) => state.reels || { items: [], loading: false });
+  const { items: reels, loading } = useSelector(
+    (state) => state.reels || { items: [], loading: false },
+  );
   const containerRef = useRef(null);
   const videoRefs = useRef({});
   const { user } = useSelector((state) => state.auth);
@@ -35,7 +37,7 @@ export default function MobileReels() {
 
         if (entry.isIntersecting) {
           video.play().catch((err) => console.log("Auto-play blocked", err));
-          
+
           // Increment view count on backend if not already done in this session
           if (reelId && !viewedReels.current.has(reelId)) {
             viewedReels.current.add(reelId);
@@ -47,7 +49,10 @@ export default function MobileReels() {
       });
     };
 
-    const observer = new IntersectionObserver(observerCallback, observerOptions);
+    const observer = new IntersectionObserver(
+      observerCallback,
+      observerOptions,
+    );
 
     // Observe all video elements
     const videos = Object.values(videoRefs.current);
@@ -62,9 +67,6 @@ export default function MobileReels() {
     };
   }, [reels]);
 
-  const handleLike = (id) => {
-    dispatch(likeReel(id));
-  };
 
   const formatCount = (n) => {
     if (!n) return 0;
@@ -102,8 +104,6 @@ export default function MobileReels() {
         }}
       >
         {reels.map((reel) => {
-          const isLiked = reel.likes?.includes(user?._id) || reel.likedByMe;
-          const likesCount = reel.likesCount !== undefined ? reel.likesCount : (reel.likes?.length || 0);
 
           return (
             <div
@@ -136,53 +136,27 @@ export default function MobileReels() {
                 </div>
               </div>
 
-              {/* Sidebar Interactions */}
-              <div className="absolute right-4 bottom-20 flex flex-col gap-6 items-center z-10">
-                {/* Views */}
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-11 h-11 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center text-white">
-                    <Eye size={20} />
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-300 drop-shadow-md">
-                    {formatCount(reel.views)}
-                  </span>
-                </div>
 
-                {/* Like Button */}
-                <button
-                  onClick={() => handleLike(reel._id)}
-                  className="flex flex-col items-center gap-1 group active:scale-95 transition-transform"
-                >
-                  <div
-                    className={`w-11 h-11 rounded-full flex items-center justify-center border transition-all duration-300 backdrop-blur-md ${
-                      isLiked
-                        ? "bg-rose-500/25 border-rose-500/40 text-rose-500 scale-110"
-                        : "bg-black/45 border-white/10 text-white hover:bg-black/60"
-                    }`}
-                  >
-                    <Heart
-                      size={20}
-                      className={isLiked ? "fill-rose-500" : ""}
-                    />
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-300 drop-shadow-md">
-                    {formatCount(likesCount)}
-                  </span>
-                </button>
-              </div>
 
               {/* Bottom Overlay details */}
               <div className="absolute left-4 bottom-4 right-16 z-10 flex flex-col gap-2.5">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-linear-to-br from-indigo-500 to-indigo-700 border border-indigo-400 flex items-center justify-center text-xs font-bold text-white shadow-lg">
-                    {(reel.instructorName || "Instructor").slice(0, 2).toUpperCase()}
+                    {(reel.instructorName || "Instructor")
+                      .slice(0, 2)
+                      .toUpperCase()}
                   </div>
                   <div>
                     <p className="text-xs font-extrabold text-white flex items-center gap-1 drop-shadow-md">
                       {reel.instructorName || "Instructor"}
-                      <Star size={11} className="text-amber-500 fill-amber-500" />
+                      <Star
+                        size={11}
+                        className="text-amber-500 fill-amber-500"
+                      />
                     </p>
-                    <p className="text-[9px] text-slate-300/80 drop-shadow-md">Verified Instructor</p>
+                    <p className="text-[9px] text-slate-300/80 drop-shadow-md">
+                      Verified Instructor
+                    </p>
                   </div>
                 </div>
 
@@ -203,7 +177,8 @@ export default function MobileReels() {
                     style={{ animationDuration: "6s" }}
                   />
                   <span className="text-[9px] text-slate-400 font-medium truncate max-w-[180px] drop-shadow-md">
-                    Original Audio &middot; {reel.instructorName || "Instructor"}
+                    Original Audio &middot;{" "}
+                    {reel.instructorName || "Instructor"}
                   </span>
                 </div>
               </div>

@@ -11,24 +11,12 @@ const Plans = () => {
       title: t('plans.base.title'),
       price: t('plans.base.price'),
       period: t('plans.base.period'),
-      amount: 49900, // paise for Razorpay
+      amount: 10000, // ₹100.00
       desc: t('plans.base.desc'),
-      features: t('plans.base.features', { returnObjects: true }),
+      features: t('plans.base.features', { returnObjects: true }) || [],
       button: t('plans.base.button'),
-      highlight: false,
-      color: '#6366f1',
-    },
-    {
-      id: 'premium',
-      title: t('plans.premium.title'),
-      price: t('plans.premium.price'),
-      period: t('plans.premium.period'),
-      amount: 99900,
-      desc: t('plans.premium.desc'),
-      features: t('plans.premium.features', { returnObjects: true }),
-      button: t('plans.premium.button'),
       highlight: true,
-      color: '#a78bfa',
+      color: '#6366f1',
     },
   ];
 
@@ -63,7 +51,7 @@ const Plans = () => {
         </div>
 
         {/* Cards */}
-        <div className="grid gap-8 md:grid-cols-2 max-w-5xl mx-auto">
+        <div className="max-w-md mx-auto">
           {plans.map((plan, index) => (
             <div
               key={index}

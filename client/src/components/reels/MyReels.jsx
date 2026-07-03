@@ -50,7 +50,6 @@ const MyReels = () => {
       total: reels.length,
       approved: reels.filter((r) => r.status === "approved").length,
       views: reels.reduce((sum, r) => sum + (r.views || 0), 0),
-      likes: reels.reduce((sum, r) => sum + (Array.isArray(r.likes) ? r.likes.length : (r.likes || 0)), 0),
     }),
     [reels]
   );
@@ -258,7 +257,7 @@ const MyReels = () => {
 
         {/* Stat strip */}
         {!loading && reels.length > 0 && (
-          <div className="myr-glass rounded-2xl p-4 sm:p-5 mb-6 sm:mb-8 grid grid-cols-4 gap-2 sm:gap-4 text-center">
+          <div className="myr-glass rounded-2xl p-4 sm:p-5 mb-6 sm:mb-8 grid grid-cols-3 gap-2 sm:gap-4 text-center">
             <div>
               <div className="myr-stat-num">{stats.total}</div>
               <div className="myr-stat-label">Reels</div>
@@ -270,10 +269,6 @@ const MyReels = () => {
             <div>
               <div className="myr-stat-num">{stats.views}</div>
               <div className="myr-stat-label">Views</div>
-            </div>
-            <div>
-              <div className="myr-stat-num">{stats.likes}</div>
-              <div className="myr-stat-label">Likes</div>
             </div>
           </div>
         )}
@@ -358,9 +353,6 @@ const MyReels = () => {
                   {r.status === "approved" && (
                     <div className="myr-meta-row myr-glow-line pt-2">
                       <span className="flex items-center gap-1"><Eye size={12} /> {r.views ?? 0} views</span>
-                      <span className="flex items-center gap-1">
-                        <Heart size={12} /> {Array.isArray(r.likes) ? r.likes.length : (r.likes ?? 0)} likes
-                      </span>
                     </div>
                   )}
 

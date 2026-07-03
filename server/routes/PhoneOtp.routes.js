@@ -16,8 +16,8 @@ const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
 const twilioClient =
   accountSid && authToken ? twilio(accountSid, authToken) : null;
 
-const SESSION_TTL_MS = 10 * 60 * 1000; // 10 minutes
-const MAX_ATTEMPTS = 5;
+const SESSION_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const MAX_ATTEMPTS = 10;
 
 // ── POST /api/auth/send-phone-otp ─────────────────────────────────────────────
 router.post("/send-phone-otp", async (req, res) => {
@@ -47,8 +47,10 @@ router.post("/send-phone-otp", async (req, res) => {
       const elapsed = Date.now() - existingSession.createdAt;
       if (elapsed < SESSION_TTL_MS) {
         return res.status(429).json({
-          message: "Too many attempts. Please wait 10 minutes before retrying.",
+          message: "Too many attempts. Please wait 2 minutes before retrying.",
         });
+      } else {
+        await deleteOtpRecord(phoneNumber);
       }
     }
 
@@ -116,9 +118,8 @@ router.post("/verify-phone-otp", async (req, res) => {
 
     // ── Too many wrong attempts ───────────────────────────────────────────────
     if (record.attempts >= MAX_ATTEMPTS) {
-      await deleteOtpRecord(phoneNumber);
       return res.status(429).json({
-        message: "Too many incorrect attempts. Please request a new OTP.",
+        message: "Too many incorrect attempts. Please wait 2 minutes before retrying.",
       });
     }
 
@@ -142,7 +143,7 @@ router.post("/verify-phone-otp", async (req, res) => {
       });
       return res.status(400).json({
         success: false,
-        message: `Invalid OTP. ${MAX_ATTEMPTS - (record.attempts || 0) - 1} attempts remaining.`,
+        message: "Invalid OTP.",
       });
     }
 

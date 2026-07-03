@@ -1,4 +1,4 @@
-﻿import express from "express";
+import express from "express";
 import {
   RegisterUser,
   LoginUser,
@@ -10,6 +10,7 @@ import {
   deleteUser,
   bulkImportStudents,
   createStudentByAdmin,
+  selectClass,
 } from "./../controllers/user.controller.js";
 import {
   protect,
@@ -39,6 +40,7 @@ router.post("/login", LoginUser);
 router.post("/logout", LogoutUser);
 
 router.get("/me", protect, getCurrentUser);
+router.put("/me/select-class", protect, selectClass);
 
 router.get("/:id", protect, selfOrPermission("users", "view"), getUserById);
 router.put("/:id", protect, selfOrPermission("users", "edit"), updateUser);

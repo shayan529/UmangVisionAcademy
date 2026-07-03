@@ -196,7 +196,7 @@ export default function AdminQuestionPapers() {
   const fetchPapers = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get("/api/question-papers/all");
+      const { data } = await axios.get("/question-papers/all");
       setPapers(data);
     } catch {
       showToast("error", "Failed to load papers.");
@@ -232,7 +232,7 @@ export default function AdminQuestionPapers() {
     try {
       setUploading(true);
       setProgress(0);
-      await axios.post("/api/question-papers/upload", fd, {
+      await axios.post("/question-papers/upload", fd, {
         headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress: (e) =>
           setProgress(Math.round((e.loaded * 100) / e.total)),
@@ -254,7 +254,7 @@ export default function AdminQuestionPapers() {
     if (!window.confirm("Delete this question paper?")) return;
     try {
       setDeleting(id);
-      await axios.delete(`/api/question-papers/${id}`);
+      await axios.delete(`/question-papers/${id}`);
       setPapers((prev) => prev.filter((p) => p._id !== id));
       showToast("success", "Paper deleted.");
     } catch {

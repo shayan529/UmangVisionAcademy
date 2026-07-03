@@ -886,7 +886,9 @@ const AdminStudents = ({
   const ql = q.toLowerCase();
   const filtS = students.filter(
     (s) =>
-      s.name?.toLowerCase().includes(ql) || s.email?.toLowerCase().includes(ql),
+      s.name?.toLowerCase().includes(ql) ||
+      s.email?.toLowerCase().includes(ql) ||
+      s.phoneNumber?.toLowerCase().includes(ql),
   );
   const fileInputRef = useRef(null);
   const [importing, setImporting] = useState(false);
@@ -1078,6 +1080,11 @@ const AdminStudents = ({
                   <p className="text-xs font-bold text-slate-200 truncate">
                     {s.name}
                   </p>
+                  {s.phoneNumber && (
+                    <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">
+                      {s.phoneNumber}
+                    </p>
+                  )}
                   <p className="text-[10px] text-slate-500 truncate mt-0.5">
                     {s.email}
                   </p>
