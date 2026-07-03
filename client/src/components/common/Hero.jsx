@@ -198,8 +198,8 @@ const Hero = () => {
                 <span
                   key={i}
                   className={`h-1.5 rounded-full transition-all ${i === activeStat
-                      ? "w-4 bg-emerald-300"
-                      : "w-1.5 bg-white/20"
+                    ? "w-4 bg-emerald-300"
+                    : "w-1.5 bg-white/20"
                     }`}
                 />
               ))}
@@ -235,11 +235,11 @@ const Hero = () => {
 
             {/* BUTTONS */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/my-courses" className="w-full sm:w-auto">
+              {/* <Link to="/my-courses" className="w-full sm:w-auto">
                 <button className="w-full sm:w-auto inline-flex cursor-pointer items-center justify-center rounded-full bg-emerald-300 px-8 py-4 text-slate-950 font-semibold shadow-2xl shadow-emerald-300/25 transition duration-300 hover:scale-[1.02] hover:bg-emerald-200">
                   {t("hero.startLearning")}
                 </button>
-              </Link>
+              </Link> */}
 
               <Link to="/courses" className="w-full sm:w-auto">
                 <button className="w-full sm:w-auto inline-flex cursor-pointer items-center justify-center rounded-full border border-white/20 bg-white/10 px-8 py-4 text-white font-semibold backdrop-blur-sm transition duration-300 hover:border-emerald-300 hover:text-emerald-300">
