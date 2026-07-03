@@ -3,6 +3,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../redux/slices/cartSlice.js";
 import { hasBaseRole } from "../../utils/permissions";
 
+const getOptimizedImageUrl = (url) => {
+  if (!url) return "";
+  if (url.includes("imagekit.io") || url.includes("imagekit")) {
+    const separator = url.includes("?") ? "&" : "?";
+    return `${url}${separator}tr=w-480,h-320,fo-auto,q-70`;
+  }
+  return url;
+};
+
 const CourseCard = ({ course }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -34,8 +43,9 @@ const CourseCard = ({ course }) => {
     <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-row md:flex-col h-[150px] md:h-auto p-2.5 md:p-0 gap-3 md:gap-0">
       {/* Image */}
       <img
-        src={course.image}
+        src={getOptimizedImageUrl(course.image)}
         alt={course.title}
+        loading="lazy"
         className="w-32 h-full md:w-full md:h-48 object-cover rounded-md md:rounded-none shrink-0"
       />
 

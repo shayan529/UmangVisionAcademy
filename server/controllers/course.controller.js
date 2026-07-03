@@ -123,7 +123,7 @@ export const getCourses = async (req, res) => {
 export const getPublishedCourses = async (req, res) => {
   try {
     const cacheKey = "courses:published";
-    const courses = await cacheResponse(cacheKey, 30, async () => {
+    const courses = await cacheResponse(cacheKey, 7200, async () => {
       return await Course.find({
         approvalStatus: "approved",
         published: true,
@@ -181,7 +181,7 @@ export const getCourseByIdPublic = async (req, res) => {
       })),
     };
 
-    await setJson(cacheKey, shaped, 30);
+    await setJson(cacheKey, shaped, 7200);
     res.json(shaped);
   } catch (error) {
     res.status(500).json({ message: error.message });
