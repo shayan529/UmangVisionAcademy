@@ -1162,6 +1162,14 @@
     "verifyPasswordChange": "Verify Password Change",
     "verifyPasswordChangeSubtitle": "Enter the 6-digit code sent to {{email}} to confirm this change"
   },
+  "studentDetailsModal": {
+    "title": "Student Details",
+    "completeProfile": "Complete your profile to help us serve you better.",
+    "fieldsOptional": "All fields are optional. You can update them anytime.",
+    "skipForNow": "Skip for now",
+    "saveDetails": "Save Details",
+    "saving": "Saving..."
+  },
   "studentReferences": {
     "title": "Reference Module",
     "subtitle": "Manage your references with full CRUD.",

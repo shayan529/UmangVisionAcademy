@@ -2,7 +2,7 @@
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const Sidebar = ({
   user,
@@ -33,6 +33,19 @@ const Sidebar = ({
   const isPremium = subscription?.plan === "premium";
 
   const [mockTestsOpen, setMockTestsOpen] = useState(false);
+  const [scrollTop, setScrollTop] = useState(0);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const handleScroll = () => {
+      setScrollTop(window.scrollY);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    setScrollTop(window.scrollY);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [mobileOpen]);
+
+  const dynamicTop = mobileOpen ? Math.max(0, 73 - scrollTop) : 0;
 
   // ── Items rendered BEFORE the Mock Tests section ──────────────────────────
   const navItemsTop = [
@@ -54,12 +67,12 @@ const Sidebar = ({
     },
     ...(!billingLoading && isPremium
       ? [
-          {
-            label: t("studentSidebar.sessions"),
-            to: "/student-dashboard/sessions",
-            icon: "🎥",
-          },
-        ]
+        {
+          label: t("studentSidebar.sessions"),
+          to: "/student-dashboard/sessions",
+          icon: "🎥",
+        },
+      ]
       : []),
   ];
 
@@ -130,7 +143,7 @@ const Sidebar = ({
     p-3
     transition-all duration-300
     ${collapsed ? "w-[68px] min-w-[68px]" : "w-[230px] min-w-[230px]"}
-    ${mobileOpen ? "fixed top-[73px] bottom-[82px] left-0 w-[220px] shadow-2xl z-40" : "hidden md:flex z-40 md:relative md:h-auto"}
+    ${mobileOpen ? "fixed top-[73px] bottom-[82px] left-0 w-[220px] shadow-2xl z-50" : "hidden md:flex z-40 md:relative md:h-auto"}
   `;
 
   const NavItem = ({ item }) => (
@@ -203,7 +216,10 @@ const Sidebar = ({
     );
 
   return (
-    <aside className={sidebarClass}>
+    <aside
+      className={sidebarClass}
+      style={mobileOpen ? { top: `${dynamicTop}px` } : undefined}
+    >
 
       {/* Nav items — scrollable middle */}
       <nav className="flex-1 flex flex-col gap-1 overflow-y-auto px-1 pb-24 md:pb-4">

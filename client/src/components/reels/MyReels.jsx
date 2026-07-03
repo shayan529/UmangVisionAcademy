@@ -11,137 +11,14 @@ import {
   CalendarDays,
   Inbox,
 } from "lucide-react";
+import InstructorUploadReel from "../instructor/InstructorUploadReel";
 
-/**
- * ─────────────────────────────────────────────────────────────────────────
- * INTEGRATION NOTE
- * This file runs on local mock state so it renders as a live preview.
- * To drop it into your app:
- *
- * 1. Restore real data fetching in fetchMine — marked "REAL API" below,
- *    matches your original fetch() call exactly (same endpoint, same
- *    credentials: "include").
- * 2. Re-add `const { user } = useSelector((s) => s.auth);` if you use it
- *    elsewhere (kept out here since this preview has no redux store).
- * 3. Swap the inline <UploadModal> below for your real
- *    `import InstructorUploadReel from "../instructor/InstructorUploadReel"`
- *    — it's stubbed here only because that file isn't available in this
- *    preview sandbox. Same onClose(...) contract, so it's a drop-in swap.
- * ─────────────────────────────────────────────────────────────────────────
- */
 
-const MOCK_REELS = [
-  {
-    _id: "r5e944",
-    title: "SN1 vs SN2 in Under a Minute",
-    status: "approved",
-    thumbnail: "https://images.unsplash.com/photo-1532634922-8fe0b757fb13?w=400&q=60",
-    videoUrl: "",
-    views: 860,
-    likes: 51,
-    createdAt: "2026-06-29T10:15:00Z",
-  },
-  {
-    _id: "r2b710",
-    title: "Quick Derivative Trick for Exams",
-    status: "approved",
-    thumbnail: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&q=60",
-    videoUrl: "",
-    views: 1240,
-    likes: 88,
-    createdAt: "2026-06-24T08:40:00Z",
-  },
-  {
-    _id: "r1a9f3",
-    title: "5-Minute Warm-up Before Every Lecture",
-    status: "pending",
-    thumbnail: "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=400&q=60",
-    videoUrl: "",
-    views: 0,
-    likes: 0,
-    createdAt: "2026-07-01T18:05:00Z",
-  },
-  {
-    _id: "r4d833",
-    title: "Fiscal Policy Explained with Coffee",
-    status: "rejected",
-    rejectedReason: "Audio is out of sync for the first 10 seconds — please re-upload.",
-    thumbnail: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&q=60",
-    videoUrl: "",
-    views: 0,
-    likes: 0,
-    createdAt: "2026-06-18T14:22:00Z",
-  },
-];
 
 const formatDate = (iso) => {
   if (!iso) return "—";
   const d = new Date(iso);
   return d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-};
-
-const UploadModal = ({ onClose }) => {
-  const [title, setTitle] = useState("");
-  const [file, setFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [uploading, setUploading] = useState(false);
-
-  const handleFile = (e) => {
-    const f = e.target.files[0];
-    if (!f) return;
-    setFile(f);
-    setPreviewUrl(URL.createObjectURL(f));
-  };
-
-  const handleSubmit = async () => {
-    if (!file) return alert("Select a video file first");
-    setUploading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    setUploading(false);
-    onClose();
-  };
-
-  return (
-    <div className="myr-modal-overlay">
-      <div className="myr-glass myr-modal rounded-2xl p-5 w-full max-w-md">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-white text-lg">Upload Reel</h3>
-          <button onClick={onClose} className="myr-close">
-            <X size={16} />
-          </button>
-        </div>
-        <div className="space-y-3">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title"
-            className="myr-input w-full p-2.5 rounded-lg text-sm"
-          />
-          <label className="myr-file-drop flex flex-col items-center justify-center gap-2 rounded-lg p-5 text-xs cursor-pointer">
-            <Film size={20} style={{ color: "#93C5FD" }} />
-            <span style={{ color: "#9CA3D4" }}>{file ? file.name : "Choose a video file"}</span>
-            <input type="file" accept="video/*" onChange={handleFile} className="hidden" />
-          </label>
-          {previewUrl && (
-            <video src={previewUrl} controls className="w-full rounded-lg" />
-          )}
-          <div className="flex gap-2.5 justify-end pt-1">
-            <button onClick={onClose} className="myr-tab px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide">
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={uploading}
-              className="myr-badge-btn px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide text-white"
-            >
-              {uploading ? "Uploading…" : "Submit for review"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 const MyReels = () => {
@@ -152,14 +29,16 @@ const MyReels = () => {
 
   const fetchMine = async () => {
     setLoading(true);
-    // REAL API:
-    // const res = await fetch(`/api/reels?mine=1`, { credentials: "include" });
-    // if (!res.ok) throw new Error("Failed");
-    // const data = await res.json();
-    // setReels(data);
-    await new Promise((r) => setTimeout(r, 500));
-    setReels(MOCK_REELS);
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/reels?mine=1`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load reels");
+      const data = await res.json();
+      setReels(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("fetchMine error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -508,7 +387,7 @@ const MyReels = () => {
       </div>
 
       {showUpload && (
-        <UploadModal
+        <InstructorUploadReel
           onClose={() => {
             setShowUpload(false);
             fetchMine();

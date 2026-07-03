@@ -102,33 +102,34 @@ const StudentDetailsFormModal = ({
   referencesLoading = false,
   isAutoPrompt = false,
 }) => {
+  const { t } = useTranslation();
   if (!open) return null;
 
   const fields = [
     {
       key: "fatherName",
-      label: "Father's Name",
-      placeholder: "Enter father's name",
+      label: t("studentSettings.fatherName", "Father's Name"),
+      placeholder: t("studentSettings.fatherNamePlaceholder", "Enter father's name"),
     },
     {
       key: "motherName",
-      label: "Mother's Name",
-      placeholder: "Enter mother's name",
+      label: t("studentSettings.motherName", "Mother's Name"),
+      placeholder: t("studentSettings.motherNamePlaceholder", "Enter mother's name"),
     },
     {
       key: "fatherMobileNumber",
-      label: "Father's Mobile",
-      placeholder: "e.g. 9876543210",
+      label: t("studentSettings.fatherMobile", "Father's Mobile"),
+      placeholder: t("studentSettings.fatherMobilePlaceholder", "e.g. 9876543210"),
     },
     {
       key: "socialMediaAccount",
-      label: "Social Media",
-      placeholder: "Instagram / Facebook URL",
+      label: t("studentSettings.socialMedia", "Social Media"),
+      placeholder: t("studentSettings.socialMediaPlaceholder", "Instagram / Facebook URL"),
     },
     {
       key: "vidhansabha",
-      label: "Vidhansabha",
-      placeholder: "Enter vidhansabha",
+      label: t("studentSettings.vidhansabha", "Vidhansabha"),
+      placeholder: t("studentSettings.vidhansabhaPlaceholder", "Enter vidhansabha"),
     },
   ];
 
@@ -179,7 +180,7 @@ const StudentDetailsFormModal = ({
                   margin: 0,
                 }}
               >
-                Student Details
+                {t("studentDetailsModal.title", "Student Details")}
               </h3>
             </div>
             <p
@@ -191,8 +192,8 @@ const StudentDetailsFormModal = ({
               }}
             >
               {isAutoPrompt
-                ? "Complete your profile to help us serve you better."
-                : "All fields are optional. You can update them anytime."}
+                ? t("studentDetailsModal.completeProfile", "Complete your profile to help us serve you better.")
+                : t("studentDetailsModal.fieldsOptional", "All fields are optional. You can update them anytime.")}
             </p>
           </div>
           <button
@@ -295,7 +296,7 @@ const StudentDetailsFormModal = ({
                 color: "#8a6a3a",
               }}
             >
-              Reference
+              {t("studentSettings.reference", "Reference")}
             </label>
             <select
               value={form.reference ?? ""}
@@ -322,8 +323,8 @@ const StudentDetailsFormModal = ({
             >
               <option value="">
                 {referencesLoading
-                  ? "Loading references..."
-                  : "Select reference"}
+                  ? t("studentSettings.loadingReferences", "Loading references...")
+                  : t("studentSettings.selectReference", "Select reference")}
               </option>
               {hasCurrentReference && (
                 <option value={form.reference}>{form.reference}</option>
@@ -347,13 +348,13 @@ const StudentDetailsFormModal = ({
                 color: "#8a6a3a",
               }}
             >
-              Full Address
+              {t("studentSettings.fullAddress", "Full Address")}
             </label>
             <textarea
               rows={3}
               value={form.fullAddress ?? ""}
               onChange={(e) => onChange("fullAddress", e.target.value)}
-              placeholder="House no., street, city, state, pincode"
+              placeholder={t("studentSettings.fullAddressPlaceholder", "House no., street, city, state, pincode")}
               style={{
                 background: "#fff8ed",
                 border: "1px solid #d9c4a0",
@@ -404,7 +405,9 @@ const StudentDetailsFormModal = ({
               cursor: saving ? "not-allowed" : "pointer",
             }}
           >
-            {isAutoPrompt ? "Skip for now" : "Cancel"}
+            {isAutoPrompt
+              ? t("studentDetailsModal.skipForNow", "Skip for now")
+              : t("studentSettings.cancel", "Cancel")}
           </button>
           <button
             type="button"
@@ -439,7 +442,7 @@ const StudentDetailsFormModal = ({
                 }}
               />
             )}
-            {saving ? "Saving..." : "Save Details"}
+            {saving ? t("studentDetailsModal.saving", "Saving...") : t("studentDetailsModal.saveDetails", "Save Details")}
           </button>
         </div>
       </div>
@@ -926,27 +929,27 @@ export const DashboardHome = () => {
             >
               {coursesLoading
                 ? [...Array(3)].map((_, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        background: "#111827",
-                        border: "1px solid #1e293b",
-                        borderRadius: 14,
-                        padding: "16px 18px",
-                      }}
-                    >
-                      <Skeleton w="65%" h={13} style={{ marginBottom: 10 }} />
-                      <Skeleton w="100%" h={6} radius={4} />
-                    </div>
-                  ))
+                  <div
+                    key={i}
+                    style={{
+                      background: "#111827",
+                      border: "1px solid #1e293b",
+                      borderRadius: 14,
+                      padding: "16px 18px",
+                    }}
+                  >
+                    <Skeleton w="65%" h={13} style={{ marginBottom: 10 }} />
+                    <Skeleton w="100%" h={6} radius={4} />
+                  </div>
+                ))
                 : enrolledCourses
-                    .slice(0, 6)
-                    .map((course, i) => (
-                      <CourseProgressCard
-                        key={course._id ?? course.id ?? i}
-                        course={course}
-                      />
-                    ))}
+                  .slice(0, 6)
+                  .map((course, i) => (
+                    <CourseProgressCard
+                      key={course._id ?? course.id ?? i}
+                      course={course}
+                    />
+                  ))}
             </div>
           </section>
         )}
@@ -1073,6 +1076,20 @@ const StudentDashboard = () => {
     dispatch(fetchSubscription());
     dispatch(fetchSessions());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.style.touchAction = "none"; // extra safety for iOS momentum scroll
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    };
+  }, [mobileOpen]);
 
   useEffect(() => {
     const handleNavbarMenuOpen = () => {

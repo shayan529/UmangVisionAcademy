@@ -1164,6 +1164,14 @@
     "verifyPasswordChange": "पासवर्ड बदलाव सत्यापित करें",
     "verifyPasswordChangeSubtitle": "इस बदलाव की पुष्टि के लिए {{email}} पर भेजा गया 6-अंकों का कोड दर्ज करें"
   },
+  "studentDetailsModal": {
+    "title": "छात्र विवरण",
+    "completeProfile": "आपकी बेहतर सहायता के लिए अपनी प्रोफ़ाइल पूरी करें।",
+    "fieldsOptional": "सभी फ़ील्ड वैकल्पिक हैं। आप इन्हें कभी भी अपडेट कर सकते हैं।",
+    "skipForNow": "अभी छोड़ें",
+    "saveDetails": "विवरण सहेजें",
+    "saving": "सहेजा जा रहा है..."
+  },
   "studentReferences": {
     "title": "रेफरेंस मॉड्यूल",
     "subtitle": "अपने रेफरेंस को पूरी CRUD के साथ प्रबंधित करें।",

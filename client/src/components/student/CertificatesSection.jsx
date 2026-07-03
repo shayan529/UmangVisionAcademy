@@ -394,14 +394,10 @@ const CertificateRow = ({
 
   return (
     <div
+      className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-4 rounded-xl"
       style={{
         background: `linear-gradient(135deg, ${c1}cc 0%, ${c2}cc 100%)`,
         border: `1px solid ${t.border}55`,
-        borderRadius: 14,
-        padding: "14px 18px",
-        display: "flex",
-        alignItems: "center",
-        gap: 14,
         animation: "fadeIn 0.3s ease",
       }}
     >
@@ -466,7 +462,7 @@ const CertificateRow = ({
 
       {/* Actions */}
       <div
-        style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}
+        className="flex flex-wrap gap-2 items-center w-full sm:w-auto mt-2 sm:mt-0"
       >
         <button
           onClick={() => onView(cert)}

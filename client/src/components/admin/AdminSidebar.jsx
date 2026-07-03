@@ -61,7 +61,7 @@ const AdminSidebar = ({
       )}
 
       <aside
-        className={`bg-[#0b1120] border-r border-slate-800 flex flex-col transition-all duration-300 z-40
+        className={`bg-[#0b1120] border-r border-slate-800 flex flex-col transition-all duration-300 z-50
           ${collapsed ? "w-[68px] min-w-[68px]" : "w-[220px] min-w-[220px]"}
           ${
             mobileOpen

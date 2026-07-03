@@ -48,14 +48,6 @@ const ReferralPage = () => {
             <p className="mt-2 text-sm text-slate-400">
               {t("studentReferral.summaryCoins")}
             </p>
-            <div className="mt-5 rounded-2xl border border-[#2a3e5c] bg-[#111827] p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                {t("studentReferral.referralCode")}
-              </p>
-              <p className="mt-2 text-lg font-semibold text-white">
-                {referralCode}
-              </p>
-            </div>
           </div>
 
           <div className="rounded-2xl border border-[#243145] bg-[#0f172a] p-6">

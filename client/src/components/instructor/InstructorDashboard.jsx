@@ -47,6 +47,19 @@ export default function InstructorDashboard() {
   const [toastMsg, setToastMsg] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [scrollTop, setScrollTop] = useState(0);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const handleScroll = () => {
+      setScrollTop(window.scrollY);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    setScrollTop(window.scrollY);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [sidebarOpen]);
+
+  const dynamicTop = sidebarOpen ? Math.max(0, 73 - scrollTop) : 0;
   const [courseForm, setCourseForm] = useState(EMPTY_FORM);
 
   const dispatch = useDispatch();
@@ -310,13 +323,14 @@ export default function InstructorDashboard() {
 
         {/* Mobile drawer */}
         <aside
-          className={`bg-[#0b1120] border-r border-slate-800 flex-col transition-all duration-300 z-40 p-5 md:hidden
+          className={`bg-[#0b1120] border-r border-slate-800 flex-col transition-all duration-300 z-50 p-5 md:hidden
             ${
               sidebarOpen
-                ? "fixed top-[73px] bottom-[82px] left-0 w-[220px] shadow-2xl flex"
+                ? "fixed bottom-[82px] left-0 w-[220px] shadow-2xl flex"
                 : "hidden"
             }
           `}
+          style={sidebarOpen ? { top: `${dynamicTop}px` } : undefined}
         >
           <button
             onClick={() => setSidebarOpen(false)}
