@@ -55,13 +55,13 @@ const AdminSidebar = ({
       {/* ── Mobile backdrop ── */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          className="fixed inset-0 z-[90] bg-black/50 md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       <aside
-        className={`bg-[#0b1120] border-r border-slate-800 flex flex-col transition-all duration-300 z-50
+        className={`bg-slate-950 border-r border-slate-800 flex flex-col transition-all duration-300 z-[100]
           ${collapsed ? "w-[68px] min-w-[68px]" : "w-[220px] min-w-[220px]"}
           ${
             mobileOpen
