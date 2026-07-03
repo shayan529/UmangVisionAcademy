@@ -59,16 +59,14 @@ const AdminSidebar = ({
           onClick={() => setMobileOpen(false)}
         />
       )}
-
       <aside
-        className={`bg-slate-950 border-r border-slate-800 flex flex-col transition-all duration-300 z-[100]
-          ${collapsed ? "w-[68px] min-w-[68px]" : "w-[220px] min-w-[220px]"}
-          ${
-            mobileOpen
-              ? "fixed top-0 bottom-[82px] left-0 shadow-2xl"
-              : "hidden md:flex md:relative md:h-auto"
-          }
-        `}
+        className={`bg-slate-950 border-r border-slate-800 flex flex-col overflow-hidden
+    transition-transform duration-300 ease-in-out
+    fixed top-0 bottom-[82px] left-0 z-[100] shadow-2xl
+    md:relative md:top-auto md:bottom-auto md:h-auto md:shadow-none md:translate-x-0
+    ${collapsed ? "w-[68px] min-w-[68px]" : "w-[220px] min-w-[220px]"}
+    ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+  `}
       >
         {/* Brand & Collapse Header */}
         <div className="flex items-center justify-between mb-5 px-3 py-4 border-b border-slate-800">
@@ -107,9 +105,8 @@ const AdminSidebar = ({
         {/* User Card */}
         <div className="px-3 mb-4">
           <div
-            className={`flex items-center gap-3 rounded-xl p-3 ${
-              collapsed ? "justify-center" : "justify-start"
-            } bg-indigo-950/20 border border-indigo-900/30`}
+            className={`flex items-center gap-3 rounded-xl p-3 ${collapsed ? "justify-center" : "justify-start"
+              } bg-indigo-950/20 border border-indigo-900/30`}
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-indigo-400 to-violet-600 text-xs font-bold text-white shadow-sm shadow-indigo-500/10">
               AD
@@ -141,13 +138,11 @@ const AdminSidebar = ({
                   if (mobileOpen) setMobileOpen(false);
                 }}
                 title={collapsed ? item.label : undefined}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 w-full text-left ${
-                  collapsed ? "justify-center" : "justify-start"
-                } ${
-                  isActive
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 w-full text-left ${collapsed ? "justify-center" : "justify-start"
+                  } ${isActive
                     ? "bg-indigo-950/40 text-indigo-300 border-l-2 border-indigo-500 pl-2.5"
                     : "text-slate-400 hover:bg-slate-900 hover:text-white border-l-2 border-transparent"
-                }`}
+                  }`}
               >
                 <Icon size={16} className="shrink-0" />
                 {!collapsed && (

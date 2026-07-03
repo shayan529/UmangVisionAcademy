@@ -63,312 +63,320 @@ const themes = {
 };
 
 // ── A4CertificateCard ─────────────────────────────────────────────────────────
+// Wrapped in a container-query context (containerType: "inline-size") so all
+// font sizes below use `cqw` (percent of THIS element's own width) instead of
+// vw/viewport units. That means: on a narrow phone the rendered card shrinks
+// and its text shrinks proportionally with it, while the hidden off-screen
+// copy used for PDF generation (still rendered at a fixed 860px) keeps its
+// full-size text — so PDF output quality is unaffected by mobile scaling.
 const A4CertificateCard = ({ cert, studentName }) => {
   const t = themes[cert.theme] || themes.purple;
   const [c1, c2] = t.colors;
 
   return (
-    <div
-      id={`cert-card-${cert.id}`}
-      style={{
-        width: "100%",
-        aspectRatio: "297 / 210",
-        background: `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`,
-        borderRadius: 16,
-        position: "relative",
-        overflow: "hidden",
-        fontFamily: "'Georgia', 'Times New Roman', serif",
-        boxSizing: "border-box",
-        border: `2px solid ${t.border}55`,
-        boxShadow: "0 16px 48px rgba(0,0,0,0.35)",
-      }}
-    >
-      {/* decorative rings */}
+    <div style={{ containerType: "inline-size" }}>
       <div
+        id={`cert-card-${cert.id}`}
         style={{
-          position: "absolute",
-          right: -80,
-          top: -80,
-          width: 320,
-          height: 320,
-          borderRadius: "50%",
-          border: "1px solid rgba(255,255,255,0.08)",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          right: -40,
-          top: -40,
-          width: 200,
-          height: 200,
-          borderRadius: "50%",
-          border: "1px solid rgba(255,255,255,0.06)",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          left: -60,
-          bottom: -60,
-          width: 280,
-          height: 280,
-          borderRadius: "50%",
-          border: "1px solid rgba(255,255,255,0.07)",
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* outer border frame */}
-      <div
-        style={{
-          position: "absolute",
-          inset: "14px",
-          border: `1.5px solid ${t.accent}44`,
-          borderRadius: 10,
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* medal - top right */}
-      <div
-        style={{
-          position: "absolute",
-          top: 32,
-          right: 36,
-          fontSize: "clamp(22px, 3.5vw, 40px)",
-          zIndex: 2,
+          width: "100%",
+          aspectRatio: "297 / 210",
+          background: `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`,
+          borderRadius: 16,
+          position: "relative",
+          overflow: "hidden",
+          fontFamily: "'Georgia', 'Times New Roman', serif",
+          boxSizing: "border-box",
+          border: `2px solid ${t.border}55`,
+          boxShadow: "0 16px 48px rgba(0,0,0,0.35)",
         }}
       >
-        🏅
-      </div>
-
-      {/* inner content */}
-      <div
-        style={{
-          position: "absolute",
-          inset: "28px 32px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          zIndex: 1,
-        }}
-      >
-        {/* TOP */}
+        {/* decorative rings */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            marginBottom: 16,
+            position: "absolute",
+            right: -80,
+            top: -80,
+            width: 320,
+            height: 320,
+            borderRadius: "50%",
+            border: "1px solid rgba(255,255,255,0.08)",
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            right: -40,
+            top: -40,
+            width: 200,
+            height: 200,
+            borderRadius: "50%",
+            border: "1px solid rgba(255,255,255,0.06)",
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            left: -60,
+            bottom: -60,
+            width: 280,
+            height: 280,
+            borderRadius: "50%",
+            border: "1px solid rgba(255,255,255,0.07)",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* outer border frame */}
+        <div
+          style={{
+            position: "absolute",
+            inset: "1.6cqw",
+            border: `1.5px solid ${t.accent}44`,
+            borderRadius: 10,
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* medal - top right */}
+        <div
+          style={{
+            position: "absolute",
+            top: "3.7cqw",
+            right: "4.2cqw",
+            fontSize: "clamp(16px, 4.5cqw, 40px)",
+            zIndex: 2,
           }}
         >
-          <div style={{ textAlign: "center" }}>
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 800,
-                color: t.accent,
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                fontFamily: "sans-serif",
-                marginBottom: 2,
-              }}
-            >
-              Umang Vision Academy
-            </div>
-            <div
-              style={{
-                fontSize: 9,
-                color: "rgba(255,255,255,0.45)",
-                fontFamily: "sans-serif",
-                letterSpacing: "0.05em",
-              }}
-            >
-              Verify ID: {cert.id} · Issued: {cert.issuedDate}
-            </div>
-          </div>
+          🏅
         </div>
 
-        {/* MIDDLE */}
-        <div style={{ textAlign: "center", padding: "0 4%" }}>
+        {/* inner content */}
+        <div
+          style={{
+            position: "absolute",
+            inset: "3.2cqw 3.7cqw",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            zIndex: 1,
+          }}
+        >
+          {/* TOP */}
           <div
             style={{
               display: "flex",
               justifyContent: "center",
-              marginBottom: 10,
+              alignItems: "center",
+              marginBottom: "1.8cqw",
             }}
           >
-            <img
-              src="/Logo.png"
-              alt="Umang Vision Academy logo"
-              style={{
-                width: 70,
-                height: 70,
-                borderRadius: 16,
-                objectFit: "contain",
-                background: "rgba(255,255,255,0.08)",
-                padding: 8,
-              }}
-            />
+            <div style={{ textAlign: "center" }}>
+              <div
+                style={{
+                  fontSize: "clamp(8px, 1.3cqw, 12px)",
+                  fontWeight: 800,
+                  color: t.accent,
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  fontFamily: "sans-serif",
+                  marginBottom: 2,
+                }}
+              >
+                Umang Vision Academy
+              </div>
+              <div
+                style={{
+                  fontSize: "clamp(6px, 1cqw, 9px)",
+                  color: "rgba(255,255,255,0.45)",
+                  fontFamily: "sans-serif",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                Verify ID: {cert.id} · Issued: {cert.issuedDate}
+              </div>
+            </div>
           </div>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: t.accent,
-              letterSpacing: "0.3em",
-              textTransform: "uppercase",
-              fontFamily: "sans-serif",
-              marginBottom: 8,
-            }}
-          >
-            {cert.title}
-          </div>
-          <div
-            style={{
-              width: "30%",
-              height: 1,
-              background: `linear-gradient(90deg, transparent, ${t.accent}88, transparent)`,
-              margin: "0 auto 10px",
-            }}
-          />
-          <div
-            style={{
-              fontSize: 13,
-              color: "rgba(255,255,255,0.78)",
-              fontFamily: "Georgia, serif",
-              marginBottom: 10,
-              lineHeight: 1.7,
-            }}
-          >
-            This is to certify that{" "}
-            <strong>{studentName || "Student Name"}</strong> has exhibited
-            outstanding dedication and successfully completed the course{" "}
-            <strong>“{cert.course}”</strong>.
-          </div>
-          <div
-            style={{
-              fontSize: 13,
-              color: "rgba(255,255,255,0.78)",
-              fontFamily: "Georgia, serif",
-              marginBottom: 10,
-              lineHeight: 1.7,
-            }}
-          >
-            Awarded on <strong>{cert.issuedDate}</strong>, this certificate
-            confirms the successful completion of the program and recognizes
-            excellence in learning and achievement.
-          </div>
-          <div
-            style={{
-              fontSize: 13,
-              color: "rgba(255,255,255,0.78)",
-              fontFamily: "Georgia, serif",
-              marginBottom: 0,
-              lineHeight: 1.7,
-            }}
-          >
-            Presented by Umang Vision Academy as an official record of
-            accomplishment for the student’s hard work and growth.
-          </div>
-        </div>
 
-        {/* BOTTOM */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-            borderTop: "1px solid rgba(255,255,255,0.12)",
-            paddingTop: "1.2%",
-          }}
-        >
-          <div>
+          {/* MIDDLE */}
+          <div style={{ textAlign: "center", padding: "0 4%" }}>
             <div
               style={{
-                fontSize: 8,
-                color: "rgba(255,255,255,0.4)",
-                fontFamily: "sans-serif",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                marginBottom: 2,
-              }}
-            >
-              Credential ID
-            </div>
-            <div
-              style={{
-                fontSize: 9,
-                color: t.accent,
-                fontFamily: "monospace",
-                fontWeight: 700,
-              }}
-            >
-              {cert.id}
-            </div>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: "50%",
-                border: `2px solid ${t.accent}88`,
                 display: "flex",
-                alignItems: "center",
                 justifyContent: "center",
-                margin: "0 auto 2px",
-                fontSize: 18,
+                marginBottom: "1.2cqw",
               }}
             >
-              🎓
+              <img
+                src="/Logo.png"
+                alt="Umang Vision Academy logo"
+                style={{
+                  width: "clamp(36px, 8cqw, 70px)",
+                  height: "clamp(36px, 8cqw, 70px)",
+                  borderRadius: 16,
+                  objectFit: "contain",
+                  background: "rgba(255,255,255,0.08)",
+                  padding: "clamp(4px, 0.9cqw, 8px)",
+                }}
+              />
             </div>
             <div
               style={{
-                fontSize: 7,
-                color: "rgba(255,255,255,0.4)",
-                fontFamily: "sans-serif",
-                letterSpacing: "0.15em",
-                textTransform: "uppercase",
-              }}
-            >
-              Official Seal
-            </div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div
-              style={{
-                fontSize: 14,
-                fontFamily: "Georgia, serif",
-                fontStyle: "italic",
+                fontSize: "clamp(9px, 1.4cqw, 12px)",
+                fontWeight: 700,
                 color: t.accent,
-                marginBottom: 2,
-                opacity: 0.9,
+                letterSpacing: "0.3em",
+                textTransform: "uppercase",
+                fontFamily: "sans-serif",
+                marginBottom: "0.9cqw",
               }}
             >
-              {cert.instructor}
+              {cert.title}
             </div>
             <div
               style={{
-                width: 70,
+                width: "30%",
                 height: 1,
-                background: `${t.accent}66`,
-                marginLeft: "auto",
-                marginBottom: 2,
+                background: `linear-gradient(90deg, transparent, ${t.accent}88, transparent)`,
+                margin: "0 auto 1.2cqw",
               }}
             />
             <div
               style={{
-                fontSize: 8,
-                color: "rgba(255,255,255,0.5)",
-                fontFamily: "sans-serif",
-                letterSpacing: "0.05em",
+                fontSize: "clamp(9px, 1.5cqw, 13px)",
+                color: "rgba(255,255,255,0.78)",
+                fontFamily: "Georgia, serif",
+                marginBottom: "1.2cqw",
+                lineHeight: 1.6,
               }}
             >
-              {cert.instructorTitle}
+              This is to certify that{" "}
+              <strong>{studentName || "Student Name"}</strong> has exhibited
+              outstanding dedication and successfully completed the course{" "}
+              <strong>“{cert.course}”</strong>.
+            </div>
+            <div
+              style={{
+                fontSize: "clamp(9px, 1.5cqw, 13px)",
+                color: "rgba(255,255,255,0.78)",
+                fontFamily: "Georgia, serif",
+                marginBottom: "1.2cqw",
+                lineHeight: 1.6,
+              }}
+            >
+              Awarded on <strong>{cert.issuedDate}</strong>, this certificate
+              confirms the successful completion of the program and recognizes
+              excellence in learning and achievement.
+            </div>
+            <div
+              style={{
+                fontSize: "clamp(9px, 1.5cqw, 13px)",
+                color: "rgba(255,255,255,0.78)",
+                fontFamily: "Georgia, serif",
+                marginBottom: 0,
+                lineHeight: 1.6,
+              }}
+            >
+              Presented by Umang Vision Academy as an official record of
+              accomplishment for the student’s hard work and growth.
+            </div>
+          </div>
+
+          {/* BOTTOM */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+              borderTop: "1px solid rgba(255,255,255,0.12)",
+              paddingTop: "1.2%",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: "clamp(6px, 0.9cqw, 8px)",
+                  color: "rgba(255,255,255,0.4)",
+                  fontFamily: "sans-serif",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  marginBottom: 2,
+                }}
+              >
+                Credential ID
+              </div>
+              <div
+                style={{
+                  fontSize: "clamp(7px, 1cqw, 9px)",
+                  color: t.accent,
+                  fontFamily: "monospace",
+                  fontWeight: 700,
+                }}
+              >
+                {cert.id}
+              </div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div
+                style={{
+                  width: "clamp(26px, 5cqw, 44px)",
+                  height: "clamp(26px, 5cqw, 44px)",
+                  borderRadius: "50%",
+                  border: `2px solid ${t.accent}88`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 2px",
+                  fontSize: "clamp(11px, 2cqw, 18px)",
+                }}
+              >
+                🎓
+              </div>
+              <div
+                style={{
+                  fontSize: "clamp(5px, 0.8cqw, 7px)",
+                  color: "rgba(255,255,255,0.4)",
+                  fontFamily: "sans-serif",
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Official Seal
+              </div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div
+                style={{
+                  fontSize: "clamp(10px, 1.6cqw, 14px)",
+                  fontFamily: "Georgia, serif",
+                  fontStyle: "italic",
+                  color: t.accent,
+                  marginBottom: 2,
+                  opacity: 0.9,
+                }}
+              >
+                {cert.instructor}
+              </div>
+              <div
+                style={{
+                  width: "clamp(40px, 8cqw, 70px)",
+                  height: 1,
+                  background: `${t.accent}66`,
+                  marginLeft: "auto",
+                  marginBottom: 2,
+                }}
+              />
+              <div
+                style={{
+                  fontSize: "clamp(6px, 0.9cqw, 8px)",
+                  color: "rgba(255,255,255,0.5)",
+                  fontFamily: "sans-serif",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                {cert.instructorTitle}
+              </div>
             </div>
           </div>
         </div>
@@ -571,8 +579,9 @@ const CertificateModal = ({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "20px",
+        padding: "clamp(10px, 4vw, 20px)",
         animation: "fadeIn 0.18s ease",
+        overflowY: "auto",
       }}
     >
       <div
@@ -617,7 +626,7 @@ const CertificateModal = ({
             justifyContent: "space-between",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <div
               style={{
                 background: "#1e293b",
@@ -647,7 +656,7 @@ const CertificateModal = ({
             </button>
           </div>
 
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <button
               onClick={() => onDownload(cert)}
               disabled={downloadingCertId === cert.id}
@@ -662,6 +671,7 @@ const CertificateModal = ({
                 cursor:
                   downloadingCertId === cert.id ? "not-allowed" : "pointer",
                 opacity: downloadingCertId === cert.id ? 0.6 : 1,
+                whiteSpace: "nowrap",
               }}
             >
               {downloadingCertId === cert.id ? "Generating…" : "⬇ Download PDF"}
@@ -677,6 +687,7 @@ const CertificateModal = ({
                 fontSize: 12,
                 fontWeight: 700,
                 cursor: "pointer",
+                whiteSpace: "nowrap",
               }}
             >
               {copiedLink === cert.id ? "Link Copied ✓" : "🔗 Copy Link"}
@@ -708,14 +719,14 @@ export default function Certificates() {
   }, [dispatch]);
 
   const copyId = (id) => {
-    navigator.clipboard.writeText(id).catch(() => {});
+    navigator.clipboard.writeText(id).catch(() => { });
     setCopiedId(id);
     setTimeout(() => setCopiedId(""), 2000);
   };
 
   const copyLink = (id) => {
     const link = `${window.location.origin}/certificates/verify/${id}`;
-    navigator.clipboard.writeText(link).catch(() => {});
+    navigator.clipboard.writeText(link).catch(() => { });
     setCopiedLink(id);
     setTimeout(() => setCopiedLink(""), 2000);
   };
@@ -807,16 +818,16 @@ export default function Certificates() {
 
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <h2 style={{ fontSize: 26, fontWeight: 800, color: "#f1f5f9" }}>
+        <h2 style={{ fontSize: "clamp(20px, 5vw, 26px)", fontWeight: 800, color: "#f1f5f9" }}>
           {t("studentCertificates.title")}
         </h2>
         <p style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
           {enrolledLoading
             ? t("studentCertificates.loading")
             : t("studentCertificates.summary", {
-                earned: earnedCertificates.length,
-                progress: inProgressCourses.length,
-              })}
+              earned: earnedCertificates.length,
+              progress: inProgressCourses.length,
+            })}
         </p>
       </div>
 
@@ -929,6 +940,7 @@ export default function Certificates() {
                   borderRadius: 16,
                   padding: "16px 18px",
                   display: "flex",
+                  flexWrap: "wrap",
                   alignItems: "center",
                   gap: 14,
                 }}
@@ -948,13 +960,16 @@ export default function Certificates() {
                 >
                   {course.thumb}
                 </div>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: "1 1 160px", minWidth: 0 }}>
                   <div
                     style={{
                       fontSize: 14,
                       fontWeight: 700,
                       color: "#f1f5f9",
                       marginBottom: 6,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
                     }}
                   >
                     {course.title}
@@ -981,7 +996,7 @@ export default function Certificates() {
                     {course.progress}% complete — finish to unlock certificate
                   </div>
                 </div>
-                <Link to={`/courses/${course.id}`}>
+                <Link to={`/courses/${course.id}`} style={{ flexShrink: 0 }}>
                   <button
                     style={{
                       padding: "7px 14px",

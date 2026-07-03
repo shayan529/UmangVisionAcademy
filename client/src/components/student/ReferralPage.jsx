@@ -24,12 +24,12 @@ const ReferralPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-[#1e293b] bg-[#111827] p-8">
+      <div className="rounded-2xl sm:rounded-3xl border border-[#1e293b] bg-[#111827] p-5 sm:p-8">
         <div className="mb-4">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] sm:tracking-[0.18em] text-slate-500">
             {t("studentReferral.title")}
           </p>
-          <h1 className="mt-3 text-3xl font-bold text-white">
+          <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-white">
             {t("studentReferral.header")}
           </h1>
           <p className="mt-3 text-sm leading-6 text-slate-400 max-w-2xl">
@@ -38,11 +38,11 @@ const ReferralPage = () => {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-2xl border border-[#243145] bg-[#0f172a] p-6">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+          <div className="rounded-2xl border border-[#243145] bg-[#0f172a] p-5 sm:p-6">
+            <p className="text-xs uppercase tracking-[0.14em] sm:tracking-[0.18em] text-slate-500">
               {t("studentReferral.summaryTitle")}
             </p>
-            <p className="mt-4 text-4xl font-bold text-white">
+            <p className="mt-4 text-3xl sm:text-4xl font-bold text-white">
               {(user?.referralsCount ?? 0) * 50}
             </p>
             <p className="mt-2 text-sm text-slate-400">
@@ -50,11 +50,11 @@ const ReferralPage = () => {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-[#243145] bg-[#0f172a] p-6">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+          <div className="rounded-2xl border border-[#243145] bg-[#0f172a] p-5 sm:p-6">
+            <p className="text-xs uppercase tracking-[0.14em] sm:tracking-[0.18em] text-slate-500">
               {t("studentReferral.referralCode")}
             </p>
-            <p className="mt-3 text-2xl font-semibold text-white">
+            <p className="mt-3 text-xl sm:text-2xl font-semibold text-white break-all">
               {referralCode}
             </p>
             <p className="mt-2 text-sm text-slate-400">
@@ -64,8 +64,8 @@ const ReferralPage = () => {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-[#243145] bg-[#0f172a] p-6">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+          <div className="rounded-2xl border border-[#243145] bg-[#0f172a] p-5 sm:p-6 sm:col-span-2 lg:col-span-1">
+            <p className="text-xs uppercase tracking-[0.14em] sm:tracking-[0.18em] text-slate-500">
               {t("studentReferral.share")}
             </p>
             <div className="mt-3 rounded-2xl border border-[#2a3e5c] bg-[#111827] p-4 text-sm text-slate-200 break-words">
@@ -75,7 +75,7 @@ const ReferralPage = () => {
               type="button"
               onClick={handleCopy}
               disabled={!referralLink}
-              className="mt-4 inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-500 to-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-4 w-full sm:w-auto inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-500 to-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t("studentReferral.copyLink")}
             </button>
