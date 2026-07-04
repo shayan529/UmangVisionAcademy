@@ -1,9 +1,8 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../redux/slices/authSlice";
 import { ChevronDown, ShoppingCart } from "lucide-react";
-import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { getCustomRoles, hasBaseRole } from "../utils/permissions";
 
@@ -44,9 +43,11 @@ const Navbar = () => {
   const dropdownRef = useRef(null);
   const languageRef = useRef(null);
   const mobileLangRef = useRef(null);
+  const topBarRef = useRef(null);
   const { t, i18n } = useTranslation();
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [mobileLangDropdownOpen, setMobileLangDropdownOpen] = useState(false);
+  const [topBarHeight, setTopBarHeight] = useState(0);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -85,6 +86,61 @@ const Navbar = () => {
     };
   }, []);
 
+  // Measure the sticky top bar's rendered height so the full-screen mobile
+  // menu can start exactly below it instead of overlapping it.
+  useEffect(() => {
+    const el = topBarRef.current;
+    if (!el) return;
+    const updateHeight = () => setTopBarHeight(el.offsetHeight);
+    updateHeight();
+
+    const resizeObserver = new ResizeObserver(updateHeight);
+    resizeObserver.observe(el);
+    window.addEventListener("resize", updateHeight);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateHeight);
+    };
+  }, []);
+
+  // Lock body scroll while the mobile menu is open, using the mobile-safe
+  // technique (position:fixed + saved offset) instead of overflow:hidden
+  // alone, since touch-drag scrolling ignores overflow:hidden on iOS/Android.
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const scrollY = window.scrollY;
+    const { body } = document;
+    const previous = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+    };
+
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+
+    return () => {
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.left = previous.left;
+      body.style.right = previous.right;
+      body.style.width = previous.width;
+      window.scrollTo(0, scrollY);
+    };
+  }, [mobileMenuOpen]);
+
+  // Close the mobile menu on route changes so it never lingers open after a
+  // link navigation.
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
   const closeMobile = () => setMobileMenuOpen(false);
   const currentLanguage = i18n.language?.startsWith("hi") ? "hi" : "en";
   const isHindi = currentLanguage === "hi";
@@ -103,8 +159,9 @@ const Navbar = () => {
   const goingToInstructor = !isInstructorDashboard;
 
   return (
-    <nav className="w-full sticky top-0 z-50 bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10">
-      <style>{`
+    <>
+      <nav className="w-full sticky top-0 z-[101] bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10">
+        <style>{`
 .btn-navy,
 .btn-indigo-shine,
 .btn-red {
@@ -164,295 +221,322 @@ button.btn-red:hover,
 }
 `}</style>
 
-      <div className="w-full px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 flex items-center justify-between gap-2">
-        {/* ── Logo ── */}
-        <Link
-          to="/"
-          className="flex items-center shrink-0"
-          aria-label="Go to home"
+        <div
+          ref={topBarRef}
+          className="w-full px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 flex items-center justify-between gap-2"
         >
-          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex items-center justify-center">
-            <img
-              src="/Logo.png"
-              alt="Logo"
-              className="w-full h-full object-contain"
-            />
-          </div>
-          <div className="hidden md:flex items-center ml-2 lg:ml-3">
-            <span className="text-sm lg:text-base xl:text-lg font-extrabold text-white tracking-wide">
-              Umang Vision
-            </span>
-            <span className="ml-1 shimmer-txt text-sm lg:text-base xl:text-lg font-extrabold tracking-wide">
-              Academy
-            </span>
-          </div>
-        </Link>
-
-        {/* ── Desktop nav links ── */}
-        <div className="hidden md:flex justify-center flex-1 items-center gap-8 text-[15px] font-medium text-gray-300 mx-8">
-          {!isStaffOrAdmin && (
-            <Link
-              to="/courses"
-              className="hover:text-indigo-300 transition duration-300"
-            >
-              {t("nav.courses")}
-            </Link>
-          )}
-          {!isStaffOrAdmin && (
-            <Link
-              to="/plans"
-              className="hover:text-indigo-300 transition duration-300"
-            >
-              {t("nav.plans")}
-            </Link>
-          )}
+          {/* ── Logo ── */}
           <Link
-            to="/question-bank"
-            className="hover:text-indigo-300 transition duration-300"
+            to="/"
+            className="flex items-center shrink-0"
+            aria-label="Go to home"
           >
-            {t("nav.questionBank")}
-          </Link>
-          <Link
-            to="/blogs"
-            className="hover:text-indigo-300 transition duration-300"
-          >
-            {t("nav.blogs")}
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex items-center justify-center">
+              <img
+                src="/Logo.png"
+                alt="Logo"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div className="hidden md:flex items-center ml-2 lg:ml-3">
+              <span className="text-sm lg:text-base xl:text-lg font-extrabold text-white tracking-wide">
+                Umang Vision
+              </span>
+              <span className="ml-1 shimmer-txt text-sm lg:text-base xl:text-lg font-extrabold tracking-wide">
+                Academy
+              </span>
+            </div>
           </Link>
 
-          {!isStaffOrAdmin && (
-            <div ref={dropdownRef} className="relative">
-              <button
-                onClick={() => setBoardOpen((prev) => !prev)}
-                className="flex items-center gap-1 hover:text-indigo-300 transition"
+          {/* ── Desktop nav links ── */}
+          <div className="hidden md:flex justify-center flex-1 items-center gap-8 text-[15px] font-medium text-gray-300 mx-8">
+            {!isStaffOrAdmin && (
+              <Link
+                to="/courses"
+                className="hover:text-indigo-300 transition duration-300"
               >
-                {t("nav.board")}
+                {t("nav.courses")}
+              </Link>
+            )}
+            {!isStaffOrAdmin && (
+              <Link
+                to="/plans"
+                className="hover:text-indigo-300 transition duration-300"
+              >
+                {t("nav.plans")}
+              </Link>
+            )}
+            <Link
+              to="/question-bank"
+              className="hover:text-indigo-300 transition duration-300"
+            >
+              {t("nav.questionBank")}
+            </Link>
+            <Link
+              to="/blogs"
+              className="hover:text-indigo-300 transition duration-300"
+            >
+              {t("nav.blogs")}
+            </Link>
+
+            {!isStaffOrAdmin && (
+              <div ref={dropdownRef} className="relative">
+                <button
+                  onClick={() => setBoardOpen((prev) => !prev)}
+                  className="flex items-center gap-1 hover:text-indigo-300 transition"
+                >
+                  {t("nav.board")}
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform ${boardOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {boardOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
+                    <Link
+                      to="/boards/cbse"
+                      onClick={() => setBoardOpen(false)}
+                      className="block px-4 py-3 hover:bg-slate-800"
+                    >
+                      CBSE
+                    </Link>
+                    <Link
+                      to="/boards/mp-board"
+                      onClick={() => setBoardOpen(false)}
+                      className="block px-4 py-3 hover:bg-slate-800"
+                    >
+                      MP Board
+                    </Link>
+                    <Link
+                      to="/boards/icse"
+                      onClick={() => setBoardOpen(false)}
+                      className="block px-4 py-3 hover:bg-slate-800"
+                    >
+                      ICSE
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!hasInstructorRole && !hasAdminRole && (
+              <Link
+                to="/become-instructor"
+                className="hover:text-indigo-300 transition duration-300"
+              >
+                {t("nav.becomeInstructor")}
+              </Link>
+            )}
+
+            <div ref={languageRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setLangDropdownOpen((prev) => !prev)}
+                className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800 transition"
+              >
+                {isHindi ? "हिन्दी" : "EN"}
                 <ChevronDown
                   size={16}
-                  className={`transition-transform ${boardOpen ? "rotate-180" : ""}`}
+                  className={`transition-transform ${langDropdownOpen ? "rotate-180" : ""}`}
                 />
               </button>
-              {boardOpen && (
-                <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
-                  <Link
-                    to="/boards/cbse"
-                    onClick={() => setBoardOpen(false)}
-                    className="block px-4 py-3 hover:bg-slate-800"
+              {langDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-36 rounded-2xl border border-slate-700 bg-slate-900 shadow-xl">
+                  <button
+                    type="button"
+                    onClick={() => changeLanguage("en")}
+                    className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800"
                   >
-                    CBSE
-                  </Link>
-                  <Link
-                    to="/boards/mp-board"
-                    onClick={() => setBoardOpen(false)}
-                    className="block px-4 py-3 hover:bg-slate-800"
+                    English
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changeLanguage("hi")}
+                    className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800"
                   >
-                    MP Board
-                  </Link>
-                  <Link
-                    to="/boards/icse"
-                    onClick={() => setBoardOpen(false)}
-                    className="block px-4 py-3 hover:bg-slate-800"
-                  >
-                    ICSE
-                  </Link>
+                    हिंदी
+                  </button>
                 </div>
               )}
             </div>
-          )}
-
-          {!hasInstructorRole && !hasAdminRole && (
-            <Link
-              to="/become-instructor"
-              className="hover:text-indigo-300 transition duration-300"
-            >
-              {t("nav.becomeInstructor")}
-            </Link>
-          )}
-
-          <div ref={languageRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setLangDropdownOpen((prev) => !prev)}
-              className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800 transition"
-            >
-              {isHindi ? "हिन्दी" : "EN"}
-              <ChevronDown
-                size={16}
-                className={`transition-transform ${langDropdownOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-            {langDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-36 rounded-2xl border border-slate-700 bg-slate-900 shadow-xl">
-                <button
-                  type="button"
-                  onClick={() => changeLanguage("en")}
-                  className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800"
-                >
-                  English
-                </button>
-                <button
-                  type="button"
-                  onClick={() => changeLanguage("hi")}
-                  className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800"
-                >
-                  हिंदी
-                </button>
-              </div>
-            )}
           </div>
-        </div>
 
-        {/* ── Desktop right section ── */}
-        <div className="hidden md:flex items-center gap-4 ml-auto ">
-          {!isStaffOrAdmin && (
-            <button
-              type="button"
-              onClick={() => navigate("/cart")}
-              className="relative cursor-pointer inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
-              aria-label="Cart"
-            >
-              <ShoppingCart size={18} />
-              {cartCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-          )}
-
-          {loading ? (
-            <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
-              <div className="w-4 h-4 rounded-full border-2 border-indigo-500/30 border-t-indigo-500 animate-spin" />
-              <span className="text-xs text-slate-400 font-medium">
-                {t("nav.verifyingSession")}
-              </span>
-            </div>
-          ) : !user ? (
-            <>
-              <Link
-                to="/login"
-                className="text-white hover:text-indigo-300 transition"
-              >
-                {t("nav.login")}
-              </Link>
-              <Link to="/become-instructor" className="btn-navy">
-                {t("nav.getStarted")}
-              </Link>
-            </>
-          ) : (
-            <>
-              <div className="text-right">
-                <p className="text-white text-sm font-semibold">
-                  {t("nav.welcome")}
-                </p>
-                <p className="text-slate-400 text-xs">{user?.name}</p>
-              </div>
-
-              {isMultiRole ? (
-                <Link to={switchTarget} className="btn-indigo-shine">
-                  ⇄ {switchLabel}
-                </Link>
-              ) : (
-                <Link to={dashboardPath} className="btn-indigo-shine">
-                  {t("nav.dashboard")}
-                </Link>
-              )}
-
+          {/* ── Desktop right section ── */}
+          <div className="hidden md:flex items-center gap-4 ml-auto ">
+            {!isStaffOrAdmin && (
               <button
-                onClick={() => {
-                  dispatch(logoutUser());
-                  navigate("/");
-                }}
-                className="btn-red"
+                type="button"
+                onClick={() => navigate("/cart")}
+                className="relative cursor-pointer inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
+                aria-label="Cart"
               >
-                {t("nav.logout")}
+                <ShoppingCart size={18} />
+                {cartCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                    {cartCount}
+                  </span>
+                )}
               </button>
-            </>
-          )}
-        </div>
+            )}
 
-        {/* ── Mobile actions ── */}
-        <div className="md:hidden ml-auto flex items-center gap-2">
-          {/* Language selector in mobile navbar */}
-          <div ref={mobileLangRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setMobileLangDropdownOpen((prev) => !prev)}
-              className="inline-flex h-9 items-center gap-0.5 rounded-xl border border-white/10 bg-white/5 px-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition"
-            >
-              {isHindi ? "हि" : "EN"}
-              <ChevronDown
-                size={12}
-                className={`transition-transform ${mobileLangDropdownOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-            {mobileLangDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-32 rounded-xl border border-slate-700 bg-slate-900 shadow-xl z-50">
-                <button
-                  type="button"
-                  onClick={() => changeLanguage("en")}
-                  className="w-full px-4 py-2.5 text-left text-sm text-slate-200 hover:bg-slate-800 rounded-t-xl"
-                >
-                  English
-                </button>
-                <button
-                  type="button"
-                  onClick={() => changeLanguage("hi")}
-                  className="w-full px-4 py-2.5 text-left text-sm text-slate-200 hover:bg-slate-800 rounded-b-xl"
-                >
-                  हिंदी
-                </button>
+            {loading ? (
+              <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
+                <div className="w-4 h-4 rounded-full border-2 border-indigo-500/30 border-t-indigo-500 animate-spin" />
+                <span className="text-xs text-slate-400 font-medium">
+                  {t("nav.verifyingSession")}
+                </span>
               </div>
+            ) : !user ? (
+              <>
+                <Link
+                  to="/login"
+                  className="text-white hover:text-indigo-300 transition"
+                >
+                  {t("nav.login")}
+                </Link>
+                <Link to="/become-instructor" className="btn-navy">
+                  {t("nav.getStarted")}
+                </Link>
+              </>
+            ) : (
+              <>
+                <div className="text-right">
+                  <p className="text-white text-sm font-semibold">
+                    {t("nav.welcome")}
+                  </p>
+                  <p className="text-slate-400 text-xs">{user?.name}</p>
+                </div>
+
+                {isMultiRole ? (
+                  <Link to={switchTarget} className="btn-indigo-shine">
+                    ⇄ {switchLabel}
+                  </Link>
+                ) : (
+                  <Link to={dashboardPath} className="btn-indigo-shine">
+                    {t("nav.dashboard")}
+                  </Link>
+                )}
+
+                <button
+                  onClick={() => {
+                    dispatch(logoutUser());
+                    navigate("/");
+                  }}
+                  className="btn-red"
+                >
+                  {t("nav.logout")}
+                </button>
+              </>
             )}
           </div>
 
-          {!isStaffOrAdmin && (
+          {/* ── Mobile actions ── */}
+          <div className="md:hidden ml-auto flex items-center gap-2">
+            {/* Language selector in mobile navbar */}
+            <div ref={mobileLangRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setMobileLangDropdownOpen((prev) => !prev)}
+                className="inline-flex h-9 items-center gap-0.5 rounded-xl border border-white/10 bg-white/5 px-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition"
+              >
+                {isHindi ? "हि" : "EN"}
+                <ChevronDown
+                  size={12}
+                  className={`transition-transform ${mobileLangDropdownOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+              {mobileLangDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-32 rounded-xl border border-slate-700 bg-slate-900 shadow-xl z-[110]">
+                  <button
+                    type="button"
+                    onClick={() => changeLanguage("en")}
+                    className="w-full px-4 py-2.5 text-left text-sm text-slate-200 hover:bg-slate-800 rounded-t-xl"
+                  >
+                    English
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changeLanguage("hi")}
+                    className="w-full px-4 py-2.5 text-left text-sm text-slate-200 hover:bg-slate-800 rounded-b-xl"
+                  >
+                    हिंदी
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {!isStaffOrAdmin && (
+              <button
+                type="button"
+                onClick={() => navigate("/cart")}
+                className="relative cursor-pointer inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
+                aria-label="Cart"
+              >
+                <ShoppingCart size={18} />
+                {cartCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => navigate("/cart")}
-              className="relative cursor-pointer inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
-              aria-label="Cart"
+              onClick={() =>
+                setMobileMenuOpen((prev) => {
+                  const next = !prev;
+                  if (next && isDashboardRoute) {
+                    window.dispatchEvent(
+                      new CustomEvent("navbar-mobile-menu-open"),
+                    );
+                  }
+                  return next;
+                })
+              }
+              className="relative z-50 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white hover:bg-white/5 transition text-lg"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
             >
-              <ShoppingCart size={18} />
-              {cartCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-                  {cartCount}
-                </span>
-              )}
+              {mobileMenuOpen ? "✕" : "☰"}
             </button>
-          )}
-          <button
-            type="button"
-            onClick={() =>
-              setMobileMenuOpen((prev) => {
-                const next = !prev;
-                if (next && isDashboardRoute) {
-                  window.dispatchEvent(
-                    new CustomEvent("navbar-mobile-menu-open"),
-                  );
-                }
-                return next;
-              })
-            }
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white hover:bg-white/5 transition text-lg"
-          >
-            {mobileMenuOpen ? "✕" : "☰"}
-          </button>
+          </div>
         </div>
-      </div>
 
-      {/* ── Mobile menu ── */}
+      </nav>
+
+      {/* ── Mobile menu: full-screen fixed overlay, starts below the top bar ──
+         Rendered outside <nav> on purpose: <nav> has backdrop-blur-lg, and a
+         backdrop-filter on an ancestor creates its own containing block for
+         position:fixed descendants, which was collapsing this overlay down
+         to the height of the top bar instead of the full viewport. ── */}
       <div
-        className={`md:hidden border-t border-white/10 overflow-hidden transition-all duration-300 ${mobileMenuOpen ? "max-h-[85vh] overflow-y-auto" : "max-h-0"}`}
-      >
-        <div className="px-4 pt-3 pb-4 space-y-1">
-          {/* ── Branding header ── */}
+        className={`md:hidden fixed inset-x-0 bottom-0 z-[100] bg-black/60 transition-opacity duration-300 ${mobileMenuOpen
+            ? "opacity-100"
+            : "opacity-0 pointer-events-none"
+          }`}
+        style={{ top: topBarHeight }}
+        onClick={closeMobile}
+        aria-hidden="true"
+      />
 
+      <div
+        className="md:hidden fixed right-0 w-[280px] max-w-[80vw] bottom-0 z-[100] bg-[#0f172a] overflow-y-auto transition-transform duration-300 ease-out border-l border-white/10"
+        style={{
+          top: topBarHeight,
+          overscrollBehavior: "contain",
+          transform: mobileMenuOpen ? "translateX(0)" : "translateX(100%)",
+          pointerEvents: mobileMenuOpen ? "auto" : "none",
+        }}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="px-4 pt-3 pb-6 space-y-1">
           {[
             ...(!isStaffOrAdmin
               ? [
-                  { to: "/courses", label: t("nav.courses") },
-                  { to: "/plans", label: t("nav.plans") },
-                ]
+                { to: "/courses", label: t("nav.courses") },
+                { to: "/plans", label: t("nav.plans") },
+              ]
               : []),
             ...(!hasInstructorRole && !hasAdminRole
               ? [{ to: "/become-instructor", label: t("nav.becomeInstructor") }]
@@ -530,7 +614,7 @@ button.btn-red:hover,
                       display: "flex",
                     }}
                   >
-                    {goingToInstructor ? "✦" : "⟵"} {switchLabel}
+                    {goingToInstructor ? "✦ " : "⟵ "} {switchLabel.replace(/go to\s+/i, "").replace(/\s*पर जाएँ/g, "").replace(/\s*जाएँ/g, "").trim()}
                   </Link>
                 ) : (
                   <Link
@@ -566,7 +650,7 @@ button.btn-red:hover,
           )}
         </div>
       </div>
-    </nav>
+    </>
   );
 };
 

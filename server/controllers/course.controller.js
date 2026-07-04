@@ -5,7 +5,6 @@ import {
   cacheResponse,
   deleteKeys,
   getJson,
-  invalidateCache,
   setJson,
 } from "../utils/redisClient.js";
 
@@ -40,11 +39,22 @@ const shapeCourse = (c) => ({
     signatoryTitle: "",
     theme: "purple",
   },
+  notes: c.notes ?? [],
 });
 
-const invalidateCourseCache = async (courseId) => {
+// ── cache invalidation ────────────────────────────────────────────────────────
+// NOTE: previously this used invalidateCache("courses:published*"), which
+// relies on Upstash's KEYS/SCAN command. Upstash's REST client frequently
+// blocks or errors on KEYS in production, and that error was being silently
+// swallowed inside scanKeys(), so the wildcard delete was a no-op — the
+// "courses:published" cache entry never actually got busted on enroll/
+// approve/reject/update/delete, and stayed stale for the full 7200s TTL.
+//
+// There's only ever one exact key for the published list, so we delete it
+// directly instead of pattern-matching for it.
+export const invalidateCourseCache = async (courseId) => {
   await Promise.all([
-    invalidateCache("courses:published*"),
+    deleteKeys(["courses:published"]),
     deleteKeys([`course:public:${courseId}`]),
   ]);
 };
@@ -67,6 +77,7 @@ export const createCourse = async (req, res) => {
       published,
       quiz,
       certificate,
+      notes,
     } = req.body;
 
     if (!title?.trim())
@@ -88,6 +99,7 @@ export const createCourse = async (req, res) => {
       thumbnailUrl: thumbnailUrl || "",
       demoVideoUrl: demoVideoUrl || "",
       lessons: Array.isArray(lessons) ? lessons : [],
+      notes: Array.isArray(notes) ? notes : [],
       tags: Array.isArray(tags) ? tags : [],
       quiz: quiz && typeof quiz === "object" ? quiz : undefined,
       published: false, // never auto-published
@@ -297,6 +309,11 @@ export const enrolledCourses = async (req, res) => {
         certificate: course.certificate ?? null,
         ratingAverage: course.ratingAverage,
         reviewCount: course.reviewCount,
+        // Student's own rating for this course (null if not yet rated)
+        userRating: course.ratings?.find(
+          (r) => r.user?.toString() === studentId.toString()
+        ) ?? null,
+        notes: course.notes ?? [],
       };
     });
 
@@ -371,6 +388,14 @@ export const enrollCourses = async (req, res) => {
       }),
     );
 
+    await Promise.all(
+      enrolled.map((id) =>
+        invalidateCourseCache(id).catch((err) =>
+          console.error("[Cache] Failed to invalidate course cache:", err.message)
+        )
+      )
+    );
+
     await Cart.findOneAndUpdate(
       { user: studentId },
       { $pull: { courses: { $in: courseIds } } },
@@ -423,6 +448,7 @@ export const updateCourse = async (req, res) => {
       board,
       quiz,
       certificate,
+      notes,
     } = req.body;
 
     const existing = await Course.findOne({
@@ -470,6 +496,7 @@ export const updateCourse = async (req, res) => {
       ...(lessons !== undefined && { lessons }),
       ...(quiz !== undefined && { quiz }),
       ...(certificate !== undefined && { certificate }),
+      ...(notes !== undefined && { notes }),
       published: newPublished,
       approvalStatus: newApprovalStatus,
       rejectionReason:
@@ -527,6 +554,10 @@ export const rateCourse = async (req, res) => {
 
     course.recalcRatings();
     await course.save();
+
+    // Rating changes ratingAverage/reviewCount which are part of the cached
+    // published list — invalidate so students see fresh numbers immediately.
+    await invalidateCourseCache(course._id);
 
     res.json({
       success: true,

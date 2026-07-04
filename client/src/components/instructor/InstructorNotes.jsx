@@ -113,20 +113,9 @@ export default function InstructorNotes({ showToast }) {
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 800, color: "#f1f5f9" }}>Study Notes</h2>
           <p style={{ color: "#94a3b8", fontSize: 14, marginTop: 4 }}>
-            Upload PDFs or documents for your students.
+            Study notes and documents uploaded for your courses.
           </p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          style={{
-            display: "flex", alignItems: "center", gap: 8,
-            padding: "10px 20px", borderRadius: 12, border: "none",
-            background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
-            color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer"
-          }}
-        >
-          <Plus size={18} /> Upload Note
-        </button>
       </div>
 
       {loading ? (
@@ -137,9 +126,9 @@ export default function InstructorNotes({ showToast }) {
           background: "#0b1120", border: "1px dashed #1e293b", borderRadius: 16
         }}>
           <FileText size={48} color="#334155" style={{ margin: "0 auto 16px" }} />
-          <h3 style={{ fontSize: 16, color: "#f1f5f9", fontWeight: 700 }}>No notes uploaded yet</h3>
+          <h3 style={{ fontSize: 16, color: "#f1f5f9", fontWeight: 700 }}>No notes found</h3>
           <p style={{ color: "#64748b", fontSize: 13, marginTop: 8 }}>
-            Click the upload button to add your first study note.
+            Add study notes inside your courses via the Course Creator / Editor.
           </p>
         </div>
       ) : (

@@ -35,6 +35,7 @@ export const uploadToImageKit = async ({
     uploadData,
     {
       headers: { "Content-Type": "multipart/form-data" },
+      withCredentials: false,
       onUploadProgress,
     },
   );

@@ -198,6 +198,7 @@ function App() {
             <Route index element={<DashboardHome />} />
             <Route path="courses" element={<Courses />} />
             <Route path="my-courses" element={<MyCoursesSection />} />
+            <Route path="notes" element={<MobileNotes />} />
             <Route path="ai-tutor" element={<AITutor />} />
             <Route path="community" element={<CommunitySection />} />
             <Route path="settings" element={<SettingsSection />} />

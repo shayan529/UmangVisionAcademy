@@ -1,4 +1,5 @@
 import Note from "../models/note.model.js";
+import Course from "../models/courses.model.js";
 import { hasBaseRole, hasPermissionGrant } from "../utils/userRoles.js";
 import { cacheResponse, invalidateCache } from "../utils/redisClient.js";
 
@@ -45,28 +46,82 @@ export const listNotes = async (req, res) => {
         return res.status(403).json({ message: "Access denied — notes moderation permission required" });
       }
 
-      const all = await Note.find()
-        .populate("instructor", "phoneNumber city state")
-        .sort({ createdAt: -1 })
+      const courses = await Course.find()
+        .populate("instructor", "name email phoneNumber city state")
         .lean();
-      return res.json(all);
-    }
 
-    // If instructor and ?mine=1, return their uploaded notes
-    if (isInstructor && req.query.mine === "1") {
-      const mine = await Note.find({ instructor: req.user._id }).sort({
-        createdAt: -1,
+      let allNotes = [];
+      courses.forEach((course) => {
+        if (course.notes && Array.isArray(course.notes)) {
+          course.notes.forEach((note) => {
+            allNotes.push({
+              _id: note._id,
+              title: note.title,
+              description: note.description,
+              fileUrl: note.fileUrl,
+              createdAt: note.createdAt,
+              instructor: course.instructor,
+              instructorName: course.instructor?.name || "Instructor",
+              courseTitle: course.title,
+              status: course.approvalStatus === "approved" ? "approved" : "pending",
+            });
+          });
+        }
       });
-      return res.json(mine);
+      allNotes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      return res.json(allNotes);
     }
 
-    // Public / Student listing — only approved notes
-    const notes = await cacheResponse("notes:public", 30, async () => {
-      return await Note.find({ status: "approved" })
-        .sort({ createdAt: -1 })
+    // If instructor and ?mine=1, return their uploaded notes from their courses
+    if (isInstructor && req.query.mine === "1") {
+      const courses = await Course.find({ instructor: req.user._id }).lean();
+      let mineNotes = [];
+      courses.forEach((course) => {
+        if (course.notes && Array.isArray(course.notes)) {
+          course.notes.forEach((note) => {
+            mineNotes.push({
+              _id: note._id,
+              title: note.title,
+              description: note.description,
+              fileUrl: note.fileUrl,
+              createdAt: note.createdAt,
+              status: course.approvalStatus === "approved" ? "approved" : "pending",
+              courseTitle: course.title,
+            });
+          });
+        }
+      });
+      mineNotes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      return res.json(mineNotes);
+    }
+
+    // Public / Student listing — return notes of all courses this student is enrolled in
+    if (req.user) {
+      const enrolledCoursesList = await Course.find({ students: req.user._id })
+        .populate("instructor", "name email")
         .lean();
-    });
-    res.json(notes);
+
+      let studentNotes = [];
+      enrolledCoursesList.forEach((course) => {
+        if (course.notes && Array.isArray(course.notes)) {
+          course.notes.forEach((note) => {
+            studentNotes.push({
+              _id: note._id,
+              title: note.title,
+              description: note.description,
+              fileUrl: note.fileUrl,
+              createdAt: note.createdAt,
+              instructorName: course.instructor?.name || "Instructor",
+              courseTitle: course.title,
+            });
+          });
+        }
+      });
+      studentNotes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      return res.json(studentNotes);
+    }
+
+    return res.json([]);
   } catch (err) {
     console.error("listNotes", err);
     res.status(500).json({ message: err.message || "Failed to list notes" });

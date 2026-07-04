@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { fetchPublishedCourses } from "../../redux/slices/courseSlice";
+import { fetchPublishedCourses, fetchEnrolledCourses } from "../../redux/slices/courseSlice";
 import CourseCard from "./CourseCard";
 import { FaStar } from "react-icons/fa";
-import axios from "axios";
+import api from "../../config/api";
 import { toast } from "react-hot-toast";
 import { hasBaseRole } from "../../utils/permissions";
 
@@ -136,9 +136,16 @@ const Courses = () => {
   // ── Redux state ──────────────────────────────────────────────────────────
   const {
     courses: allCourses = [],
+    enrolled: enrolledCourses = [],
     loading,
     error,
   } = useSelector((s) => s.courses);
+
+  // Build a Set of enrolled course IDs for O(1) lookup
+  const enrolledIdSet = useMemo(
+    () => new Set(enrolledCourses.map((c) => c._id?.toString())),
+    [enrolledCourses]
+  );
 
   const [selectedClass, setSelectedClass] = useState(ALL);
   const [selectedSubject, setSelectedSubject] = useState(ALL_SUBJECTS);
@@ -148,7 +155,8 @@ const Courses = () => {
 
   useEffect(() => {
     dispatch(fetchPublishedCourses());
-  }, [dispatch]);
+    if (user) dispatch(fetchEnrolledCourses());
+  }, [dispatch, user]);
 
   // ── Derived filter options ─────────────────────────────────────────────────
   const dynamicClasses = useMemo(
@@ -198,14 +206,15 @@ const Courses = () => {
   const isEnrolled = (course) => {
     if (!user) return false;
     if (!canEnroll) return false;
-    
-    const directlyEnrolled = course.students?.some((s) => (s._id ?? s) === user._id);
-    if (directlyEnrolled) return true;
 
+    // Primary check: use the enrolled courses list from Redux (authoritative)
+    if (enrolledIdSet.has(course._id?.toString())) return true;
+
+    // Secondary check: subscription-based access
     const hasActiveSubscription = user.subscription?.status === "active";
-    const matchesClass = user.selectedClass && course.category && 
+    const matchesClass = user.selectedClass && course.category &&
       user.selectedClass.toLowerCase().trim() === course.category.toLowerCase().trim();
-      
+
     return !!(hasActiveSubscription && matchesClass);
   };
 
@@ -227,11 +236,13 @@ const Courses = () => {
 
   const hasRated = (course) => {
     if (!user) return false;
-    // Check submitted in this session
+    // Check submitted in this session (survives until refresh)
     if (submittedRatings[course._id]) return true;
-    // Check existing reviews on course
-    if (Array.isArray(course.reviews)) {
-      return course.reviews.some((r) => (r.user?._id ?? r.user) === user._id);
+    // Check the ratings array from the DB (field is `ratings`, not `reviews`)
+    if (Array.isArray(course.ratings)) {
+      return course.ratings.some(
+        (r) => (r.user?._id ?? r.user)?.toString() === user._id?.toString()
+      );
     }
     return false;
   };
@@ -239,7 +250,7 @@ const Courses = () => {
   // ── Submit rating ─────────────────────────────────────────────────────────
   const handleRatingSubmit = async (courseId, rating, comment) => {
     try {
-      await axios.post(`/api/courses/${courseId}/rate`, { rating, comment });
+      await api.post(`/courses/${courseId}/rate`, { rating, comment });
       setSubmittedRatings((prev) => ({ ...prev, [courseId]: rating }));
       toast.success("Thanks for your rating!");
       dispatch(fetchPublishedCourses()); // refresh to update ratingAverage
@@ -390,6 +401,11 @@ const Courses = () => {
               const enrolled = isEnrolled(course);
               const rated = hasRated(course);
               const sessionRating = submittedRatings[course._id];
+              // Find user's own rating from DB (for display after refresh)
+              const ownRating = sessionRating ??
+                course.ratings?.find(
+                  (r) => (r.user?._id ?? r.user)?.toString() === user?._id?.toString()
+                )?.rating ?? Math.round(course.ratingAverage ?? 0);
 
               return (
                 <div key={course._id} className="flex flex-col gap-2">
@@ -428,9 +444,7 @@ const Courses = () => {
                             <FaStar
                               key={s}
                               className={
-                                s <=
-                                (sessionRating ??
-                                  Math.round(course.ratingAverage))
+                                s <= ownRating
                                   ? "text-amber-400"
                                   : "text-slate-600"
                               }

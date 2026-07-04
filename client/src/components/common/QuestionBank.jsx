@@ -306,7 +306,7 @@ const QuestionBank = () => {
 
   useEffect(() => {
     axios
-      .get("/api/question-papers")
+      .get("/question-papers")
       .then(({ data }) => setUploadedPapers(data))
       .catch(() => {}); // silent fallback to external URLs
   }, []);

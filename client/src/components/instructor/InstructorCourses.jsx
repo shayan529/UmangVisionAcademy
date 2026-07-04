@@ -17,6 +17,7 @@ const EMPTY_FORM = {
   description: "",
   content: "",
   lessons: [],
+  notes: [],
   price: "",
   thumbnailUrl: "",
   demoVideoUrl: "",
@@ -36,6 +37,7 @@ const EMPTY_BULK_ITEM = () => ({
   description: "",
   content: "",
   lessons: [],
+  notes: [],
   quiz: { title: "Final Quiz", questions: [] },
   certificate: {
     enabled: false,
@@ -463,6 +465,226 @@ const Sel = ({ value, onChange, options }) => (
     ))}
   </select>
 );
+
+// ── NotesManager ─────────────────────────────────────────────────────────────
+function NotesManager({ notes = [], onChange, showToast }) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newNote, setNewNote] = useState({ title: "", description: "", fileUrl: "" });
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setProgress(0);
+    try {
+      const data = await uploadToImageKit({
+        file,
+        folder: "Umang Vision Academy/notes",
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          setProgress(percentCompleted);
+        },
+      });
+      setNewNote((prev) => ({ ...prev, fileUrl: data.url }));
+      showToast?.("File uploaded successfully.");
+    } catch (err) {
+      showToast?.("File upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleAddNote = () => {
+    if (!newNote.title.trim()) {
+      showToast?.("Note title is required.");
+      return;
+    }
+    if (!newNote.fileUrl) {
+      showToast?.("Please upload a file for the note.");
+      return;
+    }
+    const updated = [...notes, { ...newNote, _id: new Date().getTime().toString() }];
+    onChange(updated);
+    setNewNote({ title: "", description: "", fileUrl: "" });
+    setShowAddForm(false);
+  };
+
+  const handleRemoveNote = (idx) => {
+    const updated = notes.filter((_, i) => i !== idx);
+    onChange(updated);
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, background: "#111827", border: "1px solid #1e293b", borderRadius: 12, padding: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h4 style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>Course Study Notes</h4>
+          <p style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>Upload documents & PDFs for this course.</p>
+        </div>
+        {!showAddForm && (
+          <button
+            type="button"
+            onClick={() => setShowAddForm(true)}
+            style={{
+              padding: "6px 12px",
+              borderRadius: 8,
+              border: "none",
+              background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+              color: "#fff",
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            + Add Note
+          </button>
+        )}
+      </div>
+
+      {showAddForm && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, border: "1px dashed #334155", borderRadius: 8, padding: 12, background: "#0b1120" }}>
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 4 }}>Note Title *</label>
+            <input
+              type="text"
+              value={newNote.title}
+              onChange={(e) => setNewNote((p) => ({ ...p, title: e.target.value }))}
+              placeholder="e.g. Chapter 1 Formula Sheet"
+              style={{ padding: "8px 12px", background: "#111827", border: "1px solid #1e293b", borderRadius: 8, color: "#f1f5f9", fontSize: 12, width: "100%", boxSizing: "border-box" }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 4 }}>Description (optional)</label>
+            <textarea
+              value={newNote.description}
+              onChange={(e) => setNewNote((p) => ({ ...p, description: e.target.value }))}
+              placeholder="e.g. Contains all core equations for Algebra chapter."
+              rows={2}
+              style={{ padding: "8px 12px", background: "#111827", border: "1px solid #1e293b", borderRadius: 8, color: "#f1f5f9", fontSize: 12, width: "100%", boxSizing: "border-box", resize: "none" }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 4 }}>File Upload * (PDF, DOCX, etc.)</label>
+            {newNote.fileUrl ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#111827", padding: "8px 12px", borderRadius: 8, border: "1px solid #16a34a" }}>
+                <span style={{ fontSize: 14 }}>📄</span>
+                <span style={{ fontSize: 12, color: "#4ade80", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{newNote.fileUrl}</span>
+                <button
+                  type="button"
+                  onClick={() => setNewNote((p) => ({ ...p, fileUrl: "" }))}
+                  style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: 12, fontWeight: 700 }}
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div style={{ position: "relative" }}>
+                <input
+                  type="file"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                  style={{ display: "none" }}
+                  id="note-file-input"
+                />
+                <label
+                  htmlFor="note-file-input"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    padding: "10px",
+                    background: "#111827",
+                    border: "1px dashed #334155",
+                    borderRadius: 8,
+                    color: "#94a3b8",
+                    fontSize: 12,
+                    cursor: uploading ? "not-allowed" : "pointer",
+                    textAlign: "center"
+                  }}
+                >
+                  {uploading ? `Uploading... (${progress}%)` : "📁 Choose File to Upload"}
+                </label>
+              </div>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 4 }}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowAddForm(false);
+                setNewNote({ title: "", description: "", fileUrl: "" });
+              }}
+              style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #334155", background: "transparent", color: "#94a3b8", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleAddNote}
+              style={{ padding: "6px 12px", borderRadius: 8, border: "none", background: "#166534", color: "#4ade80", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+            >
+              Save Note
+            </button>
+          </div>
+        </div>
+      )}
+
+      {notes.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
+          {notes.map((note, idx) => (
+            <div
+              key={note._id || idx}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "10px 12px",
+                background: "#0b1120",
+                border: "1px solid #1e293b",
+                borderRadius: 8,
+              }}
+            >
+              <div style={{ minWidth: 0, flex: 1, marginRight: 12 }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0" }}>{note.title}</p>
+                {note.description && (
+                  <p style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{note.description}</p>
+                )}
+                <a
+                  href={note.fileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ fontSize: 10, color: "#818cf8", textDecoration: "none", display: "inline-block", marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}
+                >
+                  🔗 {note.fileUrl}
+                </a>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRemoveNote(idx)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#ef4444",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  padding: "4px 8px",
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── QuizManager ───────────────────────────────────────────────────────────────
 function QuizManager({
@@ -1476,6 +1698,11 @@ const CourseForm = ({
           onUploaded={(url) => setForm((f) => ({ ...f, demoVideoUrl: url }))}
         />
       </div>
+      <NotesManager
+        notes={form.notes ?? []}
+        onChange={(notes) => setForm((f) => ({ ...f, notes }))}
+        showToast={showToast}
+      />
       <Field
         label="Final Quiz"
         hint="(optional — students take after completing all lessons)"
@@ -1899,7 +2126,11 @@ const BulkCourseForm = ({
                       rows={4}
                     />
                   </Field>
-
+                  <NotesManager
+                    notes={item.notes ?? []}
+                    onChange={(notes) => updateItem(idx, "notes", notes)}
+                    showToast={showToast}
+                  />
                   <Field
                     label="Final Quiz"
                     hint="(optional — students take after completing all lessons)"
@@ -2090,6 +2321,7 @@ export default function InstructorCourses({ showToast }) {
       board: course.board ?? "",
       description: course.summary ?? "",
       lessons: course.lessons ?? [],
+      notes: course.notes ?? [],
       content: course.description ?? "",
       thumbnailUrl: course.thumbnailUrl ?? "",
       demoVideoUrl: course.demoVideoUrl ?? "",
@@ -2114,6 +2346,7 @@ export default function InstructorCourses({ showToast }) {
     category: form.className,
     board: form.board,
     lessons: form.lessons ?? [],
+    notes: form.notes ?? [],
     price: Number(form.price) || 0,
     thumbnailUrl: form.thumbnailUrl || "",
     demoVideoUrl: form.demoVideoUrl || "",
@@ -2203,6 +2436,7 @@ export default function InstructorCourses({ showToast }) {
         category: bulkForm.className,
         board: bulkForm.board,
         lessons: item.lessons ?? [],
+        notes: item.notes ?? [],
         price: Number(item.price) || 0,
         thumbnailUrl: bulkForm.thumbnailUrl || "",
         demoVideoUrl: bulkForm.demoVideoUrl || "",

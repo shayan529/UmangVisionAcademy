@@ -461,8 +461,35 @@ export default function AITutor() {
   const recRef = useRef(null);
   const didMount = useRef(false);
   const voiceActiveRef = useRef(false);
+  const silenceTimeoutRef = useRef(null);
+  const hasResultRef = useRef(false);
   const lastAiTextRef = useRef("");
   const recLangRef = useRef("en-US");
+
+  const clearSilenceTimer = useCallback(() => {
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
+  }, []);
+
+  const cancelStream = useCallback(() => {
+    abortRef.current?.abort();
+    dispatch(setStreaming(false));
+    window.speechSynthesis?.cancel();
+    setSpeaking(false);
+    voiceActiveRef.current = false;
+    clearSilenceTimer();
+    recRef.current?.stop();
+    setListening(false);
+  }, [dispatch, clearSilenceTimer]);
+
+  const resetSilenceTimer = useCallback(() => {
+    clearSilenceTimer();
+    silenceTimeoutRef.current = setTimeout(() => {
+      cancelStream();
+    }, 60000);
+  }, [clearSilenceTimer, cancelStream]);
 
   useEffect(() => {
     recLangRef.current = voiceLang;
@@ -560,12 +587,19 @@ export default function AITutor() {
   useEffect(() => {
     if (mode !== "voice") {
       voiceActiveRef.current = false;
+      clearSilenceTimer();
       recRef.current?.stop();
       window.speechSynthesis?.cancel();
       setListening(false);
       setSpeaking(false);
     }
-  }, [mode]);
+  }, [mode, clearSilenceTimer]);
+
+  useEffect(() => {
+    return () => {
+      clearSilenceTimer();
+    };
+  }, [clearSilenceTimer]);
 
   // Close sidebar on outside tap (mobile overlay)
   const handleOverlayClick = useCallback(() => {
@@ -819,15 +853,7 @@ export default function AITutor() {
     [input, messages, streaming, mode, voiceLang, dispatch],
   );
 
-  const cancelStream = () => {
-    abortRef.current?.abort();
-    dispatch(setStreaming(false));
-    window.speechSynthesis?.cancel();
-    setSpeaking(false);
-    voiceActiveRef.current = false;
-    recRef.current?.stop();
-    setListening(false);
-  };
+
 
   const speak = useCallback(
     (text) =>
@@ -886,6 +912,7 @@ export default function AITutor() {
     ) {
       dispatch(setError("Voice input not supported. Try Chrome."));
       voiceActiveRef.current = false;
+      clearSilenceTimer();
       return;
     }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -897,46 +924,63 @@ export default function AITutor() {
     rec.onstart = () => {
       setListening(true);
       dispatch(setError(null));
+      hasResultRef.current = false;
     };
-    rec.onend = () => setListening(false);
+    rec.onend = () => {
+      setListening(false);
+      if (voiceActiveRef.current && !hasResultRef.current) {
+        startRecognition();
+      }
+    };
     rec.onerror = (e) => {
       setListening(false);
-      voiceActiveRef.current = false;
       const map = {
         "not-allowed": "Microphone access denied.",
-        "no-speech": "No speech detected.",
+        "no-speech": null,
         network: "Network error.",
         "audio-capture": "No microphone found.",
         aborted: null,
       };
       const m = map[e.error];
-      if (m !== null) dispatch(setError(m ?? `Voice error: ${e.error}`));
+      if (m !== null && m !== undefined) dispatch(setError(m ?? `Voice error: ${e.error}`));
+      if (e.error === "not-allowed" || e.error === "audio-capture") {
+        voiceActiveRef.current = false;
+        clearSilenceTimer();
+      }
     };
     rec.onresult = async (e) => {
+      hasResultRef.current = true;
       setListening(false);
+      clearSilenceTimer();
       const transcript = e.results[0][0].transcript;
       const aiText = await sendMessage(transcript, false);
       if (!voiceActiveRef.current) return;
       if (aiText) await speak(aiText);
-      if (voiceActiveRef.current) startRecognition();
+      if (voiceActiveRef.current) {
+        resetSilenceTimer();
+        startRecognition();
+      }
     };
     rec.start();
-  }, [dispatch, sendMessage, speak]);
+  }, [dispatch, sendMessage, speak, resetSilenceTimer, clearSilenceTimer]);
 
   const toggleListen = () => {
     if (speaking) {
       window.speechSynthesis?.cancel();
       setSpeaking(false);
       voiceActiveRef.current = false;
+      clearSilenceTimer();
       return;
     }
     if (listening || voiceActiveRef.current) {
       voiceActiveRef.current = false;
+      clearSilenceTimer();
       recRef.current?.stop();
       setListening(false);
       return;
     }
     voiceActiveRef.current = true;
+    resetSilenceTimer();
     startRecognition();
   };
 

@@ -79,6 +79,14 @@ const courseSchema = new Schema(
       signatoryTitle: { type: String, default: "" },
       theme: { type: String, default: "purple" },
     },
+    notes: [
+      {
+        title: { type: String, required: true, trim: true },
+        description: { type: String, trim: true, default: "" },
+        fileUrl: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
+      }
+    ],
   },
   { timestamps: true },
 );

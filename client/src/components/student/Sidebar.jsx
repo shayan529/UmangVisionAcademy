@@ -61,6 +61,11 @@ const Sidebar = ({
       icon: "📚",
     },
     {
+      label: t("studentSidebar.notes", "Study Notes"),
+      to: "/student-dashboard/notes",
+      icon: "📝",
+    },
+    {
       label: t("studentSidebar.aiTutor"),
       to: "/student-dashboard/ai-tutor",
       icon: "🤖",

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import api from "../../config/api.js";
@@ -1600,9 +1601,70 @@ export default function CoursePage() {
   // ── Rating state ────────────────────────────────────────────────────────────
   const [showRating, setShowRating] = useState(false);
   const [localRatingAvg, setLocalRatingAvg] = useState(null);
+  // localRated: star count submitted in this session (locks the button immediately)
+  const [localRated, setLocalRated] = useState(null);
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // isDesktop tracks the actual breakpoint live (not just at mount), so
+  // resizing the window/devtools no longer leaves the layout in a stale
+  // state. On desktop the sidebar renders inline; on mobile it renders in a
+  // separate portal-based drawer.
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 768,
+  );
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [collapsedCh, setCollapsedCh] = useState(new Set());
+
+  useEffect(() => {
+    const onResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // If the viewport crosses into desktop while the mobile drawer happens to
+  // be open, close it so it doesn't linger in a weird state.
+  useEffect(() => {
+    if (isDesktop) setMobileSidebarOpen(false);
+  }, [isDesktop]);
+
+  // Lock body scroll only while the mobile drawer is open (prevents page
+  // scrolling behind the overlay). Automatically unlocked on desktop or
+  // when closed.
+  //
+  // `overflow:hidden` alone does NOT stop touch-drag scrolling on mobile
+  // browsers — it only blocks wheel/keyboard scrolling. iOS/Android will
+  // still let a finger-drag scroll the body underneath a fixed overlay.
+  // The reliable fix is to also take the body out of the layout with
+  // `position:fixed`, pinned at its current scroll offset, then restore
+  // the scroll position when unlocking.
+  const scrollLockY = useRef(0);
+  useEffect(() => {
+    if (!isDesktop && mobileSidebarOpen) {
+      scrollLockY.current = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollLockY.current}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.width = "100%";
+      document.body.style.overflow = "hidden";
+    } else {
+      const y = scrollLockY.current;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+      window.scrollTo(0, y);
+    }
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+    };
+  }, [isDesktop, mobileSidebarOpen]);
   const openQuizFromUrl = searchParams.get("quiz") === "1";
   const totalLessonCount = course?.lessons?.length ?? 0;
   const courseComplete =
@@ -1619,16 +1681,12 @@ export default function CoursePage() {
   const handleQuizSubmit = async () => {
     setQuizLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`/api/courses/${course._id}/quiz/submit`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ answers: selectedAnswers }),
-      });
-      const data = await res.json();
+      // Use the api instance (not raw fetch) so the auth interceptor
+      // automatically attaches the correct "authToken" Bearer header.
+      const { data } = await api.post(
+        `/courses/${course._id}/quiz/submit`,
+        { answers: selectedAnswers },
+      );
       if (data.success) {
         setQuizResult(data);
         const isPerfectScore = data.percentage === 100;
@@ -1851,6 +1909,277 @@ export default function CoursePage() {
       </div>
     );
 
+  const sidebarContent = (
+    <>
+      <div
+        style={{
+          padding: "14px 18px",
+          borderBottom: "1px solid #1e293b",
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 10,
+        }}
+      >
+        <div>
+          <h2 style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
+            Course Content
+          </h2>
+          <p style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>
+            {chapters.length} chapters · {allLessons.length} lessons
+          </p>
+        </div>
+        {!isDesktop && (
+          <button
+            onClick={() => setMobileSidebarOpen(false)}
+            aria-label="Close sidebar"
+            style={{
+              background: "#1e293b",
+              border: "1px solid #334155",
+              borderRadius: 8,
+              width: 26,
+              height: 26,
+              color: "#94a3b8",
+              fontSize: 13,
+              lineHeight: 1,
+              cursor: "pointer",
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            ✕
+          </button>
+        )}
+      </div>
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {chapters.map((chapter, ci) => (
+          <div key={ci}>
+            <button
+              onClick={() => toggleChapter(ci)}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 18px",
+                background: "#111827",
+                border: "none",
+                borderBottom: "1px solid #1e293b",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#f1f5f9",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {chapter.title}
+              </span>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  flexShrink: 0,
+                }}
+              >
+                <span style={{ fontSize: 11, color: "#64748b" }}>
+                  {chapter.lessons.length}
+                </span>
+                <span style={{ color: "#64748b", fontSize: 11 }}>
+                  {!collapsedCh.has(ci) ? "▲" : "▼"}
+                </span>
+              </div>
+            </button>
+            {!collapsedCh.has(ci) &&
+              chapter.lessons.map((lesson) => {
+                const isActive =
+                  lesson.globalIdx === activeIdx && !showQuiz;
+                const isDone = completed.has(lesson.globalIdx);
+                const lessonIsText = lesson.type === "text";
+                return (
+                  <button
+                    key={lesson.globalIdx}
+                    onClick={() => {
+                      setShowQuiz(false);
+                      setActiveIdx(lesson.globalIdx);
+                      if (!isDesktop) setMobileSidebarOpen(false);
+                    }}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 10,
+                      padding: "11px 18px 11px 24px",
+                      background: isActive ? "#1e1b4b" : "transparent",
+                      border: "none",
+                      borderBottom: "1px solid #1e293b1a",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      transition: "background 0.15s",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: "50%",
+                        border: `2px solid ${isDone ? "#4ade80" : isActive ? "#7c3aed" : "#334155"}`,
+                        background: isDone ? "#052e16" : "transparent",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        marginTop: 2,
+                      }}
+                    >
+                      {isDone && (
+                        <span style={{ color: "#4ade80", fontSize: 9 }}>
+                          ✓
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p
+                        style={{
+                          fontSize: 12,
+                          fontWeight: isActive ? 700 : 500,
+                          color: isActive ? "#a78bfa" : "#e2e8f0",
+                          lineHeight: 1.4,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {lesson.title}
+                      </p>
+                      <div
+                        style={{ display: "flex", gap: 6, marginTop: 2 }}
+                      >
+                        <span style={{ fontSize: 10, color: "#475569" }}>
+                          {lessonIsText ? "📝 Text" : "🎬 Video"}
+                        </span>
+                        {!lessonIsText && lesson.durationMinutes > 0 && (
+                          <span style={{ fontSize: 10, color: "#475569" }}>
+                            {fmtMins(lesson.durationMinutes)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {isActive && (
+                      <span
+                        style={{
+                          color: "#7c3aed",
+                          fontSize: 12,
+                          flexShrink: 0,
+                        }}
+                      >
+                        ▶
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+          </div>
+        ))}
+
+        {course?.quiz?.questions?.length > 0 && (
+          <button
+            className="quiz-btn-hover"
+            onClick={() => {
+              setShowQuiz(true);
+              setQuizStep("intro");
+              setSelectedAnswers({});
+              setCurrentQuestion(0);
+              setQuizResult(null);
+              if (!isDesktop) setMobileSidebarOpen(false);
+            }}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "14px 18px",
+              background: showQuiz
+                ? courseComplete
+                  ? "#1e1b4b"
+                  : "#111827"
+                : "transparent",
+              border: "none",
+              borderTop: "1px solid #1e293b",
+              cursor: "pointer",
+              textAlign: "left",
+              transition: "background 0.15s",
+              opacity: courseComplete ? 1 : 0.72,
+            }}
+          >
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: !courseComplete
+                  ? "#1e293b"
+                  : showQuiz
+                    ? "#7c3aed"
+                    : "linear-gradient(135deg,#4f46e5,#7c3aed)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 15,
+                flexShrink: 0,
+              }}
+            >
+              📝
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: !courseComplete
+                    ? "#64748b"
+                    : showQuiz
+                      ? "#a78bfa"
+                      : "#e2e8f0",
+                  marginBottom: 2,
+                }}
+              >
+                {course.quiz.title || "Final Quiz"}
+              </p>
+              <p style={{ fontSize: 10, color: "#475569" }}>
+                {courseComplete
+                  ? `${course.quiz.questions.length} questions · ${course.quiz.questions.length * 10} pts`
+                  : `Locked · ${completed.size}/${totalLessonCount} lessons`}
+              </p>
+            </div>
+            {courseComplete &&
+              user?.quizSubmissions?.some(
+                (s) => s.courseId?.toString() === course._id?.toString(),
+              ) && (
+                <span style={{ color: "#4ade80", fontSize: 14 }}>✓</span>
+              )}
+            {!courseComplete && (
+              <span style={{ color: "#64748b", fontSize: 14 }}>🔒</span>
+            )}
+            {courseComplete && showQuiz && (
+              <span style={{ color: "#7c3aed", fontSize: 12 }}>▶</span>
+            )}
+          </button>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div
       style={{
@@ -1869,14 +2198,27 @@ export default function CoursePage() {
         }
         .cp-layout { display:flex; flex:1; overflow:hidden; }
         .cp-main   { flex:1; min-width:0; overflow-y:auto; padding:16px 14px 40px; }
-        .cp-sidebar { width:320px; border-left:1px solid #1e293b; background:#0d1526; display:flex; flex-direction:column; flex-shrink:0; position:sticky; top:57px; height:calc(100vh - 57px); overflow-y:auto; }
+        /* Desktop sidebar — always visible, in normal flow. Anchored with
+           top+bottom instead of a vh-based height so it can never detach
+           from the bottom edge. */
+        .cp-sidebar { width:320px; border-left:1px solid #1e293b; background:#0d1526; display:flex; flex-direction:column; flex-shrink:0; position:sticky; top:57px; bottom:0; max-height:calc(100dvh - 57px); overflow-y:auto; }
         @media (min-width:768px) { .cp-main { padding:24px 24px 40px; } .cp-sidebar { width:360px; } }
-        @media (max-width:767px) {
-          .cp-layout { position:relative; }
-          .cp-sidebar { position:fixed; top:57px; right:0; height:calc(100vh - 57px); z-index:40; width:min(340px,90vw); box-shadow:-4px 0 24px rgba(0,0,0,0.5); transform:translateX(100%); transition:transform 0.25s ease; }
-          .cp-sidebar.open { transform:translateX(0); }
-          .cp-sidebar-overlay { display:none; position:fixed; inset:0; top:57px; background:rgba(0,0,0,0.5); z-index:39; }
-          .cp-sidebar.open ~ .cp-sidebar-overlay, .cp-sidebar-overlay.show { display:block; }
+
+        /* Mobile sidebar — rendered through a React Portal straight into
+           document.body, so it's genuinely fixed to the viewport no matter
+           what ancestors (transforms, overflow, etc.) wrap the page. */
+        .cp-mobile-sidebar {
+          position:fixed; top:57px; right:0; bottom:0; height:auto;
+          z-index:1001; width:min(340px,90vw); background:#0d1526;
+          display:flex; flex-direction:column; overflow-y:auto;
+          overscroll-behavior:contain;
+          box-shadow:-4px 0 24px rgba(0,0,0,0.5);
+          transform:translateX(100%); transition:transform 0.25s ease;
+        }
+        .cp-mobile-sidebar.open { transform:translateX(0); }
+        .cp-mobile-sidebar-overlay {
+          position:fixed; inset:0; top:57px; background:rgba(0,0,0,0.5); z-index:1000;
+          touch-action:none;
         }
         .cp-topbar-title { font-size:14px; font-weight:700; color:#f1f5f9; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         @media (min-width:768px) { .cp-topbar-title { font-size:15px; } }
@@ -1945,23 +2287,28 @@ export default function CoursePage() {
             {progressPct}%
           </span>
         </div>
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          style={{
-            background: "#1e293b",
-            border: "1px solid #334155",
-            borderRadius: 8,
-            padding: "5px 10px",
-            color: "#94a3b8",
-            fontSize: 11,
-            fontWeight: 600,
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-            flexShrink: 0,
-          }}
-        >
-          {sidebarOpen ? "Hide" : "Show"}
-        </button>
+        {/* Toggle only makes sense on mobile — on desktop the sidebar is
+            always visible in the normal flow, so the button is omitted
+            there entirely instead of doing nothing. */}
+        {!isDesktop && (
+          <button
+            onClick={() => setMobileSidebarOpen((o) => !o)}
+            style={{
+              background: "#1e293b",
+              border: "1px solid #334155",
+              borderRadius: 8,
+              padding: "5px 10px",
+              color: "#94a3b8",
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            {mobileSidebarOpen ? "Hide" : "Show"}
+          </button>
+        )}
       </div>
 
       {/* ── Main layout ── */}
@@ -2143,41 +2490,59 @@ export default function CoursePage() {
               >
                 ← Previous
               </button>
-              <button
-                onClick={() => {
-                  setCompleted((p) => {
-                    const next = new Set([...p, activeIdx]);
-                    scheduleSave({
-                      lastLesson: activeIdx + 1,
-                      completed: Array.from(next),
-                      lessonProgress: lessonProgressRef.current,
-                    });
-                    return next;
-                  });
-                  setActiveIdx(Math.min(allLessons.length - 1, activeIdx + 1));
-                }}
-                disabled={activeIdx === allLessons.length - 1}
-                style={{
-                  flex: 1,
-                  padding: "11px",
-                  borderRadius: 12,
-                  border: "none",
-                  background:
-                    activeIdx === allLessons.length - 1
-                      ? "#1e293b"
-                      : "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                  color:
-                    activeIdx === allLessons.length - 1 ? "#334155" : "#fff",
-                  fontWeight: 700,
-                  fontSize: 13,
-                  cursor:
-                    activeIdx === allLessons.length - 1
-                      ? "not-allowed"
-                      : "pointer",
-                }}
-              >
-                Next →
-              </button>
+              {(() => {
+                const isLastLesson = activeIdx === allLessons.length - 1;
+                const hasQuiz = course?.quiz?.questions?.length > 0;
+                // On the last lesson there's nowhere further to "Next" to
+                // unless there's a final quiz — in that case Next should
+                // finish the lesson and jump straight into it, rather than
+                // just disabling with nothing to do.
+                const goToQuiz = isLastLesson && hasQuiz;
+                const disabledNext = isLastLesson && !hasQuiz;
+                return (
+                  <button
+                    onClick={() => {
+                      const destinationIdx = goToQuiz
+                        ? activeIdx
+                        : Math.min(allLessons.length - 1, activeIdx + 1);
+                      setCompleted((p) => {
+                        const next = new Set([...p, activeIdx]);
+                        scheduleSave({
+                          lastLesson: destinationIdx,
+                          completed: Array.from(next),
+                          lessonProgress: lessonProgressRef.current,
+                        });
+                        return next;
+                      });
+                      if (goToQuiz) {
+                        setShowQuiz(true);
+                        setQuizStep("intro");
+                        setSelectedAnswers({});
+                        setCurrentQuestion(0);
+                        setQuizResult(null);
+                      } else {
+                        setActiveIdx(destinationIdx);
+                      }
+                    }}
+                    disabled={disabledNext}
+                    style={{
+                      flex: 1,
+                      padding: "11px",
+                      borderRadius: 12,
+                      border: "none",
+                      background: disabledNext
+                        ? "#1e293b"
+                        : "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                      color: disabledNext ? "#334155" : "#fff",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      cursor: disabledNext ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {goToQuiz ? "Finish → Take Quiz" : "Next →"}
+                  </button>
+                );
+              })()}
             </div>
           )}
 
@@ -2202,36 +2567,58 @@ export default function CoursePage() {
               <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9" }}>
                 About this course
               </h3>
-              <button
-                className="rate-btn"
-                onClick={() => setShowRating(true)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "7px 13px",
-                  borderRadius: 10,
-                  border: userExistingRating
-                    ? "1px solid #854d0e"
-                    : "1px solid #334155",
-                  background: userExistingRating ? "#1c1005" : "transparent",
-                  color: userExistingRating ? "#fbbf24" : "#94a3b8",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  transition: "background 0.15s",
-                  flexShrink: 0,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <span style={{ fontSize: 14 }}>
-                  {userExistingRating
-                    ? "★".repeat(userExistingRating.rating) +
-                      "☆".repeat(5 - userExistingRating.rating)
-                    : "☆☆☆☆☆"}
-                </span>
-                {userExistingRating ? "Edit rating" : "Rate this course"}
-              </button>
+              {/* Show locked "Rated" badge if already rated (DB or this session) */}
+              {(userExistingRating || localRated) ? (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "7px 13px",
+                    borderRadius: 10,
+                    border: "1px solid #854d0e",
+                    background: "#1c1005",
+                    color: "#fbbf24",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    flexShrink: 0,
+                    whiteSpace: "nowrap",
+                    userSelect: "none",
+                  }}
+                >
+                  <span style={{ fontSize: 14 }}>
+                    {(() => {
+                      const stars = localRated ?? userExistingRating?.rating ?? 0;
+                      return "★".repeat(stars) + "☆".repeat(5 - stars);
+                    })()}
+                  </span>
+                  Rated
+                </div>
+              ) : (
+                <button
+                  className="rate-btn"
+                  onClick={() => setShowRating(true)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "7px 13px",
+                    borderRadius: 10,
+                    border: "1px solid #334155",
+                    background: "transparent",
+                    color: "#94a3b8",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    transition: "background 0.15s",
+                    flexShrink: 0,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <span style={{ fontSize: 14 }}>☆☆☆☆☆</span>
+                  Rate this course
+                </button>
+              )}
             </div>
             <p
               style={{
@@ -2275,257 +2662,115 @@ export default function CoursePage() {
                   </span>
                 ))}
             </div>
-          </div>
-        </div>
-
-        {/* ── Sidebar ── */}
-        <div className={`cp-sidebar${sidebarOpen ? " open" : ""}`}>
-          <div
-            style={{
-              padding: "14px 18px",
-              borderBottom: "1px solid #1e293b",
-              flexShrink: 0,
-            }}
-          >
-            <h2 style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
-              Course Content
-            </h2>
-            <p style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>
-              {chapters.length} chapters · {allLessons.length} lessons
-            </p>
-          </div>
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            {chapters.map((chapter, ci) => (
-              <div key={ci}>
-                <button
-                  onClick={() => toggleChapter(ci)}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "12px 18px",
-                    background: "#111827",
-                    border: "none",
-                    borderBottom: "1px solid #1e293b",
-                    cursor: "pointer",
-                    textAlign: "left",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: "#f1f5f9",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {chapter.title}
-                  </span>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <span style={{ fontSize: 11, color: "#64748b" }}>
-                      {chapter.lessons.length}
-                    </span>
-                    <span style={{ color: "#64748b", fontSize: 11 }}>
-                      {!collapsedCh.has(ci) ? "▲" : "▼"}
-                    </span>
-                  </div>
-                </button>
-                {!collapsedCh.has(ci) &&
-                  chapter.lessons.map((lesson) => {
-                    const isActive =
-                      lesson.globalIdx === activeIdx && !showQuiz;
-                    const isDone = completed.has(lesson.globalIdx);
-                    const lessonIsText = lesson.type === "text";
-                    return (
-                      <button
-                        key={lesson.globalIdx}
-                        onClick={() => {
-                          setShowQuiz(false);
-                          setActiveIdx(lesson.globalIdx);
-                          if (window.innerWidth < 768) setSidebarOpen(false);
-                        }}
-                        style={{
-                          width: "100%",
-                          display: "flex",
-                          alignItems: "flex-start",
-                          gap: 10,
-                          padding: "11px 18px 11px 24px",
-                          background: isActive ? "#1e1b4b" : "transparent",
-                          border: "none",
-                          borderBottom: "1px solid #1e293b1a",
-                          cursor: "pointer",
-                          textAlign: "left",
-                          transition: "background 0.15s",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 18,
-                            height: 18,
-                            borderRadius: "50%",
-                            border: `2px solid ${isDone ? "#4ade80" : isActive ? "#7c3aed" : "#334155"}`,
-                            background: isDone ? "#052e16" : "transparent",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            flexShrink: 0,
-                            marginTop: 2,
-                          }}
-                        >
-                          {isDone && (
-                            <span style={{ color: "#4ade80", fontSize: 9 }}>
-                              ✓
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p
-                            style={{
-                              fontSize: 12,
-                              fontWeight: isActive ? 700 : 500,
-                              color: isActive ? "#a78bfa" : "#e2e8f0",
-                              lineHeight: 1.4,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {lesson.title}
-                          </p>
-                          <div
-                            style={{ display: "flex", gap: 6, marginTop: 2 }}
-                          >
-                            <span style={{ fontSize: 10, color: "#475569" }}>
-                              {lessonIsText ? "📝 Text" : "🎬 Video"}
-                            </span>
-                            {!lessonIsText && lesson.durationMinutes > 0 && (
-                              <span style={{ fontSize: 10, color: "#475569" }}>
-                                {fmtMins(lesson.durationMinutes)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        {isActive && (
-                          <span
-                            style={{
-                              color: "#7c3aed",
-                              fontSize: 12,
-                              flexShrink: 0,
-                            }}
-                          >
-                            ▶
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-              </div>
-            ))}
-
-            {course?.quiz?.questions?.length > 0 && (
-              <button
-                className="quiz-btn-hover"
-                onClick={() => {
-                  setShowQuiz(true);
-                  setQuizStep("intro");
-                  setSelectedAnswers({});
-                  setCurrentQuestion(0);
-                  setQuizResult(null);
-                  if (window.innerWidth < 768) setSidebarOpen(false);
-                }}
+            {course?.notes && course.notes.length > 0 && (
+              <div
                 style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "14px 18px",
-                  background: showQuiz
-                    ? courseComplete
-                      ? "#1e1b4b"
-                      : "#111827"
-                    : "transparent",
-                  border: "none",
+                  marginTop: 18,
+                  paddingTop: 16,
                   borderTop: "1px solid #1e293b",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  transition: "background 0.15s",
-                  opacity: courseComplete ? 1 : 0.72,
                 }}
               >
-                <div
+                <h4
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 8,
-                    background: !courseComplete
-                      ? "#1e293b"
-                      : showQuiz
-                        ? "#7c3aed"
-                        : "linear-gradient(135deg,#4f46e5,#7c3aed)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 15,
-                    flexShrink: 0,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "#f1f5f9",
+                    marginBottom: 10,
                   }}
                 >
-                  📝
+                  📄 Study Notes & Materials
+                </h4>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                  }}
+                >
+                  {course.notes.map((note) => (
+                    <div
+                      key={note._id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "10px 12px",
+                        background: "#0d1526",
+                        borderRadius: 10,
+                        border: "1px solid #1e293b",
+                      }}
+                    >
+                      <div style={{ minWidth: 0, flex: 1, marginRight: 10 }}>
+                        <p
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: "#e2e8f0",
+                          }}
+                        >
+                          {note.title}
+                        </p>
+                        {note.description && (
+                          <p
+                            style={{
+                              fontSize: 10,
+                              color: "#64748b",
+                              marginTop: 2,
+                            }}
+                          >
+                            {note.description}
+                          </p>
+                        )}
+                      </div>
+                      <a
+                        href={note.fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          padding: "6px 12px",
+                          background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                          color: "#fff",
+                          borderRadius: 8,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          textDecoration: "none",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Download
+                      </a>
+                    </div>
+                  ))}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: !courseComplete
-                        ? "#64748b"
-                        : showQuiz
-                          ? "#a78bfa"
-                          : "#e2e8f0",
-                      marginBottom: 2,
-                    }}
-                  >
-                    {course.quiz.title || "Final Quiz"}
-                  </p>
-                  <p style={{ fontSize: 10, color: "#475569" }}>
-                    {courseComplete
-                      ? `${course.quiz.questions.length} questions · ${course.quiz.questions.length * 10} pts`
-                      : `Locked · ${completed.size}/${totalLessonCount} lessons`}
-                  </p>
-                </div>
-                {courseComplete &&
-                  user?.quizSubmissions?.some(
-                    (s) => s.courseId?.toString() === course._id?.toString(),
-                  ) && (
-                    <span style={{ color: "#4ade80", fontSize: 14 }}>✓</span>
-                  )}
-                {!courseComplete && (
-                  <span style={{ color: "#64748b", fontSize: 14 }}>🔒</span>
-                )}
-                {courseComplete && showQuiz && (
-                  <span style={{ color: "#7c3aed", fontSize: 12 }}>▶</span>
-                )}
-              </button>
+              </div>
             )}
           </div>
         </div>
 
-        {sidebarOpen && (
-          <div
-            className="cp-sidebar-overlay show"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
+        {/* ── Sidebar (desktop) — always visible, in normal flow ── */}
+        {isDesktop && <div className="cp-sidebar">{sidebarContent}</div>}
       </div>
+
+      {/* ── Sidebar (mobile) — rendered through a portal to document.body so
+          it is truly fixed to the viewport regardless of any transformed
+          or scrolling ancestors, and can no longer scroll with the page. ── */}
+      {!isDesktop &&
+        createPortal(
+          <>
+            {mobileSidebarOpen && (
+              <div
+                className="cp-mobile-sidebar-overlay"
+                onClick={() => setMobileSidebarOpen(false)}
+              />
+            )}
+            <div
+              className={`cp-mobile-sidebar${mobileSidebarOpen ? " open" : ""}`}
+            >
+              {sidebarContent}
+            </div>
+          </>,
+          document.body,
+        )}
 
       {/* ── Certificate Earned Modal ── */}
       {showCertModal && (
@@ -2543,6 +2788,10 @@ export default function CoursePage() {
           user={user}
           onClose={() => setShowRating(false)}
           onSubmitted={(stars) => {
+            // Lock the button immediately in this session
+            setLocalRated(stars);
+            setShowRating(false);
+            // Optimistically update the displayed average
             const existing = course?.ratings ?? [];
             const alreadyRated = existing.some(
               (r) => r.user?.toString() === user._id?.toString(),

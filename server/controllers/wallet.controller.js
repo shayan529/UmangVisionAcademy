@@ -3,6 +3,7 @@ import crypto from "crypto";
 import Wallet from "../models/wallet.model.js";
 import Course from "../models/courses.model.js";
 import User from "../models/user.model.js"; // adjust path if different
+import { invalidateCourseCache } from "./course.controller.js";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -22,11 +23,11 @@ const serializeTransaction = (wallet, transaction) => ({
   _id: transaction._id,
   user: wallet.userId
     ? {
-        _id: wallet.userId._id,
-        name: wallet.userId.name,
-        email: wallet.userId.email,
-        phoneNumber: wallet.userId.phoneNumber,
-      }
+      _id: wallet.userId._id,
+      name: wallet.userId.name,
+      email: wallet.userId.email,
+      phoneNumber: wallet.userId.phoneNumber,
+    }
     : null,
   type: transaction.type,
   amount: transaction.amount,
@@ -498,6 +499,10 @@ export const payWithWallet = async (req, res) => {
     await Course.findByIdAndUpdate(courseId, {
       $addToSet: { students: req.user._id },
     });
+
+    await invalidateCourseCache(courseId).catch((err) =>
+      console.error("[Cache] Failed to invalidate course cache:", err.message)
+    );
 
     res.json({
       message: `Enrolled in "${course.title}" successfully.`,

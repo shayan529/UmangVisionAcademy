@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { fetchPublishedCourses } from "../../redux/slices/courseSlice";
+import { fetchPublishedCourses, fetchEnrolledCourses } from "../../redux/slices/courseSlice";
 import CourseCard from "./CourseCard";
 
 const SkeletonCard = () => (
@@ -31,9 +31,16 @@ const Courses = () => {
   // ── Redux state ──────────────────────────────────────────────────────────
   const {
     courses: allCourses = [],
+    enrolled: enrolledCourses = [],
     loading,
     error,
   } = useSelector((s) => s.courses);
+
+  // Build a Set of enrolled course IDs for O(1) lookup
+  const enrolledIdSet = useMemo(
+    () => new Set(enrolledCourses.map((c) => c._id?.toString())),
+    [enrolledCourses]
+  );
 
   const [selectedClass, setSelectedClass] = useState(ALL);
   const [selectedSubject, setSelectedSubject] = useState(ALL_SUBJECTS);
@@ -41,7 +48,8 @@ const Courses = () => {
 
   useEffect(() => {
     dispatch(fetchPublishedCourses());
-  }, [dispatch]);
+    if (user) dispatch(fetchEnrolledCourses());
+  }, [dispatch, user]);
 
   // ── Derived filter options — recomputed only when courses change ──────────
   const dynamicClasses = useMemo(
@@ -89,14 +97,15 @@ const Courses = () => {
   );
   const isEnrolled = (course) => {
     if (!user) return false;
-    
-    const directlyEnrolled = course.students?.some((s) => (s._id ?? s) === user._id);
-    if (directlyEnrolled) return true;
 
+    // Primary check: use the enrolled courses list from Redux (authoritative)
+    if (enrolledIdSet.has(course._id?.toString())) return true;
+
+    // Secondary check: subscription-based access
     const hasActiveSubscription = user.subscription?.status === "active";
-    const matchesClass = user.selectedClass && course.category && 
+    const matchesClass = user.selectedClass && course.category &&
       user.selectedClass.toLowerCase().trim() === course.category.toLowerCase().trim();
-      
+
     return !!(hasActiveSubscription && matchesClass);
   };
 

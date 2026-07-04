@@ -355,9 +355,12 @@ export default function MyCourses() {
 
 function RatingDialog({ course, user, onClose, onSubmitted }) {
   const userId = user?._id ?? user?.id;
-  const existingRating = course?.ratings?.find(
-    (r) => getRatingUserId(r)?.toString() === userId?.toString(),
-  );
+  // course.userRating is set by the enrolled courses API (this student's rating).
+  // Fall back to searching course.ratings for other contexts.
+  const existingRating = course?.userRating ??
+    course?.ratings?.find(
+      (r) => getRatingUserId(r)?.toString() === userId?.toString(),
+    );
   const [selected, setSelected] = useState(existingRating?.rating ?? 0);
   const [hovered, setHovered] = useState(0);
   const [review, setReview] = useState(existingRating?.review ?? "");
@@ -779,21 +782,44 @@ function CourseCard({ course, animDelay = 0, onRate }) {
               )}
               {isComplete && (
                 <>
-                  <button
-                    onClick={onRate}
-                    style={{
-                      padding: "7px 16px",
-                      borderRadius: 10,
-                      border: "none",
-                      background: "#052e16",
-                      color: "#4ade80",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Rate This Course 🌟
-                  </button>
+                  {course.userRating ? (
+                    // Already rated — show stars and allow update
+                    <button
+                      onClick={onRate}
+                      title="Update your rating"
+                      style={{
+                        padding: "7px 14px",
+                        borderRadius: 10,
+                        border: "1px solid #854d0e",
+                        background: "#1c1005",
+                        color: "#fbbf24",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 5,
+                      }}
+                    >
+                      {"★".repeat(course.userRating.rating)}{"☆".repeat(5 - course.userRating.rating)} Rated
+                    </button>
+                  ) : (
+                    <button
+                      onClick={onRate}
+                      style={{
+                        padding: "7px 16px",
+                        borderRadius: 10,
+                        border: "none",
+                        background: "#052e16",
+                        color: "#4ade80",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Rate This Course 🌟
+                    </button>
+                  )}
                   {hasFinalQuiz && (
                     <Link to={`/courses/${course._id}?quiz=1`}>
                       <button

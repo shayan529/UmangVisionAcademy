@@ -4,6 +4,7 @@ import User from "../models/user.model.js";
 import Course from "../models/courses.model.js";
 import Cart from "../models/cart.model.js";
 import Wallet from "../models/wallet.model.js";
+import { invalidateCourseCache } from "./course.controller.js";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -199,6 +200,13 @@ export const verifyPayment = async (req, res) => {
             $addToSet: { students: req.user._id },
           }),
         ),
+      );
+      await Promise.all(
+        courseIds.map((id) =>
+          invalidateCourseCache(id).catch((err) =>
+            console.error("[Cache] Failed to invalidate course cache:", err.message)
+          )
+        )
       );
       await User.findByIdAndUpdate(req.user._id, {
         $addToSet: { enrolledCourses: { $each: courseIds } },
