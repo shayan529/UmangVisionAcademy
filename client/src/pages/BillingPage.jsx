@@ -408,7 +408,7 @@ export default function BillingPage() {
                       </span>
                       <span style={{ fontSize: 12, color: "#64748b" }}>
                         {subscription.status === "active" ||
-                        subscription.status === "cancelled"
+                          subscription.status === "cancelled"
                           ? `${days} day${days !== 1 ? "s" : ""} remaining`
                           : ""}
                       </span>
@@ -654,7 +654,7 @@ export default function BillingPage() {
           )}
 
           {/* ── Upgrade option if on base plan ── */}
-          {activeSub && subscription?.plan === "base" && (
+          {/* {activeSub && subscription?.plan === "base" && (
             <div
               className="billing-fade"
               style={{
@@ -696,7 +696,7 @@ export default function BillingPage() {
                 Upgrade — ₹999/mo
               </button>
             </div>
-          )}
+          )} */}
 
           {/* ── Payment details ── */}
           {subscription?.razorpayPaymentId && (
