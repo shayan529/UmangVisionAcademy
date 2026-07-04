@@ -2,7 +2,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const BASE = "/api/mock-tests";
+const BASE = "/mock-tests";
 
 // ── Thunks ──────────────────────────────────────────────────
 

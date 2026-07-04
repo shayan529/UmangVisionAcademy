@@ -10,6 +10,8 @@ import {
   hydrateUsersRoles,
   mergeBaseAndCustomRoles,
 } from "../utils/userRoles.js";
+import Course from "../models/courses.model.js";
+import { invalidateCourseCache } from "./course.controller.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -401,6 +403,15 @@ export const bulkImportStudents = async (req, res) => {
     const targetRole =
       req.body.role === "instructor" ? "instructor" : "student";
 
+    let courseIds = [];
+    try {
+      if (req.body.courseIds) {
+        courseIds = JSON.parse(req.body.courseIds);
+      }
+    } catch (e) {
+      console.warn("Failed to parse courseIds in bulk import", e);
+    }
+
     let rows = [];
     let source = "";
     const ext = req.file.originalname.split(".").pop()?.toLowerCase();
@@ -536,6 +547,31 @@ export const bulkImportStudents = async (req, res) => {
       }
     }
 
+    if (courseIds.length > 0 && created.length > 0) {
+      try {
+        const newStudentIds = created.map(c => c._id);
+
+        await Promise.all(
+          courseIds.map(async (courseId) => {
+            await Course.findByIdAndUpdate(courseId, {
+              $addToSet: { students: { $each: newStudentIds } }
+            });
+          })
+        );
+
+        await User.updateMany(
+          { _id: { $in: newStudentIds } },
+          { $addToSet: { enrolledCourses: { $each: courseIds } } }
+        );
+
+        await Promise.all(
+          courseIds.map(id => invalidateCourseCache(id).catch(e => console.error(e)))
+        );
+      } catch (err) {
+        console.error("Failed to assign courses in bulk import:", err);
+      }
+    }
+
     res.status(201).json({
       message: `Imported ${created.length} ${targetRole}s from ${source}`,
       inserted: created.length,
@@ -640,6 +676,7 @@ export const createStudentByAdmin = async (req, res) => {
     phoneNumber,
     pincode,
     referralCode: referralCodeParam,
+    courseIds,
   } = req.body;
 
   try {
@@ -698,6 +735,26 @@ export const createStudentByAdmin = async (req, res) => {
       referrer.coins = (referrer.coins ?? 0) + 50;
       referrer.referralsCount = (referrer.referralsCount ?? 0) + 1;
       await referrer.save();
+    }
+
+    if (Array.isArray(courseIds) && courseIds.length > 0) {
+      try {
+        await Promise.all(
+          courseIds.map(async (courseId) => {
+            await Course.findByIdAndUpdate(courseId, {
+              $addToSet: { students: user._id },
+            });
+          })
+        );
+        await User.findByIdAndUpdate(user._id, {
+          $addToSet: { enrolledCourses: { $each: courseIds } }
+        });
+        await Promise.all(
+          courseIds.map(id => invalidateCourseCache(id).catch(e => console.error(e)))
+        );
+      } catch (err) {
+        console.error("Failed to assign courses during student creation:", err);
+      }
     }
 
     // No devices/login stamping here — this account hasn't actually logged

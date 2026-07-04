@@ -22,6 +22,9 @@ import {
   UserPlus,
   Save,
   Loader2,
+  BookPlus,
+  GraduationCap,
+  Tag,
 } from "lucide-react";
 import api from "../../config/api.js";
 
@@ -51,6 +54,11 @@ const fmtDate = (d) => {
     return "—";
   }
 };
+
+// Course titles follow a "Subject - Extra" convention elsewhere in the app
+// (see the student Courses page filters) — the part before " - " is the
+// subject. Falls back to the full title when there's no separator.
+const subjectOf = (title) => title?.split(" - ")[0]?.trim() ?? title;
 
 const ROLE_OPTIONS = ["student", "instructor", "admin"];
 
@@ -89,7 +97,7 @@ const Av = ({ name = "?", size = 36 }) => (
 const InfoRow = ({ icon: Icon, label, value }) => (
   <div className="flex items-start gap-3 py-2.5">
     <Icon size={16} className="text-slate-500 mt-0.5 flex-none" />
-    <div className="min-w-0">
+    <div className="min-w-0 flex-1">
       <p className="text-xs uppercase tracking-wider text-slate-500 font-bold">
         {label}
       </p>
@@ -140,7 +148,7 @@ const TextField = ({
 );
 
 /* ─── Add Student Modal ───────────────────────────────── */
-const AddStudentModal = ({ onClose, onCreated }) => {
+const AddStudentModal = ({ courses = [], onClose, onCreated }) => {
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -152,8 +160,35 @@ const AddStudentModal = ({ onClose, onCreated }) => {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [selectedCourses, setSelectedCourses] = useState([]);
+  const [courseSearch, setCourseSearch] = useState("");
 
   const set = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
+
+  const toggleCourse = (courseId) => {
+    setSelectedCourses((prev) =>
+      prev.includes(courseId)
+        ? prev.filter((id) => id !== courseId)
+        : [...prev, courseId]
+    );
+  };
+
+  const courseSearchLower = courseSearch.trim().toLowerCase();
+  const filteredCourses = courseSearchLower
+    ? courses.filter((c) => {
+      const haystack = [
+        c.title,
+        subjectOf(c.title),
+        c.category,
+        c.board,
+        c.instructor?.name,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(courseSearchLower);
+    })
+    : courses;
 
   const handleSubmit = async () => {
     const required = [
@@ -187,6 +222,7 @@ const AddStudentModal = ({ onClose, onCreated }) => {
         state: form.state.trim(),
         pincode: form.pincode.trim(),
         role: "student",
+        courseIds: selectedCourses,
       };
       if (form.email.trim()) payload.email = form.email.trim();
 
@@ -204,7 +240,7 @@ const AddStudentModal = ({ onClose, onCreated }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
@@ -254,7 +290,7 @@ const AddStudentModal = ({ onClose, onCreated }) => {
             placeholder="Minimum 6 characters"
             required
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <TextField
               label="City"
               value={form.city}
@@ -277,6 +313,94 @@ const AddStudentModal = ({ onClose, onCreated }) => {
             placeholder="6-digit pincode"
             required
           />
+
+          <FieldLabel>Assign Courses (Optional)</FieldLabel>
+
+          <div className="relative">
+            <Search
+              size={14}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+            />
+            <input
+              type="text"
+              value={courseSearch}
+              onChange={(e) => setCourseSearch(e.target.value)}
+              placeholder="Search courses by title, subject, class, or board…"
+              className="w-full bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 pl-9 pr-4 text-sm text-white placeholder-slate-500 transition duration-150"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
+            {courses.length === 0 ? (
+              <p className="text-sm text-slate-500 italic">No courses available.</p>
+            ) : filteredCourses.length === 0 ? (
+              <p className="text-sm text-slate-500 italic">
+                No courses match "{courseSearch}".
+              </p>
+            ) : (
+              filteredCourses.map((c) => {
+                const active = selectedCourses.includes(c._id);
+                const subject = subjectOf(c.title);
+                return (
+                  <button
+                    key={c._id}
+                    type="button"
+                    onClick={() => toggleCourse(c._id)}
+                    className={`w-full text-left rounded-xl border p-3.5 transition ${active
+                      ? "bg-emerald-500/10 border-emerald-500/40"
+                      : "bg-slate-900/40 border-slate-700 hover:border-slate-600"
+                      }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className={`font-semibold text-sm truncate ${active ? "text-emerald-300" : "text-white"}`}>
+                          {c.title}
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                          {subject && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20 text-[10px] font-bold text-sky-300 uppercase tracking-wide">
+                              <Tag size={10} className="flex-none" />
+                              {subject}
+                            </span>
+                          )}
+                          {c.category && (
+                            <span className="px-2 py-0.5 rounded-md bg-slate-800/80 text-[10px] font-semibold text-slate-300 uppercase tracking-wide">
+                              {c.category}
+                            </span>
+                          )}
+                          {c.board && (
+                            <span className="px-2 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-[10px] font-semibold text-purple-300 uppercase tracking-wide">
+                              {c.board}
+                            </span>
+                          )}
+                        </div>
+
+                        {(c.instructor?.name || c.instructor?.email) ? (
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 pt-2.5 border-t border-slate-800/70">
+                            {c.instructor?.name && (
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-300">
+                                <GraduationCap size={12} className="flex-none text-slate-500" />
+                                <span className="truncate">{c.instructor.name}</span>
+                              </span>
+                            )}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="flex-none pt-0.5">
+                        {active ? (
+                          <CheckCircle2 size={19} className="text-emerald-400" />
+                        ) : (
+                          <div className="w-[19px] h-[19px] rounded-full border-2 border-slate-700" />
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
 
           {error && (
             <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-red-300">
@@ -387,7 +511,7 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
@@ -430,7 +554,7 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
             value={form.phoneNumber}
             onChange={set("phoneNumber")}
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <TextField label="City" value={form.city} onChange={set("city")} />
             <TextField
               label="State"
@@ -460,11 +584,10 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
                     key={role}
                     type="button"
                     onClick={() => toggleRole(role)}
-                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${
-                      active
-                        ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"
-                        : "bg-slate-900/40 border-slate-700 text-slate-500 hover:border-slate-600"
-                    }`}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${active
+                      ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"
+                      : "bg-slate-900/40 border-slate-700 text-slate-500 hover:border-slate-600"
+                      }`}
                   >
                     {role}
                   </button>
@@ -535,7 +658,7 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
@@ -853,11 +976,10 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
                   ([key, val]) => (
                     <span
                       key={key}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${
-                        val
-                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
-                          : "bg-slate-800/60 border-slate-700 text-slate-500"
-                      }`}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${val
+                        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+                        : "bg-slate-800/60 border-slate-700 text-slate-500"
+                        }`}
                     >
                       {key.replace(/([A-Z])/g, " $1")}
                     </span>
@@ -866,6 +988,221 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
               </div>
             </>
           )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─── Assign Course Modal ────────────────────────────── */
+const AssignCourseModal = ({ student, courses = [], onClose, onAssigned }) => {
+  const [selectedCourses, setSelectedCourses] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const enrolledCourseIds = new Set(
+    courses
+      .filter((c) => c.students?.some((sid) => (sid._id || sid) === student._id))
+      .map((c) => c._id)
+  );
+
+  const availableCourses = courses.filter((c) => !enrolledCourseIds.has(c._id));
+
+  const toggleCourse = (courseId) => {
+    setSelectedCourses((prev) =>
+      prev.includes(courseId)
+        ? prev.filter((id) => id !== courseId)
+        : [...prev, courseId]
+    );
+  };
+
+  const handleSubmit = async () => {
+    if (selectedCourses.length === 0) {
+      setError("Please select at least one course.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      await api.post("/courses/enroll", {
+        courseIds: selectedCourses,
+        studentId: student._id,
+      });
+      if (onAssigned) await onAssigned();
+      onClose();
+    } catch (err) {
+      setError(
+        err.response?.data?.message || err.message || "Failed to assign courses."
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-5 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
+          <div className="flex items-center gap-3 min-w-0">
+            <Av name={student.name} size={40} />
+            <div className="min-w-0">
+              <p className="text-base font-extrabold text-white truncate">
+                Assign Courses
+              </p>
+              <p className="text-xs text-slate-500 truncate">{student.email}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex-none p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-6 flex flex-col gap-4">
+          <FieldLabel>Select courses to assign</FieldLabel>
+
+          {availableCourses.length === 0 ? (
+            <p className="text-sm text-slate-500 italic">
+              This student is already enrolled in all available courses.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2.5 max-h-[26rem] overflow-y-auto pr-1">
+              {availableCourses.map((c) => {
+                const active = selectedCourses.includes(c._id);
+                const subject = subjectOf(c.title);
+                return (
+                  <button
+                    key={c._id}
+                    type="button"
+                    onClick={() => toggleCourse(c._id)}
+                    className={`w-full text-left rounded-xl border p-3.5 transition ${active
+                      ? "bg-emerald-500/10 border-emerald-500/40"
+                      : "bg-slate-900/40 border-slate-700 hover:border-slate-600"
+                      }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        {/* Course title */}
+                        <p
+                          className={`font-semibold text-sm truncate ${active ? "text-emerald-300" : "text-white"
+                            }`}
+                        >
+                          {c.title}
+                        </p>
+
+                        {/* Subject / class / board badges */}
+                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                          {subject && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20 text-[10px] font-bold text-sky-300 uppercase tracking-wide">
+                              <Tag size={10} className="flex-none" />
+                              {subject}
+                            </span>
+                          )}
+                          {c.category && (
+                            <span className="px-2 py-0.5 rounded-md bg-slate-800/80 text-[10px] font-semibold text-slate-300 uppercase tracking-wide">
+                              {c.category}
+                            </span>
+                          )}
+                          {c.board && (
+                            <span className="px-2 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-[10px] font-semibold text-purple-300 uppercase tracking-wide">
+                              {c.board}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Instructor name + email, or a flag when missing */}
+                        {c.instructor?.name || c.instructor?.email ? (
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 pt-2.5 border-t border-slate-800/70">
+                            {c.instructor?.name && (
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-300">
+                                <GraduationCap
+                                  size={12}
+                                  className="flex-none text-slate-500"
+                                />
+                                <span className="truncate">
+                                  {c.instructor.name}
+                                </span>
+                              </span>
+                            )}
+                            {c.instructor?.email && (
+                              <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-500 min-w-0">
+                                <Mail
+                                  size={11}
+                                  className="flex-none text-slate-600"
+                                />
+                                <span className="truncate">
+                                  {c.instructor.email}
+                                </span>
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-slate-800/70 text-[11px] font-medium text-amber-400/80 italic">
+                            <AlertCircle size={11} className="flex-none" />
+                            Instructor account deleted
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Selection indicator */}
+                      <div className="flex-none pt-0.5">
+                        {active ? (
+                          <CheckCircle2
+                            size={19}
+                            className="text-emerald-400"
+                          />
+                        ) : (
+                          <div className="w-[19px] h-[19px] rounded-full border-2 border-slate-700" />
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {error && (
+            <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-red-300 mt-2">
+              <AlertCircle size={15} className="mt-0.5 flex-none" />
+              <p className="text-xs">{error}</p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-3 mt-4">
+            <button
+              onClick={onClose}
+              disabled={saving}
+              className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition disabled:opacity-60"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={saving || availableCourses.length === 0}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition disabled:opacity-60"
+            >
+              {saving ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  Assigning...
+                </>
+              ) : (
+                <>
+                  <BookPlus size={15} />
+                  Assign Selected
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -897,11 +1234,13 @@ const AdminStudents = ({
   const [importStats, setImportStats] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [editingStudent, setEditingStudent] = useState(null);
+  const [assigningStudent, setAssigningStudent] = useState(null);
   const [addingStudent, setAddingStudent] = useState(false);
+  const [bulkImportFile, setBulkImportFile] = useState(null);
 
   const handleImportClick = () => fileInputRef.current?.click();
 
-  const handleImportFile = async (event) => {
+  const handleImportFileSelect = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -914,34 +1253,8 @@ const AdminStudents = ({
       return;
     }
 
-    setImporting(true);
-    setImportError("");
-    setImportSuccess("");
-    setImportStats(null);
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const { data } = await api.post("/users/bulk-import", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      setImportSuccess(data.message || "Students imported successfully.");
-      setImportStats({
-        inserted: data.inserted || 0,
-        skipped: data.skipped || 0,
-        skippedRows: data.skippedRows || [],
-      });
-      if (refreshUsers) await refreshUsers();
-    } catch (err) {
-      setImportError(
-        err.response?.data?.message || err.message || "Import failed.",
-      );
-    } finally {
-      setImporting(false);
-      event.target.value = "";
-    }
+    setBulkImportFile(file);
+    event.target.value = "";
   };
 
   // Called after a successful add/edit. Prefers a full refresh from the
@@ -967,8 +1280,8 @@ const AdminStudents = ({
           </h2>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-          <div className="relative w-full md:w-72 shrink-0">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 w-full md:w-auto">
+          <div className="relative w-full sm:flex-1 md:flex-none md:w-72 shrink-0">
             <Search
               size={14}
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
@@ -1009,7 +1322,7 @@ const AdminStudents = ({
             type="file"
             accept=".csv,.xlsx,.xls,.docx,.txt"
             className="hidden"
-            onChange={handleImportFile}
+            onChange={handleImportFileSelect}
           />
         </div>
       </div>
@@ -1072,9 +1385,9 @@ const AdminStudents = ({
           return (
             <div
               key={s._id}
-              className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 p-3.5 bg-slate-900/35 border border-slate-800/80 rounded-2xl transition duration-150 hover:border-slate-700/60"
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3.5 bg-slate-900/35 border border-slate-800/80 rounded-2xl transition duration-150 hover:border-slate-700/60"
             >
-              <div className="flex items-center gap-3.5 min-w-0">
+              <div className="flex items-center gap-3.5 min-w-0 w-full sm:w-auto">
                 <Av name={s.name} size={36} />
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-slate-200 truncate">
@@ -1110,6 +1423,17 @@ const AdminStudents = ({
                   <Eye size={12} />
                   Details
                 </button>
+
+                {/* Assign button */}
+                {canEdit && (
+                  <button
+                    onClick={() => setAssigningStudent(s)}
+                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/30 transition duration-150"
+                  >
+                    <BookPlus size={12} />
+                    Assign
+                  </button>
+                )}
 
                 {/* Edit button */}
                 {canEdit && (
@@ -1166,9 +1490,9 @@ const AdminStudents = ({
           onEdit={
             canEdit
               ? () => {
-                  setEditingStudent(selectedStudent);
-                  setSelectedStudent(null);
-                }
+                setEditingStudent(selectedStudent);
+                setSelectedStudent(null);
+              }
               : null
           }
         />
@@ -1184,9 +1508,175 @@ const AdminStudents = ({
 
       {addingStudent && (
         <AddStudentModal
+          courses={courses}
           onClose={() => setAddingStudent(false)}
           onCreated={handleMutationSuccess}
         />
+      )}
+
+      {assigningStudent && (
+        <AssignCourseModal
+          student={assigningStudent}
+          courses={courses}
+          onClose={() => setAssigningStudent(null)}
+          onAssigned={handleMutationSuccess}
+        />
+      )}
+
+      {bulkImportFile && (
+        <div
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+          onClick={() => setBulkImportFile(null)}
+        >
+          <div
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-5 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
+              <div className="flex items-center gap-2.5">
+                <Upload size={20} className="text-indigo-400" />
+                <p className="text-base font-extrabold text-white">Bulk Import Students</p>
+              </div>
+              <button
+                onClick={() => setBulkImportFile(null)}
+                className="flex-none p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 flex flex-col gap-4">
+              <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+                <p className="text-sm font-semibold text-slate-200">Selected File:</p>
+                <p className="text-sm text-slate-400 truncate mt-1">{bulkImportFile.name}</p>
+              </div>
+
+              <FieldLabel>Assign Courses (Optional)</FieldLabel>
+              <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
+                {courses.length === 0 ? (
+                  <p className="text-sm text-slate-500 italic">No courses available.</p>
+                ) : (
+                  courses.map((c) => {
+                    const active = (bulkImportFile.selectedCourses || []).includes(c._id);
+                    const subject = subjectOf(c.title);
+                    return (
+                      <button
+                        key={c._id}
+                        type="button"
+                        onClick={() => {
+                          const prev = bulkImportFile.selectedCourses || [];
+                          const next = prev.includes(c._id) ? prev.filter((id) => id !== c._id) : [...prev, c._id];
+                          setBulkImportFile({ ...bulkImportFile, selectedCourses: next });
+                        }}
+                        className={`w-full text-left rounded-xl border p-3.5 transition ${active
+                          ? "bg-emerald-500/10 border-emerald-500/40"
+                          : "bg-slate-900/40 border-slate-700 hover:border-slate-600"
+                          }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className={`font-semibold text-sm truncate ${active ? "text-emerald-300" : "text-white"}`}>
+                              {c.title}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                              {subject && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20 text-[10px] font-bold text-sky-300 uppercase tracking-wide">
+                                  <Tag size={10} className="flex-none" />
+                                  {subject}
+                                </span>
+                              )}
+                              {c.category && (
+                                <span className="px-2 py-0.5 rounded-md bg-slate-800/80 text-[10px] font-semibold text-slate-300 uppercase tracking-wide">
+                                  {c.category}
+                                </span>
+                              )}
+                              {c.board && (
+                                <span className="px-2 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-[10px] font-semibold text-purple-300 uppercase tracking-wide">
+                                  {c.board}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex-none pt-0.5">
+                            {active ? (
+                              <CheckCircle2 size={19} className="text-emerald-400" />
+                            ) : (
+                              <div className="w-[19px] h-[19px] rounded-full border-2 border-slate-700" />
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+
+              {importError && (
+                <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-red-300">
+                  <AlertCircle size={15} className="mt-0.5 flex-none" />
+                  <p className="text-xs">{importError}</p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 mt-2">
+                <button
+                  onClick={() => setBulkImportFile(null)}
+                  disabled={importing}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    setImporting(true);
+                    setImportError("");
+                    setImportSuccess("");
+                    setImportStats(null);
+
+                    const formData = new FormData();
+                    formData.append("file", bulkImportFile);
+                    if (bulkImportFile.selectedCourses?.length > 0) {
+                      formData.append("courseIds", JSON.stringify(bulkImportFile.selectedCourses));
+                    }
+
+                    try {
+                      const { data } = await api.post("/users/bulk-import", formData, {
+                        headers: { "Content-Type": "multipart/form-data" },
+                      });
+
+                      setImportSuccess(data.message || "Students imported successfully.");
+                      setImportStats({
+                        inserted: data.inserted || 0,
+                        skipped: data.skipped || 0,
+                        skippedRows: data.skippedRows || [],
+                      });
+                      if (refreshUsers) await refreshUsers();
+                      setBulkImportFile(null);
+                    } catch (err) {
+                      setImportError(err.response?.data?.message || err.message || "Import failed.");
+                    } finally {
+                      setImporting(false);
+                    }
+                  }}
+                  disabled={importing}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition disabled:opacity-60"
+                >
+                  {importing ? (
+                    <>
+                      <Loader2 size={15} className="animate-spin" />
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={15} />
+                      Import Students
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

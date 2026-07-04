@@ -39,15 +39,15 @@ export default function MobileBottomBar() {
       idx,
   );
   // Debug log to help diagnose duplicate renders in runtime
-  if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
-    // eslint-disable-next-line no-console
-    console.debug(
-      "MobileBottomBar navItems:",
-      navItems,
-      "unique:",
-      uniqueNavItems,
-    );
-  }
+  // if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+  //   // eslint-disable-next-line no-console
+  //   console.debug(
+  //     "MobileBottomBar navItems:",
+  //     navItems,
+  //     "unique:",
+  //     uniqueNavItems,
+  //   );
+  // }
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-30">
@@ -65,20 +65,18 @@ export default function MobileBottomBar() {
               className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition duration-200"
             >
               <div
-                className={`flex items-center justify-center p-2 rounded-xl transition-all duration-300 ${
-                  isActive
+                className={`flex items-center justify-center p-2 rounded-xl transition-all duration-300 ${isActive
                     ? "bg-indigo-500/20 text-indigo-400 scale-110 shadow-lg shadow-indigo-500/10"
                     : "text-slate-400 hover:text-slate-200"
-                }`}
+                  }`}
               >
                 <Icon size={20} className={isActive ? "animate-pulse" : ""} />
               </div>
               <span
-                className={`text-[10px] mt-1 font-bold tracking-wide transition-all duration-300 ${
-                  isActive
+                className={`text-[10px] mt-1 font-bold tracking-wide transition-all duration-300 ${isActive
                     ? "text-indigo-300 opacity-100 scale-105"
                     : "text-slate-500 opacity-80"
-                }`}
+                  }`}
               >
                 {item.label}
               </span>

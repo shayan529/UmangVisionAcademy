@@ -267,7 +267,7 @@ const AddInstructorModal = ({ onClose, onCreated }) => {
             placeholder="Minimum 6 characters"
             required
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <TextField
               label="City"
               value={form.city}
@@ -450,7 +450,7 @@ const EditInstructorModal = ({ instructor, onClose, onSaved }) => {
             value={form.phoneNumber}
             onChange={set("phoneNumber")}
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <TextField label="City" value={form.city} onChange={set("city")} />
             <TextField
               label="State"
@@ -819,9 +819,9 @@ const AdminInstructors = ({
           </h2>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 w-full md:w-auto">
           {/* Search Box */}
-          <div className="relative w-full md:w-72 shrink-0">
+          <div className="relative w-full sm:flex-1 md:flex-none md:w-72 shrink-0">
             <Search
               size={14}
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"

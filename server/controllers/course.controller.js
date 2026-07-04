@@ -7,6 +7,7 @@ import {
   getJson,
   setJson,
 } from "../utils/redisClient.js";
+import { hasBaseRole, hasPermissionGrant } from "../utils/userRoles.js";
 
 // ── shared shape helper ───────────────────────────────────────────────────────
 const shapeCourse = (c) => ({
@@ -353,13 +354,22 @@ const issueCertificateIfEarned = async (studentId, course) => {
 // ── enrollCourses ─────────────────────────────────────────────────────────────
 export const enrollCourses = async (req, res) => {
   try {
-    const { courseIds } = req.body;
+    const { courseIds, studentId: requestedStudentId } = req.body;
     if (!Array.isArray(courseIds) || courseIds.length === 0)
       return res
         .status(400)
         .json({ message: "courseIds must be a non-empty array." });
 
-    const studentId = req.user._id;
+    let studentId = req.user._id;
+
+    if (requestedStudentId && requestedStudentId.toString() !== req.user._id.toString()) {
+      const canEdit = hasBaseRole(req.user, "admin") || hasPermissionGrant(req.user, "users", "edit");
+      if (!canEdit) {
+        return res.status(403).json({ message: "Access denied — cannot enroll other students." });
+      }
+      studentId = requestedStudentId;
+    }
+
     const enrolled = [],
       alreadyEnrolled = [],
       notFound = [];

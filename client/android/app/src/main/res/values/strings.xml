@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Umang Vision Academy</string>
-    <string name="title_activity_main">Umang Vision Academy</string>
-    <string name="package_name">com.umangvisionacademy.app</string>
-    <string name="custom_url_scheme">com.umangvisionacademy.app</string>
-</resources>

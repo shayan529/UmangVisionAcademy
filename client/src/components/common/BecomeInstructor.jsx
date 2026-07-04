@@ -48,9 +48,7 @@ const BecomeInstructor = () => {
       ? t('becomeInstructor.buttonStatus')
       : t('becomeInstructor.buttonBecome');
 
-  useEffect(() => {
-    console.log('Application:', myApplication);
-  }, [myApplication]);
+
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">

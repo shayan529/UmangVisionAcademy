@@ -505,7 +505,7 @@ const InstructorSettings = ({ showToast }) => {
   };
 
   // ── Email change ──
-  const sendEmailOtp = async () => {
+  const updateEmailDirectly = async () => {
     if (!emailForm.newEmail) {
       setEmailMsg({ text: t("instructorSettings.enterNewEmail"), ok: false });
       return;
@@ -523,28 +523,6 @@ const InstructorSettings = ({ showToast }) => {
     }
     setEmailStep("sending");
     try {
-      await api.post("/settings/send-email-otp", {
-        newEmail: emailForm.newEmail,
-      });
-      setEmailStep("otp");
-      setShowEmailOtp(true);
-      setEmailMsg({ text: "", ok: false });
-    } catch (err) {
-      setEmailMsg({
-        text:
-          err.response?.data?.message || t("instructorSettings.failedSendOtp"),
-        ok: false,
-      });
-      setEmailStep("idle");
-    }
-  };
-
-  const verifyEmailOtp = async (code) => {
-    try {
-      await api.post("/settings/verify-email-otp", {
-        newEmail: emailForm.newEmail,
-        otp: code,
-      });
       await dispatch(
         updateProfile({
           ...profile,
@@ -555,17 +533,15 @@ const InstructorSettings = ({ showToast }) => {
       setProfile((prev) => ({ ...prev, email: emailForm.newEmail }));
       setEmailForm({ newEmail: "" });
       setEmailStep("done");
-      setShowEmailOtp(false);
       setEmailMsg({ text: t("instructorSettings.emailUpdated"), ok: true });
       showToast(t("instructorSettings.emailUpdated"));
       setTimeout(() => setEmailMsg({ text: "", ok: false }), 5000);
     } catch (err) {
-      throw new Error(
-        err.response?.data?.message || t("instructorSettings.invalidOtp"),
-        {
-          cause: err,
-        },
-      );
+      setEmailMsg({
+        text: err.message || "Failed to update email.",
+        ok: false,
+      });
+      setEmailStep("idle");
     }
   };
 
@@ -1025,15 +1001,15 @@ const InstructorSettings = ({ showToast }) => {
               />
             </div>
             <button
-              onClick={sendEmailOtp}
+              onClick={updateEmailDirectly}
               disabled={emailStep === "sending" || !emailForm.newEmail}
               style={sendOtpBtnStyle(
                 emailStep === "sending" || !emailForm.newEmail,
               )}
             >
               {emailStep === "sending"
-                ? t("instructorSettings.sending")
-                : t("instructorSettings.sendOtp")}
+                ? "Updating..."
+                : "Update Email"}
             </button>
           </div>
 
@@ -1351,21 +1327,7 @@ const InstructorSettings = ({ showToast }) => {
         </Card>
       </div>
 
-      {/* ── Email OTP Modal ── */}
-      {showEmailOtp && (
-        <OtpModal
-          title={t("instructorSettings.verifyNewEmail")}
-          subtitle={t("instructorSettings.verifyEmailSubtitle", {
-            email: emailForm.newEmail,
-          })}
-          onVerify={verifyEmailOtp}
-          onResend={sendEmailOtp}
-          onClose={() => {
-            setShowEmailOtp(false);
-            setEmailStep("idle");
-          }}
-        />
-      )}
+
 
       {/* ── Phone OTP Modal ── */}
       {showPhoneOtp && (
