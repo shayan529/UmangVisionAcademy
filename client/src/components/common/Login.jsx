@@ -123,7 +123,7 @@ const PasswordResetModal = ({ onClose }) => {
       return toast.error(t("passwordReset.toast.invalidPhone"));
     setLoading(true);
     try {
-      await axios.post("/api/auth/forgot-password-phone", {
+      await axios.post("/auth/forgot-password-phone", {
         phoneNumber: fullPhone,
       });
       toast.success(t("passwordReset.toast.otpSentPhone"));
@@ -145,7 +145,7 @@ const PasswordResetModal = ({ onClose }) => {
     if (cooldown > 0) return;
     setLoading(true);
     try {
-      await axios.post("/api/auth/forgot-password-phone", {
+      await axios.post("/auth/forgot-password-phone", {
         phoneNumber: fullPhone,
       });
       toast.success(t("passwordReset.toast.otpResent"));
@@ -189,7 +189,7 @@ const PasswordResetModal = ({ onClose }) => {
       return toast.error(t("passwordReset.toast.enterFullOtp"));
     setLoading(true);
     try {
-      const { data } = await axios.post("/api/auth/verify-reset-phone-otp", {
+      const { data } = await axios.post("/auth/verify-reset-phone-otp", {
         phoneNumber: fullPhone,
         otp: otpStr,
       });
@@ -212,7 +212,7 @@ const PasswordResetModal = ({ onClose }) => {
       return toast.error(t("passwordReset.toast.passwordsDoNotMatch"));
     setLoading(true);
     try {
-      await axios.post("/api/auth/reset-password", {
+      await axios.post("/auth/reset-password", {
         phoneNumber: fullPhone,
         resetToken,
         newPassword,
@@ -389,23 +389,19 @@ const PasswordResetModal = ({ onClose }) => {
                   {t("passwordReset.phoneNumberLabel")}
                 </label>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <select
-                    value={countryCode}
-                    onChange={(e) => setCountryCode(e.target.value)}
+                  <div
                     style={{
                       ...inputStyle,
                       width: 100,
-                      paddingLeft: 10,
-                      paddingRight: 10,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                       background: "#1e293b",
+                      userSelect: "none",
                     }}
                   >
-                    {countryCodes.map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.code}
-                      </option>
-                    ))}
-                  </select>
+                    +91
+                  </div>
                   <input
                     type="tel"
                     value={phoneNumber}

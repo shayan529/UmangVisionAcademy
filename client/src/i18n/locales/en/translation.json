@@ -1481,8 +1481,61 @@
         "Host live mentorship sessions",
         "Track student progress analytics",
         "Build your instructor profile",
-        "Earn certificates and badges"
+        "Earn certificates & badges"
       ]
+    }
+  },
+  "passwordReset": {
+    "step1of3": "Step 1 of 3",
+    "step2of3": "Step 2 of 3",
+    "step3of3": "Step 3 of 3",
+    "complete": "Complete",
+    "titlePhone": "Forgot Password",
+    "titleOtp": "Verify OTP",
+    "titlePassword": "New Password",
+    "titleDone": "All Done!",
+    "phoneStepDesc": "Enter your registered phone number and we'll send you a 6-digit OTP.",
+    "phoneNumberLabel": "Phone Number",
+    "mobilePlaceholder": "10-digit mobile number",
+    "sendOtp": "Send OTP →",
+    "sending": "Sending…",
+    "otpStepDesc": "Enter the 6-digit OTP sent to {{phone}}. It will expire in 10 minutes.",
+    "verifyOtp": "Verify OTP →",
+    "verifying": "Verifying…",
+    "didntReceive": "Didn't receive the code?",
+    "resendIn": "Resend in {{sec}}s",
+    "resendOtp": "Resend OTP",
+    "changePhoneNumber": "← Change phone number",
+    "passwordStepDesc": "Choose a strong new password for {{phone}}.",
+    "newPasswordLabel": "New Password",
+    "newPasswordPlaceholder": "Minimum 6 characters",
+    "confirmPasswordLabel": "Confirm Password",
+    "confirmPasswordPlaceholder": "Re-enter password",
+    "passwordsDontMatch": "Passwords do not match",
+    "resetPassword": "Reset Password →",
+    "resetting": "Resetting…",
+    "doneTitle": "Password Reset Successful!",
+    "doneDesc": "Your password has been updated successfully. You can now log in with your new password.",
+    "backToLogin": "Back to Login",
+    "strength": {
+      "veryWeak": "Very Weak",
+      "weak": "Weak",
+      "fair": "Fair",
+      "strong": "Strong",
+      "veryStrong": "Very Strong"
+    },
+    "toast": {
+      "invalidPhone": "Enter a valid 10-digit phone number",
+      "otpSentPhone": "OTP sent to your phone!",
+      "otpResent": "OTP resent!",
+      "failedSendOtp": "Something went wrong",
+      "failedResend": "Failed to resend",
+      "enterFullOtp": "Enter the 6-digit OTP",
+      "otpVerified": "OTP verified!",
+      "invalidOtp": "Invalid OTP",
+      "passwordMin6": "Password must be at least 6 characters",
+      "passwordsDoNotMatch": "Passwords do not match",
+      "failedResetPassword": "Failed to reset password"
     }
   },
   "adminNotes": {
