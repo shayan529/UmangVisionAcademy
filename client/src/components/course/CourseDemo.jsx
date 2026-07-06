@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../../config/api.js";
 import { addToCart } from "../../redux/slices/cartSlice";
+import { useTranslation } from "react-i18next";
 
 // ── Local state ───────────────────────────────────────────────────────────────
 const useCourseDemo = (id) => {
@@ -236,194 +237,178 @@ const EnrollCard = ({
   onEnroll,
   onViewDemo,
   navigate,
-}) => (
-  <div
-    style={{
-      background: "#111827",
-      border: "1px solid #1e293b",
-      borderRadius: 22,
-      overflow: "hidden",
-    }}
-  >
-    {loading ? (
-      <Sk h={200} r={0} />
-    ) : course?.thumbnailUrl ? (
-      <img
-        src={course.thumbnailUrl}
-        alt={course.title}
-        style={{
-          width: "100%",
-          height: 200,
-          objectFit: "cover",
-          display: "block",
-        }}
-      />
-    ) : (
-      <div
-        style={{
-          height: 200,
-          background: "linear-gradient(135deg,#1e1b4b,#0f172a)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 48,
-        }}
-      >
-        🎓
-      </div>
-    )}
-
-    <div style={{ padding: "22px 22px 26px" }}>
+}) => {
+  const { t } = useTranslation();
+  return (
+    <div
+      style={{
+        background: "#111827",
+        border: "1px solid #1e293b",
+        borderRadius: 22,
+        overflow: "hidden",
+      }}
+    >
       {loading ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <Sk w="50%" h={36} r={8} />
-          <Sk h={48} r={14} />
-          <Sk h={40} r={14} />
-        </div>
+        <Sk h={200} r={0} />
+      ) : course?.thumbnailUrl ? (
+        <img
+          src={course.thumbnailUrl}
+          alt={course.title}
+          style={{
+            width: "100%",
+            height: 200,
+            objectFit: "cover",
+            display: "block",
+          }}
+        />
       ) : (
-        <>
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 36, fontWeight: 800, color: "#f1f5f9" }}>
-              {course.price ? (
-                `₹${course.price}`
-              ) : (
-                <span style={{ color: "#34d399" }}>Free</span>
+        <div
+          style={{
+            height: 200,
+            background: "linear-gradient(135deg,#1e1b4b,#0f172a)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 48,
+          }}
+        >
+          🎓
+        </div>
+      )}
+
+      <div style={{ padding: "22px 22px 26px" }}>
+        {loading ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Sk w="50%" h={36} r={8} />
+            <Sk h={48} r={14} />
+            <Sk h={40} r={14} />
+          </div>
+        ) : (
+          <>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 36, fontWeight: 800, color: "#f1f5f9" }}>
+                {course.price ? (
+                  `₹${course.price}`
+                ) : (
+                  <span style={{ color: "#34d399" }}>{t("courses.free")}</span>
+                )}
+              </div>
+              {course.price > 0 && (
+                <p style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
+                  {t("demo.lifetime")}
+                </p>
               )}
             </div>
-            {course.price > 0 && (
-              <p style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
-                One-time payment · Lifetime access
-              </p>
-            )}
-          </div>
 
-          <button
-            className="enroll-btn"
-            onClick={onEnroll}
-            style={{
-              width: "100%",
-              padding: "14px",
-              borderRadius: 14,
-              border: "none",
-              background:
-                isInCart || addedToCart
-                  ? "linear-gradient(135deg,#059669,#34d399)"
-                  : "linear-gradient(135deg,#7c3aed,#06b6d4)",
-              color: "#fff",
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: "pointer",
-              transition: "all 0.2s",
-              boxShadow: "0 8px 24px rgba(124,58,237,0.3)",
-              marginBottom: 12,
-            }}
-          >
-            {isInCart || addedToCart
-              ? "✓ Added to Cart"
-              : course?.price > 0
-                ? "Buy Now"
-                : "Enroll Now"}
-          </button>
-          {/* 
-          <button
-            onClick={onViewDemo}
-            style={{
-              width: "100%",
-              padding: "12px",
-              borderRadius: 14,
-              border: "1px solid #334155",
-              background: "transparent",
-              color: "#94a3b8",
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: "pointer",
-              marginBottom: 12,
-            }}
-          >
-            View Demo
-          </button> */}
-
-          {(isInCart || addedToCart) && (
             <button
-              onClick={() => navigate("/cart")}
+              className="enroll-btn"
+              onClick={onEnroll}
               style={{
                 width: "100%",
-                padding: "12px",
+                padding: "14px",
                 borderRadius: 14,
-                border: "1px solid #334155",
-                background: "transparent",
-                color: "#94a3b8",
-                fontSize: 14,
-                fontWeight: 600,
+                border: "none",
+                background:
+                  isInCart || addedToCart
+                    ? "linear-gradient(135deg,#059669,#34d399)"
+                    : "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                color: "#fff",
+                fontSize: 15,
+                fontWeight: 700,
                 cursor: "pointer",
+                transition: "all 0.2s",
+                boxShadow: "0 8px 24px rgba(124,58,237,0.3)",
+                marginBottom: 12,
               }}
             >
-              Go to Cart →
+              {isInCart || addedToCart
+                ? t("demo.added")
+                : course?.price > 0
+                  ? t("demo.buy_now")
+                  : t("demo.enroll_now")}
             </button>
-          )}
 
-          {!user && (
-            <p
-              style={{
-                textAlign: "center",
-                fontSize: 12,
-                color: "#475569",
-                marginTop: 10,
-              }}
-            >
-              Already enrolled?{" "}
+            {(isInCart || addedToCart) && (
               <button
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/cart")}
                 style={{
-                  background: "none",
-                  border: "none",
-                  color: "#818cf8",
-                  cursor: "pointer",
-                  fontSize: 12,
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: 14,
+                  border: "1px solid #334155",
+                  background: "transparent",
+                  color: "#94a3b8",
+                  fontSize: 14,
                   fontWeight: 600,
+                  cursor: "pointer",
                 }}
               >
-                Log in
+                {t("demo.go_to_cart")}
               </button>
-            </p>
-          )}
+            )}
 
-          <div
-            style={{
-              marginTop: 20,
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-            }}
-          >
-            {[
-              course.lessonCount > 0 && `${course.lessonCount} lessons`,
-              course.durationHours > 0 &&
-              `${course.durationHours} hours of content`,
-              "Lifetime access",
-              "Certificate of completion",
-            ]
-              .filter(Boolean)
-              .map((item) => (
-                <div
-                  key={item}
+            {!user && (
+              <p
+                style={{
+                  textAlign: "center",
+                  fontSize: 12,
+                  color: "#475569",
+                  marginTop: 10,
+                }}
+              >
+                {t("demo.loginPrompt")}{" "}
+                <button
+                  onClick={() => navigate("/login")}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    fontSize: 13,
-                    color: "#94a3b8",
+                    background: "none",
+                    border: "none",
+                    color: "#818cf8",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: 600,
                   }}
                 >
-                  <span style={{ color: "#34d399" }}>✓</span> {item}
-                </div>
-              ))}
-          </div>
-        </>
-      )}
+                  {t("demo.login")}
+                </button>
+              </p>
+            )}
+
+            <div
+              style={{
+                marginTop: 20,
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+              }}
+            >
+              {[
+                course.lessonCount > 0 && t("demo.lessonsCount", { count: course.lessonCount }),
+                course.durationHours > 0 && t("demo.hoursCount", { count: course.durationHours }),
+                t("demo.lifetime_access"),
+                t("demo.certificate"),
+              ]
+                .filter(Boolean)
+                .map((item) => (
+                  <div
+                    key={item}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      fontSize: 13,
+                      color: "#94a3b8",
+                    }}
+                  >
+                    <span style={{ color: "#34d399" }}>✓</span> {item}
+                  </div>
+                ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function CourseDemo() {
@@ -431,6 +416,7 @@ export default function CourseDemo() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
+  const { t } = useTranslation();
 
   const { course, loading, error } = useCourseDemo(id);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -528,7 +514,7 @@ export default function CourseDemo() {
                 cursor: "pointer",
               }}
             >
-              Browse Courses
+              {t("demo.browseCourses")}
             </button>
           </div>
         )}
@@ -549,7 +535,7 @@ export default function CourseDemo() {
               gap: 6,
             }}
           >
-            ← Back to Courses
+            {t("demo.backToCourses")}
           </button>
         </div>
 
@@ -679,20 +665,20 @@ export default function CourseDemo() {
                           {course.ratingAverage?.toFixed(1) || "New"}
                         </span>
                         <span style={{ fontSize: 12, color: "#64748b" }}>
-                          ({course.reviewCount ?? 0} reviews)
+                          {t("demo.reviewsCount", { count: course.reviewCount ?? 0 })}
                         </span>
                       </div>
                       <span style={{ fontSize: 13, color: "#64748b" }}>
-                        👥 {course.enrolledCount ?? 0} students
+                        {t("demo.studentsCount", { count: course.enrolledCount ?? 0 })}
                       </span>
                       {course.lessonCount > 0 && (
                         <span style={{ fontSize: 13, color: "#64748b" }}>
-                          📚 {course.lessonCount} lessons
+                          📚 {t("demo.lessonsCount", { count: course.lessonCount })}
                         </span>
                       )}
                       {course.durationHours > 0 && (
                         <span style={{ fontSize: 13, color: "#64748b" }}>
-                          ⏱ {course.durationHours}h total
+                          {t("demo.hoursTotal", { count: course.durationHours })}
                         </span>
                       )}
                     </div>
@@ -726,7 +712,7 @@ export default function CourseDemo() {
                         </div>
                         <div>
                           <p style={{ fontSize: 12, color: "#64748b" }}>
-                            Instructor
+                            {t("demo.instructor")}
                           </p>
                           <p
                             style={{
@@ -767,7 +753,7 @@ export default function CourseDemo() {
                         marginBottom: 10,
                       }}
                     >
-                      🎬 Course Preview
+                      {t("demo.preview")}
                     </p>
                     <VideoPlayer
                       url={course.demoVideoUrl}
@@ -803,7 +789,7 @@ export default function CourseDemo() {
                       <>
                         <span style={{ fontSize: 40 }}>🎓</span>
                         <p style={{ color: "#475569", fontSize: 13 }}>
-                          No demo video yet
+                          {t("demo.noDemoVideo")}
                         </p>
                       </>
                     )}
@@ -828,7 +814,7 @@ export default function CourseDemo() {
                         marginBottom: 12,
                       }}
                     >
-                      About this course
+                      {t("demo.about")}
                     </h3>
                     <p
                       style={{
@@ -861,7 +847,7 @@ export default function CourseDemo() {
                         marginBottom: 16,
                       }}
                     >
-                      Course Curriculum{" "}
+                      {t("demo.curriculum")}{" "}
                       <span
                         style={{
                           color: "#64748b",
@@ -869,7 +855,7 @@ export default function CourseDemo() {
                           fontSize: 13,
                         }}
                       >
-                        ({course.lessons.length} lessons)
+                        ({t("demo.lessonsCount", { count: course.lessons.length })})
                       </span>
                     </h3>
                     <div

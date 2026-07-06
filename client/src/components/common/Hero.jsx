@@ -230,7 +230,7 @@ const Hero = () => {
           </div>
 
           {/* RIGHT SIDE BENEFITS */}
-          <div className="grid w-full xl:w-[320px] gap-4">
+          {/* <div className="grid w-full xl:w-[320px] gap-4">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm hover:bg-white/10 transition duration-300">
               <div className="text-2xl mb-2">🤖</div>
               <p className="text-sm font-bold text-emerald-300">{t("hero.benefit1Title")}</p>
@@ -254,7 +254,7 @@ const Hero = () => {
                 {t("hero.benefit3Desc")}
               </p>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </section>

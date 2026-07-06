@@ -143,7 +143,7 @@ const CourseCard = ({ course }) => {
                   onClick={handleBuy}
                   className="flex-1 bg-indigo-600 hover:bg-indigo-700 transition text-white py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center"
                 >
-                  {course.price > 0 ? t("courseCard.buyNow") : t("courseCard.enrollNow")}
+                  {course.rawPrice > 0 ? t("courseCard.buyNow") : t("courseCard.enrollNow")}
                 </button>
               </div>
             ) : (

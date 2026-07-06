@@ -255,6 +255,7 @@ const Courses = () => {
                     reviews: course.reviewCount ?? 0,
                     price:
                       course.price > 0 ? `₹${course.price}` : t("courses.free"),
+                    rawPrice: course.price,
                     image: course.thumbnailUrl ?? null,
                     board: course.board ?? null,
                     category: course.category ?? null,

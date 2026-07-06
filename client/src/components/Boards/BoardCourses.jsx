@@ -293,12 +293,14 @@ const BoardCourses = () => {
               >
                 <CourseCard
                   course={{
+                    _id: course._id,
                     title: course.title,
                     instructor: instructorName(course.instructor),
                     instructorId: typeof course.instructor === 'object' ? course.instructor?._id : null,
                     rating: course.ratingAverage ?? 0,
                     reviews: course.reviewCount ?? 0,
-                    price: course.price > 0 ? `₹${course.price}` : "Free",
+                    price: course.price > 0 ? `₹${course.price}` : t("courses.free"),
+                    rawPrice: course.price,
                     image: course.thumbnailUrl ?? null,
                     board: course.board ?? null,
                     category: course.category ?? null,

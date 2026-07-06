@@ -427,6 +427,7 @@ const Courses = () => {
                           course.price > 0
                             ? `₹${course.price}`
                             : t("courses.free"),
+                        rawPrice: course.price,
                         image: course.thumbnailUrl ?? null,
                         board: course.board ?? null,
                         category: course.category ?? null,
