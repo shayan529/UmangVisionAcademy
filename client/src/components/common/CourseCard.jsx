@@ -128,7 +128,7 @@ const CourseCard = ({ course }) => {
                   {t("courseCard.continueLearning")}
                 </button>
               </Link>
-            ) : canEnroll || !user ? (
+            ) : (
               <div className="flex gap-2">
                 <Link to={`/courses/${course._id}/demo`} className="flex-1">
                   <button
@@ -141,21 +141,20 @@ const CourseCard = ({ course }) => {
 
                 <button
                   onClick={handleBuy}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 transition text-white py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center"
+                  disabled={!canEnroll && user}
+                  className={`flex-1 transition text-white py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center ${
+                    (!canEnroll && user)
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-indigo-600 hover:bg-indigo-700"
+                  }`}
+                  title={(!canEnroll && user) ? "Not available for admins or staff" : ""}
                 >
-                  {course.rawPrice > 0 ? t("courseCard.buyNow") : t("courseCard.enrollNow")}
+                  {(!canEnroll && user)
+                    ? "Locked"
+                    : course.rawPrice > 0
+                    ? t("courseCard.buyNow")
+                    : t("courseCard.enrollNow")}
                 </button>
-              </div>
-            ) : (
-              <div>
-                <Link to={`/courses/${course._id}/demo`} className="block">
-                  <button
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-full border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center"
-                  >
-                    {t("courseCard.viewDemo")}
-                  </button>
-                </Link>
               </div>
             )}
           </div>

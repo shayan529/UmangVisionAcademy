@@ -27,10 +27,6 @@ const Sidebar = ({
       to: "/student-dashboard/mock-tests/leaderboard",
     },
   ];
-  // AFTER
-  const subscription = useSelector((state) => state.billing.subscription);
-  const billingLoading = useSelector((state) => state.billing.loading);
-  const isPremium = subscription?.plan === "premium";
 
   const [mockTestsOpen, setMockTestsOpen] = useState(false);
   const [scrollTop, setScrollTop] = useState(0);
@@ -70,15 +66,11 @@ const Sidebar = ({
       to: "/student-dashboard/ai-tutor",
       icon: "🤖",
     },
-    ...(!billingLoading && isPremium
-      ? [
-        {
-          label: t("studentSidebar.sessions"),
-          to: "/student-dashboard/sessions",
-          icon: "🎥",
-        },
-      ]
-      : []),
+    {
+      label: t("studentSidebar.sessions"),
+      to: "/student-dashboard/sessions",
+      icon: "🎥",
+    },
   ];
 
   // ── Items rendered AFTER the Mock Tests section ────────────────────────────
@@ -225,7 +217,6 @@ const Sidebar = ({
       className={sidebarClass}
       style={mobileOpen ? { top: `${dynamicTop}px` } : undefined}
     >
-
       {/* Nav items — scrollable middle */}
       <nav className="flex-1 flex flex-col gap-1 overflow-y-auto px-1 pb-24 md:pb-4">
         {navItemsTop.map((item) => (

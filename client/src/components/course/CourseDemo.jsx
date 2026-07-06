@@ -239,6 +239,8 @@ const EnrollCard = ({
   navigate,
 }) => {
   const { t } = useTranslation();
+  const isAdminOrStaff = user && (user.roles?.includes("admin") || (user.roles && user.roles.some(role => typeof role === "object")));
+
   return (
     <div
       style={{
@@ -303,32 +305,38 @@ const EnrollCard = ({
             <button
               className="enroll-btn"
               onClick={onEnroll}
+              disabled={isAdminOrStaff}
               style={{
                 width: "100%",
                 padding: "14px",
                 borderRadius: 14,
                 border: "none",
                 background:
-                  isInCart || addedToCart
+                  isAdminOrStaff
+                    ? "#475569"
+                    : isInCart || addedToCart
                     ? "linear-gradient(135deg,#059669,#34d399)"
                     : "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                color: "#fff",
+                color: isAdminOrStaff ? "#94a3b8" : "#fff",
                 fontSize: 15,
                 fontWeight: 700,
-                cursor: "pointer",
+                cursor: isAdminOrStaff ? "not-allowed" : "pointer",
                 transition: "all 0.2s",
-                boxShadow: "0 8px 24px rgba(124,58,237,0.3)",
+                boxShadow: isAdminOrStaff ? "none" : "0 8px 24px rgba(124,58,237,0.3)",
                 marginBottom: 12,
               }}
+              title={isAdminOrStaff ? "Not available for admins or staff" : ""}
             >
-              {isInCart || addedToCart
+              {isAdminOrStaff
+                ? "Locked for Staff"
+                : isInCart || addedToCart
                 ? t("demo.added")
                 : course?.price > 0
                   ? t("demo.buy_now")
                   : t("demo.enroll_now")}
             </button>
 
-            {(isInCart || addedToCart) && (
+            {(isInCart || addedToCart) && !isAdminOrStaff && (
               <button
                 onClick={() => navigate("/cart")}
                 style={{
