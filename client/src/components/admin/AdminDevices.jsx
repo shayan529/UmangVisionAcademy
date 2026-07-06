@@ -91,6 +91,14 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
   const [q, setQ] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [expandedUserAgents, setExpandedUserAgents] = useState({});
+  const [showFullHistory, setShowFullHistory] = useState({});
+
+  const toggleFullHistory = (userId) => {
+    setShowFullHistory((prev) => ({
+      ...prev,
+      [userId]: !prev[userId],
+    }));
+  };
 
   const toggleUA = (deviceId) => {
     setExpandedUserAgents((prev) => ({
@@ -288,7 +296,7 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
 
               {user.devices && user.devices.length > 0 ? (
                 <div className="grid gap-2">
-                  {user.devices.map((device, index) => {
+                  {(showFullHistory[user._id] ? user.devices : user.devices.slice(0, 5)).map((device, index) => {
                     const parsed = parseUA(device.userAgent);
                     const deviceId = `${user._id}-${index}`;
                     const isExpanded = !!expandedUserAgents[deviceId];
@@ -356,6 +364,16 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
                       </div>
                     );
                   })}
+                  {user.devices.length > 5 && (
+                    <button
+                      onClick={() => toggleFullHistory(user._id)}
+                      className="mt-2 text-xs font-semibold text-white transition duration-200 text-center w-full rounded-xl py-2.5 shadow-sm hover:shadow-md bg-gradient-to-r from-indigo-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 border border-indigo-500/30 hover:border-indigo-400/50"
+                    >
+                      {showFullHistory[user._id]
+                        ? "Hide full history"
+                        : `View full history (${user.devices.length - 5} more)`}
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="py-6 text-center border border-dashed border-slate-800/40 rounded-xl bg-slate-950/5">
