@@ -38,7 +38,15 @@
     "tryDifferent": "Try selecting a different class, subject, or board.",
     "clearFilters": "Clear filters",
     "free": "Free",
-    "viewAll": "View All Courses"
+    "viewAll": "View All Courses",
+    "ratingModalTitle": "Rate this Course",
+    "ratingCommentPlaceholder": "Share your experience (optional)…",
+    "cancel": "Cancel",
+    "submitRating": "Submit Rating",
+    "submitting": "Submitting…",
+    "rated": "Rated",
+    "rateCourse": "Rate Course",
+    "ratingLabels": ["", "Poor", "Fair", "Good", "Very Good", "Excellent"]
   },
   "demo": {
     "add_to_cart": "Add to Cart",
@@ -166,13 +174,20 @@
   "hero": {
     "tag": "AI Powered Online Learning",
     "headingLine1": "Empowering Students",
-    "headingLine2": "From Class 9 to 12",
-    "text": "Welcome to Umang Vision Academy, your complete AI-powered learning platform designed for students from Classes 9 to 12. Learn with expert instructors, interactive courses, AI tutors, live classes, quizzes, assignments, and personalized learning paths that help every student achieve academic excellence.",
+    "headingLine2": "From Class 9 to 12, Graduation & Competitive Exams",
+    "text": "Welcome to Umang Vision Academy, your complete AI-powered learning platform designed for students from Classes 9 to 12, Graduation, and Competitive Exams. Learn with expert instructors, interactive courses, AI tutors, live classes, quizzes, assignments, and personalized learning paths that help every student achieve academic excellence.",
     "startLearning": "Start Learning",
     "exploreCourses": "Explore Courses",
     "studentsWorldwide": "Students Worldwide",
     "onlineCourses": "Online Courses",
-    "expertInstructors": "Expert Instructors"
+    "expertInstructors": "Expert Instructors",
+    "benefit1Title": "AI-Powered Learning",
+    "benefit1Desc": "Personalized study paths, AI tutors, and custom practice tests to help you learn faster and retain more.",
+    "benefit2Title": "Expert Mentorship",
+    "benefit2Desc": "Interact with top-tier educators through interactive live sessions and direct Q&A support.",
+    "benefit3Title": "Flexible Study Paths",
+    "benefit3Desc": "Access high-quality study materials, quizzes, and certificates at your own pace, anytime, anywhere.",
+    "floatingBadge": "AI-Powered Learning"
   },
   "plans": {
     "flexiblePricing": "Flexible Pricing",
@@ -193,11 +208,28 @@
         "Progress Tracking"
       ],
       "button": "Choose Plan"
+    },
+    "premium": {
+      "title": "Premium",
+      "price": "₹500",
+      "period": "month",
+      "desc": "Everything in Base, plus live support and deeper personalization for serious exam prep.",
+      "button": "Go Premium",
+      "features": [
+        "Everything in Base plan",
+        "Live doubt-clearing sessions with instructors",
+        "Personalized AI-powered study plan",
+        "Priority instructor support",
+        "Advanced mock test analytics & performance insights"
+      ]
     }
   },
   "courseCard": {
     "viewDemo": "View Demo",
-    "enroll": "Enroll"
+    "enrollNow": "Enroll Now",
+    "buyNow": "Buy Now",
+    "continueLearning": "Continue Learning →",
+    "viewInstructor": "View Instructor"
   },
   "exploreCourses": {
     "title": "Explore Courses",
@@ -1569,6 +1601,7 @@
     "students": "Students",
     "instructors": "Instructors",
     "courses": "Courses",
+    "sessions": "Sessions",
     "questionPapers": "Question Papers",
     "bulkImport": "Bulk Import",
     "notes": "Notes Moderation",
@@ -1621,5 +1654,25 @@
     "notes": "Notes",
     "reels": "Reels",
     "profile": "Profile"
+  },
+  "boardCourses": {
+    "title": "Board Courses",
+    "heroTitle": "{{label}} Courses",
+    "heroSubtitle": "Explore structured courses for the {{label}} Board — curated by verified instructors across all classes and subjects.",
+    "statCourses": "Courses",
+    "statClasses": "Classes",
+    "statSubjects": "Subjects",
+    "retry": "Retry →",
+    "filterClass": "Class",
+    "filterSubject": "Subject",
+    "all": "All",
+    "result": "result",
+    "results": "results",
+    "clearFilters": "Clear filters",
+    "noCoursesYet": "No {{label}} courses yet",
+    "noCoursesDesc": "Instructors haven't published courses for this board yet. Check back soon!",
+    "browseAll": "Browse all courses",
+    "noMatch": "No courses match your filters",
+    "tryDifferent": "Try selecting a different class or subject."
   }
 }

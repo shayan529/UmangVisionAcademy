@@ -9,6 +9,7 @@ import {
 } from "../../redux/slices/courseSlice";
 import { uploadToImageKit } from "../../utils/imagekitUpload.js";
 import ChapterManager from "../course/ChapterManager.jsx";
+import api from "../../config/api";
 
 const EMPTY_FORM = {
   subject: "",
@@ -692,6 +693,7 @@ function QuizManager({
   onChange,
   courseTitle,
   courseDescription,
+  courseClass,
   showToast,
 }) {
   const [aiLoading, setAiLoading] = useState(false);
@@ -735,25 +737,12 @@ function QuizManager({
     }
     setAiLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("/api/ai/generate-quiz", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: courseTitle,
-          summary: courseDescription,
-        }),
+      const { data } = await api.post("/ai/generate-quiz", {
+        title: courseTitle,
+        summary: courseDescription,
+        className: courseClass,
       });
 
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.message || `Request failed (${res.status})`);
-      }
-
-      const data = await res.json();
       const aiQuestions = data.quiz?.questions;
       if (aiQuestions?.length) {
         updateQuestions(aiQuestions);
@@ -765,7 +754,9 @@ function QuizManager({
       }
     } catch (err) {
       console.error("AI quiz generation failed:", err);
-      showToast?.(err.message || "AI quiz generation failed.");
+      showToast?.(
+        err.response?.data?.message || err.message || "AI quiz generation failed.",
+      );
     } finally {
       setAiLoading(false);
     }
@@ -1712,6 +1703,7 @@ const CourseForm = ({
           onChange={(quiz) => setForm((f) => ({ ...f, quiz }))}
           courseTitle={form.subject}
           courseDescription={form.description}
+          courseClass={form.className}
           showToast={showToast}
         />
       </Field>
@@ -2140,6 +2132,7 @@ const BulkCourseForm = ({
                       onChange={(quiz) => updateItem(idx, "quiz", quiz)}
                       courseTitle={item.subject}
                       courseDescription={item.description}
+                      courseClass={form.className}
                       showToast={showToast}
                     />
                   </Field>

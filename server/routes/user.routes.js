@@ -11,6 +11,7 @@ import {
   bulkImportStudents,
   createStudentByAdmin,
   selectClass,
+  getInstructorPublicProfile,
 } from "./../controllers/user.controller.js";
 import {
   protect,
@@ -41,6 +42,8 @@ router.post("/logout", LogoutUser);
 
 router.get("/me", protect, getCurrentUser);
 router.put("/me/select-class", protect, selectClass);
+
+router.get("/instructors/:id/public", getInstructorPublicProfile);
 
 router.get("/:id", protect, selfOrPermission("users", "view"), getUserById);
 router.put("/:id", protect, selfOrPermission("users", "edit"), updateUser);

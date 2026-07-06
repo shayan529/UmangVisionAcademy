@@ -12,6 +12,7 @@ import {
   UploadCloud,
   FileQuestion,
   Film,
+  Calendar,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -36,6 +37,7 @@ const AdminSidebar = ({
     { id: "students", label: t("adminSidebar.students"), icon: Users },
     { id: "instructors", label: t("adminSidebar.instructors"), icon: GraduationCap },
     { id: "courses", label: t("adminSidebar.courses"), icon: BookOpen },
+    { id: "sessions", label: t("adminSidebar.sessions"), icon: Calendar },
     { id: "question-papers", label: t("adminSidebar.questionPapers"), icon: FileQuestion },
     { id: "bulk-import", label: t("adminSidebar.bulkImport"), icon: UploadCloud },
     { id: "notes", label: t("adminSidebar.notes"), icon: BookOpen },

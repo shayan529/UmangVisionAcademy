@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { createReel } from "../../redux/slices/reelsSlice";
+import { uploadToImageKit } from "../../utils/imagekitUpload";
 
 // ── Brand tokens (matches the AI Tutor's purple → cyan identity) ────────────
 const ACCENT_GRADIENT = "linear-gradient(135deg,#7c3aed,#06b6d4)";
@@ -68,15 +69,10 @@ const InstructorUploadReel = ({ onClose }) => {
     setUploading(true);
     setUploadError("");
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        credentials: "include",
-        body: fd,
+      const data = await uploadToImageKit({
+        file,
+        folder: "instructor-reels"
       });
-      if (!res.ok) throw new Error("Upload failed");
-      const data = await res.json();
 
       // create reel
       await dispatch(createReel({ title, videoUrl: data.url })).unwrap();

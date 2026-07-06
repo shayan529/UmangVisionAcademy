@@ -26,7 +26,7 @@ import {
 import api from "../../config/api.js";
 
 /* ─── helpers ─────────────────────────────────────────── */
-const fmt = (n) => (n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n}`);
+const fmt = (n) => (n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : `₹${n}`);
 const hue = (name = "?") => {
   const palette = [
     "#7c3aed",
@@ -53,29 +53,45 @@ const fmtDate = (d) => {
   }
 };
 
+const roleLabel = (role) =>
+  role && typeof role === "object" ? role.name || "Custom Role" : role;
+
 const ROLE_OPTIONS = ["student", "instructor", "admin"];
 
 /* ─── Avatar ──────────────────────────────────────────── */
-const Av = ({ name = "?", size = 44 }) => (
-  <div
-    style={{
-      width: size,
-      height: size,
-      borderRadius: "50%",
-      background: hue(name),
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: size * 0.38,
-      fontWeight: 800,
-      color: "#fff",
-      flexShrink: 0,
-      letterSpacing: "-0.02em",
-    }}
-  >
-    {name.slice(0, 2).toUpperCase()}
-  </div>
-);
+const Av = ({ name = "?", size = 44, src }) => {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover" }}
+        className="flex-shrink-0 shadow-lg"
+      />
+    );
+  }
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        background: hue(name),
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: size * 0.38,
+        fontWeight: 800,
+        color: "#fff",
+        flexShrink: 0,
+        letterSpacing: "-0.02em",
+      }}
+      className="shadow-lg"
+    >
+      {name.slice(0, 2).toUpperCase()}
+    </div>
+  );
+};
 
 /* ─── Modal info row ──────────────────────────────────── */
 const InfoRow = ({ icon: Icon, label, value }) => (
@@ -205,8 +221,8 @@ const AddInstructorModal = ({ onClose, onCreated }) => {
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          err.message ||
-          "Failed to add instructor.",
+        err.message ||
+        "Failed to add instructor.",
       );
     } finally {
       setSaving(false);
@@ -414,7 +430,7 @@ const EditInstructorModal = ({ instructor, onClose, onSaved }) => {
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-5 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
           <div className="flex items-center gap-3 min-w-0">
-            <Av name={instructor.name} size={40} />
+            <Av name={instructor.name} src={instructor.avatarUrl} size={40} />
             <div className="min-w-0">
               <p className="text-base font-extrabold text-white truncate">
                 Edit Instructor
@@ -487,11 +503,10 @@ const EditInstructorModal = ({ instructor, onClose, onSaved }) => {
                     key={role}
                     type="button"
                     onClick={() => toggleRole(role)}
-                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${
-                      active
-                        ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"
-                        : "bg-slate-900/40 border-slate-700 text-slate-500 hover:border-slate-600"
-                    }`}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${active
+                      ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"
+                      : "bg-slate-900/40 border-slate-700 text-slate-500 hover:border-slate-600"
+                      }`}
                   >
                     {role}
                   </button>
@@ -561,7 +576,7 @@ const InstructorDetailsModal = ({ instructor, onClose, onEdit }) => {
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-5 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
           <div className="flex items-center gap-3 min-w-0">
-            <Av name={instructor.name} size={46} />
+            <Av name={instructor.name} src={instructor.avatarUrl} size={46} />
             <div className="min-w-0">
               <p className="text-base font-extrabold text-white truncate">
                 {instructor.name}
@@ -691,7 +706,6 @@ const InstructorDetailsModal = ({ instructor, onClose, onEdit }) => {
                       {c.students?.length || 0}
                     </span>
                     <span className="flex items-center gap-1 font-semibold text-emerald-400">
-                      <DollarSign size={12} />
                       {fmt((c.price || 0) * (c.students?.length || 0))}
                     </span>
                   </span>
@@ -705,16 +719,21 @@ const InstructorDetailsModal = ({ instructor, onClose, onEdit }) => {
           )}
 
           {/* Roles */}
+          {/* Roles */}
           <SectionTitle icon={Shield}>Account Roles</SectionTitle>
           <div className="flex flex-wrap gap-2">
-            {(instructor.roles || ["instructor"]).map((r) => (
-              <span
-                key={r}
-                className="text-xs font-semibold px-3 py-1.5 rounded-full border bg-indigo-500/10 border-indigo-500/20 text-indigo-300"
-              >
-                {r}
-              </span>
-            ))}
+            {(instructor.roles || ["instructor"]).map((r) => {
+              const roleName = typeof r === "string" ? r : r?.name || "unknown";
+              const roleKey = typeof r === "string" ? r : r?._id || roleName;
+              return (
+                <span
+                  key={roleKey}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-full border bg-indigo-500/10 border-indigo-500/20 text-indigo-300"
+                >
+                  {roleName}
+                </span>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -924,7 +943,7 @@ const AdminInstructors = ({
           >
             {/* Left section: profile and courses preview */}
             <div className="flex gap-4 items-start min-w-0 flex-1 w-full">
-              <Av name={inst.name} size={42} />
+              <Av name={inst.name} src={inst.avatarUrl} size={42} />
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold text-slate-200 truncate">
                   {inst.name}
@@ -935,6 +954,34 @@ const AdminInstructors = ({
 
                 {/* Badges row */}
                 <div className="flex flex-wrap gap-1.5 mb-4">
+                  {(() => {
+                    const rls = inst.roles || ["instructor"];
+                    if (rls.length === 1) {
+                      return (
+                        <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full">
+                          {roleLabel(rls[0])}
+                        </span>
+                      );
+                    }
+                    return (
+                      <div tabIndex={0} className="relative group outline-none">
+                        <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full cursor-pointer flex items-center gap-1">
+                          {rls.length} Roles
+                          <span className="text-[8px] transition-transform duration-200 group-hover:rotate-90 group-focus:rotate-90 group-focus-within:rotate-90 inline-block">▶</span>
+                        </span>
+                        <div className="absolute top-full left-0 mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus:opacity-100 group-focus:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 flex flex-col gap-1.5 bg-slate-800 border border-slate-700 p-2.5 rounded-xl shadow-xl z-[60] min-w-[120px]">
+                          {rls.map((role, idx) => (
+                            <span
+                              key={idx}
+                              className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-full text-center"
+                            >
+                              {roleLabel(role)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                   <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
                     {inst.mc?.length || 0} course
                     {inst.mc?.length !== 1 ? "s" : ""}
@@ -1005,7 +1052,7 @@ const AdminInstructors = ({
                       `Are you sure you want to remove instructor "${inst.name}"?`,
                     )
                   ) {
-                    deleteUser(inst._id);
+                    deleteUser(inst._id, "instructor");
                   }
                 }}
                 className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/30 transition duration-150"
@@ -1037,9 +1084,9 @@ const AdminInstructors = ({
           onEdit={
             canEdit
               ? () => {
-                  setEditingInstructor(selectedInstructor);
-                  setSelectedInstructor(null);
-                }
+                setEditingInstructor(selectedInstructor);
+                setSelectedInstructor(null);
+              }
               : null
           }
         />

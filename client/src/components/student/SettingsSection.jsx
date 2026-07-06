@@ -8,6 +8,7 @@ import {
 } from "../../redux/slices/billingSlice";
 import { logoutUser } from "../../redux/slices/authSlice";
 import api from "../../config/api";
+import { uploadToImageKit } from "../../utils/imagekitUpload";
 import { useTranslation } from "react-i18next";
 
 // ── Indian states & cities ────────────────────────────────────────────────────
@@ -568,8 +569,9 @@ export default function Settings() {
     formData.append("folder", "user-avatars");
     setUploading(true);
     try {
-      const { data } = await api.post("/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const data = await uploadToImageKit({
+        file,
+        folder: "user-avatars"
       });
       const newAvatarUrl = data.url;
       setProfile((prev) => ({ ...prev, avatarUrl: newAvatarUrl }));

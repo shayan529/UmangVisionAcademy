@@ -30,6 +30,14 @@ const sessionSchema = new mongoose.Schema(
       ref: "Course",
       default: null,
     },
+    class: {
+      type: String,
+      default: null,
+    },
+    subject: {
+      type: String,
+      default: null,
+    },
     url: {
       type: String,
       required: true,

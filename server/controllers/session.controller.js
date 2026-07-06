@@ -2,6 +2,31 @@ import Session from "../models/session.model.js";
 import Course from "../models/courses.model.js";
 import { cacheResponse, deleteKey, invalidateCache } from "../utils/redisClient.js";
 
+// Helper to check if a user has admin or staff roles
+const checkIsAdminOrStaff = (user) => {
+  if (!user) return false;
+  return (
+    user.role === "admin" ||
+    user.role === "staff" ||
+    (user.roles && (user.roles.includes("admin") || user.roles.includes("staff")))
+  );
+};
+
+// GET /sessions/all — for ADMIN/STAFF (all sessions)
+export const getAllSessions = async (req, res) => {
+  try {
+    const sessions = await Session.find({})
+      .populate("course", "title")
+      .populate("instructor", "name")
+      .sort({ date: 1 })
+      .lean();
+
+    res.json(sessions);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // GET /sessions — for INSTRUCTOR (their own sessions)
 export const getInstructorSessions = async (req, res) => {
   try {
@@ -20,11 +45,13 @@ export const getInstructorSessions = async (req, res) => {
   }
 };
 
-// GET /sessions — for STUDENT (enrolled courses only)
+// GET /sessions — for STUDENT (enrolled courses & class-based sessions)
 export const getStudentSessions = async (req, res) => {
   try {
     const studentId = req.user._id.toString();
+    const studentClass = req.user.selectedClass;
     const cacheKey = `student:sessions:${studentId}`;
+    
     const sessions = await cacheResponse(cacheKey, 300, async () => {
       const enrolledCourses = await Course.find({ students: req.user._id })
         .select("_id instructor")
@@ -35,14 +62,23 @@ export const getStudentSessions = async (req, res) => {
         .map((c) => c.instructor)
         .filter(Boolean);
 
-      if (enrolledCourseIds.length === 0) return [];
+      const conditions = [];
 
-      return await Session.find({
-        $or: [
-          { course: { $in: enrolledCourseIds } },
-          { instructor: { $in: instructorIds } },
-        ],
-      })
+      if (enrolledCourseIds.length > 0) {
+        conditions.push({ course: { $in: enrolledCourseIds } });
+      }
+
+      if (instructorIds.length > 0) {
+        conditions.push({ instructor: { $in: instructorIds } });
+      }
+
+      if (studentClass) {
+        conditions.push({ class: studentClass });
+      }
+
+      if (conditions.length === 0) return [];
+
+      return await Session.find({ $or: conditions })
         .populate("course", "title")
         .populate("instructor", "name")
         .sort({ date: 1 })
@@ -58,10 +94,14 @@ export const getStudentSessions = async (req, res) => {
 // GET /sessions/:id
 export const getSessionById = async (req, res) => {
   try {
-    const session = await Session.findOne({
-      _id: req.params.id,
-      instructor: req.user._id,
-    });
+    const query = checkIsAdminOrStaff(req.user)
+      ? { _id: req.params.id }
+      : { _id: req.params.id, instructor: req.user._id };
+
+    const session = await Session.findOne(query)
+      .populate("course", "title")
+      .populate("instructor", "name");
+
     if (!session) return res.status(404).json({ message: "Session not found" });
     res.json(session);
   } catch (error) {
@@ -72,23 +112,31 @@ export const getSessionById = async (req, res) => {
 // POST /sessions
 export const createSession = async (req, res) => {
   try {
-    const { title, date, time, status, course, url } = req.body;
+    const { title, date, time, status, course, url, instructor, class: classVal, subject } = req.body;
     if (!title?.trim()) {
       return res.status(400).json({ message: "Session title is required" });
     }
+
+    let targetInstructorId = req.user._id;
+    if (checkIsAdminOrStaff(req.user) && instructor) {
+      targetInstructorId = instructor;
+    }
+
     const session = await Session.create({
       title,
       date: date || "TBD",
       time: time || "TBD",
       status: status || "upcoming",
       course: course || null,
-      instructor: req.user._id,
+      class: classVal || null,
+      subject: subject || null,
+      instructor: targetInstructorId,
       url: url || null,
     });
 
     // Invalidate session caches
     await Promise.all([
-      deleteKey(`instructor:sessions:${req.user._id}`),
+      deleteKey(`instructor:sessions:${targetInstructorId}`),
       invalidateCache("student:sessions*"),
     ]);
 
@@ -101,8 +149,12 @@ export const createSession = async (req, res) => {
 // PUT /sessions/:id
 export const updateSession = async (req, res) => {
   try {
+    const query = checkIsAdminOrStaff(req.user)
+      ? { _id: req.params.id }
+      : { _id: req.params.id, instructor: req.user._id };
+
     const session = await Session.findOneAndUpdate(
-      { _id: req.params.id, instructor: req.user._id },
+      query,
       req.body,
       { new: true, runValidators: true },
     );
@@ -110,7 +162,7 @@ export const updateSession = async (req, res) => {
 
     // Invalidate session caches
     await Promise.all([
-      deleteKey(`instructor:sessions:${req.user._id}`),
+      deleteKey(`instructor:sessions:${session.instructor}`),
       invalidateCache("student:sessions*"),
     ]);
 
@@ -123,15 +175,16 @@ export const updateSession = async (req, res) => {
 // DELETE /sessions/:id
 export const deleteSession = async (req, res) => {
   try {
-    const session = await Session.findOneAndDelete({
-      _id: req.params.id,
-      instructor: req.user._id,
-    });
+    const query = checkIsAdminOrStaff(req.user)
+      ? { _id: req.params.id }
+      : { _id: req.params.id, instructor: req.user._id };
+
+    const session = await Session.findOneAndDelete(query);
     if (!session) return res.status(404).json({ message: "Session not found" });
 
     // Invalidate session caches
     await Promise.all([
-      deleteKey(`instructor:sessions:${req.user._id}`),
+      deleteKey(`instructor:sessions:${session.instructor}`),
       invalidateCache("student:sessions*"),
     ]);
 

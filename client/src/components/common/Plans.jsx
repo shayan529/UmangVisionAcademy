@@ -15,8 +15,32 @@ const Plans = () => {
       desc: t('plans.base.desc'),
       features: t('plans.base.features', { returnObjects: true }) || [],
       button: t('plans.base.button'),
-      highlight: true,
+      highlight: false,
       color: '#6366f1',
+    },
+    {
+      id: 'premium',
+      title: t('plans.premium.title', { defaultValue: 'Premium' }),
+      price: t('plans.premium.price', { defaultValue: '₹500' }),
+      period: t('plans.premium.period', { defaultValue: 'month' }),
+      amount: 50000, // ₹500.00
+      desc: t('plans.premium.desc', {
+        defaultValue:
+          'Everything in Base, plus live support and deeper personalization for serious exam prep.',
+      }),
+      features: t('plans.premium.features', {
+        returnObjects: true,
+        defaultValue: [
+          'Everything in Base plan',
+          'Live doubt-clearing sessions with instructors',
+          'Personalized AI-powered study plan',
+          'Priority instructor support',
+          'Advanced mock test analytics & performance insights',
+        ],
+      }) || [],
+      button: t('plans.premium.button', { defaultValue: 'Go Premium' }),
+      highlight: true,
+      color: '#a78bfa',
     },
   ];
 
@@ -51,15 +75,14 @@ const Plans = () => {
         </div>
 
         {/* Cards */}
-        <div className="max-w-md mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-start">
           {plans.map((plan, index) => (
             <div
               key={index}
               className={`relative rounded-[32px] p-8 border transition duration-300 hover:-translate-y-2
-                ${
-                  plan.highlight
-                    ? 'bg-gradient-to-b from-indigo-600 to-purple-700 border-indigo-400 shadow-2xl shadow-indigo-500/20'
-                    : 'bg-white/5 border-white/10 backdrop-blur-xl'
+                ${plan.highlight
+                  ? 'bg-gradient-to-b from-indigo-600 to-purple-700 border-indigo-400 shadow-2xl shadow-indigo-500/20 md:scale-105'
+                  : 'bg-white/5 border-white/10 backdrop-blur-xl'
                 }`}
             >
               {plan.highlight && (
@@ -68,24 +91,48 @@ const Plans = () => {
                 </div>
               )}
 
-              <h3 className="text-3xl font-bold text-white">{plan.title}</h3>
+              <h3
+                className={`text-3xl font-bold ${plan.highlight ? 'text-white' : 'text-white'
+                  }`}
+              >
+                {plan.title}
+              </h3>
 
               <h2 className="text-5xl font-extrabold text-white mt-6">
                 {plan.price}
-                <span className="text-xl font-medium text-slate-300">
+                <span
+                  className={`text-xl font-medium ${plan.highlight ? 'text-slate-300' : 'text-slate-400'
+                    }`}
+                >
                   /{plan.period}
                 </span>
               </h2>
 
-              <p className="text-slate-200 mt-5 leading-relaxed">{plan.desc}</p>
+              <p
+                className={`mt-5 leading-relaxed ${plan.highlight ? 'text-slate-200' : 'text-slate-400'
+                  }`}
+              >
+                {plan.desc}
+              </p>
 
               <div className="mt-8 space-y-4">
                 {plan.features.map((feature, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-sm shrink-0">
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-sm shrink-0 ${plan.highlight
+                        ? 'bg-green-500/20 text-green-300'
+                        : 'bg-green-500/10 text-green-400'
+                        }`}
+                    >
                       ✓
                     </div>
-                    <p className="text-slate-100">{feature}</p>
+                    <p
+                      className={
+                        plan.highlight ? 'text-slate-100' : 'text-slate-300'
+                      }
+                    >
+                      {feature}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -93,10 +140,9 @@ const Plans = () => {
               <button
                 onClick={() => handlePlanClick(plan)}
                 className={`mt-10 w-full py-4 rounded-2xl font-semibold transition duration-300 cursor-pointer
-                  ${
-                    plan.highlight
-                      ? 'bg-white text-indigo-700 hover:bg-slate-100'
-                      : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                  ${plan.highlight
+                    ? 'bg-white text-indigo-700 hover:bg-slate-100'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                   }`}
               >
                 {user ? plan.button : t('plans.loginToContinue')}

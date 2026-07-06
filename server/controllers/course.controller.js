@@ -266,6 +266,30 @@ export const rejectCourse = async (req, res) => {
   }
 };
 
+// ── unrejectCourse (admin only) ───────────────────────────────────────────────
+// POST /courses/:id/unreject
+export const unrejectCourse = async (req, res) => {
+  try {
+    const course = await Course.findByIdAndUpdate(
+      req.params.id,
+      {
+        approvalStatus: "pending",
+        rejectionReason: "",
+      },
+      { new: true },
+    );
+    if (!course) return res.status(404).json({ message: "Course not found" });
+    await invalidateCourseCache(course._id);
+    res.json({
+      success: true,
+      message: "Course unrejected and marked as pending.",
+      course: shapeCourse(course),
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // ── enrolledCourses ───────────────────────────────────────────────────────────
 export const enrolledCourses = async (req, res) => {
   try {

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 const Hero = () => {
@@ -22,8 +22,8 @@ const Hero = () => {
   const fullText = t("hero.text");
   const langKey = i18n.language?.split("-")[0] || "en";
   const markers = {
-    en: "Classes 9 to 12",
-    hi: "कक्षा 9 से 12 तक",
+    en: "Classes 9 to 12, Graduation, and Competitive Exams",
+    hi: "कक्षा 9 से 12 तक, स्नातक, और प्रतियोगी परीक्षाओं",
   };
   const marker = markers[langKey] || markers.en;
   const shortText =
@@ -31,22 +31,11 @@ const Hero = () => {
       ? fullText.substring(0, fullText.indexOf(marker) + marker.length) + "."
       : fullText;
 
-  // ── Stat carousel (mobile) ────────────────────────────────────────────────
-  const stats = [
-    { value: "200K+", label: t("hero.studentsWorldwide"), icon: "🎓" },
-    { value: "10K+", label: t("hero.onlineCourses"), icon: "📚" },
-    { value: "500+", label: t("hero.expertInstructors"), icon: "👨‍🏫" },
+  const benefits = [
+    { title: t("hero.benefit1Title"), desc: t("hero.benefit1Desc"), icon: "🤖" },
+    { title: t("hero.benefit2Title"), desc: t("hero.benefit2Desc"), icon: "🤝" },
+    { title: t("hero.benefit3Title"), desc: t("hero.benefit3Desc"), icon: "⚡" },
   ];
-  const statsScrollRef = useRef(null);
-  const [activeStat, setActiveStat] = useState(0);
-
-  const handleStatsScroll = () => {
-    const el = statsScrollRef.current;
-    if (!el || !el.firstChild) return;
-    const cardWidth = el.firstChild.offsetWidth + 12; // gap-3 = 12px
-    const idx = Math.round(el.scrollLeft / cardWidth);
-    setActiveStat(Math.min(Math.max(idx, 0), stats.length - 1));
-  };
 
   return (
     <section className="relative overflow-hidden text-white">
@@ -129,15 +118,17 @@ const Hero = () => {
             {/* Floating stat pill overlapping the card edge */}
             <div className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-950/90 border border-white/10 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-              200K+ {t("hero.studentsWorldwide")}
+              {t("hero.floatingBadge")}
             </div>
           </div>
 
           {/* HEADING */}
           <div className="text-center mt-2">
-            <h1 className="text-[34px] font-black tracking-tight leading-[1.08]">
-              {t("hero.headingLine1")}
-              <span className="block text-emerald-300 mt-1">
+            <h1 className="font-black tracking-tight">
+              <span className="block text-[32px] leading-[1.12] text-white">
+                {t("hero.headingLine1")}
+              </span>
+              <span className="block text-[19px] leading-[1.35] text-emerald-300 mt-2 tracking-normal">
                 {t("hero.headingLine2")}
               </span>
             </h1>
@@ -173,35 +164,22 @@ const Hero = () => {
             </Link>
           </div>
 
-          {/* STAT CAROUSEL */}
+          {/* BENEFITS CAROUSEL */}
           <div className="mt-2">
             <div
-              ref={statsScrollRef}
-              onScroll={handleStatsScroll}
               className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 -mx-5 px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {stats.map((s) => (
+              {benefits.map((b, idx) => (
                 <div
-                  key={s.label}
-                  className="snap-center flex-shrink-0 w-[168px] rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm px-4 py-4"
+                  key={idx}
+                  className="snap-center flex-shrink-0 w-[200px] rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm px-4 py-4"
                 >
-                  <div className="text-xl mb-1.5">{s.icon}</div>
-                  <p className="text-2xl font-bold">{s.value}</p>
-                  <p className="mt-0.5 text-[11px] leading-tight text-slate-400">
-                    {s.label}
+                  <div className="text-xl mb-1.5">{b.icon}</div>
+                  <p className="text-xs font-bold text-emerald-300">{b.title}</p>
+                  <p className="mt-1.5 text-[10px] leading-relaxed text-slate-300">
+                    {b.desc}
                   </p>
                 </div>
-              ))}
-            </div>
-            <div className="flex justify-center gap-1.5 mt-3">
-              {stats.map((_, i) => (
-                <span
-                  key={i}
-                  className={`h-1.5 rounded-full transition-all ${i === activeStat
-                    ? "w-4 bg-emerald-300"
-                    : "w-1.5 bg-white/20"
-                    }`}
-                />
               ))}
             </div>
           </div>
@@ -221,9 +199,11 @@ const Hero = () => {
 
             {/* HEADING */}
             <div className="space-y-6">
-              <h1 className="text-5xl md:text-6xl xl:text-7xl font-black tracking-tight leading-tight">
-                {t("hero.headingLine1")}
-                <span className="block text-emerald-300">
+              <h1 className="font-black tracking-tight">
+                <span className="block text-5xl md:text-6xl xl:text-7xl leading-tight text-white">
+                  {t("hero.headingLine1")}
+                </span>
+                <span className="block text-2xl md:text-3xl xl:text-4xl leading-snug text-emerald-300 mt-3 tracking-normal">
                   {t("hero.headingLine2")}
                 </span>
               </h1>
@@ -249,26 +229,29 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* RIGHT SIDE STATS */}
-          <div className="grid w-full xl:w-[300px] gap-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-              <p className="text-3xl font-bold">200K+</p>
-              <p className="mt-1 text-sm text-slate-400">
-                {t("hero.studentsWorldwide")}
+          {/* RIGHT SIDE BENEFITS */}
+          <div className="grid w-full xl:w-[320px] gap-4">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm hover:bg-white/10 transition duration-300">
+              <div className="text-2xl mb-2">🤖</div>
+              <p className="text-sm font-bold text-emerald-300">{t("hero.benefit1Title")}</p>
+              <p className="mt-1 text-xs text-slate-300 leading-relaxed">
+                {t("hero.benefit1Desc")}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-              <p className="text-3xl font-bold">10K+</p>
-              <p className="mt-1 text-sm text-slate-400">
-                {t("hero.onlineCourses")}
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm hover:bg-white/10 transition duration-300">
+              <div className="text-2xl mb-2">🤝</div>
+              <p className="text-sm font-bold text-indigo-300">{t("hero.benefit2Title")}</p>
+              <p className="mt-1 text-xs text-slate-300 leading-relaxed">
+                {t("hero.benefit2Desc")}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-              <p className="text-3xl font-bold">500+</p>
-              <p className="mt-1 text-sm text-slate-400">
-                {t("hero.expertInstructors")}
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm hover:bg-white/10 transition duration-300">
+              <div className="text-2xl mb-2">⚡</div>
+              <p className="text-sm font-bold text-amber-300">{t("hero.benefit3Title")}</p>
+              <p className="mt-1 text-xs text-slate-300 leading-relaxed">
+                {t("hero.benefit3Desc")}
               </p>
             </div>
           </div>

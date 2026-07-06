@@ -250,6 +250,7 @@ const Courses = () => {
                     _id: course._id,
                     title: course.title,
                     instructor: instructorName(course.instructor),
+                    instructorId: typeof course.instructor === 'object' ? course.instructor?._id : null,
                     rating: course.ratingAverage ?? 0,
                     reviews: course.reviewCount ?? 0,
                     price:

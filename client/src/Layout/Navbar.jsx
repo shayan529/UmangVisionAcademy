@@ -160,7 +160,7 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="w-full sticky top-0 z-[101] bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10">
+      <nav className="w-full sticky top-0 z-30 bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10">
         <style>{`
 .btn-navy,
 .btn-indigo-shine,
@@ -319,7 +319,7 @@ button.btn-red:hover,
               </div>
             )}
 
-            {!hasInstructorRole && !hasAdminRole && (
+            {!hasInstructorRole && !isStaffOrAdmin && (
               <Link
                 to="/become-instructor"
                 className="hover:text-indigo-300 transition duration-300"
@@ -538,7 +538,7 @@ button.btn-red:hover,
                 { to: "/plans", label: t("nav.plans") },
               ]
               : []),
-            ...(!hasInstructorRole && !hasAdminRole
+            ...(!hasInstructorRole && !isStaffOrAdmin
               ? [{ to: "/become-instructor", label: t("nav.becomeInstructor") }]
               : []),
             { to: "/question-bank", label: t("nav.questionBank") },

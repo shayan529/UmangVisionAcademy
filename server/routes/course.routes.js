@@ -14,6 +14,7 @@ import {
   rateCourse,
   approveCourse,
   rejectCourse,
+  unrejectCourse,
 } from "../controllers/course.controller.js";
 import { protect, adminOnly, requirePermission } from "../middleware/auth.middleware.js";
 
@@ -37,6 +38,7 @@ router.post("/:id/rate", protect, rateCourse);
 // ── Admin approval actions ────────────────────────────────────────────────────
 router.post("/:id/approve", protect, requirePermission("courses", "approve"), approveCourse);
 router.post("/:id/reject", protect, requirePermission("courses", "approve"), rejectCourse);
+router.post("/:id/unreject", protect, requirePermission("courses", "approve"), unrejectCourse);
 
 router.get("/:id", protect, getCourseById);
 router.put("/:id", protect, updateCourse);

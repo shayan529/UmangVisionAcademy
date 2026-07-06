@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { useSelector, useDispatch } from "react-redux";
@@ -138,9 +139,9 @@ const StudentDetailsFormModal = ({
     !!form.reference &&
     !references.some((item) => item.name === form.reference);
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4"
       style={{ background: "rgba(10,14,26,0.75)", backdropFilter: "blur(6px)" }}
     >
       <div
@@ -161,6 +162,9 @@ const StudentDetailsFormModal = ({
             borderBottom: "1px solid #e8d9c0",
             background: "#faf3e8",
             borderRadius: "20px 20px 0 0",
+            position: "sticky",
+            top: 0,
+            zIndex: 1,
           }}
         >
           <div>
@@ -389,6 +393,10 @@ const StudentDetailsFormModal = ({
             gap: 10,
             padding: "14px 24px 22px",
             borderTop: "1px solid #e8d9c0",
+            position: "sticky",
+            bottom: 0,
+            background: "#fdf8f0",
+            borderRadius: "0 0 20px 20px",
           }}
         >
           <button
@@ -447,7 +455,8 @@ const StudentDetailsFormModal = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -521,6 +530,21 @@ export const DashboardHome = () => {
       vidhansabha: settingsProfile.vidhansabha ?? "",
     });
   }, [settingsProfile]);
+
+  // ── Lock body scroll while the student details modal is open ──
+  useEffect(() => {
+    if (showStudentDetailsModal) {
+      document.body.style.overflow = "hidden";
+      document.body.style.touchAction = "none";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    };
+  }, [showStudentDetailsModal]);
 
   const enrolledCourses = useSelector(
     (s) => s.courses?.enrolled ?? s.myCourses?.courses ?? [],

@@ -13,6 +13,7 @@ import AdminStudents from "./AdminStudents";
 import AdminInstructors from "./AdminInstructors";
 import AdminCourses from "./AdminCourses";
 import AdminApplications from "./AdminApplications";
+import AdminSessions from "./AdminSessions";
 
 import AdminDevices from "./AdminDevices";
 import AdminBulkImport from "./AdminBulkImport";
@@ -78,7 +79,7 @@ export default function AdminDashboard() {
     setQ("");
   }, [tab]);
 
-  const deleteUser = (id) => dispatch(deleteUserThunk(id));
+  const deleteUser = (id, role) => dispatch(deleteUserThunk({ id, role }));
 
   // ── Derived stats ──────────────────────────────────────────────────────────
   const totalRevenue = courses.reduce(
@@ -201,6 +202,12 @@ export default function AdminDashboard() {
             loading={coursesLoading}
             error={coursesError}
             onRetry={() => dispatch(fetchAllCoursesAdmin())}
+          />
+        );
+      case "sessions":
+        return (
+          <AdminSessions
+            instructors={instructors}
           />
         );
       case "question-papers":

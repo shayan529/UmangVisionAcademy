@@ -72,26 +72,39 @@ const roleLabel = (role) =>
   role && typeof role === "object" ? role.name || "Custom Role" : role;
 
 /* ─── Avatar ──────────────────────────────────────────── */
-const Av = ({ name = "?", size = 36 }) => (
-  <div
-    style={{
-      width: size,
-      height: size,
-      borderRadius: "50%",
-      background: hue(name),
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: size * 0.38,
-      fontWeight: 800,
-      color: "#fff",
-      flexShrink: 0,
-      letterSpacing: "-0.02em",
-    }}
-  >
-    {name.slice(0, 2).toUpperCase()}
-  </div>
-);
+const Av = ({ name = "?", size = 36, src }) => {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover" }}
+        className="flex-shrink-0 shadow-lg"
+      />
+    );
+  }
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        background: hue(name),
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: size * 0.38,
+        fontWeight: 800,
+        color: "#fff",
+        flexShrink: 0,
+        letterSpacing: "-0.02em",
+      }}
+      className="shadow-lg"
+    >
+      {name.slice(0, 2).toUpperCase()}
+    </div>
+  );
+};
 
 /* ─── small presentational bits for the modal (larger fonts) ── */
 const InfoRow = ({ icon: Icon, label, value }) => (
@@ -520,7 +533,7 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-5 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
           <div className="flex items-center gap-3 min-w-0">
-            <Av name={student.name} size={40} />
+            <Av name={student.name} src={student.avatarUrl} size={40} />
             <div className="min-w-0">
               <p className="text-base font-extrabold text-white truncate">
                 Edit Student
@@ -668,7 +681,7 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-5 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
           <div className="flex items-center gap-3 min-w-0">
-            <Av name={student.name} size={46} />
+            <Av name={student.name} src={student.avatarUrl} size={46} />
             <div className="min-w-0">
               <p className="text-base font-extrabold text-white truncate">
                 {student.name}
@@ -1050,7 +1063,7 @@ const AssignCourseModal = ({ student, courses = [], onClose, onAssigned }) => {
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-5 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
           <div className="flex items-center gap-3 min-w-0">
-            <Av name={student.name} size={40} />
+            <Av name={student.name} src={student.avatarUrl} size={40} />
             <div className="min-w-0">
               <p className="text-base font-extrabold text-white truncate">
                 Assign Courses
@@ -1220,6 +1233,7 @@ const AdminStudents = ({
   canEdit = true,
   canDelete = true,
 }) => {
+  const approvedCourses = courses.filter((c) => c.approvalStatus === "approved");
   const ql = q.toLowerCase();
   const filtS = students.filter(
     (s) =>
@@ -1227,7 +1241,7 @@ const AdminStudents = ({
       s.email?.toLowerCase().includes(ql) ||
       s.phoneNumber?.toLowerCase().includes(ql),
   );
-  const fileInputRef = useRef(null);
+  const bulkFileInputRef = useRef(null);
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState("");
   const [importSuccess, setImportSuccess] = useState("");
@@ -1236,26 +1250,10 @@ const AdminStudents = ({
   const [editingStudent, setEditingStudent] = useState(null);
   const [assigningStudent, setAssigningStudent] = useState(null);
   const [addingStudent, setAddingStudent] = useState(false);
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [bulkImportFile, setBulkImportFile] = useState(null);
-
-  const handleImportClick = () => fileInputRef.current?.click();
-
-  const handleImportFileSelect = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const accepted = /\.(csv|xlsx|xls|docx|txt)$/i.test(file.name);
-    if (!accepted) {
-      setImportError(
-        "Supported formats: CSV, Excel (.xlsx/.xls), DOCX, or TXT",
-      );
-      event.target.value = "";
-      return;
-    }
-
-    setBulkImportFile(file);
-    event.target.value = "";
-  };
+  const [bulkImportCourses, setBulkImportCourses] = useState([]);
+  const [bulkCourseSearch, setBulkCourseSearch] = useState("");
 
   // Called after a successful add/edit. Prefers a full refresh from the
   // server (so course counts etc. stay in sync) but falls back gracefully
@@ -1309,7 +1307,13 @@ const AdminStudents = ({
           {canCreate && (
             <button
               type="button"
-              onClick={handleImportClick}
+              onClick={() => {
+                setBulkImportFile(null);
+                setBulkImportCourses([]);
+                setBulkCourseSearch("");
+                setImportError("");
+                setShowBulkImportModal(true);
+              }}
               disabled={importing}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60"
             >
@@ -1317,13 +1321,6 @@ const AdminStudents = ({
               {importing ? "Importing..." : "Bulk Import"}
             </button>
           )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,.xlsx,.xls,.docx,.txt"
-            className="hidden"
-            onChange={handleImportFileSelect}
-          />
         </div>
       </div>
 
@@ -1388,7 +1385,7 @@ const AdminStudents = ({
               className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3.5 bg-slate-900/35 border border-slate-800/80 rounded-2xl transition duration-150 hover:border-slate-700/60"
             >
               <div className="flex items-center gap-3.5 min-w-0 w-full sm:w-auto">
-                <Av name={s.name} size={36} />
+                <Av name={s.name} src={s.avatarUrl} size={36} />
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-slate-200 truncate">
                     {s.name}
@@ -1406,10 +1403,34 @@ const AdminStudents = ({
 
               <div className="flex flex-wrap items-center gap-2 sm:gap-4 shrink-0 justify-start sm:justify-end w-full sm:w-auto">
                 {/* Custom tags */}
-                <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full">
-                  Student
-                </span>
-
+                {(() => {
+                  const rls = s.roles || ["student"];
+                  if (rls.length === 1) {
+                    return (
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full">
+                        {roleLabel(rls[0])}
+                      </span>
+                    );
+                  }
+                  return (
+                    <div tabIndex={0} className="relative group outline-none">
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full cursor-pointer flex items-center gap-1">
+                        {rls.length} Roles
+                        <span className="text-[8px] transition-transform duration-200 group-hover:rotate-90 group-focus:rotate-90 group-focus-within:rotate-90 inline-block">▶</span>
+                      </span>
+                      <div className="absolute top-full right-0 mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus:opacity-100 group-focus:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 flex flex-col gap-1.5 bg-slate-800 border border-slate-700 p-2.5 rounded-xl shadow-xl z-[60] min-w-[120px]">
+                        {rls.map((role, idx) => (
+                          <span
+                            key={idx}
+                            className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-full text-center"
+                          >
+                            {roleLabel(role)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
                 <span className="text-xs font-semibold text-slate-400 min-w-[4.375rem] text-right">
                   {studentCoursesCount} course
                   {studentCoursesCount !== 1 ? "s" : ""}
@@ -1455,7 +1476,7 @@ const AdminStudents = ({
                           `Are you sure you want to remove student "${s.name}"?`,
                         )
                       ) {
-                        deleteUser(s._id);
+                        deleteUser(s._id, "student");
                       }
                     }}
                     className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/30 transition duration-150"
@@ -1508,7 +1529,7 @@ const AdminStudents = ({
 
       {addingStudent && (
         <AddStudentModal
-          courses={courses}
+          courses={approvedCourses}
           onClose={() => setAddingStudent(false)}
           onCreated={handleMutationSuccess}
         />
@@ -1517,16 +1538,16 @@ const AdminStudents = ({
       {assigningStudent && (
         <AssignCourseModal
           student={assigningStudent}
-          courses={courses}
+          courses={approvedCourses}
           onClose={() => setAssigningStudent(null)}
           onAssigned={handleMutationSuccess}
         />
       )}
 
-      {bulkImportFile && (
+      {showBulkImportModal && (
         <div
           className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
-          onClick={() => setBulkImportFile(null)}
+          onClick={() => setShowBulkImportModal(false)}
         >
           <div
             className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl"
@@ -1538,7 +1559,7 @@ const AdminStudents = ({
                 <p className="text-base font-extrabold text-white">Bulk Import Students</p>
               </div>
               <button
-                onClick={() => setBulkImportFile(null)}
+                onClick={() => setShowBulkImportModal(false)}
                 className="flex-none p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
               >
                 <X size={20} />
@@ -1546,69 +1567,157 @@ const AdminStudents = ({
             </div>
 
             <div className="p-6 flex flex-col gap-4">
-              <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-                <p className="text-sm font-semibold text-slate-200">Selected File:</p>
-                <p className="text-sm text-slate-400 truncate mt-1">{bulkImportFile.name}</p>
+              {/* File upload area */}
+              <div>
+                <FieldLabel>Student File <span className="text-red-400 ml-1">*</span></FieldLabel>
+                <input
+                  ref={bulkFileInputRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xls,.docx,.txt"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const accepted = /\.(csv|xlsx|xls|docx|txt)$/i.test(file.name);
+                    if (!accepted) {
+                      setImportError("Supported formats: CSV, Excel (.xlsx/.xls), DOCX, or TXT");
+                      e.target.value = "";
+                      return;
+                    }
+                    setImportError("");
+                    setBulkImportFile(file);
+                    e.target.value = "";
+                  }}
+                />
+                {bulkImportFile ? (
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/50 p-3.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-slate-200 truncate">{bulkImportFile.name}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{(bulkImportFile.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setBulkImportFile(null)}
+                      className="flex-none p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => bulkFileInputRef.current?.click()}
+                    className="w-full rounded-xl border-2 border-dashed border-slate-700 hover:border-indigo-500/50 bg-slate-900/30 hover:bg-indigo-500/5 p-6 transition duration-150 group"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <Upload size={24} className="text-slate-500 group-hover:text-indigo-400 transition" />
+                      <p className="text-sm font-semibold text-slate-300 group-hover:text-white transition">Click to select file</p>
+                      <p className="text-[11px] text-slate-500">CSV, Excel (.xlsx/.xls), DOCX, or TXT</p>
+                    </div>
+                  </button>
+                )}
               </div>
 
-              <FieldLabel>Assign Courses (Optional)</FieldLabel>
-              <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
-                {courses.length === 0 ? (
-                  <p className="text-sm text-slate-500 italic">No courses available.</p>
-                ) : (
-                  courses.map((c) => {
-                    const active = (bulkImportFile.selectedCourses || []).includes(c._id);
-                    const subject = subjectOf(c.title);
-                    return (
-                      <button
-                        key={c._id}
-                        type="button"
-                        onClick={() => {
-                          const prev = bulkImportFile.selectedCourses || [];
-                          const next = prev.includes(c._id) ? prev.filter((id) => id !== c._id) : [...prev, c._id];
-                          setBulkImportFile({ ...bulkImportFile, selectedCourses: next });
-                        }}
-                        className={`w-full text-left rounded-xl border p-3.5 transition ${active
-                          ? "bg-emerald-500/10 border-emerald-500/40"
-                          : "bg-slate-900/40 border-slate-700 hover:border-slate-600"
-                          }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <p className={`font-semibold text-sm truncate ${active ? "text-emerald-300" : "text-white"}`}>
-                              {c.title}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                              {subject && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20 text-[10px] font-bold text-sky-300 uppercase tracking-wide">
-                                  <Tag size={10} className="flex-none" />
-                                  {subject}
-                                </span>
-                              )}
-                              {c.category && (
-                                <span className="px-2 py-0.5 rounded-md bg-slate-800/80 text-[10px] font-semibold text-slate-300 uppercase tracking-wide">
-                                  {c.category}
-                                </span>
-                              )}
-                              {c.board && (
-                                <span className="px-2 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-[10px] font-semibold text-purple-300 uppercase tracking-wide">
-                                  {c.board}
-                                </span>
+              <div className="rounded-xl border border-slate-800 bg-slate-950/30 p-3 text-xs text-slate-300">
+                <p className="font-semibold text-slate-200 mb-1">Expected columns</p>
+                <p className="text-slate-400">
+                  <span className="font-medium">name</span>,{" "}
+                  <span className="font-medium">email</span>,{" "}
+                  <span className="font-medium">phoneNumber</span>,{" "}
+                  <span className="font-medium">password</span>,{" "}
+                  <span className="font-medium">city</span>,{" "}
+                  <span className="font-medium">state</span>,{" "}
+                  <span className="font-medium">pincode</span>
+                </p>
+              </div>
+
+              {/* Course selection */}
+              <div>
+                <FieldLabel>Assign Courses (Optional)</FieldLabel>
+                <div className="relative mb-2">
+                  <Search
+                    size={14}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+                  />
+                  <input
+                    type="text"
+                    value={bulkCourseSearch}
+                    onChange={(e) => setBulkCourseSearch(e.target.value)}
+                    placeholder="Search courses…"
+                    className="w-full bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 pl-9 pr-4 text-sm text-white placeholder-slate-500 transition duration-150"
+                  />
+                </div>
+                <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
+                  {(() => {
+                    const searchLower = bulkCourseSearch.trim().toLowerCase();
+                    const filtered = searchLower
+                      ? approvedCourses.filter((c) => {
+                        const haystack = [c.title, subjectOf(c.title), c.category, c.board, c.instructor?.name]
+                          .filter(Boolean).join(" ").toLowerCase();
+                        return haystack.includes(searchLower);
+                      })
+                      : approvedCourses;
+
+                    if (approvedCourses.length === 0) {
+                      return <p className="text-sm text-slate-500 italic">No courses available.</p>;
+                    }
+                    if (filtered.length === 0) {
+                      return <p className="text-sm text-slate-500 italic">No courses match "{bulkCourseSearch}".</p>;
+                    }
+                    return filtered.map((c) => {
+                      const active = bulkImportCourses.includes(c._id);
+                      const subject = subjectOf(c.title);
+                      return (
+                        <button
+                          key={c._id}
+                          type="button"
+                          onClick={() => {
+                            setBulkImportCourses((prev) =>
+                              prev.includes(c._id) ? prev.filter((id) => id !== c._id) : [...prev, c._id]
+                            );
+                          }}
+                          className={`w-full text-left rounded-xl border p-3.5 transition ${active
+                            ? "bg-emerald-500/10 border-emerald-500/40"
+                            : "bg-slate-900/40 border-slate-700 hover:border-slate-600"
+                            }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <p className={`font-semibold text-sm truncate ${active ? "text-emerald-300" : "text-white"}`}>
+                                {c.title}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                {subject && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20 text-[10px] font-bold text-sky-300 uppercase tracking-wide">
+                                    <Tag size={10} className="flex-none" />
+                                    {subject}
+                                  </span>
+                                )}
+                                {c.category && (
+                                  <span className="px-2 py-0.5 rounded-md bg-slate-800/80 text-[10px] font-semibold text-slate-300 uppercase tracking-wide">
+                                    {c.category}
+                                  </span>
+                                )}
+                                {c.board && (
+                                  <span className="px-2 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-[10px] font-semibold text-purple-300 uppercase tracking-wide">
+                                    {c.board}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex-none pt-0.5">
+                              {active ? (
+                                <CheckCircle2 size={19} className="text-emerald-400" />
+                              ) : (
+                                <div className="w-[19px] h-[19px] rounded-full border-2 border-slate-700" />
                               )}
                             </div>
                           </div>
-                          <div className="flex-none pt-0.5">
-                            {active ? (
-                              <CheckCircle2 size={19} className="text-emerald-400" />
-                            ) : (
-                              <div className="w-[19px] h-[19px] rounded-full border-2 border-slate-700" />
-                            )}
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
+                        </button>
+                      );
+                    });
+                  })()}
+                </div>
               </div>
 
               {importError && (
@@ -1620,7 +1729,7 @@ const AdminStudents = ({
 
               <div className="flex items-center justify-end gap-3 mt-2">
                 <button
-                  onClick={() => setBulkImportFile(null)}
+                  onClick={() => setShowBulkImportModal(false)}
                   disabled={importing}
                   className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition disabled:opacity-60"
                 >
@@ -1628,6 +1737,10 @@ const AdminStudents = ({
                 </button>
                 <button
                   onClick={async () => {
+                    if (!bulkImportFile) {
+                      setImportError("Please select a file to import.");
+                      return;
+                    }
                     setImporting(true);
                     setImportError("");
                     setImportSuccess("");
@@ -1635,8 +1748,8 @@ const AdminStudents = ({
 
                     const formData = new FormData();
                     formData.append("file", bulkImportFile);
-                    if (bulkImportFile.selectedCourses?.length > 0) {
-                      formData.append("courseIds", JSON.stringify(bulkImportFile.selectedCourses));
+                    if (bulkImportCourses.length > 0) {
+                      formData.append("courseIds", JSON.stringify(bulkImportCourses));
                     }
 
                     try {
@@ -1651,14 +1764,14 @@ const AdminStudents = ({
                         skippedRows: data.skippedRows || [],
                       });
                       if (refreshUsers) await refreshUsers();
-                      setBulkImportFile(null);
+                      setShowBulkImportModal(false);
                     } catch (err) {
                       setImportError(err.response?.data?.message || err.message || "Import failed.");
                     } finally {
                       setImporting(false);
                     }
                   }}
-                  disabled={importing}
+                  disabled={importing || !bulkImportFile}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition disabled:opacity-60"
                 >
                   {importing ? (

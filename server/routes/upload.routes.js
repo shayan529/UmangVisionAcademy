@@ -9,16 +9,7 @@ import { protect } from '../middleware/auth.middleware.js';
 
 import fs from 'fs';
 
-// Store temp files in /tmp, max 500MB (supports large video uploads)
-const tempDir = 'tmp';
-if (!fs.existsSync(tempDir)) {
-  fs.mkdirSync(tempDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, tempDir),
-  filename: (req, file, cb) => cb(null, `${Date.now()}_${file.originalname}`),
-});
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   const allowed = [

@@ -629,7 +629,7 @@ function LessonPreviewModal({ lesson, lessonIndex, onClose }) {
 }
 
 // ── Course detail drawer ──────────────────────────────────────────────────────
-function CourseDrawer({ course, onClose, onApprove, onReject, actioning }) {
+function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, actioning }) {
   const st = STATUS_CONFIG[course.approvalStatus ?? "draft"];
   const [previewLesson, setPreviewLesson] = useState(null);
   const [previewIndex, setPreviewIndex] = useState(null);
@@ -1124,9 +1124,29 @@ function CourseDrawer({ course, onClose, onApprove, onReject, actioning }) {
               borderTop: "1px solid #1e293b",
             }}
           >
-            <p style={{ fontSize: 12, color: "#64748b", textAlign: "center" }}>
+            <p style={{ fontSize: 12, color: "#64748b", textAlign: "center", marginBottom: 12 }}>
               Instructor will be able to edit and resubmit.
             </p>
+            {onUnreject && (
+              <button
+                onClick={() => onUnreject(course._id)}
+                disabled={actioning}
+                style={{
+                  width: "100%",
+                  padding: 12,
+                  borderRadius: 12,
+                  border: "1px solid #eab308",
+                  background: "#422006",
+                  color: "#fde047",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: actioning ? "not-allowed" : "pointer",
+                  opacity: actioning ? 0.6 : 1,
+                }}
+              >
+                Mark as Pending
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -1190,6 +1210,20 @@ export default function AdminCourses({
       await api.post(`/courses/${rejectTarget._id}/reject`, { reason });
       dispatch(fetchAllCoursesAdmin());
       setRejectTarget(null);
+      setSelected(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActioning(false);
+    }
+  };
+
+  const handleUnreject = async (courseId) => {
+    if (!courseId) return;
+    setActioning(true);
+    try {
+      await api.post(`/courses/${courseId}/unreject`);
+      dispatch(fetchAllCoursesAdmin());
       setSelected(null);
     } catch (err) {
       console.error(err);
@@ -1552,6 +1586,7 @@ export default function AdminCourses({
           onClose={() => setSelected(null)}
           onApprove={canApprove ? handleApprove : undefined}
           onReject={canApprove ? (c) => setRejectTarget(c) : undefined}
+          onUnreject={canApprove ? handleUnreject : undefined}
           actioning={actioning}
         />
       )}

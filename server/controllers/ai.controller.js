@@ -207,16 +207,18 @@ export const getChatHistory = async (req, res) => {
 
 export const generateQuizAI = async (req, res) => {
   try {
-    const { title, summary } = req.body;
+    const { title, summary, className } = req.body;
     if (!title || !summary)
       return res
         .status(400)
         .json({ message: "Title and summary are required." });
 
-    const prompt = `Generate exactly 5 multiple choice questions for a final course quiz based on the following course title and summary.
+    const prompt = `Generate exactly 5 multiple choice questions for a final course quiz based on the following course details.
 
-Course Title: ${title}
-Course Summary: ${summary}
+Course Title (Subject): ${title}
+${className ? `Class / Grade Level: ${className}\n` : ""}Course Summary: ${summary}
+
+Calibrate the difficulty, vocabulary, and depth of every question strictly to the stated class/grade level${className ? ` (${className})` : ""} — do not write questions above or below that level, and do not include topics that fall outside a typical ${className || "school"} syllabus for this subject.
 
 Return valid JSON only in the following shape:
 {

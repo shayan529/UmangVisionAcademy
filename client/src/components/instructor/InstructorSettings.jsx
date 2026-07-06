@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { fetchProfile, updateProfile } from "../../redux/slices/settingsSlice";
 import { logoutUser } from "../../redux/slices/authSlice";
 import api from "../../config/api";
+import { uploadToImageKit } from "../../utils/imagekitUpload";
 
 // ── Indian states & cities ────────────────────────────────────────────────────
 const indianCitiesByState = {
@@ -463,13 +464,11 @@ const InstructorSettings = ({ showToast }) => {
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("folder", "instructor-avatars");
     setUploading(true);
     try {
-      const { data } = await api.post("/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const data = await uploadToImageKit({
+        file,
+        folder: "instructor-avatars"
       });
       const newAvatarUrl = data.url;
       setProfile((prev) => ({ ...prev, avatarUrl: newAvatarUrl }));

@@ -29,9 +29,12 @@ export const updateUser = createAsyncThunk("users/updateUser", async ({ id, payl
   }
 })
 
-export const deleteUser = createAsyncThunk("users/deleteUser", async (id, { rejectWithValue }) => {
+export const deleteUser = createAsyncThunk("users/deleteUser", async (payload, { rejectWithValue }) => {
   try {
-    const { data } = await api.delete(API_ENDPOINTS.USERS.DELETE(id))
+    const id = typeof payload === "object" ? payload.id : payload
+    const role = typeof payload === "object" ? payload.role : undefined
+    const url = role ? `${API_ENDPOINTS.USERS.DELETE(id)}?role=${role}` : API_ENDPOINTS.USERS.DELETE(id)
+    const { data } = await api.delete(url)
     return data
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || error.message)
@@ -92,10 +95,11 @@ const usersSlice = createSlice({
       })
       .addCase(updateUser.fulfilled, (state, action) => {
         state.loading = false
-        state.currentUser = action.payload
-        const index = state.users.findIndex((u) => u._id === action.payload._id)
-        if (index !== -1) {
-          state.users[index] = action.payload
+        state.users = state.users.map((u) =>
+          u._id === action.payload._id ? action.payload : u
+        )
+        if (state.currentUser?._id === action.payload._id) {
+          state.currentUser = action.payload
         }
       })
       .addCase(updateUser.rejected, (state, action) => {
@@ -111,9 +115,18 @@ const usersSlice = createSlice({
       })
       .addCase(deleteUser.fulfilled, (state, action) => {
         state.loading = false
-        state.users = state.users.filter((u) => u._id !== action.meta.arg)
-        if (state.currentUser?._id === action.meta.arg) {
-          state.currentUser = null
+        const targetId = typeof action.meta.arg === "object" ? action.meta.arg.id : action.meta.arg
+        if (action.payload.deleted || action.payload.deleted === undefined) {
+          // If deleted is undefined, fallback to old behavior (assume fully deleted)
+          state.users = state.users.filter((u) => u._id !== targetId)
+          if (state.currentUser?._id === targetId) {
+            state.currentUser = null
+          }
+        } else {
+          // Just update the user in the list (since they only lost a role but still exist)
+          state.users = state.users.map((u) =>
+            u._id === targetId ? action.payload.user : u
+          )
         }
       })
       .addCase(deleteUser.rejected, (state, action) => {

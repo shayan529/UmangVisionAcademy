@@ -28,7 +28,8 @@ const RatingModal = ({ course, onClose, onSubmit }) => {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const labels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
+  const { t } = useTranslation();
+  const labels = t("courses.ratingLabels", { returnObjects: true }) || ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
 
   const handleSubmit = async () => {
     if (!selected) return toast.error("Please select a rating");
@@ -47,7 +48,7 @@ const RatingModal = ({ course, onClose, onSubmit }) => {
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h3 className="text-white font-bold text-lg">Rate this Course</h3>
+            <h3 className="text-white font-bold text-lg">{t("courses.ratingModalTitle")}</h3>
             <p className="text-slate-400 text-sm mt-0.5 line-clamp-1">
               {course.title}
             </p>
@@ -90,7 +91,7 @@ const RatingModal = ({ course, onClose, onSubmit }) => {
         <textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="Share your experience (optional)…"
+          placeholder={t("courses.ratingCommentPlaceholder")}
           rows={3}
           className="w-full bg-[#0B1120] border border-slate-700 rounded-xl px-4 py-3 text-slate-300 text-sm placeholder-slate-600 outline-none focus:border-indigo-500 resize-none transition-colors"
         />
@@ -101,14 +102,14 @@ const RatingModal = ({ course, onClose, onSubmit }) => {
             onClick={onClose}
             className="flex-1 py-2.5 rounded-xl text-sm font-medium text-slate-400 border border-slate-700 hover:text-white hover:border-slate-500 transition-all"
           >
-            Cancel
+            {t("courses.cancel")}
           </button>
           <button
             onClick={handleSubmit}
             disabled={!selected || submitting}
             className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? "Submitting…" : "Submit Rating"}
+            {submitting ? t("courses.submitting") : t("courses.submitRating")}
           </button>
         </div>
       </div>
@@ -419,6 +420,7 @@ const Courses = () => {
                         _id: course._id,
                         title: course.title,
                         instructor: instructorName(course.instructor),
+                        instructorId: typeof course.instructor === 'object' ? course.instructor?._id : null,
                         rating: course.ratingAverage ?? 0,
                         reviews: course.reviewCount ?? 0,
                         price:
@@ -450,7 +452,7 @@ const Courses = () => {
                               }
                             />
                           ))}
-                          <span className="text-slate-400 ml-1">Rated</span>
+                          <span className="text-slate-400 ml-1">{t("courses.rated")}</span>
                         </div>
                       ) : (
                         <button
@@ -461,7 +463,7 @@ const Courses = () => {
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-semibold hover:bg-amber-500/20 hover:border-amber-500/40 transition-all"
                         >
                           <FaStar className="text-[11px]" />
-                          Rate Course
+                          {t("courses.rateCourse")}
                         </button>
                       )}
                     </div>

@@ -91,6 +91,7 @@ import BoardCourses from "./components/Boards/BoardCourses";
 import CoursePage from "./components/course/CoursePage";
 import ProgressPage from "./components/student/ProgressPage";
 import PurchaseHistory from "./components/student/PurchaseHistory";
+import InstructorAboutPage from "./components/common/InstructorAboutPage";
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -169,6 +170,7 @@ function App() {
           <Route path="blogs" element={<Blogs />} />
           <Route path="courses/:id" element={<CoursePage />} />
           <Route path="boards/:board" element={<BoardCourses />} />
+          <Route path="instructors/:id" element={<InstructorAboutPage />} />
           <Route
             path="become-instructor/apply"
             element={<BecomeInstructorApplication />}

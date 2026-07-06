@@ -634,12 +634,33 @@ export const updateUser = async (req, res) => {
   }
 };
 
-// ── Delete User ───────────────────────────────────────────────────────────────
 export const deleteUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    const { role } = req.query;
+
+    const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.json({ message: "User deleted" });
+
+    if (role) {
+      const otherRoles = user.roles.filter((r) => {
+        if (typeof r === "string") {
+          return r !== role;
+        }
+        // Keep custom role objects
+        return true;
+      });
+
+      if (otherRoles.length > 0) {
+        user.roles = otherRoles;
+        await user.save();
+        const hydrated = await hydrateUserRoles(user);
+        return res.json({ deleted: false, user: hydrated, message: `Role ${role} removed` });
+      }
+    }
+
+    await User.findByIdAndDelete(id);
+    res.json({ deleted: true, message: "User deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -801,5 +822,52 @@ export const selectClass = async (req, res) => {
     res.json(await hydrateUserRoles(user));
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const getInstructorPublicProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const instructor = await User.findById(id).select(
+      "name bio specialization city state createdAt roles avatarUrl",
+    );
+    if (!instructor || !instructor.roles?.includes("instructor")) {
+      return res.status(404).json({ message: "Instructor not found." });
+    }
+
+    const courses = await Course.find({
+      instructor: id,
+      published: true,
+      approvalStatus: "approved",
+    }).select(
+      "title thumbnailUrl price category board ratingAverage reviewCount students",
+    );
+
+    const ratings = courses.map((c) => c.ratingAverage).filter((r) => r > 0);
+    const avgRating = ratings.length
+      ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
+      : null;
+    const totalStudents = courses.reduce(
+      (sum, c) => sum + (c.students?.length || 0),
+      0,
+    );
+
+    res.json({
+      _id: instructor._id,
+      name: instructor.name,
+      avatarUrl: instructor.avatarUrl,
+      bio: instructor.bio,
+      specialization: instructor.specialization,
+      city: instructor.city,
+      state: instructor.state,
+      createdAt: instructor.createdAt,
+      avgRating,
+      totalStudents,
+      courses,
+    });
+  } catch (err) {
+    console.error("Instructor public profile error:", err);
+    res.status(500).json({ message: "Failed to load instructor profile." });
   }
 };

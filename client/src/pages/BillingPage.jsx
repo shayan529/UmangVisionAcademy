@@ -11,7 +11,6 @@ import {
   resetPaymentSuccess,
 } from "../redux/slices/billingSlice";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 const fmt = (dateStr) => {
   if (!dateStr) return "—";
   return new Date(dateStr).toLocaleDateString("en-IN", {
@@ -35,7 +34,6 @@ const statusColors = {
 
 const planColors = { base: "#6366f1", premium: "#a78bfa" };
 
-// ── Skeleton ──────────────────────────────────────────────────────────────────
 const Sk = ({ w = "100%", h = 16, r = 8, style = {} }) => (
   <div
     style={{
@@ -50,7 +48,6 @@ const Sk = ({ w = "100%", h = 16, r = 8, style = {} }) => (
   />
 );
 
-// ── Load Razorpay script ──────────────────────────────────────────────────────
 const loadRazorpay = () =>
   new Promise((resolve) => {
     if (window.Razorpay) {
@@ -64,14 +61,12 @@ const loadRazorpay = () =>
     document.body.appendChild(script);
   });
 
-// ── Main page ─────────────────────────────────────────────────────────────────
 export default function BillingPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
 
-  // Plan passed from Plans page via navigate state
   const selectedPlan = location.state?.plan ?? null;
 
   const { user } = useSelector((s) => s.auth);
@@ -87,29 +82,25 @@ export default function BillingPage() {
 
   const [showCancel, setShowCancel] = useState(false);
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!user)
       navigate("/login", { state: { from: "/billing" }, replace: true });
   }, [user, navigate]);
 
-  // Fetch current subscription on mount
   useEffect(() => {
     dispatch(fetchSubscription());
   }, [dispatch]);
 
-  // Redirect to dashboard after successful payment
   useEffect(() => {
     if (paymentSuccess) {
-      const t = setTimeout(() => {
+      const timer = setTimeout(() => {
         dispatch(resetPaymentSuccess());
         navigate("/student-dashboard");
       }, 3000);
-      return () => clearTimeout(t);
+      return () => clearTimeout(timer);
     }
   }, [paymentSuccess, dispatch, navigate]);
 
-  // ── Razorpay checkout flow ────────────────────────────────────────────────
   const handlePay = async (plan) => {
     const ok = await loadRazorpay();
     if (!ok) {
@@ -117,7 +108,6 @@ export default function BillingPage() {
       return;
     }
 
-    // 1. Create order on backend
     const result = await dispatch(
       createOrder({
         planId: plan.id,
@@ -140,7 +130,6 @@ export default function BillingPage() {
       return;
     }
 
-    // 2. Open Razorpay checkout
     const options = {
       key: keyId,
       amount,
@@ -154,7 +143,6 @@ export default function BillingPage() {
       },
       theme: { color: planColors[plan.id] ?? "#7c3aed" },
       handler: async (response) => {
-        // 3. Verify on backend
         await dispatch(
           verifyPayment({
             razorpay_order_id: response.razorpay_order_id,
@@ -163,7 +151,6 @@ export default function BillingPage() {
             planId: plan.id,
           }),
         );
-        // Re-fetch subscription to update UI
         dispatch(fetchSubscription());
       },
     };
@@ -210,6 +197,7 @@ export default function BillingPage() {
         .billing-fade:nth-child(2) { animation-delay:0.07s; }
         .billing-fade:nth-child(3) { animation-delay:0.13s; }
         .plan-card:hover { border-color:#334155 !important; transform:translateY(-2px); }
+        .plan-card.plan-card-premium:hover { transform:translateY(-4px); }
       `}</style>
 
       <div
@@ -220,7 +208,6 @@ export default function BillingPage() {
           fontFamily: "'Inter','Segoe UI',sans-serif",
         }}
       >
-        {/* ── Nav ── */}
         <nav
           style={{
             display: "flex",
@@ -263,7 +250,6 @@ export default function BillingPage() {
             gap: 28,
           }}
         >
-          {/* ── Success banner ── */}
           {paymentSuccess && (
             <div
               style={{
@@ -288,7 +274,6 @@ export default function BillingPage() {
             </div>
           )}
 
-          {/* ── Error banner ── */}
           {error && (
             <div
               style={{
@@ -318,7 +303,6 @@ export default function BillingPage() {
             </div>
           )}
 
-          {/* ── Page title ── */}
           <div className="billing-fade">
             <h1
               style={{
@@ -334,7 +318,6 @@ export default function BillingPage() {
             </p>
           </div>
 
-          {/* ── Current plan card ── */}
           <div
             className="billing-fade"
             style={{
@@ -433,7 +416,6 @@ export default function BillingPage() {
                   )}
                 </div>
 
-                {/* Progress bar for days remaining */}
                 {activeSub &&
                   subscription.startDate &&
                   subscription.endDate && (
@@ -488,7 +470,6 @@ export default function BillingPage() {
             )}
           </div>
 
-          {/* ── Plan selection (only if no active plan OR plan passed from Plans page) ── */}
           {!activeSub && (
             <div className="billing-fade">
               <p
@@ -505,8 +486,8 @@ export default function BillingPage() {
               </p>
               <div
                 style={{
-                  display: "flex",
-                  justifyContent: "center",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))",
                   gap: 16,
                 }}
               >
@@ -519,6 +500,25 @@ export default function BillingPage() {
                     amount: 10000,
                     features: t("plans.base.features", { returnObjects: true }) || [],
                     color: "#6366f1",
+                    popular: false,
+                  },
+                  {
+                    id: "premium",
+                    title: t("plans.premium.title", { defaultValue: "Premium" }),
+                    price: t("plans.premium.price", { defaultValue: "₹500" }),
+                    period: t("plans.premium.period", { defaultValue: "month" }),
+                    amount: 50000,
+                    features: t("plans.premium.features", {
+                      returnObjects: true,
+                      defaultValue: [
+                        "Everything in Base plan",
+                        "Live doubt-clearing sessions with instructors",
+                        "Personalized AI-powered study plan",
+                        "Priority instructor support",
+
+                      ],
+                    }) || [],
+                    color: "#a78bfa",
                     popular: true,
                   },
                 ].map((plan) => {
@@ -526,16 +526,31 @@ export default function BillingPage() {
                   return (
                     <div
                       key={plan.id}
-                      className="plan-card"
-                      style={{
-                        background: isSelected ? `${plan.color}12` : "#111827",
-                        border: `1px solid ${isSelected ? plan.color : "#1e293b"}`,
-                        borderRadius: 18,
-                        padding: "22px",
-                        transition: "all 0.2s",
-                        position: "relative",
-                        cursor: "default",
-                      }}
+                      className={`plan-card${plan.popular ? " plan-card-premium" : ""}`}
+                      style={
+                        plan.popular
+                          ? {
+                            background: isSelected
+                              ? "linear-gradient(135deg,#4f22a8,#2e1065)"
+                              : "linear-gradient(135deg,#4c1d95,#1e1b4b)",
+                            border: `1px solid ${isSelected ? plan.color : "#7c3aed50"}`,
+                            borderRadius: 20,
+                            padding: "24px",
+                            transition: "all 0.2s",
+                            position: "relative",
+                            cursor: "default",
+                            boxShadow: "0 10px 30px rgba(124,58,237,0.25)",
+                          }
+                          : {
+                            background: isSelected ? `${plan.color}12` : "#111827",
+                            border: `1px solid ${isSelected ? plan.color : "#1e293b"}`,
+                            borderRadius: 18,
+                            padding: "22px",
+                            transition: "all 0.2s",
+                            position: "relative",
+                            cursor: "default",
+                          }
+                      }
                     >
                       {plan.popular && (
                         <span
@@ -547,17 +562,16 @@ export default function BillingPage() {
                             fontWeight: 700,
                             padding: "2px 8px",
                             borderRadius: 20,
-                            background: `${plan.color}20`,
-                            color: plan.color,
-                            border: `1px solid ${plan.color}40`,
+                            background: "#fff",
+                            color: "#6d28d9",
                           }}
                         >
-                          POPULAR
+                          MOST POPULAR
                         </span>
                       )}
                       <h3
                         style={{
-                          fontSize: 18,
+                          fontSize: plan.popular ? 20 : 18,
                           fontWeight: 700,
                           color: "#f1f5f9",
                         }}
@@ -567,14 +581,19 @@ export default function BillingPage() {
                       <div style={{ marginTop: 8, marginBottom: 16 }}>
                         <span
                           style={{
-                            fontSize: 30,
+                            fontSize: plan.popular ? 34 : 30,
                             fontWeight: 800,
-                            color: plan.color,
+                            color: plan.popular ? "#fff" : plan.color,
                           }}
                         >
                           {plan.price}
                         </span>
-                        <span style={{ fontSize: 13, color: "#64748b" }}>
+                        <span
+                          style={{
+                            fontSize: 13,
+                            color: plan.popular ? "#c4b5fd" : "#64748b",
+                          }}
+                        >
                           /{plan.period}
                         </span>
                       </div>
@@ -594,10 +613,15 @@ export default function BillingPage() {
                               alignItems: "center",
                               gap: 8,
                               fontSize: 13,
-                              color: "#94a3b8",
+                              color: plan.popular ? "#e9d5ff" : "#94a3b8",
                             }}
                           >
-                            <span style={{ color: "#34d399", flexShrink: 0 }}>
+                            <span
+                              style={{
+                                color: plan.popular ? "#4ade80" : "#34d399",
+                                flexShrink: 0,
+                              }}
+                            >
                               ✓
                             </span>
                             {f}
@@ -612,14 +636,18 @@ export default function BillingPage() {
                           padding: "12px",
                           borderRadius: 12,
                           border: "none",
-                          background: `linear-gradient(135deg,${plan.color},${plan.color}99)`,
-                          color: "#fff",
+                          background: plan.popular
+                            ? "#fff"
+                            : `linear-gradient(135deg,${plan.color},${plan.color}99)`,
+                          color: plan.popular ? "#6d28d9" : "#fff",
                           fontSize: 14,
                           fontWeight: 700,
                           cursor: "pointer",
                           opacity: orderLoading || paymentLoading ? 0.6 : 1,
                           transition: "opacity 0.2s",
-                          boxShadow: `0 6px 20px ${plan.color}30`,
+                          boxShadow: plan.popular
+                            ? "0 6px 20px rgba(255,255,255,0.15)"
+                            : `0 6px 20px ${plan.color}30`,
                         }}
                       >
                         {orderLoading || paymentLoading
@@ -635,9 +663,9 @@ export default function BillingPage() {
                             marginTop: 8,
                             padding: "10px",
                             borderRadius: 12,
-                            border: "1px dashed #334155",
+                            border: `1px dashed ${plan.popular ? "#a78bfa60" : "#334155"}`,
                             background: "transparent",
-                            color: "#64748b",
+                            color: plan.popular ? "#c4b5fd" : "#64748b",
                             fontSize: 12,
                             fontWeight: 600,
                             cursor: "pointer",
@@ -653,52 +681,6 @@ export default function BillingPage() {
             </div>
           )}
 
-          {/* ── Upgrade option if on base plan ── */}
-          {/* {activeSub && subscription?.plan === "base" && (
-            <div
-              className="billing-fade"
-              style={{
-                background: "linear-gradient(135deg,#2e1065,#0f172a)",
-                border: "1px solid #7c3aed30",
-                borderRadius: 18,
-                padding: "22px 24px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 16,
-              }}
-            >
-              <div>
-                <p style={{ fontWeight: 700, color: "#a78bfa", fontSize: 15 }}>
-                  Upgrade to Premium
-                </p>
-                <p style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
-                  Get live classes, personalized paths and priority support.
-                </p>
-              </div>
-              <button
-                onClick={() =>
-                  handlePay({ id: "premium", title: "Premium", price: "₹999" })
-                }
-                disabled={orderLoading || paymentLoading}
-                style={{
-                  padding: "10px 22px",
-                  borderRadius: 12,
-                  border: "none",
-                  background: "linear-gradient(135deg,#7c3aed,#a78bfa)",
-                  color: "#fff",
-                  fontWeight: 700,
-                  fontSize: 13,
-                  cursor: "pointer",
-                }}
-              >
-                Upgrade — ₹999/mo
-              </button>
-            </div>
-          )} */}
-
-          {/* ── Payment details ── */}
           {subscription?.razorpayPaymentId && (
             <div
               className="billing-fade"
@@ -764,7 +746,6 @@ export default function BillingPage() {
         </div>
       </div>
 
-      {/* ── Cancel confirmation modal ── */}
       {showCancel && (
         <div
           style={{

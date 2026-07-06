@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../redux/slices/cartSlice.js";
 import { hasBaseRole } from "../../utils/permissions";
+import { useTranslation } from "react-i18next";
 
 const getOptimizedImageUrl = (url) => {
   if (!url) return "";
@@ -16,6 +17,7 @@ const CourseCard = ({ course }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const { t } = useTranslation();
 
   // Only base "student" or "instructor" accounts can enroll / add to cart.
   // Custom-role staff (HR Manager, etc.) and base "admin" only ever get
@@ -58,9 +60,31 @@ const CourseCard = ({ course }) => {
           </h3>
 
           {/* Instructor */}
-          <p className="text-[11px] md:text-sm text-gray-500 mt-0.5 md:mt-1 truncate">
-            {course.instructor}
-          </p>
+          <div className="mt-0.5 md:mt-1 flex items-center justify-between">
+            {course.instructorId ? (
+              <Link
+                to={`/instructors/${course.instructorId}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-[11px] md:text-sm text-gray-500 hover:text-indigo-600 hover:underline truncate"
+                title={course.instructor}
+              >
+                {course.instructor}
+              </Link>
+            ) : (
+              <p className="text-[11px] md:text-sm text-gray-500 truncate">
+                {course.instructor}
+              </p>
+            )}
+            {course.instructorId && (
+              <Link
+                to={`/instructors/${course.instructorId}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-[10px] md:text-[11px] text-indigo-500 hover:text-indigo-600 hover:underline shrink-0 ml-2"
+              >
+                {t("courseCard.viewInstructor")}
+              </Link>
+            )}
+          </div>
 
           {/* Class & Board */}
           <div className="flex flex-wrap gap-1.5 md:gap-2 mt-1.5 md:mt-3">
@@ -101,7 +125,7 @@ const CourseCard = ({ course }) => {
             {course.enrolled ? (
               <Link to={`/courses/${course._id}`} className="block">
                 <button className="w-full bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 transition text-white py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center">
-                  Continue Learning →
+                  {t("courseCard.continueLearning")}
                 </button>
               </Link>
             ) : canEnroll || !user ? (
@@ -111,7 +135,7 @@ const CourseCard = ({ course }) => {
                     onClick={(e) => e.stopPropagation()}
                     className="w-full border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center"
                   >
-                    View Demo
+                    {t("courseCard.viewDemo")}
                   </button>
                 </Link>
 
@@ -119,7 +143,7 @@ const CourseCard = ({ course }) => {
                   onClick={handleBuy}
                   className="flex-1 bg-indigo-600 hover:bg-indigo-700 transition text-white py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center"
                 >
-                  {course.price > 0 ? "Buy Now" : "Enroll Now"}
+                  {course.price > 0 ? t("courseCard.buyNow") : t("courseCard.enrollNow")}
                 </button>
               </div>
             ) : (
@@ -129,7 +153,7 @@ const CourseCard = ({ course }) => {
                     onClick={(e) => e.stopPropagation()}
                     className="w-full border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center"
                   >
-                    View Demo
+                    {t("courseCard.viewDemo")}
                   </button>
                 </Link>
               </div>
