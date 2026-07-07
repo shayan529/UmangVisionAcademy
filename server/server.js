@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cookieParser from "cookie-parser";
+import mongoose from "mongoose";
 import "dotenv/config";
 import ConnectDb from "./utils/ConnectDb.js";
 import { connectRedis } from "./utils/redisClient.js";
@@ -98,6 +99,17 @@ const io = new Server(httpServer, {
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));
+
+// Debug logger for APK requests
+app.use((req, res, next) => {
+  const userAgent = req.headers["user-agent"] || "";
+  if (userAgent.includes("Capacitor") || userAgent.includes("Native")) {
+    console.log(`[APK Request] ${req.method} ${req.url}`);
+    console.log(`  Origin: ${req.headers["origin"]}`);
+    console.log(`  Mongoose State: ${mongoose.connection.readyState}`);
+  }
+  next();
+});
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.get("/api", (req, res) => {

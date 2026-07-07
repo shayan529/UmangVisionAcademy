@@ -29,11 +29,24 @@ const seedAdminUser = async () => {
 
 const ConnectDb = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI);
-    if (conn) console.log("Connected to MongoDB", conn.connection.host);
+    // Increase buffer timeout globally for Mongoose to handle slow cold starts
+    mongoose.set('bufferTimeoutMS', 30000);
+
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      heartbeatFrequencyMS: 10000,
+    });
+
+    if (conn) {
+      console.log("Connected to MongoDB", conn.connection.host);
+      // We keep buffering enabled but with a longer timeout
+    }
+
     await seedAdminUser();
   } catch (error) {
-    console.error("Error connecting to MongoDB:", error);
+    console.error("Critical: Error connecting to MongoDB:", error);
+    throw error;
   }
 };
 
