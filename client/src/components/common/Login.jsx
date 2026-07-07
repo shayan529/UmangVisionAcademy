@@ -894,14 +894,14 @@ const Login = () => {
       const isEarlyBird = hour < 7;
       const isNightOwl = hour >= 22;
 
-      await dispatch(
+      // Fire and forget achievements to avoid blocking UI navigation
+      dispatch(
         checkAndAwardAchievements({
           firstLogin: true,
           earlyBird: isEarlyBird,
           nightStudy: isNightOwl,
         }),
-      );
-      await dispatch(fetchAchievements());
+      ).then(() => dispatch(fetchAchievements()));
 
       toast(t("auth.welcomeToast"), { icon: "👋" });
 
