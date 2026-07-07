@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 const Hero = () => {
@@ -18,6 +18,16 @@ const Hero = () => {
       else mq.removeListener(onChange);
     };
   }, []);
+
+  const [activeSlide, setActiveSlide] = useState(0);
+  const carouselRef = useRef(null);
+
+  const handleCarouselScroll = (e) => {
+    const el = e.target;
+    const cardWidth = 200 + 12; // card width + gap-3 (12px)
+    const index = Math.round(el.scrollLeft / cardWidth);
+    setActiveSlide(Math.min(index, benefits.length - 1));
+  };
 
   const fullText = t("hero.text");
   const langKey = i18n.language?.split("-")[0] || "en";
@@ -164,9 +174,12 @@ const Hero = () => {
             </Link>
           </div>
 
+
           {/* BENEFITS CAROUSEL */}
           <div className="mt-2">
             <div
+              ref={carouselRef}
+              onScroll={handleCarouselScroll}
               className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 -mx-5 px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {benefits.map((b, idx) => (
@@ -180,6 +193,28 @@ const Hero = () => {
                     {b.desc}
                   </p>
                 </div>
+              ))}
+            </div>
+
+            {/* DOTS */}
+            <div className="mt-4 flex justify-center items-center gap-2">
+              {benefits.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  aria-label={`Go to slide ${idx + 1}`}
+                  onClick={() => {
+                    const cardWidth = 200 + 12;
+                    carouselRef.current?.scrollTo({
+                      left: idx * cardWidth,
+                      behavior: "smooth",
+                    });
+                  }}
+                  className={`h-2 rounded-full transition-all duration-300 ease-out ${activeSlide === idx
+                    ? "w-6 bg-gradient-to-r from-emerald-300 to-sky-300 shadow-[0_0_8px_rgba(110,231,183,0.6)]"
+                    : "w-2 bg-white/25 hover:bg-white/40"
+                    }`}
+                />
               ))}
             </div>
           </div>

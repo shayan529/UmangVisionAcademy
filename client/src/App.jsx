@@ -102,26 +102,29 @@ const ScrollToTop = () => {
 };
 
 const Layout = () => {
+  const { isAuthenticated } = useSelector((s) => s.auth);
   const nativeApp = isNativeApp();
   const isMobileViewport =
     typeof window !== "undefined" && window.innerWidth < 768;
-  const showMobileBottomBar = nativeApp || isMobileViewport;
+  const showMobileBottomBar = (nativeApp || isMobileViewport) && isAuthenticated;
+  const showNavbarAndFooter = (isMobileViewport || nativeApp) ? isAuthenticated : true;
 
   return (
-    <div className="bg-slate-950 text-slate-100 min-h-screen pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
-      <Navbar />
-      <div className="pb-8">
+    <div className={`bg-slate-950 text-slate-100 min-h-screen ${showMobileBottomBar ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : 'pb-0'} md:pb-0`}>
+      {showNavbarAndFooter && <Navbar />}
+      <div className={showNavbarAndFooter ? "pb-8" : ""}>
         <Outlet />
       </div>
       {showMobileBottomBar && <MobileBottomBar />}
-      <Footer />
+      {showNavbarAndFooter && <Footer />}
     </div>
   );
 };
 
 function App() {
   const dispatch = useDispatch();
-  const { user } = useSelector((s) => s.auth);
+  const { user, isAuthenticated, loading } = useSelector((s) => s.auth);
+  const location = useLocation();
 
   useEffect(() => {
     dispatch(loadCurrentUser());
@@ -137,6 +140,46 @@ function App() {
   const isMobileViewport =
     typeof window !== "undefined" && window.innerWidth < 768;
   const showMobileNav = nativeApp || isMobileViewport;
+
+  // ── Loading state (to prevent flash of unauthenticated content) ───────────
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#0b1120",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              border: "3px solid #1e293b",
+              borderTopColor: "#7c3aed",
+              animation: "spin 0.8s linear infinite",
+              margin: "0 auto 16px",
+            }}
+          />
+          <p style={{ color: "#64748b", fontSize: 14 }}>Loading...</p>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  // ── Unauthenticated APK Redirect Logic ────────────────────────────────────
+  if (nativeApp && !isAuthenticated) {
+    const publicAuthRoutes = ["/login", "/signup", "/privacy", "/terms"];
+    // If we are NOT on a public auth page, force redirect to login
+    if (!publicAuthRoutes.includes(location.pathname)) {
+      return <Navigate to="/login" replace />;
+    }
+  }
 
   return (
     <>

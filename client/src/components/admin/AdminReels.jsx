@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import { hasPermission, hasBaseRole } from "../../utils/permissions";
+import { useTranslation } from "react-i18next";
 
 /**
  * ─────────────────────────────────────────────────────────────────────────
@@ -36,6 +37,7 @@ import { hasPermission, hasBaseRole } from "../../utils/permissions";
 const FILTERS = ["all", "pending", "approved", "rejected"];
 
 const AdminReels = () => {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const [reels, setReels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -355,14 +357,14 @@ const AdminReels = () => {
               Umang Vision Academy &middot; Staff Workspace
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold text-white flex items-center gap-3">
-              Reels Moderation <Clapperboard className="text-indigo-300" size={30} />
+              {t('adminReels.title')} <Clapperboard className="text-indigo-300" size={30} />
             </h1>
             <p className="mt-2 text-sm max-w-xl" style={{ color: "#9CA3D4" }}>
-              Review short-form videos submitted by instructors before they reach students.
+              {t('adminReels.subtitle')}
             </p>
           </div>
           <div className="amr-badge rounded-xl px-5 py-3 text-white text-sm font-semibold whitespace-nowrap self-start md:self-center">
-            {counts.pending} Awaiting Review
+            {counts.pending} {t('adminReels.awaitingReview')}
           </div>
         </div>
 
@@ -375,7 +377,7 @@ const AdminReels = () => {
                 onClick={() => setFilter(f)}
                 className={`amr-tab px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide ${filter === f ? "active" : ""}`}
               >
-                {f} <span style={{ opacity: 0.65 }}>&middot; {counts[f]}</span>
+                {t(`adminReels.filters.${f}`)} <span style={{ opacity: 0.65 }}>&middot; {counts[f]}</span>
               </button>
             ))}
           </div>
@@ -384,7 +386,7 @@ const AdminReels = () => {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search title or instructor"
+              placeholder={t('adminReels.searchPlaceholder')}
               className="amr-input w-full pl-9 pr-3 py-2 rounded-lg text-sm"
             />
           </div>
@@ -402,9 +404,9 @@ const AdminReels = () => {
             <div className="amr-icon-tile w-14 h-14 rounded-full flex items-center justify-center mb-4">
               <Inbox size={26} />
             </div>
-            <h3 className="text-lg font-semibold text-white">The queue is empty</h3>
+            <h3 className="text-lg font-semibold text-white">{t('adminReels.emptyQueueTitle')}</h3>
             <p className="text-sm mt-1" style={{ color: "#6B7398" }}>
-              Nothing matches this view right now.
+              {t('adminReels.emptyQueueSubtitle')}
             </p>
           </div>
         ) : (
@@ -454,7 +456,7 @@ const AdminReels = () => {
                       {r.status === "approved" && <Check size={11} />}
                       {r.status === "rejected" && <X size={11} />}
                       {r.status === "pending" && <Clock size={11} />}
-                      {r.status}
+                      {t(`adminReels.filters.${r.status}`)}
                     </span>
                   </div>
 
@@ -463,7 +465,7 @@ const AdminReels = () => {
                       {r.title || "Untitled"}
                     </h3>
                     <p className="text-[11px] mt-1 truncate" style={{ color: "#B4B9E0" }}>
-                      {r.instructorName || "Unknown instructor"}
+                      {r.instructorName || t('adminReels.unknownInstructor')}
                     </p>
                     {r.status === "approved" && (
                       <div className="flex items-center gap-3 mt-1.5 text-[11px]" style={{ color: "#9CA3D4" }}>
@@ -480,7 +482,7 @@ const AdminReels = () => {
                       style={{ background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)", color: "#B4B9E0" }}
                     >
                       <span className="font-semibold" style={{ color: "#FCA5A5" }}>
-                        Reason:{" "}
+                        {t('adminReels.reason')}{" "}
                       </span>
                       {r.rejectedReason}
                     </div>
@@ -494,7 +496,7 @@ const AdminReels = () => {
                           disabled={stamping?.id === r._id}
                           className="amr-btn-reject flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-colors"
                         >
-                          <X size={12} /> Reject
+                          <X size={12} /> {t('adminReels.actions.reject')}
                         </button>
                       )}
                       {canApprove && (
@@ -503,7 +505,7 @@ const AdminReels = () => {
                           disabled={stamping?.id === r._id}
                           className="amr-btn-approve flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-colors"
                         >
-                          <Check size={12} /> Approve
+                          <Check size={12} /> {t('adminReels.actions.approve')}
                         </button>
                       )}
                     </div>
@@ -516,7 +518,7 @@ const AdminReels = () => {
                         disabled={stamping?.id === r._id}
                         className="amr-btn-reject flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-colors"
                       >
-                        <RotateCcw size={12} /> Unapprove
+                        <RotateCcw size={12} /> {t('adminReels.actions.unapprove')}
                       </button>
                     </div>
                   )}
@@ -528,7 +530,7 @@ const AdminReels = () => {
                         disabled={stamping?.id === r._id}
                         className="amr-btn-approve flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-colors"
                       >
-                        <RotateCcw size={12} /> Unreject
+                        <RotateCcw size={12} /> {t('adminReels.actions.unreject')}
                       </button>
                     </div>
                   )}
@@ -539,7 +541,7 @@ const AdminReels = () => {
                         autoFocus
                         value={rejectReason}
                         onChange={(e) => setRejectReason(e.target.value)}
-                        placeholder="Reason (optional)"
+                        placeholder={t('adminReels.rejectReasonPlaceholder')}
                         rows={2}
                         className="amr-input w-full rounded-lg p-2 text-[11px] resize-none"
                       />
@@ -548,13 +550,13 @@ const AdminReels = () => {
                           onClick={() => setRejectingId(null)}
                           className="amr-tab flex-1 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide"
                         >
-                          Cancel
+                          {t('adminReels.actions.cancel')}
                         </button>
                         <button
                           onClick={() => confirmReject(r._id)}
                           className="amr-btn-reject flex-1 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide"
                         >
-                          Confirm
+                          {t('adminReels.actions.confirm')}
                         </button>
                       </div>
                     </div>

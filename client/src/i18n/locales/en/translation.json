@@ -46,7 +46,14 @@
     "submitting": "Submitting…",
     "rated": "Rated",
     "rateCourse": "Rate Course",
-    "ratingLabels": ["", "Poor", "Fair", "Good", "Very Good", "Excellent"]
+    "ratingLabels": [
+      "",
+      "Poor",
+      "Fair",
+      "Good",
+      "Very Good",
+      "Excellent"
+    ]
   },
   "demo": {
     "add_to_cart": "Add to Cart",
@@ -1691,5 +1698,30 @@
     "browseAll": "Browse all courses",
     "noMatch": "No courses match your filters",
     "tryDifferent": "Try selecting a different class or subject."
+  },
+  "adminReels": {
+    "title": "Reels Moderation",
+    "subtitle": "Review short-form videos submitted by instructors before they reach students.",
+    "awaitingReview": "Awaiting Review",
+    "filters": {
+      "all": "All",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "searchPlaceholder": "Search title or instructor",
+    "emptyQueueTitle": "The queue is empty",
+    "emptyQueueSubtitle": "Nothing matches this view right now.",
+    "unknownInstructor": "Unknown instructor",
+    "reason": "Reason:",
+    "actions": {
+      "reject": "Reject",
+      "approve": "Approve",
+      "unapprove": "Unapprove",
+      "unreject": "Unreject",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "rejectReasonPlaceholder": "Reason (optional)"
   }
 }

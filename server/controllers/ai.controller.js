@@ -367,7 +367,7 @@ Return a JSON object with a single key "articles" whose value is an array of 6 o
           },
           { role: "user", content: prompt },
         ],
-        max_tokens: 2500,
+        max_tokens: 8000,
         temperature: 0.7,
       });
 

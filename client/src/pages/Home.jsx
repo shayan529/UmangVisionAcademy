@@ -1,4 +1,6 @@
 import AISection from "../components/common/AiSection";
+import { useSelector } from "react-redux";
+import { Navigate } from "react-router-dom";
 
 import Community from "../components/common/Community";
 import Footer from "../Layout/Footer";
@@ -10,6 +12,13 @@ import FeaturedCourses from "../components/common/FeaturedCourses";
 import Testimonials from "../components/common/Testimonials";
 
 const Home = () => {
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
+
+  if (isMobileViewport && !isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <div>
       <Hero />

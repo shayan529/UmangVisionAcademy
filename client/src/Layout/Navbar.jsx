@@ -160,7 +160,7 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="w-full sticky top-0 z-30 bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10">
+      <nav className="w-full sticky top-0 z-50 bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10">
         <style>{`
 .btn-navy,
 .btn-indigo-shine,
@@ -341,7 +341,7 @@ button.btn-red:hover,
                 />
               </button>
               {langDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-36 rounded-2xl border border-slate-700 bg-slate-900 shadow-xl">
+                <div className="absolute right-0 top-full mt-2 w-36 rounded-2xl border border-slate-700 bg-slate-900 shadow-xl z-50 overflow-hidden">
                   <button
                     type="button"
                     onClick={() => changeLanguage("en")}
