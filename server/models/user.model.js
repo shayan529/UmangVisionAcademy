@@ -198,6 +198,7 @@ const userSchema = new Schema(
         lastLogin: { type: Date, default: Date.now },
       },
     ],
+    purchasedPYQs: [{ type: String }],
   },
   {
     timestamps: true,

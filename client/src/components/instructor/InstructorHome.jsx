@@ -14,6 +14,7 @@ import {
 const InstructorHome = ({ showToast, onNavigate }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  const { user } = useSelector((s) => s.auth);
   const { courses, loading: coursesLoading } = useSelector((s) => s.courses);
   const { sessions, loading: sessionsLoading } = useSelector((s) => s.sessions);
 
@@ -54,6 +55,15 @@ const InstructorHome = ({ showToast, onNavigate }) => {
 
   return (
     <>
+      <div style={{ marginBottom: 24 }}>
+        <p style={{ color: "#a78bfa", fontWeight: 500, fontSize: 14, marginBottom: 6 }}>
+          Welcome back, {user?.name?.split(" ")[0] || "Instructor"}
+        </p>
+        <h1 style={{ fontSize: "clamp(24px,3vw,32px)", fontWeight: 800, color: "#f1f5f9", lineHeight: 1.2 }}>
+          Instructor Dashboard
+        </h1>
+      </div>
+
       {/* Stats row — no delta props */}
       <div
         style={{

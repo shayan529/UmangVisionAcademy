@@ -170,8 +170,11 @@ const AdminOverview = ({
               ? t("adminOverview.workspaceAdmin")
               : `${roleLabel} ${t("adminOverview.workspaceStaff")}`}
           </p>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white leading-tight mb-2">
+          <p className="text-sm text-indigo-300 font-medium mb-1">
             {t("adminOverview.welcomeBack", { name: greetingName })}
+          </p>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-white leading-tight mb-2">
+            {isFullAdmin ? "Admin Dashboard" : "Staff Dashboard"}
           </h1>
           <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
             {isFullAdmin

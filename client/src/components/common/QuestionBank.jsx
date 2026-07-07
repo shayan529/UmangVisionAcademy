@@ -303,6 +303,11 @@ const QuestionBank = () => {
   const [selectedClass, setSelectedClass] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [uploadedPapers, setUploadedPapers] = useState([]);
+  
+  const [showModal, setShowModal] = useState(false);
+  const [modalData, setModalData] = useState(null);
+  const [purchasing, setPurchasing] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
 
   useEffect(() => {
     axios
@@ -324,11 +329,12 @@ const QuestionBank = () => {
     return boardMatch && classMatch && (searchTerm ? subjectMatch : true);
   });
 
-  const handlePaperAccess = (year, subject, board, className) => {
+  const handlePaperAccess = async (year, subject, board, className) => {
     if (!user) {
       navigate("/login", { state: { from: "/question-bank" } });
       return;
     }
+    
     const uploaded = uploadedPapers.find(
       (p) =>
         p.board === board &&
@@ -336,10 +342,64 @@ const QuestionBank = () => {
         p.subject === subject &&
         p.year === year,
     );
-    const url = uploaded
-      ? uploaded.fileUrl // ✅ real PDF from ImageKit
-      : getPaperUrl(board, className, subject, year); // fallback to external
-    window.open(url, "_blank", "noopener,noreferrer");
+    const targetUrl = uploaded
+      ? uploaded.fileUrl
+      : getPaperUrl(board, className, subject, year);
+
+    try {
+      const res = await axios.post("/question-papers/access", {
+        board,
+        className,
+        subject,
+        year,
+      });
+
+      if (res.data.access) {
+        window.open(targetUrl, "_blank", "noopener,noreferrer");
+      } else {
+        // Needs purchase
+        const walletRes = await axios.get("/wallet");
+        const balance = walletRes.data.balance || 0;
+        setWalletBalance(balance);
+        
+        setModalData({
+          board,
+          className,
+          subject,
+          year,
+          price: res.data.price || 20,
+          url: targetUrl,
+        });
+        setShowModal(true);
+      }
+    } catch (error) {
+      console.error("Error checking PYQ access", error);
+      alert("Something went wrong. Please try again.");
+    }
+  };
+
+  const handlePurchase = async () => {
+    if (!modalData) return;
+    setPurchasing(true);
+    try {
+      await axios.post("/question-papers/purchase", {
+        board: modalData.board,
+        className: modalData.className,
+        subject: modalData.subject,
+        year: modalData.year,
+      });
+      setShowModal(false);
+      window.open(modalData.url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      console.error("Purchase error", error);
+      if (error.response?.data?.code === "INSUFFICIENT_FUNDS") {
+        alert(t("questionBank.insufficientBalance"));
+      } else {
+        alert(error.response?.data?.message || "Purchase failed");
+      }
+    } finally {
+      setPurchasing(false);
+    }
   };
 
   const boardOptions = [
@@ -553,6 +613,66 @@ const QuestionBank = () => {
           })}
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {showModal && modalData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-sm w-full text-center">
+            <h2 className="text-xl font-bold text-white mb-2">
+              {t("questionBank.unlockTitle")}
+            </h2>
+            <p className="text-slate-400 text-sm mb-4">
+              {t("questionBank.unlockDescription")}
+            </p>
+            <div className="bg-slate-800/50 rounded-xl p-4 mb-4">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-slate-400">{t("questionBank.questionPaper")}:</span>
+                <span className="text-white font-medium">{modalData.year}</span>
+              </div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-slate-400">Amount:</span>
+                <span className="text-cyan-400 font-bold">₹{modalData.price}</span>
+              </div>
+              <div className="flex justify-between text-sm border-t border-slate-700 pt-2 mt-2">
+                <span className="text-slate-400">Wallet Balance:</span>
+                <span className="text-white font-medium">₹{walletBalance}</span>
+              </div>
+            </div>
+
+            {walletBalance < modalData.price ? (
+              <div className="text-red-400 text-sm mb-4">
+                {t("questionBank.insufficientBalance")}
+              </div>
+            ) : null}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowModal(false)}
+                className="flex-1 py-2.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors"
+                disabled={purchasing}
+              >
+                {t("questionBank.cancel")}
+              </button>
+              {walletBalance >= modalData.price ? (
+                <button
+                  onClick={handlePurchase}
+                  disabled={purchasing}
+                  className="flex-1 py-2.5 rounded-lg bg-cyan-600 text-white hover:bg-cyan-500 transition-colors font-medium"
+                >
+                  {purchasing ? t("questionBank.processing") : t("questionBank.payAndUnlock")}
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate("/student")} // Student Wallet is in Dashboard
+                  className="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition-colors font-medium"
+                >
+                  {t("questionBank.goToWallet")}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

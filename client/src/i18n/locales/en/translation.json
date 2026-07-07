@@ -286,7 +286,16 @@
     },
     "view": "View",
     "questionPaper": "Question Paper",
-    "noResults": "No papers found for the selected filters."
+    "noResults": "No papers found for the selected filters.",
+    "unlockTitle": "Unlock Question Paper",
+    "unlockDescription": "This previous year question paper is a premium resource. The latest year (2025) is free, and enrolled students get all papers for their subject free.",
+    "unlockPrice": "Price: ₹{{price}}",
+    "walletBalance": "Wallet Balance: ₹{{balance}}",
+    "insufficientBalance": "Insufficient balance. Please add funds to your wallet.",
+    "payAndUnlock": "Pay & Unlock",
+    "cancel": "Cancel",
+    "goToWallet": "Go to Wallet",
+    "processing": "Processing..."
   },
   "authHero": {
     "tag": "AI-Powered Learning",

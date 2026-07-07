@@ -3,6 +3,8 @@ import QuestionPaper from "../models/questionPaper.model.js";
 import ImageKit from "imagekit";
 import streamifier from "streamifier";
 import { cacheResponse, invalidateCache } from "../utils/redisClient.js";
+import User from "../models/user.model.js";
+import Wallet from "../models/wallet.model.js";
 
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
@@ -99,5 +101,83 @@ export const getQuestionPapers = async (req, res) => {
     res.json(papers);
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+export const checkPYQAccess = async (req, res) => {
+  try {
+    const { board, className, subject, year } = req.body;
+    // The latest year (2025) is free
+    if (year === 2025 || year === "2025") {
+      return res.json({ access: true, reason: "free_year" });
+    }
+
+    const pyqId = `${board}_${className}_${subject}_${year}`;
+    const user = await User.findById(req.user._id).populate("enrolledCourses");
+
+    if (user.purchasedPYQs?.includes(pyqId)) {
+      return res.json({ access: true, reason: "purchased" });
+    }
+
+    // Check if enrolled in matching course (case-insensitive)
+    const hasCourse = user.enrolledCourses?.some((c) => {
+      const matchCat = c.category?.toLowerCase() === className?.toLowerCase();
+      const matchTitle = c.title?.toLowerCase() === subject?.toLowerCase();
+      return matchCat && matchTitle;
+    });
+
+    if (hasCourse) {
+      return res.json({ access: true, reason: "course_enrolled" });
+    }
+
+    // Otherwise, require purchase
+    res.json({ access: false, price: 20 });
+  } catch (error) {
+    console.error("[checkPYQAccess]", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const purchasePYQ = async (req, res) => {
+  try {
+    const { board, className, subject, year } = req.body;
+    const pyqId = `${board}_${className}_${subject}_${year}`;
+    const price = 20;
+
+    const user = await User.findById(req.user._id);
+    if (user.purchasedPYQs?.includes(pyqId)) {
+      return res.status(400).json({ message: "Already purchased." });
+    }
+
+    let wallet = await Wallet.findOne({ userId: req.user._id });
+    if (!wallet) {
+      wallet = await Wallet.create({ userId: req.user._id, balance: 0, transactions: [] });
+    }
+
+    if (wallet.balance < price) {
+      return res.status(400).json({ message: "Insufficient wallet balance.", code: "INSUFFICIENT_FUNDS" });
+    }
+
+    // Deduct and create transaction
+    wallet.balance -= price;
+    wallet.transactions.push({
+      type: "purchase",
+      amount: price,
+      description: `Purchased PYQ: ${board} ${className} ${subject} ${year}`,
+      paymentMethod: "wallet",
+      status: "success"
+    });
+
+    await wallet.save();
+
+    // Add to user
+    user.purchasedPYQs = user.purchasedPYQs || [];
+    user.purchasedPYQs.push(pyqId);
+    await user.save();
+
+    res.json({ success: true, message: "Purchase successful" });
+  } catch (error) {
+    console.error("[purchasePYQ]", error);
+    res.status(500).json({ message: error.message });
   }
 };

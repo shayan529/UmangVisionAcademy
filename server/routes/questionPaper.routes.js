@@ -7,6 +7,8 @@ import {
   getAllQuestionPapers,
   deleteQuestionPaper,
   getQuestionPapers,
+  checkPYQAccess,
+  purchasePYQ,
 } from "../controllers/questionPaper.controller.js";
 
 const router = express.Router();
@@ -16,6 +18,8 @@ const upload = multer({
 }); // 20MB
 
 router.get("/", getQuestionPapers); // public
+router.post("/access", protect, checkPYQAccess);
+router.post("/purchase", protect, purchasePYQ);
 router.get("/all", protect, adminOnly, getAllQuestionPapers); // admin
 router.post(
   "/upload",

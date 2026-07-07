@@ -144,11 +144,12 @@ api.interceptors.response.use(
   (error) => {
     if (error.response) {
       const status = error.response.status;
-      // In production, sanitize 5xx (Server) errors to keep it clean and friendly for UI toasts
+      // In production, sanitize 5xx (Server) errors but keep the original message if it exists
       if (status >= 500) {
+        const serverMessage = error.response.data?.message;
         error.response.data = {
           ...error.response.data,
-          message: "An unexpected server error occurred. Please try again later.",
+          message: serverMessage || "An unexpected server error occurred. Please try again later.",
         };
       }
     } else if (error.request) {

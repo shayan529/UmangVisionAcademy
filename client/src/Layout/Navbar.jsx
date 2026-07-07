@@ -390,7 +390,7 @@ button.btn-red:hover,
               <>
                 <Link
                   to="/login"
-                  className="text-white hover:text-indigo-300 transition"
+                  className="text-white text-[15px] font-semibold hover:text-indigo-300 transition-colors"
                 >
                   {t("nav.login")}
                 </Link>
@@ -567,7 +567,7 @@ button.btn-red:hover,
               <Link
                 to="/login"
                 onClick={closeMobile}
-                className="flex-1 text-center text-sm font-semibold py-2 px-3 rounded-lg border border-indigo-400/40 text-indigo-300 hover:bg-indigo-400/10 transition"
+                className="flex-1 text-center text-sm font-semibold py-2 px-3 rounded-lg border border-indigo-400/40 text-indigo-300 hover:bg-indigo-400/10 transition-colors"
               >
                 {t("nav.login")}
               </Link>
