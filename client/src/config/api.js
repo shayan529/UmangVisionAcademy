@@ -10,18 +10,15 @@ import axios from "axios";
 const PRODUCTION_API_BASE_URL = "https://umangvisionacademy.onrender.com/api";
 
 const getDefaultApiBaseUrl = () => {
-  // Local dev convenience: if running on localhost in a normal browser
-  // (npm run dev), keep hitting the local backend.
-  // Note: inside Capacitor Android WebView, window.location.hostname is also "localhost"
-  // but window.Capacitor is defined, so we check !window.Capacitor to avoid
-  // hitting localhost:5000 on the device.
-  if (
-    typeof window !== "undefined" &&
-    !window.Capacitor &&
-    (window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1")
-  ) {
-    return "http://localhost:5000/api";
+  // Local dev convenience: if running on localhost, 10.0.2.2, or a local IP
+  // in a normal browser or WebView, keep hitting the local backend.
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    // If it's the production Render domain, use production API URL
+    if (hostname === "umangvisionacademy.onrender.com" || hostname.endsWith(".onrender.com")) {
+      return PRODUCTION_API_BASE_URL;
+    }
+    return `http://${hostname}:5000/api`;
   }
   return PRODUCTION_API_BASE_URL;
 };
@@ -29,13 +26,13 @@ const getDefaultApiBaseUrl = () => {
 const PRODUCTION_SOCKET_URL = "https://umangvisionacademy.onrender.com";
 
 const getDefaultSocketUrl = () => {
-  if (
-    typeof window !== "undefined" &&
-    !window.Capacitor &&
-    (window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1")
-  ) {
-    return "http://localhost:5000";
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    // If it's the production Render domain, use production Socket URL
+    if (hostname === "umangvisionacademy.onrender.com" || hostname.endsWith(".onrender.com")) {
+      return PRODUCTION_SOCKET_URL;
+    }
+    return `http://${hostname}:5000`;
   }
   return PRODUCTION_SOCKET_URL;
 };

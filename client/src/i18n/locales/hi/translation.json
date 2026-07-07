@@ -1268,13 +1268,15 @@
     "menu": "☰ मेनू"
   },
   "instructorHome": {
+    "welcomeBack": "वापसी पर स्वागत है, {{name}}",
+    "dashboardTitle": "शिक्षक नियंत्रण-पटल",
     "totalCourses": "कुल पाठ्यक्रम",
     "totalStudents": "कुल विद्यार्थी",
     "instructorRating": "शिक्षक रेटिंग",
     "activeCourses": "सक्रिय पाठ्यक्रम",
     "viewAll": "सभी देखें",
     "loadingCourses": "पाठ्यक्रम लोड हो रहे हैं...",
-    "noCourses": "अभी कोई पाठ्यक्रम नहीं है।",
+    "noCourses": "अभी कोई सक्रिय पाठ्यक्रम नहीं है।",
     "studentsRevenue": "{{count}} विद्यार्थी · ${{revenue}}",
     "avgCompletion": "{{value}}% औसत पूर्णता",
     "upcomingSessions": "आगामी सत्र",
@@ -1683,6 +1685,7 @@
     "liveCourses": "{{count}} लाइव पाठ्यक्रम",
     "trackEnrollment": "नामांकन वितरण, पाठ्यक्रम रेटिंग और प्लेटफ़ॉर्म राजस्व मेट्रिक्स को ट्रैक करें।"
   },
+
   "bottomBar": {
     "home": "होम",
     "chat": "चर्चा",

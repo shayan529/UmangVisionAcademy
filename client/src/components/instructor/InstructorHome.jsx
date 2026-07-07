@@ -57,10 +57,10 @@ const InstructorHome = ({ showToast, onNavigate }) => {
     <>
       <div style={{ marginBottom: 24 }}>
         <p style={{ color: "#a78bfa", fontWeight: 500, fontSize: 14, marginBottom: 6 }}>
-          Welcome back, {user?.name?.split(" ")[0] || "Instructor"}
+          {t("instructorHome.welcomeBack", { name: user?.name?.split(" ")[0] || "Instructor" })}
         </p>
         <h1 style={{ fontSize: "clamp(24px,3vw,32px)", fontWeight: 800, color: "#f1f5f9", lineHeight: 1.2 }}>
-          Instructor Dashboard
+          {t("instructorHome.dashboardTitle")}
         </h1>
       </div>
 

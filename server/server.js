@@ -61,12 +61,19 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
 
-    // Automatically allow requests from the deployment domain on Render
+    // Automatically allow requests from the deployment domain on Render or local development/private network IPs
     try {
       const originUrl = new URL(origin);
+      const hostname = originUrl.hostname;
       if (
-        originUrl.hostname === "umangvisionacademy.onrender.com" ||
-        originUrl.hostname.endsWith(".onrender.com")
+        hostname === "umangvisionacademy.onrender.com" ||
+        hostname.endsWith(".onrender.com") ||
+        hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname === "10.0.2.2" ||
+        hostname.startsWith("192.168.") ||
+        hostname.startsWith("10.") ||
+        hostname.startsWith("172.")
       ) {
         return callback(null, true);
       }

@@ -1266,13 +1266,15 @@
     "menu": "☰ Menu"
   },
   "instructorHome": {
+    "welcomeBack": "Welcome back, {{name}}",
+    "dashboardTitle": "Instructor Dashboard",
     "totalCourses": "Total Courses",
     "totalStudents": "Total Students",
     "instructorRating": "Instructor Rating",
     "activeCourses": "Active Courses",
-    "viewAll": "View all",
+    "viewAll": "View All",
     "loadingCourses": "Loading courses...",
-    "noCourses": "No courses yet.",
+    "noCourses": "No active courses right now.",
     "studentsRevenue": "{{count}} students · ${{revenue}}",
     "avgCompletion": "{{value}}% avg completion",
     "upcomingSessions": "Upcoming Sessions",
@@ -1681,6 +1683,7 @@
     "liveCourses": "{{count}} Live Courses",
     "trackEnrollment": "Track enrollment distribution, courses rating, and platform revenue metrics."
   },
+
   "bottomBar": {
     "home": "Home",
     "chat": "Chat",

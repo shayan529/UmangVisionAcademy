@@ -96,7 +96,7 @@ const ChatPanel = ({ sessionId, currentUser }) => {
     const msgPayload = {
       sessionId,
       text,
-      sender: currentUser?.name || "You",
+      sender: currentUser?.name || currentUser?.email || "Student",
       senderId: currentUser?._id,
       createdAt: new Date().toISOString(),
     };
@@ -146,23 +146,23 @@ const ChatPanel = ({ sessionId, currentUser }) => {
           </p>
         )}
         {messages.map((msg, i) => {
-          const isOwn = msg.senderId === currentUser?._id;
+          const isOwn =
+            currentUser?._id &&
+            msg.senderId &&
+            String(msg.senderId) === String(currentUser._id);
           return (
             <div
               key={msg._id || i}
               className={`flex flex-col ${isOwn ? "items-end" : "items-start"}`}
             >
-              {!isOwn && (
-                <span className="text-xs text-slate-500 mb-1 ml-1">
-                  {msg.sender}
-                </span>
-              )}
+              <span className="text-xs text-slate-500 mb-1 mx-1">
+                {isOwn ? "You" : msg.sender}
+              </span>
               <div
-                className={`max-w-[70%] px-3 py-2 rounded-xl text-sm leading-relaxed break-words ${
-                  isOwn
-                    ? "bg-gradient-to-r from-purple-600 to-cyan-500 text-white rounded-br-sm"
-                    : "bg-slate-800 text-slate-200 rounded-bl-sm"
-                }`}
+                className={`max-w-[70%] px-3 py-2 rounded-xl text-sm leading-relaxed break-words ${isOwn
+                  ? "bg-purple-600/90 text-white rounded-br-sm"
+                  : "bg-slate-800 text-slate-200 rounded-bl-sm"
+                  }`}
               >
                 {msg.text}
               </div>
@@ -192,7 +192,7 @@ const ChatPanel = ({ sessionId, currentUser }) => {
           onClick={sendMessage}
           disabled={!input.trim() || !connected}
           title={!connected ? "Waiting for chat connection…" : undefined}
-          className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white text-sm font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          className="px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition"
         >
           Send
         </button>
@@ -416,7 +416,7 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
     >
       {/* The actual YouTube iframe gets mounted into this div by the Player API */}
       <div className="absolute inset-0 pointer-events-none">
-        <div ref={containerRef} className="w-full h-full" />
+        <div ref={containerRef} className="w-full h-full" title={title} />
       </div>
 
       {/* Click-catcher: sits above the iframe and intercepts every mouse
@@ -508,9 +508,8 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
       {/* Custom control bar */}
       {ready && (
         <div
-          className={`absolute bottom-0 left-0 right-0 px-4 pb-3 pt-8 bg-gradient-to-t from-black/85 via-black/40 to-transparent transition-opacity duration-200 z-30 ${
-            hovering ? "opacity-100" : "opacity-0"
-          }`}
+          className={`absolute bottom-0 left-0 right-0 px-4 pb-3 pt-8 bg-gradient-to-t from-black/85 via-black/40 to-transparent transition-opacity duration-200 z-30 ${hovering ? "opacity-100" : "opacity-0"
+            }`}
         >
           {!isLive && (
             <input
@@ -657,11 +656,10 @@ const SessionRoom = ({ session, currentUser, onLeave }) => {
           </div>
         </div>
         <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            session.status === "live"
-              ? "bg-green-500/20 text-green-400 border border-green-500/30"
-              : "bg-purple-500/20 text-purple-400 border border-purple-500/30"
-          }`}
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${session.status === "live"
+            ? "bg-green-500/20 text-green-400 border border-green-500/30"
+            : "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+            }`}
         >
           {session.status === "live" ? "🔴 LIVE" : session.status}
         </span>
@@ -718,23 +716,21 @@ const SessionCard = ({ session, onJoin, showToast }) => {
       <div>
         <div className="flex items-center gap-3 mb-2">
           <div
-            className={`w-3 h-3 rounded-full ${
-              session.status === "live"
-                ? "bg-green-500 animate-pulse"
-                : session.status === "ended"
-                  ? "bg-slate-500"
-                  : "bg-purple-500"
-            }`}
+            className={`w-3 h-3 rounded-full ${session.status === "live"
+              ? "bg-green-500 animate-pulse"
+              : session.status === "ended"
+                ? "bg-slate-500"
+                : "bg-purple-500"
+              }`}
           />
           <h3 className="text-lg font-semibold text-white">{session.title}</h3>
           <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
-              session.status === "live"
-                ? "bg-green-500/20 text-green-400"
-                : session.status === "ended"
-                  ? "bg-slate-500/20 text-slate-300"
-                  : "bg-purple-500/20 text-purple-400"
-            }`}
+            className={`px-2 py-1 rounded-full text-xs font-medium ${session.status === "live"
+              ? "bg-green-500/20 text-green-400"
+              : session.status === "ended"
+                ? "bg-slate-500/20 text-slate-300"
+                : "bg-purple-500/20 text-purple-400"
+              }`}
           >
             {session.status}
           </span>
@@ -770,8 +766,10 @@ const SessionSkeleton = () => (
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const StudentSessions = ({ showToast, currentUser }) => {
+const StudentSessions = ({ showToast, currentUser: propCurrentUser }) => {
   const dispatch = useDispatch();
+  const reduxUser = useSelector((state) => state.auth.user);
+  const currentUser = propCurrentUser || reduxUser;
 
   // ✅ Correct selector — slice name is "sessions", state shape is { sessions: [], loading, error }
   const sessions = useSelector((state) => state.sessions.sessions);

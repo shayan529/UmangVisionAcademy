@@ -13,7 +13,9 @@ import api from "../../config/api";
 
 const EMPTY_FORM = {
   subject: "",
+  courseType: "classes", // "classes" | "competitive"
   className: "",
+  examName: "",
   board: "",
   description: "",
   content: "",
@@ -49,7 +51,8 @@ const EMPTY_BULK_ITEM = () => ({
   },
 });
 
-const CLASSES = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`);
+// ── Class dropdown now Class 9–12 only ────────────────────────────────────────
+const CLASSES = ["Class 9", "Class 10", "Class 11", "Class 12"];
 const BOARDS = ["CBSE", "ICSE", "MP Board"];
 const DRAFT_STORAGE_KEY = "instructorCourseDraft";
 
@@ -119,6 +122,7 @@ const isDraftForm = (form) =>
   Boolean(
     form.subject?.trim() ||
     form.className?.trim() ||
+    form.examName?.trim() ||
     form.board?.trim() ||
     form.description?.trim() ||
     form.content?.trim() ||
@@ -467,6 +471,70 @@ const Sel = ({ value, onChange, options }) => (
   </select>
 );
 
+// ── CourseTypeSelector (circular toggle: Classes vs Competitive Exam) ────────
+const CourseTypeSelector = ({ value, onChange }) => {
+  const options = [
+    { key: "classes", label: "Classes", icon: "🎓" },
+    { key: "competitive", label: "Competitive Exam", icon: "🏆" },
+  ];
+  return (
+    <div style={{ display: "flex", gap: 28 }}>
+      {options.map((opt) => {
+        const selected = value === opt.key;
+        return (
+          <button
+            key={opt.key}
+            type="button"
+            onClick={() => onChange(opt.key)}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 6,
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                border: `2px solid ${selected ? "#7c3aed" : "#334155"}`,
+                background: selected
+                  ? "linear-gradient(135deg,#7c3aed,#06b6d4)"
+                  : "#0b1120",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 22,
+                transition: "all 0.2s ease",
+                boxShadow: selected
+                  ? "0 4px 14px rgba(124,58,237,.35)"
+                  : "none",
+              }}
+            >
+              {opt.icon}
+            </div>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: selected ? "#e2e8f0" : "#64748b",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {opt.label}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
 // ── NotesManager ─────────────────────────────────────────────────────────────
 function NotesManager({ notes = [], onChange, showToast }) {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -493,6 +561,7 @@ function NotesManager({ notes = [], onChange, showToast }) {
       setNewNote((prev) => ({ ...prev, fileUrl: data.url }));
       showToast?.("File uploaded successfully.");
     } catch (err) {
+      console.error(err);
       showToast?.("File upload failed.");
     } finally {
       setUploading(false);
@@ -655,6 +724,7 @@ function NotesManager({ notes = [], onChange, showToast }) {
                 {note.description && (
                   <p style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{note.description}</p>
                 )}
+
                 <a
                   href={note.fileUrl}
                   target="_blank"
@@ -1120,6 +1190,8 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
   const signatoryName = certificate?.signatoryName ?? "";
   const signatoryTitle = certificate?.signatoryTitle ?? "";
   const theme = certificate?.theme ?? "purple";
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
 
   const updateCert = (field, value) =>
     onChange({
@@ -1181,13 +1253,28 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
       }}
     >
       <div
+        onClick={() => setIsCollapsed((c) => !c)}
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          cursor: "pointer",
+          userSelect: "none",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              display: "inline-block",
+              fontSize: 11,
+              color: "#64748b",
+              transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)",
+              transition: "transform 0.2s ease",
+              lineHeight: 1,
+            }}
+          >
+            ▼
+          </span>
           <span style={{ fontSize: 18 }}>🎓</span>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
@@ -1200,6 +1287,7 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
           </div>
         </div>
         <label
+          onClick={(e) => e.stopPropagation()}
           style={{
             position: "relative",
             display: "inline-block",
@@ -1242,7 +1330,7 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
         </label>
       </div>
 
-      {enabled && (
+      {!isCollapsed && enabled && (
         <div
           style={{
             display: "flex",
@@ -1592,8 +1680,26 @@ const CourseForm = ({
   showToast,
 }) => {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const courseType = form.courseType || "classes";
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <Field label="Course Type" hint="* (choose one)">
+        <CourseTypeSelector
+          value={courseType}
+          onChange={(type) =>
+            setForm((f) => ({
+              ...f,
+              courseType: type,
+              // clear the field that no longer applies
+              className: type === "competitive" ? "" : f.className,
+              examName: type === "classes" ? "" : f.examName,
+              board: type === "competitive" ? "" : f.board,
+            }))
+          }
+        />
+      </Field>
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <Field label="Subject" hint="*">
           <Input
@@ -1602,28 +1708,40 @@ const CourseForm = ({
             placeholder="e.g. Mathematics"
           />
         </Field>
-        <Field label="Class" hint="*">
-          <Sel
-            value={form.className}
-            onChange={set("className")}
-            options={[
-              { value: "", label: "Select class" },
-              ...CLASSES.map((c) => ({ value: c, label: c })),
-            ]}
-          />
-        </Field>
+        {courseType === "classes" ? (
+          <Field label="Class" hint="*">
+            <Sel
+              value={form.className}
+              onChange={set("className")}
+              options={[
+                { value: "", label: "Select class" },
+                ...CLASSES.map((c) => ({ value: c, label: c })),
+              ]}
+            />
+          </Field>
+        ) : (
+          <Field label="Exam Name" hint="*">
+            <Input
+              value={form.examName}
+              onChange={set("examName")}
+              placeholder="e.g. JEE Main, NEET, CUET"
+            />
+          </Field>
+        )}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label="Board" hint="*">
-          <Sel
-            value={form.board}
-            onChange={set("board")}
-            options={[
-              { value: "", label: "Select board" },
-              ...BOARDS.map((b) => ({ value: b, label: b })),
-            ]}
-          />
-        </Field>
+        {courseType === "classes" ? (
+          <Field label="Board" hint="*">
+            <Sel
+              value={form.board}
+              onChange={set("board")}
+              options={[
+                { value: "", label: "Select board" },
+                ...BOARDS.map((b) => ({ value: b, label: b })),
+              ]}
+            />
+          </Field>
+        ) : null}
         <Field label="Price" hint="(₹ — 0 for free)">
           <Input
             value={form.price}
@@ -1703,7 +1821,7 @@ const CourseForm = ({
           onChange={(quiz) => setForm((f) => ({ ...f, quiz }))}
           courseTitle={form.subject}
           courseDescription={form.description}
-          courseClass={form.className}
+          courseClass={courseType === "classes" ? form.className : form.examName}
           showToast={showToast}
         />
       </Field>
@@ -2308,9 +2426,15 @@ export default function InstructorCourses({ showToast }) {
 
   const openEdit = (course) => {
     setExpandedId(course._id);
+    // Infer courseType from the stored category:
+    // if it matches one of our known classes -> "classes", otherwise "competitive"
+    const category = course.category ?? "";
+    const isKnownClass = CLASSES.includes(category);
     setEditForm({
       subject: course.title ?? "",
-      className: course.category ?? "",
+      courseType: isKnownClass || !category ? "classes" : "competitive",
+      className: isKnownClass ? category : "",
+      examName: isKnownClass || !category ? "" : category,
       board: course.board ?? "",
       description: course.summary ?? "",
       lessons: course.lessons ?? [],
@@ -2332,14 +2456,26 @@ export default function InstructorCourses({ showToast }) {
   };
   const closeEdit = () => setExpandedId(null);
 
+  const cleanNotes = (notes) =>
+    (notes ?? []).map((note) => {
+      const { _id, ...rest } = note;
+      if (_id && /^[0-9a-fA-F]{24}$/.test(_id)) {
+        return { _id, ...rest };
+      }
+      return rest;
+    });
+
   const buildPayload = (form, published) => ({
     title: form.subject.trim(),
     summary: form.description.trim(),
     description: form.content?.trim() || "",
-    category: form.className,
+    category:
+      (form.courseType || "classes") === "classes"
+        ? form.className
+        : form.examName,
     board: form.board,
     lessons: form.lessons ?? [],
-    notes: form.notes ?? [],
+    notes: cleanNotes(form.notes),
     price: Number(form.price) || 0,
     thumbnailUrl: form.thumbnailUrl || "",
     demoVideoUrl: form.demoVideoUrl || "",
@@ -2355,10 +2491,13 @@ export default function InstructorCourses({ showToast }) {
   });
 
   const validateForPublish = (form) => {
+    const courseType = form.courseType || "classes";
     const required = [
       { key: "subject", label: "Subject" },
-      { key: "className", label: "Class" },
-      { key: "board", label: "Board" },
+      courseType === "classes"
+        ? { key: "className", label: "Class" }
+        : { key: "examName", label: "Exam Name" },
+      ...(courseType === "classes" ? [{ key: "board", label: "Board" }] : []),
       { key: "description", label: "Description" },
       { key: "content", label: "Course Content" },
       { key: "thumbnailUrl", label: "Thumbnail" },
@@ -2429,7 +2568,7 @@ export default function InstructorCourses({ showToast }) {
         category: bulkForm.className,
         board: bulkForm.board,
         lessons: item.lessons ?? [],
-        notes: item.notes ?? [],
+        notes: cleanNotes(item.notes),
         price: Number(item.price) || 0,
         thumbnailUrl: bulkForm.thumbnailUrl || "",
         demoVideoUrl: bulkForm.demoVideoUrl || "",

@@ -64,19 +64,33 @@ export const getStudentSessions = async (req, res) => {
 
       const conditions = [];
 
+      // 1. Session is associated with a course the student is enrolled in
       if (enrolledCourseIds.length > 0) {
         conditions.push({ course: { $in: enrolledCourseIds } });
       }
 
+      // 2. Session is associated with an instructor of an enrolled course (fallback)
       if (instructorIds.length > 0) {
         conditions.push({ instructor: { $in: instructorIds } });
       }
 
+      // 3. Session is a public/free session (course is null or undefined)
+      //    And matches the student's class, or has no class restriction
+      const publicConditions = [
+        { class: null },
+        { class: "" }
+      ];
       if (studentClass) {
-        conditions.push({ class: studentClass });
+        publicConditions.push({ class: studentClass });
       }
 
-      if (conditions.length === 0) return [];
+      conditions.push({
+        $or: [
+          { course: null },
+          { course: { $exists: false } }
+        ],
+        class: { $in: publicConditions.map(pc => pc.class) }
+      });
 
       return await Session.find({ $or: conditions })
         .populate("course", "title")

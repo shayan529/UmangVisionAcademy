@@ -4,10 +4,24 @@ export const isBaseRole = (role) =>
   typeof role === "string" && BASE_ROLES.has(role);
 
 export const hasBaseRole = (user, roleName) =>
-  Boolean(user?.roles?.some((role) => role === roleName));
+  Array.isArray(user?.roles) &&
+  user.roles.some((role) => {
+    if (typeof role === "string") {
+      return role.toLowerCase() === roleName.toLowerCase();
+    }
+    if (role && typeof role === "object" && role.name) {
+      return role.name.toLowerCase() === roleName.toLowerCase();
+    }
+    return false;
+  });
 
 export const getCustomRoles = (user) =>
-  (user?.roles || []).filter((role) => role && typeof role === "object");
+  (user?.roles || []).filter(
+    (role) =>
+      role &&
+      typeof role === "object" &&
+      (!role.name || !BASE_ROLES.has(role.name.toLowerCase()))
+  );
 
 export const hasPermission = (user, moduleName, actionName = "view") => {
   if (hasBaseRole(user, "admin")) return true;
