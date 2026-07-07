@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
+import { getCustomRoles, hasBaseRole } from "../../utils/permissions";
 
 const indianCitiesByState = {
   "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati"],
@@ -128,7 +129,26 @@ const Signup = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.auth);
+  const { loading, error, isAuthenticated, user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const isAdmin = hasBaseRole(user, "admin");
+      const isStaff = !isAdmin && getCustomRoles(user).length > 0;
+      const isInstructor = !isAdmin && !isStaff && hasBaseRole(user, "instructor");
+      
+      const from = location.state?.from;
+      if (from) {
+        navigate(from, { replace: true });
+        return;
+      }
+      
+      if (isAdmin) navigate("/admin-dashboard", { replace: true });
+      else if (isStaff) navigate("/staff-dashboard", { replace: true });
+      else if (isInstructor) navigate("/instructor-dashboard", { replace: true });
+      else navigate("/student-dashboard", { replace: true });
+    }
+  }, [isAuthenticated, user, navigate, location.state]);
 
   const [phoneOtpSent, setPhoneOtpSent] = useState(() => getSessionValue("signup_phoneOtpSent", false));
   const [phoneVerified, setPhoneVerified] = useState(() => getSessionValue("signup_phoneVerified", false));
