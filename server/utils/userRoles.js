@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Role from "../models/role.model.js";
 import User from "../models/user.model.js";
+import { getJson, setJson } from "./redisClient.js";
 
 const { Types } = mongoose;
 
@@ -50,6 +51,12 @@ const toPlainUser = (user) => {
 export const migrateLegacyAssignedRoles = async (user) => {
   if (!user?._id) return null;
 
+  // If the user object already has an empty assignedRoles array,
+  // we can safely assume there are no legacy roles to migrate and skip the raw DB query.
+  if ('assignedRoles' in user && (!user.assignedRoles || user.assignedRoles.length === 0)) {
+    return user.roles || [];
+  }
+
   const rawUser = await User.collection.findOne(
     { _id: user._id },
     { projection: { roles: 1, assignedRoles: 1 } },
@@ -83,9 +90,27 @@ export const hydrateUserRoles = async (user, { migrate = true } = {}) => {
 
   const baseRoles = roles.filter(isBaseRole);
   const customRoleIds = customRoleIdsFromRoles(roles);
-  const customRoles = customRoleIds.length
-    ? await Role.find({ _id: { $in: customRoleIds } }).lean()
-    : [];
+  
+  const customRoles = [];
+  if (customRoleIds.length > 0) {
+    const rolesToFetchFromDb = [];
+    for (const id of customRoleIds) {
+      const cached = await getJson(`role:${id}`);
+      if (cached) {
+        customRoles.push(cached);
+      } else {
+        rolesToFetchFromDb.push(id);
+      }
+    }
+    
+    if (rolesToFetchFromDb.length > 0) {
+      const fetchedRoles = await Role.find({ _id: { $in: rolesToFetchFromDb } }).lean();
+      for (const role of fetchedRoles) {
+        await setJson(`role:${role._id.toString()}`, role, 3600 * 24); // Cache for 24 hours
+        customRoles.push(role);
+      }
+    }
+  }
   const customRoleById = new Map(
     customRoles.map((role) => [role._id.toString(), role]),
   );

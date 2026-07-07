@@ -755,13 +755,26 @@ const Signup = () => {
             />
 
             <div
-              className="card-glow rounded-3xl p-9"
+              className="card-glow rounded-3xl p-9 w-full"
               style={{
                 background:
                   "linear-gradient(160deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%)",
                 backdropFilter: "blur(24px)",
               }}
             >
+              {/* Mobile Logo & Title */}
+              <div className="flex lg:hidden items-center justify-start mb-6">
+                <img src="/Logo.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14 object-contain mr-3" />
+                <div className="flex flex-wrap items-center">
+                  <span className="text-lg sm:text-xl font-extrabold text-white tracking-wide">
+                    Umang Vision
+                  </span>
+                  <span className="ml-1 shimmer-txt text-lg sm:text-xl font-extrabold tracking-wide">
+                    Academy
+                  </span>
+                </div>
+              </div>
+
               <div className="text-center mb-7">
                 <h2 className="df text-3xl font-black text-white">
                   {t("auth.signup")}

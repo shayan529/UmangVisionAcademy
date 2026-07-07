@@ -5,6 +5,7 @@ import {
   isBaseRole,
   mergeBaseAndCustomRoles,
 } from "../utils/userRoles.js";
+import { deleteKeys } from "../utils/redisClient.js";
 
 // ── List available modules/actions (for building the UI matrix) ─────────────
 export const getPermissionModules = async (req, res) => {
@@ -67,6 +68,10 @@ export const updateRole = async (req, res) => {
     if (permissions) role.permissions = permissions;
 
     await role.save();
+
+    // Invalidate cache
+    await deleteKeys([`role:${role._id.toString()}`]);
+
     res.json(role);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -91,6 +96,10 @@ export const deleteRole = async (req, res) => {
     );
 
     await role.deleteOne();
+
+    // Invalidate cache
+    await deleteKeys([`role:${role._id.toString()}`]);
+
     res.json({ message: "Role deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });
