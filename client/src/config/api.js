@@ -144,12 +144,15 @@ api.interceptors.response.use(
   (error) => {
     if (error.response) {
       const status = error.response.status;
-      // In production, sanitize 5xx (Server) errors but keep the original message if it exists
+      const serverData = error.response.data;
+
       if (status >= 500) {
-        const serverMessage = error.response.data?.message;
+        // More descriptive error for debugging in the APK
+        const message = serverData?.message || serverData?.error || "Internal Server Error";
+        const code = serverData?.code || status;
         error.response.data = {
-          ...error.response.data,
-          message: serverMessage || "An unexpected server error occurred. Please try again later.",
+          ...serverData,
+          message: `Server Error [${code}]: ${message}`,
         };
       }
     } else if (error.request) {
