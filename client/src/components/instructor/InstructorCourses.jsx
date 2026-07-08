@@ -132,6 +132,12 @@ const isDraftForm = (form) =>
     Number(form.price) > 0,
   );
 
+// Returns the index of the first lesson missing a non-empty title, or null if all lessons are OK.
+const findMissingLessonTitle = (lessons = []) => {
+  const idx = lessons.findIndex((l) => !l?.title?.trim());
+  return idx === -1 ? null : idx;
+};
+
 const statusStyle = (course) => {
   const s = course.approvalStatus ?? (course.published ? "approved" : "draft");
   switch (s) {
@@ -2545,6 +2551,13 @@ export default function InstructorCourses({ showToast }) {
 
   const handleCreate = async (publish) => {
     if (publish && !validateForPublish(createForm)) return;
+
+    const missingIdx = findMissingLessonTitle(createForm.lessons);
+    if (missingIdx !== null) {
+      showToast?.(`Lesson ${missingIdx + 1} is missing a title. Please add one before saving.`);
+      return;
+    }
+
     setSaving(true);
     const result = await dispatch(
       createCourse(buildPayload(createForm, publish)),
@@ -2574,6 +2587,17 @@ export default function InstructorCourses({ showToast }) {
       showToast?.("Add at least one subject.");
       return;
     }
+
+    for (const item of items) {
+      const missingIdx = findMissingLessonTitle(item.lessons);
+      if (missingIdx !== null) {
+        showToast?.(
+          `"${item.subject}" — Lesson ${missingIdx + 1} is missing a title. Please add one before submitting.`
+        );
+        return;
+      }
+    }
+
     if (publish) {
       if (!bulkForm.thumbnailUrl) {
         showToast?.("Thumbnail is required before submitting for review.");
@@ -2636,6 +2660,13 @@ export default function InstructorCourses({ showToast }) {
 
   const handleEdit = async (publish) => {
     if (publish && !validateForPublish(editForm)) return;
+
+    const missingIdx = findMissingLessonTitle(editForm.lessons);
+    if (missingIdx !== null) {
+      showToast?.(`Lesson ${missingIdx + 1} is missing a title. Please add one before saving.`);
+      return;
+    }
+
     setSaving(true);
     await dispatch(
       updateCourse({
