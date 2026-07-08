@@ -202,7 +202,7 @@ function IKVideoPlayer({ src }) {
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
             setStatus("playing");
-            video.play().catch(() => {});
+            video.play().catch(() => { });
           });
           hls.on(Hls.Events.ERROR, (_, data) => {
             if (data.fatal) {
@@ -980,6 +980,143 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, action
           </div>
         )}
 
+        {/* ── Notes — files uploaded with the course ── */}
+        <div>
+          <p
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#64748b",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              marginBottom: 8,
+            }}
+          >
+            Notes ({course.notes?.length ?? 0})
+          </p>
+
+          {!course.notes?.length ? (
+            <div
+              style={{
+                padding: "18px 14px",
+                background: "#0b1120",
+                border: "1px dashed #1e293b",
+                borderRadius: 10,
+                textAlign: "center",
+              }}
+            >
+              <span style={{ fontSize: 22 }}>📄</span>
+              <p style={{ fontSize: 12, color: "#475569", marginTop: 6 }}>
+                No notes attached to this course
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {course.notes.map((n, i) => (
+                <div
+                  key={n._id ?? i}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 10,
+                    padding: "10px 14px",
+                    background: "#111827",
+                    border: "1px solid #1e293b",
+                    borderRadius: 10,
+                    fontSize: 12,
+                    color: "#e2e8f0",
+                  }}
+                >
+                  {/* Index */}
+                  <span
+                    style={{
+                      color: "#64748b",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      flexShrink: 0,
+                      width: 16,
+                      textAlign: "center",
+                      marginTop: 2,
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+
+                  {/* Type icon */}
+                  <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>
+                    📄
+                  </span>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p
+                      style={{
+                        fontWeight: 600,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {n.title || "Untitled note"}
+                    </p>
+                    {n.description && (
+                      <p
+                        style={{
+                          fontSize: 11,
+                          color: "#94a3b8",
+                          marginTop: 2,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {n.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* File link / status */}
+                  {n.fileUrl ? (
+                    <a
+                      href={n.fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        padding: "3px 10px",
+                        borderRadius: 20,
+                        flexShrink: 0,
+                        background: "rgba(56,189,248,0.1)",
+                        color: "#38bdf8",
+                        border: "1px solid rgba(56,189,248,0.25)",
+                        textDecoration: "none",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      View file ↗
+                    </a>
+                  ) : (
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 600,
+                        padding: "3px 10px",
+                        borderRadius: 20,
+                        flexShrink: 0,
+                        background: "rgba(239,68,68,0.1)",
+                        color: "#f87171",
+                        border: "1px solid rgba(239,68,68,0.2)",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      No file
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Lesson preview modal — rendered inside drawer, portalled above everything */}
         {previewLesson && (
           <LessonPreviewModal
@@ -1580,7 +1717,7 @@ export default function AdminCourses({
 
       {selected && (
         <CourseDrawer
-          course={selected}
+          course={courses.find((c) => c._id === selected._id) ?? selected}
           onClose={() => setSelected(null)}
           onApprove={canApprove ? handleApprove : undefined}
           onReject={canApprove ? (c) => setRejectTarget(c) : undefined}
