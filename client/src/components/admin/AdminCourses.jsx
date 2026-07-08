@@ -154,19 +154,17 @@ function RejectModal({ course, onClose, onConfirm, loading }) {
   );
 }
 
-// ── ImageKit video URL helpers ────────────────────────────────────────────────
+// ── Video URL helpers ─────────────────────────────────────────────────────────
 
 /**
- * ImageKit raw URLs work fine as plain MP4 in the browser — we just need to
- * strip the query string (?updatedAt=... etc.) which confuses MIME detection.
- * We do NOT append /ik-video.mp4 because that counts as a video transformation
- * and burns the monthly quota on free/starter plans.
+ * Strip query-string parameters from a video URL — some CDN/storage URLs append
+ * ?updatedAt=... or cache-busting params that confuse browser MIME detection.
  */
 const toIkMp4 = (url) => {
   if (!url) return url;
   try {
     const u = new URL(url);
-    u.search = ""; // strip ?updatedAt=... and any other params
+    u.search = ""; // strip query params
     return u.toString();
   } catch {
     return url;
@@ -183,10 +181,10 @@ function IKVideoPlayer({ src }) {
     if (!src || !videoRef.current) return;
     const video = videoRef.current;
 
-    // Convert ImageKit URL to the plain MP4 endpoint
+    // Strip query params and try plain MP4 first
     const mp4Src = toIkMp4(src);
 
-    // Try native MP4 first — ImageKit /ik-video.mp4 works in most browsers
+    // Try native MP4 — works for most direct video URLs
     video.src = mp4Src;
     video.load();
 

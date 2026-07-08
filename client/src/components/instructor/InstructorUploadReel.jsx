@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { createReel } from "../../redux/slices/reelsSlice";
-import { uploadToImageKit } from "../../utils/imagekitUpload";
+import { uploadFile } from "../../utils/uploadFile";
 
 // ── Brand tokens (matches the AI Tutor's purple → cyan identity) ────────────
 const ACCENT_GRADIENT = "linear-gradient(135deg,#7c3aed,#06b6d4)";
@@ -69,7 +69,7 @@ const InstructorUploadReel = ({ onClose }) => {
     setUploading(true);
     setUploadError("");
     try {
-      const data = await uploadToImageKit({
+      const data = await uploadFile({
         file,
         folder: "instructor-reels"
       });

@@ -83,7 +83,8 @@ export const createCourse = async (req, res) => {
 
     if (!title?.trim())
       return res.status(400).json({ message: "Title is required" });
-    if (!summary?.trim())
+    // summary is required only when submitting for review (published=true)
+    if (published === true && !summary?.trim())
       return res.status(400).json({ message: "Summary is required" });
 
     // If instructor clicked "Publish" → set approvalStatus to "pending"
@@ -490,6 +491,10 @@ export const updateCourse = async (req, res) => {
       instructor: req.user._id,
     });
     if (!existing) return res.status(404).json({ message: "Course not found" });
+
+    // summary only required when submitting for review
+    if (published === true && !summary?.trim())
+      return res.status(400).json({ message: "Summary is required" });
 
     const wantsPublish = published === true;
 

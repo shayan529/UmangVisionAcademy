@@ -27,7 +27,7 @@ const ratingSchema = new Schema(
 const courseSchema = new Schema(
   {
     title: { type: String, required: true, trim: true },
-    summary: { type: String, required: true, trim: true },
+    summary: { type: String, trim: true, default: "" },
     description: { type: String, trim: true, default: "" },
     category: { type: String, trim: true, default: "General" },
     level: {

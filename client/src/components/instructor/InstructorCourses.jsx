@@ -7,7 +7,7 @@ import {
   updateCourse,
   deleteCourse,
 } from "../../redux/slices/courseSlice";
-import { uploadToImageKit } from "../../utils/imagekitUpload.js";
+import { uploadFile } from "../../utils/uploadFile.js";
 import ChapterManager from "../course/ChapterManager.jsx";
 import api from "../../config/api";
 
@@ -190,7 +190,7 @@ const FileUploader = ({
     setProgress(0);
     setErrMsg("");
     try {
-      const data = await uploadToImageKit({
+      const data = await uploadFile({
         file,
         folder,
         onUploadProgress: (e) =>
@@ -560,7 +560,7 @@ function NotesManager({ notes = [], onChange, showToast }) {
     setProgress(0);
     setUploadError("");
     try {
-      const data = await uploadToImageKit({
+      const data = await uploadFile({
         file,
         folder: "Umang Vision Academy/notes",
         onUploadProgress: (progressEvent) => {

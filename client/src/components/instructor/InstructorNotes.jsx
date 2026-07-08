@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import api from "../../config/api";
 import { Toast } from "./InstructorUi";
-import { uploadToImageKit } from "../../utils/imagekitUpload";
+import { uploadFile } from "../../utils/uploadFile";
 import { FileText, Plus, X, Upload } from "lucide-react";
 
 export default function InstructorNotes({ showToast }) {
@@ -43,7 +43,7 @@ export default function InstructorNotes({ showToast }) {
     try {
       setUploadingFile(true);
       setUploadProgress(0);
-      const data = await uploadToImageKit({
+      const data = await uploadFile({
         file,
         folder: "/notes",
         onUploadProgress: (progressEvent) => {

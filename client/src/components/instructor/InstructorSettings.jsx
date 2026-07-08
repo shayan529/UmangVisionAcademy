@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { fetchProfile, updateProfile } from "../../redux/slices/settingsSlice";
 import { logoutUser } from "../../redux/slices/authSlice";
 import api from "../../config/api";
-import { uploadToImageKit } from "../../utils/imagekitUpload";
+import { uploadFile } from "../../utils/uploadFile";
 
 // ── Indian states & cities ────────────────────────────────────────────────────
 const indianCitiesByState = {
@@ -466,7 +466,7 @@ const InstructorSettings = ({ showToast }) => {
     if (!file) return;
     setUploading(true);
     try {
-      const data = await uploadToImageKit({
+      const data = await uploadFile({
         file,
         folder: "instructor-avatars"
       });

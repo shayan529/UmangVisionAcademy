@@ -8,7 +8,7 @@ const questionPaperSchema = new mongoose.Schema(
     subject: { type: String, required: true },
     year: { type: Number, required: true },
     fileUrl: { type: String, required: true },
-    fileId: { type: String }, // ImageKit file ID for deletion
+    fileId: { type: String }, // Relative path used for file deletion (e.g. "question-papers/filename.pdf")
     fileName: { type: String, required: true },
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },

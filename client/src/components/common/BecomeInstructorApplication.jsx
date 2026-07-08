@@ -6,7 +6,7 @@ import {
   fetchMyApplication,
   submitApplication,
 } from '../../redux/slices/applicationsSlice';
-import { uploadToImageKit } from '../../utils/imagekitUpload.js';
+import { uploadFile } from '../../utils/uploadFile.js';
 import toast from 'react-hot-toast';
 
 const BecomeInstructorApplication = () => {
@@ -52,7 +52,7 @@ const BecomeInstructorApplication = () => {
     setResumeUploadProgress(0);
 
     try {
-      const data = await uploadToImageKit({
+      const data = await uploadFile({
         file,
         folder: '/instructor-resumes',
         onUploadProgress: (event) =>

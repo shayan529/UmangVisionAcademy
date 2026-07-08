@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { uploadToImageKit } from "../../utils/imagekitUpload.js";
+import { uploadFile } from "../../utils/uploadFile.js";
 
 // ── shared primitives (duplicated from parent for standalone use) ──────────────
 const iStyle = {
@@ -119,7 +119,7 @@ const VideoUploadCell = ({ value, onUploaded }) => {
     setProgress(0);
     setErrorMsg("");
     try {
-      const data = await uploadToImageKit({
+      const data = await uploadFile({
         file,
         folder: "/Umang Vision Academy-videos",
         onUploadProgress: (e) => {

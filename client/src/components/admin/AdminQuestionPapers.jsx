@@ -318,7 +318,7 @@ export default function AdminQuestionPapers() {
               Upload Question Paper
             </h2>
             <p className="text-xs text-slate-500">
-              PDF only · Max 20 MB · Stored on ImageKit
+              PDF only · Max 20 MB
             </p>
           </div>
         </div>
@@ -449,7 +449,7 @@ export default function AdminQuestionPapers() {
         {uploading && (
           <div className="mt-3">
             <div className="flex justify-between text-xs text-slate-400 mb-1">
-              <span>Uploading to ImageKit...</span>
+              <span>Uploading...</span>
               <span>{progress}%</span>
             </div>
             <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
