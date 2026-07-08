@@ -106,8 +106,10 @@ const Layout = () => {
   const nativeApp = isNativeApp();
   const isMobileViewport =
     typeof window !== "undefined" && window.innerWidth < 768;
-  const showMobileBottomBar = (nativeApp || isMobileViewport) && isAuthenticated;
-  const showNavbarAndFooter = (isMobileViewport || nativeApp) ? isAuthenticated : true;
+  const showMobileBottomBar = nativeApp || isMobileViewport;
+  
+  // Show Navbar and Footer for all non-native app users, regardless of auth status
+  const showNavbarAndFooter = nativeApp ? isAuthenticated : true;
 
   return (
     <div className={`bg-slate-950 text-slate-100 min-h-screen ${showMobileBottomBar ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : 'pb-0'} md:pb-0`}>

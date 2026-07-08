@@ -13,12 +13,7 @@ import Testimonials from "../components/common/Testimonials";
 
 const Home = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
-  const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
-
-  if (isMobileViewport && !isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
+  
   return (
     <div>
       <Hero />
