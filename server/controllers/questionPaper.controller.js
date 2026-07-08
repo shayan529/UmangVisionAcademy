@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const UPLOADS_DIR = path.resolve(__dirname, "../../uploads");
+const UPLOADS_DIR = path.resolve(__dirname, "../uploads");
 
 export const uploadQuestionPaper = async (req, res) => {
   try {
@@ -76,7 +76,7 @@ export const deleteQuestionPaper = async (req, res) => {
     // Delete from local storage
     if (paper.fileId) {
       try {
-        const filePath = path.join(UPLOADS_DIR, "..", "uploads", paper.fileId);
+        const filePath = path.join(UPLOADS_DIR, paper.fileId);
         await fsPromises.unlink(filePath);
       } catch (err) {
         console.error("Failed to delete local file:", err);

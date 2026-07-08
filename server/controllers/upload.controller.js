@@ -6,7 +6,10 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const UPLOADS_DIR = path.resolve(__dirname, "../../uploads");
+// UPLOADS_DIR must match the directory served by express.static in server.js:
+// app.use("/uploads", express.static(path.join(__dirname_server, "uploads")))
+// server.js __dirname = .../server, so uploads live at .../server/uploads
+const UPLOADS_DIR = path.resolve(__dirname, "../uploads");
 
 export const uploadFile = async (req, res) => {
   try {
@@ -20,7 +23,12 @@ export const uploadFile = async (req, res) => {
     const targetDir = path.join(UPLOADS_DIR, folder);
     await fsPromises.mkdir(targetDir, { recursive: true });
 
-    const fileName = `${Date.now()}_${req.file.originalname.replace(/\s+/g, "_")}`;
+    // Sanitize the file name to avoid errors on Windows (e.g. colons, slashes)
+    const sanitizedOriginalName = req.file.originalname
+      .replace(/[^a-zA-Z0-9.\-_]/g, "_")
+      .replace(/_+/g, "_");
+      
+    const fileName = `${Date.now()}_${sanitizedOriginalName}`;
     const filePath = path.join(targetDir, fileName);
     let fileData = req.file.buffer;
 

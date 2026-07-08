@@ -536,33 +536,47 @@ const CourseTypeSelector = ({ value, onChange }) => {
 };
 
 // ── NotesManager ─────────────────────────────────────────────────────────────
+// instanceId makes the file-input id unique so multiple NotesManagers on the
+// same page (e.g. BulkCourseForm) don't share the same label→input binding.
+let _notesManagerCounter = 0;
+
 function NotesManager({ notes = [], onChange, showToast }) {
+  const [instanceId] = useState(() => ++_notesManagerCounter);
+  const fileInputId = `note-file-input-${instanceId}`;
+  const fileInputRef = useRef(null);
+
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newNote, setNewNote] = useState({ title: "", description: "", fileUrl: "" });
+  const [newNote, setNewNote] = useState({ title: "", description: "", fileUrl: "", fileName: "" });
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [uploadError, setUploadError] = useState("");
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Reset the input so the same file can be re-selected after a remove
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setUploading(true);
     setProgress(0);
+    setUploadError("");
     try {
       const data = await uploadToImageKit({
         file,
         folder: "Umang Vision Academy/notes",
         onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          setProgress(percentCompleted);
+          const total = progressEvent.total || progressEvent.event?.total;
+          if (total) {
+            setProgress(Math.round((progressEvent.loaded * 100) / total));
+          }
         },
       });
-      setNewNote((prev) => ({ ...prev, fileUrl: data.url }));
+      setNewNote((prev) => ({ ...prev, fileUrl: data.url, fileName: file.name }));
       showToast?.("File uploaded successfully.");
     } catch (err) {
-      console.error(err);
-      showToast?.("File upload failed.");
+      console.error("Note file upload error:", err);
+      const msg = err.response?.data?.message || err.message || "Upload failed.";
+      setUploadError(msg);
+      showToast?.(`File upload failed: ${msg}`);
     } finally {
       setUploading(false);
     }
@@ -577,9 +591,11 @@ function NotesManager({ notes = [], onChange, showToast }) {
       showToast?.("Please upload a file for the note.");
       return;
     }
-    const updated = [...notes, { ...newNote, _id: new Date().getTime().toString() }];
+    const { fileName, ...noteData } = newNote;
+    const updated = [...notes, { ...noteData, _id: new Date().getTime().toString() }];
     onChange(updated);
-    setNewNote({ title: "", description: "", fileUrl: "" });
+    setNewNote({ title: "", description: "", fileUrl: "", fileName: "" });
+    setUploadError("");
     setShowAddForm(false);
   };
 
@@ -642,10 +658,12 @@ function NotesManager({ notes = [], onChange, showToast }) {
             {newNote.fileUrl ? (
               <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#111827", padding: "8px 12px", borderRadius: 8, border: "1px solid #16a34a" }}>
                 <span style={{ fontSize: 14 }}>📄</span>
-                <span style={{ fontSize: 12, color: "#4ade80", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{newNote.fileUrl}</span>
+                <span style={{ fontSize: 12, color: "#4ade80", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {newNote.fileName || newNote.fileUrl}
+                </span>
                 <button
                   type="button"
-                  onClick={() => setNewNote((p) => ({ ...p, fileUrl: "" }))}
+                  onClick={() => setNewNote((p) => ({ ...p, fileUrl: "", fileName: "" }))}
                   style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: 12, fontWeight: 700 }}
                 >
                   Remove
@@ -654,14 +672,16 @@ function NotesManager({ notes = [], onChange, showToast }) {
             ) : (
               <div style={{ position: "relative" }}>
                 <input
+                  ref={fileInputRef}
                   type="file"
+                  id={fileInputId}
+                  accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
                   onChange={handleFileUpload}
                   disabled={uploading}
                   style={{ display: "none" }}
-                  id="note-file-input"
                 />
                 <label
-                  htmlFor="note-file-input"
+                  htmlFor={fileInputId}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -669,16 +689,27 @@ function NotesManager({ notes = [], onChange, showToast }) {
                     gap: 8,
                     padding: "10px",
                     background: "#111827",
-                    border: "1px dashed #334155",
+                    border: `1px dashed ${uploadError ? "#ef4444" : "#334155"}`,
                     borderRadius: 8,
-                    color: "#94a3b8",
+                    color: uploadError ? "#f87171" : "#94a3b8",
                     fontSize: 12,
                     cursor: uploading ? "not-allowed" : "pointer",
-                    textAlign: "center"
+                    pointerEvents: uploading ? "none" : "auto",
+                    textAlign: "center",
+                    userSelect: "none",
                   }}
                 >
-                  {uploading ? `Uploading... (${progress}%)` : "📁 Choose File to Upload"}
+                  {uploading
+                    ? `Uploading… ${progress}%`
+                    : uploadError
+                      ? `❌ ${uploadError} — click to retry`
+                      : "📁 Choose File to Upload"}
                 </label>
+                {uploading && (
+                  <div style={{ marginTop: 6, height: 4, background: "#1e293b", borderRadius: 4, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg,#7c3aed,#06b6d4)", borderRadius: 4, transition: "width 0.2s" }} />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -687,7 +718,8 @@ function NotesManager({ notes = [], onChange, showToast }) {
               type="button"
               onClick={() => {
                 setShowAddForm(false);
-                setNewNote({ title: "", description: "", fileUrl: "" });
+                setNewNote({ title: "", description: "", fileUrl: "", fileName: "" });
+                setUploadError("");
               }}
               style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #334155", background: "transparent", color: "#94a3b8", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
             >
@@ -731,7 +763,7 @@ function NotesManager({ notes = [], onChange, showToast }) {
                   rel="noreferrer"
                   style={{ fontSize: 10, color: "#818cf8", textDecoration: "none", display: "inline-block", marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}
                 >
-                  🔗 {note.fileUrl}
+                  🔗 {note.fileName || note.fileUrl.split("/").pop() || note.fileUrl}
                 </a>
               </div>
               <button
