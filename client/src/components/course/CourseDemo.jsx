@@ -240,6 +240,12 @@ const EnrollCard = ({
 }) => {
   const { t } = useTranslation();
   const isAdminOrStaff = user && (user.roles?.includes("admin") || (user.roles && user.roles.some(role => typeof role === "object")));
+  
+  const isEnrolled = user && course && (
+    user.enrolledCourses?.some(id => (id._id || id).toString() === course._id?.toString()) ||
+    course.students?.some(id => (id._id || id).toString() === user._id?.toString())
+  );
+  const canAccess = isAdminOrStaff || isEnrolled;
 
   return (
     <div
@@ -304,31 +310,29 @@ const EnrollCard = ({
 
             <button
               className="enroll-btn"
-              onClick={onEnroll}
-              disabled={isAdminOrStaff}
+              onClick={canAccess ? () => navigate(`/courses/${course?._id}`) : onEnroll}
               style={{
                 width: "100%",
                 padding: "14px",
                 borderRadius: 14,
                 border: "none",
                 background:
-                  isAdminOrStaff
-                    ? "#475569"
+                  canAccess
+                    ? "linear-gradient(135deg,#7c3aed,#06b6d4)"
                     : isInCart || addedToCart
                     ? "linear-gradient(135deg,#059669,#34d399)"
                     : "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                color: isAdminOrStaff ? "#94a3b8" : "#fff",
+                color: "#fff",
                 fontSize: 15,
                 fontWeight: 700,
-                cursor: isAdminOrStaff ? "not-allowed" : "pointer",
+                cursor: "pointer",
                 transition: "all 0.2s",
-                boxShadow: isAdminOrStaff ? "none" : "0 8px 24px rgba(124,58,237,0.3)",
+                boxShadow: "0 8px 24px rgba(124,58,237,0.3)",
                 marginBottom: 12,
               }}
-              title={isAdminOrStaff ? "Not available for admins or staff" : ""}
             >
-              {isAdminOrStaff
-                ? "Locked for Staff"
+              {canAccess
+                ? "Go to Course"
                 : isInCart || addedToCart
                 ? t("demo.added")
                 : course?.price > 0
@@ -336,7 +340,7 @@ const EnrollCard = ({
                   : t("demo.enroll_now")}
             </button>
 
-            {(isInCart || addedToCart) && !isAdminOrStaff && (
+            {(isInCart || addedToCart) && !canAccess && (
               <button
                 onClick={() => navigate("/cart")}
                 style={{

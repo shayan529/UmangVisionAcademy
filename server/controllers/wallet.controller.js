@@ -500,6 +500,10 @@ export const payWithWallet = async (req, res) => {
       $addToSet: { students: req.user._id },
     });
 
+    await User.findByIdAndUpdate(req.user._id, {
+      $addToSet: { enrolledCourses: courseId },
+    });
+
     await invalidateCourseCache(courseId).catch((err) =>
       console.error("[Cache] Failed to invalidate course cache:", err.message)
     );

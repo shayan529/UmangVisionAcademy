@@ -117,7 +117,7 @@ const ChatPanel = ({ sessionId, currentUser }) => {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col h-full lg:h-[480px]">
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col h-[420px] lg:h-[480px]">
       <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800">
         <h3 className="text-white font-semibold text-sm">Live Chat</h3>
         <span
@@ -242,6 +242,7 @@ function formatPlayerTime(seconds = 0) {
 // that chrome ever renders. All playback is driven through our own buttons
 // via the official postMessage-based Player API, so this is fully supported
 // (not a hack relying on undocumented embed params).
+//
 const CustomYouTubePlayer = ({ videoId, title }) => {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
@@ -256,6 +257,29 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
   const [hovering, setHovering] = useState(false);
   const [seeking, setSeeking] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const hideControlsTimeoutRef = useRef(null);
+
+  // On touch devices there is no hover event, so controls (bottom bar,
+  // fullscreen button) would otherwise never appear. This shows them on
+  // tap and auto-hides them again after a few seconds while playing,
+  // mirroring standard mobile video-player behavior.
+  const revealControls = useCallback(() => {
+    setHovering(true);
+    if (hideControlsTimeoutRef.current) {
+      clearTimeout(hideControlsTimeoutRef.current);
+    }
+    hideControlsTimeoutRef.current = setTimeout(() => {
+      setHovering(false);
+    }, 3000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (hideControlsTimeoutRef.current) {
+        clearTimeout(hideControlsTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Detects whether the loaded video is a live broadcast. The API's
   // getVideoData().isLive flag is the primary signal; as a fallback,
@@ -301,11 +325,24 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
             setDuration(e.target.getDuration());
             setVolume(e.target.getVolume());
             e.target.playVideo();
+            // Optimistic: we just told it to play. Don't wait on the
+            // async onStateChange event to confirm — on some browsers
+            // that event is delayed or dropped entirely, which left the
+            // video stuck behind our "paused" cover indefinitely even
+            // though it was actually playing underneath.
+            setPlaying(true);
           },
           onStateChange: (e) => {
             if (destroyed) return;
-            setPlaying(e.data === YT.PlayerState.PLAYING);
-            if (e.data === YT.PlayerState.PLAYING) {
+            // Treat BUFFERING as "playing" too — it fires right after we
+            // call playVideo()/seekTo() and briefly precedes the actual
+            // PLAYING state; treating it as paused would flash our cover
+            // back on during every buffer/seek.
+            const YTState = YT.PlayerState;
+            const stillPlaying =
+              e.data === YTState.PLAYING || e.data === YTState.BUFFERING;
+            setPlaying(stillPlaying);
+            if (e.data === YTState.PLAYING) {
               setIsLive(detectLive(e.target));
               setDuration(e.target.getDuration());
             }
@@ -338,7 +375,13 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
   const togglePlay = () => {
     const p = playerRef.current;
     if (!p) return;
-    playing ? p.pauseVideo() : p.playVideo();
+    if (playing) {
+      p.pauseVideo();
+      setPlaying(false);
+    } else {
+      p.playVideo();
+      setPlaying(true);
+    }
   };
 
   const toggleMute = () => {
@@ -413,6 +456,7 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
       className="relative w-full h-full bg-black"
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
+      onTouchStart={revealControls}
     >
       {/* The actual YouTube iframe gets mounted into this div by the Player API */}
       <div className="absolute inset-0 pointer-events-none">
@@ -424,7 +468,23 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
           A single click toggles play/pause, mirroring native behavior. */}
       <button
         type="button"
-        onClick={togglePlay}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          revealControls();
+          togglePlay();
+        }}
+        onTouchEnd={(e) => {
+          // Some mobile browsers surface YouTube's own native mobile
+          // controls (share/watch-later/suggested video/logo) on tap
+          // regardless of the controls=0 param. Stopping the touch here
+          // — in addition to the click handler above — keeps that tap
+          // from ever reaching the iframe underneath.
+          e.preventDefault();
+          e.stopPropagation();
+          revealControls();
+          togglePlay();
+        }}
         aria-label={playing ? "Pause" : "Play"}
         className="absolute inset-0 w-full h-full bg-transparent cursor-pointer z-10"
       />
@@ -439,13 +499,56 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
           control bar / play-glyph rendered on top for the actual UI.
           pointer-events-none throughout so clicks still reach the
           click-catcher beneath. */}
-      {(!playing || isLive) && (
-        <div className="absolute bottom-0 left-0 right-0 h-12 bg-black pointer-events-none z-20" />
+      {/* YouTube renders a native "pause card" (title, share/watch-later
+          icons, a suggested video thumbnail, and the YouTube logo) inside
+          its own iframe whenever the video is paused. This is YouTube's
+          own overlay content and can't be disabled via player params, so
+          the only reliable fix is to fully cover the iframe while paused
+          — our own center play button (z-30, rendered below) sits above
+          this cover. */}
+      {!playing && (
+        <div className="absolute inset-0 bg-black z-20 pointer-events-none" />
+      )}
+
+      {/* While an actual LIVE broadcast is playing, YouTube keeps a
+          persistent watermark/title strip pinned at the top and bottom —
+          cover just those thin strips so the live picture itself stays
+          visible instead of blacking out the whole frame. */}
+      {playing && isLive && (
+        <>
+          <div className="absolute top-0 left-0 right-0 h-14 bg-black pointer-events-none z-20" />
+          <div className="absolute bottom-0 left-0 right-0 h-12 bg-black pointer-events-none z-20" />
+        </>
       )}
 
       {!ready && (
         <div className="absolute inset-0 flex items-center justify-center bg-black">
           <div className="w-8 h-8 border-2 border-slate-600 border-t-purple-500 rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* Top-right fullscreen button, shown on hover (or always on touch
+          devices via the isLive/paused chrome-cover condition reused here
+          for consistency) */}
+      {ready && (
+        <div
+          className={`absolute top-3 right-3 z-30 transition-opacity duration-200 ${hovering ? "opacity-100" : "opacity-0"
+            }`}
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              goFullscreen();
+            }}
+            aria-label="Fullscreen"
+            title="Fullscreen"
+            className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 hover:scale-110 transition cursor-pointer text-white border border-slate-700/50"
+          >
+            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+              <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
+            </svg>
+          </button>
         </div>
       )}
 
@@ -508,7 +611,7 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
       {/* Custom control bar */}
       {ready && (
         <div
-          className={`absolute bottom-0 left-0 right-0 px-4 pb-3 pt-8 bg-gradient-to-t from-black/85 via-black/40 to-transparent transition-opacity duration-200 z-30 ${hovering ? "opacity-100" : "opacity-0"
+          className={`absolute bottom-0 left-0 right-0 px-4 pb-3 pt-8 bg-black transition-opacity duration-200 z-30 ${hovering ? "opacity-100" : "opacity-0"
             }`}
         >
           {!isLive && (
@@ -655,14 +758,6 @@ const SessionRoom = ({ session, currentUser, onLeave }) => {
             </p>
           </div>
         </div>
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${session.status === "live"
-            ? "bg-green-500/20 text-green-400 border border-green-500/30"
-            : "bg-purple-500/20 text-purple-400 border border-purple-500/30"
-            }`}
-        >
-          {session.status === "live" ? "🔴 LIVE" : session.status}
-        </span>
       </div>
 
       {/* Video + Chat — side by side like YouTube */}

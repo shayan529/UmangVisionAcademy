@@ -1,14 +1,12 @@
-import ImageKit from "imagekit";
 import fs from "fs";
 import fsPromises from "fs/promises";
 import path from "path";
 import sharp from "sharp";
+import { fileURLToPath } from "url";
 
-const imagekit = new ImageKit({
-  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
-});
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const UPLOADS_DIR = path.resolve(__dirname, "../../uploads");
 
 export const uploadFile = async (req, res) => {
   try {
@@ -16,8 +14,14 @@ export const uploadFile = async (req, res) => {
       return res.status(400).json({ message: "No file provided." });
 
     const rawFolder = req.body.folder || "Umang Vision Academy";
-    const folder = "/" + rawFolder.trim().replace(/[^a-zA-Z0-9_\-\/]/g, "_").replace(/\/+/g, "/");
+    const folder = rawFolder.trim().replace(/[^a-zA-Z0-9_\-\/]/g, "_").replace(/\/+/g, "/").replace(/^\/+/, ''); // Ensure no leading slash for local directory logic
+    
+    // Create the target directory locally
+    const targetDir = path.join(UPLOADS_DIR, folder);
+    await fsPromises.mkdir(targetDir, { recursive: true });
+
     const fileName = `${Date.now()}_${req.file.originalname.replace(/\s+/g, "_")}`;
+    const filePath = path.join(targetDir, fileName);
     let fileData = req.file.buffer;
 
     try {
@@ -42,35 +46,20 @@ export const uploadFile = async (req, res) => {
       );
     }
 
-    const result = await imagekit.upload({
-      file: fileData,
-      fileName,
-      folder,
-      useUniqueFileName: true,
-    });
+    // Save to disk
+    await fsPromises.writeFile(filePath, fileData);
+
+    // Construct the local URL
+    const baseUrl = process.env.SERVER_URL || `${req.protocol}://${req.get("host")}`;
+    const fileUrl = `${baseUrl}/uploads/${folder}/${fileName}`;
 
     res.json({
-      url: result.url,
-      fileId: result.fileId,
-      name: result.name,
+      url: fileUrl,
+      fileId: `${folder}/${fileName}`, // Store relative path as ID for easy deletion
+      name: fileName,
     });
   } catch (err) {
-    console.error("ImageKit upload error:", err);
+    console.error("Local upload error:", err);
     res.status(500).json({ message: err.message || "Upload failed." });
-  }
-};
-
-export const getUploadSignature = (req, res) => {
-  try {
-    const authParams = imagekit.getAuthenticationParameters();
-    res.json({
-      publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
-      signature: authParams.signature,
-      expire: authParams.expire,
-      token: authParams.token,
-    });
-  } catch (err) {
-    console.error("ImageKit signature error:", err);
-    res.status(500).json({ message: "Failed to generate upload signature." });
   }
 };

@@ -1,13 +1,7 @@
 import express from 'express';
 import multer from 'multer';
-import path from 'path';
-import {
-  uploadFile,
-  getUploadSignature,
-} from '../controllers/upload.controller.js';
+import { uploadFile } from '../controllers/upload.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
-
-import fs from 'fs';
 
 const storage = multer.memoryStorage();
 
@@ -33,10 +27,7 @@ const upload = multer({
 
 const router = express.Router();
 
-// GET /upload/signature — generate ImageKit upload signature for direct browser uploads
-router.get('/signature', protect, getUploadSignature);
-
-// POST /upload  — single file, field name "file"
-router.post('/', protect, upload.single('file'), uploadFile);
+// POST /upload/local  — single file, field name "file"
+router.post('/local', protect, upload.single('file'), uploadFile);
 
 export default router;

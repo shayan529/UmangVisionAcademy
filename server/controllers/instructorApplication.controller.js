@@ -1,6 +1,12 @@
 import InstructorApplication from "../models/instructorApplication.model.js";
 import User from "../models/user.model.js";
-import imagekit from "../utils/imageKit.js";
+import fsPromises from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const UPLOADS_DIR = path.resolve(__dirname, "../../uploads");
 
 // POST /instructor-applications
 export const submitApplication = async (req, res) => {
@@ -21,14 +27,17 @@ export const submitApplication = async (req, res) => {
     if (req.body?.resumeUrl) {
       resumeUrl = req.body.resumeUrl;
     } else if (req.file) {
-      const uploadedFile = await imagekit.upload({
-        file: req.file.buffer,
-        fileName: `${Date.now()}-${req.file.originalname}`,
-        folder: "/instructor-resumes",
-      });
+      const folder = "instructor-resumes";
+      const targetDir = path.join(UPLOADS_DIR, folder);
+      await fsPromises.mkdir(targetDir, { recursive: true });
 
-      resumeUrl = uploadedFile.url;
-      resumeFileId = uploadedFile.fileId;
+      const fileName = `${Date.now()}-${req.file.originalname.replace(/\s+/g, "_")}`;
+      const filePath = path.join(targetDir, fileName);
+      await fsPromises.writeFile(filePath, req.file.buffer);
+
+      const baseUrl = process.env.SERVER_URL || `${req.protocol}://${req.get("host")}`;
+      resumeUrl = `${baseUrl}/uploads/${folder}/${fileName}`;
+      resumeFileId = `${folder}/${fileName}`;
     }
 
     const application = await InstructorApplication.create({
@@ -61,55 +70,102 @@ export const getMyApplication = async (req, res) => {
   }
 };
 
-// GET /instructor-applications  (admin)
+// GET /instructor-applications
 export const getAllApplications = async (req, res) => {
   try {
-    const applications = await InstructorApplication.find().populate(
-      "user",
-      "name email avatar",
-    );
+    const statusFilter = req.query.status
+      ? { status: req.query.status }
+      : {};
+    const applications = await InstructorApplication.find(statusFilter)
+      .populate("user", "name email phone")
+      .sort({ createdAt: -1 });
+
     res.json(applications);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// PUT /instructor-applications/:id/approve  (admin)
+// PUT /instructor-applications/:id/approve
 export const approveApplication = async (req, res) => {
   try {
     const application = await InstructorApplication.findByIdAndUpdate(
       req.params.id,
-      { status: "approved", reviewNote: req.body?.reviewNote ?? null },
+      { status: "approved" },
       { new: true },
-    );
+    ).populate("user", "name email phone");
+
     if (!application)
       return res.status(404).json({ message: "Application not found" });
 
-    // Promote the user's role to instructor
-    await User.findByIdAndUpdate(application.user, {
-      $addToSet: { roles: "instructor" },
-    });
+    const user = await User.findById(application.user._id);
+    if (user && !user.roles.includes("instructor")) {
+      user.roles.push("instructor");
+      await user.save();
+    }
 
     res.json(application);
   } catch (err) {
-    console.error("approveApplication error:", err.message);
     res.status(500).json({ message: err.message });
   }
 };
 
-// DELETE /instructor-applications/:id  (admin)
+// DELETE /instructor-applications/:id (reject)
 export const rejectApplication = async (req, res) => {
   try {
     const application = await InstructorApplication.findByIdAndUpdate(
       req.params.id,
-      { status: "rejected", reviewNote: req.body?.reviewNote ?? null },
+      { status: "rejected" },
       { new: true },
-    );
+    ).populate("user", "name email phone");
+
     if (!application)
       return res.status(404).json({ message: "Application not found" });
+
+    const user = await User.findById(application.user._id);
+    if (user && user.roles.includes("instructor")) {
+      user.roles = user.roles.filter((role) => role !== "instructor");
+      await user.save();
+    }
+
     res.json(application);
   } catch (err) {
-    console.error("rejectApplication error:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// PUT /instructor-applications/:id/status
+export const updateApplicationStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const application = await InstructorApplication.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true },
+    ).populate("user", "name email phone");
+
+    if (!application)
+      return res.status(404).json({ message: "Application not found" });
+
+    // If approved, update user role
+    if (status === "approved") {
+      const user = await User.findById(application.user._id);
+      if (user && !user.roles.includes("instructor")) {
+        user.roles.push("instructor");
+        await user.save();
+      }
+    } else if (status === "rejected") {
+      // Optional: remove role if rejected and previously approved,
+      // but usually rejected means they just don't get it.
+      const user = await User.findById(application.user._id);
+      if (user && user.roles.includes("instructor")) {
+        user.roles = user.roles.filter((role) => role !== "instructor");
+        await user.save();
+      }
+    }
+
+    res.json(application);
+  } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };

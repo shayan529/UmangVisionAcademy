@@ -1,4 +1,3 @@
-import axios from "axios";
 import api from "../config/api.js";
 
 const sanitizeFolderValue = (folder = "Umang Vision Academy") => {
@@ -15,30 +14,16 @@ export const uploadToImageKit = async ({
   folder = "Umang Vision Academy",
   onUploadProgress,
 }) => {
-  const { data: auth } = await api.get("/upload/signature");
-
   const uploadData = new FormData();
   uploadData.append("file", file);
-  uploadData.append(
-    "fileName",
-    `${Date.now()}_${file.name.replace(/\s+/g, "_")}`,
-  );
-  uploadData.append("publicKey", auth.publicKey);
-  uploadData.append("signature", auth.signature);
-  uploadData.append("expire", auth.expire);
-  uploadData.append("token", auth.token);
   uploadData.append("folder", sanitizeFolderValue(folder));
-  uploadData.append("useUniqueFileName", "true");
 
-  const response = await axios.post(
-    "https://upload.imagekit.io/api/v1/files/upload",
-    uploadData,
-    {
-      headers: { "Content-Type": "multipart/form-data" },
-      withCredentials: false,
-      onUploadProgress,
-    },
-  );
+  // Note: we still call the function uploadToImageKit to avoid massive refactoring,
+  // but it now uploads to our local server endpoint.
+  const response = await api.post("/upload/local", uploadData, {
+    headers: { "Content-Type": "multipart/form-data" },
+    onUploadProgress,
+  });
 
   return response.data;
 };

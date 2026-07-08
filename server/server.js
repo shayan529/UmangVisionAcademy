@@ -106,6 +106,7 @@ const io = new Server(httpServer, {
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Debug logger for APK requests
 app.use((req, res, next) => {

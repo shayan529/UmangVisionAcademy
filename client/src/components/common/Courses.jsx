@@ -208,8 +208,17 @@ const Courses = () => {
     if (!user) return false;
     if (!canEnroll) return false;
 
+    const courseIdStr = course._id?.toString();
+    const userIdStr = user._id?.toString();
+
     // Primary check: use the enrolled courses list from Redux (authoritative)
-    if (enrolledIdSet.has(course._id?.toString())) return true;
+    if (enrolledIdSet.has(courseIdStr)) return true;
+
+    // Fallback check 1: check user object's enrolledCourses array
+    if (user.enrolledCourses?.some((id) => (id._id || id).toString() === courseIdStr)) return true;
+
+    // Fallback check 2: check course object's students array
+    if (Array.isArray(course.students) && course.students.some((id) => (id._id || id).toString() === userIdStr)) return true;
 
     // Secondary check: subscription-based access
     const hasActiveSubscription = user.subscription?.status === "active";

@@ -1,16 +1,15 @@
 // controllers/questionPaper.controller.js
 import QuestionPaper from "../models/questionPaper.model.js";
-import ImageKit from "imagekit";
-import streamifier from "streamifier";
 import { cacheResponse, invalidateCache } from "../utils/redisClient.js";
 import User from "../models/user.model.js";
 import Wallet from "../models/wallet.model.js";
+import fsPromises from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const imagekit = new ImageKit({
-  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
-});
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const UPLOADS_DIR = path.resolve(__dirname, "../../uploads");
 
 export const uploadQuestionPaper = async (req, res) => {
   try {
@@ -21,18 +20,21 @@ export const uploadQuestionPaper = async (req, res) => {
     if (!board || !cls || !subject || !year)
       return res.status(400).json({ message: "All fields are required." });
 
-    const fileName = `${board}-${cls}-${subject}-${year}.pdf`.replace(
+    const fileName = `${board}-${cls}-${subject}-${year}-${Date.now()}.pdf`.replace(
       /\s+/g,
       "_",
     );
 
-    // Upload buffer to ImageKit
-    const uploadResponse = await imagekit.upload({
-      file: req.file.buffer,
-      fileName,
-      folder: "/question-papers",
-      useUniqueFileName: false, // overwrite same name = same board+class+subject+year
-    });
+    const folder = "question-papers";
+    const targetDir = path.join(UPLOADS_DIR, folder);
+    await fsPromises.mkdir(targetDir, { recursive: true });
+
+    const filePath = path.join(targetDir, fileName);
+    await fsPromises.writeFile(filePath, req.file.buffer);
+
+    const baseUrl = process.env.SERVER_URL || `${req.protocol}://${req.get("host")}`;
+    const fileUrl = `${baseUrl}/uploads/${folder}/${fileName}`;
+    const fileId = `${folder}/${fileName}`;
 
     const paper = await QuestionPaper.findOneAndUpdate(
       { board, class: cls, subject, year: Number(year) },
@@ -41,9 +43,9 @@ export const uploadQuestionPaper = async (req, res) => {
         class: cls,
         subject,
         year: Number(year),
-        fileUrl: uploadResponse.url,
-        fileId: uploadResponse.fileId, // store for deletion
-        fileName: uploadResponse.name,
+        fileUrl,
+        fileId, // store for deletion
+        fileName,
         uploadedBy: req.user._id,
       },
       { upsert: true, new: true },
@@ -71,9 +73,14 @@ export const deleteQuestionPaper = async (req, res) => {
     const paper = await QuestionPaper.findById(req.params.id);
     if (!paper) return res.status(404).json({ message: "Paper not found." });
 
-    // Delete from ImageKit too
+    // Delete from local storage
     if (paper.fileId) {
-      await imagekit.deleteFile(paper.fileId);
+      try {
+        const filePath = path.join(UPLOADS_DIR, "..", "uploads", paper.fileId);
+        await fsPromises.unlink(filePath);
+      } catch (err) {
+        console.error("Failed to delete local file:", err);
+      }
     }
 
     await paper.deleteOne();
@@ -181,3 +188,4 @@ export const purchasePYQ = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+ 
