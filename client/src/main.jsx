@@ -16,6 +16,9 @@ createRoot(document.getElementById("root")).render(
         containerStyle={{
           top: 70,
         }}
+        toastOptions={{
+          duration: 4000,
+        }}
       />
     </BrowserRouter>
   </Provider>,

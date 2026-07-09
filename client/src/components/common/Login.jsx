@@ -924,7 +924,7 @@ const Login = () => {
         }),
       ).then(() => dispatch(fetchAchievements()));
 
-      toast(t("auth.welcomeToast"), { icon: "👋" });
+      toast(t("auth.welcomeToast"), { icon: "👋", duration: 3000 });
 
       const isAdmin = hasBaseRole(user, "admin");
       // Custom-role staff (HR Manager, Payroll Admin, etc.) are detected by
