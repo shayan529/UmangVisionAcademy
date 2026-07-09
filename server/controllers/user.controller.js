@@ -235,8 +235,8 @@ export const RegisterUser = async (req, res) => {
 
     const referrer = referralCodeParam
       ? await User.findOne({
-        referralCode: referralCodeParam.trim().toUpperCase(),
-      })
+          referralCode: referralCodeParam.trim().toUpperCase(),
+        })
       : null;
 
     const user = await User.create({
@@ -371,8 +371,13 @@ export const LoginUser = async (req, res) => {
     // Tell the frontend whether a coin was awarded so it can show a toast
     res.json({ ...userData, loginCoinAwarded, token });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const logMessage =
+      error?.message || error?.toString() || "Unknown login error";
     console.error("Error logging in user:", error);
+    res.status(500).json({
+      message: "Login failed due to a server issue. Please try again.",
+      error: logMessage,
+    });
   }
 };
 
@@ -549,23 +554,25 @@ export const bulkImportStudents = async (req, res) => {
 
     if (courseIds.length > 0 && created.length > 0) {
       try {
-        const newStudentIds = created.map(c => c._id);
+        const newStudentIds = created.map((c) => c._id);
 
         await Promise.all(
           courseIds.map(async (courseId) => {
             await Course.findByIdAndUpdate(courseId, {
-              $addToSet: { students: { $each: newStudentIds } }
+              $addToSet: { students: { $each: newStudentIds } },
             });
-          })
+          }),
         );
 
         await User.updateMany(
           { _id: { $in: newStudentIds } },
-          { $addToSet: { enrolledCourses: { $each: courseIds } } }
+          { $addToSet: { enrolledCourses: { $each: courseIds } } },
         );
 
         await Promise.all(
-          courseIds.map(id => invalidateCourseCache(id).catch(e => console.error(e)))
+          courseIds.map((id) =>
+            invalidateCourseCache(id).catch((e) => console.error(e)),
+          ),
         );
       } catch (err) {
         console.error("Failed to assign courses in bulk import:", err);
@@ -655,7 +662,11 @@ export const deleteUser = async (req, res) => {
         user.roles = otherRoles;
         await user.save();
         const hydrated = await hydrateUserRoles(user);
-        return res.json({ deleted: false, user: hydrated, message: `Role ${role} removed` });
+        return res.json({
+          deleted: false,
+          user: hydrated,
+          message: `Role ${role} removed`,
+        });
       }
     }
 
@@ -735,8 +746,8 @@ export const createStudentByAdmin = async (req, res) => {
 
     const referrer = referralCodeParam
       ? await User.findOne({
-        referralCode: referralCodeParam.trim().toUpperCase(),
-      })
+          referralCode: referralCodeParam.trim().toUpperCase(),
+        })
       : null;
 
     const user = await User.create({
@@ -765,13 +776,15 @@ export const createStudentByAdmin = async (req, res) => {
             await Course.findByIdAndUpdate(courseId, {
               $addToSet: { students: user._id },
             });
-          })
+          }),
         );
         await User.findByIdAndUpdate(user._id, {
-          $addToSet: { enrolledCourses: { $each: courseIds } }
+          $addToSet: { enrolledCourses: { $each: courseIds } },
         });
         await Promise.all(
-          courseIds.map(id => invalidateCourseCache(id).catch(e => console.error(e)))
+          courseIds.map((id) =>
+            invalidateCourseCache(id).catch((e) => console.error(e)),
+          ),
         );
       } catch (err) {
         console.error("Failed to assign courses during student creation:", err);

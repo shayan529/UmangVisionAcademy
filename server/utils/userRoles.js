@@ -37,7 +37,11 @@ export const customRoleIdsFromRoles = (roles = []) =>
 export const mergeBaseAndCustomRoles = (baseRoles = [], customRoleIds = []) => {
   const cleanBaseRoles = [...new Set(baseRoles.filter(isBaseRole))];
   const cleanCustomRoleIds = [
-    ...new Set(customRoleIds.map(roleIdString).filter((id) => Types.ObjectId.isValid(id))),
+    ...new Set(
+      customRoleIds
+        .map(roleIdString)
+        .filter((id) => Types.ObjectId.isValid(id)),
+    ),
   ].map((id) => new Types.ObjectId(id));
 
   return [...cleanBaseRoles, ...cleanCustomRoleIds];
@@ -53,7 +57,10 @@ export const migrateLegacyAssignedRoles = async (user) => {
 
   // If the user object already has an empty assignedRoles array,
   // we can safely assume there are no legacy roles to migrate and skip the raw DB query.
-  if ('assignedRoles' in user && (!user.assignedRoles || user.assignedRoles.length === 0)) {
+  if (
+    "assignedRoles" in user &&
+    (!user.assignedRoles || user.assignedRoles.length === 0)
+  ) {
     return user.roles || [];
   }
 
@@ -84,43 +91,48 @@ export const hydrateUserRoles = async (user, { migrate = true } = {}) => {
   const plainUser = toPlainUser(user);
   if (!plainUser) return null;
 
-  const roles = migrate
-    ? await migrateLegacyAssignedRoles(plainUser)
-    : plainUser.roles || [];
+  try {
+    const roles = migrate
+      ? await migrateLegacyAssignedRoles(plainUser)
+      : plainUser.roles || [];
 
-  const baseRoles = roles.filter(isBaseRole);
-  const customRoleIds = customRoleIdsFromRoles(roles);
-  
-  const customRoles = [];
-  if (customRoleIds.length > 0) {
-    const rolesToFetchFromDb = [];
-    for (const id of customRoleIds) {
-      const cached = await getJson(`role:${id}`);
-      if (cached) {
-        customRoles.push(cached);
-      } else {
-        rolesToFetchFromDb.push(id);
+    const baseRoles = roles.filter(isBaseRole);
+    const customRoleIds = customRoleIdsFromRoles(roles);
+
+    const customRoles = [];
+    if (customRoleIds.length > 0) {
+      const rolesToFetchFromDb = [];
+      for (const id of customRoleIds) {
+        const cached = await getJson(`role:${id}`);
+        if (cached) {
+          customRoles.push(cached);
+        } else {
+          rolesToFetchFromDb.push(id);
+        }
+      }
+
+      if (rolesToFetchFromDb.length > 0) {
+        const fetchedRoles = await Role.find({
+          _id: { $in: rolesToFetchFromDb },
+        }).lean();
+        for (const role of fetchedRoles) {
+          await setJson(`role:${role._id.toString()}`, role, 3600 * 24); // Cache for 24 hours
+          customRoles.push(role);
+        }
       }
     }
-    
-    if (rolesToFetchFromDb.length > 0) {
-      const fetchedRoles = await Role.find({ _id: { $in: rolesToFetchFromDb } }).lean();
-      for (const role of fetchedRoles) {
-        await setJson(`role:${role._id.toString()}`, role, 3600 * 24); // Cache for 24 hours
-        customRoles.push(role);
-      }
-    }
+    const customRoleById = new Map(
+      customRoles.map((role) => [role._id.toString(), role]),
+    );
+
+    plainUser.roles = [
+      ...baseRoles,
+      ...customRoleIds.map((id) => customRoleById.get(id)).filter(Boolean),
+    ];
+  } catch (error) {
+    console.error("[Roles] hydrateUserRoles failed:", error);
+    plainUser.roles = (plainUser.roles || []).filter(isBaseRole);
   }
-  const customRoleById = new Map(
-    customRoles.map((role) => [role._id.toString(), role]),
-  );
-
-  plainUser.roles = [
-    ...baseRoles,
-    ...customRoleIds
-      .map((id) => customRoleById.get(id))
-      .filter(Boolean),
-  ];
 
   delete plainUser.assignedRoles;
   delete plainUser.password;
