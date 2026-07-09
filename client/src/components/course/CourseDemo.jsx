@@ -239,12 +239,20 @@ const EnrollCard = ({
   navigate,
 }) => {
   const { t } = useTranslation();
-  const isAdminOrStaff = user && (user.roles?.includes("admin") || (user.roles && user.roles.some(role => typeof role === "object")));
-  
-  const isEnrolled = user && course && (
-    user.enrolledCourses?.some(id => (id._id || id).toString() === course._id?.toString()) ||
-    course.students?.some(id => (id._id || id).toString() === user._id?.toString())
-  );
+  const isAdminOrStaff =
+    user &&
+    (user.roles?.includes("admin") ||
+      (user.roles && user.roles.some((role) => typeof role === "object")));
+
+  const isEnrolled =
+    user &&
+    course &&
+    (user.enrolledCourses?.some(
+      (id) => (id._id || id).toString() === course._id?.toString(),
+    ) ||
+      course.students?.some(
+        (id) => (id._id || id).toString() === user._id?.toString(),
+      ));
   const canAccess = isAdminOrStaff || isEnrolled;
 
   return (
@@ -310,16 +318,17 @@ const EnrollCard = ({
 
             <button
               className="enroll-btn"
-              onClick={canAccess ? () => navigate(`/courses/${course?._id}`) : onEnroll}
+              onClick={
+                canAccess ? () => navigate(`/courses/${course?._id}`) : onEnroll
+              }
               style={{
                 width: "100%",
                 padding: "14px",
                 borderRadius: 14,
                 border: "none",
-                background:
-                  canAccess
-                    ? "linear-gradient(135deg,#7c3aed,#06b6d4)"
-                    : isInCart || addedToCart
+                background: canAccess
+                  ? "linear-gradient(135deg,#7c3aed,#06b6d4)"
+                  : isInCart || addedToCart
                     ? "linear-gradient(135deg,#059669,#34d399)"
                     : "linear-gradient(135deg,#7c3aed,#06b6d4)",
                 color: "#fff",
@@ -334,10 +343,10 @@ const EnrollCard = ({
               {canAccess
                 ? "Go to Course"
                 : isInCart || addedToCart
-                ? t("demo.added")
-                : course?.price > 0
-                  ? t("demo.buy_now")
-                  : t("demo.enroll_now")}
+                  ? t("demo.added")
+                  : course?.price > 0
+                    ? t("demo.buy_now")
+                    : t("demo.enroll_now")}
             </button>
 
             {(isInCart || addedToCart) && !canAccess && (
@@ -394,8 +403,10 @@ const EnrollCard = ({
               }}
             >
               {[
-                course.lessonCount > 0 && t("demo.lessonsCount", { count: course.lessonCount }),
-                course.durationHours > 0 && t("demo.hoursCount", { count: course.durationHours }),
+                course.lessonCount > 0 &&
+                  t("demo.lessonsCount", { count: course.lessonCount }),
+                course.durationHours > 0 &&
+                  t("demo.hoursCount", { count: course.durationHours }),
                 t("demo.lifetime_access"),
                 t("demo.certificate"),
               ]
@@ -677,20 +688,29 @@ export default function CourseDemo() {
                           {course.ratingAverage?.toFixed(1) || "New"}
                         </span>
                         <span style={{ fontSize: 12, color: "#64748b" }}>
-                          {t("demo.reviewsCount", { count: course.reviewCount ?? 0 })}
+                          {t("demo.reviewsCount", {
+                            count: course.reviewCount ?? 0,
+                          })}
                         </span>
                       </div>
                       <span style={{ fontSize: 13, color: "#64748b" }}>
-                        {t("demo.studentsCount", { count: course.enrolledCount ?? 0 })}
+                        {t("demo.studentsCount", {
+                          count: course.enrolledCount ?? 0,
+                        })}
                       </span>
                       {course.lessonCount > 0 && (
                         <span style={{ fontSize: 13, color: "#64748b" }}>
-                          📚 {t("demo.lessonsCount", { count: course.lessonCount })}
+                          📚{" "}
+                          {t("demo.lessonsCount", {
+                            count: course.lessonCount,
+                          })}
                         </span>
                       )}
                       {course.durationHours > 0 && (
                         <span style={{ fontSize: 13, color: "#64748b" }}>
-                          {t("demo.hoursTotal", { count: course.durationHours })}
+                          {t("demo.hoursTotal", {
+                            count: course.durationHours,
+                          })}
                         </span>
                       )}
                     </div>
@@ -841,6 +861,93 @@ export default function CourseDemo() {
                   </div>
                 )}
 
+                {/* Notes */}
+                {!loading && course.notes?.length > 0 && (
+                  <div
+                    style={{
+                      background: "#111827",
+                      border: "1px solid #1e293b",
+                      borderRadius: 18,
+                      padding: isMobile ? "18px 16px" : "22px 24px",
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 700,
+                        color: "#f1f5f9",
+                        marginBottom: 14,
+                      }}
+                    >
+                      📄 Study Notes & Materials
+                    </h3>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 10,
+                      }}
+                    >
+                      {course.notes.map((note) => (
+                        <div
+                          key={note._id || note.title}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: 10,
+                            padding: "10px 12px",
+                            background: "#0d1526",
+                            borderRadius: 12,
+                            border: "1px solid #1e293b",
+                          }}
+                        >
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p
+                              style={{
+                                fontSize: 13,
+                                fontWeight: 700,
+                                color: "#e2e8f0",
+                              }}
+                            >
+                              {note.title}
+                            </p>
+                            {note.description && (
+                              <p
+                                style={{
+                                  fontSize: 11,
+                                  color: "#64748b",
+                                  marginTop: 2,
+                                }}
+                              >
+                                {note.description}
+                              </p>
+                            )}
+                          </div>
+                          <a
+                            href={note.fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                              padding: "7px 12px",
+                              background:
+                                "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                              color: "#fff",
+                              borderRadius: 8,
+                              fontSize: 11,
+                              fontWeight: 700,
+                              textDecoration: "none",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            Download
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Lesson list */}
                 {!loading && course.lessons?.length > 0 && (
                   <div
@@ -867,7 +974,11 @@ export default function CourseDemo() {
                           fontSize: 13,
                         }}
                       >
-                        ({t("demo.lessonsCount", { count: course.lessons.length })})
+                        (
+                        {t("demo.lessonsCount", {
+                          count: course.lessons.length,
+                        })}
+                        )
                       </span>
                     </h3>
                     <div

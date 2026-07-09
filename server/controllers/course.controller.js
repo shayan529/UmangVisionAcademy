@@ -193,6 +193,13 @@ export const getCourseByIdPublic = async (req, res) => {
         durationMinutes: l.durationMinutes,
         type: l.type ?? "video",
       })),
+      notes: (course.notes ?? []).map((note) => ({
+        _id: note._id,
+        title: note.title,
+        description: note.description,
+        fileUrl: note.fileUrl,
+        createdAt: note.createdAt,
+      })),
     };
 
     await setJson(cacheKey, shaped, 7200);
@@ -336,9 +343,10 @@ export const enrolledCourses = async (req, res) => {
         ratingAverage: course.ratingAverage,
         reviewCount: course.reviewCount,
         // Student's own rating for this course (null if not yet rated)
-        userRating: course.ratings?.find(
-          (r) => r.user?.toString() === studentId.toString()
-        ) ?? null,
+        userRating:
+          course.ratings?.find(
+            (r) => r.user?.toString() === studentId.toString(),
+          ) ?? null,
         notes: course.notes ?? [],
       };
     });
@@ -387,10 +395,17 @@ export const enrollCourses = async (req, res) => {
 
     let studentId = req.user._id;
 
-    if (requestedStudentId && requestedStudentId.toString() !== req.user._id.toString()) {
-      const canEdit = hasBaseRole(req.user, "admin") || hasPermissionGrant(req.user, "users", "edit");
+    if (
+      requestedStudentId &&
+      requestedStudentId.toString() !== req.user._id.toString()
+    ) {
+      const canEdit =
+        hasBaseRole(req.user, "admin") ||
+        hasPermissionGrant(req.user, "users", "edit");
       if (!canEdit) {
-        return res.status(403).json({ message: "Access denied — cannot enroll other students." });
+        return res
+          .status(403)
+          .json({ message: "Access denied — cannot enroll other students." });
       }
       studentId = requestedStudentId;
     }
@@ -426,9 +441,12 @@ export const enrollCourses = async (req, res) => {
     await Promise.all(
       enrolled.map((id) =>
         invalidateCourseCache(id).catch((err) =>
-          console.error("[Cache] Failed to invalidate course cache:", err.message)
-        )
-      )
+          console.error(
+            "[Cache] Failed to invalidate course cache:",
+            err.message,
+          ),
+        ),
+      ),
     );
 
     await Cart.findOneAndUpdate(

@@ -1,6 +1,10 @@
 import Session from "../models/session.model.js";
 import Course from "../models/courses.model.js";
-import { cacheResponse, deleteKey, invalidateCache } from "../utils/redisClient.js";
+import {
+  cacheResponse,
+  deleteKey,
+  invalidateCache,
+} from "../utils/redisClient.js";
 
 // Helper to check if a user has admin or staff roles
 const checkIsAdminOrStaff = (user) => {
@@ -8,7 +12,8 @@ const checkIsAdminOrStaff = (user) => {
   return (
     user.role === "admin" ||
     user.role === "staff" ||
-    (user.roles && (user.roles.includes("admin") || user.roles.includes("staff")))
+    (user.roles &&
+      (user.roles.includes("admin") || user.roles.includes("staff")))
   );
 };
 
@@ -51,7 +56,7 @@ export const getStudentSessions = async (req, res) => {
     const studentId = req.user._id.toString();
     const studentClass = req.user.selectedClass;
     const cacheKey = `student:sessions:${studentId}`;
-    
+
     const sessions = await cacheResponse(cacheKey, 300, async () => {
       const enrolledCourses = await Course.find({ students: req.user._id })
         .select("_id instructor")
@@ -69,28 +74,24 @@ export const getStudentSessions = async (req, res) => {
         conditions.push({ course: { $in: enrolledCourseIds } });
       }
 
-      // 2. Session is associated with an instructor of an enrolled course (fallback)
+      // 2. Session is a course-less instructor session, but only for instructors
+      //    whose courses the student is enrolled in.
       if (instructorIds.length > 0) {
-        conditions.push({ instructor: { $in: instructorIds } });
+        const instructorSessionCondition = {
+          instructor: { $in: instructorIds },
+          $or: [{ course: null }, { course: { $exists: false } }],
+        };
+
+        if (studentClass) {
+          instructorSessionCondition.class = { $in: [null, "", studentClass] };
+        }
+
+        conditions.push(instructorSessionCondition);
       }
 
-      // 3. Session is a public/free session (course is null or undefined)
-      //    And matches the student's class, or has no class restriction
-      const publicConditions = [
-        { class: null },
-        { class: "" }
-      ];
-      if (studentClass) {
-        publicConditions.push({ class: studentClass });
+      if (conditions.length === 0) {
+        return [];
       }
-
-      conditions.push({
-        $or: [
-          { course: null },
-          { course: { $exists: false } }
-        ],
-        class: { $in: publicConditions.map(pc => pc.class) }
-      });
 
       return await Session.find({ $or: conditions })
         .populate("course", "title")
@@ -108,11 +109,57 @@ export const getStudentSessions = async (req, res) => {
 // GET /sessions/:id
 export const getSessionById = async (req, res) => {
   try {
-    const query = checkIsAdminOrStaff(req.user)
-      ? { _id: req.params.id }
-      : { _id: req.params.id, instructor: req.user._id };
+    if (checkIsAdminOrStaff(req.user)) {
+      const session = await Session.findById(req.params.id)
+        .populate("course", "title")
+        .populate("instructor", "name");
 
-    const session = await Session.findOne(query)
+      if (!session)
+        return res.status(404).json({ message: "Session not found" });
+      return res.json(session);
+    }
+
+    const isInstructor =
+      req.user.role === "instructor" ||
+      (req.user.roles && req.user.roles.includes("instructor"));
+
+    if (isInstructor) {
+      const session = await Session.findOne({
+        _id: req.params.id,
+        instructor: req.user._id,
+      })
+        .populate("course", "title")
+        .populate("instructor", "name");
+
+      if (!session)
+        return res.status(404).json({ message: "Session not found" });
+      return res.json(session);
+    }
+
+    const enrolledCourses = await Course.find({ students: req.user._id })
+      .select("_id instructor")
+      .lean();
+
+    const enrolledCourseIds = enrolledCourses.map((c) => c._id);
+    const instructorIds = enrolledCourses
+      .map((c) => c.instructor)
+      .filter(Boolean);
+
+    if (enrolledCourseIds.length === 0 && instructorIds.length === 0) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    const session = await Session.findOne({
+      _id: req.params.id,
+      $or: [
+        { course: { $in: enrolledCourseIds } },
+        {
+          instructor: { $in: instructorIds },
+          $or: [{ course: null }, { course: { $exists: false } }],
+          class: { $in: [null, "", req.user.selectedClass] },
+        },
+      ],
+    })
       .populate("course", "title")
       .populate("instructor", "name");
 
@@ -126,7 +173,17 @@ export const getSessionById = async (req, res) => {
 // POST /sessions
 export const createSession = async (req, res) => {
   try {
-    const { title, date, time, status, course, url, instructor, class: classVal, subject } = req.body;
+    const {
+      title,
+      date,
+      time,
+      status,
+      course,
+      url,
+      instructor,
+      class: classVal,
+      subject,
+    } = req.body;
     if (!title?.trim()) {
       return res.status(400).json({ message: "Session title is required" });
     }
@@ -167,11 +224,10 @@ export const updateSession = async (req, res) => {
       ? { _id: req.params.id }
       : { _id: req.params.id, instructor: req.user._id };
 
-    const session = await Session.findOneAndUpdate(
-      query,
-      req.body,
-      { new: true, runValidators: true },
-    );
+    const session = await Session.findOneAndUpdate(query, req.body, {
+      new: true,
+      runValidators: true,
+    });
     if (!session) return res.status(404).json({ message: "Session not found" });
 
     // Invalidate session caches

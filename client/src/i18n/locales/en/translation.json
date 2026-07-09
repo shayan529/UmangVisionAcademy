@@ -46,14 +46,7 @@
     "submitting": "Submitting…",
     "rated": "Rated",
     "rateCourse": "Rate Course",
-    "ratingLabels": [
-      "",
-      "Poor",
-      "Fair",
-      "Good",
-      "Very Good",
-      "Excellent"
-    ]
+    "ratingLabels": ["", "Poor", "Fair", "Good", "Very Good", "Excellent"]
   },
   "demo": {
     "add_to_cart": "Add to Cart",
@@ -226,8 +219,8 @@
       "desc": "Get full access to all courses of your selected class (Class 9 to 12).",
       "features": [
         "Select one Class (Class 9 to 12)",
-        "Access all courses of that class",
-        "Recorded Lessons & Resources",
+        "Access all subjects of that class",
+        "Live Lessons and Resources",
         "AI Tutor & Quizzes",
         "Progress Tracking"
       ],
@@ -244,7 +237,7 @@
         "Live doubt-clearing sessions with instructors",
         "Personalized AI-powered study plan",
         "Priority instructor support",
-        "Advanced mock test analytics & performance insights"
+        "Premium LMS resources and mentor collaboration"
       ]
     }
   },
