@@ -21,6 +21,7 @@ import RoleManager from "./RoleManager";
 import AdminQuestionPapers from "./AdminQuestionPapers";
 import AdminNotes from "./AdminNotes";
 import AdminReels from "./AdminReels";
+import AdminPayments from "./AdminPayments";
 
 export default function AdminDashboard() {
   const dispatch = useDispatch();
@@ -214,6 +215,8 @@ export default function AdminDashboard() {
         return <AdminQuestionPapers />;
       case "bulk-import":
         return <AdminBulkImport refreshUsers={() => dispatch(fetchUsers())} />;
+      case "payments":
+        return <AdminPayments />;
       case "applications":
         return <AdminApplications />;
       case "roles":

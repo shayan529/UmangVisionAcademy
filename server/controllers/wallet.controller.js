@@ -176,8 +176,13 @@ export const getPaymentTransactions = async (req, res) => {
 };
 
 export const getRefundQueue = async (req, res) => {
-  req.query.refundStatus = "pending";
-  return getPaymentTransactions(req, res);
+  try {
+    req.query.refundStatus = "pending";
+    return await getPaymentTransactions(req, res);
+  } catch (err) {
+    console.error("[Wallet] getRefundQueue:", err.message);
+    res.status(500).json({ message: "Failed to fetch refund queue." });
+  }
 };
 
 export const processRefund = async (req, res) => {
@@ -330,7 +335,7 @@ export const createDepositOrder = async (req, res) => {
 // ── POST /api/wallet/deposit/verify ─────────────────────────────────────────
 export const verifyDeposit = async (req, res) => {
   try {
-    const { razorpayOrderId, razorpayPaymentId, razorpaySignature, amount } =
+    const { razorpayOrderId, razorpayPaymentId, razorpaySignature } =
       req.body;
 
     const expectedSig = crypto
@@ -341,6 +346,12 @@ export const verifyDeposit = async (req, res) => {
     if (expectedSig !== razorpaySignature)
       return res.status(400).json({ message: "Payment verification failed." });
 
+    // Fetch payment to get actual captured amount to prevent amount spoofing
+    const payment = await razorpay.payments.fetch(razorpayPaymentId);
+    if (!payment || payment.status !== "captured") {
+      return res.status(400).json({ message: "Payment not captured." });
+    }
+
     const wallet = await getOrCreateWallet(req.user._id);
     const alreadyCredited = wallet.transactions.some(
       (t) => t.razorpayPaymentId === razorpayPaymentId,
@@ -348,7 +359,7 @@ export const verifyDeposit = async (req, res) => {
     if (alreadyCredited)
       return res.status(409).json({ message: "Payment already credited." });
 
-    const amountInRupees = amount / 100;
+    const amountInRupees = payment.amount / 100;
     wallet.balance += amountInRupees;
     wallet.transactions.push({
       type: "deposit",

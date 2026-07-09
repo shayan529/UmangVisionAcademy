@@ -1,6 +1,17 @@
 import React, { useState } from "react";
 import { Search, FileText, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+const loadRazorpay = () =>
+  new Promise((resolve) => {
+    if (window.Razorpay) return resolve(true);
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
@@ -303,11 +314,12 @@ const QuestionBank = () => {
   const [selectedClass, setSelectedClass] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [uploadedPapers, setUploadedPapers] = useState([]);
-  
+
   const [showModal, setShowModal] = useState(false);
   const [modalData, setModalData] = useState(null);
   const [purchasing, setPurchasing] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
+  const [paymentError, setPaymentError] = useState("");
 
   useEffect(() => {
     axios
@@ -334,7 +346,7 @@ const QuestionBank = () => {
       navigate("/login", { state: { from: "/question-bank" } });
       return;
     }
-    
+
     const uploaded = uploadedPapers.find(
       (p) =>
         p.board === board &&
@@ -361,7 +373,7 @@ const QuestionBank = () => {
         const walletRes = await axios.get("/wallet");
         const balance = walletRes.data.balance || 0;
         setWalletBalance(balance);
-        
+
         setModalData({
           board,
           className,
@@ -378,8 +390,9 @@ const QuestionBank = () => {
     }
   };
 
-  const handlePurchase = async () => {
+  const handleWalletPurchase = async () => {
     if (!modalData) return;
+    setPaymentError("");
     setPurchasing(true);
     try {
       await axios.post("/question-papers/purchase", {
@@ -391,12 +404,88 @@ const QuestionBank = () => {
       setShowModal(false);
       window.open(modalData.url, "_blank", "noopener,noreferrer");
     } catch (error) {
-      console.error("Purchase error", error);
+      console.error("Wallet purchase error", error);
       if (error.response?.data?.code === "INSUFFICIENT_FUNDS") {
-        alert(t("questionBank.insufficientBalance"));
+        setPaymentError(t("questionBank.insufficientBalance"));
       } else {
-        alert(error.response?.data?.message || "Purchase failed");
+        setPaymentError(
+          error.response?.data?.message || "Wallet purchase failed",
+        );
       }
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
+  const handleRazorpayPurchase = async () => {
+    if (!modalData) return;
+    setPaymentError("");
+    setPurchasing(true);
+    try {
+      const { data } = await axios.post("/question-papers/purchase/order", {
+        board: modalData.board,
+        className: modalData.className,
+        subject: modalData.subject,
+        year: modalData.year,
+      });
+
+      if (data.mockMode) {
+        await axios.post("/question-papers/purchase/verify", {
+          razorpay_order_id: data.orderId,
+          razorpay_payment_id: `mock_${Date.now()}`,
+          razorpay_signature: "mock_signature",
+          board: modalData.board,
+          className: modalData.className,
+          subject: modalData.subject,
+          year: modalData.year,
+        });
+        setShowModal(false);
+        window.open(modalData.url, "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      const ok = await loadRazorpay();
+      if (!ok) {
+        throw new Error("Razorpay failed to load.");
+      }
+
+      new window.Razorpay({
+        key: data.keyId,
+        amount: data.amount,
+        currency: data.currency || "INR",
+        name: "Umang Vision Academy",
+        description: `${modalData.subject} ${modalData.year} Question Paper`,
+        order_id: data.orderId,
+        prefill: { name: user?.name || "", email: user?.email || "" },
+        theme: { color: "#06b6d4" },
+        handler: async (response) => {
+          try {
+            await axios.post("/question-papers/purchase/verify", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              board: modalData.board,
+              className: modalData.className,
+              subject: modalData.subject,
+              year: modalData.year,
+            });
+            setShowModal(false);
+            window.open(modalData.url, "_blank", "noopener,noreferrer");
+          } catch (error) {
+            console.error("Razorpay verify error", error);
+            setPaymentError(
+              error.response?.data?.message || "Razorpay payment failed",
+            );
+          }
+        },
+      }).open();
+    } catch (error) {
+      console.error("Razorpay purchase error", error);
+      setPaymentError(
+        error.response?.data?.message ||
+          error.message ||
+          "Razorpay payment failed",
+      );
     } finally {
       setPurchasing(false);
     }
@@ -626,12 +715,16 @@ const QuestionBank = () => {
             </p>
             <div className="bg-slate-800/50 rounded-xl p-4 mb-4">
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-slate-400">{t("questionBank.questionPaper")}:</span>
+                <span className="text-slate-400">
+                  {t("questionBank.questionPaper")}:
+                </span>
                 <span className="text-white font-medium">{modalData.year}</span>
               </div>
               <div className="flex justify-between text-sm mb-2">
                 <span className="text-slate-400">Amount:</span>
-                <span className="text-cyan-400 font-bold">₹{modalData.price}</span>
+                <span className="text-cyan-400 font-bold">
+                  ₹{modalData.price}
+                </span>
               </div>
               <div className="flex justify-between text-sm border-t border-slate-700 pt-2 mt-2">
                 <span className="text-slate-400">Wallet Balance:</span>
@@ -639,36 +732,38 @@ const QuestionBank = () => {
               </div>
             </div>
 
-            {walletBalance < modalData.price ? (
-              <div className="text-red-400 text-sm mb-4">
-                {t("questionBank.insufficientBalance")}
-              </div>
+            {paymentError ? (
+              <div className="text-red-400 text-sm mb-4">{paymentError}</div>
             ) : null}
 
-            <div className="flex gap-3">
+            <div className="grid gap-3">
+              <button
+                onClick={handleRazorpayPurchase}
+                disabled={purchasing}
+                className="w-full py-2.5 rounded-lg bg-cyan-600 text-white hover:bg-cyan-500 transition-colors font-medium"
+              >
+                {purchasing
+                  ? t("questionBank.processing")
+                  : t("questionBank.payWithRazorpay")}
+              </button>
+
+              <button
+                onClick={handleWalletPurchase}
+                disabled={purchasing || walletBalance < modalData.price}
+                className="w-full py-2.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors font-medium"
+              >
+                {walletBalance >= modalData.price
+                  ? t("questionBank.payWithWallet")
+                  : t("questionBank.walletUnavailable")}
+              </button>
+
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 py-2.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors"
+                className="w-full py-2.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors"
                 disabled={purchasing}
               >
                 {t("questionBank.cancel")}
               </button>
-              {walletBalance >= modalData.price ? (
-                <button
-                  onClick={handlePurchase}
-                  disabled={purchasing}
-                  className="flex-1 py-2.5 rounded-lg bg-cyan-600 text-white hover:bg-cyan-500 transition-colors font-medium"
-                >
-                  {purchasing ? t("questionBank.processing") : t("questionBank.payAndUnlock")}
-                </button>
-              ) : (
-                <button
-                  onClick={() => navigate("/student")} // Student Wallet is in Dashboard
-                  className="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition-colors font-medium"
-                >
-                  {t("questionBank.goToWallet")}
-                </button>
-              )}
             </div>
           </div>
         </div>

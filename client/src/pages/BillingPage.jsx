@@ -10,6 +10,7 @@ import {
   clearBillingError,
   resetPaymentSuccess,
 } from "../redux/slices/billingSlice";
+import { loadCurrentUser } from "../redux/slices/authSlice";
 
 const fmt = (dateStr) => {
   if (!dateStr) return "—";
@@ -81,6 +82,7 @@ export default function BillingPage() {
   } = useSelector((s) => s.billing);
 
   const [showCancel, setShowCancel] = useState(false);
+  const [selectedClass, setSelectedClass] = useState("");
 
   useEffect(() => {
     if (!user)
@@ -102,6 +104,11 @@ export default function BillingPage() {
   }, [paymentSuccess, dispatch, navigate]);
 
   const handlePay = async (plan) => {
+    if (!selectedClass) {
+      alert("Please select a class before purchasing the plan.");
+      return;
+    }
+
     const ok = await loadRazorpay();
     if (!ok) {
       alert("Failed to load Razorpay. Check your internet connection.");
@@ -111,6 +118,7 @@ export default function BillingPage() {
     const result = await dispatch(
       createOrder({
         planId: plan.id,
+        selectedClass,
       }),
     );
     if (createOrder.rejected.match(result)) return;
@@ -124,9 +132,11 @@ export default function BillingPage() {
           razorpay_payment_id: `mock_pay_${Date.now()}`,
           razorpay_signature: "mock_signature",
           planId: plan.id,
+          selectedClass,
         }),
       );
       dispatch(fetchSubscription());
+      dispatch(loadCurrentUser());
       return;
     }
 
@@ -149,9 +159,11 @@ export default function BillingPage() {
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
             planId: plan.id,
+            selectedClass,
           }),
         );
         dispatch(fetchSubscription());
+        dispatch(loadCurrentUser());
       },
     };
 
@@ -176,15 +188,22 @@ export default function BillingPage() {
   const days = daysLeft(subscription?.endDate);
 
   const handleMockPay = async (plan) => {
+    if (!selectedClass) {
+      alert("Please select a class before purchasing the plan.");
+      return;
+    }
+
     await dispatch(
       verifyPayment({
         razorpay_order_id: `mock_order_${Date.now()}`,
         razorpay_payment_id: `mock_pay_${Date.now()}`,
         razorpay_signature: "mock_signature",
         planId: plan.id,
+        selectedClass,
       }),
     );
     dispatch(fetchSubscription());
+    dispatch(loadCurrentUser());
   };
 
   return (
@@ -628,6 +647,31 @@ export default function BillingPage() {
                           </div>
                         ))}
                       </div>
+
+                      <div style={{ marginBottom: 16 }}>
+                        <select
+                          value={selectedClass}
+                          onChange={(e) => setSelectedClass(e.target.value)}
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            borderRadius: 10,
+                            background: plan.popular ? "#fff" : "#1e293b",
+                            border: `1px solid ${plan.popular ? "#e2e8f0" : "#334155"}`,
+                            color: plan.popular ? "#1e293b" : "#f1f5f9",
+                            fontSize: 14,
+                            outline: "none",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <option value="" disabled>Select your Class</option>
+                          <option value="Class 9">Class 9</option>
+                          <option value="Class 10">Class 10</option>
+                          <option value="Class 11">Class 11</option>
+                          <option value="Class 12">Class 12</option>
+                        </select>
+                      </div>
+
                       <button
                         onClick={() => handlePay(plan)}
                         disabled={orderLoading || paymentLoading}

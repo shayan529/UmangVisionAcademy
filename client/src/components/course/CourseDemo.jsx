@@ -3,6 +3,8 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../../config/api.js";
 import { addToCart } from "../../redux/slices/cartSlice";
+import { loadCurrentUser } from "../../redux/slices/authSlice";
+import { fetchEnrolledCourses } from "../../redux/slices/courseSlice";
 import { hasBaseRole } from "../../utils/permissions.js";
 import { useTranslation } from "react-i18next";
 
@@ -254,6 +256,8 @@ const EnrollCard = ({
   isInCart,
   addedToCart,
   canAccess,
+  isFreeWithPlan,
+  enrollingFree,
   onEnroll,
   onViewDemo,
   navigate,
@@ -326,6 +330,7 @@ const EnrollCard = ({
               onClick={
                 canAccess ? () => navigate(`/courses/${course?._id}`) : onEnroll
               }
+              disabled={enrollingFree}
               style={{
                 width: "100%",
                 padding: "14px",
@@ -333,13 +338,15 @@ const EnrollCard = ({
                 border: "none",
                 background: canAccess
                   ? "linear-gradient(135deg,#7c3aed,#06b6d4)"
-                  : isInCart || addedToCart
-                    ? "linear-gradient(135deg,#059669,#34d399)"
-                    : "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                  : enrollingFree
+                    ? "#334155"
+                    : isInCart || addedToCart
+                      ? "linear-gradient(135deg,#059669,#34d399)"
+                      : "linear-gradient(135deg,#7c3aed,#06b6d4)",
                 color: "#fff",
                 fontSize: 15,
                 fontWeight: 700,
-                cursor: "pointer",
+                cursor: enrollingFree ? "not-allowed" : "pointer",
                 transition: "all 0.2s",
                 boxShadow: "0 8px 24px rgba(124,58,237,0.3)",
                 marginBottom: 12,
@@ -347,11 +354,15 @@ const EnrollCard = ({
             >
               {canAccess
                 ? "Go to Course"
-                : isInCart || addedToCart
-                  ? t("demo.added")
-                  : course?.price > 0
-                    ? t("demo.buy_now")
-                    : t("demo.enroll_now")}
+                : enrollingFree
+                  ? "Enrolling..."
+                  : isFreeWithPlan
+                    ? "Enroll for Free (Academy Plan)"
+                    : isInCart || addedToCart
+                      ? t("demo.added")
+                      : course?.price > 0
+                        ? t("demo.buy_now")
+                        : t("demo.enroll_now")}
             </button>
 
             {(isInCart || addedToCart) && !canAccess && (
@@ -414,6 +425,7 @@ const EnrollCard = ({
                   t("demo.hoursCount", { count: course.durationHours }),
                 course.notes?.length > 0 &&
                   `${course.notes.length} study note${course.notes.length === 1 ? "" : "s"} included`,
+                !canAccess && course?.price > 0 && t("demo.pyqBenefit"),
                 t("demo.lifetime_access"),
                 t("demo.certificate"),
               ]
@@ -457,6 +469,13 @@ export default function CourseDemo() {
   const isInCart = cartIds.includes(id);
   const canAccess = useCourseAccess(user, course);
 
+  const isFreeWithPlan =
+    user?.subscription?.status === "active" &&
+    user?.selectedClass &&
+    course?.category &&
+    user.selectedClass.toLowerCase().trim() === course.category.toLowerCase().trim();
+  const [enrollingFree, setEnrollingFree] = useState(false);
+
   useEffect(() => {
     if (!id || id === "undefined") navigate("/courses", { replace: true });
   }, [id, navigate]);
@@ -467,7 +486,7 @@ export default function CourseDemo() {
     return () => window.removeEventListener("resize", handler);
   }, []);
 
-  const handleEnrollClick = () => {
+  const handleEnrollClick = async () => {
     if (!user) {
       navigate("/login", {
         state: { from: `/courses/${id}/demo`, replace: true },
@@ -476,6 +495,22 @@ export default function CourseDemo() {
     }
 
     if (!id || id === "undefined") return;
+
+    if (isFreeWithPlan && !canAccess) {
+      try {
+        setEnrollingFree(true);
+        await api.post("/courses/enroll", { courseIds: [id] });
+        // Update user state so UI knows they are enrolled
+        await dispatch(loadCurrentUser());
+        await dispatch(fetchEnrolledCourses());
+        // After successful enrollment, simply reload or navigate to the course
+        navigate(`/courses/${id}`);
+      } catch (err) {
+        alert(err.response?.data?.message || "Error enrolling for free.");
+        setEnrollingFree(false);
+      }
+      return;
+    }
 
     dispatch(addToCart(id));
     setAddedToCart(true);
@@ -497,6 +532,8 @@ export default function CourseDemo() {
     isInCart,
     addedToCart,
     canAccess,
+    isFreeWithPlan,
+    enrollingFree,
     onEnroll: handleEnrollClick,
     onViewDemo: handleViewDemoClick,
     navigate,
@@ -1082,7 +1119,8 @@ export default function CourseDemo() {
                                 textOverflow: "ellipsis",
                               }}
                             >
-                              {lesson.subject ? `${lesson.subject} — ` : ""}{lesson.title}
+                              {lesson.subject ? `${lesson.subject} — ` : ""}
+                              {lesson.title}
                             </p>
                             {lesson.description && (
                               <p

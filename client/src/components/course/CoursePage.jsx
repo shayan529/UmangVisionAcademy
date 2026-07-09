@@ -1675,7 +1675,7 @@ export default function CoursePage() {
   const openQuizFromUrl = searchParams.get("quiz") === "1";
   const totalLessonCount = course?.lessons?.length ?? 0;
   const courseComplete =
-    totalLessonCount > 0 && completed.size >= totalLessonCount;
+    totalLessonCount === 0 ? true : completed.size >= totalLessonCount;
 
   // ── Derived lesson data — must be declared BEFORE any hook that reads it
   // (e.g. in a dependency array) to avoid a "cannot access before
@@ -2095,8 +2095,7 @@ export default function CoursePage() {
           const subjDoneCount = subjLessons.filter((l) =>
             completed.has(l.globalIdx),
           ).length;
-          const subjAllDone =
-            subjLessons.length > 0 && subjDoneCount === subjLessons.length;
+          const subjAllDone = subjDoneCount === subjLessons.length;
           const sq = subj.subjectQuiz;
           // Locking is PER-SUBJECT: find the first uncompleted lesson within this subject only
           const subjFirstUncompletedGlobalIdx = (() => {
@@ -2889,20 +2888,26 @@ export default function CoursePage() {
                   subjLessonsFlat[subjLessonsFlat.length - 1].globalIdx ===
                     activeIdx;
                 const subjectQuiz = currentSubj?.subjectQuiz ?? null;
-                // "go to subject quiz" takes priority when last lesson in subject and quiz exists
-                const goToSubjectQuiz = isLastInSubject && !!subjectQuiz;
+                const isSubjectQuizSubmitted = subjectQuiz && (user?.quizSubmissions || []).some(
+                  (s) => s.courseId?.toString() === course?._id?.toString() && s.title === (subjectQuiz.title || "Subject Quiz")
+                );
+                // "go to subject quiz" takes priority when last lesson in subject and quiz exists and not yet submitted
+                const goToSubjectQuiz = isLastInSubject && !!subjectQuiz && !isSubjectQuizSubmitted;
 
                 const isLastLesson = activeIdx === allLessons.length - 1;
                 const hasFinalQuiz = course?.quiz?.questions?.length > 0;
-                // Only go to final quiz if NOT going to a subject quiz first
+                const isFinalQuizSubmitted = hasFinalQuiz && (user?.quizSubmissions || []).some(
+                  (s) => s.courseId?.toString() === course?._id?.toString() && s.title === (course.quiz.title || "Final Quiz")
+                );
+                // Only go to final quiz if NOT going to a subject quiz first and not yet submitted
                 const goToFinalQuiz =
-                  !goToSubjectQuiz && isLastLesson && hasFinalQuiz;
+                  !goToSubjectQuiz && isLastLesson && hasFinalQuiz && !isFinalQuizSubmitted;
 
                 const isCurrentCompleted = completed.has(activeIdx);
                 // Disable if: current not done OR (last lesson globally with no quiz at all)
                 const disabledNext =
                   !isCurrentCompleted ||
-                  (isLastLesson && !goToSubjectQuiz && !hasFinalQuiz);
+                  (isLastLesson && !goToSubjectQuiz && !goToFinalQuiz && !hasFinalQuiz);
 
                 const btnLabel = goToSubjectQuiz
                   ? "Finish → Take Subject Quiz"

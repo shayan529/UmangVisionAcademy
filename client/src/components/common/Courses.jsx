@@ -73,11 +73,10 @@ const RatingModal = ({ course, onClose, onSubmit }) => {
                 className="transition-transform hover:scale-110"
               >
                 <FaStar
-                  className={`text-3xl transition-colors ${
-                    star <= (hovered || selected)
+                  className={`text-3xl transition-colors ${star <= (hovered || selected)
                       ? "text-amber-400"
                       : "text-slate-600"
-                  }`}
+                    }`}
                 />
               </button>
             ))}
@@ -121,6 +120,28 @@ const ALL = "All";
 const ALL_SUBJECTS = "All Subjects";
 const ALL_BOARDS = "All Boards";
 
+// ── Course type (Classes vs Competitive Exam) ─────────────────────────────────
+// Courses don't store an explicit "courseType" field — we infer it from
+// `category`, mirroring the same logic used in InstructorCourses.jsx: if the
+// category matches one of the known class names, it's a "Classes" course;
+// otherwise it's treated as a Competitive Exam course (category holds the
+// exam name, e.g. "NEET", "JEE Main").
+const CLASSES = ["Class 9", "Class 10", "Class 11", "Class 12"];
+const TYPE_ALL = "All";
+const TYPE_CLASSES = "Classes";
+const TYPE_COMPETITIVE = "Competitive Exam";
+const ALL_EXAMS = "All Exams";
+const isClassCategory = (category) => CLASSES.includes(category);
+const isCompetitiveCourse = (course) =>
+  Boolean(course.category) && !isClassCategory(course.category);
+
+// ── Language filter ───────────────────────────────────────────────────────────
+// Defaults to "Multilanguage" (no filtering applied). A course with no
+// `language` field set is treated as available in every language, since it
+// hasn't been tagged to one specific language.
+const ALL_LANGUAGES = "Multilanguage";
+const LANGUAGE_OPTIONS = ["English", "Hindi"];
+
 const Courses = () => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -148,9 +169,12 @@ const Courses = () => {
     [enrolledCourses]
   );
 
+  const [selectedCourseType, setSelectedCourseType] = useState(TYPE_ALL);
   const [selectedClass, setSelectedClass] = useState(ALL);
+  const [selectedExam, setSelectedExam] = useState(ALL_EXAMS);
   const [selectedSubject, setSelectedSubject] = useState(ALL_SUBJECTS);
   const [selectedBoard, setSelectedBoard] = useState(ALL_BOARDS);
+  const [selectedLanguage, setSelectedLanguage] = useState(ALL_LANGUAGES);
   const [ratingCourse, setRatingCourse] = useState(null); // course being rated
   const [submittedRatings, setSubmittedRatings] = useState({}); // { courseId: rating }
 
@@ -159,9 +183,22 @@ const Courses = () => {
     if (user) dispatch(fetchEnrolledCourses());
   }, [dispatch, user]);
 
+  // When switching course type, reset the filters that no longer apply so
+  // stale selections don't silently zero-out results.
+  const handleCourseTypeChange = (type) => {
+    setSelectedCourseType(type);
+    setSelectedClass(ALL);
+    setSelectedExam(ALL_EXAMS);
+    setSelectedBoard(ALL_BOARDS);
+  };
+
   // ── Derived filter options ─────────────────────────────────────────────────
   const dynamicClasses = useMemo(
-    () => [...new Set(allCourses.map((c) => c.category).filter(Boolean))],
+    () => [
+      ...new Set(
+        allCourses.map((c) => c.category).filter(isClassCategory),
+      ),
+    ],
     [allCourses],
   );
 
@@ -170,6 +207,18 @@ const Courses = () => {
     const numB = parseInt(b.replace(/\D/g, ""));
     return numA - numB;
   });
+
+  const dynamicExams = useMemo(
+    () => [
+      ...new Set(
+        allCourses
+          .filter(isCompetitiveCourse)
+          .map((c) => c.category)
+          .filter(Boolean),
+      ),
+    ],
+    [allCourses],
+  );
 
   const dynamicSubjects = useMemo(
     () => [
@@ -191,17 +240,47 @@ const Courses = () => {
   const filteredCourses = useMemo(
     () =>
       allCourses.filter((course) => {
+        const typeMatch =
+          selectedCourseType === TYPE_ALL
+            ? true
+            : selectedCourseType === TYPE_CLASSES
+              ? isClassCategory(course.category)
+              : isCompetitiveCourse(course);
+
         const classMatch =
-          selectedClass === "All" || course.category === selectedClass;
+          selectedCourseType === TYPE_COMPETITIVE
+            ? selectedExam === ALL_EXAMS || course.category === selectedExam
+            : selectedClass === ALL || course.category === selectedClass;
+
         const subjectMatch =
           selectedSubject === "All Subjects" ||
           course.title?.toLowerCase().includes(selectedSubject.toLowerCase()) ||
           course.summary?.toLowerCase().includes(selectedSubject.toLowerCase());
+
+        // Board doesn't apply to competitive-exam courses.
         const boardMatch =
-          selectedBoard === "All Boards" || course.board === selectedBoard;
-        return classMatch && subjectMatch && boardMatch;
+          selectedCourseType === TYPE_COMPETITIVE
+            ? true
+            : selectedBoard === "All Boards" || course.board === selectedBoard;
+
+        // A course with no language tag is treated as available in every
+        // language, so it still shows up under English or Hindi filters.
+        const languageMatch =
+          selectedLanguage === ALL_LANGUAGES ||
+          !course.language ||
+          course.language.toLowerCase() === selectedLanguage.toLowerCase();
+
+        return typeMatch && classMatch && subjectMatch && boardMatch && languageMatch;
       }),
-    [allCourses, selectedClass, selectedSubject, selectedBoard],
+    [
+      allCourses,
+      selectedCourseType,
+      selectedClass,
+      selectedExam,
+      selectedSubject,
+      selectedBoard,
+      selectedLanguage,
+    ],
   );
 
   const isEnrolled = (course) => {
@@ -295,6 +374,23 @@ const Courses = () => {
     instructor?.email?.split("@")[0] ??
     (typeof instructor === "string" ? instructor : "Instructor");
 
+  const filtersActive =
+    selectedCourseType !== TYPE_ALL ||
+    selectedClass !== ALL ||
+    selectedExam !== ALL_EXAMS ||
+    selectedSubject !== ALL_SUBJECTS ||
+    selectedBoard !== ALL_BOARDS ||
+    selectedLanguage !== ALL_LANGUAGES;
+
+  const clearFilters = () => {
+    setSelectedCourseType(TYPE_ALL);
+    setSelectedClass(ALL);
+    setSelectedExam(ALL_EXAMS);
+    setSelectedSubject(ALL_SUBJECTS);
+    setSelectedBoard(ALL_BOARDS);
+    setSelectedLanguage(ALL_LANGUAGES);
+  };
+
   return (
     <section className="px-6 md:px-10 py-20 bg-[#0B1120]">
       <style>{`
@@ -334,27 +430,75 @@ const Courses = () => {
           </div>
         )}
 
+        {/* Course type toggle */}
+        <div className="mb-8">
+          <label className="block text-white font-semibold mb-3">
+            {t("courses.select_course_type", "Course Type")}
+          </label>
+          <div className="inline-flex flex-wrap gap-2 p-1 rounded-xl border border-slate-700 bg-[#111827]">
+            {[
+              { key: TYPE_ALL, label: t("courses.courseTypeAll", "All") },
+              { key: TYPE_CLASSES, label: t("courses.courseTypeClasses", "Classes") },
+              { key: TYPE_COMPETITIVE, label: t("courses.courseTypeCompetitive", "Competitive Exam") },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => handleCourseTypeChange(opt.key)}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${selectedCourseType === opt.key
+                    ? "bg-gradient-to-r from-indigo-600 to-cyan-500 text-white shadow-lg shadow-indigo-500/20"
+                    : "text-slate-400 hover:text-white"
+                  }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Filters */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
-          <div>
-            <label className="block text-white font-semibold mb-3">
-              {t("courses.select_class")}
-            </label>
-            <select
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              className="w-full bg-[#111827] border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500"
-            >
-              <option key={ALL} value={ALL}>
-                {t("courses.all")}
-              </option>
-              {sortedClasses.map((cls) => (
-                <option key={cls} value={cls}>
-                  {cls}
+          {selectedCourseType === TYPE_COMPETITIVE ? (
+            <div>
+              <label className="block text-white font-semibold mb-3">
+                {t("courses.select_exam", "Select Exam")}
+              </label>
+              <select
+                value={selectedExam}
+                onChange={(e) => setSelectedExam(e.target.value)}
+                className="w-full bg-[#111827] border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500"
+              >
+                <option key={ALL_EXAMS} value={ALL_EXAMS}>
+                  {t("courses.allExams", "All Exams")}
                 </option>
-              ))}
-            </select>
-          </div>
+                {dynamicExams.map((exam) => (
+                  <option key={exam} value={exam}>
+                    {exam}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-white font-semibold mb-3">
+                {t("courses.select_class")}
+              </label>
+              <select
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                className="w-full bg-[#111827] border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500"
+              >
+                <option key={ALL} value={ALL}>
+                  {t("courses.all")}
+                </option>
+                {sortedClasses.map((cls) => (
+                  <option key={cls} value={cls}>
+                    {cls}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-white font-semibold mb-3">
@@ -376,21 +520,43 @@ const Courses = () => {
             </select>
           </div>
 
+          {selectedCourseType !== TYPE_COMPETITIVE && (
+            <div>
+              <label className="block text-white font-semibold mb-3">
+                {t("courses.select_board")}
+              </label>
+              <select
+                value={selectedBoard}
+                onChange={(e) => setSelectedBoard(e.target.value)}
+                className="w-full bg-[#111827] border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500"
+              >
+                <option key={ALL_BOARDS} value={ALL_BOARDS}>
+                  {t("courses.allBoards")}
+                </option>
+                {dynamicBoards.map((board) => (
+                  <option key={board} value={board}>
+                    {board}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-white font-semibold mb-3">
-              {t("courses.select_board")}
+              {t("courses.select_language", "Select Language")}
             </label>
             <select
-              value={selectedBoard}
-              onChange={(e) => setSelectedBoard(e.target.value)}
-              className="w-full bg-[#111827] border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500"
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              className="w-full bg-[#111827] border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500"
             >
-              <option key={ALL_BOARDS} value={ALL_BOARDS}>
-                {t("courses.allBoards")}
+              <option key={ALL_LANGUAGES} value={ALL_LANGUAGES}>
+                {t("courses.multilanguage", "Multilanguage")}
               </option>
-              {dynamicBoards.map((board) => (
-                <option key={board} value={board}>
-                  {board}
+              {LANGUAGE_OPTIONS.map((lang) => (
+                <option key={lang} value={lang}>
+                  {t(`courses.language${lang}`, lang)}
                 </option>
               ))}
             </select>
@@ -492,15 +658,9 @@ const Courses = () => {
                 ? t("courses.noPublished")
                 : t("courses.tryDifferent")}
             </p>
-            {(selectedClass !== ALL ||
-              selectedSubject !== ALL_SUBJECTS ||
-              selectedBoard !== ALL_BOARDS) && (
+            {filtersActive && (
               <button
-                onClick={() => {
-                  setSelectedClass(ALL);
-                  setSelectedSubject(ALL_SUBJECTS);
-                  setSelectedBoard(ALL_BOARDS);
-                }}
+                onClick={clearFilters}
                 className="mt-6 px-6 py-2 rounded-xl border border-indigo-500/30 text-indigo-400 text-sm font-semibold hover:bg-indigo-500/10 transition"
               >
                 {t("courses.clearFilters")}

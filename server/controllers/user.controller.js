@@ -556,12 +556,9 @@ export const bulkImportStudents = async (req, res) => {
       try {
         const newStudentIds = created.map((c) => c._id);
 
-        await Promise.all(
-          courseIds.map(async (courseId) => {
-            await Course.findByIdAndUpdate(courseId, {
-              $addToSet: { students: { $each: newStudentIds } },
-            });
-          }),
+        await Course.updateMany(
+          { _id: { $in: courseIds } },
+          { $addToSet: { students: { $each: newStudentIds } } }
         );
 
         await User.updateMany(

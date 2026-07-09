@@ -8,6 +8,8 @@ import {
   deleteQuestionPaper,
   getQuestionPapers,
   checkPYQAccess,
+  createPYQOrder,
+  verifyPYQPayment,
   purchasePYQ,
 } from "../controllers/questionPaper.controller.js";
 
@@ -19,6 +21,8 @@ const upload = multer({
 
 router.get("/", getQuestionPapers); // public
 router.post("/access", protect, checkPYQAccess);
+router.post("/purchase/order", protect, createPYQOrder);
+router.post("/purchase/verify", protect, verifyPYQPayment);
 router.post("/purchase", protect, purchasePYQ);
 router.get("/all", protect, adminOnly, getAllQuestionPapers); // admin
 router.post(

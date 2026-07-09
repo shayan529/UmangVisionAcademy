@@ -21,11 +21,12 @@ export const fetchSubscription = createAsyncThunk(
 
 export const createOrder = createAsyncThunk(
   "billing/createOrder",
-  async ({ planId, courseIds }, { rejectWithValue }) => {
+  async ({ planId, courseIds, selectedClass }, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/billing/create-order", {
         planId,
         courseIds,
+        selectedClass,
       });
       return data;
     } catch (err) {

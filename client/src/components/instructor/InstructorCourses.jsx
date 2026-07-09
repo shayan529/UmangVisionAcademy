@@ -17,6 +17,7 @@ const EMPTY_FORM = {
   className: "",
   examName: "",
   board: "",
+  language: "",
   description: "",
   content: "",
   lessons: [],
@@ -46,6 +47,7 @@ const EMPTY_BULK_ITEM = () => ({
 // ── Class dropdown now Class 9–12 only ────────────────────────────────────────
 const CLASSES = ["Class 9", "Class 10", "Class 11", "Class 12"];
 const BOARDS = ["CBSE", "ICSE", "MP Board"];
+const LANGUAGES = ["English", "Hindi"];
 const DRAFT_STORAGE_KEY = "instructorCourseDraft";
 
 // ── Bulk-upload specific constants ────────────────────────────────────────────
@@ -1781,6 +1783,18 @@ const CourseForm = ({
           />
         </Field>
       </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <Field label="Language" hint="">
+          <Sel
+            value={form.language || ""}
+            onChange={set("language")}
+            options={[
+              { value: "", label: "Multilanguage (Default)" },
+              ...LANGUAGES.map((l) => ({ value: l, label: l })),
+            ]}
+          />
+        </Field>
+      </div>
 
       <ChapterManager
         lessons={form.lessons ?? []}
@@ -2000,6 +2014,18 @@ const BulkCourseForm = ({
             options={[
               { value: "", label: "Select board" },
               ...BOARDS.map((b) => ({ value: b, label: b })),
+            ]}
+          />
+        </Field>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <Field label="Language" hint="(Optional)">
+          <Sel
+            value={form.language || ""}
+            onChange={setMeta("language")}
+            options={[
+              { value: "", label: "Multilanguage (Default)" },
+              ...LANGUAGES.map((l) => ({ value: l, label: l })),
             ]}
           />
         </Field>
@@ -2388,6 +2414,7 @@ export default function InstructorCourses({ showToast }) {
     title: "",
     className: "",
     board: "",
+    language: "",
     thumbnailUrl: "",
     demoVideoUrl: "",
     price: "",
@@ -2649,6 +2676,7 @@ export default function InstructorCourses({ showToast }) {
       description: "A complete bundle course including multiple subjects.",
       category: bulkForm.className,
       board: bulkForm.board,
+      language: bulkForm.language,
       lessons,
       notes,
       subjectQuizzes,
@@ -2667,6 +2695,7 @@ export default function InstructorCourses({ showToast }) {
         title: "",
         className: "",
         board: "",
+        language: "",
         thumbnailUrl: "",
         demoVideoUrl: "",
         price: "",

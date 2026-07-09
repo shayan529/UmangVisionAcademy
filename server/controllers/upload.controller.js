@@ -24,20 +24,18 @@ export const uploadFile = async (req, res) => {
     await fsPromises.mkdir(targetDir, { recursive: true });
 
     // Sanitize the file name to avoid errors on Windows (e.g. colons, slashes)
-    const sanitizedOriginalName = req.file.originalname
-      .replace(/[^a-zA-Z0-9.\-_]/g, "_")
-      .replace(/_+/g, "_");
-      
-    const fileName = `${Date.now()}_${sanitizedOriginalName}`;
+    // In multer diskStorage we already have a generated filename, but we want to store it in targetDir
+    const fileName = req.file.filename;
     const filePath = path.join(targetDir, fileName);
-    let fileData = req.file.buffer;
+
+    let isImageCompressed = false;
 
     try {
       if (
         req.file.mimetype.startsWith("image/") &&
         req.file.mimetype !== "image/gif"
       ) {
-        const pipeline = sharp(fileData).withMetadata();
+        const pipeline = sharp(req.file.path).withMetadata();
         if (req.file.mimetype === "image/jpeg" || req.file.mimetype === "image/jpg") {
           pipeline.jpeg({ quality: 75, mozjpeg: true });
         } else if (req.file.mimetype === "image/png") {
@@ -45,17 +43,23 @@ export const uploadFile = async (req, res) => {
         } else if (req.file.mimetype === "image/webp") {
           pipeline.webp({ quality: 75 });
         }
-        fileData = await pipeline.toBuffer();
+        await pipeline.toFile(filePath);
+        isImageCompressed = true;
       }
     } catch (compressionError) {
       console.warn(
-        "Compression failed, using original buffer:",
+        "Compression failed, using original file:",
         compressionError.message || compressionError,
       );
     }
 
-    // Save to disk
-    await fsPromises.writeFile(filePath, fileData);
+    if (!isImageCompressed) {
+      // Save to disk
+      await fsPromises.copyFile(req.file.path, filePath);
+    }
+    
+    // Clean up temporary file
+    await fsPromises.unlink(req.file.path).catch(e => console.error("Temp file cleanup failed:", e));
 
     // Construct the local URL
     const baseUrl = process.env.SERVER_URL || `${req.protocol}://${req.get("host")}`;

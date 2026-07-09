@@ -17,7 +17,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logoutUser } from "../../redux/slices/authSlice";
-import { Lock } from "lucide-react";
+import { Lock, CreditCard } from "lucide-react";
 
 const AdminSidebar = ({
   tab,
@@ -40,6 +40,7 @@ const AdminSidebar = ({
     { id: "sessions", label: t("adminSidebar.sessions"), icon: Calendar },
     { id: "question-papers", label: t("adminSidebar.questionPapers"), icon: FileQuestion },
     { id: "bulk-import", label: t("adminSidebar.bulkImport"), icon: UploadCloud },
+    { id: "payments", label: t("adminSidebar.payments", "Payments"), icon: CreditCard },
     { id: "notes", label: t("adminSidebar.notes"), icon: BookOpen },
     { id: "reels", label: t("adminSidebar.reels"), icon: Film },
     {

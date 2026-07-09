@@ -63,6 +63,25 @@ export const payWithWallet = createAsyncThunk(
     }
 );
 
+export const fetchAdminTransactions = createAsyncThunk(
+    "wallet/adminTransactions",
+    async (params = {}, { rejectWithValue }) => {
+        try {
+            const queryParams = new URLSearchParams();
+            if (params.page) queryParams.append("page", params.page);
+            if (params.limit) queryParams.append("limit", params.limit);
+            if (params.search) queryParams.append("search", params.search);
+            if (params.type) queryParams.append("type", params.type);
+            if (params.status) queryParams.append("status", params.status);
+            
+            const { data } = await api.get(`/wallet/admin/transactions?${queryParams.toString()}`);
+            return data; // { transactions, pagination, summary }
+        } catch (err) {
+            return rejectWithValue(err.response?.data?.message || "Failed to fetch admin transactions.");
+        }
+    }
+);
+
 // ── Slice ────────────────────────────────────────────────────────────────────
 
 const walletSlice = createSlice({
@@ -74,6 +93,11 @@ const walletSlice = createSlice({
         depositLoading: false,
         payLoading: false,
         error: null,
+        // Admin
+        adminTransactions: [],
+        adminPagination: null,
+        adminSummary: null,
+        adminLoading: false,
     },
     reducers: {
         clearWalletError: (state) => { state.error = null; },
@@ -134,6 +158,20 @@ const walletSlice = createSlice({
             })
             .addCase(payWithWallet.rejected, (state, { payload }) => {
                 state.payLoading = false;
+                state.error = payload;
+            });
+            
+        // fetchAdminTransactions
+        builder
+            .addCase(fetchAdminTransactions.pending, (state) => { state.adminLoading = true; state.error = null; })
+            .addCase(fetchAdminTransactions.fulfilled, (state, { payload }) => {
+                state.adminLoading = false;
+                state.adminTransactions = payload.transactions;
+                state.adminPagination = payload.pagination;
+                state.adminSummary = payload.summary;
+            })
+            .addCase(fetchAdminTransactions.rejected, (state, { payload }) => {
+                state.adminLoading = false;
                 state.error = payload;
             });
     },

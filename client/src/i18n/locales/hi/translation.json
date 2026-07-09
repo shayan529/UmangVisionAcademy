@@ -46,7 +46,24 @@
     "submitting": "सबमिट हो रहा है…",
     "rated": "रेट किया गया",
     "rateCourse": "पाठ्यक्रम को रेट करें",
-    "ratingLabels": ["", "खराब", "औसत", "अच्छा", "बहुत अच्छा", "उत्कृष्ट"]
+    "ratingLabels": [
+      "",
+      "खराब",
+      "औसत",
+      "अच्छा",
+      "बहुत अच्छा",
+      "उत्कृष्ट"
+    ],
+    "select_course_type": "पाठ्यक्रम का प्रकार",
+    "courseTypeAll": "सब",
+    "courseTypeClasses": "कक्षाएं",
+    "courseTypeCompetitive": "प्रतियोगी परीक्षा",
+    "select_exam": "परीक्षा चुनें",
+    "allExams": "सभी परीक्षाएं",
+    "select_language": "भाषा चुनें",
+    "multilanguage": "बहुभाषी",
+    "languageEnglish": "अंग्रेज़ी",
+    "languageHindi": "हिंदी"
   },
   "demo": {
     "add_to_cart": "कार्ट में जोड़ें",
@@ -76,7 +93,8 @@
     "studentsCount": "👥 {{count}} छात्र",
     "studentsCount_plural": "👥 {{count}} छात्र",
     "hoursTotal": "⏱ {{count}} घंटे कुल",
-    "hoursTotal_plural": "⏱ {{count}} घंटे कुल"
+    "hoursTotal_plural": "⏱ {{count}} घंटे कुल",
+    "pyqBenefit": "इस कोर्स को खरीदने पर इस विषय की सभी 5 पिछले वर्ष की प्रश्न-पत्रों तक पहुँच पाएँगे।"
   },
   "aiTutor": {
     "emptyTitle": "आज मैं आपकी कैसे मदद कर सकता हूँ?",
@@ -308,11 +326,14 @@
     "questionPaper": "प्रश्न पत्र",
     "noResults": "चयनित फ़िल्टर के लिए कोई प्रश्न पत्र नहीं मिला।",
     "unlockTitle": "प्रश्न पत्र अनलॉक करें",
-    "unlockDescription": "यह पिछले वर्ष का प्रश्न पत्र एक प्रीमियम संसाधन है। नवीनतम वर्ष (2025) निःशुल्क है, और नामांकित छात्रों को उनके विषय के सभी पेपर निःशुल्क मिलते हैं।",
+    "unlockDescription": "केवल नवीनतम वर्ष (2025) मुफ्त है। अन्य 4 वर्ष ₹20 प्रति वर्ष हैं, और मिलते हुए विषय का कोर्स खरीदने पर सभी 5 प्रश्न-पत्र खुल जाते हैं।",
     "unlockPrice": "मूल्य: ₹{{price}}",
     "walletBalance": "वॉलेट बैलेंस: ₹{{balance}}",
     "insufficientBalance": "अपर्याप्त बैलेंस। कृपया अपने वॉलेट में धनराशि जोड़ें।",
     "payAndUnlock": "भुगतान करें और अनलॉक करें",
+    "payWithRazorpay": "Razorpay से भुगतान करें",
+    "payWithWallet": "वॉलेट से भुगतान करें",
+    "walletUnavailable": "वॉलेट बैलेंस पर्याप्त नहीं है",
     "cancel": "रद्द करें",
     "goToWallet": "वॉलेट पर जाएं",
     "processing": "प्रसंस्करण..."
@@ -1639,7 +1660,8 @@
     "applications": "आवेदन",
     "roles": "भूमिकाएं और अनुमतियां",
     "devices": "लॉग इन किए गए उपकरण",
-    "logout": "लॉगआउट"
+    "logout": "लॉगआउट",
+    "payments": "भुगतान"
   },
   "adminOverview": {
     "totalRevenue": "कुल राजस्व",
@@ -1678,7 +1700,6 @@
     "liveCourses": "{{count}} लाइव पाठ्यक्रम",
     "trackEnrollment": "नामांकन वितरण, पाठ्यक्रम रेटिंग और प्लेटफ़ॉर्म राजस्व मेट्रिक्स को ट्रैक करें।"
   },
-
   "bottomBar": {
     "home": "होम",
     "chat": "चर्चा",
@@ -1730,5 +1751,43 @@
       "confirm": "पुष्टि करें"
     },
     "rejectReasonPlaceholder": "कारण (वैकल्पिक)"
+  },
+  "adminPayments": {
+    "platformPayments": "प्लेटफ़ॉर्म भुगतान",
+    "monitorDescription": "सभी रेज़रपे जमा, पाठ्यक्रम खरीद और रिफंड की निगरानी करें।",
+    "refresh": "रिफ्रेश",
+    "totalVolume": "कुल राशि (सफल)",
+    "successfulTxns": "सफल लेनदेन",
+    "pendingRefunds": "लंबित रिफंड",
+    "processedRefunds": "संसाधित रिफंड",
+    "searchPlaceholder": "उपयोगकर्ता, ईमेल, या रेज़रपे आईडी द्वारा खोजें...",
+    "allTypes": "सभी प्रकार",
+    "deposits": "जमा (Deposits)",
+    "purchases": "खरीद (Purchases)",
+    "subscriptions": "सदस्यता (Subscriptions)",
+    "refunds": "रिफंड (Refunds)",
+    "coinRedeems": "सिक्का भुनाना (Coin Redeems)",
+    "tableHeaders": {
+      "date": "तारीख",
+      "user": "उपयोगकर्ता",
+      "type": "प्रकार",
+      "description": "विवरण",
+      "amount": "राशि",
+      "methodId": "विधि/आईडी",
+      "status": "स्थिति"
+    },
+    "loading": "लेनदेन लोड हो रहे हैं...",
+    "noTransactions": "कोई लेनदेन नहीं मिला।",
+    "deletedUser": "हटाए गए उपयोगकर्ता",
+    "refundLabel": "रिफंड",
+    "pagination": {
+      "prev": "पिछला",
+      "page": "पृष्ठ",
+      "of": "का",
+      "next": "अगला"
+    },
+    "statusSuccess": "सफल",
+    "statusFailed": "विफल",
+    "statusPending": "लंबित"
   }
 }

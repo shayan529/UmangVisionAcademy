@@ -46,7 +46,24 @@
     "submitting": "Submitting…",
     "rated": "Rated",
     "rateCourse": "Rate Course",
-    "ratingLabels": ["", "Poor", "Fair", "Good", "Very Good", "Excellent"]
+    "ratingLabels": [
+      "",
+      "Poor",
+      "Fair",
+      "Good",
+      "Very Good",
+      "Excellent"
+    ],
+    "select_course_type": "Course Type",
+    "courseTypeAll": "All",
+    "courseTypeClasses": "Classes",
+    "courseTypeCompetitive": "Competitive Exam",
+    "select_exam": "Select Exam",
+    "allExams": "All Exams",
+    "select_language": "Select Language",
+    "multilanguage": "Multilanguage",
+    "languageEnglish": "English",
+    "languageHindi": "Hindi"
   },
   "demo": {
     "add_to_cart": "Add to Cart",
@@ -76,7 +93,8 @@
     "studentsCount": "👥 {{count}} students",
     "studentsCount_plural": "👥 {{count}} students",
     "hoursTotal": "⏱ {{count}}h total",
-    "hoursTotal_plural": "⏱ {{count}}h total"
+    "hoursTotal_plural": "⏱ {{count}}h total",
+    "pyqBenefit": "Buy this course to unlock all 5 previous year question papers for this subject."
   },
   "auth": {
     "signup": "Create Account",
@@ -281,11 +299,14 @@
     "questionPaper": "Question Paper",
     "noResults": "No papers found for the selected filters.",
     "unlockTitle": "Unlock Question Paper",
-    "unlockDescription": "This previous year question paper is a premium resource. The latest year (2025) is free, and enrolled students get all papers for their subject free.",
+    "unlockDescription": "Only the latest year (2025) is free. The other 4 years cost ₹20 each, and buying the matching subject course unlocks all 5 papers.",
     "unlockPrice": "Price: ₹{{price}}",
     "walletBalance": "Wallet Balance: ₹{{balance}}",
     "insufficientBalance": "Insufficient balance. Please add funds to your wallet.",
     "payAndUnlock": "Pay & Unlock",
+    "payWithRazorpay": "Pay with Razorpay",
+    "payWithWallet": "Pay with Wallet",
+    "walletUnavailable": "Wallet balance is too low",
     "cancel": "Cancel",
     "goToWallet": "Go to Wallet",
     "processing": "Processing..."
@@ -1637,7 +1658,8 @@
     "applications": "Applications",
     "roles": "Roles & Permissions",
     "devices": "Logged In Devices",
-    "logout": "Logout"
+    "logout": "Logout",
+    "payments": "Payments"
   },
   "adminOverview": {
     "totalRevenue": "Total Revenue",
@@ -1676,7 +1698,6 @@
     "liveCourses": "{{count}} Live Courses",
     "trackEnrollment": "Track enrollment distribution, courses rating, and platform revenue metrics."
   },
-
   "bottomBar": {
     "home": "Home",
     "chat": "Chat",
@@ -1728,5 +1749,43 @@
       "confirm": "Confirm"
     },
     "rejectReasonPlaceholder": "Reason (optional)"
+  },
+  "adminPayments": {
+    "platformPayments": "Platform Payments",
+    "monitorDescription": "Monitor all Razorpay deposits, course purchases, and refunds.",
+    "refresh": "Refresh",
+    "totalVolume": "Total Volume (Success)",
+    "successfulTxns": "Successful Txns",
+    "pendingRefunds": "Pending Refunds",
+    "processedRefunds": "Processed Refunds",
+    "searchPlaceholder": "Search by user, email, or Razorpay ID...",
+    "allTypes": "All Types",
+    "deposits": "Deposits",
+    "purchases": "Purchases",
+    "subscriptions": "Subscriptions",
+    "refunds": "Refunds",
+    "coinRedeems": "Coin Redeems",
+    "tableHeaders": {
+      "date": "Date",
+      "user": "User",
+      "type": "Type",
+      "description": "Description",
+      "amount": "Amount",
+      "methodId": "Method/ID",
+      "status": "Status"
+    },
+    "loading": "Loading transactions...",
+    "noTransactions": "No transactions found.",
+    "deletedUser": "Deleted User",
+    "refundLabel": "Refund",
+    "pagination": {
+      "prev": "Prev",
+      "page": "Page",
+      "of": "of",
+      "next": "Next"
+    },
+    "statusSuccess": "Success",
+    "statusFailed": "Failed",
+    "statusPending": "Pending"
   }
 }

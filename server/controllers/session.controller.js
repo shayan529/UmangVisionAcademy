@@ -224,7 +224,15 @@ export const updateSession = async (req, res) => {
       ? { _id: req.params.id }
       : { _id: req.params.id, instructor: req.user._id };
 
-    const session = await Session.findOneAndUpdate(query, req.body, {
+    const allowedFields = ["title", "date", "time", "status", "course", "class", "subject", "url"];
+    const updates = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    }
+
+    const session = await Session.findOneAndUpdate(query, updates, {
       new: true,
       runValidators: true,
     });

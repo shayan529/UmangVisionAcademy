@@ -66,7 +66,7 @@ export const getSubscription = async (req, res) => {
 // Handles both subscription plans AND cart course purchases
 export const createOrder = async (req, res) => {
   try {
-    const { planId, courseIds } = req.body;
+    const { planId, courseIds, selectedClass } = req.body;
     let orderAmount;
     let notes = { userId: req.user._id.toString() };
 
@@ -84,6 +84,7 @@ export const createOrder = async (req, res) => {
       orderAmount = plan.amount;
       notes.type = "subscription";
       notes.planId = planId;
+      if (selectedClass) notes.selectedClass = selectedClass;
     }
 
     if (orderAmount === 0)
@@ -101,6 +102,7 @@ export const createOrder = async (req, res) => {
           keyId: "mock",
           planId: planId ?? "cart",
           mockMode: true,
+          selectedClass: selectedClass || null,
         });
       } else {
         return res.status(400).json({
@@ -138,6 +140,7 @@ export const verifyPayment = async (req, res) => {
       razorpay_signature,
       planId,
       courseIds,
+      selectedClass,
     } = req.body;
 
     const isMock = razorpay_order_id?.startsWith("mock_");
@@ -169,7 +172,13 @@ export const verifyPayment = async (req, res) => {
         razorpayOrderId: razorpay_order_id,
         razorpayPaymentId: razorpay_payment_id,
       };
-      await User.findByIdAndUpdate(req.user._id, { subscription });
+
+      const updateData = { subscription };
+      if (selectedClass) {
+        updateData.selectedClass = selectedClass;
+      }
+      
+      await User.findByIdAndUpdate(req.user._id, updateData);
 
       // ── Log it so Purchase History can show it ─────────────────────────────
       const wallet = await getOrCreateWallet(req.user._id);

@@ -5,7 +5,27 @@ import User from "../models/user.model.js";
 import Wallet from "../models/wallet.model.js";
 import fsPromises from "fs/promises";
 import path from "path";
+import crypto from "crypto";
 import { fileURLToPath } from "url";
+import Razorpay from "razorpay";
+import { getPYQAccessResult, PYQ_PRICE } from "../utils/pyqAccess.js";
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+const isPlaceholderRazorpayConfig = () => {
+  const keyId = process.env.RAZORPAY_KEY_ID || "";
+  const keySecret = process.env.RAZORPAY_KEY_SECRET || "";
+
+  return (
+    !keyId ||
+    !keySecret ||
+    /xxxx|your_secret|your_razorpay_secret_here/i.test(keyId) ||
+    /xxxx|your_secret|your_razorpay_secret_here/i.test(keySecret)
+  );
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,10 +40,11 @@ export const uploadQuestionPaper = async (req, res) => {
     if (!board || !cls || !subject || !year)
       return res.status(400).json({ message: "All fields are required." });
 
-    const fileName = `${board}-${cls}-${subject}-${year}-${Date.now()}.pdf`.replace(
-      /\s+/g,
-      "_",
-    );
+    const fileName =
+      `${board}-${cls}-${subject}-${year}-${Date.now()}.pdf`.replace(
+        /\s+/g,
+        "_",
+      );
 
     const folder = "question-papers";
     const targetDir = path.join(UPLOADS_DIR, folder);
@@ -32,7 +53,8 @@ export const uploadQuestionPaper = async (req, res) => {
     const filePath = path.join(targetDir, fileName);
     await fsPromises.writeFile(filePath, req.file.buffer);
 
-    const baseUrl = process.env.SERVER_URL || `${req.protocol}://${req.get("host")}`;
+    const baseUrl =
+      process.env.SERVER_URL || `${req.protocol}://${req.get("host")}`;
     const fileUrl = `${baseUrl}/uploads/${folder}/${fileName}`;
     const fileId = `${folder}/${fileName}`;
 
@@ -114,33 +136,172 @@ export const getQuestionPapers = async (req, res) => {
 export const checkPYQAccess = async (req, res) => {
   try {
     const { board, className, subject, year } = req.body;
-    // The latest year (2025) is free
-    if (year === 2025 || year === "2025") {
-      return res.json({ access: true, reason: "free_year" });
-    }
-
-    const pyqId = `${board}_${className}_${subject}_${year}`;
     const user = await User.findById(req.user._id).populate("enrolledCourses");
 
-    if (user.purchasedPYQs?.includes(pyqId)) {
-      return res.json({ access: true, reason: "purchased" });
-    }
-
-    // Check if enrolled in matching course (case-insensitive)
-    const hasCourse = user.enrolledCourses?.some((c) => {
-      const matchCat = c.category?.toLowerCase() === className?.toLowerCase();
-      const matchTitle = c.title?.toLowerCase() === subject?.toLowerCase();
-      return matchCat && matchTitle;
+    const accessResult = getPYQAccessResult({
+      year,
+      purchasedPYQs: user.purchasedPYQs || [],
+      enrolledCourses: user.enrolledCourses || [],
+      className,
+      subject,
+      board,
     });
 
-    if (hasCourse) {
-      return res.json({ access: true, reason: "course_enrolled" });
-    }
-
-    // Otherwise, require purchase
-    res.json({ access: false, price: 20 });
+    res.json({ ...accessResult, price: accessResult.price ?? PYQ_PRICE });
   } catch (error) {
     console.error("[checkPYQAccess]", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const grantPYQAccess = async ({
+  userId,
+  board,
+  className,
+  subject,
+  year,
+  paymentMethod,
+  paymentDetails = {},
+}) => {
+  const pyqId = `${board}_${className}_${subject}_${year}`;
+  const user = await User.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  if (user.purchasedPYQs?.includes(pyqId)) {
+    return { success: true, message: "Already purchased." };
+  }
+
+  let wallet = await Wallet.findOne({ userId });
+  if (!wallet) {
+    wallet = await Wallet.create({ userId, balance: 0, transactions: [] });
+  }
+
+  if (paymentMethod === "wallet") {
+    if (wallet.balance < PYQ_PRICE) {
+      const error = new Error("Insufficient wallet balance.");
+      error.code = "INSUFFICIENT_FUNDS";
+      throw error;
+    }
+
+    wallet.balance -= PYQ_PRICE;
+    wallet.transactions.push({
+      type: "purchase",
+      amount: PYQ_PRICE,
+      description: `Purchased PYQ: ${board} ${className} ${subject} ${year}`,
+      paymentMethod: "wallet",
+      status: "success",
+    });
+    await wallet.save();
+  } else {
+    wallet.transactions.push({
+      type: "purchase",
+      amount: PYQ_PRICE,
+      description: `Purchased PYQ via Razorpay: ${board} ${className} ${subject} ${year}`,
+      paymentMethod: "razorpay",
+      status: "success",
+      razorpayOrderId: paymentDetails.razorpayOrderId,
+      razorpayPaymentId: paymentDetails.razorpayPaymentId,
+    });
+    await wallet.save();
+  }
+
+  user.purchasedPYQs = user.purchasedPYQs || [];
+  user.purchasedPYQs.push(pyqId);
+  await user.save();
+
+  return { success: true, message: "Purchase successful" };
+};
+
+export const createPYQOrder = async (req, res) => {
+  try {
+    const { board, className, subject, year } = req.body;
+    const amount = PYQ_PRICE * 100;
+
+    if (isPlaceholderRazorpayConfig()) {
+      if (process.env.NODE_ENV !== "production") {
+        return res.json({
+          orderId: `mock_order_${Date.now()}`,
+          amount,
+          currency: "INR",
+          keyId: "mock",
+          mockMode: true,
+        });
+      }
+      return res.status(400).json({ message: "Razorpay is not configured." });
+    }
+
+    const order = await razorpay.orders.create({
+      amount,
+      currency: "INR",
+      receipt: `pyq_${req.user._id}_${Date.now()}`,
+      notes: {
+        userId: req.user._id.toString(),
+        type: "question_paper",
+        board,
+        className,
+        subject,
+        year: String(year),
+      },
+    });
+
+    res.json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      keyId: process.env.RAZORPAY_KEY_ID,
+      mockMode: false,
+    });
+  } catch (error) {
+    console.error("[createPYQOrder]", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const verifyPYQPayment = async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      board,
+      className,
+      subject,
+      year,
+    } = req.body;
+
+    const isMock = razorpay_order_id?.startsWith("mock_");
+    if (!isMock) {
+      const expected = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+        .digest("hex");
+
+      if (expected !== razorpay_signature) {
+        return res
+          .status(400)
+          .json({ message: "Payment verification failed." });
+      }
+    }
+
+    const result = await grantPYQAccess({
+      userId: req.user._id,
+      board,
+      className,
+      subject,
+      year,
+      paymentMethod: "razorpay",
+      paymentDetails: {
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+      },
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error("[verifyPYQPayment]", error);
+    if (error.code === "INSUFFICIENT_FUNDS") {
+      return res.status(400).json({ message: error.message, code: error.code });
+    }
     res.status(500).json({ message: error.message });
   }
 };
@@ -148,44 +309,21 @@ export const checkPYQAccess = async (req, res) => {
 export const purchasePYQ = async (req, res) => {
   try {
     const { board, className, subject, year } = req.body;
-    const pyqId = `${board}_${className}_${subject}_${year}`;
-    const price = 20;
-
-    const user = await User.findById(req.user._id);
-    if (user.purchasedPYQs?.includes(pyqId)) {
-      return res.status(400).json({ message: "Already purchased." });
-    }
-
-    let wallet = await Wallet.findOne({ userId: req.user._id });
-    if (!wallet) {
-      wallet = await Wallet.create({ userId: req.user._id, balance: 0, transactions: [] });
-    }
-
-    if (wallet.balance < price) {
-      return res.status(400).json({ message: "Insufficient wallet balance.", code: "INSUFFICIENT_FUNDS" });
-    }
-
-    // Deduct and create transaction
-    wallet.balance -= price;
-    wallet.transactions.push({
-      type: "purchase",
-      amount: price,
-      description: `Purchased PYQ: ${board} ${className} ${subject} ${year}`,
+    const result = await grantPYQAccess({
+      userId: req.user._id,
+      board,
+      className,
+      subject,
+      year,
       paymentMethod: "wallet",
-      status: "success"
     });
 
-    await wallet.save();
-
-    // Add to user
-    user.purchasedPYQs = user.purchasedPYQs || [];
-    user.purchasedPYQs.push(pyqId);
-    await user.save();
-
-    res.json({ success: true, message: "Purchase successful" });
+    res.json(result);
   } catch (error) {
     console.error("[purchasePYQ]", error);
+    if (error.code === "INSUFFICIENT_FUNDS") {
+      return res.status(400).json({ message: error.message, code: error.code });
+    }
     res.status(500).json({ message: error.message });
   }
 };
- 

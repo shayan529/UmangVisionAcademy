@@ -463,7 +463,16 @@ export const enrollCourses = async (req, res) => {
 
     const enrolled = [],
       alreadyEnrolled = [],
-      notFound = [];
+      notFound = [],
+      forbidden = [];
+
+    // Pre-fetch user to check subscription and selected class
+    const userDoc = await User.findById(studentId).select("subscription selectedClass");
+    const hasActiveSubscription = userDoc?.subscription?.status === "active";
+    const userClass = userDoc?.selectedClass?.toLowerCase().trim();
+    
+    // Check if the user is an admin or staff (they can bypass payment checks)
+    const isAdminOrStaff = hasBaseRole(req.user, "admin") || hasBaseRole(req.user, "staff");
 
     await Promise.all(
       courseIds.map(async (courseId) => {
@@ -472,6 +481,16 @@ export const enrollCourses = async (req, res) => {
           notFound.push(courseId);
           return;
         }
+
+        // Price check logic
+        if (course.price > 0 && !isAdminOrStaff) {
+          const matchesClass = userClass && course.category && userClass === course.category.toLowerCase().trim();
+          if (!hasActiveSubscription || !matchesClass) {
+             forbidden.push(courseId);
+             return; // Skip enrolling this paid course without matching plan
+          }
+        }
+
         const already = course.students.some(
           (id) => id.toString() === studentId.toString(),
         );
@@ -488,6 +507,10 @@ export const enrollCourses = async (req, res) => {
         enrolled.push(courseId);
       }),
     );
+
+    if (forbidden.length > 0 && enrolled.length === 0) {
+      return res.status(403).json({ message: "Payment required for selected courses." });
+    }
 
     await Promise.all(
       enrolled.map((id) =>
