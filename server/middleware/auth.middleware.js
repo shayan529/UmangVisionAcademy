@@ -84,6 +84,36 @@ export const protect = async (req, res, next) => {
   }
 };
 
+// ── optionalAuth ──────────────────────────────────────────────────────────────
+// Same token-detection logic as `protect` (httpOnly cookie OR Bearer header,
+// so it works identically on web and the Capacitor Android app), but never
+// rejects the request. Attaches req.user when a valid token is present;
+// otherwise continues anonymously with req.user left undefined.
+//
+// Use this for routes that serve different data to logged-in vs anonymous
+// callers (e.g. a public listing that also personalizes for enrolled
+// students) instead of hand-rolling a cookie-only check, which silently
+// breaks for anyone authenticated via Bearer token.
+export const optionalAuth = async (req, res, next) => {
+  try {
+    let token = req.cookies?.token;
+    if (!token && req.headers.authorization?.startsWith("Bearer ")) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+    if (!token) return next();
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await User.findById(decoded.id).select("-password");
+    if (user && user.isActive !== false) {
+      req.user = await hydrateUserRoles(user);
+    }
+  } catch {
+    // Invalid/expired token on an optional-auth route — treat as anonymous
+    // rather than failing the request.
+  }
+  next();
+};
+
 // ── authorizeRoles ────────────────────────────────────────────────────────────
 export const authorizeRoles = (...roles) => {
   return (req, res, next) => {

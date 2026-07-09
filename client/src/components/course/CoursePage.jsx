@@ -20,24 +20,37 @@ const fmtMins = (mins) => {
   return h ? `${h}h ${m}m` : `${m}m`;
 };
 
-const groupIntoChapters = (lessons = []) => {
-  const chapters = [];
-  let current = null;
+// Groups lessons into: Subject → [{ chapterTitle, lessons }]
+// Each lesson gets a globalIdx = its flat array position.
+const groupIntoSubjects = (lessons = []) => {
+  const subjectMap = []; // ordered array of subjects
+  const subjectIndex = {}; // subjectName → index in subjectMap
+
   lessons.forEach((lesson, idx) => {
-    if (
-      lesson.chapterTitle &&
-      (!current || current.title !== lesson.chapterTitle)
-    ) {
-      current = { title: lesson.chapterTitle, lessons: [] };
-      chapters.push(current);
+    const subjectName = lesson.subject || "General";
+    const chapterTitle = lesson.chapterTitle || "Chapter 1";
+
+    if (subjectIndex[subjectName] === undefined) {
+      subjectIndex[subjectName] = subjectMap.length;
+      subjectMap.push({
+        subject: subjectName,
+        chapters: [],
+        subjectQuiz: null,
+        allLessonCount: 0,
+      });
     }
-    if (!current) {
-      current = { title: "Chapter 1", lessons: [] };
-      chapters.push(current);
+    const subj = subjectMap[subjectIndex[subjectName]];
+
+    let chapter = subj.chapters.find((c) => c.title === chapterTitle);
+    if (!chapter) {
+      chapter = { title: chapterTitle, lessons: [] };
+      subj.chapters.push(chapter);
     }
-    current.lessons.push({ ...lesson, globalIdx: idx });
+    chapter.lessons.push({ ...lesson, globalIdx: idx });
+    subj.allLessonCount++;
   });
-  return chapters;
+
+  return subjectMap;
 };
 
 // ── Certificate Earned Modal ──────────────────────────────────────────────────
@@ -891,6 +904,7 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0 }) => {
 // ── Quiz Viewer ───────────────────────────────────────────────────────────────
 function QuizViewer({
   course,
+  activeQuiz,
   user,
   quizStep,
   setQuizStep,
@@ -906,12 +920,14 @@ function QuizViewer({
   onSubmit,
   onClose,
 }) {
-  const quiz = course?.quiz;
+  const quiz = activeQuiz || course?.quiz;
   const questions = quiz?.questions || [];
   const LABELS = ["A", "B", "C", "D"];
   const totalPts = questions.length * 10;
   const prevSub = user?.quizSubmissions?.find(
-    (s) => s.courseId?.toString() === course._id?.toString(),
+    (s) =>
+      s.courseId?.toString() === course._id?.toString() &&
+      s.title === quiz?.title,
   );
 
   if (quizStep === "intro") {
@@ -942,10 +958,10 @@ function QuizViewer({
                 marginBottom: 6,
               }}
             >
-              Final Quiz Locked
+              {quiz?.title || "Quiz"} Locked
             </h2>
             <p style={{ fontSize: 13, color: "#64748b", maxWidth: 360 }}>
-              Complete every lesson before starting the final course quiz.
+              Complete the required lessons before starting this quiz.
             </p>
           </div>
           <div
@@ -1568,27 +1584,17 @@ export default function CoursePage() {
   const dispatch = useDispatch();
   const { user, loading: authLoading } = useSelector((s) => s.auth);
 
-  const storageKey = `course-progress-${id}`;
-  const savedState = useMemo(() => {
-    if (typeof window === "undefined" || !id) return null;
-    try {
-      return JSON.parse(localStorage.getItem(storageKey) || "null");
-    } catch {
-      return null;
-    }
-  }, [storageKey, id]);
+  // Progress persisted server-side; hydrate from API below for authenticated users.
 
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeIdx, setActiveIdx] = useState(savedState?.lastLesson ?? 0);
-  const [completed, setCompleted] = useState(
-    () => new Set(savedState?.completed ?? []),
-  );
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [completed, setCompleted] = useState(() => new Set());
   const [currentVideoPct, setCurrentVideoPct] = useState(0);
 
   // ── Quiz state ──────────────────────────────────────────────────────────────
-  const [showQuiz, setShowQuiz] = useState(false);
+  const [activeQuiz, setActiveQuiz] = useState(null);
   const [quizStep, setQuizStep] = useState("intro");
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -1612,7 +1618,8 @@ export default function CoursePage() {
     () => typeof window !== "undefined" && window.innerWidth >= 768,
   );
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [collapsedCh, setCollapsedCh] = useState(new Set());
+  const [collapsedSubj, setCollapsedSubj] = useState(new Set()); // subject-level collapse
+  const [collapsedCh, setCollapsedCh] = useState(new Set()); // chapter-level collapse
 
   useEffect(() => {
     const onResize = () => setIsDesktop(window.innerWidth >= 768);
@@ -1673,20 +1680,77 @@ export default function CoursePage() {
   // ── Derived lesson data — must be declared BEFORE any hook that reads it
   // (e.g. in a dependency array) to avoid a "cannot access before
   // initialization" TDZ error on render. ──
-  const chapters = groupIntoChapters(course?.lessons ?? []);
   const allLessons = course?.lessons ?? [];
   const activeLesson = allLessons[activeIdx];
   const isTextLesson = activeLesson?.type === "text";
+
+  const firstUncompletedIdx = useMemo(() => {
+    // completed stores plain 0-based indices (same as activeIdx / array position)
+    // allLessons are raw course lessons without globalIdx, so we use the index
+    return allLessons.findIndex((_, idx) => !completed.has(idx));
+  }, [allLessons, completed]);
+
+  // subjects: Subject → [{title (chapter), lessons}], quiz at subject level
+  const subjects = useMemo(() => {
+    const list = groupIntoSubjects(course?.lessons ?? []);
+    if (course?.subjectQuizzes) {
+      course.subjectQuizzes.forEach((sq) => {
+        if (!sq.questions?.length) return;
+        const subj = list.find((s) => s.subject === sq.subject);
+        if (subj) subj.subjectQuiz = sq;
+      });
+    }
+    return list;
+  }, [course?.lessons, course?.subjectQuizzes]);
+
+  // ── Certificate eligibility check ────────────────────────────────────────────
+  // Defined as a regular function (hoisted) so handleQuizSubmit can call it.
+  // Shows the cert modal when:
+  //   • certificate is enabled by the instructor
+  //   • all lessons are complete
+  //   • all quizzes submitted (pass/fail irrelevant) OR no quizzes exist
+  function checkAndShowCert(extraJustSubmittedTitle) {
+    if (!course?.certificate?.enabled) return;
+    if (!courseComplete) return;
+    if (showCertModal) return;
+
+    const requiredTitles = new Set();
+    subjects.forEach((s) => {
+      if (s.subjectQuiz?.questions?.length) {
+        requiredTitles.add(s.subjectQuiz.title || "Subject Quiz");
+      }
+    });
+    if (course?.quiz?.questions?.length) {
+      requiredTitles.add(course.quiz.title || "Final Quiz");
+    }
+
+    // No quizzes → cert on lesson completion alone
+    if (requiredTitles.size === 0) {
+      setTimeout(() => setShowCertModal(true), 800);
+      return;
+    }
+
+    const submittedTitles = new Set(
+      (user?.quizSubmissions ?? [])
+        .filter((s) => s.courseId?.toString() === course._id?.toString())
+        .map((s) => s.title),
+    );
+    if (extraJustSubmittedTitle) submittedTitles.add(extraJustSubmittedTitle);
+
+    if ([...requiredTitles].every((t) => submittedTitles.has(t))) {
+      setTimeout(() => setShowCertModal(true), 1200);
+    }
+  }
 
   const handleQuizSubmit = async () => {
     setQuizLoading(true);
     try {
       // Use the api instance (not raw fetch) so the auth interceptor
       // automatically attaches the correct "authToken" Bearer header.
-      const { data } = await api.post(
-        `/courses/${course._id}/quiz/submit`,
-        { answers: selectedAnswers },
-      );
+      const { data } = await api.post(`/courses/${course._id}/quiz/submit`, {
+        answers: selectedAnswers,
+        title: activeQuiz?.title || "Final Quiz",
+      });
       if (data.success) {
         setQuizResult(data);
         const isPerfectScore = data.percentage === 100;
@@ -1712,11 +1776,10 @@ export default function CoursePage() {
         );
         setQuizStep("result");
 
-        // ── Show certificate popup if course has a certificate enabled ──
-        if (course?.certificate?.enabled) {
-          // Small delay so result screen renders first
-          setTimeout(() => setShowCertModal(true), 1200);
-        }
+        // ── Certificate check after quiz submit ──
+        // Pass the just-submitted quiz title so we don't depend on the
+        // async redux update to have landed yet.
+        checkAndShowCert(activeQuiz?.title || "Final Quiz");
       }
     } catch (err) {
       console.error(err);
@@ -1725,28 +1788,64 @@ export default function CoursePage() {
     }
   };
 
-  const lessonProgressRef = useRef(savedState?.lessonProgress ?? {});
-  const [initialTime, setInitialTime] = useState(
-    lessonProgressRef.current[savedState?.lastLesson ?? 0] || 0,
-  );
+  const lessonProgressRef = useRef({});
+  const [initialTime, setInitialTime] = useState(0);
 
   useEffect(() => {
     setInitialTime(lessonProgressRef.current[activeIdx] || 0);
     setCurrentVideoPct(0);
   }, [activeIdx]);
 
+  // ── Cert check on lesson completion (no-quiz courses) ──────────────────────
+  // Also re-runs when quiz submissions arrive so the cert fires immediately
+  // after the last quiz even if the component didn't re-mount.
+  useEffect(() => {
+    if (!courseComplete) return;
+    checkAndShowCert();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseComplete, user?.quizSubmissions]);
+
   const saveTimer = useRef(null);
   const pendingSave = useRef({});
   const scheduleSave = useCallback(
-    (patch) => {
+    (patch, immediate = false) => {
       Object.assign(pendingSave.current, patch);
+      if (immediate) {
+        if (saveTimer.current) {
+          clearTimeout(saveTimer.current);
+          saveTimer.current = null;
+        }
+        if (user && id) {
+          api
+            .post(`/courses/${id}/progress`, pendingSave.current)
+            .catch((err) => {
+              console.warn(
+                "Failed to sync progress immediately:",
+                err?.message || err,
+              );
+            });
+        }
+        return;
+      }
       if (saveTimer.current) return;
       saveTimer.current = setTimeout(() => {
         saveTimer.current = null;
-        localStorage.setItem(storageKey, JSON.stringify(pendingSave.current));
+        // Persist progress server-side for authenticated users so progress
+        // and quiz unlocking survives across devices.
+        if (user && id) {
+          api
+            .post(`/courses/${id}/progress`, pendingSave.current)
+            .catch((err) => {
+              // Non-fatal — keep working locally even if server fails
+              console.warn(
+                "Failed to sync progress to server:",
+                err?.message || err,
+              );
+            });
+        }
       }, 5000);
     },
-    [storageKey],
+    [user, id],
   );
 
   useEffect(() => {
@@ -1757,8 +1856,25 @@ export default function CoursePage() {
     }
     api
       .get(`/courses/${id}`)
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         setCourse(data);
+        // hydrate server progress (if any)
+        try {
+          const { data: progressResp } = await api.get(
+            `/courses/${id}/progress`,
+          );
+          const prog = progressResp?.progress;
+          if (prog) {
+            lessonProgressRef.current = prog.lessonProgress || {};
+            setCompleted(new Set(prog.completed || []));
+            setActiveIdx(prog.lastLesson ?? 0);
+            setInitialTime(
+              lessonProgressRef.current[prog.lastLesson ?? 0] || 0,
+            );
+          }
+        } catch (e) {
+          console.warn("Failed to fetch course progress:", e?.message || e);
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -1769,7 +1885,7 @@ export default function CoursePage() {
 
   useEffect(() => {
     if (!openQuizFromUrl || !course?.quiz?.questions?.length) return;
-    setShowQuiz(true);
+    setActiveQuiz(course.quiz);
     setQuizStep("intro");
     setSelectedAnswers({});
     setCurrentQuestion(0);
@@ -1795,9 +1911,19 @@ export default function CoursePage() {
   useEffect(
     () => () => {
       clearTimeout(saveTimer.current);
-      localStorage.setItem(storageKey, JSON.stringify(pendingSave.current));
+      // Flush pending progress to server on unmount if any
+      if (user && id && Object.keys(pendingSave.current).length) {
+        api
+          .post(`/courses/${id}/progress`, pendingSave.current)
+          .catch((err) => {
+            console.warn(
+              "Failed to flush progress on unload:",
+              err?.message || err,
+            );
+          });
+      }
     },
-    [storageKey],
+    [user, id],
   );
 
   const handleLessonEnd = useCallback(() => {
@@ -1807,7 +1933,7 @@ export default function CoursePage() {
         lastLesson: activeIdx,
         completed: Array.from(next),
         lessonProgress: lessonProgressRef.current,
-      });
+      }, true);
       return next;
     });
     if (activeIdx < allLessons.length - 1) setActiveIdx((i) => i + 1);
@@ -1824,7 +1950,7 @@ export default function CoursePage() {
             lastLesson: activeIdx,
             completed: Array.from(next),
             lessonProgress: lessonProgressRef.current,
-          });
+          }, true);
           return next;
         }
         return prev;
@@ -1837,10 +1963,16 @@ export default function CoursePage() {
     [activeIdx, scheduleSave],
   );
 
-  const toggleChapter = (i) =>
+  const toggleSubject = (si) =>
+    setCollapsedSubj((prev) => {
+      const next = new Set(prev);
+      next.has(si) ? next.delete(si) : next.add(si);
+      return next;
+    });
+  const toggleChapter = (key) =>
     setCollapsedCh((prev) => {
       const next = new Set(prev);
-      next.has(i) ? next.delete(i) : next.add(i);
+      next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
   const progressPct = allLessons.length
@@ -1927,7 +2059,8 @@ export default function CoursePage() {
             Course Content
           </h2>
           <p style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>
-            {chapters.length} chapters · {allLessons.length} lessons
+            {subjects.length} subject{subjects.length !== 1 ? "s" : ""} ·{" "}
+            {allLessons.length} lessons
           </p>
         </div>
         {!isDesktop && (
@@ -1955,148 +2088,381 @@ export default function CoursePage() {
         )}
       </div>
       <div style={{ flex: 1, overflowY: "auto" }}>
-        {chapters.map((chapter, ci) => (
-          <div key={ci}>
-            <button
-              onClick={() => toggleChapter(ci)}
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "12px 18px",
-                background: "#111827",
-                border: "none",
-                borderBottom: "1px solid #1e293b",
-                cursor: "pointer",
-                textAlign: "left",
-              }}
-            >
-              <span
+        {subjects.map((subj, si) => {
+          const subjCollapsed = collapsedSubj.has(si);
+          // All lessons inside this subject (flat)
+          const subjLessons = subj.chapters.flatMap((ch) => ch.lessons);
+          const subjDoneCount = subjLessons.filter((l) =>
+            completed.has(l.globalIdx),
+          ).length;
+          const subjAllDone =
+            subjLessons.length > 0 && subjDoneCount === subjLessons.length;
+          const sq = subj.subjectQuiz;
+          // Locking is PER-SUBJECT: find the first uncompleted lesson within this subject only
+          const subjFirstUncompletedGlobalIdx = (() => {
+            const first = subjLessons.find((l) => !completed.has(l.globalIdx));
+            return first ? first.globalIdx : -1;
+          })();
+
+          return (
+            <div key={si} style={{ borderBottom: "1px solid #1e293b" }}>
+              {/* ── Subject Header ── */}
+              <button
+                onClick={() => toggleSubject(si)}
                 style={{
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: "#f1f5f9",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {chapter.title}
-              </span>
-              <div
-                style={{
+                  width: "100%",
                   display: "flex",
                   alignItems: "center",
-                  gap: 6,
-                  flexShrink: 0,
+                  justifyContent: "space-between",
+                  padding: "13px 18px",
+                  background: "#0f172a",
+                  border: "none",
+                  borderLeft: "3px solid #7c3aed",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  gap: 8,
                 }}
               >
-                <span style={{ fontSize: 11, color: "#64748b" }}>
-                  {chapter.lessons.length}
-                </span>
-                <span style={{ color: "#64748b", fontSize: 11 }}>
-                  {!collapsedCh.has(ci) ? "▲" : "▼"}
-                </span>
-              </div>
-            </button>
-            {!collapsedCh.has(ci) &&
-              chapter.lessons.map((lesson) => {
-                const isActive =
-                  lesson.globalIdx === activeIdx && !showQuiz;
-                const isDone = completed.has(lesson.globalIdx);
-                const lessonIsText = lesson.type === "text";
-                return (
-                  <button
-                    key={lesson.globalIdx}
-                    onClick={() => {
-                      setShowQuiz(false);
-                      setActiveIdx(lesson.globalIdx);
-                      if (!isDesktop) setMobileSidebarOpen(false);
-                    }}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    minWidth: 0,
+                  }}
+                >
+                  <span style={{ fontSize: 15, flexShrink: 0 }}>📚</span>
+                  <span
                     style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 10,
-                      padding: "11px 18px 11px 24px",
-                      background: isActive ? "#1e1b4b" : "transparent",
-                      border: "none",
-                      borderBottom: "1px solid #1e293b1a",
-                      cursor: "pointer",
-                      textAlign: "left",
-                      transition: "background 0.15s",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: "#ffffff",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    <div
-                      style={{
-                        width: 18,
-                        height: 18,
-                        borderRadius: "50%",
-                        border: `2px solid ${isDone ? "#4ade80" : isActive ? "#7c3aed" : "#334155"}`,
-                        background: isDone ? "#052e16" : "transparent",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                        marginTop: 2,
-                      }}
-                    >
-                      {isDone && (
-                        <span style={{ color: "#4ade80", fontSize: 9 }}>
-                          ✓
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p
-                        style={{
-                          fontSize: 12,
-                          fontWeight: isActive ? 700 : 500,
-                          color: isActive ? "#a78bfa" : "#e2e8f0",
-                          lineHeight: 1.4,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {lesson.title}
-                      </p>
-                      <div
-                        style={{ display: "flex", gap: 6, marginTop: 2 }}
-                      >
-                        <span style={{ fontSize: 10, color: "#475569" }}>
-                          {lessonIsText ? "📝 Text" : "🎬 Video"}
-                        </span>
-                        {!lessonIsText && lesson.durationMinutes > 0 && (
-                          <span style={{ fontSize: 10, color: "#475569" }}>
-                            {fmtMins(lesson.durationMinutes)}
-                          </span>
-                        )}
+                    {subj.subject}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    flexShrink: 0,
+                  }}
+                >
+                  <span style={{ fontSize: 10, color: "#64748b" }}>
+                    {subjDoneCount}/{subjLessons.length}
+                  </span>
+                  <span style={{ color: "#64748b", fontSize: 11 }}>
+                    {subjCollapsed ? "▼" : "▲"}
+                  </span>
+                </div>
+              </button>
+
+              {!subjCollapsed && (
+                <>
+                  {subj.chapters.map((chapter, ci) => {
+                    const chKey = `${si}-${ci}`;
+                    const chCollapsed = collapsedCh.has(chKey);
+                    return (
+                      <div key={chKey}>
+                        {/* ── Chapter Sub-Header ── */}
+                        <button
+                          onClick={() => toggleChapter(chKey)}
+                          style={{
+                            width: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "10px 18px 10px 30px",
+                            background: "#111827",
+                            border: "none",
+                            borderBottom: "1px solid #1e293b",
+                            borderLeft: "3px solid #334155",
+                            cursor: "pointer",
+                            textAlign: "left",
+                            gap: 8,
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                              minWidth: 0,
+                            }}
+                          >
+                            <span style={{ fontSize: 12, flexShrink: 0 }}>
+                              📖
+                            </span>
+                            <span
+                              style={{
+                                fontSize: 12,
+                                fontWeight: 600,
+                                color: "#cbd5e1",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {chapter.title}
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 5,
+                              flexShrink: 0,
+                            }}
+                          >
+                            <span style={{ fontSize: 10, color: "#475569" }}>
+                              {chapter.lessons.length}
+                            </span>
+                            <span style={{ color: "#475569", fontSize: 10 }}>
+                              {chCollapsed ? "▼" : "▲"}
+                            </span>
+                          </div>
+                        </button>
+
+                        {/* ── Lessons ── */}
+                        {!chCollapsed &&
+                          chapter.lessons.map((lesson) => {
+                            const isActive =
+                              lesson.globalIdx === activeIdx && !activeQuiz;
+                            const isDone = completed.has(lesson.globalIdx);
+                            const lessonIsText = lesson.type === "text";
+                            const isLocked =
+                              !isDone &&
+                              subjFirstUncompletedGlobalIdx !== -1 &&
+                              lesson.globalIdx > subjFirstUncompletedGlobalIdx;
+                            return (
+                              <button
+                                key={lesson.globalIdx}
+                                disabled={isLocked}
+                                onClick={() => {
+                                  if (isLocked) return;
+                                  setActiveQuiz(null);
+                                  setActiveIdx(lesson.globalIdx);
+                                  if (!isDesktop) setMobileSidebarOpen(false);
+                                }}
+                                style={{
+                                  width: "100%",
+                                  display: "flex",
+                                  alignItems: "flex-start",
+                                  gap: 10,
+                                  padding: "11px 18px 11px 40px",
+                                  background: isActive
+                                    ? "#1e1b4b"
+                                    : "transparent",
+                                  border: "none",
+                                  borderBottom: "1px solid #1e293b1a",
+                                  cursor: isLocked ? "not-allowed" : "pointer",
+                                  textAlign: "left",
+                                  transition: "background 0.15s",
+                                  opacity: isLocked ? 0.4 : 1,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: "50%",
+                                    border: `2px solid ${isDone ? "#4ade80" : isActive ? "#7c3aed" : isLocked ? "#1e293b" : "#334155"}`,
+                                    background: isDone
+                                      ? "#052e16"
+                                      : "transparent",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    flexShrink: 0,
+                                    marginTop: 2,
+                                  }}
+                                >
+                                  {isDone ? (
+                                    <span
+                                      style={{ color: "#4ade80", fontSize: 9 }}
+                                    >
+                                      ✓
+                                    </span>
+                                  ) : isLocked ? (
+                                    <span
+                                      style={{ color: "#64748b", fontSize: 9 }}
+                                    >
+                                      🔒
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <p
+                                    style={{
+                                      fontSize: 12,
+                                      fontWeight: isActive ? 700 : 500,
+                                      color: isActive ? "#a78bfa" : "#e2e8f0",
+                                      lineHeight: 1.4,
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {lesson.title}
+                                  </p>
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      gap: 6,
+                                      marginTop: 2,
+                                    }}
+                                  >
+                                    <span
+                                      style={{ fontSize: 10, color: "#475569" }}
+                                    >
+                                      {lessonIsText ? "📝 Text" : "🎬 Video"}
+                                    </span>
+                                    {!lessonIsText &&
+                                      lesson.durationMinutes > 0 && (
+                                        <span
+                                          style={{
+                                            fontSize: 10,
+                                            color: "#475569",
+                                          }}
+                                        >
+                                          {fmtMins(lesson.durationMinutes)}
+                                        </span>
+                                      )}
+                                  </div>
+                                </div>
+                                {isActive && (
+                                  <span
+                                    style={{
+                                      color: "#7c3aed",
+                                      fontSize: 12,
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    ▶
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
                       </div>
-                    </div>
-                    {isActive && (
-                      <span
-                        style={{
-                          color: "#7c3aed",
-                          fontSize: 12,
-                          flexShrink: 0,
-                        }}
-                      >
-                        ▶
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-          </div>
-        ))}
+                    );
+                  })}
+
+                  {/* ── Subject Quiz (at the bottom of the subject) ── */}
+                  {sq &&
+                    (() => {
+                      const isActiveQuiz = activeQuiz === sq;
+                      const quizLocked = !subjAllDone;
+                      return (
+                        <button
+                          className="quiz-btn-hover"
+                          disabled={quizLocked}
+                          onClick={() => {
+                            if (quizLocked) return;
+                            setActiveQuiz(sq);
+                            setQuizStep("intro");
+                            setSelectedAnswers({});
+                            if (!isDesktop) setMobileSidebarOpen(false);
+                          }}
+                          style={{
+                            width: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 12,
+                            padding: "14px 18px 14px 30px",
+                            background: isActiveQuiz
+                              ? "#1e1b4b"
+                              : "transparent",
+                            border: "none",
+                            borderBottom: "1px solid #1e293b1a",
+                            borderLeft: "3px solid #334155",
+                            cursor: quizLocked ? "not-allowed" : "pointer",
+                            textAlign: "left",
+                            transition: "background 0.15s",
+                            opacity: quizLocked ? 0.4 : 1,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 18,
+                              height: 18,
+                              borderRadius: "50%",
+                              border: `2px solid ${quizLocked ? "#334155" : "#a78bfa"}`,
+                              background: isActiveQuiz
+                                ? "#7c3aed"
+                                : "transparent",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: 10,
+                              flexShrink: 0,
+                            }}
+                          >
+                            📝
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p
+                              style={{
+                                fontSize: 12,
+                                fontWeight: 700,
+                                color: quizLocked
+                                  ? "#64748b"
+                                  : isActiveQuiz
+                                    ? "#a78bfa"
+                                    : "#e2e8f0",
+                                marginBottom: 2,
+                              }}
+                            >
+                              {sq.title || "Subject Quiz"}
+                            </p>
+                            <p style={{ fontSize: 10, color: "#475569" }}>
+                              {quizLocked
+                                ? "Locked · Complete all lessons first"
+                                : `${sq.questions.length} questions · ${sq.questions.length * 10} pts`}
+                            </p>
+                          </div>
+                          {!quizLocked &&
+                            user?.quizSubmissions?.some(
+                              (s) =>
+                                s.courseId?.toString() ===
+                                  course._id?.toString() &&
+                                s.title === sq.title,
+                            ) && (
+                              <span style={{ color: "#4ade80", fontSize: 14 }}>
+                                ✓
+                              </span>
+                            )}
+                          {quizLocked && (
+                            <span style={{ color: "#64748b", fontSize: 14 }}>
+                              🔒
+                            </span>
+                          )}
+                          {!quizLocked && isActiveQuiz && (
+                            <span style={{ color: "#7c3aed", fontSize: 12 }}>
+                              ▶
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })()}
+                </>
+              )}
+            </div>
+          );
+        })}
 
         {course?.quiz?.questions?.length > 0 && (
           <button
             className="quiz-btn-hover"
+            disabled={!courseComplete}
             onClick={() => {
-              setShowQuiz(true);
+              if (!courseComplete) return;
+              setActiveQuiz(course.quiz);
               setQuizStep("intro");
               setSelectedAnswers({});
               setCurrentQuestion(0);
@@ -2109,17 +2475,18 @@ export default function CoursePage() {
               alignItems: "center",
               gap: 12,
               padding: "14px 18px",
-              background: showQuiz
-                ? courseComplete
-                  ? "#1e1b4b"
-                  : "#111827"
-                : "transparent",
+              background:
+                activeQuiz === course.quiz
+                  ? courseComplete
+                    ? "#1e1b4b"
+                    : "#111827"
+                  : "transparent",
               border: "none",
               borderTop: "1px solid #1e293b",
-              cursor: "pointer",
+              cursor: !courseComplete ? "not-allowed" : "pointer",
               textAlign: "left",
               transition: "background 0.15s",
-              opacity: courseComplete ? 1 : 0.72,
+              opacity: courseComplete ? 1 : 0.4,
             }}
           >
             <div
@@ -2129,7 +2496,7 @@ export default function CoursePage() {
                 borderRadius: 8,
                 background: !courseComplete
                   ? "#1e293b"
-                  : showQuiz
+                  : activeQuiz === course.quiz
                     ? "#7c3aed"
                     : "linear-gradient(135deg,#4f46e5,#7c3aed)",
                 display: "flex",
@@ -2148,7 +2515,7 @@ export default function CoursePage() {
                   fontWeight: 700,
                   color: !courseComplete
                     ? "#64748b"
-                    : showQuiz
+                    : activeQuiz === course.quiz
                       ? "#a78bfa"
                       : "#e2e8f0",
                   marginBottom: 2,
@@ -2165,13 +2532,11 @@ export default function CoursePage() {
             {courseComplete &&
               user?.quizSubmissions?.some(
                 (s) => s.courseId?.toString() === course._id?.toString(),
-              ) && (
-                <span style={{ color: "#4ade80", fontSize: 14 }}>✓</span>
-              )}
+              ) && <span style={{ color: "#4ade80", fontSize: 14 }}>✓</span>}
             {!courseComplete && (
               <span style={{ color: "#64748b", fontSize: 14 }}>🔒</span>
             )}
-            {courseComplete && showQuiz && (
+            {courseComplete && activeQuiz === course.quiz && (
               <span style={{ color: "#7c3aed", fontSize: 12 }}>▶</span>
             )}
           </button>
@@ -2314,17 +2679,18 @@ export default function CoursePage() {
       {/* ── Main layout ── */}
       <div className="cp-layout">
         <div className="cp-main">
-          {showQuiz ? (
+          {activeQuiz ? (
             <div
               style={{
-                background: "#0d1526",
+                background: "#111827",
                 border: "1px solid #1e293b",
-                borderRadius: 16,
-                overflow: "hidden",
+                borderRadius: 18,
+                padding: "clamp(16px,3vw,32px)",
               }}
             >
               <QuizViewer
                 course={course}
+                activeQuiz={activeQuiz}
                 user={user}
                 quizStep={quizStep}
                 setQuizStep={setQuizStep}
@@ -2334,12 +2700,30 @@ export default function CoursePage() {
                 setCurrentQuestion={setCurrentQuestion}
                 quizResult={quizResult}
                 quizLoading={quizLoading}
-                quizLocked={!courseComplete}
-                completedCount={completed.size}
-                totalLessons={totalLessonCount}
+                quizLocked={
+                  activeQuiz === course.quiz
+                    ? !courseComplete
+                    : allLessons.some((l, idx) => l.subject === activeQuiz?.subject && !completed.has(idx))
+                }
+                completedCount={
+                  activeQuiz === course.quiz
+                    ? completed.size
+                    : allLessons.filter(
+                        (l, idx) =>
+                          l.subject === activeQuiz?.subject &&
+                          completed.has(idx),
+                      ).length
+                }
+                totalLessons={
+                  activeQuiz === course.quiz
+                    ? totalLessonCount
+                    : allLessons.filter(
+                        (l) => l.subject === activeQuiz?.subject,
+                      ).length
+                }
                 onSubmit={handleQuizSubmit}
                 onClose={() => {
-                  setShowQuiz(false);
+                  setActiveQuiz(null);
                   setQuizStep("intro");
                   setSelectedAnswers({});
                   setCurrentQuestion(0);
@@ -2358,7 +2742,7 @@ export default function CoursePage() {
             />
           )}
 
-          {!showQuiz && (
+          {!activeQuiz && (
             <div style={{ marginTop: 18 }}>
               <div
                 style={{
@@ -2434,7 +2818,7 @@ export default function CoursePage() {
                         lastLesson: activeIdx,
                         completed: Array.from(n),
                         lessonProgress: lessonProgressRef.current,
-                      });
+                      }, true);
                       return n;
                     })
                   }
@@ -2471,7 +2855,7 @@ export default function CoursePage() {
             </div>
           )}
 
-          {!showQuiz && (
+          {!activeQuiz && (
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
               <button
                 onClick={() => setActiveIdx(Math.max(0, activeIdx - 1))}
@@ -2491,37 +2875,70 @@ export default function CoursePage() {
                 ← Previous
               </button>
               {(() => {
+                // Find which subject+chapter this lesson belongs to
+                const currentSubj = subjects.find((s) =>
+                  s.chapters.some((ch) =>
+                    ch.lessons.some((l) => l.globalIdx === activeIdx),
+                  ),
+                );
+                const subjLessonsFlat = currentSubj
+                  ? currentSubj.chapters.flatMap((ch) => ch.lessons)
+                  : [];
+                const isLastInSubject =
+                  subjLessonsFlat.length > 0 &&
+                  subjLessonsFlat[subjLessonsFlat.length - 1].globalIdx ===
+                    activeIdx;
+                const subjectQuiz = currentSubj?.subjectQuiz ?? null;
+                // "go to subject quiz" takes priority when last lesson in subject and quiz exists
+                const goToSubjectQuiz = isLastInSubject && !!subjectQuiz;
+
                 const isLastLesson = activeIdx === allLessons.length - 1;
-                const hasQuiz = course?.quiz?.questions?.length > 0;
-                // On the last lesson there's nowhere further to "Next" to
-                // unless there's a final quiz — in that case Next should
-                // finish the lesson and jump straight into it, rather than
-                // just disabling with nothing to do.
-                const goToQuiz = isLastLesson && hasQuiz;
-                const disabledNext = isLastLesson && !hasQuiz;
+                const hasFinalQuiz = course?.quiz?.questions?.length > 0;
+                // Only go to final quiz if NOT going to a subject quiz first
+                const goToFinalQuiz =
+                  !goToSubjectQuiz && isLastLesson && hasFinalQuiz;
+
+                const isCurrentCompleted = completed.has(activeIdx);
+                // Disable if: current not done OR (last lesson globally with no quiz at all)
+                const disabledNext =
+                  !isCurrentCompleted ||
+                  (isLastLesson && !goToSubjectQuiz && !hasFinalQuiz);
+
+                const btnLabel = goToSubjectQuiz
+                  ? "Finish → Take Subject Quiz"
+                  : goToFinalQuiz
+                    ? "Finish → Take Final Quiz"
+                    : "Next →";
+
                 return (
                   <button
                     onClick={() => {
-                      const destinationIdx = goToQuiz
-                        ? activeIdx
-                        : Math.min(allLessons.length - 1, activeIdx + 1);
+                      if (!isCurrentCompleted) return;
                       setCompleted((p) => {
                         const next = new Set([...p, activeIdx]);
                         scheduleSave({
-                          lastLesson: destinationIdx,
+                          lastLesson: activeIdx,
                           completed: Array.from(next),
                           lessonProgress: lessonProgressRef.current,
-                        });
+                        }, true);
                         return next;
                       });
-                      if (goToQuiz) {
-                        setShowQuiz(true);
+                      if (goToSubjectQuiz) {
+                        setActiveQuiz(subjectQuiz);
+                        setQuizStep("intro");
+                        setSelectedAnswers({});
+                        setCurrentQuestion(0);
+                        setQuizResult(null);
+                      } else if (goToFinalQuiz) {
+                        setActiveQuiz(course.quiz);
                         setQuizStep("intro");
                         setSelectedAnswers({});
                         setCurrentQuestion(0);
                         setQuizResult(null);
                       } else {
-                        setActiveIdx(destinationIdx);
+                        setActiveIdx(
+                          Math.min(allLessons.length - 1, activeIdx + 1),
+                        );
                       }
                     }}
                     disabled={disabledNext}
@@ -2533,13 +2950,13 @@ export default function CoursePage() {
                       background: disabledNext
                         ? "#1e293b"
                         : "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                      color: disabledNext ? "#334155" : "#fff",
+                      color: disabledNext ? "#475569" : "#fff",
                       fontWeight: 700,
                       fontSize: 13,
                       cursor: disabledNext ? "not-allowed" : "pointer",
                     }}
                   >
-                    {goToQuiz ? "Finish → Take Quiz" : "Next →"}
+                    {btnLabel}
                   </button>
                 );
               })()}
@@ -2568,7 +2985,7 @@ export default function CoursePage() {
                 About this course
               </h3>
               {/* Show locked "Rated" badge if already rated (DB or this session) */}
-              {(userExistingRating || localRated) ? (
+              {userExistingRating || localRated ? (
                 <div
                   style={{
                     display: "flex",
@@ -2588,7 +3005,8 @@ export default function CoursePage() {
                 >
                   <span style={{ fontSize: 14 }}>
                     {(() => {
-                      const stars = localRated ?? userExistingRating?.rating ?? 0;
+                      const stars =
+                        localRated ?? userExistingRating?.rating ?? 0;
                       return "★".repeat(stars) + "☆".repeat(5 - stars);
                     })()}
                   </span>

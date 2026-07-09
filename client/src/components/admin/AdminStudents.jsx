@@ -293,6 +293,7 @@ const AddStudentModal = ({ courses = [], onClose, onCreated }) => {
             value={form.phoneNumber}
             onChange={set("phoneNumber")}
             placeholder="10-digit mobile number"
+
             required
           />
           <TextField

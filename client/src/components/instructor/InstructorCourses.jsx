@@ -36,19 +36,11 @@ const EMPTY_FORM = {
 
 const EMPTY_BULK_ITEM = () => ({
   subject: "",
-  price: "",
   description: "",
   content: "",
   lessons: [],
   notes: [],
-  quiz: { title: "Final Quiz", questions: [] },
-  certificate: {
-    enabled: false,
-    title: "Certificate of Completion",
-    signatoryName: "",
-    signatoryTitle: "",
-    theme: "purple",
-  },
+  quiz: { title: "Subject Quiz", questions: [] },
 });
 
 // ── Class dropdown now Class 9–12 only ────────────────────────────────────────
@@ -412,7 +404,7 @@ const Field = ({ label, hint, children }) => (
       style={{
         fontSize: 11,
         fontWeight: 700,
-        color: "#94a3b8",
+        color: "#ffffff",
         textTransform: "uppercase",
         letterSpacing: "0.1em",
       }}
@@ -421,7 +413,7 @@ const Field = ({ label, hint, children }) => (
       {hint && (
         <span
           style={{
-            color: "#475569",
+            color: "#e2e8f0",
             fontWeight: 400,
             textTransform: "none",
             letterSpacing: 0,
@@ -614,7 +606,7 @@ function NotesManager({ notes = [], onChange, showToast }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 12, background: "#111827", border: "1px solid #1e293b", borderRadius: 12, padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h4 style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>Course Study Notes</h4>
+          <h4 style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>Subject Study Notes</h4>
           <p style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>Upload documents & PDFs for this course.</p>
         </div>
         {!showAddForm && (
@@ -640,7 +632,7 @@ function NotesManager({ notes = [], onChange, showToast }) {
       {showAddForm && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12, border: "1px dashed #334155", borderRadius: 8, padding: 12, background: "#0b1120" }}>
           <div>
-            <label style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 4 }}>Note Title *</label>
+            <label style={{ fontSize: 11, fontWeight: 600, color: "#ffffff", display: "block", marginBottom: 4 }}>Note Title *</label>
             <input
               type="text"
               value={newNote.title}
@@ -650,7 +642,7 @@ function NotesManager({ notes = [], onChange, showToast }) {
             />
           </div>
           <div>
-            <label style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 4 }}>Description (optional)</label>
+            <label style={{ fontSize: 11, fontWeight: 600, color: "#ffffff", display: "block", marginBottom: 4 }}>Description (optional)</label>
             <textarea
               value={newNote.description}
               onChange={(e) => setNewNote((p) => ({ ...p, description: e.target.value }))}
@@ -660,7 +652,7 @@ function NotesManager({ notes = [], onChange, showToast }) {
             />
           </div>
           <div>
-            <label style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 4 }}>File Upload * (PDF, DOCX, etc.)</label>
+            <label style={{ fontSize: 11, fontWeight: 600, color: "#ffffff", display: "block", marginBottom: 4 }}>File Upload * (PDF, DOCX, etc.)</label>
             {newNote.fileUrl ? (
               <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#111827", padding: "8px 12px", borderRadius: 8, border: "1px solid #16a34a" }}>
                 <span style={{ fontSize: 14 }}>📄</span>
@@ -1811,7 +1803,7 @@ const CourseForm = ({
           rows={3}
         />
       </Field>
-      <Field label="Course Content" hint="(chapters, topics)">
+      <Field label="Subject Content" hint="(chapters, topics)">
         <Textarea
           value={form.content}
           onChange={set("content")}
@@ -1983,8 +1975,15 @@ const BulkCourseForm = ({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <Field label="Bundle Title" hint="* (e.g. Class 9 CBSE Complete Bundle)">
+        <Input
+          value={form.title}
+          onChange={setMeta("title")}
+          placeholder="Class 9 CBSE Complete Bundle"
+        />
+      </Field>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label="Class" hint="* (applies to all courses below)">
+        <Field label="Class" hint="* (applies to all subjects below)">
           <Sel
             value={form.className}
             onChange={handleClassChange}
@@ -1994,7 +1993,7 @@ const BulkCourseForm = ({
             ]}
           />
         </Field>
-        <Field label="Board" hint="* (applies to all courses below)">
+        <Field label="Board" hint="* (applies to all subjects below)">
           <Sel
             value={form.board}
             onChange={setMeta("board")}
@@ -2033,6 +2032,22 @@ const BulkCourseForm = ({
         />
       </div>
 
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
+        <Field label="Price" hint="(₹ — 0 for free)">
+          <Input
+            value={form.price}
+            onChange={setMeta("price")}
+            placeholder="0"
+            type="number"
+          />
+        </Field>
+        <CertificateManager
+          certificate={form.certificate}
+          onChange={(certificate) => setForm(f => ({ ...f, certificate }))}
+          courseTitle={form.title || "Complete Bundle"}
+        />
+      </div>
+
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div
           style={{
@@ -2050,7 +2065,7 @@ const BulkCourseForm = ({
               letterSpacing: "0.1em",
             }}
           >
-            Courses ({form.items.length})
+            Subjects ({form.items.length})
           </label>
           <button
             type="button"
@@ -2139,9 +2154,9 @@ const BulkCourseForm = ({
                     ▼
                   </span>
                   <span
-                    style={{ fontSize: 13, fontWeight: 700, color: "#a78bfa" }}
+                    style={{ fontSize: 13, fontWeight: 700, color: "#ffffff" }}
                   >
-                    Course {idx + 1}
+                    Subject {idx + 1}
                     {item.subject ? ` — ${item.subject}` : ""}
                   </span>
                   {isCollapsed && item.subject && (
@@ -2227,16 +2242,6 @@ const BulkCourseForm = ({
                         </div>
                       )}
                     </Field>
-                    <Field label="Price" hint="(₹ — 0 for free)">
-                      <Input
-                        value={item.price}
-                        onChange={(e) =>
-                          updateItem(idx, "price", e.target.value)
-                        }
-                        placeholder="0"
-                        type="number"
-                      />
-                    </Field>
                   </div>
 
                   <ChapterManager
@@ -2244,14 +2249,6 @@ const BulkCourseForm = ({
                     onChange={(lessons) => updateItem(idx, "lessons", lessons)}
                     courseSubject={item.subject}
                     courseDescription={item.description}
-                  />
-
-                  <CertificateManager
-                    certificate={item.certificate}
-                    onChange={(certificate) =>
-                      updateItem(idx, "certificate", certificate)
-                    }
-                    courseTitle={item.subject}
                   />
 
                   <Field label="Description" hint="* (course summary)">
@@ -2264,7 +2261,7 @@ const BulkCourseForm = ({
                       rows={3}
                     />
                   </Field>
-                  <Field label="Course Content" hint="(chapters, topics)">
+                  <Field label="Subject Content" hint="(chapters, topics)">
                     <Textarea
                       value={item.content}
                       onChange={(e) =>
@@ -2280,8 +2277,8 @@ const BulkCourseForm = ({
                     showToast={showToast}
                   />
                   <Field
-                    label="Final Quiz"
-                    hint="(optional — students take after completing all lessons)"
+                    label="Subject Quiz"
+                    hint="(optional — students take after completing all lessons in this subject)"
                   >
                     <QuizManager
                       quiz={item.quiz}
@@ -2388,10 +2385,19 @@ export default function InstructorCourses({ showToast }) {
   const [filterStatus, setFilterStatus] = useState("all");
   const [createMode, setCreateMode] = useState("single");
   const [bulkForm, setBulkForm] = useState({
+    title: "",
     className: "",
     board: "",
     thumbnailUrl: "",
     demoVideoUrl: "",
+    price: "",
+    certificate: {
+      enabled: false,
+      title: "Certificate of Completion",
+      signatoryName: "",
+      signatoryTitle: "",
+      theme: "purple",
+    },
     items: [EMPTY_BULK_ITEM()],
   });
   const [saving, setSaving] = useState(false);
@@ -2537,7 +2543,7 @@ export default function InstructorCourses({ showToast }) {
         : { key: "examName", label: "Exam Name" },
       ...(courseType === "classes" ? [{ key: "board", label: "Board" }] : []),
       { key: "description", label: "Description" },
-      { key: "content", label: "Course Content" },
+      { key: "content", label: "Subject Content" },
       { key: "thumbnailUrl", label: "Thumbnail" },
     ];
     for (const f of required) {
@@ -2578,6 +2584,10 @@ export default function InstructorCourses({ showToast }) {
   };
 
   const handleBulkCreate = async (publish) => {
+    if (!bulkForm.title?.trim()) {
+      showToast?.("Course title is required.");
+      return;
+    }
     if (!bulkForm.className || !bulkForm.board) {
       showToast?.("Select a Class and Board before submitting.");
       return;
@@ -2608,54 +2618,72 @@ export default function InstructorCourses({ showToast }) {
       );
       if (missing) {
         showToast?.(
-          "Every course needs a Description and Course Content before submitting for review.",
+          "Every subject needs a Description and Subject Content before submitting for review.",
         );
         return;
       }
     }
 
     setSaving(true);
-    let successCount = 0;
+    let lessons = [];
+    let notes = [];
+    let subjectQuizzes = [];
+
     for (const item of items) {
-      const payload = {
-        title: item.subject.trim(),
-        summary: item.description.trim(),
-        description: item.content?.trim() || "",
-        category: bulkForm.className,
-        board: bulkForm.board,
-        lessons: item.lessons ?? [],
-        notes: cleanNotes(item.notes),
-        price: Number(item.price) || 0,
-        thumbnailUrl: bulkForm.thumbnailUrl || "",
-        demoVideoUrl: bulkForm.demoVideoUrl || "",
-        published: publish,
-        quiz: item.quiz ?? { title: "Final Quiz", questions: [] },
-        certificate: item.certificate ?? {
+      const subjLessons = (item.lessons ?? []).map(l => ({ ...l, subject: item.subject.trim() }));
+      const subjNotes = (item.notes ?? []).map(n => ({ ...n, subject: item.subject.trim() }));
+      lessons = [...lessons, ...subjLessons];
+      notes = [...notes, ...cleanNotes(subjNotes)];
+      if (item.quiz && item.quiz.questions.length > 0) {
+        subjectQuizzes.push({
+          subject: item.subject.trim(),
+          title: item.quiz.title || "Subject Quiz",
+          questions: item.quiz.questions
+        });
+      }
+    }
+
+    const payload = {
+      title: bulkForm.title.trim(),
+      summary: items.map(i => i.subject).join(", ") + " Complete Bundle",
+      description: "A complete bundle course including multiple subjects.",
+      category: bulkForm.className,
+      board: bulkForm.board,
+      lessons,
+      notes,
+      subjectQuizzes,
+      price: Number(bulkForm.price) || 0,
+      thumbnailUrl: bulkForm.thumbnailUrl || "",
+      demoVideoUrl: bulkForm.demoVideoUrl || "",
+      published: publish,
+      certificate: bulkForm.certificate,
+    };
+
+    const result = await dispatch(createCourse(payload));
+    setSaving(false);
+
+    if (createCourse.fulfilled.match(result)) {
+      setBulkForm({
+        title: "",
+        className: "",
+        board: "",
+        thumbnailUrl: "",
+        demoVideoUrl: "",
+        price: "",
+        certificate: {
           enabled: false,
           title: "Certificate of Completion",
           signatoryName: "",
           signatoryTitle: "",
           theme: "purple",
         },
-      };
-      const result = await dispatch(createCourse(payload));
-      if (createCourse.fulfilled.match(result)) successCount++;
-    }
-    setSaving(false);
-
-    if (successCount > 0) {
-      setBulkForm({
-        className: "",
-        board: "",
-        thumbnailUrl: "",
-        demoVideoUrl: "",
         items: [EMPTY_BULK_ITEM()],
       });
       setView("list");
+      showToast?.(`Course bundle ${publish ? "submitted for review" : "saved as draft"}.`);
+    } else {
+      showToast?.(result.payload || "Failed to save course.");
     }
-    showToast?.(
-      `${successCount}/${items.length} courses ${publish ? "submitted for review" : "saved as draft"}.`,
-    );
   };
 
   const handleEdit = async (publish) => {

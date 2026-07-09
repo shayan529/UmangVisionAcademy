@@ -114,7 +114,7 @@ const VideoUploadCell = ({ value, onUploaded }) => {
   const [errorMsg, setErrorMsg] = useState("");
   const fileInputRef = useRef(null);
 
-  const uploadFile = async (file) => {
+  const handleUpload = async (file) => {
     setUploading(true);
     setProgress(0);
     setErrorMsg("");
@@ -140,7 +140,7 @@ const VideoUploadCell = ({ value, onUploaded }) => {
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    await uploadFile(file);
+    await handleUpload(file);
   };
 
   // Uploaded state — show filename/url with a remove button
@@ -218,7 +218,7 @@ const VideoUploadCell = ({ value, onUploaded }) => {
           e.preventDefault();
           setDragOver(false);
           const file = e.dataTransfer.files?.[0];
-          if (file) uploadFile(file);
+          if (file) handleUpload(file);
         }}
         style={{
           border: `1.5px dashed ${dragOver ? "#7c3aed" : "#1e293b"}`,
@@ -777,14 +777,14 @@ export default function ChapterManager({
             style={{
               fontSize: 11,
               fontWeight: 700,
-              color: "#94a3b8",
+              color: "#ffffff",
               textTransform: "uppercase",
               letterSpacing: "0.1em",
             }}
           >
             Chapters & Lessons
           </label>
-          <p style={{ fontSize: 11, color: "#475569", marginTop: 3 }}>
+          <p style={{ fontSize: 11, color: "#e2e8f0", marginTop: 3 }}>
             {groups.length} chapters · {totalLessons} lessons
           </p>
         </div>

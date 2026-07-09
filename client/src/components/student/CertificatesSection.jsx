@@ -6,20 +6,7 @@ import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import { useTranslation } from "react-i18next";
 
-const getLocalProgress = (courseId, totalLessons) => {
-  if (!courseId || !totalLessons) return { progress: 0, completedLessons: 0 };
-  try {
-    const saved = JSON.parse(
-      localStorage.getItem(`course-progress-${courseId}`) || "null",
-    );
-    if (!saved) return { progress: 0, completedLessons: 0 };
-    const completedLessons = (saved.completed ?? []).length;
-    const progress = Math.round((completedLessons / totalLessons) * 100);
-    return { progress, completedLessons };
-  } catch {
-    return { progress: 0, completedLessons: 0 };
-  }
-};
+// Progress is derived from server-side `user.courseProgress` on the client.
 
 const categoryEmoji = (category = "") => {
   const map = {
@@ -469,9 +456,7 @@ const CertificateRow = ({
       </div>
 
       {/* Actions */}
-      <div
-        className="flex flex-wrap gap-2 items-center w-full sm:w-auto mt-2 sm:mt-0"
-      >
+      <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto mt-2 sm:mt-0">
         <button
           onClick={() => onView(cert)}
           style={{
@@ -626,7 +611,14 @@ const CertificateModal = ({
             justifyContent: "space-between",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexWrap: "wrap",
+            }}
+          >
             <div
               style={{
                 background: "#1e293b",
@@ -719,14 +711,14 @@ export default function Certificates() {
   }, [dispatch]);
 
   const copyId = (id) => {
-    navigator.clipboard.writeText(id).catch(() => { });
+    navigator.clipboard.writeText(id).catch(() => {});
     setCopiedId(id);
     setTimeout(() => setCopiedId(""), 2000);
   };
 
   const copyLink = (id) => {
     const link = `${window.location.origin}/certificates/verify/${id}`;
-    navigator.clipboard.writeText(link).catch(() => { });
+    navigator.clipboard.writeText(link).catch(() => {});
     setCopiedLink(id);
     setTimeout(() => setCopiedLink(""), 2000);
   };
@@ -761,7 +753,11 @@ export default function Certificates() {
 
   const studentCourses = (enrolled ?? []).map((c) => {
     const totalLessons = c.lessons?.length ?? c.totalLessons ?? 0;
-    const { progress } = getLocalProgress(c._id, totalLessons);
+    const progObj = user?.courseProgress?.[c._id] || null;
+    const completedLessons = progObj ? (progObj.completed || []).length : 0;
+    const progress = progObj
+      ? Math.round((completedLessons / Math.max(1, totalLessons)) * 100)
+      : 0;
     return { ...c, totalLessons, progress };
   });
 
@@ -818,16 +814,22 @@ export default function Certificates() {
 
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <h2 style={{ fontSize: "clamp(20px, 5vw, 26px)", fontWeight: 800, color: "#f1f5f9" }}>
+        <h2
+          style={{
+            fontSize: "clamp(20px, 5vw, 26px)",
+            fontWeight: 800,
+            color: "#f1f5f9",
+          }}
+        >
           {t("studentCertificates.title")}
         </h2>
         <p style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
           {enrolledLoading
             ? t("studentCertificates.loading")
             : t("studentCertificates.summary", {
-              earned: earnedCertificates.length,
-              progress: inProgressCourses.length,
-            })}
+                earned: earnedCertificates.length,
+                progress: inProgressCourses.length,
+              })}
         </p>
       </div>
 

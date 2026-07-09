@@ -9,20 +9,21 @@ import {
 } from "../controllers/note.controller.js";
 import {
   protect,
+  optionalAuth,
   instructorOnly,
   requirePermission,
 } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// Use protect optionally: public (no token) falls through with req.user = undefined;
-// authenticated instructors/admins get their user attached for mine=1 / all=1 filters.
-router.get("/", (req, res, next) => {
-  if (req.cookies?.token) {
-    return protect(req, res, next);
-  }
-  next();
-}, listNotes);
+// Public + personalized listing: anonymous callers get an empty/public
+// result, logged-in students get notes from courses they're enrolled in,
+// instructors with ?mine=1 get their own courses' notes. optionalAuth
+// detects the same cookie-or-Bearer token that `protect` does, so this
+// works correctly for both the website (cookie) and the Capacitor Android
+// app (Bearer header) — unlike a manual `req.cookies?.token` check, which
+// only covers the cookie case.
+router.get("/", optionalAuth, listNotes);
 router.post("/", protect, instructorOnly, createNote);
 router.put(
   "/:id/approve",

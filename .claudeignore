@@ -1,0 +1,9 @@
+node_modules/
+media/
+uploads/
+*.mp4
+*.mov
+*.webm
+.git/
+dist/
+build/

@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../../config/api.js";
 import { addToCart } from "../../redux/slices/cartSlice";
+import { hasBaseRole } from "../../utils/permissions.js";
 import { useTranslation } from "react-i18next";
 
 // ── Local state ───────────────────────────────────────────────────────────────
@@ -29,6 +30,24 @@ const useCourseDemo = (id) => {
   }, [id]);
 
   return { course, loading, error };
+};
+
+// ── Access helper (shared by EnrollCard + the Notes section) ──────────────────
+const useCourseAccess = (user, course) => {
+  const isAdminOrStaff =
+    user && (hasBaseRole(user, "admin") || hasBaseRole(user, "staff"));
+
+  const isEnrolled =
+    user &&
+    course &&
+    (user.enrolledCourses?.some(
+      (id) => (id._id || id).toString() === course._id?.toString(),
+    ) ||
+      course.students?.some(
+        (id) => (id._id || id).toString() === user._id?.toString(),
+      ));
+
+  return isAdminOrStaff || isEnrolled;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -234,26 +253,12 @@ const EnrollCard = ({
   user,
   isInCart,
   addedToCart,
+  canAccess,
   onEnroll,
   onViewDemo,
   navigate,
 }) => {
   const { t } = useTranslation();
-  const isAdminOrStaff =
-    user &&
-    (user.roles?.includes("admin") ||
-      (user.roles && user.roles.some((role) => typeof role === "object")));
-
-  const isEnrolled =
-    user &&
-    course &&
-    (user.enrolledCourses?.some(
-      (id) => (id._id || id).toString() === course._id?.toString(),
-    ) ||
-      course.students?.some(
-        (id) => (id._id || id).toString() === user._id?.toString(),
-      ));
-  const canAccess = isAdminOrStaff || isEnrolled;
 
   return (
     <div
@@ -407,6 +412,8 @@ const EnrollCard = ({
                   t("demo.lessonsCount", { count: course.lessonCount }),
                 course.durationHours > 0 &&
                   t("demo.hoursCount", { count: course.durationHours }),
+                course.notes?.length > 0 &&
+                  `${course.notes.length} study note${course.notes.length === 1 ? "" : "s"} included`,
                 t("demo.lifetime_access"),
                 t("demo.certificate"),
               ]
@@ -448,6 +455,7 @@ export default function CourseDemo() {
 
   const cartIds = useSelector((s) => s.cart?.cartIds ?? []);
   const isInCart = cartIds.includes(id);
+  const canAccess = useCourseAccess(user, course);
 
   useEffect(() => {
     if (!id || id === "undefined") navigate("/courses", { replace: true });
@@ -488,6 +496,7 @@ export default function CourseDemo() {
     user,
     isInCart,
     addedToCart,
+    canAccess,
     onEnroll: handleEnrollClick,
     onViewDemo: handleViewDemoClick,
     navigate,
@@ -713,6 +722,12 @@ export default function CourseDemo() {
                           })}
                         </span>
                       )}
+                      {course.notes?.length > 0 && (
+                        <span style={{ fontSize: 13, color: "#64748b" }}>
+                          📄 {course.notes.length} note
+                          {course.notes.length === 1 ? "" : "s"}
+                        </span>
+                      )}
                     </div>
 
                     {/* Instructor */}
@@ -861,7 +876,10 @@ export default function CourseDemo() {
                   </div>
                 )}
 
-                {/* Notes */}
+                {/* Notes — count/titles always visible as a selling point;
+                    actual files only download-able once the user has access
+                    (enrolled or admin/staff), same pattern as the locked
+                    curriculum list below. */}
                 {!loading && course.notes?.length > 0 && (
                   <div
                     style={{
@@ -876,16 +894,37 @@ export default function CourseDemo() {
                         fontSize: 16,
                         fontWeight: 700,
                         color: "#f1f5f9",
-                        marginBottom: 14,
+                        marginBottom: 4,
                       }}
                     >
-                      📄 Study Notes & Materials
+                      📄 Study Notes & Materials{" "}
+                      <span
+                        style={{
+                          color: "#64748b",
+                          fontWeight: 400,
+                          fontSize: 13,
+                        }}
+                      >
+                        ({course.notes.length})
+                      </span>
                     </h3>
+                    {!canAccess && (
+                      <p
+                        style={{
+                          fontSize: 12,
+                          color: "#64748b",
+                          marginBottom: 14,
+                        }}
+                      >
+                        Included with enrollment — unlock by joining the course.
+                      </p>
+                    )}
                     <div
                       style={{
                         display: "flex",
                         flexDirection: "column",
                         gap: 10,
+                        marginTop: canAccess ? 14 : 0,
                       }}
                     >
                       {course.notes.map((note) => (
@@ -924,24 +963,38 @@ export default function CourseDemo() {
                               </p>
                             )}
                           </div>
-                          <a
-                            href={note.fileUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{
-                              padding: "7px 12px",
-                              background:
-                                "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                              color: "#fff",
-                              borderRadius: 8,
-                              fontSize: 11,
-                              fontWeight: 700,
-                              textDecoration: "none",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            Download
-                          </a>
+                          {canAccess ? (
+                            <a
+                              href={note.fileUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                padding: "7px 12px",
+                                background:
+                                  "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                                color: "#fff",
+                                borderRadius: 8,
+                                fontSize: 11,
+                                fontWeight: 700,
+                                textDecoration: "none",
+                                whiteSpace: "nowrap",
+                                flexShrink: 0,
+                              }}
+                            >
+                              Download
+                            </a>
+                          ) : (
+                            <span
+                              style={{
+                                fontSize: 13,
+                                color: "#475569",
+                                flexShrink: 0,
+                              }}
+                              title="Enroll to unlock"
+                            >
+                              🔒
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1029,7 +1082,7 @@ export default function CourseDemo() {
                                 textOverflow: "ellipsis",
                               }}
                             >
-                              {lesson.title}
+                              {lesson.subject ? `${lesson.subject} — ` : ""}{lesson.title}
                             </p>
                             {lesson.description && (
                               <p

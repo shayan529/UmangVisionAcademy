@@ -121,6 +121,11 @@ const userSchema = new Schema(
         ref: "Course",
       },
     ],
+    // Per-course lesson progress stored as: { [courseId]: { completed: [idx], lastLesson, lessonProgress: { [lessonIdx]: seconds } } }
+    courseProgress: {
+      type: Schema.Types.Mixed,
+      default: {},
+    },
     score: {
       type: Number,
       default: 0,
@@ -131,6 +136,10 @@ const userSchema = new Schema(
           type: Types.ObjectId,
           ref: "Course",
           required: true,
+        },
+        title: {
+          type: String,
+          default: "Final Quiz",
         },
         score: {
           type: Number,

@@ -9,6 +9,7 @@ const lessonSchema = new Schema(
     durationMinutes: { type: Number, default: 0, min: 0 },
     videoUrl: { type: String, trim: true, default: "" },
     chapterTitle: { type: String, trim: true, default: "" },
+    subject: { type: String, trim: true, default: "" },
     type: { type: String, enum: ["video", "text"], default: "video" },
     content: { type: String, trim: true, default: "" },
   },
@@ -72,6 +73,19 @@ const courseSchema = new Schema(
         },
       ],
     },
+    subjectQuizzes: [
+      {
+        subject: { type: String, required: true, trim: true },
+        title: { type: String, default: "Subject Quiz" },
+        questions: [
+          {
+            question: { type: String, required: true },
+            options: [{ type: String, required: true }],
+            correctOptionIndex: { type: Number, required: true },
+          },
+        ],
+      },
+    ],
     certificate: {
       enabled: { type: Boolean, default: false },
       title: { type: String, default: "Certificate of Completion" },
@@ -84,6 +98,7 @@ const courseSchema = new Schema(
         title: { type: String, required: true, trim: true },
         description: { type: String, trim: true, default: "" },
         fileUrl: { type: String, required: true },
+        subject: { type: String, trim: true, default: "" },
         createdAt: { type: Date, default: Date.now },
       }
     ],

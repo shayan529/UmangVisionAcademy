@@ -79,6 +79,7 @@ export const createCourse = async (req, res) => {
       quiz,
       certificate,
       notes,
+      subjectQuizzes,
     } = req.body;
 
     if (!title?.trim())
@@ -113,6 +114,7 @@ export const createCourse = async (req, res) => {
         certificate && typeof certificate === "object"
           ? certificate
           : undefined,
+      subjectQuizzes: Array.isArray(subjectQuizzes) ? subjectQuizzes : [],
     });
 
     res.status(201).json(shapeCourse(course));
@@ -157,7 +159,12 @@ export const getCourseByIdPublic = async (req, res) => {
   try {
     const cacheKey = `course:public:${req.params.id}`;
     const cached = await getJson(cacheKey);
-    if (cached !== null) return res.json(cached);
+    // If cache exists and already contains `notes`, return it immediately.
+    // If cache exists but lacks notes (older shape), fallthrough to rebuild
+    // the shaped payload so we can include notes and overwrite cache.
+    if (cached !== null) {
+      if (cached.notes !== undefined) return res.json(cached);
+    }
 
     const course = await Course.findOne({
       _id: req.params.id,
@@ -357,6 +364,50 @@ export const enrolledCourses = async (req, res) => {
   }
 };
 
+// POST /courses/:id/progress
+export const saveCourseProgress = async (req, res) => {
+  try {
+    const studentId = req.user._id;
+    const courseId = req.params.id;
+    const {
+      completed = [],
+      lastLesson = null,
+      lessonProgress = {},
+    } = req.body || {};
+
+    // Merge into user's courseProgress map
+    const update = {};
+    update[`courseProgress.${courseId}`] = {
+      completed: Array.isArray(completed) ? completed : [],
+      lastLesson: lastLesson ?? null,
+      lessonProgress: lessonProgress || {},
+      updatedAt: new Date(),
+    };
+
+    await User.findByIdAndUpdate(studentId, { $set: update });
+
+    return res.json({ success: true, message: "Progress saved" });
+  } catch (err) {
+    console.error("saveCourseProgress", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// GET /courses/:id/progress
+export const getCourseProgress = async (req, res) => {
+  try {
+    const studentId = req.user._id;
+    const courseId = req.params.id;
+    const student = await User.findById(studentId).select("courseProgress");
+    if (!student) return res.status(404).json({ message: "User not found" });
+    const progress = (student.courseProgress || {})[courseId] || null;
+    return res.json({ progress });
+  } catch (err) {
+    console.error("getCourseProgress", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
 const issueCertificateIfEarned = async (studentId, course) => {
   if (!course.certificate?.enabled) return;
   const student = await User.findById(studentId);
@@ -502,6 +553,7 @@ export const updateCourse = async (req, res) => {
       quiz,
       certificate,
       notes,
+      subjectQuizzes,
     } = req.body;
 
     const existing = await Course.findOne({
@@ -554,6 +606,7 @@ export const updateCourse = async (req, res) => {
       ...(quiz !== undefined && { quiz }),
       ...(certificate !== undefined && { certificate }),
       ...(notes !== undefined && { notes }),
+      ...(subjectQuizzes !== undefined && { subjectQuizzes }),
       published: newPublished,
       approvalStatus: newApprovalStatus,
       rejectionReason:
@@ -645,15 +698,23 @@ export const deleteCourse = async (req, res) => {
 // ── submitQuiz ────────────────────────────────────────────────────────────────
 export const submitQuiz = async (req, res) => {
   try {
-    const { answers } = req.body;
+    const { answers, title = "Final Quiz" } = req.body;
     const course = await Course.findById(req.params.id).populate(
       "instructor",
       "name",
-    ); // add populate
-    if (!course?.quiz?.questions?.length)
+    );
+
+    let targetQuiz = null;
+    if (title === "Final Quiz") {
+      targetQuiz = course?.quiz;
+    } else {
+      targetQuiz = course?.subjectQuizzes?.find((q) => q.title === title);
+    }
+
+    if (!targetQuiz?.questions?.length)
       return res.status(404).json({ success: false, message: "No quiz found" });
 
-    const questions = course.quiz.questions;
+    const questions = targetQuiz.questions;
     let correct = 0;
     const breakdown = questions.map((q, idx) => {
       const isCorrect = answers[idx] === q.correctOptionIndex;
@@ -669,13 +730,18 @@ export const submitQuiz = async (req, res) => {
 
     const student = await User.findById(req.user._id);
     const prevSub = student.quizSubmissions.find(
-      (s) => s.courseId.toString() === course._id.toString(),
+      (s) =>
+        s.courseId.toString() === course._id.toString() && s.title === title,
     );
     const prevBestPts = prevSub ? prevSub.score * questions.length * 0.1 : 0;
     const pointsEarned = Math.max(0, pointsThisAttempt - prevBestPts);
 
     if (!prevSub) {
-      student.quizSubmissions.push({ courseId: course._id, score: percentage });
+      student.quizSubmissions.push({
+        courseId: course._id,
+        title,
+        score: percentage,
+      });
     } else if (percentage > prevSub.score) {
       prevSub.score = percentage;
       prevSub.completedAt = new Date();
@@ -684,10 +750,30 @@ export const submitQuiz = async (req, res) => {
 
     // ── Issue certificate if not already earned ──────────────────────────
     if (course.certificate?.enabled) {
+      // Check if they have submitted all required quizzes (Final Quiz if exists, else all Subject Quizzes)
+      const requiresFinalQuiz = course.quiz?.questions?.length > 0;
+      let allPassed = false;
+      if (requiresFinalQuiz) {
+        allPassed = student.quizSubmissions.some(
+          (s) =>
+            s.courseId.toString() === course._id.toString() &&
+            s.title === "Final Quiz",
+        );
+      } else {
+        const requiredQuizzes = course.subjectQuizzes || [];
+        allPassed = requiredQuizzes.every((rq) =>
+          student.quizSubmissions.some(
+            (s) =>
+              s.courseId.toString() === course._id.toString() &&
+              s.title === rq.title,
+          ),
+        );
+      }
+
       const alreadyIssued = (student.earnedCertificates ?? []).some(
         (c) => c.courseId.toString() === course._id.toString(),
       );
-      if (!alreadyIssued) {
+      if (!alreadyIssued && allPassed) {
         if (!student.earnedCertificates) student.earnedCertificates = [];
         student.earnedCertificates.push({
           courseId: course._id,

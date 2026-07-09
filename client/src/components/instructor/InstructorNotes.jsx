@@ -173,7 +173,7 @@ export default function InstructorNotes({ showToast }) {
                   }}>
                     {st.label}
                   </div>
-                  
+
                   <div style={{ display: "flex", gap: 8 }}>
                     <a href={note.fileUrl} target="_blank" rel="noreferrer" style={{
                       fontSize: 12, fontWeight: 600, color: "#38bdf8", textDecoration: "none",
@@ -190,9 +190,9 @@ export default function InstructorNotes({ showToast }) {
                   </div>
                 </div>
                 {note.status === "rejected" && note.rejectedReason && (
-                   <div style={{ marginTop: 8, padding: 8, background: "rgba(248,113,113,0.1)", borderRadius: 8, fontSize: 11, color: "#fca5a5" }}>
-                     Reason: {note.rejectedReason}
-                   </div>
+                  <div style={{ marginTop: 8, padding: 8, background: "rgba(248,113,113,0.1)", borderRadius: 8, fontSize: 11, color: "#fca5a5" }}>
+                    Reason: {note.rejectedReason}
+                  </div>
                 )}
               </div>
             );
@@ -248,18 +248,18 @@ export default function InstructorNotes({ showToast }) {
                   type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: "none" }}
                   accept=".pdf,.doc,.docx,.ppt,.pptx"
                 />
-                
+
                 {form.fileUrl ? (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 12, background: "#111827", border: "1px solid #1e293b", borderRadius: 10 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#4ade80", fontSize: 13, fontWeight: 600 }}>
                       <FileText size={16} /> File Uploaded
                     </div>
-                    <button onClick={() => setForm({...form, fileUrl: ""})} style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
+                    <button onClick={() => setForm({ ...form, fileUrl: "" })} style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
                       Remove
                     </button>
                   </div>
                 ) : (
-                  <div 
+                  <div
                     onClick={() => !uploadingFile && fileInputRef.current?.click()}
                     style={{
                       border: "2px dashed #1e293b", borderRadius: 12, padding: 24, textAlign: "center",
@@ -270,7 +270,7 @@ export default function InstructorNotes({ showToast }) {
                       <div>
                         <div style={{ color: "#818cf8", fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Uploading {uploadProgress}%</div>
                         <div style={{ width: "100%", height: 4, background: "#1e293b", borderRadius: 2 }}>
-                           <div style={{ width: `${uploadProgress}%`, height: "100%", background: "#818cf8", borderRadius: 2 }} />
+                          <div style={{ width: `${uploadProgress}%`, height: "100%", background: "#818cf8", borderRadius: 2 }} />
                         </div>
                       </div>
                     ) : (

@@ -47,21 +47,7 @@ const categoryEmoji = (category = "") => {
   return map[category.toLowerCase()] ?? "📚";
 };
 
-// Add this helper above the component
-const getLocalProgress = (courseId, totalLessons) => {
-  if (!courseId || !totalLessons) return { progress: 0, completedLessons: 0 };
-  try {
-    const saved = JSON.parse(
-      localStorage.getItem(`course-progress-${courseId}`) || "null",
-    );
-    if (!saved) return { progress: 0, completedLessons: 0 };
-    const completedLessons = (saved.completed ?? []).length;
-    const progress = Math.round((completedLessons / totalLessons) * 100);
-    return { progress, completedLessons };
-  } catch {
-    return { progress: 0, completedLessons: 0 };
-  }
-};
+// Progress is derived from server-side `user.courseProgress` on the client.
 
 const getRatingUserId = (rating) =>
   rating?.user?._id ?? rating?.user?.id ?? rating?.user;
@@ -127,10 +113,11 @@ export default function MyCourses() {
   // Normalise + attach derived fields
   const enrolled = (rawEnrolled ?? []).map((c) => {
     const totalLessons = c.lessons?.length ?? c.totalLessons ?? 0;
-    const { progress, completedLessons } = getLocalProgress(
-      c._id,
-      totalLessons,
-    );
+    const progObj = user?.courseProgress?.[c._id] || null;
+    const completedLessons = progObj ? (progObj.completed || []).length : 0;
+    const progress = progObj
+      ? Math.round((completedLessons / Math.max(1, totalLessons)) * 100)
+      : 0;
     return {
       ...c,
       totalLessons,
@@ -357,7 +344,8 @@ function RatingDialog({ course, user, onClose, onSubmitted }) {
   const userId = user?._id ?? user?.id;
   // course.userRating is set by the enrolled courses API (this student's rating).
   // Fall back to searching course.ratings for other contexts.
-  const existingRating = course?.userRating ??
+  const existingRating =
+    course?.userRating ??
     course?.ratings?.find(
       (r) => getRatingUserId(r)?.toString() === userId?.toString(),
     );
@@ -801,7 +789,8 @@ function CourseCard({ course, animDelay = 0, onRate }) {
                         gap: 5,
                       }}
                     >
-                      {"★".repeat(course.userRating.rating)}{"☆".repeat(5 - course.userRating.rating)} Rated
+                      {"★".repeat(course.userRating.rating)}
+                      {"☆".repeat(5 - course.userRating.rating)} Rated
                     </button>
                   ) : (
                     <button
