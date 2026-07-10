@@ -5,6 +5,7 @@ import Course from "../models/courses.model.js";
 import Cart from "../models/cart.model.js";
 import Wallet from "../models/wallet.model.js";
 import { invalidateCourseCache } from "./course.controller.js";
+import { sendPlanPurchaseEmail, sendCourseEnrollmentEmail, sendSubscriptionCancellationEmail } from "../utils/Mailer.js";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -194,6 +195,11 @@ export const verifyPayment = async (req, res) => {
       });
       await wallet.save();
 
+      const user = await User.findById(req.user._id);
+      if (user && user.email) {
+        sendPlanPurchaseEmail(user.email, user.name, plan.label).catch(console.error);
+      }
+
       return res.json({ message: "Plan activated.", subscription });
     }
 
@@ -246,6 +252,12 @@ export const verifyPayment = async (req, res) => {
       });
       await wallet.save();
 
+      const user = await User.findById(req.user._id);
+      if (user && user.email) {
+        const courseTitles = courses.map((c) => c.title);
+        sendCourseEnrollmentEmail(user.email, user.name, courseTitles).catch(console.error);
+      }
+
       return res.json({
         message: "Enrolled successfully.",
         enrolled: courseIds,
@@ -262,14 +274,20 @@ export const verifyPayment = async (req, res) => {
 // ── POST /billing/cancel ──────────────────────────────────────────────────────
 export const cancelSubscription = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("subscription");
+    const user = await User.findById(req.user._id).select("subscription email name");
     if (!user?.subscription?.plan) {
       return res.status(400).json({ message: "No active subscription found." });
     }
 
+    const planLabel = user.subscription.label || user.subscription.plan;
+
     await User.findByIdAndUpdate(req.user._id, {
       "subscription.status": "cancelled",
     });
+
+    if (user.email) {
+      sendSubscriptionCancellationEmail(user.email, user.name, planLabel).catch(console.error);
+    }
 
     res.json({
       message:

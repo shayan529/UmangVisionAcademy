@@ -12,6 +12,7 @@ import {
 } from "../utils/userRoles.js";
 import Course from "../models/courses.model.js";
 import { invalidateCourseCache } from "./course.controller.js";
+import { sendRegistrationEmail, sendReferralSuccessEmail } from "../utils/Mailer.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -256,6 +257,13 @@ export const RegisterUser = async (req, res) => {
       referrer.coins = (referrer.coins ?? 0) + 50;
       referrer.referralsCount = (referrer.referralsCount ?? 0) + 1;
       await referrer.save();
+      if (referrer.email) {
+        sendReferralSuccessEmail(referrer.email, referrer.name, user.name, 50).catch(console.error);
+      }
+    }
+
+    if (user.email) {
+      sendRegistrationEmail(user.email, user.name).catch(console.error);
     }
 
     const userAgent = req.headers["user-agent"] || "Unknown Device";
@@ -764,6 +772,13 @@ export const createStudentByAdmin = async (req, res) => {
       referrer.coins = (referrer.coins ?? 0) + 50;
       referrer.referralsCount = (referrer.referralsCount ?? 0) + 1;
       await referrer.save();
+      if (referrer.email) {
+        sendReferralSuccessEmail(referrer.email, referrer.name, user.name, 50).catch(console.error);
+      }
+    }
+
+    if (user.email) {
+      sendRegistrationEmail(user.email, user.name).catch(console.error);
     }
 
     if (Array.isArray(courseIds) && courseIds.length > 0) {

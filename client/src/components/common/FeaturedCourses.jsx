@@ -251,8 +251,8 @@ const Courses = () => {
                 type="button"
                 onClick={() => handleCourseTypeChange(opt.key)}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${selectedCourseType === opt.key
-                    ? "bg-gradient-to-r from-indigo-600 to-cyan-500 text-white shadow-lg shadow-indigo-500/20"
-                    : "text-slate-400 hover:text-white"
+                  ? "bg-gradient-to-r from-indigo-600 to-cyan-500 text-white shadow-lg shadow-indigo-500/20"
+                  : "text-slate-400 hover:text-white"
                   }`}
               >
                 {opt.label}
@@ -421,30 +421,40 @@ const Courses = () => {
               selectedSubject !== ALL_SUBJECTS ||
               selectedBoard !== ALL_BOARDS ||
               selectedLanguage !== ALL_LANGUAGES) && (
-              <button
-                onClick={() => {
-                  setSelectedCourseType(TYPE_ALL);
-                  setSelectedClass(ALL);
-                  setSelectedExam(ALL_EXAMS);
-                  setSelectedSubject(ALL_SUBJECTS);
-                  setSelectedBoard(ALL_BOARDS);
-                  setSelectedLanguage(ALL_LANGUAGES);
-                }}
-                className="mt-6 px-6 py-2 rounded-xl border border-indigo-500/30 text-indigo-400 text-sm font-semibold hover:bg-indigo-500/10 transition"
-              >
-                {t("courses.clearFilters")}
-              </button>
-            )}
+                <button
+                  onClick={() => {
+                    setSelectedCourseType(TYPE_ALL);
+                    setSelectedClass(ALL);
+                    setSelectedExam(ALL_EXAMS);
+                    setSelectedSubject(ALL_SUBJECTS);
+                    setSelectedBoard(ALL_BOARDS);
+                    setSelectedLanguage(ALL_LANGUAGES);
+                  }}
+                  className="mt-6 px-6 py-2 rounded-xl border border-indigo-500/30 text-indigo-400 text-sm font-semibold hover:bg-indigo-500/10 transition"
+                >
+                  {t("courses.clearFilters")}
+                </button>
+              )}
           </div>
         )}
 
         {filteredCourses.length > 4 && (
-          <div className="flex justify-center mt-12">
+          <div className="flex justify-center mt-10">
             <button
               onClick={() => navigate("/courses")}
-              className="px-8 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xl shadow-indigo-600/10 hover:shadow-indigo-600/20 hover:-translate-y-0.5 transition duration-300 cursor-pointer"
+              className="group relative inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-black font-semibold text-sm border border-slate-200 shadow-md hover:shadow-emerald-500/20 hover:shadow-xl hover:border-emerald-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-300 cursor-pointer overflow-hidden"
             >
-              {t("courses.viewAll")}
+              <span className="relative z-10">{t("courses.viewAll")}</span>
+              <svg
+                className="relative z-10 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+              <span className="absolute inset-0 bg-emerald-50 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out" />
             </button>
           </div>
         )}

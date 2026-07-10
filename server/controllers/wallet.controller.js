@@ -4,6 +4,7 @@ import Wallet from "../models/wallet.model.js";
 import Course from "../models/courses.model.js";
 import User from "../models/user.model.js"; // adjust path if different
 import { invalidateCourseCache } from "./course.controller.js";
+import { sendWalletDepositEmail, sendCourseEnrollmentEmail } from "../utils/Mailer.js";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -371,6 +372,11 @@ export const verifyDeposit = async (req, res) => {
     });
     await wallet.save();
 
+    const user = await User.findById(req.user._id);
+    if (user && user.email) {
+      sendWalletDepositEmail(user.email, user.name, amountInRupees).catch(console.error);
+    }
+
     res.json({
       message: "Wallet credited successfully.",
       balance: wallet.balance,
@@ -518,6 +524,11 @@ export const payWithWallet = async (req, res) => {
     await invalidateCourseCache(courseId).catch((err) =>
       console.error("[Cache] Failed to invalidate course cache:", err.message)
     );
+
+    const user = await User.findById(req.user._id);
+    if (user && user.email) {
+      sendCourseEnrollmentEmail(user.email, user.name, [course.title]).catch(console.error);
+    }
 
     res.json({
       message: `Enrolled in "${course.title}" successfully.`,

@@ -8,6 +8,7 @@ import {
   setJson,
 } from "../utils/redisClient.js";
 import { hasBaseRole, hasPermissionGrant } from "../utils/userRoles.js";
+import { sendCourseEnrollmentEmail } from "../utils/Mailer.js";
 
 // ── shared shape helper ───────────────────────────────────────────────────────
 const shapeCourse = (c) => ({
@@ -475,7 +476,7 @@ export const enrollCourses = async (req, res) => {
       forbidden = [];
 
     // Pre-fetch user to check subscription and selected class
-    const userDoc = await User.findById(studentId).select("subscription selectedClass");
+    const userDoc = await User.findById(studentId).select("subscription selectedClass enrolledCourses");
     const hasActiveSubscription = userDoc?.subscription?.status === "active";
     const userClass = userDoc?.selectedClass?.toLowerCase().trim();
     
@@ -490,8 +491,16 @@ export const enrollCourses = async (req, res) => {
           return;
         }
 
+        const alreadyInUser = userDoc.enrolledCourses?.some(id => id.toString() === courseId);
+        const alreadyInCourse = course.students.some(id => id.toString() === studentId.toString());
+
+        if (alreadyInUser && alreadyInCourse) {
+          alreadyEnrolled.push(courseId);
+          return;
+        }
+
         // Price check logic
-        if (course.price > 0 && !isAdminOrStaff) {
+        if (!alreadyInUser && course.price > 0 && !isAdminOrStaff) {
           const matchesClass = userClass && course.category && userClass === course.category.toLowerCase().trim();
           if (!hasActiveSubscription || !matchesClass) {
              forbidden.push(courseId);
@@ -499,19 +508,16 @@ export const enrollCourses = async (req, res) => {
           }
         }
 
-        const already = course.students.some(
-          (id) => id.toString() === studentId.toString(),
-        );
-        if (already) {
-          alreadyEnrolled.push(courseId);
-          return;
+        if (!alreadyInCourse) {
+          await Course.findByIdAndUpdate(courseId, {
+            $addToSet: { students: studentId },
+          });
         }
-        await Course.findByIdAndUpdate(courseId, {
-          $addToSet: { students: studentId },
-        });
-        await User.findByIdAndUpdate(studentId, {
-          $addToSet: { enrolledCourses: courseId },
-        });
+        if (!alreadyInUser) {
+          await User.findByIdAndUpdate(studentId, {
+            $addToSet: { enrolledCourses: courseId },
+          });
+        }
         enrolled.push(courseId);
       }),
     );
@@ -535,6 +541,15 @@ export const enrollCourses = async (req, res) => {
       { user: studentId },
       { $pull: { courses: { $in: courseIds } } },
     );
+
+    if (enrolled.length > 0) {
+      const user = await User.findById(studentId);
+      if (user && user.email) {
+        const enrolledCourses = await Course.find({ _id: { $in: enrolled } }).select("title").lean();
+        const courseTitles = enrolledCourses.map(c => c.title);
+        sendCourseEnrollmentEmail(user.email, user.name, courseTitles).catch(console.error);
+      }
+    }
 
     return res.status(200).json({
       enrolled,

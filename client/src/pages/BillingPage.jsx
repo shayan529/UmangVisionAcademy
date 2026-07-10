@@ -416,7 +416,7 @@ export default function BillingPage() {
                       </span>
                     </div>
                   </div>
-                  {activeSub && (
+                  {activeSub && subscription.status === "active" && (
                     <button
                       onClick={() => setShowCancel(true)}
                       style={{

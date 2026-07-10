@@ -97,10 +97,6 @@ export default function AboutUs() {
 
   const missionItems = [
     {
-      labelKey: "aboutUs.mission.founded.label",
-      valueKey: "aboutUs.mission.founded.value",
-    },
-    {
       labelKey: "aboutUs.mission.supportedClasses.label",
       valueKey: "aboutUs.mission.supportedClasses.value",
     },
@@ -748,135 +744,7 @@ export default function AboutUs() {
       </section>
 
       {/* ── Team — faculty ID cards ── */}
-      <section
-        style={{
-          maxWidth: 1000,
-          margin: "0 auto",
-          padding: "88px 24px",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <p
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: "0.18em",
-              color: "#34d399",
-              textTransform: "uppercase",
-              marginBottom: 12,
-            }}
-          >
-            {t("aboutUs.team.tag")}
-          </p>
-          <h2
-            className="uva-display"
-            style={{
-              fontSize: "clamp(26px, 4vw, 36px)",
-              fontWeight: 700,
-              color: "#f1f5f9",
-            }}
-          >
-            {t("aboutUs.team.heading")}
-          </h2>
-        </div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 18,
-          }}
-        >
-          {translatedTeam.map((member, i) => (
-            <div
-              key={i}
-              className="uva-team-card"
-              style={{
-                background: "#111827",
-                border: "1px solid #1e293b",
-                borderRadius: 16,
-                padding: "20px 20px 22px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 12,
-                position: "relative",
-              }}
-            >
-              {/* hole-punch, ID-card flavor */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: 14,
-                  right: 16,
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: "#0B1120",
-                  border: "1px solid #1e293b",
-                }}
-              />
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 8,
-                    background: "#f1f5f9",
-                    border: `2px solid ${member.color}`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 15,
-                    fontWeight: 800,
-                    color: member.color,
-                    flexShrink: 0,
-                  }}
-                >
-                  {member.initials}
-                </div>
-                <div>
-                  <p
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: "#f1f5f9",
-                      marginBottom: 2,
-                    }}
-                  >
-                    {member.name}
-                  </p>
-                  <p
-                    className="uva-mono"
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      color: "#475569",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    {member.code}
-                  </p>
-                </div>
-              </div>
-              <p
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: member.color,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                {member.role}
-              </p>
-              <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.7 }}>
-                {member.bio}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
+
 
       {/* ── CTA ── */}
       <section
