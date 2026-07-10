@@ -1370,7 +1370,7 @@ export default function Settings() {
                   {new Date(subscription.endDate).toLocaleDateString()}
                 </p>
               </div>
-              {subscription.status !== "cancelled" && (
+              {subscription.status === "active" && (
                 <button
                   onClick={async () => {
                     if (

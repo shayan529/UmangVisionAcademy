@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const isVercel = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV || process.env.NODE_ENV === 'production' || __dirname.includes('/var/task');
 const TMP_DIR = isVercel 
   ? path.join(os.tmpdir(), 'uploads') 
   : path.join(__dirname, '..', '.tmp', 'uploads');
