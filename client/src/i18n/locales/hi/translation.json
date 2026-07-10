@@ -734,19 +734,11 @@
     "supportCards": {
       "email": {
         "title": "📧 ईमेल सहायता",
-        "detail": "support@umangvisionacademy.com"
-      },
-      "phone": {
-        "title": "📞 फ़ोन सहायता",
-        "detail": "+91 98765 43210"
+        "detail": "umangvisionacademy@gmail.com "
       },
       "business": {
         "title": "🏢 व्यावसायिक पूछताछ",
-        "detail": "business@umangvisionacademy.com"
-      },
-      "hours": {
-        "title": "⏰ कार्य समय",
-        "detail": "सोम - शनि / 9AM - 7PM"
+        "detail": "umangvisionacademy@gmail.com "
       }
     },
     "form": {

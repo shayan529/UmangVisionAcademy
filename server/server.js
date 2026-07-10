@@ -33,6 +33,7 @@ import questionPaperRoutes from "./routes/questionPaper.routes.js";
 import referenceRoutes from "./routes/reference.routes.js";
 import reelRoutes from "./routes/reel.routes.js";
 import noteRoutes from "./routes/note.routes.js";
+import contactRoutes from "./routes/contact.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -137,6 +138,7 @@ app.use("/api/students", studentRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/contact", contactRoutes);
 app.use("/api", cartRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/auth", emailRoutes);

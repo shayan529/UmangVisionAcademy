@@ -276,3 +276,31 @@ export const sendSubscriptionCancellationEmail = (email, name, planName) => {
     `<p>Hi ${name},</p><p>Your <strong style="color:#38bdf8;">${planName}</strong> subscription has been successfully cancelled.</p><p>You will continue to have access to your plan's features until the end of your current billing period.</p><p>We're sorry to see you go!</p>`
   );
 };
+
+export const sendContactEmail = async (name, email, subject, message) => {
+  try {
+    const info = await transporter.sendMail({
+      from: `"${name}" <${process.env.GMAIL_USER}>`, 
+      to: 'umangvisionacademy@gmail.com', // Explicitly stated by the user
+      replyTo: email,
+      subject: `Contact Form: ${subject}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <h2 style="color: #6366f1;">New Contact Form Submission</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Subject:</strong> ${subject}</p>
+          <hr />
+          <p><strong>Message:</strong></p>
+          <p style="white-space: pre-wrap;">${message}</p>
+        </div>
+      `,
+    });
+    console.log(`📧 Contact email sent from ${name}`);
+    return info;
+  } catch (err) {
+    console.error(`❌ Failed to send contact email from ${name}:`, err.message);
+    throw err;
+  }
+};
+

@@ -577,7 +577,7 @@
       },
       "contact": {
         "title": "9. Contact Information",
-        "body": "For questions regarding these Terms, contact us at support@umangacademy.com."
+        "body": "For questions regarding these Terms, contact us at umangvisionacademy@gmail.com "
       }
     }
   },
@@ -733,19 +733,11 @@
     "supportCards": {
       "email": {
         "title": "📧 Email Support",
-        "detail": "support@umangvisionacademy.com"
-      },
-      "phone": {
-        "title": "📞 Phone Support",
-        "detail": "+91 98765 43210"
+        "detail": "umangvisionacademy@gmail.com "
       },
       "business": {
         "title": "🏢 Business Inquiries",
-        "detail": "business@umangvisionacademy.com"
-      },
-      "hours": {
-        "title": "⏰ Working Hours",
-        "detail": "Mon - Sat / 9AM - 7PM"
+        "detail": "umangvisionacademy@gmail.com"
       }
     },
     "form": {

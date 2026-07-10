@@ -1,8 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
+import api from '../config/api';
 
 const Contact = () => {
   const { t } = useTranslation();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const res = await api.post('/contact', formData);
+      if (res.data.success) {
+        toast.success(res.data.message || 'Message sent successfully!');
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      } else {
+        toast.error(res.data.message || 'Failed to send message');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || 'Something went wrong, please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0B1120] text-white">
       {/* Hero Section */}
@@ -40,31 +78,11 @@ const Contact = () => {
 
               <div className="bg-white/5 border border-white/10 p-6 rounded-3xl">
                 <h3 className="text-xl font-semibold">
-                  {t('contact.supportCards.phone.title')}
-                </h3>
-
-                <p className="text-slate-400 mt-3">
-                  {t('contact.supportCards.phone.detail')}
-                </p>
-              </div>
-
-              <div className="bg-white/5 border border-white/10 p-6 rounded-3xl">
-                <h3 className="text-xl font-semibold">
                   {t('contact.supportCards.business.title')}
                 </h3>
 
                 <p className="text-slate-400 mt-3">
                   {t('contact.supportCards.business.detail')}
-                </p>
-              </div>
-
-              <div className="bg-white/5 border border-white/10 p-6 rounded-3xl">
-                <h3 className="text-xl font-semibold">
-                  {t('contact.supportCards.hours.title')}
-                </h3>
-
-                <p className="text-slate-400 mt-3">
-                  {t('contact.supportCards.hours.detail')}
                 </p>
               </div>
             </div>
@@ -77,7 +95,7 @@ const Contact = () => {
 
             <p className="text-slate-400 mt-3">{t('contact.form.subtitle')}</p>
 
-            <form className="space-y-6 mt-10">
+            <form className="space-y-6 mt-10" onSubmit={handleSubmit}>
               {/* Name */}
 
               <div>
@@ -87,6 +105,10 @@ const Contact = () => {
 
                 <input
                   type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
                   placeholder={t('contact.form.namePlaceholder')}
                   className="w-full mt-2 bg-[#111827] border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-indigo-500"
                 />
@@ -101,6 +123,10 @@ const Contact = () => {
 
                 <input
                   type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
                   placeholder={t('contact.form.emailPlaceholder')}
                   className="w-full mt-2 bg-[#111827] border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-indigo-500"
                 />
@@ -115,6 +141,10 @@ const Contact = () => {
 
                 <input
                   type="text"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  required
                   placeholder={t('contact.form.subjectPlaceholder')}
                   className="w-full mt-2 bg-[#111827] border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-indigo-500"
                 />
@@ -129,6 +159,10 @@ const Contact = () => {
 
                 <textarea
                   rows="5"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  required
                   placeholder={t('contact.form.messagePlaceholder')}
                   className="w-full mt-2 bg-[#111827] border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-indigo-500 resize-none"
                 ></textarea>
@@ -138,9 +172,17 @@ const Contact = () => {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-indigo-400 to-indigo-600 hover:scale-[1.02] transition duration-300 py-4 rounded-2xl text-black font-semibold shadow-lg shadow-indigo-500/20"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-indigo-400 to-indigo-600 hover:scale-[1.02] transition duration-300 py-4 rounded-2xl text-black font-semibold shadow-lg shadow-indigo-500/20 disabled:opacity-70 disabled:hover:scale-100 flex items-center justify-center gap-2"
               >
-                {t('contact.form.submit')}
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                    Sending...
+                  </>
+                ) : (
+                  t('contact.form.submit')
+                )}
               </button>
             </form>
           </div>
