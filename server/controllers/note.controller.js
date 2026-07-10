@@ -97,7 +97,13 @@ export const listNotes = async (req, res) => {
 
     // Public / Student listing — return notes of all courses this student is enrolled in
     if (req.user) {
-      const enrolledCoursesList = await Course.find({ students: req.user._id })
+      const query = { $or: [{ students: req.user._id }] };
+      if (req.user.subscription?.status === "active" && req.user.selectedClass) {
+        const escapedClass = req.user.selectedClass.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+        query.$or.push({ category: new RegExp(`^${escapedClass}$`, "i") });
+      }
+      
+      const enrolledCoursesList = await Course.find(query)
         .populate("instructor", "name email")
         .lean();
 

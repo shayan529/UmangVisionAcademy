@@ -310,13 +310,21 @@ export const enrolledCourses = async (req, res) => {
   try {
     const studentId = req.user._id;
 
-    const courses = await Course.find({ students: studentId })
+    const student = await User.findById(studentId)
+      .select("quizSubmissions subscription selectedClass")
+      .lean();
+
+    const query = { $or: [{ students: studentId }] };
+    
+    if (student?.subscription?.status === "active" && student?.selectedClass) {
+      const escapedClass = student.selectedClass.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      query.$or.push({ category: new RegExp(`^${escapedClass}$`, "i") });
+    }
+
+    const courses = await Course.find(query)
       .populate("instructor", "name email")
       .lean();
 
-    const student = await User.findById(studentId)
-      .select("quizSubmissions")
-      .lean();
     const quizMap = {};
     (student?.quizSubmissions ?? []).forEach((s) => {
       quizMap[s.courseId.toString()] = s.score;

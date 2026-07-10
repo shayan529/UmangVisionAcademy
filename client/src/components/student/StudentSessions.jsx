@@ -41,8 +41,12 @@ const ChatPanel = ({ sessionId, currentUser }) => {
     try {
       socket = io(socketUrl, {
         withCredentials: true,
-        reconnectionAttempts: 5,
-        timeout: 10000,
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 20000,
+        transports: ["polling", "websocket"],
       });
     } catch {
       setError("Unable to connect to chat server.");

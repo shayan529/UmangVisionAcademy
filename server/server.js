@@ -8,6 +8,8 @@ import mongoose from "mongoose";
 import "dotenv/config";
 import ConnectDb from "./utils/ConnectDb.js";
 import { connectRedis } from "./utils/redisClient.js";
+import { createAdapter } from "@socket.io/redis-adapter";
+import { createClient } from "redis";
 import userRoutes from "./routes/user.routes.js";
 import courseRoutes from "./routes/course.routes.js";
 import instructorApplicationRoutes from "./routes/instructorApplication.routes.js";
@@ -99,6 +101,9 @@ const io = new Server(httpServer, {
     origin: ALLOWED_ORIGINS,
     credentials: true,
     methods: ["GET", "POST"],
+  },
+  connectionStateRecovery: {
+    maxDisconnectionDuration: 2 * 60 * 1000,
   },
 });
 
@@ -193,10 +198,31 @@ io.engine.on("connection_error", (err) => {
 // 3. Register session chat handlers
 registerSessionChat(io);
 
+const setupRedisAdapter = async () => {
+  if (process.env.REDIS_URL) {
+    try {
+      const pubClient = createClient({ url: process.env.REDIS_URL });
+      const subClient = pubClient.duplicate();
+
+      pubClient.on("error", (err) => console.error("[Socket.IO Redis Pub] error:", err.message));
+      subClient.on("error", (err) => console.error("[Socket.IO Redis Sub] error:", err.message));
+
+      await Promise.all([pubClient.connect(), subClient.connect()]);
+      io.adapter(createAdapter(pubClient, subClient));
+      console.log("[Socket.IO] Redis adapter enabled for multiple Vercel instances");
+    } catch (err) {
+      console.error("[Socket.IO] Failed to setup Redis adapter:", err.message);
+    }
+  } else {
+    console.warn("[Socket.IO] REDIS_URL not set, running without Redis adapter");
+  }
+};
+
 // ── Start ─────────────────────────────────────────────────────────────────────
 ConnectDb()
   .then(async () => {
     await connectRedis().catch(() => undefined);
+    await setupRedisAdapter();
     httpServer.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
       console.log(`Allowed CORS origins: ${ALLOWED_ORIGINS.join(", ")}`);

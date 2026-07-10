@@ -58,7 +58,13 @@ export const getStudentSessions = async (req, res) => {
     const cacheKey = `student:sessions:${studentId}`;
 
     const sessions = await cacheResponse(cacheKey, 300, async () => {
-      const enrolledCourses = await Course.find({ students: req.user._id })
+      const query = { $or: [{ students: req.user._id }] };
+      if (req.user.subscription?.status === "active" && req.user.selectedClass) {
+        const escapedClass = req.user.selectedClass.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+        query.$or.push({ category: new RegExp(`^${escapedClass}$`, "i") });
+      }
+
+      const enrolledCourses = await Course.find(query)
         .select("_id instructor")
         .lean();
 
@@ -136,7 +142,13 @@ export const getSessionById = async (req, res) => {
       return res.json(session);
     }
 
-    const enrolledCourses = await Course.find({ students: req.user._id })
+    const query = { $or: [{ students: req.user._id }] };
+    if (req.user.subscription?.status === "active" && req.user.selectedClass) {
+      const escapedClass = req.user.selectedClass.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      query.$or.push({ category: new RegExp(`^${escapedClass}$`, "i") });
+    }
+
+    const enrolledCourses = await Course.find(query)
       .select("_id instructor")
       .lean();
 
