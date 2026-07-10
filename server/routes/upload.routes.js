@@ -4,11 +4,15 @@ import { uploadFile } from '../controllers/upload.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const TMP_DIR = path.join(__dirname, '..', '.tmp', 'uploads');
+const isVercel = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
+const TMP_DIR = isVercel 
+  ? path.join(os.tmpdir(), 'uploads') 
+  : path.join(__dirname, '..', '.tmp', 'uploads');
 
 if (!fs.existsSync(TMP_DIR)) {
   fs.mkdirSync(TMP_DIR, { recursive: true });
