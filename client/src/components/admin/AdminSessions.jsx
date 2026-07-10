@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { Calendar, Trash2, Link as LinkIcon, Plus, X, AlertCircle } from "lucide-react";
+import { Calendar, Trash2, Link as LinkIcon, Plus, X, AlertCircle, Play, Square } from "lucide-react";
 import {
   fetchSessions,
   createSession,
+  updateSession,
   deleteSession,
   clearSessionSuccess,
   clearSessionError,
@@ -25,6 +26,7 @@ const AdminSessions = ({ instructors = [] }) => {
     date: "",
     time: "",
     url: "",
+    status: "upcoming",
   });
 
   useEffect(() => {
@@ -45,6 +47,7 @@ const AdminSessions = ({ instructors = [] }) => {
         date: "",
         time: "",
         url: "",
+        status: "upcoming",
       });
     }
     if (error) {
@@ -90,8 +93,19 @@ const AdminSessions = ({ instructors = [] }) => {
         date: form.date,
         time: form.time,
         url: form.url,
+        status: form.status,
       })
     );
+  };
+
+  const handleStartSession = (id) => {
+    dispatch(updateSession({ id, sessionData: { status: "live" } }));
+  };
+
+  const handleEndSession = (id) => {
+    if (window.confirm("Are you sure you want to end this live session?")) {
+      dispatch(updateSession({ id, sessionData: { status: "ended" } }));
+    }
   };
 
   const handleDelete = (id) => {
@@ -138,13 +152,14 @@ const AdminSessions = ({ instructors = [] }) => {
                 <th className="py-4 px-6">Instructor</th>
                 <th className="py-4 px-6">Class / Subject</th>
                 <th className="py-4 px-6">Date & Time</th>
+                <th className="py-4 px-6">Status</th>
                 <th className="py-4 px-6 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300 text-sm">
               {loading && sessions.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="py-10 text-center text-slate-500">
+                  <td colSpan="6" className="py-10 text-center text-slate-500">
                     <div className="flex justify-center items-center gap-2">
                       <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                       Loading sessions...
@@ -153,7 +168,7 @@ const AdminSessions = ({ instructors = [] }) => {
                 </tr>
               ) : sessions.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="py-12 text-center text-slate-500">
+                  <td colSpan="6" className="py-12 text-center text-slate-500">
                     <AlertCircle className="mx-auto text-slate-600 mb-3" size={32} />
                     <p className="font-semibold text-slate-400">No scheduled sessions</p>
                     <p className="text-xs text-slate-600 mt-1">Schedule a session to get started.</p>
@@ -190,8 +205,42 @@ const AdminSessions = ({ instructors = [] }) => {
                       <div className="font-medium text-white">{session.date}</div>
                       <div className="mt-0.5">{session.time}</div>
                     </td>
+                    <td className="py-4 px-6">
+                      {session.status === "live" ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm shadow-emerald-500/5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          Live
+                        </span>
+                      ) : session.status === "ended" ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-400 border border-slate-700/50">
+                          Ended
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                          Scheduled
+                        </span>
+                      )}
+                    </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-3">
+                        {session.status === "upcoming" && (
+                          <button
+                            onClick={() => handleStartSession(session._id)}
+                            className="p-2 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white rounded-lg transition duration-200"
+                            title="Start Session (Go Live)"
+                          >
+                            <Play size={14} />
+                          </button>
+                        )}
+                        {session.status === "live" && (
+                          <button
+                            onClick={() => handleEndSession(session._id)}
+                            className="p-2 bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white rounded-lg transition duration-200"
+                            title="End Session"
+                          >
+                            <Square size={14} />
+                          </button>
+                        )}
                         <a
                           href={session.url}
                           target="_blank"
@@ -351,6 +400,22 @@ const AdminSessions = ({ instructors = [] }) => {
                   className="w-full bg-[#1e293b] border border-slate-700/60 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:border-indigo-500 outline-none transition"
                   required
                 />
+              </div>
+
+              {/* Initial Status */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                  Initial Status
+                </label>
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                  className="w-full bg-[#1e293b] border border-slate-700/60 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:border-indigo-500 outline-none transition"
+                >
+                  <option value="upcoming">Upcoming (Scheduled)</option>
+                  <option value="live">Live</option>
+                  <option value="ended">Ended</option>
+                </select>
               </div>
 
               {/* Action Buttons */}
