@@ -955,9 +955,10 @@ function QuizManager({
           )}
         </button>
       </div>
-      <div style={{ display: "flex", minHeight: questions.length ? 320 : 120 }}>
+      <div className="qm-body" style={{ display: "flex", minHeight: questions.length ? 320 : 120 }}>
         {questions.length > 0 && (
           <div
+            className="qm-sidebar"
             style={{
               width: 176,
               borderRight: "1px solid #1e293b",
@@ -1153,8 +1154,8 @@ function QuizManager({
                             )
                           }
                           style={{
-                            width: 16,
-                            height: 16,
+                            width: 20,
+                            height: 20,
                             accentColor: "#4ade80",
                             flexShrink: 0,
                           }}
@@ -1374,7 +1375,7 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
           }}
         >
           <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}
           >
             <Field label="Certificate Title" hint="*">
               <Input
@@ -1395,7 +1396,7 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
             </Field>
           </div>
           <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}
           >
             <Field label="Signatory Name" hint="(authorized person signing)">
               <Input
@@ -1732,7 +1733,7 @@ const CourseForm = ({
         />
       </Field>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
         <Field label="Subject" hint="*">
           <Input
             value={form.subject}
@@ -1761,7 +1762,7 @@ const CourseForm = ({
           </Field>
         )}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
         {courseType === "classes" ? (
           <Field label="Board" hint="*">
             <Sel
@@ -1783,7 +1784,7 @@ const CourseForm = ({
           />
         </Field>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
         <Field label="Language" hint="">
           <Sel
             value={form.language || ""}
@@ -1876,6 +1877,7 @@ const CourseForm = ({
           justifyContent: "flex-end",
           paddingTop: 8,
           borderTop: "1px solid #1e293b",
+          flexWrap: "wrap",
         }}
       >
         <button
@@ -1889,6 +1891,7 @@ const CourseForm = ({
             fontWeight: 600,
             fontSize: 13,
             cursor: "pointer",
+            minHeight: 40,
           }}
         >
           Cancel
@@ -1906,6 +1909,7 @@ const CourseForm = ({
             fontSize: 13,
             cursor: "pointer",
             opacity: saving ? 0.6 : 1,
+            minHeight: 40,
           }}
         >
           Save as Draft
@@ -1924,6 +1928,7 @@ const CourseForm = ({
             cursor: "pointer",
             opacity: saving ? 0.6 : 1,
             boxShadow: "0 4px 16px rgba(124,58,237,.25)",
+            minHeight: 40,
           }}
         >
           {saving
@@ -1996,7 +2001,7 @@ const BulkCourseForm = ({
           placeholder="Class 9 CBSE Complete Bundle"
         />
       </Field>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
         <Field label="Class" hint="* (applies to all subjects below)">
           <Sel
             value={form.className}
@@ -2018,7 +2023,7 @@ const BulkCourseForm = ({
           />
         </Field>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
         <Field label="Language" hint="(Optional)">
           <Sel
             value={form.language || ""}
@@ -2080,6 +2085,8 @@ const BulkCourseForm = ({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            flexWrap: "wrap",
+            gap: 8,
           }}
         >
           <label
@@ -2161,6 +2168,8 @@ const BulkCourseForm = ({
                   cursor: "pointer",
                   borderBottom: isCollapsed ? "none" : "1px solid #1e293b",
                   userSelect: "none",
+                  flexWrap: "wrap",
+                  gap: 8,
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -2235,7 +2244,7 @@ const BulkCourseForm = ({
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "2fr 1fr",
+                      gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
                       gap: 12,
                     }}
                   >
@@ -2329,6 +2338,7 @@ const BulkCourseForm = ({
           justifyContent: "flex-end",
           paddingTop: 8,
           borderTop: "1px solid #1e293b",
+          flexWrap: "wrap",
         }}
       >
         <button
@@ -2342,6 +2352,7 @@ const BulkCourseForm = ({
             fontWeight: 600,
             fontSize: 13,
             cursor: "pointer",
+            minHeight: 40,
           }}
         >
           Cancel
@@ -2359,6 +2370,7 @@ const BulkCourseForm = ({
             fontSize: 13,
             cursor: "pointer",
             opacity: saving ? 0.6 : 1,
+            minHeight: 40,
           }}
         >
           Save All as Draft
@@ -2377,6 +2389,7 @@ const BulkCourseForm = ({
             cursor: "pointer",
             opacity: saving ? 0.6 : 1,
             boxShadow: "0 4px 16px rgba(124,58,237,.25)",
+            minHeight: 40,
           }}
         >
           {saving
@@ -2753,6 +2766,18 @@ export default function InstructorCourses({ showToast }) {
         .ic-row:hover { border-color:#334155 !important; }
         .ic-btn:hover { opacity:.8; }
         select option { background:#0b1120; color:#f1f5f9; }
+        @media (max-width: 640px) {
+          .qm-body { flex-direction: column; }
+          .qm-sidebar {
+            width: 100% !important;
+            flex-direction: row !important;
+            overflow-x: auto;
+            overflow-y: hidden;
+            border-right: none !important;
+            border-bottom: 1px solid #1e293b;
+          }
+          .qm-sidebar button { flex-shrink: 0; width: auto !important; min-width: 120px; }
+        }
       `}</style>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -3045,6 +3070,7 @@ export default function InstructorCourses({ showToast }) {
                           display: "flex",
                           alignItems: "center",
                           gap: 14,
+                          flexWrap: "wrap",
                           transition: "border-color 0.15s",
                         }}
                       >
@@ -3079,7 +3105,7 @@ export default function InstructorCourses({ showToast }) {
                             "📚"
                           )}
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ flex: 1, minWidth: 180 }}>
                           <div
                             style={{
                               display: "flex",
@@ -3190,7 +3216,7 @@ export default function InstructorCourses({ showToast }) {
                                 isOpen ? closeEdit() : openEdit(course)
                               }
                               style={{
-                                padding: "6px 14px",
+                                padding: "8px 14px",
                                 borderRadius: 8,
                                 border: `1px solid ${isOpen ? "#7c3aed" : "#334155"}`,
                                 background: isOpen ? "#2e1065" : "transparent",
@@ -3199,6 +3225,7 @@ export default function InstructorCourses({ showToast }) {
                                 fontWeight: 700,
                                 cursor: "pointer",
                                 transition: "all 0.15s",
+                                minHeight: 36,
                               }}
                             >
                               {isOpen ? "✕ Close" : "Edit / Manage"}
@@ -3208,7 +3235,7 @@ export default function InstructorCourses({ showToast }) {
                             className="ic-btn"
                             onClick={() => setDeleteId(course._id)}
                             style={{
-                              padding: "6px 10px",
+                              padding: "8px 12px",
                               borderRadius: 8,
                               border: "1px solid #7f1d1d30",
                               background: "#2d0a0a",
@@ -3216,6 +3243,7 @@ export default function InstructorCourses({ showToast }) {
                               fontSize: 11,
                               cursor: "pointer",
                               transition: "opacity 0.15s",
+                              minHeight: 36,
                             }}
                           >
                             🗑

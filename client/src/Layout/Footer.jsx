@@ -5,7 +5,7 @@ const Footer = () => {
   const { t } = useTranslation(); // add this
 
   return (
-    <footer className="px-6 md:px-10 py-16 border-t border-slate-800 bg-slate-950">
+    <footer className="hidden md:block px-6 md:px-10 py-16 border-t border-slate-800 bg-slate-950">
       <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-10 w-full">
         {/* Logo Section */}
         <div className="flex items-start gap-4">

@@ -39,6 +39,7 @@ const InstructorSessions = ({ showToast }) => {
     color: "#f8fafc",
     fontSize: 14,
     outline: "none",
+    boxSizing: "border-box",
   };
 
   // ── Toast on success / error ──────────────────────────────────────────
@@ -167,6 +168,13 @@ const InstructorSessions = ({ showToast }) => {
 
   return (
     <>
+      <style>{`
+        @media (max-width: 640px) {
+          .is-row { flex-wrap: wrap; }
+          .is-row-actions { width: 100%; justify-content: flex-start; }
+        }
+      `}</style>
+
       {/* Schedule form */}
       <Card style={{ marginBottom: 16 }}>
         <SectionHeader title={t("instructorSessions.scheduleNewSession")} />
@@ -174,7 +182,7 @@ const InstructorSessions = ({ showToast }) => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
             gap: 12,
             marginBottom: 16,
           }}
@@ -306,6 +314,7 @@ const InstructorSessions = ({ showToast }) => {
           sessions.map((s) => (
             <div
               key={s._id}
+              className="is-row"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -329,7 +338,7 @@ const InstructorSessions = ({ showToast }) => {
                 }}
               />
               {editingId === s._id ? (
-                <div style={{ flex: 1, display: "grid", gap: 8 }}>
+                <div style={{ flex: 1, minWidth: 200, display: "grid", gap: 8 }}>
                   <input
                     value={editForm.title}
                     onChange={(e) =>
@@ -343,7 +352,7 @@ const InstructorSessions = ({ showToast }) => {
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
                       gap: 8,
                     }}
                   >
@@ -375,7 +384,7 @@ const InstructorSessions = ({ showToast }) => {
                   />
                 </div>
               ) : (
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 160 }}>
                   <div
                     style={{
                       fontSize: 14,
@@ -400,7 +409,7 @@ const InstructorSessions = ({ showToast }) => {
                   </div>
                 </div>
               )}
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div className="is-row-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {editingId === s._id ? (
                   <>
                     <Btn

@@ -9,6 +9,8 @@
 
   html {
     overflow-x: hidden;
+    background-color: #020617;
+    color: #f1f5f9;
   }
 
   body {
@@ -84,4 +86,8 @@ select option:disabled {
 
 html {
   overflow-y: scroll;
+}
+
+html {
+  scrollbar-gutter: stable;
 }

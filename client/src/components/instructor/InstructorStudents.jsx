@@ -37,9 +37,9 @@ const InstructorStudents = () => {
   const completed = students.filter((s) => s.completedCourse).length;
   const avgCompletion = students.length
     ? Math.round(
-        students.reduce((sum, s) => sum + (s.progress ?? s.prog ?? 0), 0) /
-          students.length,
-      )
+      students.reduce((sum, s) => sum + (s.progress ?? s.prog ?? 0), 0) /
+      students.length,
+    )
     : 0;
 
   // Top learners: sorted by progress descending
@@ -53,7 +53,7 @@ const InstructorStudents = () => {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4,1fr)",
+          gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))",
           gap: 12,
           marginBottom: 20,
         }}
@@ -80,7 +80,13 @@ const InstructorStudents = () => {
         />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))",
+          gap: 16,
+        }}
+      >
         {/* Top learners */}
         <Card>
           <SectionHeader title={t("instructorStudents.topLearners")} />
@@ -142,21 +148,32 @@ const InstructorStudents = () => {
                   >
                     {s.init ?? s.name?.slice(0, 2).toUpperCase()}
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
                         fontSize: 13,
                         fontWeight: 600,
                         color: "#f1f5f9",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {s.name}
                     </div>
-                    <div style={{ fontSize: 11, color: "#64748b" }}>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "#64748b",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {s.course ?? s.enrolledCourse}
                     </div>
                   </div>
-                  <div style={{ textAlign: "right", minWidth: 60 }}>
+                  <div style={{ textAlign: "right", minWidth: 60, flexShrink: 0 }}>
                     <div
                       style={{
                         fontSize: 13,
@@ -234,17 +251,28 @@ const InstructorStudents = () => {
                   >
                     {s.init ?? s.name?.slice(0, 2).toUpperCase()}
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
                         fontSize: 12,
                         fontWeight: 600,
                         color: "#f1f5f9",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {s.name}
                     </div>
-                    <div style={{ fontSize: 11, color: "#64748b" }}>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "#64748b",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {s.action}
                     </div>
                   </div>
@@ -256,6 +284,7 @@ const InstructorStudents = () => {
                       borderRadius: 20,
                       background: tb,
                       color: tc,
+                      flexShrink: 0,
                     }}
                   >
                     {s.tag}

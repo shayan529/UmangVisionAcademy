@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchEnrolledCourses } from "../../redux/slices/courseSlice";
 import { Link } from "react-router-dom";
@@ -7,9 +7,9 @@ import { useTranslation } from "react-i18next";
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const statusConfig = {
-  "in-progress": { bg: "#1c1003", text: "#fbbf24", label: "In Progress" },
-  completed: { bg: "#052e16", text: "#4ade80", label: "Completed" },
-  "not-started": { bg: "#0f172a", text: "#94a3b8", label: "Not Started" },
+  "in-progress": { bg: "rgba(251,191,36,0.12)", text: "#fbbf24", dot: "#fbbf24", label: "In Progress" },
+  completed: { bg: "rgba(74,222,128,0.12)", text: "#4ade80", dot: "#4ade80", label: "Completed" },
+  "not-started": { bg: "rgba(148,163,184,0.1)", text: "#94a3b8", dot: "#64748b", label: "Not Started" },
 };
 
 // Derive status from progress value since the model doesn't store it
@@ -47,10 +47,33 @@ const categoryEmoji = (category = "") => {
   return map[category.toLowerCase()] ?? "📚";
 };
 
-// Progress is derived from server-side `user.courseProgress` on the client.
-
 const getRatingUserId = (rating) =>
   rating?.user?._id ?? rating?.user?.id ?? rating?.user;
+
+// Compute progress for a course. Prefers fields the enrolled-courses API
+// itself returns (course.progress / course.completedLessons), since those
+// come fresh with every fetchEnrolledCourses() call. Falls back to the
+// auth slice's user.courseProgress only when the course object doesn't
+// carry its own progress — this avoids showing stale progress when
+// `user` hasn't been refetched after a lesson completion elsewhere in
+// the app.
+const computeProgress = (c, user) => {
+  const totalLessons = c.lessons?.length ?? c.totalLessons ?? 0;
+
+  if (typeof c.progress === "number") {
+    const completedLessons =
+      c.completedLessons ??
+      Math.round((c.progress / 100) * Math.max(1, totalLessons));
+    return { totalLessons, progress: c.progress, completedLessons };
+  }
+
+  const progObj = user?.courseProgress?.[c._id] || null;
+  const completedLessons = progObj ? (progObj.completed || []).length : 0;
+  const progress = progObj
+    ? Math.round((completedLessons / Math.max(1, totalLessons)) * 100)
+    : 0;
+  return { totalLessons, progress, completedLessons };
+};
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 const Skeleton = ({ w = "100%", h = 16, radius = 8, style = {} }) => (
@@ -70,14 +93,14 @@ const Skeleton = ({ w = "100%", h = 16, radius = 8, style = {} }) => (
 const CourseCardSkeleton = () => (
   <div
     style={{
-      background: "#111827",
+      background: "#12192b",
       border: "1px solid #1e293b",
-      borderRadius: 18,
+      borderRadius: 20,
       padding: "20px 22px",
     }}
   >
     <div style={{ display: "flex", gap: 16 }}>
-      <Skeleton w={56} h={56} radius={14} style={{ flexShrink: 0 }} />
+      <Skeleton w={60} h={60} radius={16} style={{ flexShrink: 0 }} />
       <div
         style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}
       >
@@ -98,6 +121,7 @@ export default function MyCourses() {
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState("all");
   const [ratingCourse, setRatingCourse] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const {
     enrolled: rawEnrolled,
@@ -106,18 +130,40 @@ export default function MyCourses() {
   } = useSelector((s) => s.courses);
   const { user } = useSelector((s) => s.auth);
 
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    await dispatch(fetchEnrolledCourses());
+    setRefreshing(false);
+  }, [dispatch]);
+
   useEffect(() => {
     dispatch(fetchEnrolledCourses());
   }, [dispatch]);
 
+  // Refetch whenever the tab regains focus/visibility — covers the common
+  // case where a student finishes a lesson on the course page, then
+  // navigates or switches back to My Courses without a full page reload.
+  useEffect(() => {
+    const onFocus = () => dispatch(fetchEnrolledCourses());
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        dispatch(fetchEnrolledCourses());
+      }
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [dispatch]);
+
   // Normalise + attach derived fields
   const enrolled = (rawEnrolled ?? []).map((c) => {
-    const totalLessons = c.lessons?.length ?? c.totalLessons ?? 0;
-    const progObj = user?.courseProgress?.[c._id] || null;
-    const completedLessons = progObj ? (progObj.completed || []).length : 0;
-    const progress = progObj
-      ? Math.round((completedLessons / Math.max(1, totalLessons)) * 100)
-      : 0;
+    const { totalLessons, progress, completedLessons } = computeProgress(
+      c,
+      user,
+    );
     return {
       ...c,
       totalLessons,
@@ -150,9 +196,46 @@ export default function MyCourses() {
           from { opacity: 0; transform: translateY(12px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        .course-card { animation: fadeUp 0.3s ease both; }
-        .course-card:hover { border-color: #334155 !important; }
-        .continue-btn:hover { opacity: 0.88; }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        .course-card {
+          animation: fadeUp 0.35s ease both;
+          position: relative;
+        }
+        .course-card:hover {
+          border-color: #334155 !important;
+          transform: translateY(-2px);
+          box-shadow: 0 12px 32px -12px rgba(0,0,0,0.55);
+        }
+        .continue-btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+        .action-btn { transition: transform 0.15s ease, filter 0.15s ease, opacity 0.15s ease; }
+        .action-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+        .tab-btn { transition: color 0.2s ease; }
+        .stat-card { transition: transform 0.2s ease, border-color 0.2s ease; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .refresh-btn { transition: transform 0.2s ease, background 0.2s ease; }
+        .refresh-btn:hover { background: #1e293b; }
+        .refresh-btn:active { transform: scale(0.94); }
+
+        /* Scrollable courses container — dark themed scrollbar */
+        .courses-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #334155 transparent;
+        }
+        .courses-scroll::-webkit-scrollbar {
+          width: 8px;
+        }
+        .courses-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .courses-scroll::-webkit-scrollbar-thumb {
+          background: #334155;
+          border-radius: 8px;
+        }
+        .courses-scroll::-webkit-scrollbar-thumb:hover {
+          background: #475569;
+        }
       `}</style>
 
       {/* ── Header ── */}
@@ -162,23 +245,77 @@ export default function MyCourses() {
           justifyContent: "space-between",
           alignItems: "flex-start",
           flexWrap: "wrap",
-          gap: 12,
-          marginBottom: 24,
+          gap: 16,
+          marginBottom: 26,
         }}
       >
         <div>
-          <h2 style={{ fontSize: 26, fontWeight: 800, color: "#f1f5f9" }}>
+          <h2
+            style={{
+              fontSize: 28,
+              fontWeight: 800,
+              letterSpacing: "-0.02em",
+              backgroundImage: "linear-gradient(135deg,#f1f5f9,#94a3b8)",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              color: "transparent",
+            }}
+          >
             {t("studentDashboard.myCourses")}
           </h2>
-          <p style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
+          <p
+            style={{
+              color: "#64748b",
+              fontSize: 13,
+              marginTop: 6,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
             {enrolledLoading
               ? "Loading…"
               : `${counts.total} course${counts.total !== 1 ? "s" : ""} enrolled`}
+            <button
+              onClick={refresh}
+              className="refresh-btn"
+              title="Refresh progress"
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 7,
+                border: "1px solid #334155",
+                background: "transparent",
+                color: "#94a3b8",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{
+                  animation: refreshing ? "spin 0.7s linear infinite" : "none",
+                }}
+              >
+                <path d="M23 4v6h-6" />
+                <path d="M1 20v-6h6" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              </svg>
+            </button>
           </p>
         </div>
 
         {/* Summary chips */}
-        <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ display: "flex", gap: 12 }}>
           {[
             { label: "Enrolled", value: counts.total, color: "#a78bfa" },
             { label: "Completed", value: counts.completed, color: "#4ade80" },
@@ -190,23 +327,42 @@ export default function MyCourses() {
           ].map((s) => (
             <div
               key={s.label}
+              className="stat-card"
               style={{
-                background: "#1e293b",
-                borderRadius: 10,
-                padding: "6px 14px",
+                background:
+                  "linear-gradient(160deg,#141b2e 0%,#0f1524 100%)",
+                borderRadius: 14,
+                padding: "10px 18px",
                 textAlign: "center",
-                border: "1px solid #334155",
-                minWidth: 60,
+                border: "1px solid #1e293b",
+                minWidth: 76,
               }}
             >
               {enrolledLoading ? (
-                <Skeleton w={28} h={18} style={{ margin: "0 auto 4px" }} />
+                <Skeleton w={28} h={20} style={{ margin: "0 auto 4px" }} />
               ) : (
-                <div style={{ fontSize: 18, fontWeight: 800, color: s.color }}>
+                <div
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 800,
+                    color: s.color,
+                    textShadow: `0 0 20px ${s.color}40`,
+                  }}
+                >
                   {s.value}
                 </div>
               )}
-              <div style={{ fontSize: 10, color: "#64748b" }}>{s.label}</div>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "#64748b",
+                  marginTop: 2,
+                  fontWeight: 600,
+                  letterSpacing: "0.03em",
+                }}
+              >
+                {s.label}
+              </div>
             </div>
           ))}
         </div>
@@ -217,11 +373,12 @@ export default function MyCourses() {
         style={{
           display: "flex",
           gap: 4,
-          background: "#1e293b",
-          padding: 4,
-          borderRadius: 10,
-          marginBottom: 20,
+          background: "#0f1524",
+          padding: 5,
+          borderRadius: 12,
+          marginBottom: 22,
           width: "fit-content",
+          border: "1px solid #1e293b",
         }}
       >
         {[
@@ -232,17 +389,25 @@ export default function MyCourses() {
         ].map((tab) => (
           <button
             key={tab.key}
+            className="tab-btn"
             onClick={() => setActiveTab(tab.key)}
             style={{
-              padding: "6px 16px",
-              borderRadius: 8,
+              padding: "7px 18px",
+              borderRadius: 9,
               border: "none",
-              fontSize: 12,
+              fontSize: 12.5,
               fontWeight: 600,
               cursor: "pointer",
-              background: activeTab === tab.key ? "#7c3aed" : "transparent",
+              background:
+                activeTab === tab.key
+                  ? "linear-gradient(135deg,#7c3aed,#6d28d9)"
+                  : "transparent",
               color: activeTab === tab.key ? "#fff" : "#64748b",
-              transition: "all 0.15s",
+              boxShadow:
+                activeTab === tab.key
+                  ? "0 4px 14px -2px rgba(124,58,237,0.5)"
+                  : "none",
+              transition: "all 0.2s ease",
             }}
           >
             {tab.label}
@@ -254,9 +419,9 @@ export default function MyCourses() {
       {error && !enrolledLoading && (
         <div
           style={{
-            background: "#2d0a0a",
-            border: "1px solid #7f1d1d",
-            borderRadius: 14,
+            background: "rgba(248,113,113,0.08)",
+            border: "1px solid rgba(248,113,113,0.25)",
+            borderRadius: 16,
             padding: "14px 18px",
             marginBottom: 16,
             color: "#f87171",
@@ -265,7 +430,7 @@ export default function MyCourses() {
         >
           ⚠️ {error} —{" "}
           <button
-            onClick={() => dispatch(fetchEnrolledCourses())}
+            onClick={refresh}
             style={{
               background: "none",
               border: "none",
@@ -280,49 +445,63 @@ export default function MyCourses() {
         </div>
       )}
 
-      {/* ── Course list ── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        {enrolledLoading ? (
-          // Skeleton placeholders
-          [...Array(3)].map((_, i) => <CourseCardSkeleton key={i} />)
-        ) : filtered.length === 0 ? (
-          // Empty state
-          <div
-            style={{ textAlign: "center", padding: "48px 0", color: "#475569" }}
-          >
-            <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
-            <p style={{ fontSize: 15, fontWeight: 600, color: "#64748b" }}>
-              {activeTab === "all"
-                ? "You haven't enrolled in any courses yet."
-                : `No ${activeTab.replace("-", " ")} courses.`}
-            </p>
-            {activeTab !== "all" && (
-              <button
-                onClick={() => setActiveTab("all")}
-                style={{
-                  marginTop: 12,
-                  background: "none",
-                  border: "none",
-                  color: "#818cf8",
-                  cursor: "pointer",
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
-              >
-                View all courses →
-              </button>
-            )}
-          </div>
-        ) : (
-          filtered.map((course, i) => (
-            <CourseCard
-              key={course._id ?? course.id ?? i}
-              course={course}
-              animDelay={i * 0.04}
-              onRate={() => setRatingCourse(course)}
-            />
-          ))
-        )}
+      {/* ── Course list — darker container, scrollable when it overflows ── */}
+      <div
+        className="courses-scroll"
+        style={{
+          background:
+            "radial-gradient(ellipse at top,#0b101c 0%,#05070d 100%)",
+          border: "1px solid #1e293b",
+          borderRadius: 22,
+          padding: 18,
+          maxHeight: 640,
+          overflowY: "auto",
+          boxShadow: "inset 0 2px 20px rgba(0,0,0,0.35)",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {enrolledLoading ? (
+            // Skeleton placeholders
+            [...Array(3)].map((_, i) => <CourseCardSkeleton key={i} />)
+          ) : filtered.length === 0 ? (
+            // Empty state
+            <div
+              style={{ textAlign: "center", padding: "48px 0", color: "#475569" }}
+            >
+              <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
+              <p style={{ fontSize: 15, fontWeight: 600, color: "#64748b" }}>
+                {activeTab === "all"
+                  ? "You haven't enrolled in any courses yet."
+                  : `No ${activeTab.replace("-", " ")} courses.`}
+              </p>
+              {activeTab !== "all" && (
+                <button
+                  onClick={() => setActiveTab("all")}
+                  style={{
+                    marginTop: 12,
+                    background: "none",
+                    border: "none",
+                    color: "#818cf8",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
+                >
+                  View all courses →
+                </button>
+              )}
+            </div>
+          ) : (
+            filtered.map((course, i) => (
+              <CourseCard
+                key={course._id ?? course.id ?? i}
+                course={course}
+                animDelay={i * 0.04}
+                onRate={() => setRatingCourse(course)}
+              />
+            ))
+          )}
+        </div>
       </div>
 
       {ratingCourse && (
@@ -382,7 +561,8 @@ function RatingDialog({ course, user, onClose, onSubmitted }) {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(2,8,23,0.72)",
+        background: "rgba(2,8,23,0.75)",
+        backdropFilter: "blur(4px)",
         zIndex: 100,
         display: "flex",
         alignItems: "center",
@@ -395,10 +575,10 @@ function RatingDialog({ course, user, onClose, onSubmitted }) {
         style={{
           width: "100%",
           maxWidth: 420,
-          background: "#0d1526",
+          background: "linear-gradient(160deg,#101728,#0a0f1c)",
           border: "1px solid #1e293b",
-          borderRadius: 18,
-          boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
+          borderRadius: 20,
+          boxShadow: "0 30px 70px rgba(0,0,0,0.6)",
           overflow: "hidden",
         }}
       >
@@ -433,7 +613,7 @@ function RatingDialog({ course, user, onClose, onSubmitted }) {
             style={{
               width: 30,
               height: 30,
-              borderRadius: 8,
+              borderRadius: 9,
               border: "none",
               background: "#1e293b",
               color: "#94a3b8",
@@ -468,6 +648,8 @@ function RatingDialog({ course, user, onClose, onSubmitted }) {
                   fontSize: 34,
                   lineHeight: 1,
                   padding: "2px 0",
+                  transition: "transform 0.1s ease",
+                  transform: star <= active ? "scale(1.08)" : "scale(1)",
                 }}
                 aria-label={`Rate ${star} stars`}
               >
@@ -486,9 +668,9 @@ function RatingDialog({ course, user, onClose, onSubmitted }) {
               width: "100%",
               boxSizing: "border-box",
               resize: "vertical",
-              background: "#111827",
+              background: "#0d1424",
               border: "1px solid #1e293b",
-              borderRadius: 10,
+              borderRadius: 12,
               color: "#e2e8f0",
               padding: "10px 12px",
               fontSize: 13,
@@ -515,7 +697,7 @@ function RatingDialog({ course, user, onClose, onSubmitted }) {
               onClick={onClose}
               style={{
                 padding: "9px 16px",
-                borderRadius: 10,
+                borderRadius: 11,
                 border: "1px solid #334155",
                 background: "transparent",
                 color: "#94a3b8",
@@ -530,12 +712,17 @@ function RatingDialog({ course, user, onClose, onSubmitted }) {
               disabled={loading}
               style={{
                 padding: "9px 18px",
-                borderRadius: 10,
+                borderRadius: 11,
                 border: "none",
-                background: loading ? "#334155" : "#052e16",
-                color: "#4ade80",
+                background: loading
+                  ? "#334155"
+                  : "linear-gradient(135deg,#10b981,#059669)",
+                color: loading ? "#94a3b8" : "#fff",
                 fontWeight: 800,
                 cursor: loading ? "not-allowed" : "pointer",
+                boxShadow: loading
+                  ? "none"
+                  : "0 6px 18px -4px rgba(16,185,129,0.5)",
               }}
             >
               {loading ? "Submitting..." : "Submit Rating"}
@@ -565,23 +752,24 @@ function CourseCard({ course, animDelay = 0, onRate }) {
     <div
       className="course-card"
       style={{
-        background: "#111827",
+        background: "linear-gradient(160deg,#131b2e 0%,#0e1424 100%)",
         border: "1px solid #1e293b",
-        borderRadius: 18,
+        borderRadius: 20,
         padding: "20px 22px",
         animationDelay: `${animDelay}s`,
-        transition: "border-color 0.15s",
+        transition: "border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease",
       }}
     >
       <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
         {/* Thumbnail */}
         <div
           style={{
-            width: 56,
-            height: 56,
-            borderRadius: 14,
+            width: 60,
+            height: 60,
+            borderRadius: 16,
             flexShrink: 0,
-            background: `${accent}18`,
+            background: `linear-gradient(160deg,${accent}2a,${accent}10)`,
+            border: `1px solid ${accent}30`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -596,11 +784,11 @@ function CourseCard({ course, animDelay = 0, onRate }) {
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
-                borderRadius: 14,
+                borderRadius: 15,
               }}
             />
           ) : (
-            <span style={{ fontSize: 26 }}>{emoji}</span>
+            <span style={{ fontSize: 28 }}>{emoji}</span>
           )}
         </div>
 
@@ -630,7 +818,7 @@ function CourseCard({ course, animDelay = 0, onRate }) {
               >
                 {course.title}
               </h3>
-              <p style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+              <p style={{ fontSize: 12, color: "#64748b", marginTop: 3 }}>
                 {instructorName}
                 {course.level && (
                   <span
@@ -645,24 +833,36 @@ function CourseCard({ course, animDelay = 0, onRate }) {
               style={{
                 fontSize: 11,
                 fontWeight: 700,
-                padding: "3px 10px",
+                padding: "4px 12px",
                 borderRadius: 20,
                 background: st.bg,
                 color: st.text,
+                border: `1px solid ${st.text}30`,
                 flexShrink: 0,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
               }}
             >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: st.dot,
+                }}
+              />
               {st.label}
             </span>
           </div>
 
           {/* Progress bar */}
-          <div style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 14 }}>
             <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                marginBottom: 5,
+                marginBottom: 6,
               }}
             >
               <span style={{ fontSize: 12, color: "#94a3b8" }}>
@@ -681,10 +881,11 @@ function CourseCard({ course, animDelay = 0, onRate }) {
             </div>
             <div
               style={{
-                height: 6,
-                background: "#1e293b",
-                borderRadius: 3,
+                height: 7,
+                background: "#0a0f1c",
+                borderRadius: 4,
                 overflow: "hidden",
+                border: "1px solid #1e293b",
               }}
             >
               <div
@@ -693,8 +894,9 @@ function CourseCard({ course, animDelay = 0, onRate }) {
                   width: `${course.progress}%`,
                   background: isComplete
                     ? "linear-gradient(90deg,#10b981,#4ade80)"
-                    : `linear-gradient(90deg,${accent},${accent}88)`,
-                  borderRadius: 3,
+                    : `linear-gradient(90deg,${accent},${accent}cc)`,
+                  borderRadius: 4,
+                  boxShadow: `0 0 10px ${isComplete ? "#4ade80" : accent}60`,
                   transition: "width 0.6s cubic-bezier(.4,0,.2,1)",
                 }}
               />
@@ -707,7 +909,7 @@ function CourseCard({ course, animDelay = 0, onRate }) {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              marginTop: 14,
+              marginTop: 16,
               flexWrap: "wrap",
               gap: 10,
             }}
@@ -730,10 +932,10 @@ function CourseCard({ course, animDelay = 0, onRate }) {
                 <span
                   style={{
                     display: "inline-block",
-                    marginTop: 4,
+                    marginTop: 6,
                     fontSize: 10,
                     fontWeight: 700,
-                    padding: "2px 8px",
+                    padding: "3px 9px",
                     borderRadius: 20,
                     background: `${accent}18`,
                     color: accent,
@@ -751,17 +953,17 @@ function CourseCard({ course, animDelay = 0, onRate }) {
               {!isComplete && (
                 <Link to={`/courses/${course._id}`}>
                   <button
-                    className="continue-btn"
+                    className="continue-btn action-btn"
                     style={{
-                      padding: "7px 16px",
-                      borderRadius: 10,
+                      padding: "8px 18px",
+                      borderRadius: 11,
                       border: "none",
                       background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
                       color: "#fff",
                       fontSize: 12,
                       fontWeight: 700,
                       cursor: "pointer",
-                      transition: "opacity 0.15s",
+                      boxShadow: "0 6px 18px -4px rgba(124,58,237,0.45)",
                     }}
                   >
                     Continue →
@@ -775,11 +977,12 @@ function CourseCard({ course, animDelay = 0, onRate }) {
                     <button
                       onClick={onRate}
                       title="Update your rating"
+                      className="action-btn"
                       style={{
-                        padding: "7px 14px",
-                        borderRadius: 10,
+                        padding: "8px 14px",
+                        borderRadius: 11,
                         border: "1px solid #854d0e",
-                        background: "#1c1005",
+                        background: "rgba(251,191,36,0.08)",
                         color: "#fbbf24",
                         fontSize: 12,
                         fontWeight: 700,
@@ -795,11 +998,12 @@ function CourseCard({ course, animDelay = 0, onRate }) {
                   ) : (
                     <button
                       onClick={onRate}
+                      className="action-btn"
                       style={{
-                        padding: "7px 16px",
-                        borderRadius: 10,
-                        border: "none",
-                        background: "#052e16",
+                        padding: "8px 18px",
+                        borderRadius: 11,
+                        border: "1px solid rgba(74,222,128,0.25)",
+                        background: "rgba(74,222,128,0.08)",
                         color: "#4ade80",
                         fontSize: 12,
                         fontWeight: 700,
@@ -812,11 +1016,12 @@ function CourseCard({ course, animDelay = 0, onRate }) {
                   {hasFinalQuiz && (
                     <Link to={`/courses/${course._id}?quiz=1`}>
                       <button
+                        className="action-btn"
                         style={{
-                          padding: "7px 16px",
-                          borderRadius: 10,
-                          border: "none",
-                          background: "#1e1b4b",
+                          padding: "8px 18px",
+                          borderRadius: 11,
+                          border: "1px solid rgba(167,139,250,0.25)",
+                          background: "rgba(167,139,250,0.08)",
                           color: "#a78bfa",
                           fontSize: 12,
                           fontWeight: 700,
@@ -829,11 +1034,12 @@ function CourseCard({ course, animDelay = 0, onRate }) {
                   )}
                   <Link to={`/courses/${course._id}`}>
                     <button
+                      className="action-btn"
                       style={{
-                        padding: "7px 16px",
-                        borderRadius: 10,
-                        border: "none",
-                        background: "#052e16",
+                        padding: "8px 18px",
+                        borderRadius: 11,
+                        border: "1px solid rgba(74,222,128,0.25)",
+                        background: "rgba(74,222,128,0.08)",
                         color: "#4ade80",
                         fontSize: 12,
                         fontWeight: 700,

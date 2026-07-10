@@ -61,7 +61,7 @@ const styles = {
   // two-column grid
   grid2: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
     gap: 14,
     marginBottom: 14,
   },
@@ -80,25 +80,34 @@ const styles = {
     padding: "12px 14px",
   },
   // revenue per course bars
+  revBarsOuter: {
+    overflowX: "auto",
+    marginBottom: -4,
+  },
   revBars: {
     display: "flex",
     alignItems: "flex-end",
     gap: 10,
     height: 260,
     paddingTop: 16,
+    minWidth: "min-content",
   },
   revCol: {
-    flex: 1,
+    flex: "1 0 72px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "flex-end",
     height: "100%",
-    minWidth: 0,
+    minWidth: 72,
   },
   // performance table
+  tableOuter: {
+    overflowX: "auto",
+  },
   table: {
     width: "100%",
+    minWidth: 560,
     borderCollapse: "collapse",
     fontSize: 13,
   },
@@ -219,8 +228,8 @@ const InstructorAnalytics = () => {
   const avgRating =
     courses.length > 0
       ? (
-          courses.reduce((s, c) => s + courseRating(c), 0) / courses.length
-        ).toFixed(1)
+        courses.reduce((s, c) => s + courseRating(c), 0) / courses.length
+      ).toFixed(1)
       : "–";
 
   const avgCompletion = avg(courses, "avgCompletion") || avg(courses, "prog");
@@ -229,9 +238,9 @@ const InstructorAnalytics = () => {
     .filter((rate) => rate != null);
   const avgQuizPass = quizPassRates.length
     ? Math.round(
-        quizPassRates.reduce((sum, rate) => sum + rate, 0) /
-          quizPassRates.length,
-      )
+      quizPassRates.reduce((sum, rate) => sum + rate, 0) /
+      quizPassRates.length,
+    )
     : 0;
   const avgAttendance = avg(courses, "liveAttendance");
 
@@ -337,7 +346,7 @@ const InstructorAnalytics = () => {
               borderTop: "1px solid #1e293b",
               paddingTop: 18,
               display: "grid",
-              gridTemplateColumns: "repeat(3,1fr)",
+              gridTemplateColumns: "repeat(auto-fit,minmax(110px,1fr))",
               gap: 16,
             }}
           >
@@ -429,54 +438,56 @@ const InstructorAnalytics = () => {
         <SectionHeader title={t("instructorAnalytics.revenuePerCourse")} />
 
         {revenueData.length > 0 ? (
-          <div style={styles.revBars}>
-            {revenueData.map((course) => {
-              const barH = Math.max(
-                8,
-                Math.round((course.revenue / maxRevenue) * 210),
-              );
-              return (
-                <div key={course.title} style={styles.revCol}>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "#a78bfa",
-                      fontWeight: 700,
-                      marginBottom: 6,
-                      textAlign: "center",
-                    }}
-                  >
-                    {fmt(course.revenue)}
+          <div style={styles.revBarsOuter}>
+            <div style={styles.revBars}>
+              {revenueData.map((course) => {
+                const barH = Math.max(
+                  8,
+                  Math.round((course.revenue / maxRevenue) * 210),
+                );
+                return (
+                  <div key={course.title} style={styles.revCol}>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "#a78bfa",
+                        fontWeight: 700,
+                        marginBottom: 6,
+                        textAlign: "center",
+                      }}
+                    >
+                      {fmt(course.revenue)}
+                    </div>
+                    <div
+                      title={`${course.title}: ${fmt(course.revenue)}`}
+                      style={{
+                        width: "100%",
+                        height: barH,
+                        background: "linear-gradient(180deg,#c4b5fd,#7c3aed)",
+                        borderRadius: "8px 8px 0 0",
+                        transition: "opacity 0.15s",
+                        cursor: "default",
+                      }}
+                    />
+                    <div
+                      style={{
+                        marginTop: 8,
+                        fontSize: 11,
+                        color: "#94a3b8",
+                        textAlign: "center",
+                        width: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                      title={course.title}
+                    >
+                      {course.title}
+                    </div>
                   </div>
-                  <div
-                    title={`${course.title}: ${fmt(course.revenue)}`}
-                    style={{
-                      width: "100%",
-                      height: barH,
-                      background: "linear-gradient(180deg,#c4b5fd,#7c3aed)",
-                      borderRadius: "8px 8px 0 0",
-                      transition: "opacity 0.15s",
-                      cursor: "default",
-                    }}
-                  />
-                  <div
-                    style={{
-                      marginTop: 8,
-                      fontSize: 11,
-                      color: "#94a3b8",
-                      textAlign: "center",
-                      width: "100%",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                    title={course.title}
-                  >
-                    {course.title}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         ) : (
           <div style={styles.empty}>
@@ -490,61 +501,63 @@ const InstructorAnalytics = () => {
         <SectionHeader title={t("instructorAnalytics.coursePerformance")} />
 
         {sortedCourses.length > 0 ? (
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>{t("instructorAnalytics.course")}</th>
-                <th style={styles.thRight}>
-                  {t("instructorAnalytics.students")}
-                </th>
-                <th style={styles.thRight}>
-                  {t("instructorAnalytics.revenue")}
-                </th>
-                <th style={styles.thRight}>
-                  {t("instructorAnalytics.completion")}
-                </th>
-                <th style={styles.thRight}>
-                  {t("instructorAnalytics.quizPass")}
-                </th>
-                <th style={styles.thRight}>
-                  {t("instructorAnalytics.rating")}
-                </th>
-                {/* <th style={styles.thRight}>Status</th> */}
-              </tr>
-            </thead>
-            <tbody>
-              {sortedCourses.map((course) => {
-                const comp = completion(course);
-                const passRate = quizPassRate(course);
-                const id = course._id ?? course.id ?? course.title;
-                return (
-                  <tr key={id}>
-                    <td style={{ ...styles.td, fontWeight: 600 }}>
-                      {course.title}
-                    </td>
-                    <td style={styles.tdRight}>
-                      {studentCount(course).toLocaleString("en-IN")}
-                    </td>
-                    <td style={{ ...styles.tdRight, color: "#a78bfa" }}>
-                      {fmt(courseRevenue(course))}
-                    </td>
-                    <td style={styles.tdRight}>{comp}%</td>
-                    <td style={styles.tdRight}>
-                      {passRate != null ? `${passRate}%` : "–"}
-                    </td>
-                    <td style={styles.tdRight}>
-                      {courseRating(course) > 0
-                        ? `${courseRating(course)} ★`
-                        : "–"}
-                    </td>
-                    {/* <td style={styles.tdRight}>
-                      <StatusBadge value={comp} />
-                    </td> */}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div style={styles.tableOuter}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>{t("instructorAnalytics.course")}</th>
+                  <th style={styles.thRight}>
+                    {t("instructorAnalytics.students")}
+                  </th>
+                  <th style={styles.thRight}>
+                    {t("instructorAnalytics.revenue")}
+                  </th>
+                  <th style={styles.thRight}>
+                    {t("instructorAnalytics.completion")}
+                  </th>
+                  <th style={styles.thRight}>
+                    {t("instructorAnalytics.quizPass")}
+                  </th>
+                  <th style={styles.thRight}>
+                    {t("instructorAnalytics.rating")}
+                  </th>
+                  {/* <th style={styles.thRight}>Status</th> */}
+                </tr>
+              </thead>
+              <tbody>
+                {sortedCourses.map((course) => {
+                  const comp = completion(course);
+                  const passRate = quizPassRate(course);
+                  const id = course._id ?? course.id ?? course.title;
+                  return (
+                    <tr key={id}>
+                      <td style={{ ...styles.td, fontWeight: 600 }}>
+                        {course.title}
+                      </td>
+                      <td style={styles.tdRight}>
+                        {studentCount(course).toLocaleString("en-IN")}
+                      </td>
+                      <td style={{ ...styles.tdRight, color: "#a78bfa" }}>
+                        {fmt(courseRevenue(course))}
+                      </td>
+                      <td style={styles.tdRight}>{comp}%</td>
+                      <td style={styles.tdRight}>
+                        {passRate != null ? `${passRate}%` : "–"}
+                      </td>
+                      <td style={styles.tdRight}>
+                        {courseRating(course) > 0
+                          ? `${courseRating(course)} ★`
+                          : "–"}
+                      </td>
+                      {/* <td style={styles.tdRight}>
+                        <StatusBadge value={comp} />
+                      </td> */}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <div style={styles.empty}>
             {loading

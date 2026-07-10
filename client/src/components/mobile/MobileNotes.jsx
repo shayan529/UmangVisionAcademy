@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, FileText, Download, Lock, FileImage, File, Sparkles } from "lucide-react";
 import api from "../../config/api";
+import { useTranslation } from "react-i18next";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const getFileMeta = (url = "") => {
@@ -55,6 +56,7 @@ const NoteCardSkeleton = () => (
 export default function MobileNotes() {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
+  const { t, i18n } = useTranslation();
   const requireLogin = !user;
   const [classNotes, setClassNotes] = useState([]);
   const [loadingClassNotes, setLoadingClassNotes] = useState(false);
@@ -114,17 +116,17 @@ export default function MobileNotes() {
             </div>
             <div>
               <h3 className="text-sm md:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-                Class Notes
+                {t("studyNotes.title", "Class Notes")}
                 <Sparkles size={14} className="hidden md:inline text-teal-400" />
               </h3>
               <p className="text-[10px] md:text-sm text-slate-500 font-medium">
-                Study materials from your instructors
+                {t("studyNotes.subtitle", "Study materials from your instructors")}
               </p>
             </div>
           </div>
           {!requireLogin && !loadingClassNotes && classNotes.length > 0 && (
             <span className="inline-flex items-center px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[11px] md:text-xs font-bold text-teal-300 bg-teal-500/10 border border-teal-500/20 whitespace-nowrap">
-              {classNotes.length} note{classNotes.length === 1 ? "" : "s"}
+              {classNotes.length} {classNotes.length === 1 ? t("studyNotes.note", "note") : t("studyNotes.notes", "notes")}
             </span>
           )}
         </div>
@@ -139,16 +141,16 @@ export default function MobileNotes() {
                 <Lock size={22} />
               </div>
               <h3 className="text-sm font-extrabold text-white">
-                Please login to view notes
+                {t("studyNotes.loginRequired", "Please login to view notes")}
               </h3>
               <p className="mt-2 text-[11px] leading-5 text-slate-400">
-                Sign in to access your class notes and study materials.
+                {t("studyNotes.loginRequiredSubtitle", "Sign in to access your class notes and study materials.")}
               </p>
               <button
                 onClick={() => navigate("/login")}
                 className="mt-5 inline-flex items-center justify-center rounded-full bg-gradient-to-r from-teal-600 to-violet-600 px-5 py-2.5 text-[11px] font-bold text-white transition hover:brightness-110 shadow-lg shadow-teal-500/20"
               >
-                Login
+                {t("studyNotes.login", "Login")}
               </button>
             </div>
           </div>
@@ -165,10 +167,10 @@ export default function MobileNotes() {
                 <BookOpen size={24} />
               </div>
               <p className="text-xs font-bold text-slate-300">
-                No class notes yet
+                {t("studyNotes.emptyTitle", "No class notes yet")}
               </p>
               <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
-                Notes uploaded by your instructors will show up here as soon as they're posted.
+                {t("studyNotes.emptySubtitle", "Notes uploaded by your instructors will show up here as soon as they're posted.")}
               </p>
             </div>
           </div>
@@ -207,7 +209,7 @@ export default function MobileNotes() {
                         </span>
                       </div>
                       <p className="text-[11px] text-teal-300 font-medium mt-0.5 truncate">
-                        By {note.instructorName || "Instructor"}
+                        {t("studyNotes.by", "By")} {note.instructorName || t("studyNotes.instructor", "Instructor")}
                       </p>
                       {note.description && (
                         <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed line-clamp-2">
@@ -218,11 +220,14 @@ export default function MobileNotes() {
                   </div>
                   <div className="flex items-center justify-between mt-1 border-t border-slate-800/50 pt-3">
                     <span className="text-[10px] font-bold text-slate-500">
-                      {new Date(note.createdAt).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
+                      {new Date(note.createdAt).toLocaleDateString(
+                        i18n.language === "hi" ? "hi-IN" : "en-IN",
+                        {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        }
+                      )}
                     </span>
                     <a
                       href={note.fileUrl}
@@ -231,7 +236,7 @@ export default function MobileNotes() {
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500/20 hover:text-teal-300 transition text-[11px] font-bold"
                     >
                       <Download size={14} />
-                      View File
+                      {t("studyNotes.viewFile", "View File")}
                     </a>
                   </div>
                 </div>

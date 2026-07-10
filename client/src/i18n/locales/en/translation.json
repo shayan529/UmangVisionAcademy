@@ -943,7 +943,22 @@
     "student": "Student",
     "progress": "Progress",
     "mockTests": "Mock Tests",
-    "wallet": "Wallet"
+    "wallet": "Wallet",
+    "notes": "Study Notes"
+  },
+  "studyNotes": {
+    "title": "Class Notes",
+    "subtitle": "Study materials from your instructors",
+    "note": "note",
+    "notes": "notes",
+    "loginRequired": "Please login to view notes",
+    "loginRequiredSubtitle": "Sign in to access your class notes and study materials.",
+    "login": "Login",
+    "emptyTitle": "No class notes yet",
+    "emptySubtitle": "Notes uploaded by your instructors will show up here as soon as they're posted.",
+    "by": "By",
+    "instructor": "Instructor",
+    "viewFile": "View File"
   },
   "studentReferral": {
     "title": "Referral Rewards",
@@ -1237,7 +1252,7 @@
   },
   "studentReferences": {
     "title": "Reference Module",
-    "subtitle": "Manage your references with full CRUD.",
+    "subtitle": "Manage your references.",
     "create": "Create Reference",
     "inputPlaceholder": "Enter reference name",
     "add": "Add",

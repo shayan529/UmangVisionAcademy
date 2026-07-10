@@ -24,7 +24,38 @@ function formatTime(date) {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-// ─── Chat Panel ───────────────────────────────────────────────────────────────
+// ─── Chat Panel (YouTube-style) ────────────────────────────────────────────
+
+// Deterministic color per sender, so the same person always gets the same
+// avatar/name color — mirrors how YouTube colors commenter names.
+const AVATAR_COLORS = [
+  "bg-red-500", "bg-orange-500", "bg-amber-500", "bg-emerald-500",
+  "bg-teal-500", "bg-cyan-500", "bg-blue-500", "bg-indigo-500",
+  "bg-purple-500", "bg-pink-500",
+];
+const NAME_COLORS = [
+  "text-red-400", "text-orange-400", "text-amber-400", "text-emerald-400",
+  "text-teal-400", "text-cyan-400", "text-blue-400", "text-indigo-400",
+  "text-purple-400", "text-pink-400",
+];
+
+function hashString(str = "") {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function getSenderStyle(sender = "?") {
+  const idx = hashString(sender) % AVATAR_COLORS.length;
+  return {
+    avatarColor: AVATAR_COLORS[idx],
+    nameColor: NAME_COLORS[idx],
+    initial: sender.trim().charAt(0).toUpperCase() || "?",
+  };
+}
 
 const ChatPanel = ({ sessionId, currentUser }) => {
   const [messages, setMessages] = useState([]);
@@ -121,8 +152,9 @@ const ChatPanel = ({ sessionId, currentUser }) => {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col h-[420px] lg:h-[480px]">
-      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800">
+    <div className="bg-[#0f0f0f] border border-slate-800 rounded-2xl overflow-hidden flex flex-col h-[420px] lg:h-[480px]">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/80">
         <h3 className="text-white font-semibold text-sm">Live Chat</h3>
         <span
           className={`flex items-center gap-1.5 text-xs ${connected ? "text-green-400" : "text-slate-500"}`}
@@ -135,14 +167,15 @@ const ChatPanel = ({ sessionId, currentUser }) => {
       </div>
 
       {error && (
-        <div className="mx-4 mt-3 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+        <div className="mx-3 mt-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
           ⚠️ {error}
         </div>
       )}
 
+      {/* Message list — YouTube style: avatar + name + message inline */}
       <div
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto px-5 py-4 space-y-3 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent"
+        className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent"
       >
         {messages.length === 0 && (
           <p className="text-slate-500 text-xs text-center mt-8">
@@ -150,55 +183,55 @@ const ChatPanel = ({ sessionId, currentUser }) => {
           </p>
         )}
         {messages.map((msg, i) => {
-          const isOwn =
-            currentUser?._id &&
-            msg.senderId &&
-            String(msg.senderId) === String(currentUser._id);
+          const { avatarColor, nameColor, initial } = getSenderStyle(
+            msg.sender
+          );
           return (
             <div
               key={msg._id || i}
-              className={`flex flex-col ${isOwn ? "items-end" : "items-start"}`}
+              className="flex items-start gap-2 px-2 py-1.5 rounded-lg hover:bg-white/[0.03] transition"
             >
-              <span className="text-xs text-slate-500 mb-1 mx-1">
-                {isOwn ? "You" : msg.sender}
-              </span>
               <div
-                className={`max-w-[70%] px-3 py-2 rounded-xl text-sm leading-relaxed break-words ${isOwn
-                  ? "bg-purple-600/90 text-white rounded-br-sm"
-                  : "bg-slate-800 text-slate-200 rounded-bl-sm"
-                  }`}
+                className={`w-6 h-6 rounded-full ${avatarColor} flex items-center justify-center flex-none mt-0.5`}
               >
-                {msg.text}
+                <span className="text-[10px] font-bold text-white">
+                  {initial}
+                </span>
               </div>
-              <span className="text-xs text-slate-600 mt-1 mx-1">
-                {msg.createdAt
-                  ? formatTime(new Date(msg.createdAt))
-                  : formatTime(new Date())}
-              </span>
+              <p className="min-w-0 flex-1 text-[13px] leading-snug break-words [overflow-wrap:anywhere]">
+                <span className={`font-medium ${nameColor} mr-1.5`}>
+                  {msg.sender}
+                </span>
+                <span className="text-slate-200">{msg.text}</span>
+              </p>
             </div>
           );
         })}
       </div>
 
-      <div className="px-4 py-3 border-t border-slate-800 flex gap-2">
+      {/* Input — plain, no emoji/like/share/donation icons */}
+      <div className="px-3 py-2.5 border-t border-slate-800/80 flex gap-2">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKey}
           placeholder={
-            connected ? "Send a message…" : "Type a message (connecting…)"
+            connected ? "Chat..." : "Type a message (connecting…)"
           }
           maxLength={500}
-          className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
+          className="flex-1 bg-slate-800/60 border border-slate-700 rounded-full px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
         />
         <button
           onClick={sendMessage}
           disabled={!input.trim() || !connected}
           title={!connected ? "Waiting for chat connection…" : undefined}
-          className="px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          className="w-9 h-9 flex-none rounded-full bg-purple-600 text-white flex items-center justify-center hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          aria-label="Send message"
         >
-          Send
+          <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+            <path d="M2 21l21-9L2 3v7l15 2-15 2z" />
+          </svg>
         </button>
       </div>
     </div>
@@ -482,25 +515,6 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
         aria-label={playing ? "Pause" : "Play"}
         className="absolute inset-0 w-full h-full bg-transparent cursor-pointer z-10"
       />
-
-      {/* YouTube draws its own chrome (share/link icon bottom-left, YouTube
-          wordmark bottom-right) over the video whenever it's paused, and
-          for live broadcasts it also keeps the wordmark up while playing.
-          A single static corner box can't catch all of this because the
-          icons appear in different corners depending on state. Instead we
-          cover the full width of the bottom strip whenever the native
-          chrome would be visible (paused, or live), and rely on our own
-          control bar / play-glyph rendered on top for the actual UI.
-          pointer-events-none throughout so clicks still reach the
-          click-catcher beneath. */}
-      {/* YouTube renders a native "pause card" (title, share/watch-later
-          icons, a suggested video thumbnail, and the YouTube logo) inside
-          its own iframe whenever the video is paused. This is YouTube's
-          own overlay content and can't be disabled via player params, so
-          the only reliable fix is to fully cover the iframe while paused
-          — our own center play button (z-30, rendered below) sits above
-          this cover. */}
-
 
       {/* While an actual LIVE broadcast is playing, YouTube keeps a
           persistent watermark/title strip pinned at the top and bottom —
