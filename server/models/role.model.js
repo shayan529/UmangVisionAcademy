@@ -6,7 +6,7 @@ const { Schema, model } = mongoose;
 // PERMISSION_MODULES on the frontend (RoleManager.jsx).
 export const PERMISSION_MODULES = {
   courses: ["view", "create", "edit", "delete", "approve"],
-  users: ["view", "create", "edit", "delete", "impersonate"],
+  users: ["view", "create", "edit", "delete"],
   payments: ["view", "refund", "export"],
   moderation: ["view", "flag", "remove", "ban"],
   notes: ["view", "approve", "reject", "delete"],

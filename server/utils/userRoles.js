@@ -125,9 +125,30 @@ export const hydrateUserRoles = async (user, { migrate = true } = {}) => {
       customRoles.map((role) => [role._id.toString(), role]),
     );
 
+    // System roles whose name matches a base role (e.g. the "Student" or
+    // "Instructor" system role documents) should be treated as base role
+    // strings, not kept as custom role objects. This prevents the mismatch
+    // where a user has a system role ObjectId for "Student" but no base
+    // role string "student" — which breaks every `.includes("student")`
+    // and `{ roles: { $in: ["student"] } }` filter.
+    const trueCustomRoles = [];
+    for (const id of customRoleIds) {
+      const roleDoc = customRoleById.get(id);
+      if (!roleDoc) continue;
+      const normalizedName = roleDoc.name?.toLowerCase();
+      if (roleDoc.isSystem && BASE_ROLE_SET.has(normalizedName)) {
+        // Promote to base role string if not already present
+        if (!baseRoles.includes(normalizedName)) {
+          baseRoles.push(normalizedName);
+        }
+      } else {
+        trueCustomRoles.push(roleDoc);
+      }
+    }
+
     plainUser.roles = [
       ...baseRoles,
-      ...customRoleIds.map((id) => customRoleById.get(id)).filter(Boolean),
+      ...trueCustomRoles,
     ];
   } catch (error) {
     console.error("[Roles] hydrateUserRoles failed:", error);

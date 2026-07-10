@@ -5,6 +5,7 @@ import {
   deleteUser as deleteUserThunk,
 } from "../../redux/slices/usersSlice";
 import { fetchAllCoursesAdmin } from "../../redux/slices/courseSlice";
+import { hasBaseRole } from "../../utils/permissions";
 
 import AdminSidebar from "./AdminSidebar";
 import AdminOverview from "./AdminOverview";
@@ -43,8 +44,8 @@ export default function AdminDashboard() {
 
   const { user } = useSelector((state) => state.auth);
 
-  const students = users.filter((u) => u.roles?.includes("student"));
-  const instructors = users.filter((u) => u.roles?.includes("instructor"));
+  const students = users.filter((u) => hasBaseRole(u, "student"));
+  const instructors = users.filter((u) => hasBaseRole(u, "instructor"));
 
   // ── UI state ───────────────────────────────────────────────────────────────
   const [tab, setTab] = useState("overview");

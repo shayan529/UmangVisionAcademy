@@ -6,87 +6,100 @@ import { Redis as UpstashRedis } from "@upstash/redis";
 // 2) regular redis client via REDIS_URL or REDIS_HOST/REDIS_PORT
 
 const useUpstash = !!process.env.UPSTASH_REDIS_REST_URL;
-let client = null;
-let upstash = null;
-let redisReady = false;
+
+let cached = global.redisCache;
+if (!cached) {
+  cached = global.redisCache = {
+    client: null,
+    upstash: null,
+    redisReady: false,
+  };
+}
 
 if (useUpstash) {
-  upstash = new UpstashRedis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
-  });
-  redisReady = true;
-  console.log("[Redis] using Upstash REST client");
+  if (!cached.upstash) {
+    cached.upstash = new UpstashRedis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+    cached.redisReady = true;
+    console.log("[Redis] using Upstash REST client");
+  }
 } else {
-  const redisOptions = process.env.REDIS_URL
-    ? { url: process.env.REDIS_URL }
-    : {
-        socket: {
-          host: process.env.REDIS_HOST || "127.0.0.1",
-          port: Number(process.env.REDIS_PORT) || 6379,
-        },
-        password: process.env.REDIS_PASSWORD || undefined,
-      };
+  if (!cached.client) {
+    const redisOptions = process.env.REDIS_URL
+      ? { url: process.env.REDIS_URL }
+      : {
+          socket: {
+            host: process.env.REDIS_HOST || "127.0.0.1",
+            port: Number(process.env.REDIS_PORT) || 6379,
+          },
+          password: process.env.REDIS_PASSWORD || undefined,
+        };
 
-  client = createClient(redisOptions);
+    cached.client = createClient(redisOptions);
 
-  client.on("error", (error) => {
-    console.error("[Redis] error:", error?.message || error);
-  });
+    cached.client.on("error", (error) => {
+      console.error("[Redis] error:", error?.message || error);
+    });
 
-  client.on("connect", () => {
-    console.log("[Redis] connecting...");
-  });
+    cached.client.on("connect", () => {
+      console.log("[Redis] connecting...");
+    });
 
-  client.on("ready", () => {
-    redisReady = true;
-    console.log("[Redis] ready");
-  });
+    cached.client.on("ready", () => {
+      cached.redisReady = true;
+      console.log("[Redis] ready");
+    });
 
-  client.on("end", () => {
-    redisReady = false;
-    console.warn("[Redis] connection closed");
-  });
+    cached.client.on("end", () => {
+      cached.redisReady = false;
+      console.warn("[Redis] connection closed");
+    });
+  }
 }
 
 export const connectRedis = async () => {
   try {
     if (useUpstash) {
-      // Upstash REST client doesn't require a long-lived connection.
-      // Do a light test call to confirm configuration.
       if (
         !process.env.UPSTASH_REDIS_REST_URL ||
         !process.env.UPSTASH_REDIS_REST_TOKEN
       ) {
-        redisReady = false;
+        cached.redisReady = false;
         console.warn("[Redis] Upstash env not configured");
         return;
       }
       try {
-        await upstash.get("__upstash_ping__").catch(() => undefined);
-        redisReady = true;
+        await cached.upstash.get("__upstash_ping__").catch(() => undefined);
+        cached.redisReady = true;
         console.log("[Redis] Upstash ready");
       } catch (err) {
-        redisReady = false;
+        cached.redisReady = false;
         console.warn("[Redis] Upstash ping failed:", err?.message || err);
       }
       return;
     }
 
-    if (client.isOpen) return;
-    await client.connect();
-    redisReady = client.isOpen;
-    if (redisReady) {
+    if (cached.client.isOpen) {
+      console.log("[Redis] Reusing existing connection");
+      return;
+    }
+    
+    console.log("[Redis] Creating new connection...");
+    await cached.client.connect();
+    cached.redisReady = cached.client.isOpen;
+    if (cached.redisReady) {
       console.log("[Redis] connected successfully");
     }
   } catch (error) {
-    redisReady = false;
+    cached.redisReady = false;
     console.warn("[Redis] connection failed:", error?.message || error);
   }
 };
 
 export const isRedisReady = () =>
-  redisReady && (useUpstash ? true : client.isOpen);
+  cached.redisReady && (useUpstash ? true : cached.client.isOpen);
 
 const normalizeRedisValue = (raw, key) => {
   if (raw == null) return null;
@@ -114,10 +127,10 @@ export const getJson = async (key) => {
   if (!isRedisReady()) return null;
   try {
     if (useUpstash) {
-      const raw = await upstash.get(key);
+      const raw = await cached.upstash.get(key);
       return normalizeRedisValue(raw, key);
     }
-    const raw = await client.get(key);
+    const raw = await cached.client.get(key);
     return normalizeRedisValue(raw, key);
   } catch (error) {
     console.error("[Redis] getJson error:", error?.message || error);
@@ -131,17 +144,17 @@ export const setJson = async (key, value, ttlSeconds) => {
     const payload = JSON.stringify(value);
     if (useUpstash) {
       if (ttlSeconds) {
-        await upstash.set(key, payload, { ex: ttlSeconds });
+        await cached.upstash.set(key, payload, { ex: ttlSeconds });
       } else {
-        await upstash.set(key, payload);
+        await cached.upstash.set(key, payload);
       }
       return true;
     }
 
     if (ttlSeconds) {
-      await client.set(key, payload, { EX: ttlSeconds });
+      await cached.client.set(key, payload, { EX: ttlSeconds });
     } else {
-      await client.set(key, payload);
+      await cached.client.set(key, payload);
     }
     return true;
   } catch (error) {
@@ -154,10 +167,10 @@ export const deleteKeys = async (keys) => {
   if (!isRedisReady() || !Array.isArray(keys) || keys.length === 0) return 0;
   try {
     if (useUpstash) {
-      const results = await Promise.all(keys.map((k) => upstash.del(k)));
+      const results = await Promise.all(keys.map((k) => cached.upstash.del(k)));
       return results.reduce((acc, r) => acc + (r || 0), 0);
     }
-    return client.del(keys);
+    return cached.client.del(keys);
   } catch (error) {
     console.error("[Redis] deleteKeys error:", error?.message || error);
     return 0;
@@ -168,9 +181,9 @@ export const deleteKey = async (key) => {
   if (!isRedisReady() || !key) return 0;
   try {
     if (useUpstash) {
-      return await upstash.del(key);
+      return await cached.upstash.del(key);
     }
-    return client.del(key);
+    return cached.client.del(key);
   } catch (error) {
     console.error("[Redis] deleteKey error:", error?.message || error);
     return 0;
@@ -182,9 +195,9 @@ export const scanKeys = async (pattern) => {
   try {
     if (useUpstash) {
       // Upstash supports `keys` and `scan` — prefer `scan` when available.
-      if (typeof upstash.scanIterator === "function") {
+      if (typeof cached.upstash.scanIterator === "function") {
         const matched = [];
-        for await (const k of upstash.scanIterator({
+        for await (const k of cached.upstash.scanIterator({
           MATCH: pattern,
           COUNT: 100,
         })) {
@@ -192,14 +205,14 @@ export const scanKeys = async (pattern) => {
         }
         return matched;
       }
-      if (typeof upstash.keys === "function") {
-        return await upstash.keys(pattern);
+      if (typeof cached.upstash.keys === "function") {
+        return await cached.upstash.keys(pattern);
       }
       return [];
     }
 
     const matchedKeys = [];
-    for await (const key of client.scanIterator({
+    for await (const key of cached.client.scanIterator({
       MATCH: pattern,
       COUNT: 100,
     })) {
@@ -219,9 +232,9 @@ export const invalidateCache = async (pattern) => {
 };
 
 export const cacheResponse = async (key, ttlSeconds, fetcher) => {
-  const cached = await getJson(key);
-  if (cached !== null) {
-    return cached;
+  const cachedData = await getJson(key);
+  if (cachedData !== null) {
+    return cachedData;
   }
 
   const data = await fetcher();
@@ -229,4 +242,4 @@ export const cacheResponse = async (key, ttlSeconds, fetcher) => {
   return data;
 };
 
-export default useUpstash ? upstash : client;
+export default useUpstash ? cached.upstash : cached.client;

@@ -8,7 +8,7 @@ const seedAdminUser = async () => {
   try {
     const existingAdmin = await User.findOne({ phoneNumber: adminPhone });
     if (existingAdmin) {
-      existingAdmin.roles = "admin";
+      existingAdmin.roles = ["admin"];
       existingAdmin.password = adminPassword;
       await existingAdmin.save();
       console.log("Admin account ensured:", adminPhone);
@@ -27,23 +27,47 @@ const seedAdminUser = async () => {
   }
 };
 
+// Global is used here to maintain a cached connection across hot reloads
+// in development and serverless functions (e.g. Vercel cold starts).
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
 const ConnectDb = async () => {
   try {
-    // Increase buffer timeout globally for Mongoose to handle slow cold starts
-    mongoose.set('bufferTimeoutMS', 30000);
+    if (cached.conn) {
+      console.log("Reusing existing MongoDB connection");
+      return cached.conn;
+    }
 
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 45000,
-      heartbeatFrequencyMS: 10000,
-    });
+    if (!cached.promise) {
+      // Increase buffer timeout globally for Mongoose to handle slow cold starts
+      mongoose.set('bufferTimeoutMS', 30000);
 
-    if (conn) {
-      console.log("Connected to MongoDB", conn.connection.host);
-      // We keep buffering enabled but with a longer timeout
+      const opts = {
+        serverSelectionTimeoutMS: 30000,
+        socketTimeoutMS: 45000,
+        heartbeatFrequencyMS: 10000,
+      };
+
+      console.log("Creating new MongoDB connection...");
+      cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((mongooseInstance) => {
+        console.log("Connected to MongoDB", mongooseInstance.connection.host);
+        return mongooseInstance;
+      });
+    }
+
+    try {
+      cached.conn = await cached.promise;
+    } catch (e) {
+      cached.promise = null;
+      throw e;
     }
 
     await seedAdminUser();
+    return cached.conn;
   } catch (error) {
     console.error("Critical: Error connecting to MongoDB:", error);
     throw error;

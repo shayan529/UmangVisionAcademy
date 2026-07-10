@@ -125,8 +125,25 @@ export const setUserRoles = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // System roles whose name matches a base role (e.g. the "Student" or
+    // "Instructor" system role documents) should be stored as the base role
+    // string, not as an ObjectId. This prevents the mismatch where a user
+    // has a system role ObjectId but no base role string.
     const baseRoles = (user.roles || []).filter(isBaseRole);
-    user.roles = mergeBaseAndCustomRoles(baseRoles, roleIds);
+    const trueCustomRoleIds = [];
+
+    for (const role of validRoles) {
+      const normalizedName = role.name?.toLowerCase();
+      if (role.isSystem && ["student", "instructor", "admin"].includes(normalizedName)) {
+        if (!baseRoles.includes(normalizedName)) {
+          baseRoles.push(normalizedName);
+        }
+      } else {
+        trueCustomRoleIds.push(role._id.toString());
+      }
+    }
+
+    user.roles = mergeBaseAndCustomRoles(baseRoles, trueCustomRoleIds);
     await user.save();
     await User.collection.updateOne(
       { _id: user._id },

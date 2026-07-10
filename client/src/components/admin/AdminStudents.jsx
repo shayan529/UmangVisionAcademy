@@ -18,6 +18,7 @@ import {
   Monitor,
   Gift,
   Eye,
+  EyeOff,
   Pencil,
   UserPlus,
   Save,
@@ -60,7 +61,42 @@ const fmtDate = (d) => {
 // subject. Falls back to the full title when there's no separator.
 const subjectOf = (title) => title?.split(" - ")[0]?.trim() ?? title;
 
-const ROLE_OPTIONS = ["student", "instructor", "admin"];
+const indianCitiesByState = {
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati"],
+  "Arunachal Pradesh": ["Itanagar", "Tawang", "Naharlagun"],
+  Assam: ["Guwahati", "Dibrugarh", "Jorhat", "Silchar"],
+  Bihar: ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur"],
+  Chhattisgarh: ["Raipur", "Bhilai", "Korba", "Durg"],
+  Goa: ["Panaji", "Margao", "Vasco da Gama"],
+  Gujarat: ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
+  Haryana: ["Gurugram", "Faridabad", "Panipat", "Karnal"],
+  "Himachal Pradesh": ["Shimla", "Dharamshala", "Manali"],
+  Jharkhand: ["Ranchi", "Jamshedpur", "Dhanbad"],
+  Karnataka: ["Bengaluru", "Mysuru", "Mangalore", "Hubli"],
+  Kerala: ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam"],
+  "Madhya Pradesh": ["Bhopal", "Indore", "Gwalior", "Jabalpur"],
+  Maharashtra: ["Mumbai", "Pune", "Nagpur", "Nashik"],
+  Manipur: ["Imphal", "Churachandpur"],
+  Meghalaya: ["Shillong", "Tura"],
+  Mizoram: ["Aizawl", "Lunglei"],
+  Nagaland: ["Kohima", "Dimapur"],
+  Odisha: ["Bhubaneswar", "Cuttack", "Rourkela"],
+  Punjab: ["Chandigarh", "Amritsar", "Ludhiana", "Jalandhar"],
+  Rajasthan: ["Jaipur", "Jodhpur", "Udaipur", "Kota"],
+  Sikkim: ["Gangtok", "Namchi"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli"],
+  Telangana: ["Hyderabad", "Warangal", "Nizamabad"],
+  Tripura: ["Agartala", "Udaipur"],
+  "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra"],
+  Uttarakhand: ["Dehradun", "Haridwar", "Nainital"],
+  "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Siliguri"],
+  Delhi: ["New Delhi", "Dwarka", "Rohini"],
+  "Jammu & Kashmir": ["Srinagar", "Jammu"],
+  Ladakh: ["Leh", "Kargil"],
+  Puducherry: ["Puducherry", "Karaikal"],
+};
+
+const ROLE_OPTIONS = ["student", "instructor"];
 
 // user.roles is a MIXED array post-migration: base role strings
 // ("student", "admin") alongside embedded custom-role objects
@@ -144,21 +180,39 @@ const TextField = ({
   type = "text",
   placeholder,
   required,
-}) => (
-  <div>
-    <FieldLabel>
-      {label}
-      {required && <span className="text-red-400 ml-1">*</span>}
-    </FieldLabel>
-    <input
-      type={type}
-      value={value ?? ""}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 px-3.5 text-sm text-white placeholder-slate-500 transition duration-150"
-    />
-  </div>
-);
+  maxLength,
+}) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const inputType = type === "password" && showPassword ? "text" : type;
+
+  return (
+    <div>
+      <FieldLabel>
+        {label}
+        {required && <span className="text-red-400 ml-1">*</span>}
+      </FieldLabel>
+      <div className="relative">
+        <input
+          type={inputType}
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          className="w-full bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 px-3.5 text-sm text-white placeholder-slate-500 transition duration-150 pr-10"
+        />
+        {type === "password" && (
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-indigo-400 focus:outline-none transition-colors"
+          >
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
 
 /* ─── Add Student Modal ───────────────────────────────── */
 const AddStudentModal = ({ courses = [], onClose, onCreated }) => {
@@ -291,9 +345,9 @@ const AddStudentModal = ({ courses = [], onClose, onCreated }) => {
           <TextField
             label="Phone Number"
             value={form.phoneNumber}
-            onChange={set("phoneNumber")}
+            onChange={(val) => set("phoneNumber")(val.replace(/\D/g, ""))}
             placeholder="10-digit mobile number"
-
+            maxLength={10}
             required
           />
           <TextField
@@ -305,20 +359,37 @@ const AddStudentModal = ({ courses = [], onClose, onCreated }) => {
             required
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <TextField
-              label="City"
-              value={form.city}
-              onChange={set("city")}
-              placeholder="City"
-              required
-            />
-            <TextField
-              label="State"
-              value={form.state}
-              onChange={set("state")}
-              placeholder="State"
-              required
-            />
+            <div>
+              <FieldLabel>State <span className="text-red-400 ml-1">*</span></FieldLabel>
+              <select
+                value={form.state}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, state: e.target.value, city: "" }));
+                }}
+                className="w-full bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 px-3.5 text-sm text-white transition duration-150"
+                required
+              >
+                <option value="">Select State</option>
+                {Object.keys(indianCitiesByState).map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <FieldLabel>City <span className="text-red-400 ml-1">*</span></FieldLabel>
+              <select
+                value={form.city}
+                onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                className="w-full bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 px-3.5 text-sm text-white transition duration-150 disabled:opacity-50"
+                disabled={!form.state}
+                required
+              >
+                <option value="">{form.state ? "Select City" : "Choose State First"}</option>
+                {(indianCitiesByState[form.state] || []).map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <TextField
             label="Pincode"
@@ -566,15 +637,39 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
           <TextField
             label="Phone Number"
             value={form.phoneNumber}
-            onChange={set("phoneNumber")}
+            onChange={(val) => set("phoneNumber")(val.replace(/\D/g, ""))}
+            maxLength={10}
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <TextField label="City" value={form.city} onChange={set("city")} />
-            <TextField
-              label="State"
-              value={form.state}
-              onChange={set("state")}
-            />
+            <div>
+              <FieldLabel>State</FieldLabel>
+              <select
+                value={form.state}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, state: e.target.value, city: "" }));
+                }}
+                className="w-full bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 px-3.5 text-sm text-white transition duration-150"
+              >
+                <option value="">Select State</option>
+                {Object.keys(indianCitiesByState).map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <FieldLabel>City</FieldLabel>
+              <select
+                value={form.city}
+                onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                className="w-full bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 px-3.5 text-sm text-white transition duration-150 disabled:opacity-50"
+                disabled={!form.state}
+              >
+                <option value="">{form.state ? "Select City" : "Choose State First"}</option>
+                {(indianCitiesByState[form.state] || []).map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <TextField
             label="Pincode"

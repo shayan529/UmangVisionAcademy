@@ -40,7 +40,6 @@ const ACTION_LABELS = {
   delete: "Delete",
   approve: "Approve",
   reject: "Reject",
-  impersonate: "Impersonate",
   refund: "Refund",
   export: "Export",
   flag: "Flag",

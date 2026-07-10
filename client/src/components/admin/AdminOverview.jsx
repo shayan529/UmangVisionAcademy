@@ -106,7 +106,6 @@ const ACTION_LABELS = {
   edit: 'Edit',
   delete: 'Delete',
   approve: 'Approve',
-  impersonate: 'Impersonate',
   refund: 'Refund',
   export: 'Export',
   flag: 'Flag',
