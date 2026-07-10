@@ -308,6 +308,8 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
       if (destroyed || !containerRef.current) return;
 
       playerRef.current = new YT.Player(containerRef.current, {
+        width: "100%",
+        height: "100%",
         videoId,
         playerVars: {
           autoplay: 1,
@@ -473,18 +475,6 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
       <button
         type="button"
         onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          revealControls();
-          togglePlay();
-        }}
-        onTouchEnd={(e) => {
-          // Some mobile browsers surface YouTube's own native mobile
-          // controls (share/watch-later/suggested video/logo) on tap
-          // regardless of the controls=0 param. Stopping the touch here
-          // — in addition to the click handler above — keeps that tap
-          // from ever reaching the iframe underneath.
-          e.preventDefault();
           e.stopPropagation();
           revealControls();
           togglePlay();
@@ -510,9 +500,7 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
           the only reliable fix is to fully cover the iframe while paused
           — our own center play button (z-30, rendered below) sits above
           this cover. */}
-      {!playing && (
-        <div className="absolute inset-0 bg-black z-20 pointer-events-none" />
-      )}
+
 
       {/* While an actual LIVE broadcast is playing, YouTube keeps a
           persistent watermark/title strip pinned at the top and bottom —
@@ -559,21 +547,20 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
       {/* Center play/pause & skip 10s controls, shown briefly on hover or while paused */}
       {ready && (!playing || hovering) && (
         <div
-          onClick={togglePlay}
-          className="absolute inset-0 flex items-center justify-center cursor-pointer transition-opacity z-30"
+          className="absolute inset-0 flex items-center justify-center transition-opacity z-30 pointer-events-none"
         >
           <div
-            className="flex items-center gap-6"
+            className="flex items-center gap-4 sm:gap-6 pointer-events-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Backward 10s */}
             {!isLive && (
               <button
                 onClick={() => seekOffset(-10)}
-                className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 hover:scale-110 transition cursor-pointer text-white border border-slate-700/50"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 hover:scale-110 transition cursor-pointer text-white border border-slate-700/50"
                 title="Backward 10 seconds"
               >
-                <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-6 sm:h-6 fill-current">
                   <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" />
                 </svg>
               </button>
@@ -582,15 +569,15 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
             {/* Play/Pause */}
             <button
               onClick={togglePlay}
-              className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 hover:scale-110 transition cursor-pointer text-white border border-slate-700/50"
+              className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 hover:scale-110 transition cursor-pointer text-white border border-slate-700/50"
             >
               {playing ? (
-                <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-7 sm:h-7 fill-current">
                   <rect x="6" y="5" width="4" height="14" rx="1" />
                   <rect x="14" y="5" width="4" height="14" rx="1" />
                 </svg>
               ) : (
-                <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-7 sm:h-7 fill-current">
                   <path d="M8 5v14l11-7z" />
                 </svg>
               )}
@@ -600,10 +587,10 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
             {!isLive && (
               <button
                 onClick={() => seekOffset(10)}
-                className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 hover:scale-110 transition cursor-pointer text-white border border-slate-700/50"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 hover:scale-110 transition cursor-pointer text-white border border-slate-700/50"
                 title="Forward 10 seconds"
               >
-                <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-6 sm:h-6 fill-current">
                   <path d="M11.5 8c2.65 0 5.05.99 6.9 2.6L22 7v9h-9l3.62-3.62c-1.39-1.16-3.16-1.88-5.12-1.88-3.54 0-6.55 2.31-7.6 5.5l-2.37-.78C2.92 11.03 6.85 8 11.5 8z" />
                 </svg>
               </button>
@@ -615,7 +602,7 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
       {/* Custom control bar */}
       {ready && (
         <div
-          className={`absolute bottom-0 left-0 right-0 px-4 pb-3 pt-8 bg-black transition-opacity duration-200 z-30 ${hovering ? "opacity-100" : "opacity-0"
+          className={`absolute bottom-0 left-0 right-0 px-4 pb-3 pt-8 bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-200 z-30 ${hovering ? "opacity-100" : "opacity-0"
             }`}
         >
           {!isLive && (
@@ -674,7 +661,7 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
               max={100}
               value={muted ? 0 : volume}
               onChange={handleVolumeChange}
-              className="w-20 h-1.5 rounded-full accent-purple-500 cursor-pointer flex-none"
+              className="hidden sm:block w-20 h-1.5 rounded-full accent-purple-500 cursor-pointer flex-none"
               aria-label="Volume"
             />
 
@@ -838,12 +825,21 @@ const SessionCard = ({ session, onJoin, showToast }) => {
         <p className="text-slate-400 text-sm">🕒 {session.time}</p>
       </div>
       <div className="flex gap-3">
-        <button
-          onClick={() => onJoin(session)}
-          className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-medium hover:opacity-90 transition"
-        >
-          {session.status === "ended" ? "Replay Session" : "Join Session"}
-        </button>
+        {session.status === "upcoming" ? (
+          <button
+            disabled
+            className="px-4 py-2 rounded-xl bg-slate-800 text-slate-500 font-medium cursor-not-allowed border border-slate-700/50"
+          >
+            Join Session
+          </button>
+        ) : (
+          <button
+            onClick={() => onJoin(session)}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-medium hover:opacity-90 transition"
+          >
+            {session.status === "ended" ? "Replay Session" : "Join Session"}
+          </button>
+        )}
       </div>
     </div>
   );

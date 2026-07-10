@@ -176,6 +176,9 @@ export const getSessionById = async (req, res) => {
       .populate("instructor", "name");
 
     if (!session) return res.status(404).json({ message: "Session not found" });
+    if (session.status === "upcoming") {
+      return res.status(403).json({ message: "Session has not started yet" });
+    }
     res.json(session);
   } catch (error) {
     res.status(500).json({ message: error.message });
