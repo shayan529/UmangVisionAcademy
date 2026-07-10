@@ -14,11 +14,16 @@ const getDefaultApiBaseUrl = () => {
   // in a normal browser or WebView, keep hitting the local backend.
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
-    // If it's the production Render domain, use production API URL
-    if (hostname === "umangvisionacademy.onrender.com" || hostname.endsWith(".onrender.com")) {
-      return PRODUCTION_API_BASE_URL;
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("10.")
+    ) {
+      return `http://${hostname}:5000/api`;
     }
-    return `http://${hostname}:5000/api`;
+    // For Vercel, Render, or any custom domain, use the current origin
+    return `${window.location.origin}/api`;
   }
   return PRODUCTION_API_BASE_URL;
 };
@@ -28,11 +33,16 @@ const PRODUCTION_SOCKET_URL = "https://umangvisionacademy.onrender.com";
 const getDefaultSocketUrl = () => {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
-    // If it's the production Render domain, use production Socket URL
-    if (hostname === "umangvisionacademy.onrender.com" || hostname.endsWith(".onrender.com")) {
-      return PRODUCTION_SOCKET_URL;
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("10.")
+    ) {
+      return `http://${hostname}:5000`;
     }
-    return `http://${hostname}:5000`;
+    // For Vercel, Render, or any custom domain, use the current origin
+    return window.location.origin;
   }
   return PRODUCTION_SOCKET_URL;
 };
