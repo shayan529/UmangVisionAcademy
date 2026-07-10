@@ -30,6 +30,7 @@ import BecomeInstructorApplication from "./components/common/BecomeInstructorApp
 import Login from "./components/common/Login";
 import Signup from "./components/common/Signup";
 import Plans from "./components/common/Plans";
+import { SpeedInsights } from "@vercel/speed-insights/react"
 
 import ProtectedRoute from "./components/common/ProtectedRoute";
 
@@ -107,7 +108,7 @@ const Layout = () => {
   const isMobileViewport =
     typeof window !== "undefined" && window.innerWidth < 768;
   const showMobileBottomBar = nativeApp || isMobileViewport;
-  
+
   // Show Navbar and Footer for all non-native app users, regardless of auth status
   const showNavbarAndFooter = nativeApp ? isAuthenticated : true;
 
