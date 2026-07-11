@@ -447,7 +447,7 @@ export default function Settings() {
   const [notifications, setNotifications] = useState({
     liveClass: true,
     newCourse: true,
-    community: false,
+    emailNotifications: true,
   });
   const [isEditing, setIsEditing] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -514,7 +514,7 @@ export default function Settings() {
         setNotifications({
           liveClass: userProfile.notificationSettings.liveClass ?? true,
           newCourse: userProfile.notificationSettings.newCourse ?? true,
-          community: userProfile.notificationSettings.community ?? false,
+          emailNotifications: userProfile.notificationSettings.emailNotifications ?? true,
         });
       }
     }
@@ -1525,7 +1525,7 @@ export default function Settings() {
         </SectionCard>
 
         {/* ── Notifications ── */}
-        <SectionCard title={t("studentSettings.notificationPreferences")}>
+         <SectionCard title={t("studentSettings.notificationPreferences")}>
           {[
             {
               key: "liveClass",
@@ -1538,9 +1538,9 @@ export default function Settings() {
               desc: t("studentSettings.newCourseAlertsDesc"),
             },
             {
-              key: "community",
-              label: t("studentSettings.communityReplies"),
-              desc: t("studentSettings.communityRepliesDesc"),
+              key: "emailNotifications",
+              label: t("studentSettings.emailNotifications"),
+              desc: t("studentSettings.emailNotificationsDesc"),
             },
           ].map((item) => (
             <div

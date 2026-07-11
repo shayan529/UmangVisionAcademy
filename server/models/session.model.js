@@ -43,6 +43,10 @@ const sessionSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    reminderSent: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

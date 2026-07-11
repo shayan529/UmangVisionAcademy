@@ -196,7 +196,7 @@ export const verifyPayment = async (req, res) => {
       await wallet.save();
 
       const user = await User.findById(req.user._id);
-      if (user && user.email) {
+      if (user && user.email && user.notificationSettings?.emailNotifications !== false) {
         sendPlanPurchaseEmail(user.email, user.name, plan.label).catch(console.error);
       }
 
@@ -253,7 +253,7 @@ export const verifyPayment = async (req, res) => {
       await wallet.save();
 
       const user = await User.findById(req.user._id);
-      if (user && user.email) {
+      if (user && user.email && user.notificationSettings?.emailNotifications !== false) {
         const courseTitles = courses.map((c) => c.title);
         sendCourseEnrollmentEmail(user.email, user.name, courseTitles).catch(console.error);
       }
@@ -274,7 +274,7 @@ export const verifyPayment = async (req, res) => {
 // ── POST /billing/cancel ──────────────────────────────────────────────────────
 export const cancelSubscription = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("subscription email name");
+    const user = await User.findById(req.user._id).select("subscription email name notificationSettings");
     if (!user?.subscription?.plan) {
       return res.status(400).json({ message: "No active subscription found." });
     }
@@ -285,7 +285,7 @@ export const cancelSubscription = async (req, res) => {
       "subscription.status": "cancelled",
     });
 
-    if (user.email) {
+    if (user.email && user.notificationSettings?.emailNotifications !== false) {
       sendSubscriptionCancellationEmail(user.email, user.name, planLabel).catch(console.error);
     }
 

@@ -373,7 +373,7 @@ export const verifyDeposit = async (req, res) => {
     await wallet.save();
 
     const user = await User.findById(req.user._id);
-    if (user && user.email) {
+    if (user && user.email && user.notificationSettings?.emailNotifications !== false) {
       sendWalletDepositEmail(user.email, user.name, amountInRupees).catch(console.error);
     }
 

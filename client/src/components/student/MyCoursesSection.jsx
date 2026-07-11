@@ -748,6 +748,10 @@ function CourseCard({ course, animDelay = 0, onRate }) {
     course.instructor?.email?.split("@")[0] ??
     (typeof course.instructor === "string" ? course.instructor : "Instructor");
 
+  const instructorId =
+    course.instructor?._id ??
+    (typeof course.instructor === "string" ? course.instructor : null);
+
   return (
     <div
       className="course-card"
@@ -819,7 +823,23 @@ function CourseCard({ course, animDelay = 0, onRate }) {
                 {course.title}
               </h3>
               <p style={{ fontSize: 12, color: "#64748b", marginTop: 3 }}>
-                {instructorName}
+                {instructorId ? (
+                  <Link
+                    to={`/instructors/${instructorId}`}
+                    style={{
+                      color: "#94a3b8",
+                      textDecoration: "none",
+                      fontWeight: 600,
+                      transition: "color 0.2s",
+                    }}
+                    onMouseEnter={(e) => (e.target.style.color = "#818cf8")}
+                    onMouseLeave={(e) => (e.target.style.color = "#94a3b8")}
+                  >
+                    {instructorName}
+                  </Link>
+                ) : (
+                  instructorName
+                )}
                 {course.level && (
                   <span
                     style={{ marginLeft: 8, color: accent, fontWeight: 600 }}

@@ -34,6 +34,7 @@ import referenceRoutes from "./routes/reference.routes.js";
 import reelRoutes from "./routes/reel.routes.js";
 import noteRoutes from "./routes/note.routes.js";
 import contactRoutes from "./routes/contact.routes.js";
+import { startSessionReminderScheduler } from "./utils/sessionScheduler.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -225,6 +226,10 @@ ConnectDb()
   .then(async () => {
     await connectRedis().catch(() => undefined);
     await setupRedisAdapter();
+    
+    // Start live session reminders scheduler
+    startSessionReminderScheduler();
+
     httpServer.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
       console.log(`Allowed CORS origins: ${ALLOWED_ORIGINS.join(", ")}`);

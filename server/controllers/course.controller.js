@@ -8,7 +8,8 @@ import {
   setJson,
 } from "../utils/redisClient.js";
 import { hasBaseRole, hasPermissionGrant } from "../utils/userRoles.js";
-import { sendCourseEnrollmentEmail } from "../utils/Mailer.js";
+import { sendCourseEnrollmentEmail, sendNewCourseAlertEmail } from "../utils/Mailer.js";
+import { computeInstructorRating } from "../utils/instructorRating.js";
 
 // ── shared shape helper ───────────────────────────────────────────────────────
 const shapeCourse = (c) => ({
@@ -23,7 +24,7 @@ const shapeCourse = (c) => ({
   thumbnailUrl: c.thumbnailUrl,
   demoVideoUrl: c.demoVideoUrl,
   published: c.published,
-  approvalStatus: c.approvalStatus, // "draft" | "pending" | "approved" | "rejected"
+  approvalStatus: c.approvalStatus,
   rejectionReason: c.rejectionReason,
   ratingAverage: c.ratingAverage,
   reviewCount: c.reviewCount,
@@ -32,6 +33,7 @@ const shapeCourse = (c) => ({
   lessons: c.lessons ?? [],
   quiz: c.quiz ?? { title: "Final Course Quiz", questions: [] },
   subjectQuizzes: c.subjectQuizzes ?? [],
+  subjectDetails: c.subjectDetails ?? [],
   ratings: c.ratings ?? [],
   lessonCount: c.lessons?.length ?? 0,
   enrolledCount: c.students?.length ?? 0,
@@ -84,16 +86,14 @@ export const createCourse = async (req, res) => {
       certificate,
       notes,
       subjectQuizzes,
+      subjectDetails,
     } = req.body;
 
     if (!title?.trim())
       return res.status(400).json({ message: "Title is required" });
-    // summary is required only when submitting for review (published=true)
     if (published === true && !summary?.trim())
       return res.status(400).json({ message: "Summary is required" });
 
-    // If instructor clicked "Publish" → set approvalStatus to "pending"
-    // If saved as draft → approvalStatus stays "draft", published stays false
     const wantsPublish = published === true;
 
     const course = await Course.create({
@@ -109,8 +109,8 @@ export const createCourse = async (req, res) => {
       notes: Array.isArray(notes) ? notes : [],
       tags: Array.isArray(tags) ? tags : [],
       quiz: quiz && typeof quiz === "object" ? quiz : undefined,
-      published: false, // never auto-published
-      approvalStatus: wantsPublish ? "pending" : "draft", // pending = awaiting admin
+      published: false,
+      approvalStatus: wantsPublish ? "pending" : "draft",
       instructor: req.user._id,
       board,
       students: [],
@@ -119,6 +119,7 @@ export const createCourse = async (req, res) => {
           ? certificate
           : undefined,
       subjectQuizzes: Array.isArray(subjectQuizzes) ? subjectQuizzes : [],
+      subjectDetails: Array.isArray(subjectDetails) ? subjectDetails : [],
     });
 
     res.status(201).json(shapeCourse(course));
@@ -163,11 +164,10 @@ export const getCourseByIdPublic = async (req, res) => {
   try {
     const cacheKey = `course:public:${req.params.id}`;
     const cached = await getJson(cacheKey);
-    // If cache exists and already contains `notes`, return it immediately.
-    // If cache exists but lacks notes (older shape), fallthrough to rebuild
-    // the shaped payload so we can include notes and overwrite cache.
     if (cached !== null) {
-      if (cached.notes !== undefined) return res.json(cached);
+      if (cached.notes !== undefined && (!cached.instructor || cached.instructor.avgRating !== undefined)) {
+        return res.json(cached);
+      }
     }
 
     const course = await Course.findOne({
@@ -180,6 +180,8 @@ export const getCourseByIdPublic = async (req, res) => {
 
     if (!course) return res.status(404).json({ message: "Course not found" });
 
+    const ratingData = await computeInstructorRating(course.instructor?._id);
+
     const shaped = {
       _id: course._id,
       title: course.title,
@@ -191,7 +193,15 @@ export const getCourseByIdPublic = async (req, res) => {
       thumbnailUrl: course.thumbnailUrl,
       demoVideoUrl: course.demoVideoUrl,
       board: course.board,
-      instructor: course.instructor,
+      instructor: course.instructor
+        ? {
+          _id: course.instructor._id,
+          name: course.instructor.name,
+          email: course.instructor.email,
+          avgRating: ratingData.avgRating,
+          ratingCount: ratingData.ratingCount,
+        }
+        : null,
       tags: course.tags,
       durationHours: course.durationHours,
       ratingAverage: course.ratingAverage,
@@ -233,10 +243,13 @@ export const getAllCoursesAdmin = async (req, res) => {
   }
 };
 
-// ── approveCourse (admin only) ────────────────────────────────────────────────
-// POST /courses/:id/approve
 export const approveCourse = async (req, res) => {
   try {
+    const existingCourse = await Course.findById(req.params.id);
+    if (!existingCourse) return res.status(404).json({ message: "Course not found" });
+
+    const wasAlreadyApproved = existingCourse.approvalStatus === "approved";
+
     const course = await Course.findByIdAndUpdate(
       req.params.id,
       {
@@ -245,9 +258,46 @@ export const approveCourse = async (req, res) => {
         rejectionReason: "",
       },
       { new: true },
-    );
+    ).populate("instructor", "name email");
+
     if (!course) return res.status(404).json({ message: "Course not found" });
     await invalidateCourseCache(course._id);
+
+    // If newly approved, send email notifications to students enrolled in this instructor's other courses
+    if (!wasAlreadyApproved) {
+      // Find other courses taught by this instructor
+      const instructorCourses = await Course.find({
+        instructor: course.instructor?._id,
+        _id: { $ne: course._id },
+      }).select("students");
+
+      // Extract unique student IDs
+      const studentIds = [...new Set(instructorCourses.flatMap(c => c.students.map(id => id.toString())))];
+
+      if (studentIds.length > 0) {
+        // Find these students, check if they have newCourse notifications enabled
+        const students = await User.find({
+          _id: { $in: studentIds },
+          "notificationSettings.newCourse": { $ne: false },
+          email: { $exists: true, $ne: "" },
+        }).select("email name");
+
+        const instructorName = course.instructor?.name || "Instructor";
+
+        // Send email to each student
+        for (const student of students) {
+          sendNewCourseAlertEmail(
+            student.email,
+            student.name,
+            instructorName,
+            course.title,
+            course.summary,
+            course._id
+          ).catch(err => console.error(`Failed to send new course alert to ${student.email}:`, err));
+        }
+      }
+    }
+
     res.json({
       success: true,
       message: "Course approved and published.",
@@ -319,7 +369,7 @@ export const enrolledCourses = async (req, res) => {
       .lean();
 
     const query = { $or: [{ students: studentId }] };
-    
+
     if (student?.subscription?.status === "active" && student?.selectedClass) {
       const escapedClass = student.selectedClass.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
       query.$or.push({ category: new RegExp(`^${escapedClass}$`, "i") });
@@ -482,7 +532,7 @@ export const enrollCourses = async (req, res) => {
     const userDoc = await User.findById(studentId).select("subscription selectedClass enrolledCourses");
     const hasActiveSubscription = userDoc?.subscription?.status === "active";
     const userClass = userDoc?.selectedClass?.toLowerCase().trim();
-    
+
     // Check if the user is an admin or staff (they can bypass payment checks)
     const isAdminOrStaff = hasBaseRole(req.user, "admin") || hasBaseRole(req.user, "staff");
 
@@ -506,8 +556,8 @@ export const enrollCourses = async (req, res) => {
         if (!alreadyInUser && course.price > 0 && !isAdminOrStaff) {
           const matchesClass = userClass && course.category && userClass === course.category.toLowerCase().trim();
           if (!hasActiveSubscription || !matchesClass) {
-             forbidden.push(courseId);
-             return; // Skip enrolling this paid course without matching plan
+            forbidden.push(courseId);
+            return; // Skip enrolling this paid course without matching plan
           }
         }
 
@@ -547,7 +597,7 @@ export const enrollCourses = async (req, res) => {
 
     if (enrolled.length > 0) {
       const user = await User.findById(studentId);
-      if (user && user.email) {
+      if (user && user.email && user.notificationSettings?.emailNotifications !== false) {
         const enrolledCourses = await Course.find({ _id: { $in: enrolled } }).select("title").lean();
         const courseTitles = enrolledCourses.map(c => c.title);
         sendCourseEnrollmentEmail(user.email, user.name, courseTitles).catch(console.error);
@@ -575,7 +625,15 @@ export const getCourseById = async (req, res) => {
       .populate("students", "name email")
       .populate("ratings.user", "name");
     if (!course) return res.status(404).json({ message: "Course not found" });
-    res.json(course);
+
+    const ratingData = await computeInstructorRating(course.instructor?._id);
+    const courseObj = course.toObject();
+    if (courseObj.instructor) {
+      courseObj.instructor.avgRating = ratingData.avgRating;
+      courseObj.instructor.ratingCount = ratingData.ratingCount;
+    }
+
+    res.json(courseObj);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -603,6 +661,7 @@ export const updateCourse = async (req, res) => {
       certificate,
       notes,
       subjectQuizzes,
+      subjectDetails,
     } = req.body;
 
     const existing = await Course.findOne({
@@ -611,31 +670,18 @@ export const updateCourse = async (req, res) => {
     });
     if (!existing) return res.status(404).json({ message: "Course not found" });
 
-    // summary only required when submitting for review
     if (published === true && !summary?.trim())
       return res.status(400).json({ message: "Summary is required" });
 
     const wantsPublish = published === true;
 
-    // Re-submission logic:
-    // - If currently rejected/draft and instructor clicks publish → reset to pending
-    // - If saving as draft → keep or revert to draft
-    // - If already approved and instructor saves → keep approved (edits to live course)
     let newApprovalStatus = existing.approvalStatus;
     let newPublished = existing.published;
 
     if (wantsPublish) {
-      if (existing.approvalStatus === "approved") {
-        // Already approved — keep published (instructor editing a live course)
-        newApprovalStatus = "approved";
-        newPublished = true;
-      } else {
-        // Draft or rejected — send back for review
-        newApprovalStatus = "pending";
-        newPublished = false;
-      }
+      newApprovalStatus = "pending";
+      newPublished = false;
     } else {
-      // Saving as draft — pull back from pending/approved
       newApprovalStatus = "draft";
       newPublished = false;
     }
@@ -656,6 +702,7 @@ export const updateCourse = async (req, res) => {
       ...(certificate !== undefined && { certificate }),
       ...(notes !== undefined && { notes }),
       ...(subjectQuizzes !== undefined && { subjectQuizzes }),
+      ...(subjectDetails !== undefined && { subjectDetails }),
       published: newPublished,
       approvalStatus: newApprovalStatus,
       rejectionReason:
@@ -678,7 +725,7 @@ export const updateCourse = async (req, res) => {
 // ── rateCourse ────────────────────────────────────────────────────────────────
 export const rateCourse = async (req, res) => {
   try {
-    const { rating, review = "" } = req.body;
+    const { rating, review, comment } = req.body;
     const stars = Number(rating);
     if (!stars || stars < 1 || stars > 5)
       return res
@@ -700,14 +747,16 @@ export const rateCourse = async (req, res) => {
       (r) => r.user.toString() === req.user._id.toString(),
     );
 
+    const finalReview = (review ?? comment ?? "").trim();
+
     if (existingIdx !== -1) {
       course.ratings[existingIdx].rating = stars;
-      course.ratings[existingIdx].review = review.trim();
+      course.ratings[existingIdx].review = finalReview;
     } else {
       course.ratings.push({
         user: req.user._id,
         rating: stars,
-        review: review.trim(),
+        review: finalReview,
       });
     }
 

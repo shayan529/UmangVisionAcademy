@@ -807,6 +807,13 @@ export default function CourseDemo() {
                           >
                             {course.instructor.name}
                           </p>
+                          {course.instructor.avgRating !== undefined && (
+                            <p style={{ fontSize: 12, color: course.instructor.avgRating ? "#fbbf24" : "#64748b", marginTop: 2 }}>
+                              {course.instructor.avgRating
+                                ? `★ ${course.instructor.avgRating} (${course.instructor.ratingCount} ${course.instructor.ratingCount === 1 ? 'review' : 'reviews'})`
+                                : "No ratings yet"}
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
@@ -1075,90 +1082,119 @@ export default function CourseDemo() {
                       style={{
                         display: "flex",
                         flexDirection: "column",
-                        gap: 2,
+                        gap: 8,
                       }}
                     >
-                      {course.lessons.map((lesson, i) => (
-                        <div
-                          key={i}
-                          className="lesson-row"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                            padding: "10px 10px",
-                            borderRadius: 10,
-                            transition: "background 0.15s",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 28,
-                              height: 28,
-                              borderRadius: 8,
-                              background: "#1e293b",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: 11,
-                              fontWeight: 700,
-                              color: "#64748b",
-                              flexShrink: 0,
-                            }}
-                          >
-                            {i + 1}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p
-                              style={{
-                                fontSize: 13,
-                                fontWeight: 600,
-                                color: "#e2e8f0",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                              }}
-                            >
-                              {lesson.subject ? `${lesson.subject} — ` : ""}
-                              {lesson.title}
-                            </p>
-                            {lesson.description && (
-                              <p
-                                style={{
-                                  fontSize: 11,
-                                  color: "#64748b",
-                                  marginTop: 2,
-                                  whiteSpace: "nowrap",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                }}
-                              >
-                                {lesson.description}
-                              </p>
+                      {(() => {
+                        const isBulkCourse =
+                          (course.lessons ?? []).some((l) => l.subject) ||
+                          (course.notes ?? []).some((n) => n.subject) ||
+                          (course.subjectQuizzes ?? []).length > 0;
+
+                        const subjects = isBulkCourse
+                          ? Array.from(new Set((course.lessons ?? []).map((l) => l.subject).filter(Boolean))).map((subj) => ({
+                              name: subj,
+                              lessons: (course.lessons ?? []).map((l, i) => ({ ...l, _globalIndex: i })).filter((l) => l.subject === subj)
+                            }))
+                          : [
+                              {
+                                name: "",
+                                lessons: (course.lessons ?? []).map((l, i) => ({ ...l, _globalIndex: i }))
+                              }
+                            ];
+
+                        return subjects.map((subj, sIdx) => (
+                          <div key={sIdx} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                            {subj.name && (
+                              <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", padding: "8px 12px", background: "#1e293b", borderRadius: "8px", border: "1px solid #334155" }}>
+                                {subj.name}
+                              </div>
                             )}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: subj.name ? "4px 0 0 0" : "0" }}>
+                              {subj.lessons.map((lesson) => (
+                                <div
+                                  key={lesson._globalIndex}
+                                  className="lesson-row"
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 10,
+                                    padding: "10px 10px",
+                                    borderRadius: 10,
+                                    transition: "background 0.15s",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      width: 28,
+                                      height: 28,
+                                      borderRadius: 8,
+                                      background: "#1e293b",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      fontSize: 11,
+                                      fontWeight: 700,
+                                      color: "#64748b",
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    {lesson._globalIndex + 1}
+                                  </div>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p
+                                      style={{
+                                        fontSize: 13,
+                                        fontWeight: 600,
+                                        color: "#e2e8f0",
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                      }}
+                                    >
+                                      {lesson.title}
+                                    </p>
+                                    {lesson.description && (
+                                      <p
+                                        style={{
+                                          fontSize: 11,
+                                          color: "#64748b",
+                                          marginTop: 2,
+                                          whiteSpace: "nowrap",
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis",
+                                        }}
+                                      >
+                                        {lesson.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {lesson.durationMinutes > 0 && (
+                                    <span
+                                      style={{
+                                        fontSize: 11,
+                                        color: "#64748b",
+                                        flexShrink: 0,
+                                      }}
+                                    >
+                                      {fmt(lesson.durationMinutes)}
+                                    </span>
+                                  )}
+                                  <span
+                                    style={{
+                                      fontSize: 10,
+                                      color: "#475569",
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    🔒
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                          {lesson.durationMinutes > 0 && (
-                            <span
-                              style={{
-                                fontSize: 11,
-                                color: "#64748b",
-                                flexShrink: 0,
-                              }}
-                            >
-                              {fmt(lesson.durationMinutes)}
-                            </span>
-                          )}
-                          <span
-                            style={{
-                              fontSize: 10,
-                              color: "#475569",
-                              flexShrink: 0,
-                            }}
-                          >
-                            🔒
-                          </span>
-                        </div>
-                      ))}
+                        ));
+                      })()}
                     </div>
                   </div>
                 )}

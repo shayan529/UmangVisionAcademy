@@ -642,6 +642,30 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, action
     setPreviewIndex(null);
   };
 
+  const isBulkCourse =
+    (course.lessons ?? []).some((l) => l.subject) ||
+    (course.notes ?? []).some((n) => n.subject) ||
+    (course.subjectQuizzes ?? []).length > 0;
+
+  const subjects = isBulkCourse
+    ? Array.from(
+        new Set([
+          ...(course.lessons ?? []).map((l) => l.subject).filter(Boolean),
+          ...(course.notes ?? []).map((n) => n.subject).filter(Boolean),
+        ])
+      ).map((subj) => ({
+        name: subj,
+        lessons: (course.lessons ?? []).map((l, i) => ({ ...l, _globalIndex: i })).filter((l) => l.subject === subj),
+        notes: (course.notes ?? []).map((n, i) => ({ ...n, _globalIndex: i })).filter((n) => n.subject === subj),
+      }))
+    : [
+        {
+          name: "",
+          lessons: (course.lessons ?? []).map((l, i) => ({ ...l, _globalIndex: i })),
+          notes: (course.notes ?? []).map((n, i) => ({ ...n, _globalIndex: i })),
+        },
+      ];
+
   return (
     <div
       onClick={onClose}
@@ -841,281 +865,190 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, action
             ))}
         </div>
 
-        {/* ── Lessons — click to preview in modal ── */}
-        {course.lessons?.length > 0 && (
+        {/* ── Curriculum ── */}
+        {(course.lessons?.length > 0 || course.notes?.length > 0) && (
           <div>
-            <div
+            <p
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#64748b",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
                 marginBottom: 8,
               }}
             >
-              <p
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "#64748b",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                Lessons ({course.lessons.length})
-              </p>
-              <span style={{ fontSize: 11, color: "#475569" }}>
-                Click a lesson to preview
-              </span>
-            </div>
+              Curriculum ({course.lessons?.length ?? 0} lessons, {course.notes?.length ?? 0} notes)
+            </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {course.lessons.map((l, i) => {
-                const isVideo = l.type !== "text";
-                const hasContent = isVideo ? !!l.videoUrl : !!l.content;
-
-                return (
-                  <div
-                    key={i}
-                    onClick={() => openPreview(l, i)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      padding: "10px 14px",
-                      background: "#111827",
-                      border: "1px solid #1e293b",
-                      borderRadius: 10,
-                      fontSize: 12,
-                      color: "#e2e8f0",
-                      cursor: "pointer",
-                      transition: "all 0.15s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background =
-                        "rgba(14,165,233,0.07)";
-                      e.currentTarget.style.borderColor =
-                        "rgba(56,189,248,0.25)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "#111827";
-                      e.currentTarget.style.borderColor = "#1e293b";
-                    }}
-                  >
-                    {/* Index */}
-                    <span
-                      style={{
-                        color: "#64748b",
-                        fontSize: 10,
-                        fontWeight: 700,
-                        flexShrink: 0,
-                        width: 16,
-                        textAlign: "center",
-                      }}
-                    >
-                      {i + 1}
-                    </span>
-
-                    {/* Type icon */}
-                    <span style={{ fontSize: 14, flexShrink: 0 }}>
-                      {isVideo ? "🎬" : "📝"}
-                    </span>
-
-                    {/* Title */}
-                    <span
-                      style={{
-                        flex: 1,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {l.title}
-                    </span>
-
-                    {/* Content status badge */}
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 600,
-                        padding: "2px 8px",
-                        borderRadius: 20,
-                        flexShrink: 0,
-                        background: hasContent
-                          ? "rgba(34,197,94,0.1)"
-                          : "rgba(239,68,68,0.1)",
-                        color: hasContent ? "#4ade80" : "#f87171",
-                        border: `1px solid ${hasContent ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
-                      }}
-                    >
-                      {hasContent
-                        ? isVideo
-                          ? "Has video"
-                          : "Has text"
-                        : "No content"}
-                    </span>
-
-                    {/* Play/view icon */}
-                    <div
-                      style={{
-                        flexShrink: 0,
-                        width: 26,
-                        height: 26,
-                        borderRadius: 6,
-                        background: "rgba(14,165,233,0.12)",
-                        border: "1px solid rgba(56,189,248,0.2)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 11,
-                        color: "#38bdf8",
-                      }}
-                    >
-                      {isVideo ? "▶" : "👁"}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Notes — files uploaded with the course ── */}
-        <div>
-          <p
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: "#64748b",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              marginBottom: 8,
-            }}
-          >
-            Notes ({course.notes?.length ?? 0})
-          </p>
-
-          {!course.notes?.length ? (
-            <div
-              style={{
-                padding: "18px 14px",
-                background: "#0b1120",
-                border: "1px dashed #1e293b",
-                borderRadius: 10,
-                textAlign: "center",
-              }}
-            >
-              <span style={{ fontSize: 22 }}>📄</span>
-              <p style={{ fontSize: 12, color: "#475569", marginTop: 6 }}>
-                No notes attached to this course
-              </p>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {course.notes.map((n, i) => (
-                <div
-                  key={n._id ?? i}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 10,
-                    padding: "10px 14px",
-                    background: "#111827",
-                    border: "1px solid #1e293b",
-                    borderRadius: 10,
-                    fontSize: 12,
-                    color: "#e2e8f0",
-                  }}
-                >
-                  {/* Index */}
-                  <span
-                    style={{
-                      color: "#64748b",
-                      fontSize: 10,
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {subjects.map((subj, sIdx) => (
+                <div key={sIdx} style={{ display: "flex", flexDirection: "column" }}>
+                  {subj.name && (
+                    <div style={{
+                      padding: "8px 14px",
+                      background: "#1e293b",
+                      borderRadius: (subj.lessons.length > 0 || subj.notes.length > 0) ? "10px 10px 0 0" : "10px",
+                      color: "#f1f5f9",
                       fontWeight: 700,
-                      flexShrink: 0,
-                      width: 16,
-                      textAlign: "center",
-                      marginTop: 2,
-                    }}
-                  >
-                    {i + 1}
-                  </span>
+                      fontSize: 13,
+                      border: "1px solid #334155",
+                      borderBottom: "none"
+                    }}>
+                      {subj.name}
+                    </div>
+                  )}
+                  
+                  <div style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    padding: subj.name ? "10px" : "0",
+                    background: subj.name ? "#111827" : "transparent",
+                    border: subj.name ? "1px solid #1e293b" : "none",
+                    borderTop: "none",
+                    borderRadius: subj.name ? "0 0 10px 10px" : "0"
+                  }}>
+                    {/* Lessons */}
+                    {subj.lessons.map((l) => {
+                      const isVideo = l.type !== "text";
+                      const hasContent = isVideo ? !!l.videoUrl : !!l.content;
+                      return (
+                        <div
+                          key={"l"+l._globalIndex}
+                          onClick={() => openPreview(l, l._globalIndex)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                            padding: "10px 14px",
+                            background: "#111827",
+                            border: "1px solid #1e293b",
+                            borderRadius: 10,
+                            fontSize: 12,
+                            color: "#e2e8f0",
+                            cursor: "pointer",
+                            transition: "all 0.15s",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "rgba(14,165,233,0.07)";
+                            e.currentTarget.style.borderColor = "rgba(56,189,248,0.25)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "#111827";
+                            e.currentTarget.style.borderColor = "#1e293b";
+                          }}
+                        >
+                          <span style={{ color: "#64748b", fontSize: 10, fontWeight: 700, flexShrink: 0, width: 16, textAlign: "center" }}>
+                            {l._globalIndex + 1}
+                          </span>
+                          <span style={{ fontSize: 14, flexShrink: 0 }}>
+                            {isVideo ? "🎬" : "📝"}
+                          </span>
+                          <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>
+                            {l.title}
+                          </span>
+                          <span style={{
+                            fontSize: 10,
+                            fontWeight: 600,
+                            padding: "2px 8px",
+                            borderRadius: 20,
+                            flexShrink: 0,
+                            background: hasContent ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                            color: hasContent ? "#4ade80" : "#f87171",
+                            border: `1px solid ${hasContent ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
+                          }}>
+                            {hasContent ? (isVideo ? "Has video" : "Has text") : "No content"}
+                          </span>
+                          <div style={{
+                            flexShrink: 0,
+                            width: 26,
+                            height: 26,
+                            borderRadius: 6,
+                            background: "rgba(14,165,233,0.12)",
+                            border: "1px solid rgba(56,189,248,0.2)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 11,
+                            color: "#38bdf8",
+                          }}>
+                            {isVideo ? "▶" : "👁"}
+                          </div>
+                        </div>
+                      );
+                    })}
 
-                  {/* Type icon */}
-                  <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>
-                    📄
-                  </span>
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p
-                      style={{
-                        fontWeight: 600,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {n.title || "Untitled note"}
-                    </p>
-                    {n.description && (
-                      <p
+                    {/* Notes */}
+                    {subj.notes.map((n) => (
+                      <div
+                        key={"n"+n._globalIndex}
                         style={{
-                          fontSize: 11,
-                          color: "#94a3b8",
-                          marginTop: 2,
-                          lineHeight: 1.5,
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 10,
+                          padding: "10px 14px",
+                          background: "#111827",
+                          border: "1px solid #1e293b",
+                          borderRadius: 10,
+                          fontSize: 12,
+                          color: "#e2e8f0",
                         }}
                       >
-                        {n.description}
-                      </p>
-                    )}
+                        <span style={{ color: "#64748b", fontSize: 10, fontWeight: 700, flexShrink: 0, width: 16, textAlign: "center", marginTop: 2 }}>
+                          {n._globalIndex + 1}
+                        </span>
+                        <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>
+                          📄
+                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {n.title || "Untitled note"}
+                          </p>
+                          {n.description && (
+                            <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 2, lineHeight: 1.5 }}>
+                              {n.description}
+                            </p>
+                          )}
+                        </div>
+                        {n.fileUrl ? (
+                          <a href={n.fileUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            padding: "3px 10px",
+                            borderRadius: 20,
+                            flexShrink: 0,
+                            background: "rgba(56,189,248,0.1)",
+                            color: "#38bdf8",
+                            border: "1px solid rgba(56,189,248,0.25)",
+                            textDecoration: "none",
+                            whiteSpace: "nowrap",
+                          }}>
+                            View file ↗
+                          </a>
+                        ) : (
+                          <span style={{
+                            fontSize: 10,
+                            fontWeight: 600,
+                            padding: "3px 10px",
+                            borderRadius: 20,
+                            flexShrink: 0,
+                            background: "rgba(239,68,68,0.1)",
+                            color: "#f87171",
+                            border: "1px solid rgba(239,68,68,0.2)",
+                            whiteSpace: "nowrap",
+                          }}>
+                            No file
+                          </span>
+                        )}
+                      </div>
+                    ))}
                   </div>
-
-                  {/* File link / status */}
-                  {n.fileUrl ? (
-                    <a
-                      href={n.fileUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        padding: "3px 10px",
-                        borderRadius: 20,
-                        flexShrink: 0,
-                        background: "rgba(56,189,248,0.1)",
-                        color: "#38bdf8",
-                        border: "1px solid rgba(56,189,248,0.25)",
-                        textDecoration: "none",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      View file ↗
-                    </a>
-                  ) : (
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 600,
-                        padding: "3px 10px",
-                        borderRadius: 20,
-                        flexShrink: 0,
-                        background: "rgba(239,68,68,0.1)",
-                        color: "#f87171",
-                        border: "1px solid rgba(239,68,68,0.2)",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      No file
-                    </span>
-                  )}
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Lesson preview modal — rendered inside drawer, portalled above everything */}
         {previewLesson && (

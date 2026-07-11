@@ -86,6 +86,13 @@ const courseSchema = new Schema(
         ],
       },
     ],
+    subjectDetails: [
+      {
+        subject: { type: String, required: true, trim: true },
+        description: { type: String, trim: true, default: "" },
+        content: { type: String, trim: true, default: "" },
+      },
+    ],
     certificate: {
       enabled: { type: Boolean, default: false },
       title: { type: String, default: "Certificate of Completion" },
@@ -112,8 +119,8 @@ courseSchema.methods.recalcRatings = function () {
   this.ratingAverage =
     ratings.length > 0
       ? Math.round(
-          (ratings.reduce((s, r) => s + r.rating, 0) / ratings.length) * 10,
-        ) / 10
+        (ratings.reduce((s, r) => s + r.rating, 0) / ratings.length) * 10,
+      ) / 10
       : 0;
 };
 

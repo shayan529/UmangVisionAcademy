@@ -179,7 +179,16 @@ const InstructorAboutPage = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-8">
                     <StatCard icon={BookOpen} label="Courses" value={courses.length} color="emerald" />
                     <StatCard icon={Users} label="Students" value={instructor.totalStudents ?? 0} color="sky" />
-                    <StatCard icon={Star} label="Avg Rating" value={instructor.avgRating ?? "—"} color="amber" />
+                    <StatCard
+                        icon={Star}
+                        label="Avg Rating"
+                        value={
+                            instructor.avgRating
+                                ? `${instructor.avgRating} ★ (${instructor.ratingCount} ${instructor.ratingCount === 1 ? "review" : "reviews"})`
+                                : "No ratings yet"
+                        }
+                        color="amber"
+                    />
                 </div>
 
                 {/* Courses */}

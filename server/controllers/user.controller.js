@@ -13,6 +13,7 @@ import {
 import Course from "../models/courses.model.js";
 import { invalidateCourseCache } from "./course.controller.js";
 import { sendRegistrationEmail, sendReferralSuccessEmail } from "../utils/Mailer.js";
+import { computeInstructorRating } from "../utils/instructorRating.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -257,7 +258,7 @@ export const RegisterUser = async (req, res) => {
       referrer.coins = (referrer.coins ?? 0) + 50;
       referrer.referralsCount = (referrer.referralsCount ?? 0) + 1;
       await referrer.save();
-      if (referrer.email) {
+      if (referrer.email && referrer.notificationSettings?.emailNotifications !== false) {
         sendReferralSuccessEmail(referrer.email, referrer.name, user.name, 50).catch(console.error);
       }
     }
@@ -772,7 +773,7 @@ export const createStudentByAdmin = async (req, res) => {
       referrer.coins = (referrer.coins ?? 0) + 50;
       referrer.referralsCount = (referrer.referralsCount ?? 0) + 1;
       await referrer.save();
-      if (referrer.email) {
+      if (referrer.email && referrer.notificationSettings?.emailNotifications !== false) {
         sendReferralSuccessEmail(referrer.email, referrer.name, user.name, 50).catch(console.error);
       }
     }
@@ -869,10 +870,7 @@ export const getInstructorPublicProfile = async (req, res) => {
       "title thumbnailUrl price category board ratingAverage reviewCount students",
     );
 
-    const ratings = courses.map((c) => c.ratingAverage).filter((r) => r > 0);
-    const avgRating = ratings.length
-      ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
-      : null;
+    const { avgRating, ratingCount } = await computeInstructorRating(id);
     const totalStudents = courses.reduce(
       (sum, c) => sum + (c.students?.length || 0),
       0,
@@ -888,6 +886,7 @@ export const getInstructorPublicProfile = async (req, res) => {
       state: instructor.state,
       createdAt: instructor.createdAt,
       avgRating,
+      ratingCount,
       totalStudents,
       courses,
     });

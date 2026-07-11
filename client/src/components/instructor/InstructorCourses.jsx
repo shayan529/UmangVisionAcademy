@@ -141,26 +141,36 @@ const isBulkCourse = (course) =>
   (course.subjectQuizzes ?? []).length > 0;
 
 // Reconstructs BulkCourseForm's `items` shape from a saved bulk course.
+const norm = (s) => (s ?? "").trim().toLowerCase();
+
+// Reconstructs BulkCourseForm's `items` shape from a saved bulk course.
 const groupBulkCourseIntoItems = (course) => {
   const subjectSet = new Set([
     ...(course.lessons ?? []).map((l) => l.subject).filter(Boolean),
     ...(course.notes ?? []).map((n) => n.subject).filter(Boolean),
     ...(course.subjectQuizzes ?? []).map((q) => q.subject).filter(Boolean),
+    ...(course.subjectDetails ?? []).map((d) => d.subject).filter(Boolean),
   ]);
 
   const detailsMap = new Map(
-    (course.subjectDetails ?? []).map((d) => [d.subject, d]),
+    (course.subjectDetails ?? []).map((d) => [norm(d.subject), d]),
   );
 
   return Array.from(subjectSet).map((subject) => {
-    const quiz = (course.subjectQuizzes ?? []).find((q) => q.subject === subject);
-    const details = detailsMap.get(subject);
+    const quiz = (course.subjectQuizzes ?? []).find(
+      (q) => norm(q.subject) === norm(subject),
+    );
+    const details = detailsMap.get(norm(subject));
     return {
       subject,
       description: details?.description ?? "",
       content: details?.content ?? "",
-      lessons: (course.lessons ?? []).filter((l) => l.subject === subject),
-      notes: (course.notes ?? []).filter((n) => n.subject === subject),
+      lessons: (course.lessons ?? []).filter(
+        (l) => norm(l.subject) === norm(subject),
+      ),
+      notes: (course.notes ?? []).filter(
+        (n) => norm(n.subject) === norm(subject),
+      ),
       quiz: quiz
         ? { title: quiz.title || "Subject Quiz", questions: quiz.questions || [] }
         : { title: "Subject Quiz", questions: [] },
@@ -3564,10 +3574,6 @@ export default function InstructorCourses({ showToast }) {
                               {
                                 label: "Enrolled",
                                 value: course.enrolledCount ?? 0,
-                              },
-                              {
-                                label: "Revenue",
-                                value: `₹${course.revenue ?? 0}`,
                               },
                               {
                                 label: "Rating",
