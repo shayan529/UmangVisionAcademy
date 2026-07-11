@@ -31,11 +31,11 @@ function format12Hour(timeStr) {
   const h = parseInt(parts[0], 10);
   const m = parseInt(parts[1], 10);
   if (isNaN(h) || isNaN(m)) return timeStr;
-  
+
   const ampm = h >= 12 ? "PM" : "AM";
   let displayHour = h % 12;
   if (displayHour === 0) displayHour = 12;
-  
+
   const hh = displayHour.toString().padStart(2, "0");
   const mm = m.toString().padStart(2, "0");
   return `${hh}:${mm} ${ampm}`;
@@ -827,13 +827,25 @@ const SessionRoom = ({ session, currentUser, onLeave }) => {
 
 // ─── Session Card ─────────────────────────────────────────────────────────────
 
-// ─── Session Card (Premium Light) ─────────────────────────────────────────
+// ─── Session Card (Cream/Parchment Premium) ───────────────────────────────
 
-const getInstructorName = (session) => {
-  if (session.instructor && session.instructor.name) return session.instructor.name;
-  if (session.instructorName) return session.instructorName;
-  return "UMANG Vision Academy";
-};
+const getInstructorName = (session) =>
+  session.instructor?.name ||
+  session.instructorName ||
+  session.instructor ||
+  "Umang Vision Academy";
+
+// Converts "16:32" (24h, e.g. from a <input type="time"> or stored value)
+// into "4:32 PM". Falls back to the raw string if it can't parse it.
+function formatTime12h(timeStr = "") {
+  if (!timeStr) return "";
+  const [hStr, mStr] = timeStr.split(":");
+  const h = parseInt(hStr, 10);
+  if (Number.isNaN(h) || mStr === undefined) return timeStr;
+  const period = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${mStr} ${period}`;
+}
 
 const SessionCard = ({ session, onJoin, showToast }) => {
   const instructorName = getInstructorName(session);
@@ -841,14 +853,14 @@ const SessionCard = ({ session, onJoin, showToast }) => {
 
   return (
     <div
-      className="relative bg-gradient-to-br from-white to-slate-50 border border-slate-200
+      className="relative bg-[#FBEFDD] border border-[#EADFC7]
                  rounded-2xl p-5 flex flex-col md:flex-row md:items-center md:justify-between
-                 gap-4 shadow-[0_2px_10px_rgba(15,23,42,0.06)]
-                 hover:shadow-[0_6px_20px_rgba(15,23,42,0.10)] transition-shadow duration-300
+                 gap-4 shadow-[0_2px_10px_rgba(120,90,50,0.08)]
+                 hover:shadow-[0_6px_20px_rgba(120,90,50,0.14)] transition-shadow duration-300
                  overflow-hidden"
     >
-      {/* Marigold accent line — ties into the About Us page motif */}
-      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#F2A93B] to-amber-500" />
+      {/* Peach accent line */}
+      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#F4C9A0] to-[#E8A876]" />
 
       <div className="pl-2">
         <div className="flex items-center gap-3 mb-2">
@@ -856,17 +868,17 @@ const SessionCard = ({ session, onJoin, showToast }) => {
             className={`w-2.5 h-2.5 rounded-full ${session.status === "live"
               ? "bg-emerald-500 animate-pulse"
               : session.status === "ended"
-                ? "bg-slate-400"
-                : "bg-indigo-500"
+                ? "bg-[#B9A98A]"
+                : "bg-[#C9895C]"
               }`}
           />
-          <h3 className="text-lg font-semibold text-slate-900">{session.title}</h3>
+          <h3 className="text-lg font-semibold text-[#3D2B1F]">{session.title}</h3>
           <span
             className={`px-2 py-1 rounded-full text-xs font-medium ${session.status === "live"
               ? "bg-emerald-100 text-emerald-700"
               : session.status === "ended"
-                ? "bg-slate-200 text-slate-600"
-                : "bg-indigo-100 text-indigo-700"
+                ? "bg-[#EADFC7] text-[#7A6A50]"
+                : "bg-[#F6DDC0] text-[#8B5A2B]"
               }`}
           >
             {session.status}
@@ -875,34 +887,34 @@ const SessionCard = ({ session, onJoin, showToast }) => {
 
         {/* Instructor chip */}
         <div className="flex items-center gap-2 mb-2.5">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#F2A93B] to-amber-600 flex items-center justify-center flex-none shadow-sm">
-            <span className="text-[10px] font-bold text-white">{instructorInitial}</span>
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#F4C9A0] to-[#E8A876] flex items-center justify-center flex-none shadow-sm">
+            <span className="text-[10px] font-bold text-[#5A3A1F]">{instructorInitial}</span>
           </div>
-          <p className="text-sm text-slate-600">
-            <span className="text-slate-400">Instructor:</span>{" "}
-            <span className="font-medium text-slate-700">{instructorName}</span>
+          <p className="text-sm text-[#8B6F47]">
+            <span className="text-[#000000]">Instructor:</span>{" "}
+            <span className="font-medium text-[#5A4530]">{instructorName}</span>
           </p>
         </div>
 
-        <p className="text-slate-500 text-sm">📅 {session.date}</p>
-        <p className="text-slate-500 text-sm">🕒 {format12Hour(session.time)}</p>
+        <p className="text-[#000000] text-sm">📅 {session.date}</p>
+        <p className="text-[#000000] text-sm">🕒 {formatTime12h(session.time)}</p>
       </div>
 
       <div className="flex gap-3 pl-2 md:pl-0">
         {session.status === "upcoming" ? (
           <button
             disabled
-            className="px-4 py-2 rounded-xl bg-slate-100 text-slate-400 font-medium
-                       cursor-not-allowed border border-slate-200"
+            className="px-4 py-2 rounded-xl bg-[#EFE3CC] text-[#B4A17E] font-medium
+                       cursor-not-allowed border border-[#E0D3B4]"
           >
             Join Session
           </button>
         ) : (
           <button
             onClick={() => onJoin(session)}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#F2A93B] to-amber-500
-                       text-white font-medium shadow-sm hover:shadow-md hover:opacity-95
-                       transition-all cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#F4C9A0] to-[#E8A876]
+                       text-[#5A3A1F] font-semibold shadow-sm hover:shadow-md hover:opacity-95
+                       transition-all"
           >
             {session.status === "ended" ? "Replay Session" : "Join Session"}
           </button>

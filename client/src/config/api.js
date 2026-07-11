@@ -131,6 +131,26 @@ export const api = axios.create({
   },
 });
 
+const replaceLocalhostUrls = (obj) => {
+  if (typeof obj === "string") {
+    return obj.replace(
+      /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):\d+/,
+      SOCKET_URL
+    );
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(replaceLocalhostUrls);
+  }
+  if (obj !== null && typeof obj === "object") {
+    const newObj = {};
+    for (const key in obj) {
+      newObj[key] = replaceLocalhostUrls(obj[key]);
+    }
+    return newObj;
+  }
+  return obj;
+};
+
 // Attach a Bearer token if we have one saved locally. This is a fallback
 // auth path alongside the existing httpOnly cookie: cross-origin/cross-scheme
 // cookies (e.g. "capacitor://localhost" talking to your real domain) are
@@ -147,7 +167,12 @@ api.interceptors.request.use((config) => {
 
 // Global interceptor to sanitize 5xx (Internal Server Errors) and handle network errors cleanly on the frontend
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data) {
+      response.data = replaceLocalhostUrls(response.data);
+    }
+    return response;
+  },
   (error) => {
     if (error.response) {
       const status = error.response.status;
@@ -183,7 +208,12 @@ axios.interceptors.request.use((config) => {
 });
 
 axios.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data) {
+      response.data = replaceLocalhostUrls(response.data);
+    }
+    return response;
+  },
   (error) => {
     if (error.response) {
       const status = error.response.status;
