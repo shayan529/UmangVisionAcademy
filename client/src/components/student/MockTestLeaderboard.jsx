@@ -79,24 +79,7 @@ export default function MockTestLeaderboard() {
 
   return (
     <div className="min-h-screen bg-[#060d1a] p-4 md:p-8 max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <button
-          onClick={() => navigate("/student-dashboard/mock-tests")}
-          className="text-slate-400 hover:text-white transition-colors"
-        >
-          <FaArrowLeft />
-        </button>
-        <div>
-          <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <FaTrophy className="text-amber-400" />
-            {t("studentMockTests.leaderboard")}
-          </h1>
-          <p className="text-slate-400 text-sm">
-            {t("studentMockTests.topPerformers")}
-          </p>
-        </div>
-      </div>
+
 
       {/* Test selector */}
       <div className="bg-[#0b1628] border border-[#1a2e48] rounded-2xl p-4 mb-5">

@@ -352,36 +352,7 @@ export default function MockTestResultsAnalytics() {
 
   return (
     <div className="min-h-screen bg-[#060d1a] p-4 md:p-8 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <button
-          onClick={() => navigate("/student-dashboard/mock-tests")}
-          className="text-slate-400 hover:text-white transition-colors"
-        >
-          <FaArrowLeft />
-        </button>
-        <div>
-          <h1 className="text-xl font-bold text-slate-100">
-            Results & Analytics
-          </h1>
-          {currentResult && attemptId && (
-            <p className="text-slate-400 text-sm">{currentResult.testTitle}</p>
-          )}
-        </div>
 
-        {currentResult && (
-          <button
-            onClick={() =>
-              navigate(
-                `/student-dashboard/mock-tests/leaderboard/${currentResult.mockTestId || ""}`,
-              )
-            }
-            className="ml-auto flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 transition-colors"
-          >
-            <FaTrophy className="text-xs" /> Leaderboard
-          </button>
-        )}
-      </div>
 
       {/* Score card */}
       {currentResult && activeTab === "Review" && (

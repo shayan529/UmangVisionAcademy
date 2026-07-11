@@ -228,7 +228,7 @@ export default function InstructorDashboard() {
                 borderRadius: 10,
                 border: "none",
                 textAlign: "left",
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: 500,
                 cursor: "pointer",
                 background: activeSection === id ? "#2e1065" : "transparent",
@@ -237,11 +237,13 @@ export default function InstructorDashboard() {
                 transition: "all 0.15s",
               }}
             >
-              <span>
-                {icon}{" "}
-                {id === "mock-tests"
-                  ? t("instructorSidebar.mockTests")
-                  : t(`instructorSidebar.${id}`)}
+              <span style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+                <span>
+                  {id === "mock-tests"
+                    ? t("instructorSidebar.mockTests")
+                    : t(`instructorSidebar.${id}`)}
+                </span>
               </span>
 
               {id === "notifications" && unread > 0 && (

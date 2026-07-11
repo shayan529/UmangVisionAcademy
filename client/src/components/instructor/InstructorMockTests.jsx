@@ -481,9 +481,9 @@ export default function InstructorMockTests() {
                           padding: "6px 20px",
                           minWidth: "110px",
                           justifyContent: "center",
-                          background: "rgba(100,116,139,0.2)",
-                          color: "#cbd5e1",
-                          border: "1.5px solid rgba(100,116,139,0.4)",
+                          background: "rgba(245,158,11,0.15)", // Amber
+                          color: "#fbbf24",
+                          border: "1.5px solid rgba(245,158,11,0.4)",
                           letterSpacing: "0.02em",
                         }}
                       >
@@ -492,8 +492,9 @@ export default function InstructorMockTests() {
                             width: 8,
                             height: 8,
                             borderRadius: "50%",
-                            background: "#94a3b8",
+                            background: "#fbbf24",
                             flexShrink: 0,
+                            boxShadow: "0 0 8px #fbbf24",
                           }}
                         />
                         {t("instructorMockTests.draftState")}
@@ -511,7 +512,7 @@ export default function InstructorMockTests() {
                         justifyContent: "center",
                         background: "rgba(139,92,246,0.15)",
                         color: "#ffffff",
-                        border: "1.5px solid rgba(139,92,246,0.4)",
+                        border: "1px solid rgba(139,92,246,0.4)",
                         letterSpacing: "0.02em",
                         cursor: "pointer",
                         transition: "background 0.15s, border-color 0.15s",
@@ -525,16 +526,6 @@ export default function InstructorMockTests() {
                           "rgba(139,92,246,0.15)")
                       }
                     >
-                      <span
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          background: "#a78bfa",
-                          flexShrink: 0,
-                          boxShadow: "0 0 8px #a78bfa",
-                        }}
-                      />
                       {test.isPublished
                         ? t("instructorMockTests.unpublish")
                         : t("instructorMockTests.publish")}

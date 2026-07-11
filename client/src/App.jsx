@@ -1,5 +1,5 @@
-import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loadCurrentUser } from "./redux/slices/authSlice";
 import { fetchCart } from "./redux/slices/cartSlice";
@@ -8,6 +8,7 @@ import Navbar from "./Layout/Navbar";
 import Footer from "./Layout/Footer";
 import MobileBottomBar from "./Layout/MobileBottomBar";
 import { isNativeApp } from "./utils/appEnvironment";
+import { useSwipeable } from "react-swipeable";
 
 import Home from "./pages/Home";
 import MobileChat from "./components/mobile/MobileChat";
@@ -103,21 +104,118 @@ const ScrollToTop = () => {
 };
 
 const Layout = () => {
-  const { isAuthenticated } = useSelector((s) => s.auth);
+  const { isAuthenticated, user } = useSelector((s) => s.auth);
+  const location = useLocation();
+  const navigate = useNavigate();
+  
   const nativeApp = isNativeApp();
   const isMobileViewport =
     typeof window !== "undefined" && window.innerWidth < 768;
   const showMobileBottomBar = nativeApp || isMobileViewport;
 
-  // Show Navbar and Footer for all non-native app users, regardless of auth status
   const showNavbarAndFooter = nativeApp ? isAuthenticated : true;
 
+  // --- Mobile Swipe Navigation Logic ---
+  const [slideAnim, setSlideAnim] = useState("");
+  const prevTabRef = useRef(null);
+
+  const getProfileLink = () => {
+    if (!user) return "/login";
+    const hasAdminRole = user.roles?.includes("admin");
+    const hasCustomRole = user.roles?.some((r) => typeof r === "object");
+    const hasInstructorRole = user.roles?.includes("instructor");
+    return hasAdminRole
+      ? "/admin-dashboard"
+      : hasCustomRole
+        ? "/staff-dashboard"
+        : hasInstructorRole
+          ? "/instructor-dashboard"
+          : "/student-dashboard/settings";
+  };
+
+  const tabs = [
+    "/",
+    "/mobile/chat",
+    "/mobile/notes",
+    "/mobile/reels",
+    getProfileLink(),
+  ];
+
+  const getTabIndex = (path) => {
+    for (let i = 0; i < tabs.length; i++) {
+      if (tabs[i] === "/") {
+        if (path === "/") return i;
+      } else if (path.startsWith(tabs[i])) {
+        return i;
+      } else if (i === 4 && path.startsWith("/student-dashboard")) {
+        return i;
+      } else if (i === 4 && path.startsWith("/instructor-dashboard")) {
+        return i;
+      }
+    }
+    return -1;
+  };
+
+  const currentTabIndex = getTabIndex(location.pathname);
+
+  useEffect(() => {
+    if (showMobileBottomBar && prevTabRef.current !== null && currentTabIndex !== -1 && prevTabRef.current !== currentTabIndex) {
+      setSlideAnim(currentTabIndex > prevTabRef.current ? "animate-slide-in-right" : "animate-slide-in-left");
+      const timer = setTimeout(() => {
+        setSlideAnim("");
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+    prevTabRef.current = currentTabIndex;
+  }, [currentTabIndex, showMobileBottomBar]);
+
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: (eventData) => {
+      if (eventData.event.target.closest('.overflow-x-auto, .overflow-x-scroll')) return;
+      if (currentTabIndex !== -1 && currentTabIndex < tabs.length - 1) {
+        navigate(tabs[currentTabIndex + 1]);
+      }
+    },
+    onSwipedRight: (eventData) => {
+      if (eventData.event.target.closest('.overflow-x-auto, .overflow-x-scroll')) return;
+      if (currentTabIndex > 0) {
+        navigate(tabs[currentTabIndex - 1]);
+      }
+    },
+    delta: 50,
+    trackMouse: false,
+  });
+
   return (
-    <div className={`bg-slate-950 text-slate-100 min-h-screen ${showMobileBottomBar ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : 'pb-0'} md:pb-0`}>
+    <div className={`bg-slate-950 text-slate-100 min-h-screen ${showMobileBottomBar ? 'pb-[calc(5rem+env(safe-area-inset-bottom))] overflow-x-hidden' : 'pb-0'} md:pb-0`}>
+      <style>{`
+        @keyframes slideInRight {
+          0% { transform: translateX(30%); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideInLeft {
+          0% { transform: translateX(-30%); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
+        }
+        .animate-slide-in-right {
+          animation: slideInRight 250ms cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+        }
+        .animate-slide-in-left {
+          animation: slideInLeft 250ms cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+        }
+      `}</style>
+      
       {showNavbarAndFooter && <Navbar />}
-      <div className={showNavbarAndFooter ? "pb-8" : ""}>
-        <Outlet />
+      
+      <div 
+        {...(showMobileBottomBar ? swipeHandlers : {})} 
+        className={showNavbarAndFooter ? "pb-8" : ""}
+      >
+        <div className={showMobileBottomBar ? slideAnim : ""}>
+          <Outlet />
+        </div>
       </div>
+      
       {showMobileBottomBar && <MobileBottomBar />}
       {showNavbarAndFooter && <Footer />}
     </div>
@@ -268,6 +366,8 @@ function App() {
               <Route index element={<AvailableMockTests />} />
               <Route path="results" element={<MockTestResultsAnalytics />} />
               <Route path="leaderboard" element={<MockTestLeaderboard />} />
+              <Route path="leaderboard/:testId" element={<MockTestLeaderboard />} />
+              <Route path="result/:attemptId" element={<MockTestResultsAnalytics />} />
             </Route>
           </Route>
 
@@ -277,14 +377,6 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["student"]}>
                 <MockTestPlayer />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="student-dashboard/mock-tests/result/:attemptId"
-            element={
-              <ProtectedRoute allowedRoles={["student"]}>
-                <MockTestResultsAnalytics />
               </ProtectedRoute>
             }
           />

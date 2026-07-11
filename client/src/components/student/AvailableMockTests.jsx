@@ -72,15 +72,7 @@ export default function AvailableMockTests() {
 
   return (
     <div className="min-h-screen bg-[#060d1a] p-4 md:p-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-100 mb-1">
-          {t("studentMockTests.availableMockTests")}
-        </h1>
-        <p className="text-slate-400 text-sm">
-          {t("studentMockTests.testsAvailable", { count: filtered.length })}
-        </p>
-      </div>
+
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-6">

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { fetchSessions } from "../../redux/slices/sessionSlice";
 import { io } from "socket.io-client";
 import { SOCKET_URL } from "../../config/api.js";
@@ -941,6 +942,7 @@ const SessionSkeleton = () => (
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const StudentSessions = ({ showToast, currentUser: propCurrentUser }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const reduxUser = useSelector((state) => state.auth.user);
   const currentUser = propCurrentUser || reduxUser;
@@ -972,9 +974,9 @@ const StudentSessions = ({ showToast, currentUser: propCurrentUser }) => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white">Live Sessions</h1>
+        <h1 className="text-3xl font-bold text-white">{t("studentSessions.title")}</h1>
         <p className="text-slate-400 mt-1">
-          Join upcoming and live instructor sessions.
+          {t("studentSessions.subtitle")}
         </p>
       </div>
 

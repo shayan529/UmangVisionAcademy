@@ -158,7 +158,7 @@ const Sidebar = ({
       <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>
         {item.icon}
       </span>
-      {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+      {!collapsed && <span className="text-[15px] font-medium">{item.label}</span>}
     </NavLink>
   );
 
@@ -183,7 +183,7 @@ const Sidebar = ({
             ${mockTestsOpen ? "bg-[#1e293b] text-slate-200" : "text-[#64748b] hover:text-white hover:bg-[#1e293b]"}`}
         >
           <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>📝</span>
-          <span className="text-sm font-medium flex-1 text-left">
+          <span className="text-[15px] font-medium flex-1 text-left">
             {t("studentSidebar.mockTests")}
           </span>
           <span style={{ fontSize: 10, color: "#64748b" }}>

@@ -1796,5 +1796,9 @@
     "statusSuccess": "सफल",
     "statusFailed": "विफल",
     "statusPending": "लंबित"
+  },
+  "studentSessions": {
+    "title": "लाइव सत्र",
+    "subtitle": "आगामी और लाइव प्रशिक्षक सत्रों में शामिल हों।"
   }
 }
