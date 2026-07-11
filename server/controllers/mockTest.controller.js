@@ -41,7 +41,7 @@ export const createMockTest = async (req, res) => {
       tags,
       difficulty,
       instructor: req.user._id,
-      isPublished: false,
+      isPublished: true,
     });
 
     await invalidateCache("mocktests:available*");

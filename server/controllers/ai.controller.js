@@ -296,6 +296,104 @@ Each question must have exactly 4 options and a correctOptionIndex between 0 and
   }
 };
 
+export const generateMockTestQuestionsAI = async (req, res) => {
+  try {
+    const { subject, className, board, difficulty, topic, count } = req.body;
+    
+    if (!subject || !className) {
+      return res.status(400).json({ message: "Subject and class are required." });
+    }
+
+    const questionCount = count || 5;
+    const focusTopic = topic ? `Topic Focus: ${topic}` : "General course syllabus";
+
+    const prompt = `Generate exactly ${questionCount} multiple choice questions for a mock test based on the following details.
+
+Subject: ${subject}
+Class / Grade Level: ${className}
+Board: ${board || "General"}
+Difficulty: ${difficulty || "Medium"}
+${focusTopic}
+
+Calibrate the difficulty, vocabulary, and depth strictly to the stated class level and board. Ensure the difficulty matches the requested "${difficulty || "Medium"}" level.
+
+Return valid JSON only in the following exact shape:
+{
+  "questions": [
+    {
+      "questionText": "...",
+      "options": ["...", "...", "...", "..."],
+      "correctOption": 0,
+      "explanation": "...",
+      "marks": 1
+    }
+  ]
+}
+
+- "options" must be an array of exactly 4 string choices.
+- "correctOption" must be an integer (0, 1, 2, or 3) representing the index of the correct answer in the options array.
+- "explanation" must clearly explain why the answer is correct.
+- "marks" should default to 1, or more if it's a very hard question.
+Do NOT include markdown formatting outside the JSON block. Return ONLY the raw JSON string.`;
+
+    const response = await groq.chat.completions.create({
+      model: GROQ_MODEL,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: Math.min(2500, questionCount * 300),
+      temperature: 0.7,
+    });
+
+    const text = response.choices?.[0]?.message?.content?.trim() ?? "";
+    let parsed;
+
+    try {
+      parsed = JSON.parse(text);
+    } catch (parseErr) {
+      const cleaned = text
+        .replace(/```json/gi, "")
+        .replace(/```/g, "")
+        .trim();
+      const start = cleaned.indexOf("{");
+      const end = cleaned.lastIndexOf("}");
+      if (start === -1 || end === -1 || end < start) {
+        throw new Error("AI returned invalid JSON.");
+      }
+      parsed = JSON.parse(cleaned.slice(start, end + 1));
+    }
+
+    const questions = parsed.questions;
+    if (
+      !Array.isArray(questions) ||
+      questions.length === 0 ||
+      !questions.every(
+        (q) =>
+          typeof q.questionText === "string" &&
+          Array.isArray(q.options) &&
+          q.options.length === 4 &&
+          q.options.every((opt) => typeof opt === "string") &&
+          Number.isInteger(q.correctOption) &&
+          q.correctOption >= 0 &&
+          q.correctOption < 4 &&
+          typeof q.explanation === "string"
+      )
+    ) {
+      return res.status(500).json({
+        message: "AI did not return a valid question format. Please try again.",
+      });
+    }
+
+    res.json({ questions });
+  } catch (err) {
+    console.error("AI mock test generation error:", err);
+    res.status(500).json({
+      message: err.response?.data?.message || err.message || "Question generation failed.",
+    });
+  }
+};
+
 /**
  * GET /ai/news
  * Query: ?lang=en|hi

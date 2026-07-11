@@ -29,7 +29,7 @@ const mockTestSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    isPublished: { type: Boolean, default: false },
+    isPublished: { type: Boolean, default: true },
     attempts: { type: Number, default: 0 }, // total attempts count
     tags: [{ type: String }],
     difficulty: {

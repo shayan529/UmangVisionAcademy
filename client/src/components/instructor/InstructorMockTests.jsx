@@ -11,7 +11,10 @@ import {
   FaClipboardList,
   FaChevronDown,
   FaChevronUp,
+  FaRobot,
+  FaSpinner,
 } from "react-icons/fa";
+import api from "../../config/api";
 import {
   fetchInstructorTests,
   createMockTest,
@@ -62,6 +65,10 @@ export default function InstructorMockTests() {
     questions: [emptyQuestion()],
   });
 
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [aiTopic, setAiTopic] = useState("");
+  const [aiCount, setAiCount] = useState(5);
+
   useEffect(() => {
     dispatch(fetchInstructorTests());
   }, [dispatch]);
@@ -94,6 +101,40 @@ export default function InstructorMockTests() {
       ...prev,
       questions: prev.questions.filter((_, i) => i !== idx),
     }));
+
+  const handleGenerateAI = async () => {
+    if (!form.subject || !form.class) {
+      return toast.error(t("instructorMockTests.subjectClassRequired", "Subject and Class are required for AI generation."));
+    }
+    try {
+      setIsGeneratingAI(true);
+      const res = await api.post("/ai/generate-mock-test", {
+        subject: form.subject,
+        className: form.class,
+        board: form.board,
+        difficulty: form.difficulty,
+        topic: aiTopic,
+        count: aiCount
+      });
+      const generated = res.data.questions;
+      
+      setForm((prev) => {
+        let newQuestions = [...prev.questions];
+        if (newQuestions.length === 1 && !newQuestions[0].questionText.trim()) {
+          newQuestions = generated;
+        } else {
+          newQuestions = [...newQuestions, ...generated];
+        }
+        return { ...prev, questions: newQuestions };
+      });
+      toast.success(t("instructorMockTests.aiGeneratedSuccess", "Successfully generated questions with AI!"));
+      setAiTopic("");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || t("instructorMockTests.aiGenerateFailed", "Failed to generate questions."));
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!form.title.trim())
@@ -292,6 +333,46 @@ export default function InstructorMockTests() {
               className="input-dark"
             />
           </Field>
+
+          {/* AI Generation Section */}
+          <div className="bg-indigo-900/20 border border-indigo-500/30 rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <FaRobot className="text-indigo-400" />
+              <h3 className="text-indigo-200 font-semibold text-sm">✨ Auto-generate with AI</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-slate-400 mb-1">Topic Focus (Optional)</label>
+                <input
+                  value={aiTopic}
+                  onChange={(e) => setAiTopic(e.target.value)}
+                  placeholder="e.g., Algebra, Thermodynamics..."
+                  className="input-dark w-full text-sm"
+                  disabled={isGeneratingAI}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">No. of Questions</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={aiCount}
+                  onChange={(e) => setAiCount(+e.target.value)}
+                  className="input-dark w-full text-sm"
+                  disabled={isGeneratingAI}
+                />
+              </div>
+            </div>
+            <button
+              onClick={handleGenerateAI}
+              disabled={isGeneratingAI}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors w-full justify-center md:w-auto mt-2"
+            >
+              {isGeneratingAI ? <FaSpinner className="animate-spin" /> : <FaRobot />}
+              {isGeneratingAI ? "Generating..." : "Generate Questions"}
+            </button>
+          </div>
 
           {/* Questions */}
           <div>

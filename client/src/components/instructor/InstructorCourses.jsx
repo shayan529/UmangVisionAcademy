@@ -132,6 +132,42 @@ const findMissingLessonTitle = (lessons = []) => {
   return idx === -1 ? null : idx;
 };
 
+// A course was created via bulk upload if any lesson/note carries a
+// per-subject tag, or it has subject-level quizzes — single-course
+// creation never sets these.
+const isBulkCourse = (course) =>
+  (course.lessons ?? []).some((l) => l.subject) ||
+  (course.notes ?? []).some((n) => n.subject) ||
+  (course.subjectQuizzes ?? []).length > 0;
+
+// Reconstructs BulkCourseForm's `items` shape from a saved bulk course.
+const groupBulkCourseIntoItems = (course) => {
+  const subjectSet = new Set([
+    ...(course.lessons ?? []).map((l) => l.subject).filter(Boolean),
+    ...(course.notes ?? []).map((n) => n.subject).filter(Boolean),
+    ...(course.subjectQuizzes ?? []).map((q) => q.subject).filter(Boolean),
+  ]);
+
+  const detailsMap = new Map(
+    (course.subjectDetails ?? []).map((d) => [d.subject, d]),
+  );
+
+  return Array.from(subjectSet).map((subject) => {
+    const quiz = (course.subjectQuizzes ?? []).find((q) => q.subject === subject);
+    const details = detailsMap.get(subject);
+    return {
+      subject,
+      description: details?.description ?? "",
+      content: details?.content ?? "",
+      lessons: (course.lessons ?? []).filter((l) => l.subject === subject),
+      notes: (course.notes ?? []).filter((n) => n.subject === subject),
+      quiz: quiz
+        ? { title: quiz.title || "Subject Quiz", questions: quiz.questions || [] }
+        : { title: "Subject Quiz", questions: [] },
+    };
+  });
+};
+
 const statusStyle = (course) => {
   const s = course.approvalStatus ?? (course.published ? "approved" : "draft");
   switch (s) {
@@ -2410,6 +2446,8 @@ export default function InstructorCourses({ showToast }) {
   const [view, setView] = useState("list");
   const [expandedId, setExpandedId] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [editBulkForm, setEditBulkForm] = useState(null);
+  const [editMode, setEditMode] = useState("single"); // "single" | "bulk"
   const [createForm, setCreateForm] = useState(() => {
     const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
     if (!saved) return EMPTY_FORM;
@@ -2510,35 +2548,65 @@ export default function InstructorCourses({ showToast }) {
 
   const openEdit = (course) => {
     setExpandedId(course._id);
-    // Infer courseType from the stored category:
-    // if it matches one of our known classes -> "classes", otherwise "competitive"
-    const category = course.category ?? "";
-    const isKnownClass = CLASSES.includes(category);
-    setEditForm({
-      subject: course.title ?? "",
-      courseType: isKnownClass || !category ? "classes" : "competitive",
-      className: isKnownClass ? category : "",
-      examName: isKnownClass || !category ? "" : category,
-      board: course.board ?? "",
-      description: course.summary ?? "",
-      lessons: course.lessons ?? [],
-      notes: course.notes ?? [],
-      content: course.description ?? "",
-      thumbnailUrl: course.thumbnailUrl ?? "",
-      demoVideoUrl: course.demoVideoUrl ?? "",
-      price: course.price ?? 0,
-      quiz: course.quiz ?? { title: "Final Quiz", questions: [] },
-      certificate: course.certificate ?? {
-        enabled: false,
-        title: "Certificate of Completion",
-        signatoryName: "",
-        signatoryTitle: "",
-        theme: "purple",
-      },
-    });
+
+    if (isBulkCourse(course)) {
+      setEditMode("bulk");
+      const items = groupBulkCourseIntoItems(course);
+
+      setEditBulkForm({
+        title: course.title ?? "",
+        className: course.category ?? "",
+        board: course.board ?? "",
+        language: course.language ?? "",
+        thumbnailUrl: course.thumbnailUrl ?? "",
+        demoVideoUrl: course.demoVideoUrl ?? "",
+        price: course.price ?? 0,
+        certificate: course.certificate ?? {
+          enabled: false,
+          title: "Certificate of Completion",
+          signatoryName: "",
+          signatoryTitle: "",
+          theme: "purple",
+        },
+        items: items.length ? items : [EMPTY_BULK_ITEM()],
+      });
+    } else {
+      setEditMode("single");
+      // Infer courseType from the stored category:
+      // if it matches one of our known classes -> "classes", otherwise "competitive"
+      const category = course.category ?? "";
+      const isKnownClass = CLASSES.includes(category);
+      setEditForm({
+        subject: course.title ?? "",
+        courseType: isKnownClass || !category ? "classes" : "competitive",
+        className: isKnownClass ? category : "",
+        examName: isKnownClass || !category ? "" : category,
+        board: course.board ?? "",
+        description: course.summary ?? "",
+        lessons: course.lessons ?? [],
+        notes: course.notes ?? [],
+        content: course.description ?? "",
+        thumbnailUrl: course.thumbnailUrl ?? "",
+        demoVideoUrl: course.demoVideoUrl ?? "",
+        price: course.price ?? 0,
+        quiz: course.quiz ?? { title: "Final Quiz", questions: [] },
+        certificate: course.certificate ?? {
+          enabled: false,
+          title: "Certificate of Completion",
+          signatoryName: "",
+          signatoryTitle: "",
+          theme: "purple",
+        },
+      });
+    }
+
     setView("list");
   };
-  const closeEdit = () => setExpandedId(null);
+  const closeEdit = () => {
+    setExpandedId(null);
+    setEditBulkForm(null);
+    setEditMode("single");
+  };
 
   const cleanNotes = (notes) =>
     (notes ?? []).map((note) => {
@@ -2668,6 +2736,7 @@ export default function InstructorCourses({ showToast }) {
     let lessons = [];
     let notes = [];
     let subjectQuizzes = [];
+    let subjectDetails = [];
 
     for (const item of items) {
       const subjLessons = (item.lessons ?? []).map(l => ({ ...l, subject: item.subject.trim() }));
@@ -2681,6 +2750,11 @@ export default function InstructorCourses({ showToast }) {
           questions: item.quiz.questions
         });
       }
+      subjectDetails.push({
+        subject: item.subject.trim(),
+        description: item.description.trim(),
+        content: item.content.trim(),
+      });
     }
 
     const payload = {
@@ -2693,6 +2767,7 @@ export default function InstructorCourses({ showToast }) {
       lessons,
       notes,
       subjectQuizzes,
+      subjectDetails,
       price: Number(bulkForm.price) || 0,
       thumbnailUrl: bulkForm.thumbnailUrl || "",
       demoVideoUrl: bulkForm.demoVideoUrl || "",
@@ -2738,15 +2813,126 @@ export default function InstructorCourses({ showToast }) {
     }
 
     setSaving(true);
-    await dispatch(
+    const result = await dispatch(
       updateCourse({
         id: expandedId,
         courseData: buildPayload(editForm, publish),
       }),
     );
     setSaving(false);
-    closeEdit();
-    showToast?.(publish ? "Course resubmitted for review!" : "Saved as draft.");
+
+    if (updateCourse.fulfilled.match(result)) {
+      closeEdit();
+      showToast?.(publish ? "Course resubmitted for review!" : "Saved as draft.");
+    } else {
+      showToast?.(result.payload || "Failed to update course.");
+    }
+  };
+
+  const handleEditBulk = async (publish) => {
+    if (!editBulkForm.title?.trim()) {
+      showToast?.("Course title is required.");
+      return;
+    }
+    if (!editBulkForm.className || !editBulkForm.board) {
+      showToast?.("Select a Class and Board before submitting.");
+      return;
+    }
+    const items = editBulkForm.items.filter((it) => it.subject.trim());
+    if (items.length === 0) {
+      showToast?.("Add at least one subject.");
+      return;
+    }
+
+    for (const item of items) {
+      const missingIdx = findMissingLessonTitle(item.lessons);
+      if (missingIdx !== null) {
+        showToast?.(
+          `"${item.subject}" — Lesson ${missingIdx + 1} is missing a title. Please add one before saving.`,
+        );
+        return;
+      }
+    }
+
+    if (publish) {
+      if (!editBulkForm.thumbnailUrl) {
+        showToast?.("Thumbnail is required before submitting for review.");
+        return;
+      }
+      const missing = items.find(
+        (it) => !it.description.trim() || !it.content.trim(),
+      );
+      if (missing) {
+        showToast?.(
+          "Every subject needs a Description and Subject Content before submitting for review.",
+        );
+        return;
+      }
+    }
+
+    setSaving(true);
+
+    let lessons = [];
+    let notes = [];
+    let subjectQuizzes = [];
+    let subjectDetails = [];
+
+    for (const item of items) {
+      const subjLessons = (item.lessons ?? []).map((l) => ({
+        ...l,
+        subject: item.subject.trim(),
+      }));
+      const subjNotes = (item.notes ?? []).map((n) => ({
+        ...n,
+        subject: item.subject.trim(),
+      }));
+      lessons = [...lessons, ...subjLessons];
+      notes = [...notes, ...cleanNotes(subjNotes)];
+      if (item.quiz && item.quiz.questions.length > 0) {
+        subjectQuizzes.push({
+          subject: item.subject.trim(),
+          title: item.quiz.title || "Subject Quiz",
+          questions: item.quiz.questions,
+        });
+      }
+      subjectDetails.push({
+        subject: item.subject.trim(),
+        description: item.description.trim(),
+        content: item.content.trim(),
+      });
+    }
+
+    const payload = {
+      title: editBulkForm.title.trim(),
+      summary: items.map((i) => i.subject).join(", ") + " Complete Bundle",
+      description: "A complete bundle course including multiple subjects.",
+      category: editBulkForm.className,
+      board: editBulkForm.board,
+      language: editBulkForm.language,
+      lessons,
+      notes,
+      subjectQuizzes,
+      subjectDetails,
+      price: Number(editBulkForm.price) || 0,
+      thumbnailUrl: editBulkForm.thumbnailUrl || "",
+      demoVideoUrl: editBulkForm.demoVideoUrl || "",
+      published: publish,
+      certificate: editBulkForm.certificate,
+    };
+
+    const result = await dispatch(
+      updateCourse({ id: expandedId, courseData: payload }),
+    );
+    setSaving(false);
+
+    if (updateCourse.fulfilled.match(result)) {
+      closeEdit();
+      showToast?.(
+        publish ? "Course bundle resubmitted for review!" : "Saved as draft.",
+      );
+    } else {
+      showToast?.(result.payload || "Failed to update course bundle.");
+    }
   };
 
   const handleDelete = async (id) => {
@@ -3141,6 +3327,21 @@ export default function InstructorCourses({ showToast }) {
                             >
                               {st.label}
                             </span>
+                            {isBulkCourse(course) && (
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  padding: "2px 8px",
+                                  borderRadius: 20,
+                                  background: "#052e2b",
+                                  color: "#2dd4bf",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                📦 Bundle
+                              </span>
+                            )}
                             {course.quiz?.questions?.length > 0 && (
                               <span
                                 style={{
@@ -3273,6 +3474,7 @@ export default function InstructorCourses({ showToast }) {
                             }}
                           >
                             ✏️ Editing: {course.title}
+                            {editMode === "bulk" ? " (Bundle)" : ""}
                           </p>
 
                           {course.approvalStatus === "rejected" &&
@@ -3326,15 +3528,26 @@ export default function InstructorCourses({ showToast }) {
                               </div>
                             )}
 
-                          <CourseForm
-                            form={editForm}
-                            setForm={setEditForm}
-                            onSave={handleEdit}
-                            onCancel={closeEdit}
-                            saving={saving}
-                            mode="edit"
-                            showToast={showToast}
-                          />
+                          {editMode === "bulk" && editBulkForm ? (
+                            <BulkCourseForm
+                              form={editBulkForm}
+                              setForm={setEditBulkForm}
+                              onSave={handleEditBulk}
+                              onCancel={closeEdit}
+                              saving={saving}
+                              showToast={showToast}
+                            />
+                          ) : (
+                            <CourseForm
+                              form={editForm}
+                              setForm={setEditForm}
+                              onSave={handleEdit}
+                              onCancel={closeEdit}
+                              saving={saving}
+                              mode="edit"
+                              showToast={showToast}
+                            />
+                          )}
 
                           <div
                             style={{
