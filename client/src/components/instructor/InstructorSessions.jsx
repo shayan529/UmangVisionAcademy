@@ -11,6 +11,30 @@ import {
 } from "../../redux/slices/sessionSlice";
 import { Card, SectionHeader, Btn } from "./InstructorUi";
 
+// Converts "16:32" (24h, from <input type="time">) → "4:32 PM"
+const formatTime12h = (timeStr) => {
+  if (!timeStr) return "";
+  const [hStr, mStr] = timeStr.split(":");
+  const h = parseInt(hStr, 10);
+  if (Number.isNaN(h)) return timeStr;
+  const period = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${mStr} ${period}`;
+};
+
+// Formats "2026-07-11" → "Sat, Jul 11, 2026"
+const formatDateReadable = (dateStr) => {
+  if (!dateStr) return "";
+  const d = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
 const InstructorSessions = ({ showToast }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -153,17 +177,20 @@ const InstructorSessions = ({ showToast }) => {
     cancelEditing();
   };
 
-  // Flips a scheduled session live. Students will immediately see the
-  // "🔴 LIVE" badge and their Join button unlock — this is the one piece of
-  // control that's actually ours to give (session status in our own DB),
-  // as opposed to the YouTube broadcast itself, which instructors control
-  // from YouTube Studio separately.
   const startSession = (id) => {
     dispatch(updateSession({ id, sessionData: { status: "live" } }));
   };
 
   const endSession = (id) => {
     dispatch(updateSession({ id, sessionData: { status: "ended" } }));
+  };
+
+  const statusMeta = (status) => {
+    if (status === "live")
+      return { color: "#10b981", bg: "rgba(16,185,129,0.12)", label: t("instructorSessions.live") };
+    if (status === "ended")
+      return { color: "#94a3b8", bg: "rgba(148,163,184,0.12)", label: t("instructorSessions.ended") };
+    return { color: "#a78bfa", bg: "rgba(124,58,237,0.14)", label: t("instructorSessions.upcoming") };
   };
 
   return (
@@ -173,6 +200,12 @@ const InstructorSessions = ({ showToast }) => {
           .is-row { flex-wrap: wrap; }
           .is-row-actions { width: 100%; justify-content: flex-start; }
         }
+        .is-scroll::-webkit-scrollbar { width: 8px; }
+        .is-scroll::-webkit-scrollbar-track { background: transparent; }
+        .is-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; }
+        .is-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .is-session-card { transition: background 0.15s ease, border-color 0.15s ease; }
+        .is-session-card:hover { background: #16213a; border-color: #2d3f5f; }
       `}</style>
 
       {/* Schedule form */}
@@ -189,14 +222,7 @@ const InstructorSessions = ({ showToast }) => {
         >
           {/* Title */}
           <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 6,
-                fontSize: 12,
-                color: "#94a3b8",
-              }}
-            >
+            <label style={{ display: "block", marginBottom: 6, fontSize: 12, color: "#94a3b8" }}>
               {t("instructorSessions.sessionTitle")}
             </label>
             <input
@@ -211,14 +237,7 @@ const InstructorSessions = ({ showToast }) => {
 
           {/* Date */}
           <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 6,
-                fontSize: 12,
-                color: "#94a3b8",
-              }}
-            >
+            <label style={{ display: "block", marginBottom: 6, fontSize: 12, color: "#94a3b8" }}>
               {t("instructorSessions.date")}
             </label>
             <input
@@ -232,14 +251,7 @@ const InstructorSessions = ({ showToast }) => {
 
           {/* Time */}
           <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 6,
-                fontSize: 12,
-                color: "#94a3b8",
-              }}
-            >
+            <label style={{ display: "block", marginBottom: 6, fontSize: 12, color: "#94a3b8" }}>
               {t("instructorSessions.time")}
             </label>
             <input
@@ -253,14 +265,7 @@ const InstructorSessions = ({ showToast }) => {
 
           {/* URL */}
           <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 6,
-                fontSize: 12,
-                color: "#94a3b8",
-              }}
-            >
+            <label style={{ display: "block", marginBottom: 6, fontSize: 12, color: "#94a3b8" }}>
               {t("instructorSessions.meetingUrl")}
             </label>
             <input
@@ -275,235 +280,210 @@ const InstructorSessions = ({ showToast }) => {
         </div>
 
         <Btn variant="primary" onClick={schedule} disabled={loading}>
-          {loading
-            ? t("instructorSessions.scheduling")
-            : t("instructorSessions.scheduleSession")}
+          {loading ? t("instructorSessions.scheduling") : t("instructorSessions.scheduleSession")}
         </Btn>
       </Card>
+
       {/* Session list */}
       <Card>
         <SectionHeader title={t("instructorSessions.allSessions")} />
 
         {loading && (
-          <div
-            style={{
-              color: "#64748b",
-              fontSize: 13,
-              textAlign: "center",
-              padding: "20px 0",
-            }}
-          >
+          <div style={{ color: "#64748b", fontSize: 13, textAlign: "center", padding: "20px 0" }}>
             {t("instructorSessions.loadingSessions")}
           </div>
         )}
 
         {!loading && sessions.length === 0 && (
-          <div
-            style={{
-              color: "#64748b",
-              fontSize: 13,
-              textAlign: "center",
-              padding: "20px 0",
-            }}
-          >
+          <div style={{ color: "#64748b", fontSize: 13, textAlign: "center", padding: "20px 0" }}>
             {t("instructorSessions.noSessions")}
           </div>
         )}
 
-        {!loading &&
-          sessions.map((s) => (
-            <div
-              key={s._id}
-              className="is-row"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "12px 0",
-                borderBottom: "1px solid #1e293b",
-              }}
-            >
-              <div
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  background:
-                    s.status === "ended"
-                      ? "#64748b"
-                      : s.status === "live"
-                        ? "#10b981"
-                        : "#7c3aed",
-                  flexShrink: 0,
-                }}
-              />
-              {editingId === s._id ? (
-                <div style={{ flex: 1, minWidth: 200, display: "grid", gap: 8 }}>
-                  <input
-                    value={editForm.title}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, title: e.target.value })
-                    }
-                    style={inputStyle}
-                    placeholder={t(
-                      "instructorSessions.sessionTitlePlaceholder",
-                    )}
-                  />
+        {!loading && sessions.length > 0 && (
+          <div
+            className="is-scroll"
+            style={{
+              maxHeight: 520,
+              overflowY: "auto",
+              paddingRight: 4,
+            }}
+          >
+            {sessions.map((s) => {
+              const meta = statusMeta(s.status);
+              return (
+                <div
+                  key={s._id}
+                  className="is-row is-session-card"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                    padding: "14px 12px",
+                    marginBottom: 10,
+                    borderRadius: 12,
+                    background: "#111a2e",
+                    border: "1px solid #1e293b",
+                  }}
+                >
                   <div
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
-                      gap: 8,
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: meta.color,
+                      flexShrink: 0,
+                      boxShadow: s.status === "live" ? `0 0 0 4px ${meta.bg}` : "none",
                     }}
-                  >
-                    <input
-                      type="date"
-                      value={editForm.date}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, date: e.target.value })
-                      }
-                      style={inputStyle}
-                    />
-                    <input
-                      type="time"
-                      value={editForm.time}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, time: e.target.value })
-                      }
-                      style={inputStyle}
-                    />
-                  </div>
-                  <input
-                    type="url"
-                    value={editForm.url}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, url: e.target.value })
-                    }
-                    style={inputStyle}
-                    placeholder={t("instructorSessions.meetingUrl")}
                   />
-                </div>
-              ) : (
-                <div style={{ flex: 1, minWidth: 160 }}>
-                  <div
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: "#f1f5f9",
-                    }}
-                  >
-                    {s.title}
-                  </div>
-                  <div style={{ fontSize: 12, color: "#64748b" }}>
-                    {s.date}
-                    {s.time ? ` — ${s.time}` : ""}
-                  </div>
-                  <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
-                    {s.status === "ended"
-                      ? t("instructorSessions.ended")
-                      : s.status === "live"
-                        ? t("instructorSessions.live")
-                        : s.status === "upcoming"
-                          ? t("instructorSessions.upcoming")
-                          : s.status}
-                  </div>
-                </div>
-              )}
-              <div className="is-row-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {editingId === s._id ? (
-                  <>
-                    <Btn
-                      variant="success"
-                      style={{ fontSize: 12 }}
-                      onClick={() => saveEdit(s._id)}
-                    >
-                      {t("instructorSessions.save")}
-                    </Btn>
-                    <Btn
-                      variant="ghost"
-                      style={{ fontSize: 12 }}
-                      onClick={cancelEditing}
-                    >
-                      {t("instructorSessions.cancel")}
-                    </Btn>
-                  </>
-                ) : (
-                  <>
-                    {/* Start Session — only offered while the session is
-                        still "upcoming". This is the action that actually
-                        flips student-facing status, unlike the YouTube
-                        broadcast itself which instructors start separately
-                        in YouTube Studio. */}
-                    {s.status === "upcoming" && (
-                      <Btn
-                        variant="primary"
-                        style={{ fontSize: 12 }}
-                        onClick={() => startSession(s._id)}
+                  {editingId === s._id ? (
+                    <div style={{ flex: 1, minWidth: 200, display: "grid", gap: 8 }}>
+                      <input
+                        value={editForm.title}
+                        onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                        style={inputStyle}
+                        placeholder={t("instructorSessions.sessionTitlePlaceholder")}
+                      />
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+                          gap: 8,
+                        }}
                       >
-                        {t("instructorSessions.startSession")}
-                      </Btn>
+                        <input
+                          type="date"
+                          value={editForm.date}
+                          onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                          style={inputStyle}
+                        />
+                        <input
+                          type="time"
+                          value={editForm.time}
+                          onChange={(e) => setEditForm({ ...editForm, time: e.target.value })}
+                          style={inputStyle}
+                        />
+                      </div>
+                      <input
+                        type="url"
+                        value={editForm.url}
+                        onChange={(e) => setEditForm({ ...editForm, url: e.target.value })}
+                        style={inputStyle}
+                        placeholder={t("instructorSessions.meetingUrl")}
+                      />
+                    </div>
+                  ) : (
+                    <div style={{ flex: 1, minWidth: 180 }}>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: "#f1f5f9", marginBottom: 4 }}>
+                        {s.title}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 5,
+                            fontSize: 12.5,
+                            color: "#cbd5e1",
+                            background: "#1e293b",
+                            padding: "3px 8px",
+                            borderRadius: 6,
+                          }}
+                        >
+                          📅 {formatDateReadable(s.date)}
+                        </span>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 5,
+                            fontSize: 12.5,
+                            color: "#cbd5e1",
+                            background: "#1e293b",
+                            padding: "3px 8px",
+                            borderRadius: 6,
+                          }}
+                        >
+                          🕒 {formatTime12h(s.time)}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: meta.color,
+                            background: meta.bg,
+                            padding: "3px 9px",
+                            borderRadius: 999,
+                            textTransform: "uppercase",
+                            letterSpacing: 0.3,
+                          }}
+                        >
+                          {meta.label}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="is-row-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {editingId === s._id ? (
+                      <>
+                        <Btn variant="success" style={{ fontSize: 12 }} onClick={() => saveEdit(s._id)}>
+                          {t("instructorSessions.save")}
+                        </Btn>
+                        <Btn variant="ghost" style={{ fontSize: 12 }} onClick={cancelEditing}>
+                          {t("instructorSessions.cancel")}
+                        </Btn>
+                      </>
+                    ) : (
+                      <>
+                        {s.status === "upcoming" && (
+                          <Btn variant="primary" style={{ fontSize: 12 }} onClick={() => startSession(s._id)}>
+                            {t("instructorSessions.startSession")}
+                          </Btn>
+                        )}
+
+                        <Btn
+                          variant="success"
+                          style={{ fontSize: 12 }}
+                          onClick={() => {
+                            if (!s.url) {
+                              showToast(t("instructorSessions.noSessionUrl"));
+                              return;
+                            }
+                            window.open(s.url, "_blank");
+                          }}
+                        >
+                          {t("instructorSessions.preview")}
+                        </Btn>
+
+                        <Btn variant="ghost" style={{ fontSize: 12 }} onClick={() => startEditing(s)}>
+                          {t("instructorSessions.edit")}
+                        </Btn>
+
+                        {s.status !== "ended" && (
+                          <Btn variant="ghost" style={{ fontSize: 12 }} onClick={() => endSession(s._id)}>
+                            {t("instructorSessions.end")}
+                          </Btn>
+                        )}
+
+                        <Btn variant="ghost" style={{ fontSize: 12 }} onClick={() => copySessionLink(s.url)}>
+                          {t("instructorSessions.copy")}
+                        </Btn>
+
+                        <Btn
+                          variant="danger"
+                          style={{ fontSize: 12, padding: "8px 10px" }}
+                          onClick={() => remove(s._id)}
+                        >
+                          🗑
+                        </Btn>
+                      </>
                     )}
-
-                    {/* Preview — opens the same broadcast a student would
-                        see. Renamed from "Join" since instructors aren't
-                        joining an in-app classroom, they're viewing their
-                        own YouTube Live broadcast as embedded for students. */}
-                    <Btn
-                      variant="success"
-                      style={{ fontSize: 12 }}
-                      onClick={() => {
-                        if (!s.url) {
-                          showToast(t("instructorSessions.noSessionUrl"));
-                          return;
-                        }
-
-                        window.open(s.url, "_blank");
-                      }}
-                    >
-                      {t("instructorSessions.preview")}
-                    </Btn>
-
-                    <Btn
-                      variant="ghost"
-                      style={{ fontSize: 12 }}
-                      onClick={() => startEditing(s)}
-                    >
-                      {t("instructorSessions.edit")}
-                    </Btn>
-
-                    {/* End Session — only relevant once a session is live
-                        (or still upcoming, e.g. cancelling before it
-                        starts). Hidden once already ended. */}
-                    {s.status !== "ended" && (
-                      <Btn
-                        variant="ghost"
-                        style={{ fontSize: 12 }}
-                        onClick={() => endSession(s._id)}
-                      >
-                        {t("instructorSessions.end")}
-                      </Btn>
-                    )}
-
-                    <Btn
-                      variant="ghost"
-                      style={{ fontSize: 12 }}
-                      onClick={() => copySessionLink(s.url)}
-                    >
-                      {t("instructorSessions.copy")}
-                    </Btn>
-
-                    <Btn
-                      variant="danger"
-                      style={{ fontSize: 12, padding: "8px 10px" }}
-                      onClick={() => remove(s._id)}
-                    >
-                      🗑
-                    </Btn>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </Card>
     </>
   );

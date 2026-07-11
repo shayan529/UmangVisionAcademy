@@ -6,17 +6,10 @@ import { StatCard, Card, SectionHeader, ProgressBar } from "./InstructorUi";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-const fmt = (n) =>
-  Number.isFinite(n) ? "₹" + Math.round(n).toLocaleString("en-IN") : "₹0";
-
 const avg = (arr, key) =>
   arr.length
     ? Math.round(arr.reduce((s, c) => s + (c[key] ?? 0), 0) / arr.length)
     : 0;
-
-/** Derive revenue for a course when the backend doesn't send it explicitly */
-const courseRevenue = (c) =>
-  c.revenue ?? (c.price || 0) * (c.enrolledCount ?? c.students ?? 0);
 
 const studentCount = (c) => c.enrolledCount ?? c.students ?? 0;
 const completion = (c) => c.avgCompletion ?? c.prog ?? 0;
@@ -78,28 +71,6 @@ const styles = {
     background: "#0f172a",
     borderRadius: 10,
     padding: "12px 14px",
-  },
-  // revenue per course bars
-  revBarsOuter: {
-    overflowX: "auto",
-    marginBottom: -4,
-  },
-  revBars: {
-    display: "flex",
-    alignItems: "flex-end",
-    gap: 10,
-    height: 260,
-    paddingTop: 16,
-    minWidth: "min-content",
-  },
-  revCol: {
-    flex: "1 0 72px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    height: "100%",
-    minWidth: 72,
   },
   // performance table
   tableOuter: {
@@ -211,19 +182,7 @@ const InstructorAnalytics = () => {
   }, [dispatch]);
 
   // ── aggregates ──────────────────────────────────────────────────────────────
-  const totalRevenue = courses.reduce((s, c) => s + courseRevenue(c), 0);
   const totalStudents = courses.reduce((s, c) => s + studentCount(c), 0);
-
-  // NOTE: weekRevenue / monthRevenue must be returned by your backend per
-  // course (e.g. from an analytics sub-document). If not available yet, these
-  // will simply show ₹0 until the backend provides them.
-  const thisWeekRevenue = courses.reduce((s, c) => s + (c.weekRevenue || 0), 0);
-  const thisMonthRevenue = courses.reduce(
-    (s, c) => s + (c.monthRevenue || 0),
-    0,
-  );
-  const avgRevPerCourse =
-    courses.length > 0 ? Math.round(totalRevenue / courses.length) : 0;
 
   const avgRating =
     courses.length > 0
@@ -256,16 +215,9 @@ const InstructorAnalytics = () => {
       ? [...courses].sort((a, b) => completion(b) - completion(a))[0]
       : null;
 
-  // ── revenue per course ───────────────────────────────────────────────────────
-  const revenueData = courses.map((c) => ({
-    title: c.title,
-    revenue: courseRevenue(c),
-  }));
-  const maxRevenue = Math.max(...revenueData.map((c) => c.revenue), 1);
-
-  // ── table rows sorted by revenue desc ────────────────────────────────────────
+  // ── table rows sorted by students desc ────────────────────────────────────────
   const sortedCourses = [...courses].sort(
-    (a, b) => courseRevenue(b) - courseRevenue(a),
+    (a, b) => studentCount(b) - studentCount(a),
   );
 
   // ── loading skeleton ─────────────────────────────────────────────────────────
@@ -275,16 +227,6 @@ const InstructorAnalytics = () => {
     <>
       {/* ── stat strip ────────────────────────────────────────────────────── */}
       <div style={styles.statGrid}>
-        <div style={styles.statBox}>
-          <div style={styles.statLabel}>
-            💰 {t("instructorAnalytics.totalRevenue")}
-          </div>
-          <div style={styles.statValue}>{dash ?? fmt(totalRevenue)}</div>
-          <div style={styles.statSub}>
-            {t("instructorAnalytics.coursesCount", { count: courses.length })}
-          </div>
-        </div>
-
         <div style={styles.statBox}>
           <div style={styles.statLabel}>
             👥 {t("instructorAnalytics.students")}
@@ -326,60 +268,8 @@ const InstructorAnalytics = () => {
         </div>
       </div>
 
-      {/* ── revenue overview + enrollment trend ───────────────────────────── */}
+      {/* ── enrollment trend ───────────────────────────── */}
       <div style={styles.grid2}>
-        {/* Revenue overview */}
-        <Card>
-          <SectionHeader title={t("instructorAnalytics.revenueOverview")} />
-
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ color: "#94a3b8", fontSize: 13, marginBottom: 8 }}>
-              {t("instructorAnalytics.totalRevenue")}
-            </div>
-            <div style={{ fontSize: 42, fontWeight: 800, color: "#a78bfa" }}>
-              {dash ?? fmt(totalRevenue)}
-            </div>
-          </div>
-
-          <div
-            style={{
-              borderTop: "1px solid #1e293b",
-              paddingTop: 18,
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(110px,1fr))",
-              gap: 16,
-            }}
-          >
-            {[
-              {
-                label: t("instructorAnalytics.thisWeek"),
-                value: fmt(thisWeekRevenue),
-              },
-              {
-                label: t("instructorAnalytics.thisMonth"),
-                value: fmt(thisMonthRevenue),
-              },
-              {
-                label: t("instructorAnalytics.avgPerCourse"),
-                value: fmt(avgRevPerCourse),
-              },
-            ].map(({ label, value }) => (
-              <div key={label}>
-                <div
-                  style={{ color: "#64748b", fontSize: 12, marginBottom: 5 }}
-                >
-                  {label}
-                </div>
-                <div
-                  style={{ fontSize: 20, fontWeight: 700, color: "#a78bfa" }}
-                >
-                  {dash ?? value}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
         {/* Enrollment trend */}
         <Card>
           <SectionHeader title={t("instructorAnalytics.enrollmentTrend")} />
@@ -433,69 +323,6 @@ const InstructorAnalytics = () => {
         </Card>
       </div>
 
-      {/* ── revenue per course (bar chart) ────────────────────────────────── */}
-      <Card style={styles.sectionFull}>
-        <SectionHeader title={t("instructorAnalytics.revenuePerCourse")} />
-
-        {revenueData.length > 0 ? (
-          <div style={styles.revBarsOuter}>
-            <div style={styles.revBars}>
-              {revenueData.map((course) => {
-                const barH = Math.max(
-                  8,
-                  Math.round((course.revenue / maxRevenue) * 210),
-                );
-                return (
-                  <div key={course.title} style={styles.revCol}>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: "#a78bfa",
-                        fontWeight: 700,
-                        marginBottom: 6,
-                        textAlign: "center",
-                      }}
-                    >
-                      {fmt(course.revenue)}
-                    </div>
-                    <div
-                      title={`${course.title}: ${fmt(course.revenue)}`}
-                      style={{
-                        width: "100%",
-                        height: barH,
-                        background: "linear-gradient(180deg,#c4b5fd,#7c3aed)",
-                        borderRadius: "8px 8px 0 0",
-                        transition: "opacity 0.15s",
-                        cursor: "default",
-                      }}
-                    />
-                    <div
-                      style={{
-                        marginTop: 8,
-                        fontSize: 11,
-                        color: "#94a3b8",
-                        textAlign: "center",
-                        width: "100%",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                      title={course.title}
-                    >
-                      {course.title}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div style={styles.empty}>
-            {t("instructorAnalytics.noRevenueData")}
-          </div>
-        )}
-      </Card>
-
       {/* ── course performance table ──────────────────────────────────────── */}
       <Card style={styles.sectionFull}>
         <SectionHeader title={t("instructorAnalytics.coursePerformance")} />
@@ -508,9 +335,6 @@ const InstructorAnalytics = () => {
                   <th style={styles.th}>{t("instructorAnalytics.course")}</th>
                   <th style={styles.thRight}>
                     {t("instructorAnalytics.students")}
-                  </th>
-                  <th style={styles.thRight}>
-                    {t("instructorAnalytics.revenue")}
                   </th>
                   <th style={styles.thRight}>
                     {t("instructorAnalytics.completion")}
@@ -536,9 +360,6 @@ const InstructorAnalytics = () => {
                       </td>
                       <td style={styles.tdRight}>
                         {studentCount(course).toLocaleString("en-IN")}
-                      </td>
-                      <td style={{ ...styles.tdRight, color: "#a78bfa" }}>
-                        {fmt(courseRevenue(course))}
                       </td>
                       <td style={styles.tdRight}>{comp}%</td>
                       <td style={styles.tdRight}>

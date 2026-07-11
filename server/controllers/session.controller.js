@@ -41,6 +41,7 @@ export const getInstructorSessions = async (req, res) => {
       return await Session.find({ instructor: req.user._id })
         .lean()
         .populate("course", "title")
+        .populate("instructor", "name")
         .sort({ date: 1 });
     });
 
@@ -208,7 +209,7 @@ export const createSession = async (req, res) => {
       targetInstructorId = instructor;
     }
 
-    const session = await Session.create({
+    let session = await Session.create({
       title,
       date: date || "TBD",
       time: time || "TBD",
@@ -219,6 +220,8 @@ export const createSession = async (req, res) => {
       instructor: targetInstructorId,
       url: url || null,
     });
+
+    session = await session.populate("instructor", "name");
 
     // Invalidate session caches
     await Promise.all([
@@ -250,7 +253,7 @@ export const updateSession = async (req, res) => {
     const session = await Session.findOneAndUpdate(query, updates, {
       new: true,
       runValidators: true,
-    });
+    }).populate("instructor", "name");
     if (!session) return res.status(404).json({ message: "Session not found" });
 
     // Invalidate session caches

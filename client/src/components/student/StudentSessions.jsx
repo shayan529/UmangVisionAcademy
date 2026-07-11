@@ -24,6 +24,23 @@ function formatTime(date) {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function format12Hour(timeStr) {
+  if (!timeStr || timeStr === "TBD") return "TBD";
+  const parts = timeStr.split(":");
+  if (parts.length !== 2) return timeStr;
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if (isNaN(h) || isNaN(m)) return timeStr;
+  
+  const ampm = h >= 12 ? "PM" : "AM";
+  let displayHour = h % 12;
+  if (displayHour === 0) displayHour = 12;
+  
+  const hh = displayHour.toString().padStart(2, "0");
+  const mm = m.toString().padStart(2, "0");
+  return `${hh}:${mm} ${ampm}`;
+}
+
 // ─── Chat Panel (YouTube-style) ────────────────────────────────────────────
 
 // Deterministic color per sender, so the same person always gets the same
@@ -759,7 +776,7 @@ const SessionRoom = ({ session, currentUser, onLeave }) => {
               {session.title}
             </h2>
             <p className="text-slate-400 text-xs mt-0.5">
-              📅 {session.date} · 🕒 {session.time}
+              📅 {session.date} · 🕒 {format12Hour(session.time)}
             </p>
           </div>
         </div>
@@ -810,46 +827,82 @@ const SessionRoom = ({ session, currentUser, onLeave }) => {
 
 // ─── Session Card ─────────────────────────────────────────────────────────────
 
+// ─── Session Card (Premium Light) ─────────────────────────────────────────
+
+const getInstructorName = (session) => {
+  if (session.instructor && session.instructor.name) return session.instructor.name;
+  if (session.instructorName) return session.instructorName;
+  return "UMANG Vision Academy";
+};
+
 const SessionCard = ({ session, onJoin, showToast }) => {
+  const instructorName = getInstructorName(session);
+  const instructorInitial = instructorName.trim().charAt(0).toUpperCase() || "?";
+
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div>
+    <div
+      className="relative bg-gradient-to-br from-white to-slate-50 border border-slate-200
+                 rounded-2xl p-5 flex flex-col md:flex-row md:items-center md:justify-between
+                 gap-4 shadow-[0_2px_10px_rgba(15,23,42,0.06)]
+                 hover:shadow-[0_6px_20px_rgba(15,23,42,0.10)] transition-shadow duration-300
+                 overflow-hidden"
+    >
+      {/* Marigold accent line — ties into the About Us page motif */}
+      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#F2A93B] to-amber-500" />
+
+      <div className="pl-2">
         <div className="flex items-center gap-3 mb-2">
           <div
-            className={`w-3 h-3 rounded-full ${session.status === "live"
-              ? "bg-green-500 animate-pulse"
+            className={`w-2.5 h-2.5 rounded-full ${session.status === "live"
+              ? "bg-emerald-500 animate-pulse"
               : session.status === "ended"
-                ? "bg-slate-500"
-                : "bg-purple-500"
+                ? "bg-slate-400"
+                : "bg-indigo-500"
               }`}
           />
-          <h3 className="text-lg font-semibold text-white">{session.title}</h3>
+          <h3 className="text-lg font-semibold text-slate-900">{session.title}</h3>
           <span
             className={`px-2 py-1 rounded-full text-xs font-medium ${session.status === "live"
-              ? "bg-green-500/20 text-green-400"
+              ? "bg-emerald-100 text-emerald-700"
               : session.status === "ended"
-                ? "bg-slate-500/20 text-slate-300"
-                : "bg-purple-500/20 text-purple-400"
+                ? "bg-slate-200 text-slate-600"
+                : "bg-indigo-100 text-indigo-700"
               }`}
           >
             {session.status}
           </span>
         </div>
-        <p className="text-slate-400 text-sm">📅 {session.date}</p>
-        <p className="text-slate-400 text-sm">🕒 {session.time}</p>
+
+        {/* Instructor chip */}
+        <div className="flex items-center gap-2 mb-2.5">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#F2A93B] to-amber-600 flex items-center justify-center flex-none shadow-sm">
+            <span className="text-[10px] font-bold text-white">{instructorInitial}</span>
+          </div>
+          <p className="text-sm text-slate-600">
+            <span className="text-slate-400">Instructor:</span>{" "}
+            <span className="font-medium text-slate-700">{instructorName}</span>
+          </p>
+        </div>
+
+        <p className="text-slate-500 text-sm">📅 {session.date}</p>
+        <p className="text-slate-500 text-sm">🕒 {format12Hour(session.time)}</p>
       </div>
-      <div className="flex gap-3">
+
+      <div className="flex gap-3 pl-2 md:pl-0">
         {session.status === "upcoming" ? (
           <button
             disabled
-            className="px-4 py-2 rounded-xl bg-slate-800 text-slate-500 font-medium cursor-not-allowed border border-slate-700/50"
+            className="px-4 py-2 rounded-xl bg-slate-100 text-slate-400 font-medium
+                       cursor-not-allowed border border-slate-200"
           >
             Join Session
           </button>
         ) : (
           <button
             onClick={() => onJoin(session)}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-medium hover:opacity-90 transition"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#F2A93B] to-amber-500
+                       text-white font-medium shadow-sm hover:shadow-md hover:opacity-95
+                       transition-all cursor-pointer"
           >
             {session.status === "ended" ? "Replay Session" : "Join Session"}
           </button>

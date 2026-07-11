@@ -67,7 +67,6 @@ export default function MobileReels() {
     };
   }, [reels]);
 
-
   const formatCount = (n) => {
     if (!n) return 0;
     if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
@@ -77,7 +76,7 @@ export default function MobileReels() {
 
   if (loading && reels.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-140px)] bg-slate-950">
+      <div className="flex items-center justify-center h-[calc(100dvh-140px)] bg-slate-950">
         <Loader2 className="text-indigo-500 animate-spin" size={32} />
       </div>
     );
@@ -85,7 +84,7 @@ export default function MobileReels() {
 
   if (reels.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-140px)] bg-slate-950 text-slate-400 gap-3">
+      <div className="flex flex-col items-center justify-center h-[calc(100dvh-140px)] bg-slate-950 text-slate-400 gap-3">
         <span className="text-4xl">🎬</span>
         <p className="text-sm font-semibold">No reels available right now</p>
       </div>
@@ -93,7 +92,10 @@ export default function MobileReels() {
   }
 
   return (
-    <div className="max-w-md mx-auto h-[calc(100vh-140px)] bg-black border border-slate-900 rounded-2xl overflow-hidden shadow-2xl relative">
+    <div
+      className="w-full sm:max-w-md sm:mx-auto bg-black sm:border sm:border-slate-900 sm:rounded-2xl overflow-hidden sm:shadow-2xl relative"
+      style={{ height: "calc(100dvh - 140px)" }}
+    >
       {/* Scrollable Container (Instagram Style CSS Snapping) */}
       <div
         ref={containerRef}
@@ -104,7 +106,6 @@ export default function MobileReels() {
         }}
       >
         {reels.map((reel) => {
-
           return (
             <div
               key={reel._id}
@@ -123,11 +124,12 @@ export default function MobileReels() {
                 className="absolute inset-0 w-full h-full object-cover"
               />
 
-              {/* Overlay dark gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 pointer-events-none" />
+              {/* Overlay dark gradient — taller at the bottom so caption text
+                  always sits on a legible dark base regardless of screen height */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-black/40 pointer-events-none" />
 
               {/* Top Header Indicators */}
-              <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
+              <div className="absolute top-3 left-3 right-3 flex justify-between items-center z-10">
                 <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
                   <Flame size={14} className="text-amber-500 animate-pulse" />
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider">
@@ -136,22 +138,27 @@ export default function MobileReels() {
                 </div>
               </div>
 
-
-
-              {/* Bottom Overlay details */}
-              <div className="absolute left-4 bottom-4 right-16 z-10 flex flex-col gap-2.5">
+              {/* Bottom Overlay details — extra bottom padding + safe-area
+                  inset so this never sits under the app's bottom tab bar or
+                  a phone's home-indicator gesture area */}
+              <div
+                className="absolute left-3 right-14 z-10 flex flex-col gap-2"
+                style={{
+                  bottom: "calc(1rem + env(safe-area-inset-bottom, 0px))",
+                }}
+              >
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-linear-to-br from-indigo-500 to-indigo-700 border border-indigo-400 flex items-center justify-center text-xs font-bold text-white shadow-lg">
+                  <div className="w-8 h-8 rounded-full bg-linear-to-br from-indigo-500 to-indigo-700 border border-indigo-400 flex items-center justify-center text-xs font-bold text-white shadow-lg flex-none">
                     {(reel.instructorName || "Instructor")
                       .slice(0, 2)
                       .toUpperCase()}
                   </div>
-                  <div>
-                    <p className="text-xs font-extrabold text-white flex items-center gap-1 drop-shadow-md">
+                  <div className="min-w-0">
+                    <p className="text-xs font-extrabold text-white flex items-center gap-1 drop-shadow-md truncate">
                       {reel.instructorName || "Instructor"}
                       <Star
                         size={11}
-                        className="text-amber-500 fill-amber-500"
+                        className="text-amber-500 fill-amber-500 flex-none"
                       />
                     </p>
                     <p className="text-[9px] text-slate-300/80 drop-shadow-md">
@@ -160,7 +167,7 @@ export default function MobileReels() {
                   </div>
                 </div>
 
-                <h4 className="text-xs font-bold text-slate-100 leading-snug drop-shadow-md">
+                <h4 className="text-xs font-bold text-slate-100 leading-snug drop-shadow-md line-clamp-2">
                   {reel.title}
                 </h4>
 
@@ -170,10 +177,10 @@ export default function MobileReels() {
                   </p>
                 )}
 
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-0.5">
                   <Music
                     size={12}
-                    className="text-indigo-400 animate-spin"
+                    className="text-indigo-400 animate-spin flex-none"
                     style={{ animationDuration: "6s" }}
                   />
                   <span className="text-[9px] text-slate-400 font-medium truncate max-w-[180px] drop-shadow-md">
