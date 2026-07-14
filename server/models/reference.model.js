@@ -14,11 +14,13 @@ const referenceSchema = new Schema(
       type: Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
   },
   { timestamps: true },
 );
+
+// User-owned references are always read newest first.
+referenceSchema.index({ createdBy: 1, createdAt: -1 });
 
 const Reference = model("Reference", referenceSchema);
 

@@ -102,13 +102,20 @@ const Courses = () => {
   );
 
   const dynamicSubjects = useMemo(
-    () => [
-      ...new Set(
-        allCourses
-          .map((c) => c.title?.split(" - ")[0] ?? c.title)
-          .filter(Boolean),
-      ),
-    ],
+    () => {
+      const excludedKeywords = ["bundle", "neet", "jee", "cuet", "clat", "cat", "complete", "crash course", "mock test"];
+      return [
+        ...new Set(
+          allCourses
+            .map((c) => c.title?.split(" - ")[0]?.trim() ?? c.title?.trim())
+            .filter((subject) => {
+              if (!subject) return false;
+              const lower = subject.toLowerCase();
+              return !excludedKeywords.some((kw) => lower.includes(kw));
+            }),
+        ),
+      ];
+    },
     [allCourses],
   );
 
@@ -214,9 +221,7 @@ const Courses = () => {
             </h2>
             {!loading && allCourses.length > 0 && (
               <p className="text-slate-400 text-sm mt-2">
-                {t("courses.availableCourses", {
-                  count: Math.min(filteredCourses.length, 4),
-                })}
+                {`${Math.min(filteredCourses.length, 4)} ${Math.min(filteredCourses.length, 4) === 1 ? 'course' : 'courses'} available`}
               </p>
             )}
           </div>

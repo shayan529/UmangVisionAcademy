@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchLeaderboard } from "../../redux/slices/studentSlice";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { getCitiesForState, INDIA_STATES } from "../../data/indiaLocations";
 
 const LeaderBoard = () => {
   const dispatch = useDispatch();
@@ -20,20 +21,8 @@ const LeaderBoard = () => {
 
   const currentUserId = user?._id ?? user?.id;
 
-  const states = [
-    ...new Set(
-      (leaderboard ?? []).map((student) => student.state).filter(Boolean),
-    ),
-  ];
-
-  const cities = [
-    ...new Set(
-      (leaderboard ?? [])
-        .filter((student) => !selectedState || student.state === selectedState)
-        .map((student) => student.city)
-        .filter(Boolean),
-    ),
-  ];
+  const states = INDIA_STATES;
+  const cities = selectedState ? getCitiesForState(selectedState) : [];
 
   const filteredLeaderboard = (leaderboard ?? []).filter((student) => {
     const stateMatch = !selectedState || student.state === selectedState;
@@ -77,6 +66,12 @@ const LeaderBoard = () => {
       label: t("studentLeaderboard.earnCertificate"),
       coins: 25,
       desc: t("studentLeaderboard.earnCertificateDesc"),
+    },
+    {
+      icon: "🏅",
+      label: t("studentLeaderboard.earnAchievements", "Earn Achievements"),
+      coins: "10-50",
+      desc: t("studentLeaderboard.earnAchievementsDesc", "Unlock badges for making progress in your courses and tests"),
     },
   ];
 
@@ -426,6 +421,7 @@ const LeaderBoard = () => {
         <select
           value={selectedCity}
           onChange={(e) => setSelectedCity(e.target.value)}
+          disabled={!selectedState}
           style={{
             padding: "10px 14px",
             borderRadius: 10,
@@ -433,9 +429,15 @@ const LeaderBoard = () => {
             border: "1px solid #334155",
             color: "#fff",
             minWidth: 180,
+            opacity: selectedState ? 1 : 0.55,
+            cursor: selectedState ? "pointer" : "not-allowed",
           }}
         >
-          <option value="">{t("studentLeaderboard.allCities")}</option>
+          <option value="">
+            {selectedState
+              ? t("studentLeaderboard.allCities")
+              : t("studentLeaderboard.selectStateFirst", "Select a state first")}
+          </option>
           {cities.map((city) => (
             <option key={city} value={city}>
               {city}

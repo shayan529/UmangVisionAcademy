@@ -638,7 +638,7 @@ function NotesManager({ notes = [], onChange, showToast }) {
       return;
     }
     const { fileName, ...noteData } = newNote;
-    const updated = [...notes, { ...noteData, _id: new Date().getTime().toString() }];
+    const updated = [...notes, { ...noteData, status: "pending", _id: new Date().getTime().toString() }];
     onChange(updated);
     setNewNote({ title: "", description: "", fileUrl: "", fileName: "" });
     setUploadError("");
@@ -798,7 +798,28 @@ function NotesManager({ notes = [], onChange, showToast }) {
               }}
             >
               <div style={{ minWidth: 0, flex: 1, marginRight: 12 }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0" }}>{note.title}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0", margin: 0 }}>{note.title}</p>
+                  <span
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      padding: "2px 8px",
+                      borderRadius: 20,
+                      ...(note.status === "approved"
+                        ? { background: "#052e16", color: "#4ade80", border: "1px solid #166534" }
+                        : note.status === "rejected"
+                          ? { background: "#2d0a0a", color: "#f87171", border: "1px solid #7f1d1d" }
+                          : { background: "#1c1a00", color: "#fbbf24", border: "1px solid #854d0e" }),
+                    }}
+                  >
+                    {note.status === "approved" ? "Approved" : note.status === "rejected" ? "Rejected" : "Pending approval"}
+                  </span>
+                </div>
+                {note.status === "rejected" && note.rejectedReason && (
+                  <p style={{ fontSize: 10, color: "#fca5a5", marginTop: 4 }}>Reason: {note.rejectedReason}</p>
+                )}
                 {note.description && (
                   <p style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{note.description}</p>
                 )}

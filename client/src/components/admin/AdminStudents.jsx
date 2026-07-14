@@ -28,6 +28,7 @@ import {
   Tag,
 } from "lucide-react";
 import api from "../../config/api.js";
+import { INDIA_CITIES_BY_STATE } from "../../data/indiaLocations";
 
 /* ─── helpers ─────────────────────────────────────────── */
 const hue = (name = "?") => {
@@ -94,6 +95,7 @@ const indianCitiesByState = {
   "Jammu & Kashmir": ["Srinagar", "Jammu"],
   Ladakh: ["Leh", "Kargil"],
   Puducherry: ["Puducherry", "Karaikal"],
+  ...INDIA_CITIES_BY_STATE,
 };
 
 const ROLE_OPTIONS = ["student", "instructor"];

@@ -8,41 +8,7 @@ import api from "../../config/api";
 import { uploadFile } from "../../utils/uploadFile";
 
 // ── Indian states & cities ────────────────────────────────────────────────────
-const indianCitiesByState = {
-  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati"],
-  "Arunachal Pradesh": ["Itanagar", "Tawang", "Naharlagun"],
-  Assam: ["Guwahati", "Dibrugarh", "Jorhat", "Silchar"],
-  Bihar: ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur"],
-  Chhattisgarh: ["Raipur", "Bhilai", "Korba", "Durg"],
-  Goa: ["Panaji", "Margao", "Vasco da Gama"],
-  Gujarat: ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
-  Haryana: ["Gurugram", "Faridabad", "Panipat", "Karnal"],
-  "Himachal Pradesh": ["Shimla", "Dharamshala", "Manali"],
-  Jharkhand: ["Ranchi", "Jamshedpur", "Dhanbad"],
-  Karnataka: ["Bengaluru", "Mysuru", "Mangalore", "Hubli"],
-  Kerala: ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam"],
-  "Madhya Pradesh": ["Bhopal", "Indore", "Gwalior", "Jabalpur"],
-  Maharashtra: ["Mumbai", "Pune", "Nagpur", "Nashik"],
-  Manipur: ["Imphal", "Churachandpur"],
-  Meghalaya: ["Shillong", "Tura"],
-  Mizoram: ["Aizawl", "Lunglei"],
-  Nagaland: ["Kohima", "Dimapur"],
-  Odisha: ["Bhubaneswar", "Cuttack", "Rourkela"],
-  Punjab: ["Chandigarh", "Amritsar", "Ludhiana", "Jalandhar"],
-  Rajasthan: ["Jaipur", "Jodhpur", "Udaipur", "Kota"],
-  Sikkim: ["Gangtok", "Namchi"],
-  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli"],
-  Telangana: ["Hyderabad", "Warangal", "Nizamabad"],
-  Tripura: ["Agartala", "Udaipur"],
-  "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra"],
-  Uttarakhand: ["Dehradun", "Haridwar", "Nainital"],
-  "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Siliguri"],
-  Delhi: ["New Delhi", "Dwarka", "Rohini"],
-  "Jammu & Kashmir": ["Srinagar", "Jammu"],
-  Ladakh: ["Leh", "Kargil"],
-  Puducherry: ["Puducherry", "Karaikal"],
-};
-const ALL_STATES = Object.keys(indianCitiesByState).sort();
+import { getCitiesForState, INDIA_STATES as ALL_STATES } from "../../data/indiaLocations";
 
 // ── Shared OTP Modal ──────────────────────────────────────────────────────────
 function OtpModal({ title, subtitle, onVerify, onResend, onClose }) {
@@ -429,7 +395,7 @@ const InstructorSettings = ({ showToast }) => {
     }
   }, [userProfile]);
 
-  const cityOptions = indianCitiesByState[profile.state] || [];
+  const cityOptions = getCitiesForState(profile.state);
 
   // ── Profile save (name, city, state only — email & phone have own flows) ──
   const saveProfile = async () => {
@@ -621,7 +587,7 @@ const InstructorSettings = ({ showToast }) => {
     if (!pwForm.current)
       errs.current = t("instructorSettings.enterCurrentPassword");
     if (!pwForm.next) errs.next = t("instructorSettings.enterNewPassword");
-    else if (pwForm.next.length < 8)
+    else if (pwForm.next.length < 6)
       errs.next = t("instructorSettings.passwordMinChars");
     else if (!/[A-Z]/.test(pwForm.next))
       errs.next = t("instructorSettings.passwordUppercase");
@@ -913,6 +879,9 @@ const InstructorSettings = ({ showToast }) => {
                 style={{ ...selectStyle, opacity: !isEditing ? 0.6 : 1 }}
               >
                 <option value="">{t("instructorSettings.selectState")}</option>
+                {profile.state && !ALL_STATES.includes(profile.state) && (
+                  <option value={profile.state}>{profile.state}</option>
+                )}
                 {ALL_STATES.map((s) => (
                   <option key={s} value={s}>
                     {s}
@@ -924,26 +893,20 @@ const InstructorSettings = ({ showToast }) => {
               <label style={labelStyle}>{t("instructorSettings.city")}</label>
               <select
                 value={profile.city}
-                onChange={(e) =>
-                  setProfile({ ...profile, city: e.target.value })
-                }
+                onChange={(e) => setProfile({ ...profile, city: e.target.value })}
                 disabled={!isEditing || !profile.state}
                 style={{
-                  ...selectStyle,
+                  ...inputStyle,
                   opacity: !isEditing || !profile.state ? 0.5 : 1,
-                  cursor:
-                    !isEditing || !profile.state ? "not-allowed" : "pointer",
+                  cursor: !isEditing || !profile.state ? "not-allowed" : "pointer",
                 }}
               >
-                <option value="">
-                  {profile.state
-                    ? t("instructorSettings.selectCity")
-                    : t("instructorSettings.chooseStateFirst")}
-                </option>
-                {cityOptions.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
+                <option value="">{t("instructorSettings.selectCity") || "Select City"}</option>
+                {profile.city && !cityOptions.includes(profile.city) && (
+                  <option value={profile.city}>{profile.city}</option>
+                )}
+                {cityOptions.map((city) => (
+                  <option key={city} value={city}>{city}</option>
                 ))}
               </select>
             </div>

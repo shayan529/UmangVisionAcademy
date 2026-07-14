@@ -20,6 +20,7 @@ import {
   hasBaseRole,
   isBaseRole,
 } from "../../utils/permissions";
+import { INDIA_CITIES_BY_STATE, INDIA_STATES } from "../../data/indiaLocations";
 
 const API_BASE = "/admin/roles";
 const USERS_API = "/users/admin-create";
@@ -92,8 +93,9 @@ const INDIAN_CITIES_BY_STATE = {
   "Jammu & Kashmir": ["Srinagar", "Jammu"],
   Ladakh: ["Leh", "Kargil"],
   Puducherry: ["Puducherry", "Karaikal"],
+  ...INDIA_CITIES_BY_STATE,
 };
-const INDIAN_STATES = Object.keys(INDIAN_CITIES_BY_STATE);
+const INDIAN_STATES = INDIA_STATES;
 
 const normalizeIndianPhoneNumber = (value) => {
   const digits = value.replace(/\D/g, "");

@@ -314,8 +314,28 @@ export default function MyCourses() {
           </p>
         </div>
 
-        {/* Summary chips */}
-        <div style={{ display: "flex", gap: 12 }}>
+        {/* Summary chips & Actions */}
+        <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+          <Link
+            to="/courses"
+            className="action-btn"
+            style={{
+              padding: "8px 16px",
+              backgroundColor: "rgba(99, 102, 241, 0.1)",
+              border: "1px solid rgba(99, 102, 241, 0.3)",
+              borderRadius: "10px",
+              color: "#c7d2fe",
+              fontSize: "13px",
+              fontWeight: 600,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              textDecoration: "none",
+            }}
+          >
+            {t("studentDashboard.exploreCourses")} <span style={{ fontSize: "14px", marginLeft: "2px" }}>→</span>
+          </Link>
+          <div style={{ display: "flex", gap: 12 }}>
           {[
             { label: "Enrolled", value: counts.total, color: "#a78bfa" },
             { label: "Completed", value: counts.completed, color: "#4ade80" },
@@ -365,6 +385,7 @@ export default function MyCourses() {
               </div>
             </div>
           ))}
+          </div>
         </div>
       </div>
 

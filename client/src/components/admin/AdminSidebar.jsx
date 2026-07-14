@@ -8,6 +8,7 @@ import {
   BarChart2,
   Trophy,
   ChevronLeft,
+
   Shield,
   UploadCloud,
   FileQuestion,
@@ -15,7 +16,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { Lock, CreditCard } from "lucide-react";
 
@@ -31,6 +32,7 @@ const AdminSidebar = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const navItems = [
     { id: "overview", label: t("adminSidebar.overview"), icon: BarChart2 },
     { id: "leaderboard", label: t("adminSidebar.leaderboard"), icon: Trophy },
@@ -41,7 +43,6 @@ const AdminSidebar = ({
     { id: "question-papers", label: t("adminSidebar.questionPapers"), icon: FileQuestion },
     { id: "bulk-import", label: t("adminSidebar.bulkImport"), icon: UploadCloud },
     { id: "payments", label: t("adminSidebar.payments", "Payments"), icon: CreditCard },
-    { id: "notes", label: t("adminSidebar.notes"), icon: BookOpen },
     { id: "reels", label: t("adminSidebar.reels"), icon: Film },
     {
       id: "applications",
@@ -65,65 +66,44 @@ const AdminSidebar = ({
       <aside
         className={`bg-slate-950 border-r border-slate-800 flex flex-col overflow-hidden
     transition-transform duration-300 ease-in-out
-    fixed top-0 bottom-[82px] left-0 z-[100] shadow-2xl
+    fixed top-0 bottom-0 h-full left-0 z-[100] shadow-[4px_0_24px_rgba(0,0,0,0.6)]
     md:relative md:top-auto md:bottom-auto md:h-auto md:shadow-none md:translate-x-0
     ${collapsed ? "w-[68px] min-w-[68px]" : "w-[220px] min-w-[220px]"}
     ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
   `}
       >
-        {/* Brand & Collapse Header */}
-        <div className="flex items-center justify-between mb-5 px-3 py-4 border-b border-slate-800">
-          {!collapsed && (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-black font-extrabold text-sm shadow-md shadow-indigo-500/20">
-                S
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase mt-0.5">
-                  {t("adminSidebar.panel")}
-                </span>
-              </div>
-            </div>
-          )}
-          {collapsed && (
-            <div className="w-8 h-8 mx-auto rounded-lg bg-linear-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-black font-extrabold text-sm">
-              S
-            </div>
-          )}
-          <button
-            onClick={() => {
-              setCollapsed((c) => !c);
-              if (mobileOpen) setMobileOpen(false);
-            }}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="hidden md:flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-500 hover:text-white transition"
-          >
-            <ChevronLeft
-              size={14}
-              className={`transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`}
-            />
-          </button>
-        </div>
-
         {/* User Card */}
-        <div className="px-3 mb-4">
+        <div className="px-3 mt-3 mb-4">
           <div
-            className={`flex items-center gap-3 rounded-xl p-3 ${collapsed ? "justify-center" : "justify-start"
+            className={`flex items-center rounded-xl ${collapsed ? "justify-center gap-1 p-2" : "gap-3 p-3"
               } bg-indigo-950/20 border border-indigo-900/30`}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-indigo-400 to-violet-600 text-xs font-bold text-white shadow-sm shadow-indigo-500/10">
-              AD
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-indigo-400 to-violet-600 text-xs font-bold text-white shadow-sm shadow-indigo-500/10 shrink-0">
+              {user?.name?.charAt(0)?.toUpperCase() || "A"}
             </div>
             {!collapsed && (
-              <div className="overflow-hidden">
+              <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="truncate text-xs font-bold text-white">
-                  Admin User
+                  {user?.name || "Admin User"}
                 </div>
-                <div className="text-[10px] text-indigo-400 font-semibold">
+                <div className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider truncate">
                   Administrator
                 </div>
               </div>
             )}
+            <button
+              onClick={() => {
+                setCollapsed((value) => !value);
+                if (mobileOpen) setMobileOpen(false);
+              }}
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className="hidden md:flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-indigo-800/60 bg-slate-900/80 text-slate-400 hover:border-indigo-500 hover:bg-indigo-950/60 hover:text-white transition"
+            >
+              <ChevronLeft
+                size={14}
+                className={`transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`}
+              />
+            </button>
           </div>
         </div>
 
@@ -161,6 +141,25 @@ const AdminSidebar = ({
               </button>
             );
           })}
+        {/* Logout button at the bottom (Mobile View Only) */}
+        <div className="md:hidden p-3 border-t border-slate-800 shrink-0">
+          <button
+            onClick={() => {
+              if (mobileOpen) setMobileOpen(false);
+              dispatch(logoutUser());
+              navigate("/");
+            }}
+            className={`flex items-center justify-center gap-2 rounded-xl py-2.5 transition-all duration-200 w-full text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 ${
+              collapsed ? "px-0" : "px-3"
+            }`}
+            title={collapsed ? t("nav.logout") : undefined}
+          >
+            <span style={{ fontSize: 16 }}>🚪</span>
+            {!collapsed && (
+              <span className="text-xs font-semibold">{t("nav.logout")}</span>
+            )}
+          </button>
+        </div>
         </nav>
       </aside>
     </>

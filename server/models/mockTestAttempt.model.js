@@ -46,4 +46,9 @@ mockTestAttemptSchema.index(
   },
 );
 
+// Student results and analytics are always scoped to a completed status.
+mockTestAttemptSchema.index({ student: 1, status: 1, submittedAt: -1 });
+// The leaderboard filters completed attempts and sorts by score, then speed.
+mockTestAttemptSchema.index({ mockTest: 1, status: 1, score: -1, timeTaken: 1 });
+
 export default mongoose.model("MockTestAttempt", mockTestAttemptSchema);

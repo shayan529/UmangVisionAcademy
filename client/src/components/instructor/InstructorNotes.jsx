@@ -85,14 +85,16 @@ export default function InstructorNotes({ showToast }) {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (note) => {
     if (!window.confirm("Are you sure you want to delete this note?")) return;
     try {
-      await api.delete(`/notes/${id}`);
-      setNotes(notes.filter((n) => n._id !== id));
+      await api.delete(`/notes/${note._id}`, {
+        data: { source: note.source || "standalone", courseId: note.courseId || undefined },
+      });
+      setNotes(notes.filter((n) => n._id !== note._id));
       showToast?.("Note deleted");
     } catch (error) {
-      showToast?.("Failed to delete note");
+      showToast?.(error.response?.data?.message || "Failed to delete note");
     }
   };
 
@@ -155,6 +157,7 @@ export default function InstructorNotes({ showToast }) {
                       </h4>
                       <span style={{ fontSize: 11, color: "#64748b" }}>
                         {new Date(note.createdAt).toLocaleDateString()}
+                        {note.courseTitle ? ` · ${note.courseTitle}` : " · General upload"}
                       </span>
                     </div>
                   </div>
@@ -181,7 +184,7 @@ export default function InstructorNotes({ showToast }) {
                     }}>
                       View
                     </a>
-                    <button onClick={() => handleDelete(note._id)} style={{
+                    <button onClick={() => handleDelete(note)} style={{
                       fontSize: 12, fontWeight: 600, color: "#f87171", border: "none",
                       padding: "6px 12px", borderRadius: 8, background: "rgba(248,113,113,0.1)", cursor: "pointer"
                     }}>

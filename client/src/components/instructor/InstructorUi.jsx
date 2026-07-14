@@ -47,13 +47,14 @@ export const ProgressBar = ({ value, color = "#7c3aed" }) => (
 );
 
 // ─── Btn ─────────────────────────────────────────────────────────────────────
-export const Btn = ({ children, onClick, variant = "ghost", style = {} }) => {
+export const Btn = ({ children, onClick, variant = "ghost", style = {}, disabled = false }) => {
   const base = {
     padding: "8px 16px",
     borderRadius: 10,
     fontSize: 13,
     fontWeight: 600,
-    cursor: "pointer",
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.6 : 1,
     border: "none",
     display: "inline-flex",
     alignItems: "center",
@@ -83,7 +84,11 @@ export const Btn = ({ children, onClick, variant = "ghost", style = {} }) => {
     },
   };
   return (
-    <button style={{ ...base, ...variants[variant] }} onClick={onClick}>
+    <button
+      style={{ ...base, ...variants[variant] }}
+      onClick={onClick}
+      disabled={disabled}
+    >
       {children}
     </button>
   );

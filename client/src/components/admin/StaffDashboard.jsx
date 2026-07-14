@@ -33,7 +33,6 @@ import AdminCourses from "./AdminCourses";
 import AdminApplications from "./AdminApplications";
 import StaffPayments from "./StaffPayments";
 import RoleManager from "./RoleManager";
-import AdminNotes from "./AdminNotes";
 
 const StaffSidebar = ({
   user,
@@ -76,9 +75,6 @@ const StaffSidebar = ({
       : []),
     ...(hasPermission(user, "reels", "view")
       ? [{ id: "reels", label: "Reels Moderation", icon: Film }]
-      : []),
-    ...(hasPermission(user, "notes", "view")
-      ? [{ id: "notes", label: "Notes Moderation", icon: BookOpen }]
       : []),
     ...(hasBaseRole(user, "admin")
       ? [{ id: "roles", label: "Roles & Permissions", icon: Lock }]
@@ -427,10 +423,6 @@ export default function StaffDashboard() {
           <AdminApplications
             canModerate={hasPermission(user, "moderation", "remove")}
           />
-        ) : null;
-      case "notes":
-        return hasPermission(user, "notes", "view") ? (
-          <AdminNotes />
         ) : null;
       case "reels":
         return hasPermission(user, "reels", "view") ? (

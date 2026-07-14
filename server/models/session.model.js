@@ -51,5 +51,9 @@ const sessionSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Match the instructor and course session feeds, both ordered by date.
+sessionSchema.index({ instructor: 1, date: 1 });
+sessionSchema.index({ course: 1, date: 1 });
+
 const Session = mongoose.model("Session", sessionSchema);
 export default Session;

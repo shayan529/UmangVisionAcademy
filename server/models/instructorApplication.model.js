@@ -24,6 +24,9 @@ const instructorApplicationSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Supports the moderation queue filtered by status and newest-first ordering.
+instructorApplicationSchema.index({ status: 1, createdAt: -1 });
+
 export default mongoose.model(
   "InstructorApplication",
   instructorApplicationSchema,

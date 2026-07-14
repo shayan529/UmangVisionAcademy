@@ -249,16 +249,9 @@ button.btn-red:hover,
           </Link>
 
           {/* ── Desktop nav links ── */}
-          <div className="hidden md:flex justify-center flex-1 items-center gap-8 text-[15px] font-medium text-gray-300 mx-8">
-            {!isStaffOrAdmin && (
-              <Link
-                to="/courses"
-                className="hover:text-indigo-300 transition duration-300"
-              >
-                {t("nav.courses")}
-              </Link>
-            )}
-            {!isStaffOrAdmin && (
+          <div className="hidden md:flex justify-center flex-1 items-center gap-4 xl:gap-8 text-[15px] font-medium text-gray-300 mx-4 xl:mx-8">
+
+            {!isStaffOrAdmin && !user && (
               <Link
                 to="/plans"
                 className="hover:text-indigo-300 transition duration-300"
@@ -266,18 +259,22 @@ button.btn-red:hover,
                 {t("nav.plans")}
               </Link>
             )}
-            <Link
-              to="/question-bank"
-              className="hover:text-indigo-300 transition duration-300"
-            >
-              {t("nav.questionBank")}
-            </Link>
-            <Link
-              to="/blogs"
-              className="hover:text-indigo-300 transition duration-300"
-            >
-              {t("nav.blogs")}
-            </Link>
+            {!user && (
+              <>
+                <Link
+                  to="/question-bank"
+                  className="hover:text-indigo-300 transition duration-300"
+                >
+                  {t("nav.questionBank")}
+                </Link>
+                <Link
+                  to="/blogs"
+                  className="hover:text-indigo-300 transition duration-300"
+                >
+                  {t("nav.blogs")}
+                </Link>
+              </>
+            )}
 
             {!isStaffOrAdmin && (
               <div ref={dropdownRef} className="relative">
@@ -319,7 +316,7 @@ button.btn-red:hover,
               </div>
             )}
 
-            {!hasInstructorRole && !isStaffOrAdmin && (
+            {!hasInstructorRole && !isStaffOrAdmin && !user && (
               <Link
                 to="/become-instructor"
                 className="hover:text-indigo-300 transition duration-300"
@@ -362,7 +359,7 @@ button.btn-red:hover,
           </div>
 
           {/* ── Desktop right section ── */}
-          <div className="hidden md:flex items-center gap-4 ml-auto ">
+          <div className="hidden md:flex items-center gap-2 lg:gap-4 ml-auto shrink-0">
             {!isStaffOrAdmin && (
               <button
                 type="button"
@@ -480,25 +477,27 @@ button.btn-red:hover,
                 )}
               </button>
             )}
-            <button
-              type="button"
-              onClick={() =>
-                setMobileMenuOpen((prev) => {
-                  const next = !prev;
-                  if (next && isDashboardRoute) {
-                    window.dispatchEvent(
-                      new CustomEvent("navbar-mobile-menu-open"),
-                    );
-                  }
-                  return next;
-                })
-              }
-              className="relative z-50 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white hover:bg-white/5 transition text-lg"
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileMenuOpen}
-            >
-              {mobileMenuOpen ? "✕" : "☰"}
-            </button>
+            {!isDashboardRoute && (
+              <button
+                type="button"
+                onClick={() =>
+                  setMobileMenuOpen((prev) => {
+                    const next = !prev;
+                    if (next && isDashboardRoute) {
+                      window.dispatchEvent(
+                        new CustomEvent("navbar-mobile-menu-open"),
+                      );
+                    }
+                    return next;
+                  })
+                }
+                className="relative z-50 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white hover:bg-white/5 transition text-lg"
+                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={mobileMenuOpen}
+              >
+                {mobileMenuOpen ? "✕" : "☰"}
+              </button>
+            )}
           </div>
         </div>
 
@@ -532,17 +531,21 @@ button.btn-red:hover,
       >
         <div className="px-4 pt-3 pb-6 space-y-1">
           {[
-            ...(!isStaffOrAdmin
+            ...(!isStaffOrAdmin && !user
               ? [
                 { to: "/courses", label: t("nav.courses") },
                 { to: "/plans", label: t("nav.plans") },
               ]
               : []),
-            ...(!hasInstructorRole && !isStaffOrAdmin
+            ...(!hasInstructorRole && !isStaffOrAdmin && !user
               ? [{ to: "/become-instructor", label: t("nav.becomeInstructor") }]
               : []),
-            { to: "/question-bank", label: t("nav.questionBank") },
-            { to: "/blogs", label: t("nav.blogs") },
+            ...(!user 
+              ? [
+                  { to: "/question-bank", label: t("nav.questionBank") },
+                  { to: "/blogs", label: t("nav.blogs") }
+                ] 
+              : [])
           ].map(({ to, label }) => (
             <Link
               key={to}

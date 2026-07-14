@@ -25,6 +25,7 @@ export default function MockTestPlayer() {
   const { activeTest, loading } = useSelector((s) => s.mockTest);
 
   const [answers, setAnswers] = useState({}); // { questionIndex: selectedOption }
+  const [marked, setMarked] = useState({}); // { questionIndex: boolean }
   const [current, setCurrent] = useState(0);
   const [timeLeft, setTimeLeft] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -80,6 +81,7 @@ export default function MockTestPlayer() {
 
   const handleSelect = (qIndex, optIndex) => {
     setAnswers((prev) => ({ ...prev, [qIndex]: optIndex }));
+    setMarked((prev) => ({ ...prev, [qIndex]: false }));
   };
 
   const handleSubmit = async (autoSubmit = false) => {
@@ -211,13 +213,23 @@ export default function MockTestPlayer() {
           </div>
 
           {/* Prev / Next */}
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center">
             <button
               onClick={() => setCurrent((c) => c - 1)}
               disabled={current === 0}
               className="px-5 py-2 rounded-xl text-sm font-medium text-slate-400 border border-[#1a2e48] hover:border-slate-500 hover:text-white disabled:opacity-30 transition-all"
             >
               ← Prev
+            </button>
+            <button
+              onClick={() => setMarked(m => ({ ...m, [current]: !m[current] }))}
+              className={`px-5 py-2 rounded-xl text-sm font-medium border transition-all ${
+                marked[current]
+                  ? "bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/30"
+                  : "text-slate-400 border-[#1a2e48] hover:border-slate-500 hover:text-white"
+              }`}
+            >
+              {marked[current] ? "Unmark Review" : "Mark for Review"}
             </button>
             <button
               onClick={() => setCurrent((c) => c + 1)}
@@ -238,6 +250,7 @@ export default function MockTestPlayer() {
             <div className="grid grid-cols-5 md:grid-cols-4 gap-1.5">
               {questions.map((_, i) => {
                 const ans = answers[i] !== undefined;
+                const isMarked = marked[i];
                 const isCurrent = i === current;
                 return (
                   <button
@@ -246,9 +259,13 @@ export default function MockTestPlayer() {
                     className={`w-9 h-9 rounded-lg text-xs font-semibold transition-all ${
                       isCurrent
                         ? "bg-violet-600 text-white scale-110 shadow-md shadow-violet-900/30"
-                        : ans
-                          ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30"
-                          : "bg-[#1a2e48] text-slate-500 hover:bg-[#1e3a5f] hover:text-slate-300"
+                        : isMarked
+                          ? ans 
+                            ? "bg-amber-500/20 text-amber-400 border-2 border-emerald-500" 
+                            : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                          : ans
+                            ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30"
+                            : "bg-[#1a2e48] text-slate-500 hover:bg-[#1e3a5f] hover:text-slate-300"
                     }`}
                   >
                     {i + 1}
@@ -261,6 +278,10 @@ export default function MockTestPlayer() {
               <div className="flex items-center gap-2 text-slate-500">
                 <span className="w-3 h-3 rounded bg-emerald-600/20 border border-emerald-600/30" />
                 Answered
+              </div>
+              <div className="flex items-center gap-2 text-slate-500">
+                <span className="w-3 h-3 rounded bg-amber-500/20 border border-amber-500/30" />
+                Marked for Review
               </div>
               <div className="flex items-center gap-2 text-slate-500">
                 <span className="w-3 h-3 rounded bg-[#1a2e48]" />

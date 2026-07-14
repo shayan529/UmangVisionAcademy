@@ -1,4 +1,5 @@
 import Achievement from "../models/achievement.model.js";
+import User from "../models/user.model.js";
 import { cacheResponse, deleteKey } from "../utils/redisClient.js";
 
 // ── Fetch user's achievements with earned badges ──
@@ -68,6 +69,9 @@ export const checkAndAwardAchievements = async (req, res) => {
 
     const newAchievements = [];
 
+    const RARE_BADGES = ["early_bird", "full_marks"];
+    const LEGEND_BADGE = "legend";
+
     // Helper: award badge if not already earned
     const awardBadge = async (badgeId) => {
       const existing = await Achievement.findOne({ userId, badgeId });
@@ -79,6 +83,18 @@ export const checkAndAwardAchievements = async (req, res) => {
         });
         await achievement.save();
         newAchievements.push(badgeId);
+
+        // Award Coins
+        let coinsToAward = 10; // Standard badge
+        if (RARE_BADGES.includes(badgeId)) {
+          coinsToAward = 25;
+        } else if (badgeId === LEGEND_BADGE) {
+          coinsToAward = 50;
+        }
+
+        await User.findByIdAndUpdate(userId, {
+          $inc: { coins: coinsToAward },
+        });
       }
     };
 

@@ -8,7 +8,6 @@ const achievementSchema = new Schema(
       type: Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
     badgeId: {
       type: String,
@@ -42,5 +41,6 @@ const achievementSchema = new Schema(
 
 // Compound index to prevent duplicates
 achievementSchema.index({ userId: 1, badgeId: 1 }, { unique: true });
+achievementSchema.index({ userId: 1, earnedAt: -1 });
 
 export default model("Achievement", achievementSchema);

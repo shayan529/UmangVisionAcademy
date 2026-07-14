@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { logoutUser } from "../../redux/slices/authSlice";
+import { getCustomRoles, hasBaseRole } from "../../utils/permissions";
 
 // UI primitives & modal
 import { Toast, Btn } from "./InstructorUi";
@@ -59,11 +62,49 @@ export default function InstructorDashboard() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [sidebarOpen]);
 
+  useEffect(() => {
+    if (sidebarOpen && window.innerWidth < 768) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.touchAction = "none";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      document.body.style.touchAction = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      document.body.style.touchAction = "";
+    };
+  }, [sidebarOpen]);
+
   const dynamicTop = sidebarOpen ? Math.max(0, 73 - scrollTop) : 0;
   const [courseForm, setCourseForm] = useState(EMPTY_FORM);
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { courses } = useSelector((s) => s.courses);
+  const { user } = useSelector((s) => s.auth);
+
+  const hasInstructorRole = hasBaseRole(user, "instructor");
+  const hasStudentRole = hasBaseRole(user, "student");
+  const hasAdminRole = hasBaseRole(user, "admin");
+  const hasCustomRole = getCustomRoles(user).length > 0;
+  const isMultiRole = hasInstructorRole && hasStudentRole && !hasAdminRole && !hasCustomRole;
+
+  const dashboardPath = hasAdminRole
+    ? "/admin-dashboard"
+    : hasCustomRole
+      ? "/staff-dashboard"
+      : hasInstructorRole
+        ? "/instructor-dashboard"
+        : "/student-dashboard";
+
+  const isInstructorDashboard = window.location.pathname.startsWith("/instructor-dashboard");
+  const goingToInstructor = !isInstructorDashboard;
+  const switchTarget = goingToInstructor ? "/instructor-dashboard" : "/student-dashboard";
+  const switchLabel = goingToInstructor ? t("nav.goToInstructor") : t("nav.goToStudent");
 
   const unread = notifs.filter((n) => !n.read).length;
 
@@ -212,56 +253,74 @@ export default function InstructorDashboard() {
 
     return (
       <>
+        {/* User Card */}
+        <div className="px-3 mt-3 mb-4">
+          <div className="flex items-center rounded-xl gap-3 p-3 bg-indigo-950/20 border border-indigo-900/30">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-indigo-400 to-violet-600 text-lg font-bold text-white shadow-sm shadow-indigo-500/10 shrink-0">
+              {user?.name?.charAt(0).toUpperCase() || "U"}
+            </div>
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="truncate text-xs font-bold text-white">
+                {user?.name}
+              </div>
+              <div className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider truncate mt-0.5">
+                {hasAdminRole ? "Admin" : isMultiRole ? "Multiple Roles" : hasInstructorRole ? "Instructor" : "Student"}
+              </div>
+            </div>
+          </div>
+        </div>
 
-
-        <nav style={{ flex: 1, overflowY: "auto" }}>
-          {allNavItems.map(({ id, icon }) => (
-            <button
-              key={id}
-              onClick={() => handleNavClick(id)}
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "none",
-                textAlign: "left",
-                fontSize: 15,
-                fontWeight: 500,
-                cursor: "pointer",
-                background: activeSection === id ? "#2e1065" : "transparent",
-                color: activeSection === id ? "#a78bfa" : "#64748b",
-                marginBottom: 2,
-                transition: "all 0.15s",
-              }}
-            >
-              <span style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
-                <span>
+        <nav className="flex-1 flex flex-col gap-1.5 px-3 pb-4 overflow-y-auto">
+          {allNavItems.map(({ id, icon }) => {
+            const isActive = activeSection === id;
+            return (
+              <button
+                key={id}
+                onClick={() => handleNavClick(id)}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 w-full text-left justify-start ${
+                  isActive
+                    ? "bg-indigo-950/40 text-indigo-300 border-l-2 border-indigo-500 pl-2.5"
+                    : "text-slate-400 hover:bg-slate-900 hover:text-white border-l-2 border-transparent"
+                }`}
+              >
+                <span className="shrink-0 text-lg leading-none">{icon}</span>
+                <span className="text-xs font-semibold flex-1">
                   {id === "mock-tests"
                     ? t("instructorSidebar.mockTests")
                     : t(`instructorSidebar.${id}`)}
                 </span>
-              </span>
 
-              {id === "notifications" && unread > 0 && (
-                <span
-                  style={{
-                    background: "#7c3aed",
-                    color: "#fff",
-                    fontSize: 10,
-                    fontWeight: 700,
-                    padding: "2px 6px",
-                    borderRadius: 10,
-                  }}
-                >
-                  {unread}
-                </span>
-              )}
-            </button>
-          ))}
+                {id === "notifications" && unread > 0 && (
+                  <span className="bg-red-500 text-white rounded-full text-[9px] font-bold px-2 py-0.5 min-w-4.5 text-center">
+                    {unread}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        {/* Profile & Logout Section (Mobile View Only) */}
+        <div className="md:hidden p-3 border-t border-slate-800 shrink-0">
+          {isMultiRole && (
+            <Link
+              to={switchTarget}
+              onClick={() => setSidebarOpen(false)}
+              className="btn-indigo-shine mb-2 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold"
+            >
+              ⇄ {switchLabel}
+            </Link>
+          )}
+          <button
+            onClick={() => {
+              setSidebarOpen(false);
+              dispatch(logoutUser());
+              navigate("/");
+            }}
+            className="flex items-center justify-center gap-2 rounded-xl py-2.5 transition-all duration-200 w-full text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 px-3"
+          >
+            <span style={{ fontSize: 16 }}>🚪</span>
+            <span className="text-xs font-semibold">{t("nav.logout")}</span>
+          </button>
+        </div>
         </nav>
       </>
     );
@@ -293,13 +352,10 @@ export default function InstructorDashboard() {
       >
         {/* Desktop sidebar */}
         <aside
-          className="instr-sidebar"
+          className="instr-sidebar bg-slate-950 border-r border-slate-800"
           style={{
             width: 230,
-            background: "#0b1120",
-            borderRight: "1px solid #1e293b",
             flexDirection: "column",
-            padding: "24px 12px",
             position: "sticky",
             top: 0,
             height: "100vh",
@@ -325,14 +381,13 @@ export default function InstructorDashboard() {
 
         {/* Mobile drawer */}
         <aside
-          className={`bg-[#0b1120] border-r border-slate-800 flex-col transition-all duration-300 z-50 p-5 md:hidden
+          className={`bg-slate-950 border-r border-slate-800 flex-col transition-all duration-300 z-50 md:hidden
             ${
               sidebarOpen
-                ? "fixed bottom-[82px] left-0 w-[220px] shadow-2xl flex"
+                ? "fixed top-0 bottom-0 left-0 h-full w-[220px] shadow-[4px_0_24px_rgba(0,0,0,0.6)] flex"
                 : "hidden"
             }
           `}
-          style={sidebarOpen ? { top: `${dynamicTop}px` } : undefined}
         >
           <button
             onClick={() => setSidebarOpen(false)}
@@ -343,7 +398,9 @@ export default function InstructorDashboard() {
               color: "#64748b",
               fontSize: 22,
               cursor: "pointer",
-              marginBottom: 12,
+              marginRight: 16,
+              marginTop: 12,
+              marginBottom: 4,
               lineHeight: 1,
               padding: 0,
             }}

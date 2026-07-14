@@ -47,6 +47,7 @@ const InstructorSessions = ({ showToast }) => {
     time: "",
     url: "",
   });
+  const [startingSessionId, setStartingSessionId] = useState(null);
 
   useEffect(() => {
     dispatch(fetchSessions());
@@ -177,8 +178,22 @@ const InstructorSessions = ({ showToast }) => {
     cancelEditing();
   };
 
-  const startSession = (id) => {
-    dispatch(updateSession({ id, sessionData: { status: "live" } }));
+  const startSession = async (session) => {
+    if (!session.url) {
+      showToast(t("instructorSessions.noSessionUrl"));
+      return;
+    }
+
+    setStartingSessionId(session._id);
+    try {
+      await dispatch(
+        updateSession({ id: session._id, sessionData: { status: "live" } }),
+      ).unwrap();
+    } catch (error) {
+      console.error("Failed to start session:", error);
+    } finally {
+      setStartingSessionId(null);
+    }
   };
 
   const endSession = (id) => {
@@ -436,8 +451,15 @@ const InstructorSessions = ({ showToast }) => {
                     ) : (
                       <>
                         {s.status === "upcoming" && (
-                          <Btn variant="primary" style={{ fontSize: 12 }} onClick={() => startSession(s._id)}>
-                            {t("instructorSessions.startSession")}
+                          <Btn
+                            variant="primary"
+                            style={{ fontSize: 12 }}
+                            disabled={startingSessionId === s._id}
+                            onClick={() => startSession(s)}
+                          >
+                            {startingSessionId === s._id
+                              ? t("instructorSessions.starting", "Starting…")
+                              : t("instructorSessions.startSession")}
                           </Btn>
                         )}
 

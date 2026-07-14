@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Course from "./../models/courses.model.js";
 import User from "./../models/user.model.js";
 import Cart from "./../models/cart.model.js";
@@ -11,6 +12,43 @@ import { hasBaseRole, hasPermissionGrant } from "../utils/userRoles.js";
 import { sendCourseEnrollmentEmail, sendNewCourseAlertEmail } from "../utils/Mailer.js";
 import { computeInstructorRating } from "../utils/instructorRating.js";
 
+// ── notes sanitizer ────────────────────────────────────────────────────────────
+// Notes are moderated (pending → approved/rejected by an admin) before they're
+// shown to students. This strips any status/rejectedReason the client tries to
+// send (an instructor must never be able to self-approve a note), keeps the
+// existing status for notes that already existed on the course, and forces
+// every genuinely new note to "pending". It also drops any client-generated
+// placeholder _id (the course editor uses a temporary Date.now() string id for
+// unsaved notes) so Mongoose assigns a real ObjectId instead of failing to
+// cast it.
+const sanitizeNotesForSave = (incomingNotes, existingNotes = []) => {
+  if (!Array.isArray(incomingNotes)) return undefined;
+
+  const existingById = new Map(
+    (existingNotes || []).map((n) => [String(n._id), n]),
+  );
+
+  return incomingNotes
+    .filter((n) => n && n.title && n.fileUrl)
+    .map((n) => {
+      const existing =
+        n._id && mongoose.Types.ObjectId.isValid(n._id)
+          ? existingById.get(String(n._id))
+          : null;
+
+      return {
+        ...(existing ? { _id: existing._id } : {}),
+        title: n.title,
+        description: n.description || "",
+        fileUrl: n.fileUrl,
+        subject: n.subject || "",
+        status: existing ? existing.status : "pending",
+        rejectedReason: existing ? existing.rejectedReason || "" : "",
+        createdAt: existing ? existing.createdAt : new Date(),
+      };
+    });
+};
+
 // ── shared shape helper ───────────────────────────────────────────────────────
 const shapeCourse = (c) => ({
   _id: c._id,
@@ -19,6 +57,7 @@ const shapeCourse = (c) => ({
   description: c.description ?? "",
   category: c.category,
   board: c.board ?? "",
+  language: c.language ?? "",
   level: c.level,
   price: c.price,
   thumbnailUrl: c.thumbnailUrl,
@@ -81,6 +120,7 @@ export const createCourse = async (req, res) => {
       lessons,
       tags,
       board,
+      language,
       published,
       quiz,
       certificate,
@@ -106,13 +146,14 @@ export const createCourse = async (req, res) => {
       thumbnailUrl: thumbnailUrl || "",
       demoVideoUrl: demoVideoUrl || "",
       lessons: Array.isArray(lessons) ? lessons : [],
-      notes: Array.isArray(notes) ? notes : [],
+      notes: sanitizeNotesForSave(notes, []) ?? [],
       tags: Array.isArray(tags) ? tags : [],
       quiz: quiz && typeof quiz === "object" ? quiz : undefined,
       published: false,
       approvalStatus: wantsPublish ? "pending" : "draft",
       instructor: req.user._id,
       board,
+      language,
       students: [],
       certificate:
         certificate && typeof certificate === "object"
@@ -214,13 +255,15 @@ export const getCourseByIdPublic = async (req, res) => {
         durationMinutes: l.durationMinutes,
         type: l.type ?? "video",
       })),
-      notes: (course.notes ?? []).map((note) => ({
-        _id: note._id,
-        title: note.title,
-        description: note.description,
-        fileUrl: note.fileUrl,
-        createdAt: note.createdAt,
-      })),
+      notes: (course.notes ?? [])
+        .filter((note) => note.status === "approved")
+        .map((note) => ({
+          _id: note._id,
+          title: note.title,
+          description: note.description,
+          fileUrl: note.fileUrl,
+          createdAt: note.createdAt,
+        })),
     };
 
     await setJson(cacheKey, shaped, 7200);
@@ -256,8 +299,15 @@ export const approveCourse = async (req, res) => {
         approvalStatus: "approved",
         published: true,
         rejectionReason: "",
+        // Notes are reviewed as part of their parent course. Publishing the
+        // reviewed course makes all of its attached notes available too.
+        "notes.$[note].status": "approved",
+        "notes.$[note].rejectedReason": "",
       },
-      { new: true },
+      {
+        new: true,
+        arrayFilters: [{ "note.status": { $ne: "approved" } }],
+      },
     ).populate("instructor", "name email");
 
     if (!course) return res.status(404).json({ message: "Course not found" });
@@ -300,7 +350,7 @@ export const approveCourse = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Course approved and published.",
+      message: "Course and its notes approved and published.",
       course: shapeCourse(course),
     });
   } catch (err) {
@@ -416,7 +466,7 @@ export const enrolledCourses = async (req, res) => {
           course.ratings?.find(
             (r) => r.user?.toString() === studentId.toString(),
           ) ?? null,
-        notes: course.notes ?? [],
+        notes: (course.notes ?? []).filter((n) => n.status === "approved"),
       };
     });
 
@@ -633,6 +683,18 @@ export const getCourseById = async (req, res) => {
       courseObj.instructor.ratingCount = ratingData.ratingCount;
     }
 
+    // Students (and anyone who isn't the owning instructor/an admin) should
+    // only ever see notes an admin has approved — pending/rejected notes are
+    // only visible to the instructor who owns the course or to admins.
+    const isOwner =
+      course.instructor?._id?.toString() === req.user._id.toString();
+    const isAdmin = hasBaseRole(req.user, "admin");
+    if (!isOwner && !isAdmin) {
+      courseObj.notes = (courseObj.notes ?? []).filter(
+        (n) => n.status === "approved",
+      );
+    }
+
     res.json(courseObj);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -657,6 +719,7 @@ export const updateCourse = async (req, res) => {
       tags,
       published,
       board,
+      language,
       quiz,
       certificate,
       notes,
@@ -697,10 +760,13 @@ export const updateCourse = async (req, res) => {
       ...(demoVideoUrl !== undefined && { demoVideoUrl }),
       ...(tags !== undefined && { tags: Array.isArray(tags) ? tags : [] }),
       ...(board !== undefined && { board }),
+      ...(language !== undefined && { language }),
       ...(lessons !== undefined && { lessons }),
       ...(quiz !== undefined && { quiz }),
       ...(certificate !== undefined && { certificate }),
-      ...(notes !== undefined && { notes }),
+      ...(notes !== undefined && {
+        notes: sanitizeNotesForSave(notes, existing.notes || []),
+      }),
       ...(subjectQuizzes !== undefined && { subjectQuizzes }),
       ...(subjectDetails !== undefined && { subjectDetails }),
       published: newPublished,

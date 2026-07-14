@@ -85,6 +85,11 @@ export const updateProfile = async (req, res) => {
       vidhansaba,
     } = req.body;
 
+    let finalCity = city;
+    if (finalCity) {
+      finalCity = finalCity.charAt(0).toUpperCase() + finalCity.slice(1);
+    }
+
     if (email && email !== req.user.email) {
       const existing = await User.findOne({ email, _id: { $ne: req.user._id } });
       if (existing) {
@@ -97,7 +102,7 @@ export const updateProfile = async (req, res) => {
       email,
       bio,
       phoneNumber,
-      city,
+      city: finalCity,
       state,
       avatarUrl,
       specialization,

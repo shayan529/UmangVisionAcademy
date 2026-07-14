@@ -23,4 +23,7 @@ const ReelSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+ReelSchema.index({ status: 1, createdAt: -1 });
+ReelSchema.index({ instructor: 1, createdAt: -1 });
+
 export default mongoose.model("Reel", ReelSchema);

@@ -3,13 +3,16 @@ import mongoose from "mongoose";
 // ─── Message Schema (optional — for persisting chat history) ────────────────
 const sessionMessageSchema = new mongoose.Schema(
   {
-    sessionId: { type: String, required: true, index: true },
+    sessionId: { type: String, required: true },
     sender: { type: String, required: true },
     senderId: { type: String },
     text: { type: String, required: true, maxlength: 500 },
   },
   { timestamps: true },
 );
+
+// Fetching the most recent chat history filters by session and sorts by time.
+sessionMessageSchema.index({ sessionId: 1, createdAt: -1 });
 
 const SessionMessage =
   mongoose.models.SessionMessage ||

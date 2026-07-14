@@ -63,6 +63,7 @@ const courseSchema = new Schema(
     reviewCount: { type: Number, default: 0, min: 0 },
     ratingAverage: { type: Number, default: 0, min: 0, max: 5 },
     board: { type: String, trim: true, default: "" },
+    language: { type: String, trim: true, default: "" },
     quiz: {
       title: { type: String, default: "Final Course Quiz" },
       questions: [
@@ -106,6 +107,14 @@ const courseSchema = new Schema(
         description: { type: String, trim: true, default: "" },
         fileUrl: { type: String, required: true },
         subject: { type: String, trim: true, default: "" },
+        // Every note starts "pending" and only becomes visible to students
+        // once an admin/moderator approves it (see note.controller.js).
+        status: {
+          type: String,
+          enum: ["pending", "approved", "rejected"],
+          default: "pending",
+        },
+        rejectedReason: { type: String, default: "" },
         createdAt: { type: Date, default: Date.now },
       }
     ],
@@ -125,5 +134,9 @@ courseSchema.methods.recalcRatings = function () {
 };
 
 courseSchema.index({ approvalStatus: 1, published: 1, createdAt: -1 });
+// Powers instructor dashboards and the membership lookups used by student
+// course, session, and notes feeds.
+courseSchema.index({ instructor: 1, createdAt: -1 });
+courseSchema.index({ students: 1 });
 
 export default model("Course", courseSchema);

@@ -846,7 +846,7 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, action
 
         {/* Meta tags */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {[course.category, course.board, course.level]
+          {[course.category, course.board, course.level, course.language]
             .filter(Boolean)
             .map((t) => (
               <span
@@ -880,6 +880,11 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, action
             >
               Curriculum ({course.lessons?.length ?? 0} lessons, {course.notes?.length ?? 0} notes)
             </p>
+            {course.notes?.length > 0 && (
+              <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10, lineHeight: 1.5 }}>
+                Notes are reviewed with this course and are approved when the course is approved.
+              </p>
+            )}
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {subjects.map((subj, sIdx) => (
@@ -980,6 +985,25 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, action
                     })}
 
                     {/* Notes */}
+                    {subj.notes.length > 0 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          marginTop: subj.lessons.length > 0 ? 8 : 0,
+                          padding: "4px 2px 2px",
+                          color: "#94a3b8",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          letterSpacing: "0.08em",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        <span style={{ fontSize: 13 }}>📝</span>
+                        Notes
+                      </div>
+                    )}
                     {subj.notes.map((n) => (
                       <div
                         key={"n"+n._globalIndex}
@@ -1011,6 +1035,19 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, action
                             </p>
                           )}
                         </div>
+                        <span style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: "3px 8px",
+                          borderRadius: 20,
+                          flexShrink: 0,
+                          background: n.status === "approved" ? "rgba(34,197,94,0.1)" : "rgba(234,179,8,0.1)",
+                          color: n.status === "approved" ? "#4ade80" : "#fbbf24",
+                          border: `1px solid ${n.status === "approved" ? "rgba(34,197,94,0.2)" : "rgba(234,179,8,0.2)"}`,
+                          whiteSpace: "nowrap",
+                        }}>
+                          {n.status === "approved" ? "Approved" : "Pending with course"}
+                        </span>
                         {n.fileUrl ? (
                           <a href={n.fileUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} style={{
                             fontSize: 10,
@@ -1147,7 +1184,7 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, action
                 cursor: actioning ? "not-allowed" : "pointer",
               }}
             >
-              {actioning ? "Processing…" : "✓ Approve & Publish"}
+              {actioning ? "Processing…" : "✓ Approve Course & Notes"}
             </button>
           </div>
         )}

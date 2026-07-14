@@ -25,6 +25,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import api from "../../config/api.js";
+import { INDIA_CITIES_BY_STATE } from "../../data/indiaLocations";
 
 /* ─── helpers ─────────────────────────────────────────── */
 const fmt = (n) => (n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : `₹${n}`);
@@ -92,6 +93,7 @@ const indianCitiesByState = {
   "Jammu & Kashmir": ["Srinagar", "Jammu"],
   Ladakh: ["Leh", "Kargil"],
   Puducherry: ["Puducherry", "Karaikal"],
+  ...INDIA_CITIES_BY_STATE,
 };
 
 /* ─── Avatar ──────────────────────────────────────────── */

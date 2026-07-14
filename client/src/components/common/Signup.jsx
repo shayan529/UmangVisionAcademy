@@ -7,41 +7,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { getCustomRoles, hasBaseRole } from "../../utils/permissions";
-
-const indianCitiesByState = {
-  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati"],
-  "Arunachal Pradesh": ["Itanagar", "Tawang", "Naharlagun"],
-  Assam: ["Guwahati", "Dibrugarh", "Jorhat", "Silchar"],
-  Bihar: ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur"],
-  Chhattisgarh: ["Raipur", "Bhilai", "Korba", "Durg"],
-  Goa: ["Panaji", "Margao", "Vasco da Gama"],
-  Gujarat: ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
-  Haryana: ["Gurugram", "Faridabad", "Panipat", "Karnal"],
-  "Himachal Pradesh": ["Shimla", "Dharamshala", "Manali"],
-  Jharkhand: ["Ranchi", "Jamshedpur", "Dhanbad"],
-  Karnataka: ["Bengaluru", "Mysuru", "Mangalore", "Hubli"],
-  Kerala: ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam"],
-  "Madhya Pradesh": ["Bhopal", "Indore", "Gwalior", "Jabalpur"],
-  Maharashtra: ["Mumbai", "Pune", "Nagpur", "Nashik"],
-  Manipur: ["Imphal", "Churachandpur"],
-  Meghalaya: ["Shillong", "Tura"],
-  Mizoram: ["Aizawl", "Lunglei"],
-  Nagaland: ["Kohima", "Dimapur"],
-  Odisha: ["Bhubaneswar", "Cuttack", "Rourkela"],
-  Punjab: ["Chandigarh", "Amritsar", "Ludhiana", "Jalandhar"],
-  Rajasthan: ["Jaipur", "Jodhpur", "Udaipur", "Kota"],
-  Sikkim: ["Gangtok", "Namchi"],
-  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli"],
-  Telangana: ["Hyderabad", "Warangal", "Nizamabad"],
-  Tripura: ["Agartala", "Udaipur"],
-  "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra"],
-  Uttarakhand: ["Dehradun", "Haridwar", "Nainital"],
-  "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Siliguri"],
-  Delhi: ["New Delhi", "Dwarka", "Rohini"],
-  "Jammu & Kashmir": ["Srinagar", "Jammu"],
-  Ladakh: ["Leh", "Kargil"],
-  Puducherry: ["Puducherry", "Karaikal"],
-};
+import { getCitiesForState, INDIA_STATES } from "../../data/indiaLocations";
 
 /* ── Animated particle canvas ── */
 const ParticleCanvas = () => {
@@ -199,7 +165,7 @@ const Signup = () => {
 
   // ── Password validation ──
   const passwordRules = [
-    { id: "len", label: t("auth.passwordRuleLen"), test: (p) => p.length >= 8 },
+    { id: "len", label: t("auth.passwordRuleLen"), test: (p) => p.length >= 6 },
     {
       id: "upper",
       label: t("auth.passwordRuleUpper"),
@@ -260,8 +226,8 @@ const Signup = () => {
     }));
   };
 
-  const states = Object.keys(indianCitiesByState);
-  const cityOptions = indianCitiesByState[formData.state] || [];
+  const states = INDIA_STATES;
+  const cityOptions = getCitiesForState(formData.state);
   const countryCodes = [{ code: "+91", country: "India" }];
 
   useEffect(() => {
@@ -1156,15 +1122,16 @@ const Signup = () => {
                           ? " cursor-not-allowed opacity-50"
                           : "")
                       }
+                      disabled={!formData.state}
                     >
                       <option value="" disabled>
                         {formData.state
-                          ? t("auth.selectCity")
-                          : t("auth.chooseStateFirst")}
+                          ? t("auth.selectCity") || "Select City"
+                          : t("auth.selectState") || "Select State first"}
                       </option>
-                      {cityOptions.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
+                      {cityOptions.map((city) => (
+                        <option key={city} value={city}>
+                          {city}
                         </option>
                       ))}
                     </select>

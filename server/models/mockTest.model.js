@@ -41,4 +41,10 @@ const mockTestSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Serves an instructor's newest-first dashboard without scanning all tests.
+mockTestSchema.index({ instructor: 1, createdAt: -1 });
+// Covers the common public catalogue request before optional filters are
+// applied, while avoiding an index for every combination of filters.
+mockTestSchema.index({ isPublished: 1, createdAt: -1 });
+
 export default mongoose.model("MockTest", mockTestSchema);

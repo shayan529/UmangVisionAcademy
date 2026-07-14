@@ -20,7 +20,6 @@ import AdminDevices from "./AdminDevices";
 import AdminBulkImport from "./AdminBulkImport";
 import RoleManager from "./RoleManager";
 import AdminQuestionPapers from "./AdminQuestionPapers";
-import AdminNotes from "./AdminNotes";
 import AdminReels from "./AdminReels";
 import AdminPayments from "./AdminPayments";
 
@@ -60,6 +59,23 @@ export default function AdminDashboard() {
     dispatch(fetchUsers());
     dispatch(fetchAllCoursesAdmin());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (sideOpen && window.innerWidth < 768) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.touchAction = "none";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      document.body.style.touchAction = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      document.body.style.touchAction = "";
+    };
+  }, [sideOpen]);
 
   useEffect(() => {
     const handleNavbarMenuOpen = () => {
@@ -222,8 +238,6 @@ export default function AdminDashboard() {
         return <AdminApplications />;
       case "roles":
         return <RoleManager currentUser={user} />;
-      case "notes":
-        return <AdminNotes user={user} />;
       case "reels":
         return <AdminReels />;
       case "devices":

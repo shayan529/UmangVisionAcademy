@@ -16,6 +16,7 @@ import instructorApplicationRoutes from "./routes/instructorApplication.routes.j
 import sessionRoutes from "./routes/session.routes.js";
 import studentRoutes from "./routes/student.routes.js";
 import cors from "cors";
+import compression from "compression";
 import billingRoutes from "./routes/billing.route.js";
 import uploadRoutes from "./routes/upload.routes.js";
 import aiRoutes from "./routes/ai.routes.js";
@@ -71,6 +72,8 @@ const corsOptions = {
       const hostname = originUrl.hostname;
       if (
         hostname === "umangvisionacademy.onrender.com" ||
+        hostname === "umang-vision-academy.vercel.app" ||
+        hostname.endsWith(".vercel.app") ||
         hostname.endsWith(".onrender.com") ||
         hostname === "localhost" ||
         hostname === "127.0.0.1" ||
@@ -110,6 +113,7 @@ const io = new Server(httpServer, {
 });
 
 // ── Middleware ────────────────────────────────────────────────────────────────
+app.use(compression());
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));

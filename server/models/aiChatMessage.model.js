@@ -6,12 +6,10 @@ const aiChatMessageSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: false,
-      index: true,
     },
     conversationId: {
       type: String,
       required: true,
-      index: true,
     },
     role: {
       type: String,
@@ -26,6 +24,10 @@ const aiChatMessageSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+// Loads and deletes a conversation in chronological order. This replaces the
+// two single-field indexes above with one index that serves the read path.
+aiChatMessageSchema.index({ conversationId: 1, createdAt: 1 });
 
 const AiChatMessage =
   mongoose.models.AiChatMessage ||

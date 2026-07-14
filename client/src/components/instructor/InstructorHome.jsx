@@ -268,7 +268,7 @@ const InstructorHome = ({ showToast, onNavigate }) => {
                     <div style={{ fontSize: 11, color: "#64748b", marginTop: 1 }}>
                       {t("instructorHome.studentsRevenue", {
                         count: c.enrolledCount ?? 0,
-                        revenue: c.revenue ?? 0,
+                        revenue: Number(c.revenue ?? 0).toLocaleString("en-IN"),
                       })}
                     </div>
                     <div style={{ marginTop: 6 }}>

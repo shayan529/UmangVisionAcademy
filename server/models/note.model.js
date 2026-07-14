@@ -22,7 +22,6 @@ const NoteSchema = new Schema(
       type: Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
     instructorName: {
       type: String,
@@ -32,7 +31,6 @@ const NoteSchema = new Schema(
       type: String,
       enum: ["pending", "approved", "rejected"],
       default: "pending",
-      index: true,
     },
     rejectedReason: {
       type: String,
@@ -40,5 +38,9 @@ const NoteSchema = new Schema(
   },
   { timestamps: true }
 );
+
+// These replace the single-field indexes and match the two list endpoints.
+NoteSchema.index({ instructor: 1, createdAt: -1 });
+NoteSchema.index({ status: 1, createdAt: -1 });
 
 export default model("Note", NoteSchema);
