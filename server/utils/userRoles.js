@@ -52,49 +52,12 @@ const toPlainUser = (user) => {
   return typeof user.toObject === "function" ? user.toObject() : { ...user };
 };
 
-export const migrateLegacyAssignedRoles = async (user) => {
-  if (!user?._id) return null;
-
-  // If the user object already has an empty assignedRoles array,
-  // we can safely assume there are no legacy roles to migrate and skip the raw DB query.
-  if (
-    "assignedRoles" in user &&
-    (!user.assignedRoles || user.assignedRoles.length === 0)
-  ) {
-    return user.roles || [];
-  }
-
-  const rawUser = await User.collection.findOne(
-    { _id: user._id },
-    { projection: { roles: 1, assignedRoles: 1 } },
-  );
-
-  const legacyAssignedRoles = rawUser?.assignedRoles || [];
-  if (!legacyAssignedRoles.length) return rawUser?.roles || user.roles || [];
-
-  const baseRoles = (rawUser.roles || user.roles || []).filter(isBaseRole);
-  const customRoleIds = [
-    ...customRoleIdsFromRoles(rawUser.roles || user.roles || []),
-    ...legacyAssignedRoles.map((id) => id.toString()),
-  ];
-  const mergedRoles = mergeBaseAndCustomRoles(baseRoles, customRoleIds);
-
-  await User.collection.updateOne(
-    { _id: user._id },
-    { $set: { roles: mergedRoles }, $unset: { assignedRoles: "" } },
-  );
-
-  return mergedRoles;
-};
-
-export const hydrateUserRoles = async (user, { migrate = true } = {}) => {
+export const hydrateUserRoles = async (user) => {
   const plainUser = toPlainUser(user);
   if (!plainUser) return null;
 
   try {
-    const roles = migrate
-      ? await migrateLegacyAssignedRoles(plainUser)
-      : plainUser.roles || [];
+    const roles = plainUser.roles || [];
 
     const baseRoles = roles.filter(isBaseRole);
     const customRoleIds = customRoleIdsFromRoles(roles);
@@ -160,8 +123,8 @@ export const hydrateUserRoles = async (user, { migrate = true } = {}) => {
   return plainUser;
 };
 
-export const hydrateUsersRoles = async (users = [], options) =>
-  Promise.all(users.map((user) => hydrateUserRoles(user, options)));
+export const hydrateUsersRoles = async (users = []) =>
+  Promise.all(users.map((user) => hydrateUserRoles(user)));
 
 export const hasPermissionGrant = (user, moduleName, actionName = "view") => {
   if (hasBaseRole(user, "admin")) return true;

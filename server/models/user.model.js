@@ -13,6 +13,7 @@ const userSchema = new Schema(
     },
     email: {
       type: String,
+      unique: true,
       sparse: true,
       lowercase: true,
       trim: true,
@@ -215,6 +216,8 @@ const userSchema = new Schema(
     timestamps: true,
   },
 );
+
+userSchema.index({ roles: 1, coins: -1, updatedAt: -1 });
 
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) {

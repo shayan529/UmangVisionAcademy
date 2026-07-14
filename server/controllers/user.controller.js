@@ -812,7 +812,7 @@ export const createStudentByAdmin = async (req, res) => {
     // No devices/login stamping here — this account hasn't actually logged
     // in yet; that will happen naturally the first time the student signs in.
 
-    const userData = await hydrateUserRoles(user, { migrate: false });
+    const userData = await hydrateUserRoles(user);
 
     // Deliberately no createToken / setTokenCookie call here.
     res.status(201).json(userData);

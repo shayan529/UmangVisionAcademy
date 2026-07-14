@@ -95,6 +95,15 @@ export const deleteRole = async (req, res) => {
       { $pull: { roles: role._id, assignedRoles: role._id } },
     );
 
+    // Autodelete users who have no roles left after the unassignment
+    await User.deleteMany({
+      $or: [
+        { roles: [] },
+        { roles: { $exists: false } },
+        { roles: null }
+      ]
+    });
+
     await role.deleteOne();
 
     // Invalidate cache
@@ -163,13 +172,23 @@ export const setUserRoles = async (req, res) => {
     }
 
     user.roles = mergeBaseAndCustomRoles(baseRoles, trueCustomRoleIds);
+
+    if (user.roles.length === 0) {
+      await User.findByIdAndDelete(user._id);
+      return res.json({
+        success: true,
+        message: "User autodeleted because no roles were assigned",
+        deleted: true,
+      });
+    }
+
     await user.save();
     await User.collection.updateOne(
       { _id: user._id },
       { $unset: { assignedRoles: "" } },
     );
 
-    res.json(await hydrateUserRoles(user, { migrate: false }));
+    res.json(await hydrateUserRoles(user));
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

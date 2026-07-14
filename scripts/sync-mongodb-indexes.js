@@ -11,6 +11,7 @@ import Reel from "../server/models/reel.model.js";
 import Reference from "../server/models/reference.model.js";
 import Session from "../server/models/session.model.js";
 import { SessionMessage } from "../server/utils/SessionChatSocket.js";
+import User from "../server/models/user.model.js";
 
 const envPath = resolve("server/.env");
 if (existsSync(envPath)) process.loadEnvFile(envPath);
@@ -27,6 +28,7 @@ const models = [
   Reference,
   Session,
   SessionMessage,
+  User,
 ];
 const mongoose = Course.base;
 const apply = process.argv.includes("--apply");
