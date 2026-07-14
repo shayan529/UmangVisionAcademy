@@ -95,52 +95,67 @@ const Signup = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const { loading, error, isAuthenticated, user } = useSelector((state) => state.auth);
+  const { loading, error, isAuthenticated, user } = useSelector(
+    (state) => state.auth,
+  );
 
   useEffect(() => {
     if (isAuthenticated && user) {
       const isAdmin = hasBaseRole(user, "admin");
       const isStaff = !isAdmin && getCustomRoles(user).length > 0;
-      const isInstructor = !isAdmin && !isStaff && hasBaseRole(user, "instructor");
-      
+      const isInstructor =
+        !isAdmin && !isStaff && hasBaseRole(user, "instructor");
+
       const from = location.state?.from;
       if (from) {
         navigate(from, { replace: true });
         return;
       }
-      
+
       if (isAdmin) navigate("/admin-dashboard", { replace: true });
       else if (isStaff) navigate("/staff-dashboard", { replace: true });
-      else if (isInstructor) navigate("/instructor-dashboard", { replace: true });
+      else if (isInstructor)
+        navigate("/instructor-dashboard", { replace: true });
       else navigate("/student-dashboard", { replace: true });
     }
   }, [isAuthenticated, user, navigate, location.state]);
 
-  const [phoneOtpSent, setPhoneOtpSent] = useState(() => getSessionValue("signup_phoneOtpSent", false));
-  const [phoneVerified, setPhoneVerified] = useState(() => getSessionValue("signup_phoneVerified", false));
-  const [phoneOtpInputs, setPhoneOtpInputs] = useState(() => getSessionValue("signup_phoneOtpInputs", ["", "", "", "", "", ""]));
+  const [phoneOtpSent, setPhoneOtpSent] = useState(() =>
+    getSessionValue("signup_phoneOtpSent", false),
+  );
+  const [phoneVerified, setPhoneVerified] = useState(() =>
+    getSessionValue("signup_phoneVerified", false),
+  );
+  const [phoneOtpInputs, setPhoneOtpInputs] = useState(() =>
+    getSessionValue("signup_phoneOtpInputs", ["", "", "", "", "", ""]),
+  );
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false);
   const [verifyingPhone, setVerifyingPhone] = useState(false);
   const [phoneResendCooldown, setPhoneResendCooldown] = useState(0);
   const phoneOtpRefs = useRef([]);
 
-  const [formData, setFormData] = useState(() => getSessionValue("signup_formData", {
-    name: "",
-    email: "",
-    countryCode: "+91",
-    phoneNumber: "",
-    city: "",
-    state: "",
-    pincode: "",
-    password: "",
-    confirmPassword: "",
-    referralCode: "",
-  }));
+  const [formData, setFormData] = useState(() =>
+    getSessionValue("signup_formData", {
+      name: "",
+      email: "",
+      countryCode: "+91",
+      phoneNumber: "",
+      city: "",
+      state: "",
+      pincode: "",
+      password: "",
+      confirmPassword: "",
+      referralCode: "",
+    }),
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [focused, setFocused] = useState("");
-  const [agreedToTerms, setAgreedToTerms] = useState(() => getSessionValue("signup_agreedToTerms", false));
+  const [agreedToTerms, setAgreedToTerms] = useState(() =>
+    getSessionValue("signup_agreedToTerms", false),
+  );
   const [submitting, setSubmitting] = useState(false);
+  const [referralAutoFilled, setReferralAutoFilled] = useState(false);
 
   // Sync state changes with sessionStorage
   useEffect(() => {
@@ -148,15 +163,24 @@ const Signup = () => {
   }, [phoneOtpSent]);
 
   useEffect(() => {
-    sessionStorage.setItem("signup_phoneVerified", JSON.stringify(phoneVerified));
+    sessionStorage.setItem(
+      "signup_phoneVerified",
+      JSON.stringify(phoneVerified),
+    );
   }, [phoneVerified]);
 
   useEffect(() => {
-    sessionStorage.setItem("signup_phoneOtpInputs", JSON.stringify(phoneOtpInputs));
+    sessionStorage.setItem(
+      "signup_phoneOtpInputs",
+      JSON.stringify(phoneOtpInputs),
+    );
   }, [phoneOtpInputs]);
 
   useEffect(() => {
-    sessionStorage.setItem("signup_agreedToTerms", JSON.stringify(agreedToTerms));
+    sessionStorage.setItem(
+      "signup_agreedToTerms",
+      JSON.stringify(agreedToTerms),
+    );
   }, [agreedToTerms]);
 
   useEffect(() => {
@@ -214,6 +238,9 @@ const Signup = () => {
         ...prev,
         referralCode: refCode.trim().toUpperCase(),
       }));
+      setReferralAutoFilled(true);
+    } else {
+      setReferralAutoFilled(false);
     }
   }, [location.search]);
 
@@ -750,7 +777,11 @@ const Signup = () => {
             >
               {/* Mobile Logo & Title */}
               <div className="flex lg:hidden items-center justify-start mb-6">
-                <img src="/Logo.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14 object-contain mr-3" />
+                <img
+                  src="/Logo.png"
+                  alt="Logo"
+                  className="w-12 h-12 sm:w-14 sm:h-14 object-contain mr-3"
+                />
                 <div className="flex flex-wrap items-center">
                   <span className="text-lg sm:text-xl font-extrabold text-white tracking-wide">
                     Umang Vision
@@ -847,7 +878,8 @@ const Signup = () => {
                           maxLength={10}
                           disabled={phoneVerified}
                           className={
-                            inputCls("phoneNumber") + " pr-10 disabled:opacity-50"
+                            inputCls("phoneNumber") +
+                            " pr-10 disabled:opacity-50"
                           }
                         />
                         {phoneVerified && (
@@ -1066,7 +1098,13 @@ const Signup = () => {
                     onFocus={() => setFocused("referralCode")}
                     onBlur={() => setFocused("")}
                     placeholder="Enter referral code"
-                    className={inputCls("referralCode")}
+                    readOnly={referralAutoFilled}
+                    className={
+                      inputCls("referralCode") +
+                      (referralAutoFilled
+                        ? " cursor-not-allowed bg-slate-800/70"
+                        : "")
+                    }
                   />
                   <p className="text-xs text-slate-500 mt-2">
                     If you have a referral code, add it here to earn bonus
