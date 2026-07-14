@@ -360,7 +360,13 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
 
 // ── Assign roles modal ────────────────────────────────────────────────────────
 const AssignRolesModal = ({ user, roles, onClose, onSaved, showToast }) => {
-  const [selected, setSelected] = useState(getCustomRoleIds(user));
+  const [selected, setSelected] = useState(() => {
+    const customIds = getCustomRoleIds(user);
+    const systemRoleIds = (roles || [])
+      .filter((r) => r.isSystem && hasBaseRole(user, r.name))
+      .map((r) => r._id);
+    return [...customIds, ...systemRoleIds];
+  });
   const [saving, setSaving] = useState(false);
 
   const toggleRole = (id) =>

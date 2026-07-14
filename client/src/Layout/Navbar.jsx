@@ -47,6 +47,8 @@ const Navbar = () => {
   const { t, i18n } = useTranslation();
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [mobileLangDropdownOpen, setMobileLangDropdownOpen] = useState(false);
+  const [rolesDropdownOpen, setRolesDropdownOpen] = useState(false);
+  const rolesDropdownRef = useRef(null);
   const [topBarHeight, setTopBarHeight] = useState(0);
 
   useEffect(() => {
@@ -62,6 +64,12 @@ const Navbar = () => {
         !mobileLangRef.current.contains(event.target)
       ) {
         setMobileLangDropdownOpen(false);
+      }
+      if (
+        rolesDropdownRef.current &&
+        !rolesDropdownRef.current.contains(event.target)
+      ) {
+        setRolesDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -157,6 +165,22 @@ const Navbar = () => {
     ? t("nav.goToStudentDashboard")
     : t("nav.goToInstructorDashboard");
   const goingToInstructor = !isInstructorDashboard;
+
+  const dashboardOptions = [];
+  if (user) {
+    if (hasBaseRole(user, "student")) {
+      dashboardOptions.push({ name: t("nav.roleStudent", "Student"), path: "/student-dashboard" });
+    }
+    if (hasBaseRole(user, "instructor")) {
+      dashboardOptions.push({ name: t("nav.roleInstructor", "Instructor"), path: "/instructor-dashboard" });
+    }
+    if (hasBaseRole(user, "admin")) {
+      dashboardOptions.push({ name: t("nav.roleAdmin", "Admin"), path: "/admin-dashboard" });
+    }
+    getCustomRoles(user).forEach((role) => {
+      dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
+    });
+  }
 
   return (
     <>
@@ -404,10 +428,33 @@ button.btn-red:hover,
                   <p className="text-slate-400 text-xs">{user?.name}</p>
                 </div>
 
-                {isMultiRole ? (
-                  <Link to={switchTarget} className="btn-indigo-shine">
-                    ⇄ {switchLabel}
-                  </Link>
+                {dashboardOptions.length > 1 ? (
+                  <div className="relative" ref={rolesDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setRolesDropdownOpen(!rolesDropdownOpen)}
+                      className="btn-indigo-shine flex items-center gap-1.5"
+                    >
+                      {t("nav.dashboard", "Dashboard")} <ChevronDown size={14} className={`transition-transform duration-200 ${rolesDropdownOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    {rolesDropdownOpen && (
+                      <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-slate-800 bg-[#0f172a] p-2 shadow-2xl z-[120] flex flex-col gap-1.5">
+                        {dashboardOptions.map((opt, idx) => (
+                          <button
+                            type="button"
+                            key={idx}
+                            onClick={() => {
+                              setRolesDropdownOpen(false);
+                              navigate(opt.path);
+                            }}
+                            className="w-full text-center text-[10px] font-bold uppercase tracking-wider text-indigo-300 hover:text-white hover:bg-slate-900 border border-indigo-900/20 rounded-lg px-2 py-2 transition-all"
+                          >
+                            {opt.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <Link to={dashboardPath} className="btn-indigo-shine">
                     {t("nav.dashboard")}
@@ -605,25 +652,33 @@ button.btn-red:hover,
               </div>
 
               {/* Action buttons */}
-              <div className="flex gap-2 pt-1">
-                {isMultiRole ? (
-                  <Link
-                    to={switchTarget}
-                    onClick={closeMobile}
-                    className="flex-1 text-center text-xs py-2 px-2 btn-indigo-shine"
-                    style={{
-                      borderRadius: "0.5rem",
-                      padding: "0.5rem 0.5rem",
-                      display: "flex",
-                    }}
-                  >
-                    {goingToInstructor ? "✦ " : "⟵ "} {switchLabel.replace(/go to\s+/i, "").replace(/\s*पर जाएँ/g, "").replace(/\s*जाएँ/g, "").trim()}
-                  </Link>
+              <div className="flex flex-col gap-2 pt-1 w-full">
+                {dashboardOptions.length > 1 ? (
+                  <div className="flex flex-col gap-1.5 w-full">
+                    <p className="text-[9px] font-bold uppercase text-slate-500 tracking-wider">
+                      Dashboards:
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {dashboardOptions.map((opt, idx) => (
+                        <button
+                          type="button"
+                          key={idx}
+                          onClick={() => {
+                            closeMobile();
+                            navigate(opt.path);
+                          }}
+                          className="text-center text-[9px] font-bold uppercase tracking-wider text-indigo-300 hover:text-white bg-indigo-950/40 border border-indigo-900/30 rounded-lg py-2 px-1 transition-all"
+                        >
+                          {opt.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ) : (
                   <Link
                     to={dashboardPath}
                     onClick={closeMobile}
-                    className="flex-1 text-center text-xs py-2 px-2 btn-indigo-shine"
+                    className="w-full text-center text-xs py-2 px-2 btn-indigo-shine"
                     style={{
                       borderRadius: "0.5rem",
                       padding: "0.5rem 0.5rem",

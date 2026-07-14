@@ -92,12 +92,22 @@ export default function AdminDashboard() {
     };
   }, []);
 
-  // Reset search when switching tabs
+  const refreshUsersAndCourses = () => {
+    dispatch(fetchUsers());
+    dispatch(fetchAllCoursesAdmin());
+  };
+
+  const deleteUser = (id, role) => {
+    dispatch(deleteUserThunk({ id, role })).then(() => {
+      dispatch(fetchAllCoursesAdmin());
+    });
+  };
+
+  // Reset search and refresh data when switching tabs
   useEffect(() => {
     setQ("");
+    refreshUsersAndCourses();
   }, [tab]);
-
-  const deleteUser = (id, role) => dispatch(deleteUserThunk({ id, role }));
 
   // ── Derived stats ──────────────────────────────────────────────────────────
   const totalRevenue = courses.reduce(
@@ -198,7 +208,7 @@ export default function AdminDashboard() {
             setQ={setQ}
             deleteUser={deleteUser}
             loading={usersLoading}
-            refreshUsers={() => dispatch(fetchUsers())}
+            refreshUsers={refreshUsersAndCourses}
           />
         );
       case "instructors":
@@ -209,6 +219,7 @@ export default function AdminDashboard() {
             setQ={setQ}
             deleteUser={deleteUser}
             loading={usersLoading || coursesLoading}
+            refreshUsers={refreshUsersAndCourses}
           />
         );
       case "courses":
@@ -231,13 +242,27 @@ export default function AdminDashboard() {
       case "question-papers":
         return <AdminQuestionPapers />;
       case "bulk-import":
-        return <AdminBulkImport refreshUsers={() => dispatch(fetchUsers())} />;
+        return <AdminBulkImport refreshUsers={refreshUsersAndCourses} />;
       case "payments":
         return <AdminPayments />;
       case "applications":
         return <AdminApplications />;
       case "roles":
-        return <RoleManager currentUser={user} />;
+        return (
+          <RoleManager
+            currentUser={user}
+            showToast={(msg) => console.log(msg)}
+            onUserRolesUpdated={(updatedUser) => {
+              dispatch(replaceUser(updatedUser));
+              dispatch(replaceCurrentUser(updatedUser));
+              refreshUsersAndCourses();
+            }}
+            onRoleChanged={() => {
+              refreshUsersAndCourses();
+              dispatch(loadCurrentUser());
+            }}
+          />
+        );
       case "reels":
         return <AdminReels />;
       case "devices":

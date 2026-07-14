@@ -2,7 +2,7 @@
 import { useTranslation } from "react-i18next";
 import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, LogOut } from "lucide-react";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { useNavigate, Link, NavLink } from "react-router-dom";
 import { getCustomRoles, hasBaseRole } from "../../utils/permissions";
@@ -38,12 +38,39 @@ const Sidebar = ({
   const switchLabel = goingToInstructor ? t("nav.goToInstructor") : t("nav.goToStudent");
 
   const [scrollTop, setScrollTop] = useState(0);
+  const [rolesDropdownOpen, setRolesDropdownOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState({
     core: true,
     performance: true,
     extras: false,
     account: false,
   });
+
+  const dashboardOptions = [];
+  if (hasBaseRole(user, "student")) {
+    dashboardOptions.push({ name: t("nav.roleStudent", "Student"), path: "/student-dashboard" });
+  }
+  if (hasBaseRole(user, "instructor")) {
+    dashboardOptions.push({ name: t("nav.roleInstructor", "Instructor"), path: "/instructor-dashboard" });
+  }
+  if (hasBaseRole(user, "admin")) {
+    dashboardOptions.push({ name: t("nav.roleAdmin", "Admin"), path: "/admin-dashboard" });
+  }
+  getCustomRoles(user).forEach((role) => {
+    dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
+  });
+
+  useEffect(() => {
+    if (!rolesDropdownOpen) return;
+    const handleClose = () => setRolesDropdownOpen(false);
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("click", handleClose);
+    }, 0);
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("click", handleClose);
+    };
+  }, [rolesDropdownOpen]);
 
   const toggleGroup = (key) => {
     setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -155,17 +182,57 @@ const Sidebar = ({
             collapsed ? "justify-center p-2" : ""
           }`}
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-indigo-400 to-violet-600 text-lg font-bold text-white shadow-sm shadow-indigo-500/10 shrink-0">
-            {user?.name?.charAt(0).toUpperCase() || "U"}
-          </div>
+          {user?.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt={user.name}
+              className="h-10 w-10 rounded-full object-cover shrink-0"
+            />
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-indigo-400 to-violet-600 text-lg font-bold text-white shadow-sm shadow-indigo-500/10 shrink-0">
+              {user?.name?.charAt(0).toUpperCase() || "U"}
+            </div>
+          )}
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <p className="text-white text-xs font-bold truncate">
                 {user?.name}
               </p>
-              <p className="text-indigo-400 text-[10px] font-bold uppercase tracking-wider truncate mt-0.5">
-                {hasAdminRole ? "Admin" : isMultiRole ? "Multiple Roles" : hasInstructorRole ? "Instructor" : "Student"}
-              </p>
+              {dashboardOptions.length > 1 ? (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRolesDropdownOpen(!rolesDropdownOpen);
+                    }}
+                    className="flex items-center gap-1 text-indigo-400 text-[10px] font-bold uppercase tracking-wider hover:text-indigo-300 transition-colors bg-indigo-950/40 border border-indigo-900/30 rounded-full px-2.5 py-0.5 mt-1 cursor-pointer"
+                  >
+                    {dashboardOptions.length} Roles <ChevronDown size={10} className={`transition-transform duration-200 ${rolesDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {rolesDropdownOpen && (
+                    <div className="absolute left-0 top-full mt-2 w-48 rounded-xl border border-slate-800 bg-[#0f172a] p-2 shadow-2xl z-[120] flex flex-col gap-1.5">
+                      {dashboardOptions.map((opt, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setRolesDropdownOpen(false);
+                            navigate(opt.path);
+                          }}
+                          className="w-full text-center text-[10px] font-bold uppercase tracking-wider text-indigo-300 hover:text-white hover:bg-slate-900 border border-indigo-900/20 rounded-lg px-2 py-1.5 transition-all cursor-pointer"
+                        >
+                          {opt.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-indigo-400 text-[10px] font-bold uppercase tracking-wider truncate mt-0.5">
+                  {hasAdminRole ? t("nav.roleAdmin") : isMultiRole ? t("nav.roleMultiple") : hasInstructorRole ? t("nav.roleInstructor") : t("nav.roleStudent")}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -224,15 +291,11 @@ const Sidebar = ({
               dispatch(logoutUser());
               navigate("/");
             }}
-            className={`flex items-center justify-center gap-2 rounded-xl py-2.5 transition-all duration-200 w-full text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 ${
-              collapsed ? "px-0" : "px-3"
-            }`}
-            title={collapsed ? t("nav.logout") : undefined}
+            className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
+            title={t("nav.logout")}
           >
-            <span style={{ fontSize: 16 }}>🚪</span>
-            {!collapsed && (
-              <span className="text-xs font-semibold">{t("nav.logout")}</span>
-            )}
+            <LogOut size={16} className="text-rose-400 shrink-0" />
+            <span className="text-sm font-semibold">{t("nav.logout")}</span>
           </button>
         </div>
       </nav>

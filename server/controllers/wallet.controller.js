@@ -5,6 +5,7 @@ import Course from "../models/courses.model.js";
 import User from "../models/user.model.js"; // adjust path if different
 import { invalidateCourseCache } from "./course.controller.js";
 import { sendWalletDepositEmail, sendCourseEnrollmentEmail } from "../utils/Mailer.js";
+import { deleteKey } from "../utils/redisClient.js";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -450,6 +451,7 @@ export const redeemCoins = async (req, res) => {
     await User.findByIdAndUpdate(req.user._id, {
       $inc: { coins: -numCoins },
     });
+    await deleteKey("students:leaderboard");
 
     // Credit wallet
     const wallet = await getOrCreateWallet(req.user._id);

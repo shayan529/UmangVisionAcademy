@@ -55,6 +55,19 @@ const usersSlice = createSlice({
     clearError: (state) => {
       state.error = null
     },
+    // Keep dashboard views in sync when a role assignment is changed from the
+    // Roles & Permissions screen. The endpoint returns the fully hydrated user.
+    replaceUser: (state, action) => {
+      const user = action.payload
+      if (!user?._id) return
+
+      state.users = state.users.map((existingUser) =>
+        existingUser._id === user._id ? user : existingUser
+      )
+      if (state.currentUser?._id === user._id) {
+        state.currentUser = user
+      }
+    },
   },
   extraReducers: (builder) => {
     // Fetch Users
@@ -136,5 +149,5 @@ const usersSlice = createSlice({
   },
 })
 
-export const { clearError } = usersSlice.actions
+export const { clearError, replaceUser } = usersSlice.actions
 export default usersSlice.reducer

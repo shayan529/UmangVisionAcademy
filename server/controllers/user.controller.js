@@ -14,6 +14,7 @@ import Course from "../models/courses.model.js";
 import { invalidateCourseCache } from "./course.controller.js";
 import { sendRegistrationEmail, sendReferralSuccessEmail } from "../utils/Mailer.js";
 import { computeInstructorRating } from "../utils/instructorRating.js";
+import { deleteKey } from "../utils/redisClient.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -258,6 +259,7 @@ export const RegisterUser = async (req, res) => {
       referrer.coins = (referrer.coins ?? 0) + 50;
       referrer.referralsCount = (referrer.referralsCount ?? 0) + 1;
       await referrer.save();
+      await deleteKey("students:leaderboard");
       if (referrer.email && referrer.notificationSettings?.emailNotifications !== false) {
         sendReferralSuccessEmail(referrer.email, referrer.name, user.name, 50).catch(console.error);
       }
@@ -366,6 +368,9 @@ export const LoginUser = async (req, res) => {
 
     // Single save covers devices + coin update
     await user.save();
+    if (loginCoinAwarded) {
+      await deleteKey("students:leaderboard");
+    }
 
     const token = createToken(user._id);
     setTokenCookie(res, token);

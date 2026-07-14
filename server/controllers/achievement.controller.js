@@ -95,6 +95,7 @@ export const checkAndAwardAchievements = async (req, res) => {
         await User.findByIdAndUpdate(userId, {
           $inc: { coins: coinsToAward },
         });
+        await deleteKey("students:leaderboard");
       }
     };
 

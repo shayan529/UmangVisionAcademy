@@ -16,7 +16,11 @@
     "getStarted": "Get Started",
     "welcome": "Welcome",
     "verifyingSession": "Verifying session...",
-    "language": "Language"
+    "language": "Language",
+    "roleAdmin": "Admin",
+    "roleInstructor": "Instructor",
+    "roleStudent": "Student",
+    "roleMultiple": "Multiple Roles"
   },
   "home": {
     "hero_title": "Discover. Prepare. Succeed.",
@@ -1068,6 +1072,8 @@
     "completeCourseDesc": "Finish all lessons in a course",
     "earnCertificate": "Earn a Certificate",
     "earnCertificateDesc": "Receive your course completion certificate",
+    "inviteFriends": "Invite Friends",
+    "inviteFriendsDesc": "Get bonus coins when a friend registers using your link",
     "coinsConversion": "25 coins = ₹1 wallet balance",
     "coinsRedeemHint": "Coins can be redeemed in your Wallet tab",
     "allStates": "All States",
@@ -1804,5 +1810,26 @@
   "studentSessions": {
     "title": "Live Sessions",
     "subtitle": "Join upcoming and live instructor sessions."
+  },
+  "studentSidebar": {
+    "coreLearning": "Core Learning",
+    "performanceTools": "Performance & Tools",
+    "subscriptionsExtras": "Subscriptions & Extras",
+    "account": "Account",
+    "overview": "Overview",
+    "myCourses": "My Courses",
+    "notes": "Study Notes",
+    "aiTutor": "AI Tutor",
+    "sessions": "Sessions",
+    "progress": "Progress",
+    "mockTests": "Mock Tests",
+    "leaderboard": "Leaderboard",
+    "achievements": "Achievements",
+    "certificates": "Certificates",
+    "referral": "Referral",
+    "wallet": "Wallet",
+    "purchaseHistory": "Purchase History",
+    "references": "References",
+    "settings": "Settings"
   }
 }

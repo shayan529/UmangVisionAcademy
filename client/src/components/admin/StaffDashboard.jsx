@@ -2,29 +2,29 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
-  Users,
-  GraduationCap,
-  CheckCircle,
-  BookOpen,
-  BarChart2,
   ChevronLeft,
-  CreditCard,
-  Lock,
-  Film,
+  ChevronDown,
+  LogOut,
 } from "lucide-react";
 import AdminReels from "./AdminReels";
 import {
   fetchUsers,
   deleteUser as deleteUserThunk,
+  replaceUser,
 } from "../../redux/slices/usersSlice";
 import { fetchAllCoursesAdmin } from "../../redux/slices/courseSlice";
-import { logoutUser } from "../../redux/slices/authSlice";
+import {
+  loadCurrentUser,
+  logoutUser,
+  replaceCurrentUser,
+} from "../../redux/slices/authSlice";
 import {
   getCustomRoles,
   hasAnyPermission,
   hasBaseRole,
   hasPermission,
 } from "../../utils/permissions";
+import { useTranslation } from "react-i18next";
 
 import AdminOverview from "./AdminOverview";
 import AdminStudents from "./AdminStudents";
@@ -44,40 +44,75 @@ const StaffSidebar = ({
   mobileOpen,
   setMobileOpen,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const [rolesDropdownOpen, setRolesDropdownOpen] = useState(false);
+
+  const hasInstructorRole = hasBaseRole(user, "instructor");
+  const hasStudentRole = hasBaseRole(user, "student");
+  const hasAdminRole = hasBaseRole(user, "admin");
+  const hasCustomRole = getCustomRoles(user).length > 0;
+  const isMultiRole = hasInstructorRole && hasStudentRole && !hasAdminRole && !hasCustomRole;
+
+  const dashboardOptions = [];
+  if (hasBaseRole(user, "student")) {
+    dashboardOptions.push({ name: t("nav.roleStudent", "Student"), path: "/student-dashboard" });
+  }
+  if (hasBaseRole(user, "instructor")) {
+    dashboardOptions.push({ name: t("nav.roleInstructor", "Instructor"), path: "/instructor-dashboard" });
+  }
+  if (hasBaseRole(user, "admin")) {
+    dashboardOptions.push({ name: t("nav.roleAdmin", "Admin"), path: "/admin-dashboard" });
+  }
+  getCustomRoles(user).forEach((role) => {
+    dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
+  });
+
+  useEffect(() => {
+    if (!rolesDropdownOpen) return;
+    const handleClose = () => setRolesDropdownOpen(false);
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("click", handleClose);
+    }, 0);
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("click", handleClose);
+    };
+  }, [rolesDropdownOpen]);
+
   const navItems = [
-    { id: "overview", label: "Overview", icon: BarChart2 },
+    { id: "overview", label: "Overview", icon: "📊" },
     ...(hasPermission(user, "courses", "view")
-      ? [{ id: "courses", label: "Courses", icon: BookOpen }]
+      ? [{ id: "courses", label: "Courses", icon: "📚" }]
       : []),
     ...(hasPermission(user, "users", "view")
       ? [
-          { id: "students", label: "Students", icon: Users },
-          { id: "instructors", label: "Instructors", icon: GraduationCap },
+          { id: "students", label: "Students", icon: "👥" },
+          { id: "instructors", label: "Instructors", icon: "🎓" },
         ]
       : []),
     ...(hasPermission(user, "payments", "view") ||
     hasPermission(user, "payments", "refund") ||
     hasPermission(user, "payments", "export")
-      ? [{ id: "payments", label: "Payments", icon: CreditCard }]
+      ? [{ id: "payments", label: "Payments", icon: "💳" }]
       : []),
     ...(hasPermission(user, "moderation", "view")
       ? [
           {
             id: "applications",
             label: "Applications",
-            icon: CheckCircle,
+            icon: "📝",
             badge: applicationsCount,
           },
         ]
       : []),
     ...(hasPermission(user, "reels", "view")
-      ? [{ id: "reels", label: "Reels Moderation", icon: Film }]
+      ? [{ id: "reels", label: "Reels Moderation", icon: "🎥" }]
       : []),
     ...(hasBaseRole(user, "admin")
-      ? [{ id: "roles", label: "Roles & Permissions", icon: Lock }]
+      ? [{ id: "roles", label: "Roles & Permissions", icon: "🔒" }]
       : []),
   ];
 
@@ -93,6 +128,17 @@ const StaffSidebar = ({
       .map((r) => r.name)
       .join(", ") || "Staff";
 
+  const sidebarClass = `
+    relative flex flex-col bg-slate-950 border-r border-slate-800
+    transition-all duration-300 ease-in-out
+    ${collapsed ? "w-[76px] min-w-[76px]" : "w-[260px] min-w-[260px]"}
+    ${
+      mobileOpen
+        ? "fixed inset-y-0 left-0 h-dvh w-[260px] shadow-[4px_0_24px_rgba(0,0,0,0.6)] z-50"
+        : "hidden md:flex z-40 md:relative md:h-auto md:min-h-screen"
+    }
+  `;
+
   return (
     <>
       {/* ── Mobile backdrop ── */}
@@ -103,144 +149,155 @@ const StaffSidebar = ({
         />
       )}
 
-      <aside
-        className={`bg-slate-950 border-r border-slate-800 flex flex-col transition-all duration-300 z-[100]
-          ${collapsed ? "w-[68px] min-w-[68px]" : "w-[220px] min-w-[220px]"}
-          ${
-            mobileOpen
-              ? "fixed top-0 bottom-[82px] left-0 shadow-2xl"
-              : "hidden md:flex md:relative md:h-auto"
-          }
-        `}
+      <aside className={sidebarClass}>
+      {/* Mobile close button */}
+      <button
+        onClick={() => setMobileOpen(false)}
+        className="md:hidden self-end bg-transparent border-none text-[#64748b] hover:text-slate-300 text-[22px] cursor-pointer mr-4 mt-3 mb-1 leading-none p-0 transition-colors"
       >
-        {/* Brand & Collapse Header */}
-        <div className="flex items-center justify-between mb-5 px-3 py-4 border-b border-slate-800">
-          {!collapsed && (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-black font-extrabold text-sm shadow-md shadow-indigo-500/20">
-                S
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase mt-0.5">
-                  Staff Panel
-                </span>
-              </div>
-            </div>
-          )}
-          {collapsed && (
-            <div className="w-8 h-8 mx-auto rounded-lg bg-linear-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-black font-extrabold text-sm">
-              S
-            </div>
-          )}
-          <button
-            onClick={() => {
-              setCollapsed((c) => !c);
-              if (mobileOpen) setMobileOpen(false);
-            }}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="hidden md:flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-500 hover:text-white transition"
-          >
-            <ChevronLeft
-              size={14}
-              className={`transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`}
-            />
-          </button>
-        </div>
+        ✕
+      </button>
 
-        {/* User Card */}
-        <div className="px-3 mb-4">
-          <div
-            className={`flex flex-col gap-2 rounded-xl p-3 ${
-              collapsed ? "items-center" : "items-start"
-            } bg-indigo-950/20 border border-indigo-900/30`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-indigo-400 to-violet-600 text-xs font-bold text-white shadow-sm shadow-indigo-500/10">
-                ST
-              </div>
-              {!collapsed && (
-                <div className="overflow-hidden">
-                  <div className="truncate text-xs font-bold text-white">
-                    {username}
-                  </div>
-                  <div
-                    className="text-[9px] text-indigo-400 font-semibold truncate max-w-[130px]"
-                    title={customRoleNames}
+      {/* User Card */}
+      <div className="px-3 mt-3 mb-4">
+        <div
+          className={`flex items-center gap-3 p-3 bg-indigo-950/20 border border-indigo-900/30 rounded-xl ${
+            collapsed ? "justify-center p-2" : ""
+          }`}
+        >
+          {user?.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt={username}
+              className="h-10 w-10 rounded-full object-cover shrink-0"
+            />
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-indigo-400 to-violet-600 text-lg font-bold text-white shadow-sm shadow-indigo-500/10 shrink-0">
+              {user?.name?.charAt(0).toUpperCase() || "U"}
+            </div>
+          )}
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-xs font-bold truncate">
+                {username}
+              </p>
+              {dashboardOptions.length > 1 ? (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRolesDropdownOpen(!rolesDropdownOpen);
+                    }}
+                    className="flex items-center gap-1 text-indigo-400 text-[10px] font-bold uppercase tracking-wider hover:text-indigo-300 transition-colors bg-indigo-950/40 border border-indigo-900/30 rounded-full px-2.5 py-0.5 mt-1 cursor-pointer"
                   >
-                    {customRoleNames}
-                  </div>
+                    {dashboardOptions.length} Roles <ChevronDown size={10} className={`transition-transform duration-200 ${rolesDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {rolesDropdownOpen && (
+                    <div className="absolute left-0 top-full mt-2 w-48 rounded-xl border border-slate-800 bg-[#0f172a] p-2 shadow-2xl z-[120] flex flex-col gap-1.5">
+                      {dashboardOptions.map((opt, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setRolesDropdownOpen(false);
+                            navigate(opt.path);
+                          }}
+                          className="w-full text-center text-[10px] font-bold uppercase tracking-wider text-indigo-300 hover:text-white hover:bg-slate-900 border border-indigo-900/20 rounded-lg px-2 py-1.5 transition-all cursor-pointer"
+                        >
+                          {opt.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
+              ) : (
+                <p className="text-indigo-400 text-[10px] font-bold uppercase tracking-wider truncate mt-0.5" title={customRoleNames}>
+                  {customRoleNames}
+                </p>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 flex flex-col gap-1.5 px-3 pb-4 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = tab === item.id;
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setTab(item.id);
-                  if (mobileOpen) setMobileOpen(false);
-                }}
-                title={collapsed ? item.label : undefined}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 w-full text-left ${
-                  collapsed ? "justify-center" : "justify-start"
-                } ${
-                  isActive
-                    ? "bg-indigo-950/40 text-indigo-300 border-l-2 border-indigo-500 pl-2.5"
-                    : "text-slate-400 hover:bg-slate-900 hover:text-white border-l-2 border-transparent"
-                }`}
-              >
-                <Icon size={16} className="shrink-0" />
-                {!collapsed && (
-                  <span className="text-xs font-semibold flex-1">
-                    {item.label}
-                  </span>
-                )}
-                {!collapsed && item.badge > 0 && (
-                  <span className="bg-red-500 text-white rounded-full text-[9px] font-bold px-2 py-0.5 min-w-4.5 text-center">
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Logout */}
-        <div className="px-3 pb-4 pt-2 border-t border-slate-800">
-          <button
-            onClick={handleLogout}
-            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-red-400 hover:bg-red-950/20 hover:text-red-300 transition w-full text-left ${
-              collapsed ? "justify-center" : "justify-start"
-            }`}
-            title={collapsed ? "Logout" : undefined}
-          >
-            <svg
-              className="w-4 h-4 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
+          )}
+          {!collapsed && (
+            <button
+              onClick={() => {
+                setCollapsed((c) => !c);
+                if (mobileOpen) setMobileOpen(false);
+              }}
+              title="Collapse sidebar"
+              className="hidden md:flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-indigo-800/60 bg-slate-900/80 text-slate-400 hover:border-indigo-500 hover:bg-indigo-950/60 hover:text-white transition"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              <ChevronLeft
+                size={14}
+                className="transition-transform duration-300"
               />
-            </svg>
-            {!collapsed && (
-              <span className="text-xs font-semibold">Logout</span>
-            )}
-          </button>
+            </button>
+          )}
+          {collapsed && (
+            <button
+              onClick={() => setCollapsed(false)}
+              title="Expand sidebar"
+              className="hidden md:flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-indigo-800/60 bg-slate-900/80 text-slate-400 hover:border-indigo-500 hover:bg-indigo-950/60 hover:text-white transition mt-2 mx-auto"
+            >
+              <ChevronLeft
+                size={14}
+                className="rotate-180"
+              />
+            </button>
+          )}
         </div>
-      </aside>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 flex flex-col gap-1.5 px-3 pb-4 overflow-y-auto">
+        {navItems.map((item) => {
+          const isActive = tab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => {
+                setTab(item.id);
+                if (mobileOpen) setMobileOpen(false);
+              }}
+              title={collapsed ? item.label : undefined}
+              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 w-full text-left ${
+                collapsed ? "justify-center" : "justify-start"
+              } ${
+                isActive
+                  ? "bg-indigo-950/40 text-indigo-300 border-l-2 border-indigo-500 pl-2.5"
+                  : "text-slate-400 hover:bg-slate-900 hover:text-white border-l-2 border-transparent"
+              }`}
+            >
+              <span className="shrink-0 text-lg leading-none">{item.icon}</span>
+              {!collapsed && (
+                <span className="text-xs font-semibold flex-1">
+                  {item.label}
+                </span>
+              )}
+              {!collapsed && item.badge > 0 && (
+                <span className="bg-red-500 text-white rounded-full text-[9px] font-bold px-2 py-0.5 min-w-4.5 text-center">
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Logout */}
+      <div className="p-3 border-t border-slate-800 shrink-0">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
+          title={collapsed ? "Logout" : undefined}
+        >
+          <LogOut size={16} className="text-rose-400 shrink-0" />
+          {!collapsed && (
+            <span className="text-sm font-semibold">Logout</span>
+          )}
+        </button>
+      </div>
+    </aside>
     </>
   );
 };
@@ -295,7 +352,20 @@ export default function StaffDashboard() {
     };
   }, []);
 
-  const deleteUser = (id) => dispatch(deleteUserThunk(id));
+  const refreshUsersAndCourses = () => {
+    dispatch(fetchUsers());
+    dispatch(fetchAllCoursesAdmin());
+  };
+
+  const deleteUser = (id, role) => {
+    dispatch(deleteUserThunk({ id, role })).then(() => {
+      dispatch(fetchAllCoursesAdmin());
+    });
+  };
+
+  useEffect(() => {
+    refreshUsersAndCourses();
+  }, [tab]);
 
   const totalRevenue = courses.reduce(
     (s, c) => s + (c.price || 0) * (c.students?.length || 0),
@@ -398,7 +468,7 @@ export default function StaffDashboard() {
             setQ={setQ}
             deleteUser={deleteUser}
             loading={usersLoading}
-            refreshUsers={() => dispatch(fetchUsers())}
+            refreshUsers={refreshUsersAndCourses}
             canCreate={hasPermission(user, "users", "create")}
             canEdit={hasPermission(user, "users", "edit")}
             canDelete={hasPermission(user, "users", "delete")}
@@ -412,7 +482,7 @@ export default function StaffDashboard() {
             setQ={setQ}
             deleteUser={deleteUser}
             loading={usersLoading || coursesLoading}
-            refreshUsers={() => dispatch(fetchUsers())}
+            refreshUsers={refreshUsersAndCourses}
             canCreate={hasPermission(user, "users", "create")}
             canEdit={hasPermission(user, "users", "edit")}
             canDelete={hasPermission(user, "users", "delete")}
@@ -441,6 +511,15 @@ export default function StaffDashboard() {
           <RoleManager
             currentUser={user}
             showToast={(msg) => console.log(msg)}
+            onUserRolesUpdated={(updatedUser) => {
+              dispatch(replaceUser(updatedUser));
+              dispatch(replaceCurrentUser(updatedUser));
+              refreshUsersAndCourses();
+            }}
+            onRoleChanged={() => {
+              refreshUsersAndCourses();
+              dispatch(loadCurrentUser());
+            }}
           />
         ) : null;
       default:

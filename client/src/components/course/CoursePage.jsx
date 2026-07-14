@@ -1757,6 +1757,7 @@ export default function CoursePage() {
         dispatch(
           updateUserScoreAndSubmissions({
             score: data.newTotalScore,
+            coins: data.coinBalance,
             quizSubmissionUpdate: {
               courseId: course._id,
               score: data.percentage,

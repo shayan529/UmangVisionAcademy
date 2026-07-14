@@ -125,20 +125,39 @@ export const setUserRoles = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // System roles whose name matches a base role (e.g. the "Student" or
-    // "Instructor" system role documents) should be stored as the base role
-    // string, not as an ObjectId. This prevents the mismatch where a user
-    // has a system role ObjectId but no base role string.
-    const baseRoles = (user.roles || []).filter(isBaseRole);
-    const trueCustomRoleIds = [];
+    // Fetch all system roles representing base roles so we know what options were presented to the user
+    const systemRoles = await Role.find({
+      isSystem: true,
+      name: { $in: ["Student", "Instructor", "Admin", "student", "instructor", "admin"] },
+    });
 
+    const systemRoleMap = {};
+    for (const r of systemRoles) {
+      systemRoleMap[r.name.toLowerCase()] = r._id.toString();
+    }
+
+    let baseRoles = (user.roles || []).filter(isBaseRole);
+
+    // Update baseRoles according to selection/deselection of corresponding system roles
+    for (const roleName of ["student", "instructor", "admin"]) {
+      const roleIdStr = systemRoleMap[roleName];
+      if (roleIdStr) {
+        const isSelected = roleIds.includes(roleIdStr);
+        if (isSelected) {
+          if (!baseRoles.includes(roleName)) {
+            baseRoles.push(roleName);
+          }
+        } else {
+          baseRoles = baseRoles.filter((r) => r !== roleName);
+        }
+      }
+    }
+
+    const trueCustomRoleIds = [];
     for (const role of validRoles) {
       const normalizedName = role.name?.toLowerCase();
-      if (role.isSystem && ["student", "instructor", "admin"].includes(normalizedName)) {
-        if (!baseRoles.includes(normalizedName)) {
-          baseRoles.push(normalizedName);
-        }
-      } else {
+      const isSystemBase = role.isSystem && ["student", "instructor", "admin"].includes(normalizedName);
+      if (!isSystemBase) {
         trueCustomRoleIds.push(role._id.toString());
       }
     }

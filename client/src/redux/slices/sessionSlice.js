@@ -1,6 +1,16 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api, { API_ENDPOINTS } from "../../config/api.js";
 
+const dedupeSessions = (sessions = []) => {
+  const seen = new Set();
+  return sessions.filter((session) => {
+    const id = session?._id?.toString() || session?.id?.toString();
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+};
+
 export const fetchSessions = createAsyncThunk(
   "sessions/fetchAll",
   async (_, { rejectWithValue }) => {
@@ -83,19 +93,20 @@ const sessionSlice = createSlice({
       .addCase(fetchSessions.fulfilled, (state, action) => {
         state.loading = false;
         const payload = action.payload;
+        let sessions = [];
 
         // Handle: [], { sessions: [] }, { data: [] }, { data: { sessions: [] } }
         if (Array.isArray(payload)) {
-          state.sessions = payload;
+          sessions = payload;
         } else if (Array.isArray(payload?.sessions)) {
-          state.sessions = payload.sessions;
+          sessions = payload.sessions;
         } else if (Array.isArray(payload?.data)) {
-          state.sessions = payload.data;
+          sessions = payload.data;
         } else if (Array.isArray(payload?.data?.sessions)) {
-          state.sessions = payload.data.sessions;
-        } else {
-          state.sessions = [];
+          sessions = payload.data.sessions;
         }
+
+        state.sessions = dedupeSessions(sessions);
       })
       .addCase(fetchSessions.rejected, (state, action) => {
         state.loading = false;
@@ -112,7 +123,9 @@ const sessionSlice = createSlice({
         state.loading = false;
         const session =
           action.payload?.session ?? action.payload?.data ?? action.payload;
-        state.sessions.push(session);
+        if (session) {
+          state.sessions = dedupeSessions([...state.sessions, session]);
+        }
         state.success = "Session scheduled!";
       })
       .addCase(createSession.rejected, (state, action) => {
@@ -131,8 +144,8 @@ const sessionSlice = createSlice({
         const updated =
           action.payload?.session ?? action.payload?.data ?? action.payload;
         if (updated?._id) {
-          state.sessions = state.sessions.map((s) =>
-            s._id === updated._id ? updated : s,
+          state.sessions = dedupeSessions(
+            state.sessions.map((s) => (s._id === updated._id ? updated : s)),
           );
         }
         state.success = "Session updated";

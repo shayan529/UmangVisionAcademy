@@ -60,8 +60,14 @@ export const getStudentSessions = async (req, res) => {
 
     const sessions = await cacheResponse(cacheKey, 300, async () => {
       const query = { $or: [{ students: req.user._id }] };
-      if (req.user.subscription?.status === "active" && req.user.selectedClass) {
-        const escapedClass = req.user.selectedClass.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      if (
+        req.user.subscription?.status === "active" &&
+        req.user.selectedClass
+      ) {
+        const escapedClass = req.user.selectedClass.replace(
+          /[-/\\^$*+?.()|[\]{}]/g,
+          "\\$&",
+        );
         query.$or.push({ category: new RegExp(`^${escapedClass}$`, "i") });
       }
 
@@ -90,7 +96,13 @@ export const getStudentSessions = async (req, res) => {
         };
 
         if (studentClass) {
-          instructorSessionCondition.class = { $in: [null, "", studentClass] };
+          const escapedSessionClass = studentClass.replace(
+            /[-/\\^$*+?.()|[\]{}]/g,
+            "\\$&",
+          );
+          instructorSessionCondition.class = {
+            $in: [null, "", new RegExp(`^${escapedSessionClass}$`, "i")],
+          };
         }
 
         conditions.push(instructorSessionCondition);
@@ -145,7 +157,10 @@ export const getSessionById = async (req, res) => {
 
     const query = { $or: [{ students: req.user._id }] };
     if (req.user.subscription?.status === "active" && req.user.selectedClass) {
-      const escapedClass = req.user.selectedClass.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const escapedClass = req.user.selectedClass.replace(
+        /[-/\\^$*+?.()|[\]{}]/g,
+        "\\$&",
+      );
       query.$or.push({ category: new RegExp(`^${escapedClass}$`, "i") });
     }
 
@@ -242,7 +257,16 @@ export const updateSession = async (req, res) => {
       ? { _id: req.params.id }
       : { _id: req.params.id, instructor: req.user._id };
 
-    const allowedFields = ["title", "date", "time", "status", "course", "class", "subject", "url"];
+    const allowedFields = [
+      "title",
+      "date",
+      "time",
+      "status",
+      "course",
+      "class",
+      "subject",
+      "url",
+    ];
     const updates = {};
     for (const field of allowedFields) {
       if (req.body[field] !== undefined) {
@@ -250,15 +274,29 @@ export const updateSession = async (req, res) => {
       }
     }
 
+    const existingSession = await Session.findOne(query).select("instructor");
+    if (!existingSession)
+      return res.status(404).json({ message: "Session not found" });
+
+    const oldInstructorId = existingSession.instructor?.toString();
+
     const session = await Session.findOneAndUpdate(query, updates, {
       new: true,
       runValidators: true,
     }).populate("instructor", "name");
     if (!session) return res.status(404).json({ message: "Session not found" });
 
+    const newInstructorId =
+      session.instructor?._id?.toString() || session.instructor?.toString();
+    const cacheKeys = new Set();
+    if (oldInstructorId)
+      cacheKeys.add(`instructor:sessions:${oldInstructorId}`);
+    if (newInstructorId)
+      cacheKeys.add(`instructor:sessions:${newInstructorId}`);
+
     // Invalidate session caches
     await Promise.all([
-      deleteKey(`instructor:sessions:${session.instructor}`),
+      ...Array.from(cacheKeys).map((key) => deleteKey(key)),
       invalidateCache("student:sessions*"),
     ]);
 
@@ -278,9 +316,14 @@ export const deleteSession = async (req, res) => {
     const session = await Session.findOneAndDelete(query);
     if (!session) return res.status(404).json({ message: "Session not found" });
 
+    const instructorId =
+      session.instructor?._id?.toString() || session.instructor?.toString();
+
     // Invalidate session caches
     await Promise.all([
-      deleteKey(`instructor:sessions:${session.instructor}`),
+      instructorId
+        ? deleteKey(`instructor:sessions:${instructorId}`)
+        : Promise.resolve(),
       invalidateCache("student:sessions*"),
     ]);
 

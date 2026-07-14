@@ -23,15 +23,6 @@ const DIFFICULTIES = [
   { value: "Medium", key: "studentMockTests.difficultyMedium" },
   { value: "Hard", key: "studentMockTests.difficultyHard" },
 ];
-const SUBJECTS = [
-  "All",
-  "Mathematics",
-  "Science",
-  "English",
-  "Social Science",
-  "Hindi",
-];
-
 const difficultyColor = {
   Easy: "text-emerald-400 bg-emerald-400/10",
   Medium: "text-amber-400 bg-amber-400/10",
@@ -42,7 +33,12 @@ export default function AvailableMockTests() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { availableTests, loading } = useSelector((s) => s.mockTest);
+  const { availableTests = [], loading } = useSelector((s) => s.mockTest);
+
+  const uniqueSubjects = [
+    "All",
+    ...[...new Set((availableTests || []).map((t) => t.subject).filter(Boolean))].sort(),
+  ];
 
   const [diffFilter, setDiffFilter] = useState("All");
   const [subjectFilter, setSubjectFilter] = useState("All");
@@ -107,7 +103,7 @@ export default function AvailableMockTests() {
             onChange={(e) => setSubjectFilter(e.target.value)}
             className="bg-transparent text-slate-300 text-xs outline-none cursor-pointer"
           >
-            {SUBJECTS.map((s) => (
+            {uniqueSubjects.map((s) => (
               <option key={s} value={s} className="bg-[#0b1120]">
                 {s}
               </option>

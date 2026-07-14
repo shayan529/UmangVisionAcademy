@@ -16,7 +16,11 @@
     "getStarted": "आरंभ करें",
     "welcome": "स्वागतम्",
     "verifyingSession": "सत्र जाँचा जा रहा है...",
-    "language": "भाषा"
+    "language": "भाषा",
+    "roleAdmin": "प्रशासक",
+    "roleInstructor": "शिक्षक",
+    "roleStudent": "विद्यार्थी",
+    "roleMultiple": "एकाधिक भूमिकाएं"
   },
   "home": {
     "hero_title": "खोजें। तैयारी करें। सफल हों।",
@@ -1070,6 +1074,8 @@
     "completeCourseDesc": "पाठ्यक्रम के सभी पाठ पूरे करें",
     "earnCertificate": "प्रमाण पत्र प्राप्त करें",
     "earnCertificateDesc": "पाठ्यक्रम पूर्णता प्रमाण पत्र प्राप्त करें",
+    "inviteFriends": "दोस्तों को आमंत्रित करें",
+    "inviteFriendsDesc": "जब कोई मित्र आपके लिंक का उपयोग करके पंजीकरण करता है तो बोनस सिक्के प्राप्त करें",
     "coinsConversion": "25 सिक्का = ₹1 वॉलेट बैलेंस",
     "coinsRedeemHint": "सिक्का को आपके वॉलेट टैब में रिडीम किया जा सकता है",
     "allStates": "सभी राज्य",
@@ -1806,5 +1812,26 @@
   "studentSessions": {
     "title": "लाइव सत्र",
     "subtitle": "आगामी और लाइव प्रशिक्षक सत्रों में शामिल हों।"
+  },
+  "studentSidebar": {
+    "coreLearning": "मुख्य शिक्षा",
+    "performanceTools": "प्रदर्शन और उपकरण",
+    "subscriptionsExtras": "सदस्यता और अतिरिक्त",
+    "account": "खाता",
+    "overview": "अवलोकन",
+    "myCourses": "मेरे पाठ्यक्रम",
+    "notes": "अध्ययन नोट्स",
+    "aiTutor": "एआई ट्यूटर",
+    "sessions": "सत्र",
+    "progress": "प्रगति",
+    "mockTests": "मॉक टेस्ट",
+    "leaderboard": "लीडरबोर्ड",
+    "achievements": "उपलब्धियां",
+    "certificates": "प्रमाण पत्र",
+    "referral": "संदर्भ",
+    "wallet": "बटुआ",
+    "purchaseHistory": "खरीद इतिहास",
+    "references": "संदर्भ",
+    "settings": "सेटिंग्स"
   }
 }

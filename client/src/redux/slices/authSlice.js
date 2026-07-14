@@ -84,10 +84,11 @@ const authSlice = createSlice({
     },
     updateUserScoreAndSubmissions: (state, action) => {
       if (!state.user) return;
-      const { score, quizSubmissionUpdate, earnedCertificates } =
+      const { score, coins, quizSubmissionUpdate, earnedCertificates } =
         action.payload;
 
       state.user.score = score ?? state.user.score;
+      state.user.coins = coins ?? state.user.coins;
 
       if (quizSubmissionUpdate) {
         const subs = state.user.quizSubmissions ?? [];
@@ -112,6 +113,11 @@ const authSlice = createSlice({
     setSelectedClass: (state, action) => {
       if (state.user) {
         state.user.selectedClass = action.payload;
+      }
+    },
+    replaceCurrentUser: (state, action) => {
+      if (action.payload?._id === state.user?._id) {
+        state.user = action.payload;
       }
     },
   },
@@ -185,5 +191,10 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, updateUserScoreAndSubmissions, setSelectedClass } = authSlice.actions;
+export const {
+  clearError,
+  updateUserScoreAndSubmissions,
+  setSelectedClass,
+  replaceCurrentUser,
+} = authSlice.actions;
 export default authSlice.reducer;

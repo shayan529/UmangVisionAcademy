@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { getCustomRoles, hasBaseRole } from "../../utils/permissions";
+import { ChevronDown, LogOut } from "lucide-react";
 
 // UI primitives & modal
 import { Toast, Btn } from "./InstructorUi";
@@ -86,12 +87,39 @@ export default function InstructorDashboard() {
   const navigate = useNavigate();
   const { courses } = useSelector((s) => s.courses);
   const { user } = useSelector((s) => s.auth);
+  const [rolesDropdownOpen, setRolesDropdownOpen] = useState(false);
 
   const hasInstructorRole = hasBaseRole(user, "instructor");
   const hasStudentRole = hasBaseRole(user, "student");
   const hasAdminRole = hasBaseRole(user, "admin");
   const hasCustomRole = getCustomRoles(user).length > 0;
   const isMultiRole = hasInstructorRole && hasStudentRole && !hasAdminRole && !hasCustomRole;
+
+  const dashboardOptions = [];
+  if (hasStudentRole) {
+    dashboardOptions.push({ name: t("nav.roleStudent", "Student"), path: "/student-dashboard" });
+  }
+  if (hasInstructorRole) {
+    dashboardOptions.push({ name: t("nav.roleInstructor", "Instructor"), path: "/instructor-dashboard" });
+  }
+  if (hasAdminRole) {
+    dashboardOptions.push({ name: t("nav.roleAdmin", "Admin"), path: "/admin-dashboard" });
+  }
+  getCustomRoles(user).forEach((role) => {
+    dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
+  });
+
+  useEffect(() => {
+    if (!rolesDropdownOpen) return;
+    const handleClose = () => setRolesDropdownOpen(false);
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("click", handleClose);
+    }, 0);
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("click", handleClose);
+    };
+  }, [rolesDropdownOpen]);
 
   const dashboardPath = hasAdminRole
     ? "/admin-dashboard"
@@ -256,16 +284,56 @@ export default function InstructorDashboard() {
         {/* User Card */}
         <div className="px-3 mt-3 mb-4">
           <div className="flex items-center rounded-xl gap-3 p-3 bg-indigo-950/20 border border-indigo-900/30">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-indigo-400 to-violet-600 text-lg font-bold text-white shadow-sm shadow-indigo-500/10 shrink-0">
-              {user?.name?.charAt(0).toUpperCase() || "U"}
-            </div>
-            <div className="min-w-0 flex-1 overflow-hidden">
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.name}
+                className="h-10 w-10 rounded-full object-cover shrink-0"
+              />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-indigo-400 to-violet-600 text-lg font-bold text-white shadow-sm shadow-indigo-500/10 shrink-0">
+                {user?.name?.charAt(0).toUpperCase() || "U"}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
               <div className="truncate text-xs font-bold text-white">
                 {user?.name}
               </div>
-              <div className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider truncate mt-0.5">
-                {hasAdminRole ? "Admin" : isMultiRole ? "Multiple Roles" : hasInstructorRole ? "Instructor" : "Student"}
-              </div>
+              {dashboardOptions.length > 1 ? (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRolesDropdownOpen(!rolesDropdownOpen);
+                    }}
+                    className="flex items-center gap-1 text-indigo-400 text-[10px] font-bold uppercase tracking-wider hover:text-indigo-300 transition-colors bg-indigo-950/40 border border-indigo-900/30 rounded-full px-2.5 py-0.5 mt-1 cursor-pointer"
+                  >
+                    {dashboardOptions.length} Roles <ChevronDown size={10} className={`transition-transform duration-200 ${rolesDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {rolesDropdownOpen && (
+                    <div className="absolute left-0 top-full mt-2 w-48 rounded-xl border border-slate-800 bg-[#0f172a] p-2 shadow-2xl z-[120] flex flex-col gap-1.5">
+                      {dashboardOptions.map((opt, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setRolesDropdownOpen(false);
+                            navigate(opt.path);
+                          }}
+                          className="w-full text-center text-[10px] font-bold uppercase tracking-wider text-indigo-300 hover:text-white hover:bg-slate-900 border border-indigo-900/20 rounded-lg px-2 py-1.5 transition-all cursor-pointer"
+                        >
+                          {opt.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider truncate mt-0.5">
+                  {hasAdminRole ? t("nav.roleAdmin") : isMultiRole ? t("nav.roleMultiple") : hasInstructorRole ? t("nav.roleInstructor") : t("nav.roleStudent")}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -315,10 +383,10 @@ export default function InstructorDashboard() {
               dispatch(logoutUser());
               navigate("/");
             }}
-            className="flex items-center justify-center gap-2 rounded-xl py-2.5 transition-all duration-200 w-full text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 px-3"
+            className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
           >
-            <span style={{ fontSize: 16 }}>🚪</span>
-            <span className="text-xs font-semibold">{t("nav.logout")}</span>
+            <LogOut size={16} className="text-rose-400 shrink-0" />
+            <span className="text-sm font-semibold">{t("nav.logout")}</span>
           </button>
         </div>
         </nav>

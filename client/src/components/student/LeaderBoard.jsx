@@ -24,23 +24,25 @@ const LeaderBoard = () => {
   const states = INDIA_STATES;
   const cities = selectedState ? getCitiesForState(selectedState) : [];
 
-  const filteredLeaderboard = (leaderboard ?? []).filter((student) => {
+  const rankedLeaderboard = [...(leaderboard ?? [])].sort(
+    (a, b) => (b.coins ?? 0) - (a.coins ?? 0),
+  );
+
+  const filteredLeaderboard = rankedLeaderboard.filter((student) => {
     const stateMatch = !selectedState || student.state === selectedState;
     const cityMatch = !selectedCity || student.city === selectedCity;
     return stateMatch && cityMatch;
   });
 
-  const sorted = [...filteredLeaderboard].sort(
-    (a, b) => (b.coins ?? 0) - (a.coins ?? 0),
-  );
+  const sorted = filteredLeaderboard;
 
   const currentRank =
-    sorted.findIndex(
+    rankedLeaderboard.findIndex(
       (student) =>
         student._id === currentUserId || student.id === currentUserId,
     ) + 1;
 
-  const currentUser = sorted.find(
+  const currentUser = rankedLeaderboard.find(
     (s) => s._id === currentUserId || s.id === currentUserId,
   );
   const myCoins = currentUser?.coins ?? 0;
@@ -72,6 +74,12 @@ const LeaderBoard = () => {
       label: t("studentLeaderboard.earnAchievements", "Earn Achievements"),
       coins: "10-50",
       desc: t("studentLeaderboard.earnAchievementsDesc", "Unlock badges for making progress in your courses and tests"),
+    },
+    {
+      icon: "✉️",
+      label: t("studentLeaderboard.inviteFriends", "Invite Friends"),
+      coins: 50,
+      desc: t("studentLeaderboard.inviteFriendsDesc", "Get bonus coins when a friend registers using your link"),
     },
   ];
 
@@ -454,8 +462,13 @@ const LeaderBoard = () => {
       ) : sorted.length === 0 ? (
         <div style={{ color: "#94a3b8" }}>{t("studentLeaderboard.empty")}</div>
       ) : (
-        sorted.map((student, index) => {
-          const rank = index + 1;
+        sorted.map((student) => {
+          const rank =
+            rankedLeaderboard.findIndex(
+              (rankedStudent) =>
+                rankedStudent._id === student._id ||
+                rankedStudent.id === student.id,
+            ) + 1;
           const isCurrentUser =
             student._id === currentUserId || student.id === currentUserId;
           const studentCoins = student.coins ?? 0;

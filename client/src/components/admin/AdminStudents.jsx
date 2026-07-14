@@ -765,7 +765,7 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
 
   const subscription = student.subscription || {};
   const coins = typeof student.coins === "number" ? student.coins : 0;
-  const rupeeValue = (coins / 10).toFixed(2);
+  const rupeeValue = (coins / 25).toFixed(2);
 
   return (
     <div

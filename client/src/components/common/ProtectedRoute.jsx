@@ -79,10 +79,14 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   // originally created. Without this, a custom-role user would pass the
   // base-role check below and be allowed onto /student-dashboard or
   // /instructor-dashboard directly, bypassing the staff panel entirely.
-  const hasAccess = isCustomRoleUser
-    ? allowedRoles.includes("staff")
-    : allowedRoles.length === 0 ||
-      allowedRoles.some((allowedRole) => hasBaseRole(user, allowedRole));
+  const hasAccess =
+    allowedRoles.length === 0 ||
+    allowedRoles.some(
+      (allowedRole) =>
+        allowedRole === "staff"
+          ? isCustomRoleUser
+          : hasBaseRole(user, allowedRole),
+    );
 
   if (!hasAccess) {
     const fallback = isAdmin

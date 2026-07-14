@@ -45,6 +45,8 @@ const userSchema = new Schema(
       default: null,
     },
     coins: { type: Number, default: 0, min: 0 },
+    // Idempotency keys prevent retries from earning a course reward twice.
+    coinRewardKeys: { type: [String], default: [] },
     referralCode: {
       type: String,
       unique: true,

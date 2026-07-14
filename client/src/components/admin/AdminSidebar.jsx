@@ -18,7 +18,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../../redux/slices/authSlice";
-import { Lock, CreditCard } from "lucide-react";
+import { Lock, CreditCard, LogOut } from "lucide-react";
 
 const AdminSidebar = ({
   tab,
@@ -78,16 +78,24 @@ const AdminSidebar = ({
             className={`flex items-center rounded-xl ${collapsed ? "justify-center gap-1 p-2" : "gap-3 p-3"
               } bg-indigo-950/20 border border-indigo-900/30`}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-indigo-400 to-violet-600 text-xs font-bold text-white shadow-sm shadow-indigo-500/10 shrink-0">
-              {user?.name?.charAt(0)?.toUpperCase() || "A"}
-            </div>
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.name}
+                className="h-8 w-8 rounded-full object-cover shrink-0"
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-indigo-400 to-violet-600 text-xs font-bold text-white shadow-sm shadow-indigo-500/10 shrink-0">
+                {user?.name?.charAt(0)?.toUpperCase() || "A"}
+              </div>
+            )}
             {!collapsed && (
               <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="truncate text-xs font-bold text-white">
                   {user?.name || "Admin User"}
                 </div>
                 <div className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider truncate">
-                  Administrator
+                  {t("nav.roleAdmin", "Admin")}
                 </div>
               </div>
             )}
@@ -141,7 +149,6 @@ const AdminSidebar = ({
               </button>
             );
           })}
-        {/* Logout button at the bottom (Mobile View Only) */}
         <div className="md:hidden p-3 border-t border-slate-800 shrink-0">
           <button
             onClick={() => {
@@ -149,15 +156,11 @@ const AdminSidebar = ({
               dispatch(logoutUser());
               navigate("/");
             }}
-            className={`flex items-center justify-center gap-2 rounded-xl py-2.5 transition-all duration-200 w-full text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 ${
-              collapsed ? "px-0" : "px-3"
-            }`}
-            title={collapsed ? t("nav.logout") : undefined}
+            className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
+            title={t("nav.logout")}
           >
-            <span style={{ fontSize: 16 }}>🚪</span>
-            {!collapsed && (
-              <span className="text-xs font-semibold">{t("nav.logout")}</span>
-            )}
+            <LogOut size={16} className="text-rose-400 shrink-0" />
+            <span className="text-sm font-semibold">{t("nav.logout")}</span>
           </button>
         </div>
         </nav>

@@ -4,6 +4,7 @@ import User from "./../models/user.model.js";
 import Cart from "./../models/cart.model.js";
 import {
   cacheResponse,
+  deleteKey,
   deleteKeys,
   getJson,
   setJson,
@@ -912,28 +913,35 @@ export const submitQuiz = async (req, res) => {
     }
     student.score = (student.score || 0) + pointsEarned;
 
-    // ── Issue certificate if not already earned ──────────────────────────
-    if (course.certificate?.enabled) {
-      // Check if they have submitted all required quizzes (Final Quiz if exists, else all Subject Quizzes)
-      const requiresFinalQuiz = course.quiz?.questions?.length > 0;
-      let allPassed = false;
-      if (requiresFinalQuiz) {
-        allPassed = student.quizSubmissions.some(
-          (s) =>
-            s.courseId.toString() === course._id.toString() &&
-            s.title === "Final Quiz",
-        );
-      } else {
-        const requiredQuizzes = course.subjectQuizzes || [];
-        allPassed = requiredQuizzes.every((rq) =>
+    const requiresFinalQuiz = course.quiz?.questions?.length > 0;
+    const allPassed = requiresFinalQuiz
+      ? student.quizSubmissions.some(
+          (submission) =>
+            submission.courseId.toString() === course._id.toString() &&
+            submission.title === "Final Quiz",
+        )
+      : (course.subjectQuizzes || []).every((requiredQuiz) =>
           student.quizSubmissions.some(
-            (s) =>
-              s.courseId.toString() === course._id.toString() &&
-              s.title === rq.title,
+            (submission) =>
+              submission.courseId.toString() === course._id.toString() &&
+              submission.title === requiredQuiz.title,
           ),
         );
-      }
 
+    if (allPassed) {
+      const courseRewardKey = "course:" + course._id;
+      const reward = await User.updateOne(
+        { _id: student._id, coinRewardKeys: { $ne: courseRewardKey } },
+        {
+          $addToSet: { coinRewardKeys: courseRewardKey },
+          $inc: { coins: 25 },
+        },
+      );
+      if (reward.modifiedCount) await deleteKey("students:leaderboard");
+    }
+
+    // ── Issue certificate if not already earned ──────────────────────────
+    if (course.certificate?.enabled) {
       const alreadyIssued = (student.earnedCertificates ?? []).some(
         (c) => c.courseId.toString() === course._id.toString(),
       );
@@ -950,10 +958,24 @@ export const submitQuiz = async (req, res) => {
           signatoryTitle: course.certificate?.signatoryTitle || "",
           instructorName: course.instructor?.name || "",
         });
+
+        const certificateRewardKey = "certificate:" + course._id;
+        const certificateReward = await User.updateOne(
+          { _id: student._id, coinRewardKeys: { $ne: certificateRewardKey } },
+          {
+            $addToSet: { coinRewardKeys: certificateRewardKey },
+            $inc: { coins: 25 },
+          },
+        );
+        if (certificateReward.modifiedCount) {
+          await deleteKey("students:leaderboard");
+        }
       }
     }
 
     await student.save();
+    const updatedCoinBalance = (await User.findById(student._id).select("coins"))
+      ?.coins;
 
     return res.json({
       success: true,
@@ -962,6 +984,7 @@ export const submitQuiz = async (req, res) => {
       totalQuestions: questions.length,
       pointsEarned,
       newTotalScore: student.score,
+      coinBalance: updatedCoinBalance,
       breakdown,
       earnedCertificates: student.earnedCertificates,
     });
