@@ -308,46 +308,6 @@ button.btn-red:hover,
               </>
             )}
 
-            {!isStaffOrAdmin && (
-              <div ref={dropdownRef} className="relative">
-                <button
-                  onClick={() => setBoardOpen((prev) => !prev)}
-                  className="flex items-center gap-1 hover:text-indigo-300 transition"
-                >
-                  {t("nav.board")}
-                  <ChevronDown
-                    size={16}
-                    className={`transition-transform ${boardOpen ? "rotate-180" : ""}`}
-                  />
-                </button>
-                {boardOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
-                    <Link
-                      to="/boards/cbse"
-                      onClick={() => setBoardOpen(false)}
-                      className="block px-4 py-3 hover:bg-slate-800"
-                    >
-                      CBSE
-                    </Link>
-                    <Link
-                      to="/boards/mp-board"
-                      onClick={() => setBoardOpen(false)}
-                      className="block px-4 py-3 hover:bg-slate-800"
-                    >
-                      MP Board
-                    </Link>
-                    <Link
-                      to="/boards/icse"
-                      onClick={() => setBoardOpen(false)}
-                      className="block px-4 py-3 hover:bg-slate-800"
-                    >
-                      ICSE
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
-
             {!hasInstructorRole && !isStaffOrAdmin && !user && (
               <Link
                 to="/become-instructor"
@@ -360,6 +320,46 @@ button.btn-red:hover,
 
           {/* ── Desktop right section ── */}
           <div className="hidden md:flex items-center gap-2 lg:gap-4 ml-auto shrink-0">
+            {(!user || hasStudentRole) && (
+              <div ref={dropdownRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setBoardOpen((prev) => !prev)}
+                  className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800 transition cursor-pointer"
+                >
+                  {t("nav.board")}
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform ${boardOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {boardOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
+                    <Link
+                      to="/boards/cbse"
+                      onClick={() => setBoardOpen(false)}
+                      className="block px-4 py-3 text-sm text-slate-200 hover:bg-slate-800"
+                    >
+                      CBSE
+                    </Link>
+                    <Link
+                      to="/boards/mp-board"
+                      onClick={() => setBoardOpen(false)}
+                      className="block px-4 py-3 text-sm text-slate-200 hover:bg-slate-800"
+                    >
+                      MP Board
+                    </Link>
+                    <Link
+                      to="/boards/icse"
+                      onClick={() => setBoardOpen(false)}
+                      className="block px-4 py-3 text-sm text-slate-200 hover:bg-slate-800"
+                    >
+                      ICSE
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
             <div ref={languageRef} className="relative">
               <button
                 type="button"
