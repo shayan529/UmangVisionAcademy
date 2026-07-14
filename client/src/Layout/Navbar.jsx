@@ -169,13 +169,22 @@ const Navbar = () => {
   const dashboardOptions = [];
   if (user) {
     if (hasBaseRole(user, "student")) {
-      dashboardOptions.push({ name: t("nav.roleStudent", "Student"), path: "/student-dashboard" });
+      dashboardOptions.push({
+        name: t("nav.roleStudent", "Student"),
+        path: "/student-dashboard",
+      });
     }
     if (hasBaseRole(user, "instructor")) {
-      dashboardOptions.push({ name: t("nav.roleInstructor", "Instructor"), path: "/instructor-dashboard" });
+      dashboardOptions.push({
+        name: t("nav.roleInstructor", "Instructor"),
+        path: "/instructor-dashboard",
+      });
     }
     if (hasBaseRole(user, "admin")) {
-      dashboardOptions.push({ name: t("nav.roleAdmin", "Admin"), path: "/admin-dashboard" });
+      dashboardOptions.push({
+        name: t("nav.roleAdmin", "Admin"),
+        path: "/admin-dashboard",
+      });
     }
     getCustomRoles(user).forEach((role) => {
       dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
@@ -274,7 +283,6 @@ button.btn-red:hover,
 
           {/* ── Desktop nav links ── */}
           <div className="hidden md:flex justify-center flex-1 items-center gap-4 xl:gap-8 text-[15px] font-medium text-gray-300 mx-4 xl:mx-8">
-
             {!isStaffOrAdmin && !user && (
               <Link
                 to="/plans"
@@ -348,7 +356,10 @@ button.btn-red:hover,
                 {t("nav.becomeInstructor")}
               </Link>
             )}
+          </div>
 
+          {/* ── Desktop right section ── */}
+          <div className="hidden md:flex items-center gap-2 lg:gap-4 ml-auto shrink-0">
             <div ref={languageRef} className="relative">
               <button
                 type="button"
@@ -380,11 +391,7 @@ button.btn-red:hover,
                 </div>
               )}
             </div>
-          </div>
-
-          {/* ── Desktop right section ── */}
-          <div className="hidden md:flex items-center gap-2 lg:gap-4 ml-auto shrink-0">
-            {!isStaffOrAdmin && (
+            {(!user || hasStudentRole) && (
               <button
                 type="button"
                 onClick={() => navigate("/cart")}
@@ -435,7 +442,11 @@ button.btn-red:hover,
                       onClick={() => setRolesDropdownOpen(!rolesDropdownOpen)}
                       className="btn-indigo-shine flex items-center gap-1.5"
                     >
-                      {t("nav.dashboard", "Dashboard")} <ChevronDown size={14} className={`transition-transform duration-200 ${rolesDropdownOpen ? "rotate-180" : ""}`} />
+                      {t("nav.dashboard", "Dashboard")}{" "}
+                      <ChevronDown
+                        size={14}
+                        className={`transition-transform duration-200 ${rolesDropdownOpen ? "rotate-180" : ""}`}
+                      />
                     </button>
                     {rolesDropdownOpen && (
                       <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-slate-800 bg-[#0f172a] p-2 shadow-2xl z-[120] flex flex-col gap-1.5">
@@ -509,7 +520,7 @@ button.btn-red:hover,
               )}
             </div>
 
-            {!isStaffOrAdmin && (
+            {(!user || hasStudentRole) && (
               <button
                 type="button"
                 onClick={() => navigate("/cart")}
@@ -547,7 +558,6 @@ button.btn-red:hover,
             )}
           </div>
         </div>
-
       </nav>
 
       {/* ── Mobile menu: full-screen fixed overlay, starts below the top bar ──
@@ -556,10 +566,9 @@ button.btn-red:hover,
          position:fixed descendants, which was collapsing this overlay down
          to the height of the top bar instead of the full viewport. ── */}
       <div
-        className={`md:hidden fixed inset-x-0 bottom-0 z-[100] bg-black/60 transition-opacity duration-300 ${mobileMenuOpen
-            ? "opacity-100"
-            : "opacity-0 pointer-events-none"
-          }`}
+        className={`md:hidden fixed inset-x-0 bottom-0 z-[100] bg-black/60 transition-opacity duration-300 ${
+          mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
         style={{ top: topBarHeight }}
         onClick={closeMobile}
         aria-hidden="true"
@@ -580,19 +589,19 @@ button.btn-red:hover,
           {[
             ...(!isStaffOrAdmin && !user
               ? [
-                { to: "/courses", label: t("nav.courses") },
-                { to: "/plans", label: t("nav.plans") },
-              ]
+                  { to: "/courses", label: t("nav.courses") },
+                  { to: "/plans", label: t("nav.plans") },
+                ]
               : []),
             ...(!hasInstructorRole && !isStaffOrAdmin && !user
               ? [{ to: "/become-instructor", label: t("nav.becomeInstructor") }]
               : []),
-            ...(!user 
+            ...(!user
               ? [
                   { to: "/question-bank", label: t("nav.questionBank") },
-                  { to: "/blogs", label: t("nav.blogs") }
-                ] 
-              : [])
+                  { to: "/blogs", label: t("nav.blogs") },
+                ]
+              : []),
           ].map(({ to, label }) => (
             <Link
               key={to}

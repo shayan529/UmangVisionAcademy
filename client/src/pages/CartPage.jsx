@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { hasBaseRole } from "../utils/permissions";
 import {
   addToCart,
   removeFromCart,
@@ -225,7 +226,11 @@ export default function CartPage() {
 
   // Auth guard
   useEffect(() => {
-    if (!user) navigate("/login", { replace: true, state: { from: "/cart" } });
+    if (!user) {
+      navigate("/login", { replace: true, state: { from: "/cart" } });
+    } else if (!hasBaseRole(user, "student")) {
+      navigate("/", { replace: true });
+    }
   }, [user, navigate]);
 
   useEffect(() => {
@@ -234,7 +239,7 @@ export default function CartPage() {
     dispatch(fetchWallet()); // load wallet balance on mount
   }, [dispatch]);
 
-  if (!user) return null;
+  if (!user || !hasBaseRole(user, "student")) return null;
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const cartItems = availableCourses.filter((c) =>
