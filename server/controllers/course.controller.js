@@ -186,7 +186,8 @@ export const getCourses = async (req, res) => {
 export const getPublishedCourses = async (req, res) => {
   try {
     const cacheKey = "courses:published";
-    const courses = await cacheResponse(cacheKey, 7200, async () => {
+    const cacheTtl = process.env.NODE_ENV === "development" ? 1 : 7200;
+    const courses = await cacheResponse(cacheKey, cacheTtl, async () => {
       return await Course.find({
         approvalStatus: "approved",
         published: true,
@@ -205,10 +206,12 @@ export const getPublishedCourses = async (req, res) => {
 export const getCourseByIdPublic = async (req, res) => {
   try {
     const cacheKey = `course:public:${req.params.id}`;
-    const cached = await getJson(cacheKey);
-    if (cached !== null) {
-      if (cached.notes !== undefined && (!cached.instructor || cached.instructor.avgRating !== undefined)) {
-        return res.json(cached);
+    if (process.env.NODE_ENV !== "development") {
+      const cached = await getJson(cacheKey);
+      if (cached !== null) {
+        if (cached.notes !== undefined && (!cached.instructor || cached.instructor.avgRating !== undefined)) {
+          return res.json(cached);
+        }
       }
     }
 
@@ -267,7 +270,8 @@ export const getCourseByIdPublic = async (req, res) => {
         })),
     };
 
-    await setJson(cacheKey, shaped, 7200);
+    const cacheTtl = process.env.NODE_ENV === "development" ? 1 : 7200;
+    await setJson(cacheKey, shaped, cacheTtl);
     res.json(shaped);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -416,7 +420,7 @@ export const enrolledCourses = async (req, res) => {
     const studentId = req.user._id;
 
     const student = await User.findById(studentId)
-      .select("quizSubmissions subscription selectedClass")
+      .select("quizSubmissions subscription selectedClass courseProgress")
       .lean();
 
     const query = { $or: [{ students: studentId }] };
@@ -437,11 +441,17 @@ export const enrolledCourses = async (req, res) => {
 
     const shaped = courses.map((course) => {
       const totalLessons = course.lessons?.length ?? 0;
-      // No lesson-level completion yet — derive from quiz submission
-      // A course is "completed" if the student has submitted the final quiz
       const quizScore = quizMap[course._id.toString()];
       const hasCompletedQuiz = quizScore !== undefined;
-      const progress = hasCompletedQuiz ? 100 : 0;
+
+      const progObj = student?.courseProgress?.[course._id.toString()] || null;
+      const completedLessons = progObj ? (progObj.completed || []).length : 0;
+
+      const progress = hasCompletedQuiz
+        ? 100
+        : totalLessons > 0
+          ? Math.min(100, Math.round((completedLessons / totalLessons) * 100))
+          : 0;
 
       return {
         _id: course._id,
@@ -457,7 +467,7 @@ export const enrolledCourses = async (req, res) => {
         tags: course.tags,
         lessons: course.lessons ?? [],
         totalLessons,
-        completedLessons: hasCompletedQuiz ? totalLessons : 0,
+        completedLessons: hasCompletedQuiz ? totalLessons : completedLessons,
         progress,
         quizScore: quizScore ?? null,
         certificate: course.certificate ?? null,

@@ -1189,7 +1189,7 @@ function CourseCard({ course, animDelay = 0, onRate }) {
                       </button>
                     </Link>
                   )}
-                  <Link to={`/courses/${course._id}`}>
+                  <Link to={`/courses/${course._id}?replay=true`}>
                     <button
                       className="action-btn"
                       style={{

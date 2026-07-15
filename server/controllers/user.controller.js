@@ -863,7 +863,12 @@ export const getInstructorPublicProfile = async (req, res) => {
     const instructor = await User.findById(id).select(
       "name bio specialization city state createdAt roles avatarUrl",
     );
-    if (!instructor || !instructor.roles?.includes("instructor")) {
+    if (!instructor) {
+      return res.status(404).json({ message: "Instructor not found." });
+    }
+
+    const hydrated = await hydrateUserRoles(instructor);
+    if (!hydrated || !hydrated.roles?.includes("instructor")) {
       return res.status(404).json({ message: "Instructor not found." });
     }
 
@@ -882,14 +887,14 @@ export const getInstructorPublicProfile = async (req, res) => {
     );
 
     res.json({
-      _id: instructor._id,
-      name: instructor.name,
-      avatarUrl: instructor.avatarUrl,
-      bio: instructor.bio,
-      specialization: instructor.specialization,
-      city: instructor.city,
-      state: instructor.state,
-      createdAt: instructor.createdAt,
+      _id: hydrated._id,
+      name: hydrated.name,
+      avatarUrl: hydrated.avatarUrl,
+      bio: hydrated.bio,
+      specialization: hydrated.specialization,
+      city: hydrated.city,
+      state: hydrated.state,
+      createdAt: hydrated.createdAt,
       avgRating,
       ratingCount,
       totalStudents,

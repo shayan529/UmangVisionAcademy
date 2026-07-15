@@ -159,7 +159,9 @@ const authSlice = createSlice({
     // ── Load current user (called on every page load / refresh) ───────────
     builder
       .addCase(loadCurrentUser.pending, (state) => {
-        state.loading = true;
+        if (!state.isAuthenticated) {
+          state.loading = true;
+        }
         state.error = null;
       })
       .addCase(loadCurrentUser.fulfilled, (state, action) => {

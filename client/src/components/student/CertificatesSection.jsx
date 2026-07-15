@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchEnrolledCourses } from "../../redux/slices/courseSlice";
+import { loadCurrentUser } from "../../redux/slices/authSlice";
 import { Link } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
@@ -707,6 +708,7 @@ export default function Certificates() {
   const user = useSelector((s) => s.auth?.user);
 
   useEffect(() => {
+    dispatch(loadCurrentUser());
     dispatch(fetchEnrolledCourses());
   }, [dispatch]);
 
@@ -780,7 +782,7 @@ export default function Certificates() {
     (user?.earnedCertificates ?? []).map((c) => c.courseId.toString()),
   );
 
-  const inProgressCourses = (enrolled ?? [])
+  const inProgressCourses = studentCourses
     .filter(
       (c) => !earnedCourseIds.has(c._id?.toString()) && c.certificate?.enabled,
     )

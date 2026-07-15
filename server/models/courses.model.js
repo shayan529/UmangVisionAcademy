@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { deleteKeys } from "../utils/redisClient.js";
 
 const { Schema, model, Types } = mongoose;
 
@@ -138,5 +139,31 @@ courseSchema.index({ approvalStatus: 1, published: 1, createdAt: -1 });
 // course, session, and notes feeds.
 courseSchema.index({ instructor: 1, createdAt: -1 });
 courseSchema.index({ students: 1 });
+
+// ── Cache invalidation hooks ──────────────────────────────────────────────────
+// Automatically invalidates the Redis public courses list ("courses:published")
+// and the specific public course detail cache when a course is created, updated,
+// or deleted.
+const clearCourseCache = async (doc) => {
+  try {
+    const keys = ["courses:published"];
+    const id = doc?._id || doc?.id;
+    if (id) {
+      keys.push(`course:public:${id.toString()}`);
+    }
+    await deleteKeys(keys);
+  } catch (err) {
+    console.error("[Mongoose Middleware] Failed to clear course cache:", err);
+  }
+};
+
+courseSchema.post("save", clearCourseCache);
+courseSchema.post("remove", clearCourseCache);
+courseSchema.post("deleteOne", { document: true, query: true }, clearCourseCache);
+courseSchema.post("deleteMany", clearCourseCache);
+courseSchema.post("findOneAndDelete", clearCourseCache);
+courseSchema.post("findOneAndRemove", clearCourseCache);
+courseSchema.post("updateOne", clearCourseCache);
+courseSchema.post("updateMany", clearCourseCache);
 
 export default model("Course", courseSchema);

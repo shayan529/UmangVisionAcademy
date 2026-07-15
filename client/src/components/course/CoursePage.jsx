@@ -1711,7 +1711,10 @@ export default function CoursePage() {
   //   • certificate is enabled by the instructor
   //   • all lessons are complete
   //   • all quizzes submitted (pass/fail irrelevant) OR no quizzes exist
+  const isReplay = searchParams.get("replay") === "true";
+
   function checkAndShowCert(extraJustSubmittedTitle) {
+    if (isReplay) return;
     if (!course?.certificate?.enabled) return;
     if (!courseComplete) return;
     if (showCertModal) return;
