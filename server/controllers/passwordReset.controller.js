@@ -1,6 +1,5 @@
 // controllers/passwordResetController.js
 import crypto from "crypto";
-import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
 import twilio from "twilio";
 import User from "../models/user.model.js";
@@ -10,6 +9,7 @@ import {
   setOtpRecord,
   updateOtpRecord,
 } from "../utils/otpStore.js";
+import { transporter } from "../utils/Mailer.js";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -20,15 +20,6 @@ const twilioClient =
 const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const RESEND_COOLDOWN = 60 * 1000; // 1 minute
 const MAX_ATTEMPTS = 5; // wrong guesses before lockout
-
-// ── Mailer ────────────────────────────────────────────────────────────────────
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD, // Gmail App Password
-  },
-});
 
 const sendOtpEmail = async (email, otp, name = "") => {
   await transporter.sendMail({

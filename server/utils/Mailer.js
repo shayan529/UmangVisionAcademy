@@ -7,7 +7,8 @@ import nodemailer from 'nodemailer';
    CLIENT_URL        your frontend URL            e.g. http://localhost:5173
 ────────────────────────────────────────────── */
 
-const transporter = nodemailer.createTransport({
+export const transporter = nodemailer.createTransport({
+  pool: true,
   service: 'gmail',
   auth: {
     user: process.env.GMAIL_USER,
