@@ -316,13 +316,21 @@ function App() {
           <Route path="boards/:board" element={<BoardCourses />} />
           <Route path="instructors/:id" element={<InstructorAboutPage />} />
           <Route
-            path="become-instructor/apply"
-            element={<BecomeInstructorApplication />}
-          />
-          <Route
-            path="instructor-application/status"
-            element={<InstructorApplicationStatus />}
-          />
+            element={
+              <ProtectedRoute allowedRoles={["student"]}>
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          >
+            <Route
+              path="become-instructor/apply"
+              element={<BecomeInstructorApplication />}
+            />
+            <Route
+              path="instructor-application/status"
+              element={<InstructorApplicationStatus />}
+            />
+          </Route>
           <Route path="plans" element={<Plans />} />
           <Route path="contact" element={<Contact />} />
           <Route path="help-center" element={<HelpCenter />} />

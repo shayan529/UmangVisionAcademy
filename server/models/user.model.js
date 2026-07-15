@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import { deleteKey, deleteKeys } from "../utils/redisClient.js";
 
 const { Schema, model, Types } = mongoose;
 
@@ -224,6 +225,67 @@ userSchema.pre("save", async function () {
     return;
   }
   this.password = await bcrypt.hash(this.password, 10);
+});
+
+// Cache Invalidation Middleware for Redis
+const invalidateUserCache = async (userId) => {
+  if (!userId) return;
+  try {
+    await deleteKey(`user:${userId.toString()}`);
+    console.log(`[Redis Cache] Invalidated cache for user:${userId.toString()}`);
+  } catch (err) {
+    console.error(`[Redis Cache] Failed to invalidate cache for user:${userId.toString()}:`, err);
+  }
+};
+
+userSchema.post("save", async function (doc) {
+  if (doc && doc._id) {
+    await invalidateUserCache(doc._id);
+  }
+});
+
+userSchema.post("findOneAndUpdate", async function (doc) {
+  if (doc && doc._id) {
+    await invalidateUserCache(doc._id);
+  }
+  const filter = this.getFilter();
+  if (filter && filter._id) {
+    await invalidateUserCache(filter._id);
+  }
+});
+
+userSchema.post("findOneAndDelete", async function (doc) {
+  if (doc && doc._id) {
+    await invalidateUserCache(doc._id);
+  }
+  const filter = this.getFilter();
+  if (filter && filter._id) {
+    await invalidateUserCache(filter._id);
+  }
+});
+
+userSchema.post("updateOne", async function () {
+  const filter = this.getFilter();
+  if (filter && filter._id) {
+    await invalidateUserCache(filter._id);
+  }
+});
+
+userSchema.post("updateMany", async function () {
+  try {
+    const filter = this.getFilter();
+    if (filter && filter._id) {
+      if (filter._id.$in && Array.isArray(filter._id.$in)) {
+        const keys = filter._id.$in.map((id) => `user:${id.toString()}`);
+        await deleteKeys(keys);
+        console.log(`[Redis Cache] Invalidated batch user caches:`, keys);
+      } else {
+        await invalidateUserCache(filter._id);
+      }
+    }
+  } catch (err) {
+    console.error("[Redis Cache] updateMany cache invalidation failed:", err);
+  }
 });
 
 const User = model("User", userSchema);

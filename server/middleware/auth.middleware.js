@@ -5,6 +5,7 @@ import {
   hasPermissionGrant,
   hydrateUserRoles,
 } from "../utils/userRoles.js";
+import { getJson, setJson } from "../utils/redisClient.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 
@@ -42,7 +43,19 @@ export const protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    const user = await User.findById(decoded.id).select("-password");
+    const cacheKey = `user:${decoded.id}`;
+    let user = await getJson(cacheKey);
+
+    if (user) {
+      console.log(`[protect] User cache HIT for ID: ${decoded.id}`);
+    } else {
+      console.log(`[protect] User cache MISS for ID: ${decoded.id}. Querying DB.`);
+      const dbUser = await User.findById(decoded.id).select("-password");
+      if (dbUser) {
+        user = await hydrateUserRoles(dbUser);
+        await setJson(cacheKey, user, 3600); // cache for 1 hour
+      }
+    }
 
     if (!user) {
       return res.status(401).json({
@@ -54,8 +67,8 @@ export const protect = async (req, res, next) => {
     console.log(
       "[protect] User found:",
       user._id,
-      "username:",
-      user.username,
+      "name:",
+      user.name,
       "path:",
       req.path,
     );
@@ -67,7 +80,7 @@ export const protect = async (req, res, next) => {
       });
     }
 
-    req.user = await hydrateUserRoles(user);
+    req.user = user;
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
@@ -103,9 +116,20 @@ export const optionalAuth = async (req, res, next) => {
     if (!token) return next();
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await User.findById(decoded.id).select("-password");
+    
+    const cacheKey = `user:${decoded.id}`;
+    let user = await getJson(cacheKey);
+
+    if (!user) {
+      const dbUser = await User.findById(decoded.id).select("-password");
+      if (dbUser && dbUser.isActive !== false) {
+        user = await hydrateUserRoles(dbUser);
+        await setJson(cacheKey, user, 3600); // cache for 1 hour
+      }
+    }
+
     if (user && user.isActive !== false) {
-      req.user = await hydrateUserRoles(user);
+      req.user = user;
     }
   } catch {
     // Invalid/expired token on an optional-auth route — treat as anonymous
