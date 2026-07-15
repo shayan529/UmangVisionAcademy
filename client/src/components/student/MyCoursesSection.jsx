@@ -183,7 +183,8 @@ export default function MyCourses() {
     inProgress: enrolled.filter((c) => c.status === "in-progress").length,
   };
 
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isHindi = i18n.language?.startsWith("hi");
 
   return (
     <>
@@ -254,11 +255,14 @@ export default function MyCourses() {
             style={{
               fontSize: 28,
               fontWeight: 800,
-              letterSpacing: "-0.02em",
+              letterSpacing: isHindi ? "normal" : "-0.02em",
               backgroundImage: "linear-gradient(135deg,#f1f5f9,#94a3b8)",
               WebkitBackgroundClip: "text",
               backgroundClip: "text",
               color: "transparent",
+              lineHeight: isHindi ? 1.4 : 1.2,
+              paddingTop: isHindi ? "4px" : "0px",
+              paddingBottom: isHindi ? "4px" : "0px",
             }}
           >
             {t("studentDashboard.myCourses")}

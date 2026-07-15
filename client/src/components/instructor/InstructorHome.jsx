@@ -12,11 +12,12 @@ import {
 } from "./InstructorUi";
 
 const InstructorHome = ({ showToast, onNavigate }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
   const { courses, loading: coursesLoading } = useSelector((s) => s.courses);
   const { sessions, loading: sessionsLoading } = useSelector((s) => s.sessions);
+  const isHindi = i18n.language?.startsWith("hi");
 
   useEffect(() => {
     dispatch(fetchCourses());
@@ -135,12 +136,14 @@ const InstructorHome = ({ showToast, onNavigate }) => {
           style={{
             fontSize: "clamp(22px,5vw,32px)",
             fontWeight: 800,
-            letterSpacing: "-0.02em",
+            letterSpacing: isHindi ? "normal" : "-0.02em",
             backgroundImage: "linear-gradient(135deg,#f1f5f9,#94a3b8)",
             WebkitBackgroundClip: "text",
             backgroundClip: "text",
             color: "transparent",
-            lineHeight: 1.2,
+            lineHeight: isHindi ? 1.4 : 1.2,
+            paddingTop: isHindi ? "4px" : "0px",
+            paddingBottom: isHindi ? "4px" : "0px",
           }}
         >
           {t("instructorHome.dashboardTitle")}
