@@ -965,11 +965,11 @@ const Login = () => {
     }`;
 
   return (
-    <div className="min-h-screen bg-[#0B1120] flex flex-col overflow-hidden relative">
+    <div className="min-h-screen bg-[#0B1120] flex flex-col overflow-hidden relative login-page-wrapper">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=DM+Sans:wght@400;500&display=swap');
         .df { font-family:'Outfit',sans-serif; }
-        body, * { font-family:'DM Sans',sans-serif; }
+        .login-page-wrapper, .login-page-wrapper * { font-family:'DM Sans',sans-serif; }
         @keyframes pulse-orb { 0%,100%{transform:scale(1);opacity:.2} 50%{transform:scale(1.1);opacity:.32} }
         @keyframes pulse-orb2 { 0%,100%{transform:scale(1);opacity:.14} 50%{transform:scale(1.08);opacity:.22} }
         @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }

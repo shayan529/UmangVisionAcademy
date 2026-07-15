@@ -122,6 +122,8 @@ export default function MyCourses() {
   const [activeTab, setActiveTab] = useState("all");
   const [ratingCourse, setRatingCourse] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState("all");
 
   const {
     enrolled: rawEnrolled,
@@ -173,9 +175,26 @@ export default function MyCourses() {
     };
   });
 
-  const filtered = enrolled.filter((c) =>
-    activeTab === "all" ? true : c.status === activeTab,
-  );
+  const filtered = enrolled.filter((c) => {
+    const matchesTab = activeTab === "all" ? true : c.status === activeTab;
+    const matchesSearch = searchQuery.trim() === "" ? true : (
+      (c.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.instructor?.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.category || "").toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    let matchesLanguage = true;
+    if (selectedLanguage !== "all") {
+      const courseLang = (c.language || "").trim().toLowerCase();
+      if (selectedLanguage === "english") {
+        matchesLanguage = courseLang === "english";
+      } else if (selectedLanguage === "hindi") {
+        matchesLanguage = courseLang === "hindi";
+      } else if (selectedLanguage === "multilanguage") {
+        matchesLanguage = courseLang === "" || courseLang === "multilanguage";
+      }
+    }
+    return matchesTab && matchesSearch && matchesLanguage;
+  });
 
   const counts = {
     total: enrolled.length,
@@ -438,6 +457,83 @@ export default function MyCourses() {
             {tab.label}
           </button>
         ))}
+      </div>
+
+      {/* ── Search & Filter Bar ── */}
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          marginBottom: 20,
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
+        {/* Search Field */}
+        <div style={{ position: "relative", flex: 1, minWidth: 240 }}>
+          <input
+            type="text"
+            placeholder={t("courses.searchPlaceholder", "Search your courses...")}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "10px 16px 10px 38px",
+              background: "#0f1524",
+              border: "1px solid #1e293b",
+              borderRadius: 12,
+              color: "#f1f5f9",
+              fontSize: 13.5,
+              outline: "none",
+              transition: "border-color 0.2s ease",
+            }}
+            onFocus={(e) => e.target.style.borderColor = "#6366f1"}
+            onBlur={(e) => e.target.style.borderColor = "#1e293b"}
+          />
+          <span
+            style={{
+              position: "absolute",
+              left: 14,
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#475569",
+              fontSize: 15,
+            }}
+          >
+            🔍
+          </span>
+        </div>
+
+        {/* Language Dropdown */}
+        <div style={{ minWidth: 160 }}>
+          <select
+            value={selectedLanguage}
+            onChange={(e) => setSelectedLanguage(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "10px 16px",
+              background: "#0f1524",
+              border: "1px solid #1e293b",
+              borderRadius: 12,
+              color: "#c7d2fe",
+              fontSize: 13.5,
+              fontWeight: 600,
+              outline: "none",
+              cursor: "pointer",
+              appearance: "none",
+              backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23818cf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "right 12px center",
+              backgroundSize: "16px",
+              paddingRight: 36,
+            }}
+          >
+            <option value="all">{t("courses.allLanguages", "All Languages")}</option>
+            <option value="english">English</option>
+            <option value="hindi">Hindi</option>
+            <option value="multilanguage">Multilanguage</option>
+          </select>
+        </div>
       </div>
 
       {/* ── Error state ── */}
@@ -972,25 +1068,41 @@ function CourseCard({ course, animDelay = 0, onRate }) {
                   <span style={{ color: accent }}>{course.nextLesson}</span>
                 </p>
               )}
-              {/* Show category tag */}
-              {course.category && (
-                <span
-                  style={{
-                    display: "inline-block",
-                    marginTop: 6,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    padding: "3px 9px",
-                    borderRadius: 20,
-                    background: `${accent}18`,
-                    color: accent,
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {course.category}
-                </span>
-              )}
+              {/* Show category & language tags */}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+                {course.category && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: "3px 9px",
+                      borderRadius: 20,
+                      background: `${accent}18`,
+                      color: accent,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {course.category}
+                  </span>
+                )}
+                {course.language && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: "3px 9px",
+                      borderRadius: 20,
+                      background: "rgba(16,185,129,0.12)",
+                      color: "#34d399",
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {course.language}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Action buttons */}

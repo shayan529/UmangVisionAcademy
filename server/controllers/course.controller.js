@@ -452,6 +452,7 @@ export const enrolledCourses = async (req, res) => {
         price: course.price,
         thumbnailUrl: course.thumbnailUrl,
         board: course.board,
+        language: course.language ?? "",
         instructor: course.instructor,
         tags: course.tags,
         lessons: course.lessons ?? [],

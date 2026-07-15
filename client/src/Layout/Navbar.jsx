@@ -285,6 +285,14 @@ button.btn-red:hover,
           <div className="hidden md:flex justify-center flex-1 items-center gap-4 xl:gap-8 text-[15px] font-medium text-gray-300 mx-4 xl:mx-8">
             {!isStaffOrAdmin && !user && (
               <Link
+                to="/courses"
+                className="hover:text-indigo-300 transition duration-300"
+              >
+                {t("nav.courses")}
+              </Link>
+            )}
+            {!isStaffOrAdmin && !user && (
+              <Link
                 to="/plans"
                 className="hover:text-indigo-300 transition duration-300"
               >
@@ -590,6 +598,10 @@ button.btn-red:hover,
             ...(!isStaffOrAdmin && !user
               ? [
                   { to: "/courses", label: t("nav.courses") },
+                ]
+              : []),
+            ...(!isStaffOrAdmin && !user
+              ? [
                   { to: "/plans", label: t("nav.plans") },
                 ]
               : []),

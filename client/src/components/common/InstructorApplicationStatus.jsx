@@ -245,11 +245,11 @@ const InstructorApplicationStatus = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-slate-950 text-slate-100 status-page-wrapper">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap');
         .df { font-family: 'Outfit', sans-serif; }
-        * { font-family: 'DM Sans', sans-serif; }
+        .status-page-wrapper, .status-page-wrapper * { font-family: 'DM Sans', sans-serif; }
         @keyframes slide-up { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }
         @keyframes fade-in  { from { opacity:0 } to { opacity:1 } }
         .su  { animation: slide-up .55s cubic-bezier(.22,1,.36,1) both; }

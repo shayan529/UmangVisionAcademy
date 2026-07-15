@@ -304,6 +304,7 @@ const BoardCourses = () => {
                     image: course.thumbnailUrl ?? null,
                     board: course.board ?? null,
                     category: course.category ?? null,
+                    language: course.language ?? null,
                   }}
                 />
               </div>

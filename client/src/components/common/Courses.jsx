@@ -611,6 +611,7 @@ const Courses = () => {
                         image: course.thumbnailUrl ?? null,
                         board: course.board ?? null,
                         category: course.category ?? null,
+                        language: course.language ?? null,
                         students:
                           course.students?.length ?? course.enrolledCount ?? 0,
                         enrolled,

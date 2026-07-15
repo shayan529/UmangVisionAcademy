@@ -65,14 +65,14 @@ function CertificateEarnedModal({ course, onClose, onViewCertificates }) {
   const cert = course?.certificate;
   const t = themes[cert?.theme] || themes.purple;
 
-  return (
+  return createPortal(
     <div
       onClick={onClose}
       style={{
         position: "fixed",
         inset: 0,
         background: "rgba(0,0,0,0.75)",
-        zIndex: 200,
+        zIndex: 2000,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -291,7 +291,8 @@ function CertificateEarnedModal({ course, onClose, onViewCertificates }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -345,14 +346,14 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
     }
   };
 
-  return (
+  return createPortal(
     <div
       onClick={onClose}
       style={{
         position: "fixed",
         inset: 0,
         background: "rgba(0,0,0,0.65)",
-        zIndex: 100,
+        zIndex: 2000,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -604,7 +605,8 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -2621,37 +2623,6 @@ export default function CoursePage() {
           ← Courses
         </button>
         <p className="cp-topbar-title">{course?.title}</p>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            flexShrink: 0,
-          }}
-        >
-          <div
-            style={{
-              width: 80,
-              height: 5,
-              background: "#1e293b",
-              borderRadius: 3,
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                height: "100%",
-                width: `${progressPct}%`,
-                background: "linear-gradient(90deg,#7c3aed,#06b6d4)",
-                borderRadius: 3,
-                transition: "width 0.5s",
-              }}
-            />
-          </div>
-          <span style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>
-            {progressPct}%
-          </span>
-        </div>
         {/* Toggle only makes sense on mobile — on desktop the sidebar is
             always visible in the normal flow, so the button is omitted
             there entirely instead of doing nothing. */}
@@ -2671,7 +2642,7 @@ export default function CoursePage() {
               flexShrink: 0,
             }}
           >
-            {mobileSidebarOpen ? "Hide" : "Show"}
+            {mobileSidebarOpen ? "Hide" : "Content"}
           </button>
         )}
       </div>
@@ -2809,36 +2780,71 @@ export default function CoursePage() {
                         : "Start watching to track progress"}
                   </p>
                 </div>
-                <button
-                  onClick={() =>
-                    setCompleted((prev) => {
-                      const n = new Set(prev);
-                      n.has(activeIdx) ? n.delete(activeIdx) : n.add(activeIdx);
-                      scheduleSave({
-                        lastLesson: activeIdx,
-                        completed: Array.from(n),
-                        lessonProgress: lessonProgressRef.current,
-                      }, true);
-                      return n;
-                    })
-                  }
-                  style={{
-                    padding: "8px 14px",
-                    borderRadius: 10,
-                    border: `1px solid ${completed.has(activeIdx) ? "#16a34a" : "#334155"}`,
-                    background: completed.has(activeIdx)
-                      ? "#052e16"
-                      : "transparent",
-                    color: completed.has(activeIdx) ? "#4ade80" : "#94a3b8",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    flexShrink: 0,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {completed.has(activeIdx) ? "✓ Done" : "Mark Complete"}
-                </button>
+
+                {/* Progress bar on the left of Mark Complete */}
+                <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 80,
+                        height: 6,
+                        background: "#1e293b",
+                        borderRadius: 3,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: "100%",
+                          width: `${progressPct}%`,
+                          background: "linear-gradient(90deg,#7c3aed,#06b6d4)",
+                          borderRadius: 3,
+                          transition: "width 0.5s",
+                        }}
+                      />
+                    </div>
+                    <span style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>
+                      {progressPct}%
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setCompleted((prev) => {
+                        const n = new Set(prev);
+                        n.has(activeIdx) ? n.delete(activeIdx) : n.add(activeIdx);
+                        scheduleSave({
+                          lastLesson: activeIdx,
+                          completed: Array.from(n),
+                          lessonProgress: lessonProgressRef.current,
+                        }, true);
+                        return n;
+                      })
+                    }
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 10,
+                      border: `1px solid ${completed.has(activeIdx) ? "#16a34a" : "#334155"}`,
+                      background: completed.has(activeIdx)
+                        ? "#052e16"
+                        : "transparent",
+                      color: completed.has(activeIdx) ? "#4ade80" : "#94a3b8",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      flexShrink: 0,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {completed.has(activeIdx) ? "✓ Done" : "Mark Complete"}
+                  </button>
+                </div>
               </div>
               {activeLesson?.description && (
                 <p
