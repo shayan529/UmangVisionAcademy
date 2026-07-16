@@ -36,6 +36,9 @@ const boardLabel = (slug) =>
 
 const normaliseBoard = (b = "") => b.toLowerCase().replace(/[\s-]/g, "");
 
+const ALL_LANGUAGES = "Multilanguage";
+const LANGUAGE_OPTIONS = ["English", "Hindi"];
+
 // ── Main component ────────────────────────────────────────────────────────────
 const BoardCourses = () => {
   const { board } = useParams();
@@ -52,6 +55,7 @@ const BoardCourses = () => {
 
   const [selectedClass, setSelectedClass] = useState("All");
   const [selectedSubject, setSelectedSubject] = useState("All");
+  const [selectedLanguage, setSelectedLanguage] = useState(ALL_LANGUAGES);
 
   // Fetch published courses once; if already in store this is a no-op
   useEffect(() => {
@@ -62,6 +66,7 @@ const BoardCourses = () => {
   useEffect(() => {
     setSelectedClass("All");
     setSelectedSubject("All");
+    setSelectedLanguage(ALL_LANGUAGES);
   }, [board]);
 
   // ── Filter to this board ──────────────────────────────────────────────────
@@ -83,14 +88,31 @@ const BoardCourses = () => {
   );
 
   const subjects = useMemo(
-    () => [
-      "All",
-      ...new Set(
-        boardCourses
-          .map((c) => c.title?.split(" - ")[0] ?? c.title)
-          .filter(Boolean),
-      ),
-    ],
+    () => {
+      const set = new Set();
+      boardCourses.forEach((course) => {
+        const isBulk = (course.lessons ?? []).some((l) => l.subject) ||
+                       (course.notes ?? []).some((n) => n.subject) ||
+                       (course.subjectQuizzes ?? []).length > 0 ||
+                       (course.subjectDetails ?? []).length > 0;
+        if (isBulk) {
+          const courseSubjects = [
+            ...(course.lessons ?? []).map((l) => l.subject),
+            ...(course.notes ?? []).map((n) => n.subject),
+            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
+            ...(course.subjectDetails ?? []).map((d) => d.subject),
+          ];
+          courseSubjects.forEach((sub) => {
+            if (sub) set.add(sub.trim());
+          });
+        } else {
+          if (course.title) {
+            set.add(course.title.trim());
+          }
+        }
+      });
+      return ["All", ...Array.from(set).sort()];
+    },
     [boardCourses],
   );
 
@@ -100,12 +122,38 @@ const BoardCourses = () => {
       boardCourses.filter((course) => {
         const classMatch =
           selectedClass === "All" || course.category === selectedClass;
+
+        const isBulk = (course.lessons ?? []).some((l) => l.subject) ||
+                       (course.notes ?? []).some((n) => n.subject) ||
+                       (course.subjectQuizzes ?? []).length > 0 ||
+                       (course.subjectDetails ?? []).length > 0;
+
+        let courseSubjects = [];
+        if (isBulk) {
+          courseSubjects = [
+            ...(course.lessons ?? []).map((l) => l.subject),
+            ...(course.notes ?? []).map((n) => n.subject),
+            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
+            ...(course.subjectDetails ?? []).map((d) => d.subject),
+          ].filter(Boolean).map(s => s.trim().toLowerCase());
+        } else {
+          if (course.title) {
+            courseSubjects = [course.title.trim().toLowerCase()];
+          }
+        }
+
         const subjectMatch =
           selectedSubject === "All" ||
+          courseSubjects.includes(selectedSubject.trim().toLowerCase()) ||
           (course.title?.split(" - ")[0] ?? course.title) === selectedSubject;
-        return classMatch && subjectMatch;
+
+        const languageMatch =
+          selectedLanguage === ALL_LANGUAGES ||
+          !course.language ||
+          course.language.toLowerCase() === selectedLanguage.toLowerCase();
+        return classMatch && subjectMatch && languageMatch;
       }),
-    [boardCourses, selectedClass, selectedSubject],
+    [boardCourses, selectedClass, selectedSubject, selectedLanguage],
   );
 
   const handleCourseClick = (courseId) => {
@@ -119,8 +167,12 @@ const BoardCourses = () => {
   const clearFilters = () => {
     setSelectedClass("All");
     setSelectedSubject("All");
+    setSelectedLanguage(ALL_LANGUAGES);
   };
-  const filtersActive = selectedClass !== "All" || selectedSubject !== "All";
+  const filtersActive =
+    selectedClass !== "All" ||
+    selectedSubject !== "All" ||
+    selectedLanguage !== ALL_LANGUAGES;
   const label = boardLabel(board);
 
   return (
@@ -215,6 +267,27 @@ const BoardCourses = () => {
                 {subjects.map((subj) => (
                   <option key={subj} value={subj}>
                     {subj === "All" ? t("boardCourses.all") : subj}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Language filter */}
+            <div className="flex-1 min-w-[160px]">
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                {t("courses.select_language", "Select Language")}
+              </label>
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="w-full bg-[#111827] border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-emerald-500 transition"
+              >
+                <option key={ALL_LANGUAGES} value={ALL_LANGUAGES}>
+                  {t("courses.multilanguage", "Multilanguage")}
+                </option>
+                {LANGUAGE_OPTIONS.map((lang) => (
+                  <option key={lang} value={lang}>
+                    {t(`courses.language${lang}`, lang)}
                   </option>
                 ))}
               </select>

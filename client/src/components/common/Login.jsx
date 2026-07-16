@@ -1260,18 +1260,6 @@ const Login = () => {
               <p className="text-slate-400 mt-4 text-sm leading-relaxed max-w-xs">
                 {t("authHero.description")}
               </p>
-              <div className="mt-7 flex items-center gap-7">
-                {[
-                  ["50K+", t("authHero.stats.students")],
-                  ["200+", t("authHero.stats.courses")],
-                  ["98%", t("authHero.stats.passRate")],
-                ].map(([n, l]) => (
-                  <div key={l}>
-                    <p className="df text-xl font-black text-white">{n}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{l}</p>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
 

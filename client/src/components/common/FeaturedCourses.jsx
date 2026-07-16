@@ -103,18 +103,31 @@ const Courses = () => {
 
   const dynamicSubjects = useMemo(
     () => {
-      const excludedKeywords = ["bundle", "neet", "jee", "cuet", "clat", "cat", "complete", "crash course", "mock test"];
-      return [
-        ...new Set(
-          allCourses
-            .map((c) => c.title?.split(" - ")[0]?.trim() ?? c.title?.trim())
-            .filter((subject) => {
-              if (!subject) return false;
-              const lower = subject.toLowerCase();
-              return !excludedKeywords.some((kw) => lower.includes(kw));
-            }),
-        ),
-      ];
+      const subjects = new Set();
+      allCourses.forEach((course) => {
+        const isBulk = (course.lessons ?? []).some((l) => l.subject) ||
+                       (course.notes ?? []).some((n) => n.subject) ||
+                       (course.subjectQuizzes ?? []).length > 0 ||
+                       (course.subjectDetails ?? []).length > 0;
+        if (isBulk) {
+          const courseSubjects = [
+            ...(course.lessons ?? []).map((l) => l.subject),
+            ...(course.notes ?? []).map((n) => n.subject),
+            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
+            ...(course.subjectDetails ?? []).map((d) => d.subject),
+          ];
+          courseSubjects.forEach((sub) => {
+            if (sub) {
+              subjects.add(sub.trim());
+            }
+          });
+        } else {
+          if (course.title) {
+            subjects.add(course.title.trim());
+          }
+        }
+      });
+      return Array.from(subjects).sort();
     },
     [allCourses],
   );
@@ -140,8 +153,28 @@ const Courses = () => {
             ? selectedExam === ALL_EXAMS || course.category === selectedExam
             : selectedClass === ALL || course.category === selectedClass;
 
+        const isBulk = (course.lessons ?? []).some((l) => l.subject) ||
+                       (course.notes ?? []).some((n) => n.subject) ||
+                       (course.subjectQuizzes ?? []).length > 0 ||
+                       (course.subjectDetails ?? []).length > 0;
+
+        let courseSubjects = [];
+        if (isBulk) {
+          courseSubjects = [
+            ...(course.lessons ?? []).map((l) => l.subject),
+            ...(course.notes ?? []).map((n) => n.subject),
+            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
+            ...(course.subjectDetails ?? []).map((d) => d.subject),
+          ].filter(Boolean).map(s => s.trim().toLowerCase());
+        } else {
+          if (course.title) {
+            courseSubjects = [course.title.trim().toLowerCase()];
+          }
+        }
+
         const subjectMatch =
           selectedSubject === "All Subjects" ||
+          courseSubjects.includes(selectedSubject.trim().toLowerCase()) ||
           course.title?.toLowerCase().includes(selectedSubject.toLowerCase()) ||
           course.summary?.toLowerCase().includes(selectedSubject.toLowerCase());
 
@@ -170,6 +203,34 @@ const Courses = () => {
       selectedLanguage,
     ],
   );
+
+  const featuredList = useMemo(() => {
+    const selected = [];
+    const classesSeen = new Set();
+
+    // First, try to find one course for each class (Class 9, 10, 11, 12)
+    for (const cls of CLASSES) {
+      const courseForClass = filteredCourses.find((c) => c.category === cls);
+      if (courseForClass) {
+        selected.push(courseForClass);
+        classesSeen.add(cls);
+      }
+    }
+
+    // If we have fewer than 4 courses, fill the rest with any remaining courses from filteredCourses (avoiding duplicates)
+    if (selected.length < 4) {
+      const selectedIds = new Set(selected.map((c) => c._id?.toString()));
+      for (const course of filteredCourses) {
+        if (selected.length >= 4) break;
+        if (!selectedIds.has(course._id?.toString())) {
+          selected.push(course);
+          selectedIds.add(course._id?.toString());
+        }
+      }
+    }
+
+    return selected.slice(0, 4);
+  }, [filteredCourses]);
   const isEnrolled = (course) => {
     if (!user) return false;
 
@@ -221,7 +282,7 @@ const Courses = () => {
             </h2>
             {!loading && allCourses.length > 0 && (
               <p className="text-slate-400 text-sm mt-2">
-                {`${Math.min(filteredCourses.length, 4)} ${Math.min(filteredCourses.length, 4) === 1 ? 'course' : 'courses'} available`}
+                {`${featuredList.length} ${featuredList.length === 1 ? 'course' : 'courses'} available`}
               </p>
             )}
           </div>
@@ -380,9 +441,9 @@ const Courses = () => {
               <SkeletonCard key={i} />
             ))}
           </div>
-        ) : filteredCourses.length > 0 ? (
+        ) : featuredList.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
-            {filteredCourses.slice(0, 4).map((course) => (
+            {featuredList.map((course) => (
               <div
                 key={course._id}
                 onClick={() => handleCourseClick(course)} // pass full course
@@ -444,7 +505,7 @@ const Courses = () => {
           </div>
         )}
 
-        {filteredCourses.length > 4 && (
+        {filteredCourses.length > featuredList.length && (
           <div className="flex justify-center mt-10">
             <button
               onClick={() => navigate("/courses")}

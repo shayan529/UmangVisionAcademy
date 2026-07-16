@@ -1,5 +1,5 @@
 // components/admin/AdminQuestionPapers.jsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   UploadCloud,
   Trash2,
@@ -191,7 +191,36 @@ export default function AdminQuestionPapers() {
   const [filterBoard, setFilterBoard] = useState("All");
   const [deleting, setDeleting] = useState(null);
 
-  const subjects = SUBJECTS[`${form.board}-${form.class}`] || [];
+  const [courses, setCourses] = useState([]);
+
+  const subjects = useMemo(() => {
+    const set = new Set();
+    courses.forEach((course) => {
+      if (course.board === form.board && course.category === form.class) {
+        const isBulk = (course.lessons ?? []).some((l) => l.subject) ||
+                       (course.notes ?? []).some((n) => n.subject) ||
+                       (course.subjectQuizzes ?? []).length > 0 ||
+                       (course.subjectDetails ?? []).length > 0;
+        if (isBulk) {
+          const courseSubjects = [
+            ...(course.lessons ?? []).map((l) => l.subject),
+            ...(course.notes ?? []).map((n) => n.subject),
+            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
+            ...(course.subjectDetails ?? []).map((d) => d.subject),
+          ];
+          courseSubjects.forEach((sub) => {
+            if (sub) set.add(sub.trim());
+          });
+        } else {
+          if (course.title) {
+            set.add(course.title.trim());
+          }
+        }
+      }
+    });
+    const list = Array.from(set).sort();
+    return list.length > 0 ? list : (SUBJECTS[`${form.board}-${form.class}`] || []);
+  }, [courses, form.board, form.class]);
 
   const fetchPapers = async () => {
     try {
@@ -205,8 +234,19 @@ export default function AdminQuestionPapers() {
     }
   };
 
+  const fetchCourses = async () => {
+    try {
+      const { data } = await axios.get("/courses/public");
+      const raw = Array.isArray(data) ? data : (data.courses ?? data.data ?? []);
+      setCourses(raw.filter(Boolean));
+    } catch (err) {
+      console.error("Failed to load courses:", err);
+    }
+  };
+
   useEffect(() => {
     fetchPapers();
+    fetchCourses();
   }, []);
 
   const showToast = (type, msg) => {

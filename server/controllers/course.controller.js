@@ -258,6 +258,7 @@ export const getCourseByIdPublic = async (req, res) => {
         description: l.description,
         durationMinutes: l.durationMinutes,
         type: l.type ?? "video",
+        subject: l.subject,
       })),
       notes: (course.notes ?? [])
         .filter((note) => note.status === "approved")
@@ -267,7 +268,17 @@ export const getCourseByIdPublic = async (req, res) => {
           description: note.description,
           fileUrl: note.fileUrl,
           createdAt: note.createdAt,
+          subject: note.subject,
         })),
+      subjectQuizzes: (course.subjectQuizzes ?? []).map((q) => ({
+        subject: q.subject,
+        title: q.title,
+      })),
+      subjectDetails: (course.subjectDetails ?? []).map((d) => ({
+        subject: d.subject,
+        description: d.description,
+        content: d.content,
+      })),
     };
 
     const cacheTtl = process.env.NODE_ENV === "development" ? 1 : 7200;

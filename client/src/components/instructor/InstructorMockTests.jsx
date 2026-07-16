@@ -1,5 +1,5 @@
 // pages/instructor/InstructorMockTests.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-hot-toast";
@@ -21,10 +21,11 @@ import {
   deleteMockTest,
   togglePublishTest,
 } from "../../redux/slices/mockTestSlice";
+import { fetchCourses } from "../../redux/slices/courseSlice";
 
 const BOARDS = ["CBSE", "ICSE", "MP Board", "All"];
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
-const SUBJECTS = [
+const DEFAULT_SUBJECTS = [
   "Mathematics",
   "Science",
   "English",
@@ -48,6 +49,36 @@ export default function InstructorMockTests() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const { instructorTests, loading } = useSelector((s) => s.mockTest);
+  const { courses = [] } = useSelector((s) => s.courses);
+
+  const dynamicSubjects = useMemo(() => {
+    const subjects = new Set();
+    courses.forEach((course) => {
+      const isBulk = (course.lessons ?? []).some((l) => l.subject) ||
+                     (course.notes ?? []).some((n) => n.subject) ||
+                     (course.subjectQuizzes ?? []).length > 0 ||
+                     (course.subjectDetails ?? []).length > 0;
+      if (isBulk) {
+        const courseSubjects = [
+          ...(course.lessons ?? []).map((l) => l.subject),
+          ...(course.notes ?? []).map((n) => n.subject),
+          ...(course.subjectQuizzes ?? []).map((q) => q.subject),
+          ...(course.subjectDetails ?? []).map((d) => d.subject),
+        ];
+        courseSubjects.forEach((sub) => {
+          if (sub) {
+            subjects.add(sub.trim());
+          }
+        });
+      } else {
+        if (course.title) {
+          subjects.add(course.title.trim());
+        }
+      }
+    });
+    const list = Array.from(subjects).sort();
+    return list.length > 0 ? list : DEFAULT_SUBJECTS;
+  }, [courses]);
 
   const [showForm, setShowForm] = useState(false);
   const [expandedTest, setExpandedTest] = useState(null);
@@ -71,7 +102,14 @@ export default function InstructorMockTests() {
 
   useEffect(() => {
     dispatch(fetchInstructorTests());
+    dispatch(fetchCourses());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (dynamicSubjects.length > 0 && !dynamicSubjects.includes(form.subject)) {
+      setForm((prev) => ({ ...prev, subject: dynamicSubjects[0] }));
+    }
+  }, [dynamicSubjects]);
 
   const updateForm = (field, value) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -242,7 +280,7 @@ export default function InstructorMockTests() {
                 onChange={(e) => updateForm("subject", e.target.value)}
                 className="input-dark"
               >
-                {SUBJECTS.map((s) => (
+                {dynamicSubjects.map((s) => (
                   <option key={s} value={s} className="bg-[#0b1120]">
                     {s}
                   </option>

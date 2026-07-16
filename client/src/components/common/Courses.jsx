@@ -74,8 +74,8 @@ const RatingModal = ({ course, onClose, onSubmit }) => {
               >
                 <FaStar
                   className={`text-3xl transition-colors ${star <= (hovered || selected)
-                      ? "text-amber-400"
-                      : "text-slate-600"
+                    ? "text-amber-400"
+                    : "text-slate-600"
                     }`}
                 />
               </button>
@@ -222,18 +222,31 @@ const Courses = () => {
 
   const dynamicSubjects = useMemo(
     () => {
-      const excludedKeywords = ["bundle", "neet", "jee", "cuet", "clat", "cat", "complete", "crash course", "mock test"];
-      return [
-        ...new Set(
-          allCourses
-            .map((c) => c.title?.split(" - ")[0]?.trim() ?? c.title?.trim())
-            .filter((subject) => {
-              if (!subject) return false;
-              const lower = subject.toLowerCase();
-              return !excludedKeywords.some((kw) => lower.includes(kw));
-            }),
-        ),
-      ];
+      const subjects = new Set();
+      allCourses.forEach((course) => {
+        const isBulk = (course.lessons ?? []).some((l) => l.subject) ||
+                       (course.notes ?? []).some((n) => n.subject) ||
+                       (course.subjectQuizzes ?? []).length > 0 ||
+                       (course.subjectDetails ?? []).length > 0;
+        if (isBulk) {
+          const courseSubjects = [
+            ...(course.lessons ?? []).map((l) => l.subject),
+            ...(course.notes ?? []).map((n) => n.subject),
+            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
+            ...(course.subjectDetails ?? []).map((d) => d.subject),
+          ];
+          courseSubjects.forEach((sub) => {
+            if (sub) {
+              subjects.add(sub.trim());
+            }
+          });
+        } else {
+          if (course.title) {
+            subjects.add(course.title.trim());
+          }
+        }
+      });
+      return Array.from(subjects).sort();
     },
     [allCourses],
   );
@@ -259,8 +272,28 @@ const Courses = () => {
             ? selectedExam === ALL_EXAMS || course.category === selectedExam
             : selectedClass === ALL || course.category === selectedClass;
 
+        const isBulk = (course.lessons ?? []).some((l) => l.subject) ||
+                       (course.notes ?? []).some((n) => n.subject) ||
+                       (course.subjectQuizzes ?? []).length > 0 ||
+                       (course.subjectDetails ?? []).length > 0;
+
+        let courseSubjects = [];
+        if (isBulk) {
+          courseSubjects = [
+            ...(course.lessons ?? []).map((l) => l.subject),
+            ...(course.notes ?? []).map((n) => n.subject),
+            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
+            ...(course.subjectDetails ?? []).map((d) => d.subject),
+          ].filter(Boolean).map(s => s.trim().toLowerCase());
+        } else {
+          if (course.title) {
+            courseSubjects = [course.title.trim().toLowerCase()];
+          }
+        }
+
         const subjectMatch =
           selectedSubject === "All Subjects" ||
+          courseSubjects.includes(selectedSubject.trim().toLowerCase()) ||
           course.title?.toLowerCase().includes(selectedSubject.toLowerCase()) ||
           course.summary?.toLowerCase().includes(selectedSubject.toLowerCase());
 
@@ -451,8 +484,8 @@ const Courses = () => {
                 type="button"
                 onClick={() => handleCourseTypeChange(opt.key)}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${selectedCourseType === opt.key
-                    ? "bg-gradient-to-r from-indigo-600 to-cyan-500 text-white shadow-lg shadow-indigo-500/20"
-                    : "text-slate-400 hover:text-white"
+                  ? "bg-gradient-to-r from-indigo-600 to-cyan-500 text-white shadow-lg shadow-indigo-500/20"
+                  : "text-slate-400 hover:text-white"
                   }`}
               >
                 {opt.label}
