@@ -146,14 +146,16 @@ const Sidebar = ({
       to={item.to}
       end={item.end}
       title={collapsed ? item.label : undefined}
-      className={({ isActive }) =>
-        `flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 w-full text-left
+      className={({ isActive }) => {
+        const isPlansBilling = item.to === "/student-dashboard/plans" && window.location.pathname === "/student-dashboard/billing";
+        const active = isActive || isPlansBilling;
+        return `flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 w-full text-left
         ${collapsed ? "justify-center" : "justify-start"}
-        ${isActive
+        ${active
           ? "bg-indigo-950/40 text-indigo-300 border-l-2 border-indigo-500 pl-2.5"
           : "text-slate-400 hover:bg-slate-900 hover:text-white border-l-2 border-transparent"
-        }`
-      }
+        }`;
+      }}
       onClick={() => mobileOpen && setMobileOpen(false)}
     >
       <span className="shrink-0 text-lg leading-none">{item.icon}</span>

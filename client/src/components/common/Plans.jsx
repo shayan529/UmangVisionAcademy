@@ -1,6 +1,10 @@
-import { useSelector } from 'react-redux';
+import { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { fetchSubscription } from '../../redux/slices/billingSlice';
+
+import BillingPage from '../../pages/BillingPage';
 
 const Plans = () => {
   const { t } = useTranslation();
@@ -46,7 +50,19 @@ const Plans = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
+  const { subscription } = useSelector((s) => s.billing);
+
+  useEffect(() => {
+    if (user) {
+      dispatch(fetchSubscription());
+    }
+  }, [user, dispatch]);
+
+  if (subscription?.status === 'active' || subscription?.status === 'cancelled') {
+    return <BillingPage />;
+  }
 
   const handlePlanClick = (plan) => {
     if (!user) {
@@ -55,7 +71,7 @@ const Plans = () => {
       return;
     }
     // Logged in — go to billing with the chosen plan
-    navigate('/billing', { state: { plan } });
+    navigate('/student-dashboard/billing', { state: { plan } });
   };
 
   return (

@@ -191,7 +191,7 @@ const BecomeInstructorApplication = () => {
               />
             </label>
 
-            <label className="block">
+             <label className="block">
               <span className="text-sm font-semibold text-slate-300">
                 {t('becomeInstructorApplication.bioLabel')}
               </span>
@@ -204,6 +204,9 @@ const BecomeInstructorApplication = () => {
                 placeholder={t('becomeInstructorApplication.bioPlaceholder')}
                 className="mt-3 w-full rounded-3xl border border-white/10 bg-slate-950/80 px-4 py-4 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition duration-200"
               />
+              <span className="text-xs text-slate-500 mt-2 block">
+                *This will show on your profile
+              </span>
             </label>
 
             <label className="block">

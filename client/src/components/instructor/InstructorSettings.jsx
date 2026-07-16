@@ -343,6 +343,8 @@ const InstructorSettings = ({ showToast }) => {
     city: "",
     state: "",
     avatarUrl: "",
+    bio: "",
+    specialization: "",
   });
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
@@ -383,6 +385,8 @@ const InstructorSettings = ({ showToast }) => {
         city: userProfile.city || "",
         state: userProfile.state || "",
         avatarUrl: userProfile.avatarUrl || "",
+        bio: userProfile.bio || "",
+        specialization: userProfile.specialization || "",
       });
       if (userProfile.notificationSettings) {
         setNotifications({
@@ -399,6 +403,10 @@ const InstructorSettings = ({ showToast }) => {
 
   // ── Profile save (name, city, state only — email & phone have own flows) ──
   const saveProfile = async () => {
+    if (!profile.bio?.trim()) {
+      showToast("Bio is required.");
+      return;
+    }
     try {
       await dispatch(
         updateProfile({ ...profile, notificationSettings: notifications }),
@@ -910,6 +918,52 @@ const InstructorSettings = ({ showToast }) => {
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Specialization & Bio */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr",
+              gap: 12,
+              marginBottom: 16,
+            }}
+          >
+            <div>
+              <label style={labelStyle}>Specialization</label>
+              <input
+                value={profile.specialization}
+                onChange={(e) =>
+                  setProfile({ ...profile, specialization: e.target.value })
+                }
+                placeholder="e.g. Physics & Math Instructor"
+                style={inputStyle}
+                disabled={!isEditing}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>
+              Bio <span style={{ color: "#f87171" }}>*</span>
+            </label>
+            <textarea
+              value={profile.bio}
+              onChange={(e) =>
+                setProfile({ ...profile, bio: e.target.value })
+              }
+              placeholder="Tell students about yourself..."
+              style={{
+                ...inputStyle,
+                minHeight: 100,
+                resize: "vertical",
+                fontFamily: "inherit",
+              }}
+              disabled={!isEditing}
+            />
+            <span style={{ fontSize: 11, color: "#94a3b8", marginTop: 4, display: "block" }}>
+              *This will show on your profile
+            </span>
           </div>
 
           {!isEditing ? (

@@ -53,64 +53,553 @@ const DRAFT_STORAGE_KEY = "instructorCourseDraft";
 // ── Bulk-upload specific constants ────────────────────────────────────────────
 const BULK_CLASSES = ["Class 9", "Class 10", "Class 11", "Class 12"];
 
-const CLASS_SUBJECTS = {
-  "Class 9": [
-    "Mathematics",
-    "Science",
-    "Social Science",
-    "English",
-    "Hindi",
-    "Sanskrit",
-    "Computer Science",
-  ],
-  "Class 10": [
-    "Mathematics",
-    "Science",
-    "Social Science",
-    "English",
-    "Hindi",
-    "Sanskrit",
-    "Computer Science",
-  ],
-  "Class 11": [
-    "Physics",
-    "Chemistry",
-    "Mathematics",
-    "Biology",
-    "Computer Science",
-    "Physical Education",
-    "Accountancy",
-    "Business Studies",
-    "Economics",
-    "Statistics",
-    "History",
-    "Geography",
-    "Political Science",
-    "Psychology",
-    "Sociology",
-    "English",
-    "Hindi",
-  ],
-  "Class 12": [
-    "Physics",
-    "Chemistry",
-    "Mathematics",
-    "Biology",
-    "Computer Science",
-    "Physical Education",
-    "Accountancy",
-    "Business Studies",
-    "Economics",
-    "Statistics",
-    "History",
-    "Geography",
-    "Political Science",
-    "Psychology",
-    "Sociology",
-    "English",
-    "Hindi",
-  ],
+// Subject lists are board-specific — CBSE, ICSE (ICSE for Class 9-10 / ISC for
+// Class 11-12), and MP Board (MPBSE) each prescribe a different subject set.
+// Kept broad/superset per board+class since actual availability varies by school.
+//
+// Each board+class maps to an array of GROUPS (stream/category, e.g. "Science
+// (PCM)", "Humanities", "Languages"). These render as <optgroup> submenus in
+// the dropdown. Each subject inside a group can carry `optional: true`, which
+// appends " (optional)" to its label — used for elective/additional subjects
+// that aren't part of a stream's compulsory core.
+const SUBJECTS_BY_BOARD = {
+  CBSE: {
+    "Class 9": [
+      {
+        group: "Core",
+        subjects: [
+          { name: "Mathematics" },
+          { name: "Science" },
+          { name: "Social Science" },
+          { name: "English" },
+          { name: "Hindi" },
+        ],
+      },
+      {
+        group: "Additional / Skill Subjects",
+        subjects: [
+          { name: "Sanskrit", optional: true },
+          { name: "Computer Science", optional: true },
+          { name: "Information Technology", optional: true },
+          { name: "Artificial Intelligence", optional: true },
+          { name: "Home Science", optional: true },
+        ],
+      },
+    ],
+    "Class 10": [
+      {
+        group: "Core",
+        subjects: [
+          { name: "Mathematics" },
+          { name: "Science" },
+          { name: "Social Science" },
+          { name: "English" },
+          { name: "Hindi" },
+        ],
+      },
+      {
+        group: "Additional / Skill Subjects",
+        subjects: [
+          { name: "Sanskrit", optional: true },
+          { name: "Computer Science", optional: true },
+          { name: "Information Technology", optional: true },
+          { name: "Artificial Intelligence", optional: true },
+          { name: "Home Science", optional: true },
+        ],
+      },
+    ],
+    "Class 11": [
+      {
+        group: "Science (PCM)",
+        subjects: [
+          { name: "Physics" },
+          { name: "Chemistry" },
+          { name: "Mathematics" },
+          { name: "Computer Science", optional: true },
+          { name: "Informatics Practices", optional: true },
+          { name: "Physical Education", optional: true },
+        ],
+      },
+      {
+        group: "Science (PCB)",
+        subjects: [
+          { name: "Physics" },
+          { name: "Chemistry" },
+          { name: "Biology" },
+          { name: "Computer Science", optional: true },
+          { name: "Informatics Practices", optional: true },
+          { name: "Physical Education", optional: true },
+        ],
+      },
+      {
+        group: "Commerce",
+        subjects: [
+          { name: "Accountancy" },
+          { name: "Business Studies" },
+          { name: "Economics" },
+          { name: "Mathematics", optional: true },
+          { name: "Informatics Practices", optional: true },
+          { name: "Entrepreneurship", optional: true },
+        ],
+      },
+      {
+        group: "Humanities",
+        subjects: [
+          { name: "History" },
+          { name: "Geography" },
+          { name: "Political Science" },
+          { name: "Psychology", optional: true },
+          { name: "Sociology", optional: true },
+          { name: "Legal Studies", optional: true },
+          { name: "Entrepreneurship", optional: true },
+          { name: "Fine Arts", optional: true },
+          { name: "Home Science", optional: true },
+        ],
+      },
+      {
+        group: "Languages",
+        subjects: [
+          { name: "English" },
+          { name: "Hindi" },
+          { name: "Sanskrit", optional: true },
+        ],
+      },
+    ],
+    "Class 12": [
+      {
+        group: "Science (PCM)",
+        subjects: [
+          { name: "Physics" },
+          { name: "Chemistry" },
+          { name: "Mathematics" },
+          { name: "Computer Science", optional: true },
+          { name: "Informatics Practices", optional: true },
+          { name: "Physical Education", optional: true },
+        ],
+      },
+      {
+        group: "Science (PCB)",
+        subjects: [
+          { name: "Physics" },
+          { name: "Chemistry" },
+          { name: "Biology" },
+          { name: "Computer Science", optional: true },
+          { name: "Informatics Practices", optional: true },
+          { name: "Physical Education", optional: true },
+        ],
+      },
+      {
+        group: "Commerce",
+        subjects: [
+          { name: "Accountancy" },
+          { name: "Business Studies" },
+          { name: "Economics" },
+          { name: "Mathematics", optional: true },
+          { name: "Informatics Practices", optional: true },
+          { name: "Entrepreneurship", optional: true },
+        ],
+      },
+      {
+        group: "Humanities",
+        subjects: [
+          { name: "History" },
+          { name: "Geography" },
+          { name: "Political Science" },
+          { name: "Psychology", optional: true },
+          { name: "Sociology", optional: true },
+          { name: "Legal Studies", optional: true },
+          { name: "Entrepreneurship", optional: true },
+          { name: "Fine Arts", optional: true },
+          { name: "Home Science", optional: true },
+        ],
+      },
+      {
+        group: "Languages",
+        subjects: [
+          { name: "English" },
+          { name: "Hindi" },
+          { name: "Sanskrit", optional: true },
+        ],
+      },
+    ],
+  },
+  ICSE: {
+    "Class 9": [
+      {
+        group: "Group I (Compulsory)",
+        subjects: [
+          { name: "English" },
+          { name: "Second Language (Hindi/Regional)" },
+          { name: "History & Civics" },
+          { name: "Geography" },
+          { name: "Mathematics" },
+          { name: "Physics" },
+          { name: "Chemistry" },
+          { name: "Biology" },
+        ],
+      },
+      {
+        group: "Group II (choose 2)",
+        subjects: [
+          { name: "Economics", optional: true },
+          { name: "Commercial Studies", optional: true },
+          { name: "Computer Applications", optional: true },
+          { name: "Environmental Science", optional: true },
+        ],
+      },
+      {
+        group: "Group III (choose 1)",
+        subjects: [
+          { name: "Physical Education", optional: true },
+          { name: "Home Science", optional: true },
+          { name: "Art", optional: true },
+        ],
+      },
+    ],
+    "Class 10": [
+      {
+        group: "Group I (Compulsory)",
+        subjects: [
+          { name: "English" },
+          { name: "Second Language (Hindi/Regional)" },
+          { name: "History & Civics" },
+          { name: "Geography" },
+          { name: "Mathematics" },
+          { name: "Physics" },
+          { name: "Chemistry" },
+          { name: "Biology" },
+        ],
+      },
+      {
+        group: "Group II (choose 2)",
+        subjects: [
+          { name: "Economics", optional: true },
+          { name: "Commercial Studies", optional: true },
+          { name: "Computer Applications", optional: true },
+          { name: "Environmental Science", optional: true },
+        ],
+      },
+      {
+        group: "Group III (choose 1)",
+        subjects: [
+          { name: "Physical Education", optional: true },
+          { name: "Home Science", optional: true },
+          { name: "Art", optional: true },
+        ],
+      },
+    ],
+    // ISC (Class 11-12)
+    "Class 11": [
+      {
+        group: "Science",
+        subjects: [
+          { name: "English" },
+          { name: "Physics" },
+          { name: "Chemistry" },
+          { name: "Biology" },
+          { name: "Mathematics" },
+          { name: "Computer Science", optional: true },
+        ],
+      },
+      {
+        group: "Commerce",
+        subjects: [
+          { name: "English" },
+          { name: "Accounts" },
+          { name: "Commerce" },
+          { name: "Economics" },
+          { name: "Business Studies", optional: true },
+        ],
+      },
+      {
+        group: "Humanities",
+        subjects: [
+          { name: "English" },
+          { name: "History" },
+          { name: "Political Science" },
+          { name: "Geography" },
+          { name: "Psychology", optional: true },
+          { name: "Sociology", optional: true },
+          { name: "Legal Studies", optional: true },
+        ],
+      },
+      {
+        group: "Optional / Additional",
+        subjects: [
+          { name: "Home Science", optional: true },
+          { name: "Physical Education", optional: true },
+          { name: "Environmental Science", optional: true },
+          { name: "Art", optional: true },
+          { name: "Hindi", optional: true },
+        ],
+      },
+    ],
+    "Class 12": [
+      {
+        group: "Science",
+        subjects: [
+          { name: "English" },
+          { name: "Physics" },
+          { name: "Chemistry" },
+          { name: "Biology" },
+          { name: "Mathematics" },
+          { name: "Computer Science", optional: true },
+        ],
+      },
+      {
+        group: "Commerce",
+        subjects: [
+          { name: "English" },
+          { name: "Accounts" },
+          { name: "Commerce" },
+          { name: "Economics" },
+          { name: "Business Studies", optional: true },
+        ],
+      },
+      {
+        group: "Humanities",
+        subjects: [
+          { name: "English" },
+          { name: "History" },
+          { name: "Political Science" },
+          { name: "Geography" },
+          { name: "Psychology", optional: true },
+          { name: "Sociology", optional: true },
+          { name: "Legal Studies", optional: true },
+        ],
+      },
+      {
+        group: "Optional / Additional",
+        subjects: [
+          { name: "Home Science", optional: true },
+          { name: "Physical Education", optional: true },
+          { name: "Environmental Science", optional: true },
+          { name: "Art", optional: true },
+          { name: "Hindi", optional: true },
+        ],
+      },
+    ],
+  },
+  "MP Board": {
+    "Class 9": [
+      {
+        group: "Core",
+        subjects: [
+          { name: "Mathematics" },
+          { name: "Science" },
+          { name: "Social Science" },
+          { name: "English" },
+          { name: "Hindi" },
+        ],
+      },
+      {
+        group: "Additional / Skill Subjects",
+        subjects: [
+          { name: "Sanskrit", optional: true },
+          { name: "Home Science", optional: true },
+          { name: "Information Technology", optional: true },
+        ],
+      },
+    ],
+    "Class 10": [
+      {
+        group: "Core",
+        subjects: [
+          { name: "Mathematics" },
+          { name: "Science" },
+          { name: "Social Science" },
+          { name: "English" },
+          { name: "Hindi" },
+        ],
+      },
+      {
+        group: "Additional / Skill Subjects",
+        subjects: [
+          { name: "Sanskrit", optional: true },
+          { name: "Home Science", optional: true },
+          { name: "Information Technology", optional: true },
+        ],
+      },
+    ],
+    "Class 11": [
+      {
+        group: "Science (PCM)",
+        subjects: [
+          { name: "Physics" },
+          { name: "Chemistry" },
+          { name: "Mathematics" },
+        ],
+      },
+      {
+        group: "Science (PCB)",
+        subjects: [
+          { name: "Physics" },
+          { name: "Chemistry" },
+          { name: "Biology" },
+        ],
+      },
+      {
+        group: "Commerce",
+        subjects: [
+          { name: "Accountancy" },
+          { name: "Business Studies" },
+          { name: "Economics" },
+        ],
+      },
+      {
+        group: "Humanities",
+        subjects: [
+          { name: "History" },
+          { name: "Political Science" },
+          { name: "Geography" },
+          { name: "Sociology", optional: true },
+          { name: "Psychology", optional: true },
+        ],
+      },
+      {
+        group: "Languages",
+        subjects: [
+          { name: "English" },
+          { name: "Hindi" },
+          { name: "Sanskrit", optional: true },
+        ],
+      },
+      {
+        group: "Optional / Vocational",
+        subjects: [
+          { name: "Home Science", optional: true },
+          { name: "Drawing and Designing", optional: true },
+          { name: "Agriculture", optional: true },
+          { name: "Physical Education", optional: true },
+        ],
+      },
+    ],
+    "Class 12": [
+      {
+        group: "Science (PCM)",
+        subjects: [
+          { name: "Physics" },
+          { name: "Chemistry" },
+          { name: "Mathematics" },
+        ],
+      },
+      {
+        group: "Science (PCB)",
+        subjects: [
+          { name: "Physics" },
+          { name: "Chemistry" },
+          { name: "Biology" },
+        ],
+      },
+      {
+        group: "Commerce",
+        subjects: [
+          { name: "Accountancy" },
+          { name: "Business Studies" },
+          { name: "Economics" },
+        ],
+      },
+      {
+        group: "Humanities",
+        subjects: [
+          { name: "History" },
+          { name: "Political Science" },
+          { name: "Geography" },
+          { name: "Sociology", optional: true },
+          { name: "Psychology", optional: true },
+        ],
+      },
+      {
+        group: "Languages",
+        subjects: [
+          { name: "English" },
+          { name: "Hindi" },
+          { name: "Sanskrit", optional: true },
+        ],
+      },
+      {
+        group: "Optional / Vocational",
+        subjects: [
+          { name: "Home Science", optional: true },
+          { name: "Drawing and Designing", optional: true },
+          { name: "Agriculture", optional: true },
+          { name: "Physical Education", optional: true },
+        ],
+      },
+    ],
+  },
 };
+
+const getBranches = (board, className) => {
+  if (className !== "Class 11" && className !== "Class 12") return [];
+  if (board === "CBSE" || board === "MP Board") {
+    return ["Science (PCM)", "Science (PCB)", "Commerce", "Humanities"];
+  }
+  if (board === "ICSE") {
+    return ["Science", "Commerce", "Humanities"];
+  }
+  return [];
+};
+
+const inferBranchFromSubjects = (board, className, subjects = []) => {
+  const branches = getBranches(board, className);
+  if (branches.length === 0 || !subjects.length) return "";
+
+  const branchCounts = {};
+  for (const b of branches) {
+    branchCounts[b] = 0;
+    const branchGroup = (SUBJECTS_BY_BOARD[board]?.[className] ?? []).find((g) => g.group === b);
+    const branchSubjects = new Set((branchGroup?.subjects ?? []).map((s) => s.name));
+    for (const s of subjects) {
+      if (branchSubjects.has(s)) {
+        branchCounts[b]++;
+      }
+    }
+  }
+
+  let bestBranch = "";
+  let maxCount = 0;
+  for (const b of branches) {
+    if (branchCounts[b] > maxCount) {
+      maxCount = branchCounts[b];
+      bestBranch = b;
+    }
+  }
+  return bestBranch;
+};
+
+// Flattens SUBJECTS_BY_BOARD[board][className] into <optgroup>-ready option
+// groups for the Sel component. `excludeSet` removes subjects already taken
+// by another bulk item (except `currentValue`, which stays visible so the
+// current selection doesn't disappear from its own dropdown).
+const buildSubjectGroups = (board, className, excludeSet = new Set(), currentValue = "", branch = "") => {
+  const allGroups = SUBJECTS_BY_BOARD[board]?.[className] ?? [];
+  const branches = getBranches(board, className);
+
+  let groups = allGroups;
+  if (branches.length > 0 && branch) {
+    groups = allGroups.filter((g) => g.group === branch || !branches.includes(g.group));
+  }
+
+  return groups
+    .map((g) => ({
+      group: g.group,
+      options: g.subjects
+        .filter((s) => !excludeSet.has(s.name) || s.name === currentValue)
+        .map((s) => ({
+          value: s.name,
+          label: s.optional ? `${s.name} (optional)` : s.name,
+        })),
+    }))
+    .filter((g) => g.options.length > 0);
+};
+
+// Flat list of every subject name for a board+class (used where a plain
+// array is still needed, e.g. quick existence checks).
+const flattenSubjects = (board, className) =>
+  (SUBJECTS_BY_BOARD[board]?.[className] ?? []).flatMap((g) =>
+    g.subjects.map((s) => s.name),
+  );
 
 const isDraftForm = (form) =>
   Boolean(
@@ -497,25 +986,61 @@ const Textarea = ({ value, onChange, placeholder, rows = 4 }) => (
     onBlur={blur}
   />
 );
-const Sel = ({ value, onChange, options }) => (
-  <select
-    value={value}
-    onChange={onChange}
-    style={iStyle}
-    onFocus={focus}
-    onBlur={blur}
-  >
-    {options.map((o) => (
-      <option
-        key={o.value ?? o}
-        value={o.value ?? o}
-        style={{ background: "#0b1120" }}
-      >
-        {o.label ?? o}
-      </option>
-    ))}
-  </select>
-);
+// Sel supports two option shapes:
+//  - flat:    [{ value, label }, ...]              -> plain <option> list
+//  - grouped: [{ group, options: [{value,label}] }] -> rendered as <optgroup>
+// The two can be mixed in one array (e.g. a leading "Select…" placeholder
+// item alongside grouped subject options).
+const Sel = ({ value, onChange, options }) => {
+  const isGrouped = options.some((o) => Array.isArray(o.options));
+  return (
+    <select
+      value={value}
+      onChange={onChange}
+      style={iStyle}
+      onFocus={focus}
+      onBlur={blur}
+    >
+      {isGrouped
+        ? options.map((o, i) =>
+          Array.isArray(o.options) ? (
+            <optgroup
+              key={o.group ?? i}
+              label={o.group}
+              style={{ background: "#0b1120", color: "#94a3b8" }}
+            >
+              {o.options.map((opt) => (
+                <option
+                  key={opt.value}
+                  value={opt.value}
+                  style={{ background: "#0b1120" }}
+                >
+                  {opt.label ?? opt.value}
+                </option>
+              ))}
+            </optgroup>
+          ) : (
+            <option
+              key={o.value ?? o}
+              value={o.value ?? o}
+              style={{ background: "#0b1120" }}
+            >
+              {o.label ?? o}
+            </option>
+          ),
+        )
+        : options.map((o) => (
+          <option
+            key={o.value ?? o}
+            value={o.value ?? o}
+            style={{ background: "#0b1120" }}
+          >
+            {o.label ?? o}
+          </option>
+        ))}
+    </select>
+  );
+};
 
 // ── CourseTypeSelector (circular toggle: Classes vs Competitive Exam) ────────
 const CourseTypeSelector = ({ value, onChange }) => {
@@ -2024,17 +2549,36 @@ const BulkCourseForm = ({
   const toggleCollapse = (idx) =>
     setCollapsedItems((prev) => ({ ...prev, [idx]: !prev[idx] }));
 
-  // When class changes, reset all item subjects so stale subjects don't linger
+  // When class or board changes, reset all item subjects so stale subjects
+  // (from a different board's/class's subject list) don't linger.
   const handleClassChange = (e) => {
     const newClass = e.target.value;
     setForm((f) => ({
       ...f,
       className: newClass,
+      branch: "",
       items: f.items.map((it) => ({ ...it, subject: "" })),
     }));
   };
 
-  const availableSubjects = CLASS_SUBJECTS[form.className] ?? [];
+  const handleBoardChange = (e) => {
+    const newBoard = e.target.value;
+    setForm((f) => ({
+      ...f,
+      board: newBoard,
+      branch: "",
+      items: f.items.map((it) => ({ ...it, subject: "" })),
+    }));
+  };
+
+  const handleBranchChange = (e) => {
+    const newBranch = e.target.value;
+    setForm((f) => ({
+      ...f,
+      branch: newBranch,
+      items: f.items.map((it) => ({ ...it, subject: "" })),
+    }));
+  };
 
   const updateItem = (idx, field, value) =>
     setForm((f) => ({
@@ -2059,6 +2603,9 @@ const BulkCourseForm = ({
         .filter(Boolean),
     );
 
+  const branches = getBranches(form.board, form.className);
+  const hasBranches = branches.length > 0;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <Field label="Bundle Title" hint="* (e.g. Class 9 CBSE Complete Bundle)">
@@ -2082,13 +2629,25 @@ const BulkCourseForm = ({
         <Field label="Board" hint="* (applies to all subjects below)">
           <Sel
             value={form.board}
-            onChange={setMeta("board")}
+            onChange={handleBoardChange}
             options={[
               { value: "", label: "Select board" },
               ...BOARDS.map((b) => ({ value: b, label: b })),
             ]}
           />
         </Field>
+        {hasBranches && (
+          <Field label="Branch" hint="* (applies to all subjects below)">
+            <Sel
+              value={form.branch}
+              onChange={handleBranchChange}
+              options={[
+                { value: "", label: "Select branch" },
+                ...branches.map((b) => ({ value: b, label: b })),
+              ]}
+            />
+          </Field>
+        )}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
         <Field label="Language" hint="(Optional)">
@@ -2170,23 +2729,23 @@ const BulkCourseForm = ({
           <button
             type="button"
             onClick={addItem}
-            disabled={!form.className}
+            disabled={!form.className || !form.board || (hasBranches && !form.branch)}
             style={{
               padding: "6px 14px",
               borderRadius: 8,
               border: "1px dashed #334155",
               background: "transparent",
-              color: form.className ? "#818cf8" : "#334155",
+              color: form.className && form.board && (!hasBranches || form.branch) ? "#818cf8" : "#334155",
               fontSize: 12,
               fontWeight: 600,
-              cursor: form.className ? "pointer" : "not-allowed",
+              cursor: form.className && form.board && (!hasBranches || form.branch) ? "pointer" : "not-allowed",
             }}
           >
             + Add Subject
           </button>
         </div>
 
-        {!form.className && (
+        {(!form.className || !form.board || (hasBranches && !form.branch)) && (
           <div
             style={{
               padding: "14px 18px",
@@ -2201,14 +2760,20 @@ const BulkCourseForm = ({
             }}
           >
             <span style={{ fontSize: 18 }}>☝️</span>
-            Select a class above to see available subjects.
+            {!form.className || !form.board
+              ? "Select a class and board above to see available subjects."
+              : "Select a branch above to see available subjects."}
           </div>
         )}
 
         {form.items.map((item, idx) => {
           const taken = takenSubjects(idx);
-          const subjectOptions = availableSubjects.filter(
-            (s) => !taken.has(s) || s === item.subject,
+          const subjectGroups = buildSubjectGroups(
+            form.board,
+            form.className,
+            taken,
+            item.subject,
+            form.branch,
           );
 
           const isCollapsed = !!collapsedItems[idx];
@@ -2316,7 +2881,7 @@ const BulkCourseForm = ({
                     }}
                   >
                     <Field label="Subject" hint="*">
-                      {form.className ? (
+                      {form.className && form.board && (!hasBranches || form.branch) ? (
                         <Sel
                           value={item.subject}
                           onChange={(e) =>
@@ -2324,10 +2889,7 @@ const BulkCourseForm = ({
                           }
                           options={[
                             { value: "", label: "Select subject" },
-                            ...subjectOptions.map((s) => ({
-                              value: s,
-                              label: s,
-                            })),
+                            ...subjectGroups,
                           ]}
                         />
                       ) : (
@@ -2340,7 +2902,9 @@ const BulkCourseForm = ({
                             alignItems: "center",
                           }}
                         >
-                          Select a class first
+                          {!form.className || !form.board
+                            ? "Select a class and board first"
+                            : "Select a branch first"}
                         </div>
                       )}
                     </Field>
@@ -2496,6 +3060,7 @@ export default function InstructorCourses({ showToast }) {
     title: "",
     className: "",
     board: "",
+    branch: "",
     language: "",
     thumbnailUrl: "",
     demoVideoUrl: "",
@@ -2583,11 +3148,14 @@ export default function InstructorCourses({ showToast }) {
     if (isBulkCourse(course)) {
       setEditMode("bulk");
       const items = groupBulkCourseIntoItems(course);
+      const subjectsList = items.map((it) => it.subject);
+      const inferredBranch = inferBranchFromSubjects(course.board ?? "", course.category ?? "", subjectsList);
 
       setEditBulkForm({
         title: course.title ?? "",
         className: course.category ?? "",
         board: course.board ?? "",
+        branch: inferredBranch,
         language: course.language ?? "",
         thumbnailUrl: course.thumbnailUrl ?? "",
         demoVideoUrl: course.demoVideoUrl ?? "",
@@ -2727,8 +3295,14 @@ export default function InstructorCourses({ showToast }) {
       showToast?.("Course title is required.");
       return;
     }
-    if (!bulkForm.className || !bulkForm.board) {
-      showToast?.("Select a Class and Board before submitting.");
+    const branches = getBranches(bulkForm.board, bulkForm.className);
+    const hasBranches = branches.length > 0;
+    if (!bulkForm.className || !bulkForm.board || (hasBranches && !bulkForm.branch)) {
+      showToast?.(
+        !bulkForm.className || !bulkForm.board
+          ? "Select a Class and Board before submitting."
+          : "Select a Branch before submitting."
+      );
       return;
     }
     const items = bulkForm.items.filter((it) => it.subject.trim());
@@ -2814,6 +3388,7 @@ export default function InstructorCourses({ showToast }) {
         title: "",
         className: "",
         board: "",
+        branch: "",
         language: "",
         thumbnailUrl: "",
         demoVideoUrl: "",
@@ -2865,8 +3440,14 @@ export default function InstructorCourses({ showToast }) {
       showToast?.("Course title is required.");
       return;
     }
-    if (!editBulkForm.className || !editBulkForm.board) {
-      showToast?.("Select a Class and Board before submitting.");
+    const branches = getBranches(editBulkForm.board, editBulkForm.className);
+    const hasBranches = branches.length > 0;
+    if (!editBulkForm.className || !editBulkForm.board || (hasBranches && !editBulkForm.branch)) {
+      showToast?.(
+        !editBulkForm.className || !editBulkForm.board
+          ? "Select a Class and Board before submitting."
+          : "Select a Branch before submitting."
+      );
       return;
     }
     const items = editBulkForm.items.filter((it) => it.subject.trim());
@@ -2983,6 +3564,7 @@ export default function InstructorCourses({ showToast }) {
         .ic-row:hover { border-color:#334155 !important; }
         .ic-btn:hover { opacity:.8; }
         select option { background:#0b1120; color:#f1f5f9; }
+        select optgroup { background:#0b1120; color:#94a3b8; font-style:normal; font-weight:700; }
         @media (max-width: 640px) {
           .qm-body { flex-direction: column; }
           .qm-sidebar {

@@ -227,37 +227,6 @@ export default function BillingPage() {
           fontFamily: "'Inter','Segoe UI',sans-serif",
         }}
       >
-        <nav
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "16px 28px",
-            borderBottom: "1px solid #1e293b",
-            background: "#0b1120",
-            position: "sticky",
-            top: 0,
-            zIndex: 20,
-          }}
-        >
-          <button
-            onClick={() => navigate(-1)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#94a3b8",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            ← Back
-          </button>
-          <span style={{ fontSize: 18, fontWeight: 800, color: "#f1f5f9" }}>
-            Umang Vision<span style={{ color: "#a78bfa" }}> Academy</span>
-          </span>
-          <span style={{ fontSize: 13, color: "#64748b" }}>{user?.email}</span>
-        </nav>
 
         <div
           style={{
@@ -489,7 +458,7 @@ export default function BillingPage() {
             )}
           </div>
 
-          {!activeSub && (
+          {(!activeSub || (activeSub && subscription?.plan === "base")) && (
             <div className="billing-fade">
               <p
                 style={{
@@ -501,7 +470,7 @@ export default function BillingPage() {
                   marginBottom: 14,
                 }}
               >
-                Choose a Plan
+                {activeSub ? "Upgrade Plan" : "Choose a Plan"}
               </p>
               <div
                 style={{
@@ -540,7 +509,9 @@ export default function BillingPage() {
                     color: "#a78bfa",
                     popular: true,
                   },
-                ].map((plan) => {
+                ]
+                .filter((p) => !activeSub || (activeSub && subscription?.plan === "base" && p.id === "premium"))
+                .map((plan) => {
                   const isSelected = selectedPlan?.id === plan.id;
                   return (
                     <div

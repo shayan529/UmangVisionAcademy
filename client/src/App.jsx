@@ -310,7 +310,7 @@ function App() {
           <Route path="about-us" element={<AboutUs />} />
           <Route path="courses/:id/demo" element={<CourseDemo />} />
           <Route path="question-bank" element={<QuestionBank />} />
-          <Route path="billing" element={<BillingPage />} />
+
           <Route path="blogs" element={<Blogs />} />
           <Route path="courses/:id" element={<CoursePage />} />
           <Route path="boards/:board" element={<BoardCourses />} />
@@ -355,6 +355,7 @@ function App() {
             <Route path="question-bank" element={<QuestionBank />} />
             <Route path="blogs" element={<Blogs />} />
             <Route path="plans" element={<Plans />} />
+            <Route path="billing" element={<BillingPage />} />
             <Route path="become-instructor" element={<BecomeInstructor />} />
             <Route path="notes" element={<MobileNotes />} />
             <Route path="ai-tutor" element={<AITutor />} />
