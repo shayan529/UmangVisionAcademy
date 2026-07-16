@@ -437,7 +437,7 @@ export default function MobileChat() {
     (s) => s.aiTutor,
   );
   const { isAuthenticated } = useSelector((s) => s.auth);
-  const { t: translate } = useTranslation();
+  const { t: translate, i18n } = useTranslation();
   const isMobile = useIsMobile();
 
   const [dark, setDark] = useState(true);
@@ -837,7 +837,9 @@ export default function MobileChat() {
             ? voiceLang === "hi-IN"
               ? "Hindi"
               : "English"
-            : undefined;
+            : i18n.language === "hi"
+              ? "Hindi"
+              : "English";
         const res = await fetch(`${baseUrl}/ai/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -894,7 +896,7 @@ export default function MobileChat() {
       lastAiTextRef.current = fullText;
       return fullText;
     },
-    [input, messages, streaming, mode, voiceLang, dispatch],
+    [input, messages, streaming, mode, voiceLang, dispatch, i18n.language],
   );
 
 

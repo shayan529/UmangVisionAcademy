@@ -429,9 +429,14 @@ const Signup = () => {
   };
 
   const inputCls = (name) =>
-    `w-full border rounded-2xl px-5 py-3.5 text-white text-sm outline-none transition-all duration-300 placeholder-slate-500 ${
-      name === "state" || name === "city" ? "bg-[#1e293b]" : "bg-white/5"
-    } ${
+    `w-full border rounded-2xl px-5 py-3.5 text-white text-sm outline-none transition-all duration-300 placeholder-slate-500 bg-white/5 ${
+      focused === name
+        ? "border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]"
+        : "border-white/10 hover:border-white/20"
+    }`;
+
+  const selectCls = (name) =>
+    `w-full border rounded-2xl pl-3.5 pr-8 py-3.5 text-white text-sm outline-none transition-all duration-300 bg-[#1e293b] ${
       focused === name
         ? "border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]"
         : "border-white/10 hover:border-white/20"
@@ -1100,8 +1105,8 @@ const Signup = () => {
                   </p>
                 </div>
 
-                {/* State / City / Pincode */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* State / City */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
                       {t("auth.state")}
@@ -1116,7 +1121,7 @@ const Signup = () => {
                       onFocus={() => setFocused("state")}
                       onBlur={() => setFocused("")}
                       required
-                      className={inputCls("state")}
+                      className={selectCls("state")}
                     >
                       <option value="" disabled>
                         {t("auth.selectState")}
@@ -1143,7 +1148,7 @@ const Signup = () => {
                       onBlur={() => setFocused("")}
                       required
                       className={
-                        inputCls("city") +
+                        selectCls("city") +
                         (!formData.state
                           ? " cursor-not-allowed opacity-50"
                           : "")
@@ -1162,6 +1167,10 @@ const Signup = () => {
                       ))}
                     </select>
                   </div>
+                </div>
+
+                {/* Pincode */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
                       {t("auth.pincode")}

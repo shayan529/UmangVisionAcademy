@@ -75,8 +75,9 @@ export const chatWithAI = async (req, res) => {
     // Allow saving for both authenticated and anonymous users
     const saveUserId = userId || conversationId || "anonymous";
 
-    const languageHint = requestedLanguage
-      ? `Respond in ${requestedLanguage}.`
+    const targetLang = normalizeLanguage(requestedLanguage) || requestedLanguage;
+    const languageHint = targetLang
+      ? `CRITICAL: You MUST respond entirely in ${targetLang}. Ignore the language of the student's query and respond in ${targetLang}.`
       : "";
 
     const groqMessages = [
