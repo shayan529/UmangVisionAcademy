@@ -30,7 +30,7 @@ const mockTestAttemptSchema = new mongoose.Schema(
     submittedAt: { type: Date },
     status: {
       type: String,
-      enum: ["in-progress", "completed", "timed-out"],
+      enum: ["in-progress", "queued", "grading", "completed", "timed-out"],
       default: "in-progress",
     },
   },

@@ -3,6 +3,8 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import api from "../../config/api.js";
 import { fetchAllCoursesAdmin } from "../../redux/slices/courseSlice";
+import InstructorCourses from "../instructor/InstructorCourses.jsx";
+import { Toast } from "../instructor/InstructorUi.jsx";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -355,7 +357,9 @@ function LessonPreviewModal({ lesson, lessonIndex, onClose }) {
 
   const isVideo = lesson.type !== "text";
   const hasVideo = !!lesson.videoUrl;
+  const hasPdf = !!lesson.pdfUrl;
   const hasText = !!lesson.content;
+  const hasTextContent = hasPdf || hasText;
 
   return (
     <div
@@ -507,7 +511,7 @@ function LessonPreviewModal({ lesson, lessonIndex, onClose }) {
           </button>
         </div>
 
-        {/* ── Video content ── */}
+        {/* Video content */}
         {isVideo && (
           <div style={{ padding: "20px 20px 8px", flexShrink: 0 }}>
             {hasVideo ? (
@@ -531,54 +535,45 @@ function LessonPreviewModal({ lesson, lessonIndex, onClose }) {
                   No video URL attached
                 </p>
                 <p style={{ fontSize: 11, color: "#334155" }}>
-                  The instructor hasn't uploaded a video for this lesson yet.
+                  The instructor has not uploaded a video for this lesson yet.
                 </p>
               </div>
             )}
           </div>
         )}
 
-        {/* ── Text content ── */}
+        {/* Text / PDF content */}
         {!isVideo && (
           <div style={{ padding: "20px", overflowY: "auto", flex: 1 }}>
-            {hasText ? (
-              <div
-                style={{
-                  fontSize: 14,
-                  color: "#94a3b8",
-                  lineHeight: 1.9,
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                  background: "#060d1f",
-                  borderRadius: 12,
-                  padding: "18px 20px",
-                  border: "1px solid #1e293b",
-                }}
-              >
+            {hasPdf ? (
+              <>
+                <iframe
+                  src={`${lesson.pdfUrl?.includes("/uploads/") ? "/uploads/" + lesson.pdfUrl.split("/uploads/")[1] : lesson.pdfUrl}#toolbar=0&navpanes=0&scrollbar=1`}
+                  title="Lesson PDF"
+                  style={{
+                    width: "100%",
+                    height: 420,
+                    border: "none",
+                    borderRadius: 10,
+                    background: "#060d1f",
+                  }}
+                />
+                {hasText && (
+                  <div style={{ marginTop: 14, fontSize: 13, color: "#94a3b8", lineHeight: 1.7, whiteSpace: "pre-wrap", background: "#060d1f", borderRadius: 10, padding: "14px 16px", border: "1px solid #1e293b" }}>
+                    <p style={{ fontSize: 11, color: "#475569", marginBottom: 8, fontWeight: 600 }}>Lesson Notes:</p>
+                    {lesson.content}
+                  </div>
+                )}
+              </>
+            ) : hasText ? (
+              <div style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.9, whiteSpace: "pre-wrap", background: "#060d1f", borderRadius: 12, padding: "18px 20px", border: "1px solid #1e293b" }}>
                 {lesson.content}
               </div>
             ) : (
-              <div
-                style={{
-                  height: 160,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 10,
-                  background: "#060d1f",
-                  borderRadius: 12,
-                  border: "1px dashed #1e3a5f",
-                }}
-              >
+              <div style={{ height: 160, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, background: "#060d1f", borderRadius: 12, border: "1px dashed #1e3a5f" }}>
                 <span style={{ fontSize: 36 }}>📄</span>
-                <p style={{ fontSize: 13, color: "#475569", fontWeight: 600 }}>
-                  No text content attached
-                </p>
-                <p style={{ fontSize: 11, color: "#334155" }}>
-                  The instructor hasn't added written content for this lesson
-                  yet.
-                </p>
+                <p style={{ fontSize: 13, color: "#475569", fontWeight: 600 }}>No content attached</p>
+                <p style={{ fontSize: 11, color: "#334155" }}>The instructor has not added content for this lesson yet.</p>
               </div>
             )}
           </div>
@@ -917,7 +912,7 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, action
                     {/* Lessons */}
                     {subj.lessons.map((l) => {
                       const isVideo = l.type !== "text";
-                      const hasContent = isVideo ? !!l.videoUrl : !!l.content;
+                      const hasContent = isVideo ? !!l.videoUrl : !!(l.content || l.pdfUrl);
                       return (
                         <div
                           key={"l"+l._globalIndex}
@@ -963,7 +958,7 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, action
                             color: hasContent ? "#4ade80" : "#f87171",
                             border: `1px solid ${hasContent ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
                           }}>
-                            {hasContent ? (isVideo ? "Has video" : "Has text") : "No content"}
+                            {hasContent ? (isVideo ? "Has video" : (l.pdfUrl ? "Has PDF" : "Has text")) : "No content"}
                           </span>
                           <div style={{
                             flexShrink: 0,
@@ -1270,10 +1265,17 @@ export default function AdminCourses({
   canApprove = true,
 }) {
   const dispatch = useDispatch();
+  const [mode, setMode] = useState("review"); // "review" | "manage"
+  const [toastMsg, setToastMsg] = useState("");
   const [filterStatus, setFilterStatus] = useState("pending");
   const [selected, setSelected] = useState(null);
   const [rejectTarget, setRejectTarget] = useState(null);
   const [actioning, setActioning] = useState(false);
+
+  const showToast = (msg) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(""), 2500);
+  };
 
   const filtered = courses.filter((c) => {
     const matchQ =
@@ -1347,6 +1349,58 @@ export default function AdminCourses({
         .ac-row:hover { border-color:#334155 !important; background:#131f35 !important; }
         .ik-spin { animation: ik-spin 0.8s linear infinite; }
       `}</style>
+
+      {/* Mode Switcher */}
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          marginBottom: 24,
+          padding: 4,
+          background: "#0b1120",
+          borderRadius: 12,
+          border: "1px solid #1e293b",
+          width: "max-content",
+        }}
+      >
+        <button
+          onClick={() => setMode("review")}
+          style={{
+            padding: "8px 18px",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: "pointer",
+            border: "none",
+            background: mode === "review" ? "linear-gradient(135deg,#7c3aed,#db2777)" : "transparent",
+            color: mode === "review" ? "#fff" : "#94a3b8",
+            transition: "all 0.2s",
+          }}
+        >
+          Review Submissions
+        </button>
+        <button
+          onClick={() => setMode("manage")}
+          style={{
+            padding: "8px 18px",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: "pointer",
+            border: "none",
+            background: mode === "manage" ? "linear-gradient(135deg,#7c3aed,#db2777)" : "transparent",
+            color: mode === "manage" ? "#fff" : "#94a3b8",
+            transition: "all 0.2s",
+          }}
+        >
+          Manage & Edit Courses
+        </button>
+      </div>
+
+      {mode === "manage" ? (
+        <InstructorCourses showToast={showToast} isAdmin={true} />
+      ) : (
+        <>
 
       {/* Header */}
       <div
@@ -1704,6 +1758,8 @@ export default function AdminCourses({
           loading={actioning}
         />
       )}
+      </> )}
+      <Toast msg={toastMsg} />
     </>
   );
 }

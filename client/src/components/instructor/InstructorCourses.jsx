@@ -6,6 +6,7 @@ import {
   createCourse,
   updateCourse,
   deleteCourse,
+  fetchAllCoursesAdmin,
 } from "../../redux/slices/courseSlice";
 import { uploadFile } from "../../utils/uploadFile.js";
 import ChapterManager from "../course/ChapterManager.jsx";
@@ -33,6 +34,7 @@ const EMPTY_FORM = {
     signatoryTitle: "",
     theme: "purple",
   },
+  instructor: "",
 };
 
 const EMPTY_BULK_ITEM = () => ({
@@ -2303,12 +2305,29 @@ const CourseForm = ({
   saving,
   mode,
   showToast,
+  isAdmin = false,
+  instructors = [],
 }) => {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const courseType = form.courseType || "classes";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {isAdmin && instructors.length > 0 && (
+        <Field label="Assign Instructor" hint="*">
+          <Sel
+            value={form.instructor || ""}
+            onChange={set("instructor")}
+            options={[
+              { value: "", label: "Select instructor" },
+              ...instructors.map((inst) => ({
+                value: inst._id,
+                label: inst.name || inst.email,
+              })),
+            ]}
+          />
+        </Field>
+      )}
       <Field label="Course Type" hint="* (choose one)">
         <CourseTypeSelector
           value={courseType}
@@ -2542,6 +2561,8 @@ const BulkCourseForm = ({
   onCancel,
   saving,
   showToast,
+  isAdmin = false,
+  instructors = [],
 }) => {
   const setMeta = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -2608,6 +2629,21 @@ const BulkCourseForm = ({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {isAdmin && instructors.length > 0 && (
+        <Field label="Assign Instructor" hint="*">
+          <Sel
+            value={form.instructor || ""}
+            onChange={setMeta("instructor")}
+            options={[
+              { value: "", label: "Select instructor" },
+              ...instructors.map((inst) => ({
+                value: inst._id,
+                label: inst.name || inst.email,
+              })),
+            ]}
+          />
+        </Field>
+      )}
       <Field label="Bundle Title" hint="* (e.g. Class 9 CBSE Complete Bundle)">
         <Input
           value={form.title}
@@ -3033,7 +3069,7 @@ const BulkCourseForm = ({
 };
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-export default function InstructorCourses({ showToast }) {
+export default function InstructorCourses({ showToast, isAdmin = false }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const { courses = [], loading, error } = useSelector((s) => s.courses);
@@ -3073,13 +3109,32 @@ export default function InstructorCourses({ showToast }) {
       theme: "purple",
     },
     items: [EMPTY_BULK_ITEM()],
+    instructor: "",
   });
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [instructors, setInstructors] = useState([]);
+  const [selectedInstructorFilter, setSelectedInstructorFilter] = useState("");
 
   useEffect(() => {
-    dispatch(fetchCourses());
-  }, [dispatch]);
+    if (isAdmin) {
+      api.get("/users")
+        .then(({ data }) => {
+          const raw = Array.isArray(data) ? data : (data.users ?? []);
+          const instList = raw.filter((u) => u.roles?.includes("instructor"));
+          setInstructors(instList);
+        })
+        .catch((err) => console.error("Failed to load instructors", err));
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      dispatch(fetchAllCoursesAdmin());
+    } else {
+      dispatch(fetchCourses());
+    }
+  }, [dispatch, isAdmin]);
 
   const loadSavedDraft = () => {
     const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
@@ -3117,7 +3172,8 @@ export default function InstructorCourses({ showToast }) {
     const q = search.toLowerCase();
     const matchSearch =
       c.title?.toLowerCase().includes(q) ||
-      c.category?.toLowerCase().includes(q);
+      c.category?.toLowerCase().includes(q) ||
+      (isAdmin && c.instructor?.name?.toLowerCase().includes(q));
     const approvalS = c.approvalStatus ?? "draft";
     const matchStatus =
       filterStatus === "all"
@@ -3129,7 +3185,11 @@ export default function InstructorCourses({ showToast }) {
             : filterStatus === "rejected"
               ? approvalS === "rejected"
               : approvalS === "draft";
-    return matchSearch && matchStatus;
+    const matchInstructor =
+      !selectedInstructorFilter ||
+      c.instructor?._id === selectedInstructorFilter ||
+      c.instructor === selectedInstructorFilter;
+    return matchSearch && matchStatus && matchInstructor;
   });
 
   const counts = {
@@ -3168,6 +3228,7 @@ export default function InstructorCourses({ showToast }) {
           theme: "purple",
         },
         items: items.length ? items : [EMPTY_BULK_ITEM()],
+        instructor: course.instructor?._id ?? course.instructor ?? "",
       });
     } else {
       setEditMode("single");
@@ -3196,6 +3257,7 @@ export default function InstructorCourses({ showToast }) {
           signatoryTitle: "",
           theme: "purple",
         },
+        instructor: course.instructor?._id ?? course.instructor ?? "",
       });
     }
 
@@ -3239,6 +3301,7 @@ export default function InstructorCourses({ showToast }) {
       signatoryTitle: "",
       theme: "purple",
     },
+    ...(isAdmin && form.instructor && { instructor: form.instructor }),
   });
 
   const validateForPublish = (form) => {
@@ -3378,6 +3441,7 @@ export default function InstructorCourses({ showToast }) {
       demoVideoUrl: bulkForm.demoVideoUrl || "",
       published: publish,
       certificate: bulkForm.certificate,
+      ...(isAdmin && bulkForm.instructor && { instructor: bulkForm.instructor }),
     };
 
     const result = await dispatch(createCourse(payload));
@@ -3530,6 +3594,7 @@ export default function InstructorCourses({ showToast }) {
       demoVideoUrl: editBulkForm.demoVideoUrl || "",
       published: publish,
       certificate: editBulkForm.certificate,
+      ...(isAdmin && editBulkForm.instructor && { instructor: editBulkForm.instructor }),
     };
 
     const result = await dispatch(
@@ -3707,6 +3772,8 @@ export default function InstructorCourses({ showToast }) {
                 saving={saving}
                 mode="create"
                 showToast={showToast}
+                isAdmin={isAdmin}
+                instructors={instructors}
               />
             ) : (
               <BulkCourseForm
@@ -3716,6 +3783,8 @@ export default function InstructorCourses({ showToast }) {
                 onCancel={() => setView("list")}
                 saving={saving}
                 showToast={showToast}
+                isAdmin={isAdmin}
+                instructors={instructors}
               />
             )}
           </div>
@@ -3783,6 +3852,21 @@ export default function InstructorCourses({ showToast }) {
                   outline: "none",
                 }}
               />
+              {isAdmin && instructors.length > 0 && (
+                <div style={{ minWidth: 180 }}>
+                  <Sel
+                    value={selectedInstructorFilter}
+                    onChange={(e) => setSelectedInstructorFilter(e.target.value)}
+                    options={[
+                      { value: "", label: "All Instructors" },
+                      ...instructors.map((inst) => ({
+                        value: inst._id,
+                        label: inst.name || inst.email,
+                      })),
+                    ]}
+                  />
+                </div>
+              )}
               {[
                 { key: "all", label: "All" },
                 { key: "draft", label: "Draft" },
@@ -3992,6 +4076,11 @@ export default function InstructorCourses({ showToast }) {
                             <span style={{ fontSize: 11, color: "#64748b" }}>
                               👥 {course.enrolledCount ?? 0}
                             </span>
+                            {isAdmin && course.instructor && (
+                              <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 700 }}>
+                                👤 {course.instructor.name || course.instructor.email}
+                              </span>
+                            )}
                             {course.price > 0 && (
                               <span style={{ fontSize: 11, color: "#64748b" }}>
                                 ₹{course.price}
@@ -4149,6 +4238,8 @@ export default function InstructorCourses({ showToast }) {
                               onCancel={closeEdit}
                               saving={saving}
                               showToast={showToast}
+                              isAdmin={isAdmin}
+                              instructors={instructors}
                             />
                           ) : (
                             <CourseForm
@@ -4159,6 +4250,8 @@ export default function InstructorCourses({ showToast }) {
                               saving={saving}
                               mode="edit"
                               showToast={showToast}
+                              isAdmin={isAdmin}
+                              instructors={instructors}
                             />
                           )}
 

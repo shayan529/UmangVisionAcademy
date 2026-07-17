@@ -28,6 +28,8 @@
     "get_started": "शुरू करें"
   },
   "courses": {
+    "searchPlaceholder": "अपने पाठ्यक्रमों को खोजें...",
+    "allLanguages": "सभी भाषाएँ",
     "title": "पाठ्यक्रम",
     "headerTag": "कक्षा द्वारा सीखना एक्सप्लोर करें",
     "select_class": "कक्षा चुनें",
@@ -117,6 +119,7 @@
     ]
   },
   "auth": {
+    "loginFailed": "लॉगिन विफल रहा। कृपया अपने क्रेडेंशियल जांचें।",
     "signup": "खाता बनाएँ",
     "mobilePlaceholder": "10 अंकों का मोबाइल नंबर",
     "welcomeToast": "स्वागत है!",
@@ -649,6 +652,35 @@
     }
   },
   "aboutUs": {
+    "admitCard": {
+      "candidate": "उम्मीदवार",
+      "candidateValue": "हर शिक्षार्थी",
+      "classField": "कक्षा",
+      "classValue": "कक्षा 9 से 12",
+      "board": "बोर्ड",
+      "boardValue": "सीबीएसई · आईसीएसई · एमपी बोर्ड",
+      "validity": "वैधता",
+      "validityValue": "आजीवन पहुंच",
+      "eyebrow": "प्रवेश पत्र",
+      "title": "उमंग विजन एकेडमी",
+      "stamp": "सत्यापित",
+      "footer": "कोई परीक्षा नहीं · बस दाखिला लें"
+    },
+    "stats": {
+      "tag": "प्रगति रिपोर्ट",
+      "verified": "सत्यापित",
+      "activeStudents": "सक्रिय छात्र",
+      "coursesPublished": "प्रकाशित पाठ्यक्रम",
+      "passRate": "पास प्रतिशत",
+      "statesCovered": "कवर किए गए राज्य"
+    },
+    "cta": {
+      "tag": "प्रवेश प्रारंभ",
+      "title": "सीखना शुरू करने के लिए तैयार?",
+      "body": "50,000+ छात्र पहले से ही Umang Vision Academy के साथ स्मार्ट तरीके से सीख रहे हैं।",
+      "getStarted": "मुफ़्त शुरू करें",
+      "browseCourses": "पाठ्यक्रम देखें"
+    },
     "hero": {
       "tag": "हमारी कहानी",
       "headingPrefix": "शिक्षकों द्वारा बनाया गया,",
@@ -675,12 +707,6 @@
         "label": "लर्निंग मॉडल",
         "value": "हाइब्रिड — लाइव + रिकॉर्डेड + AI"
       }
-    },
-    "stats": {
-      "activeStudents": "सक्रिय छात्र",
-      "coursesPublished": "प्रकाशित पाठ्यक्रम",
-      "passRate": "पास प्रतिशत",
-      "statesCovered": "कवर किए गए राज्य"
     },
     "values": {
       "tag": "हम क्या मानते हैं",
@@ -725,12 +751,6 @@
         "role": "Head of Student Success",
         "bio": "लर्निंग गैप को बंद करने के लिए समर्पित। उन्होंने 500+ छात्रों का मेंटर किया है।"
       }
-    },
-    "cta": {
-      "title": "सीखना शुरू करने के लिए तैयार?",
-      "body": "50,000+ छात्र पहले से ही Umang Vision Academy के साथ स्मार्ट तरीके से सीख रहे हैं।",
-      "getStarted": "मुफ़्त शुरू करें",
-      "browseCourses": "पाठ्यक्रम देखें"
     }
   },
   "contact": {
@@ -929,22 +949,25 @@
     "copied": "लिंक क्लिपबोर्ड पर कॉपी हो गया!"
   },
   "studentSidebar": {
+    "coreLearning": "मुख्य शिक्षा",
+    "performanceTools": "प्रदर्शन और उपकरण",
+    "subscriptionsExtras": "सदस्यता और अतिरिक्त",
+    "account": "खाता",
     "overview": "अवलोकन",
     "myCourses": "मेरे पाठ्यक्रम",
-    "aiTutor": "AI मार्गदर्शक",
+    "notes": "अध्ययन नोट्स",
+    "aiTutor": "एआई ट्यूटर",
     "sessions": "सत्र",
-    "certificates": "प्रमाण पत्र",
-    "leaderboard": "लीडरबोर्ड",
-    "referral": "अनुशंसा",
-    "settings": "सेटिंग्स",
-    "student": "विद्यार्थी",
     "progress": "प्रगति",
-    "mockTests": "अभ्यास परीक्षण",
+    "mockTests": "मॉक टेस्ट",
+    "leaderboard": "लीडरबोर्ड",
+    "achievements": "उपलब्धियां",
+    "certificates": "प्रमाण पत्र",
+    "referral": "संदर्भ",
     "wallet": "बटुआ",
-    "achievements": "उपलब्धियाँ",
     "purchaseHistory": "खरीद इतिहास",
     "references": "संदर्भ",
-    "notes": "अध्ययन नोट्स"
+    "settings": "सेटिंग्स"
   },
   "studyNotes": {
     "title": "कक्षा नोट्स",
@@ -958,7 +981,9 @@
     "emptySubtitle": "आपके शिक्षकों द्वारा अपलोड किए गए नोट्स पोस्ट होते ही यहां दिखाई देंगे।",
     "by": "द्वारा",
     "instructor": "शिक्षक",
-    "viewFile": "फाइल देखें"
+    "viewFile": "फाइल देखें",
+    "view": "देखें",
+    "download": "डाउनलोड"
   },
   "studentReferral": {
     "title": "अनुशंसा पुरस्कार",
@@ -1063,6 +1088,9 @@
     "noProgress": "अभी कोई पाठ्यक्रम प्रगति में नहीं है।"
   },
   "studentLeaderboard": {
+    "earnAchievements": "उपलब्धियां अर्जित करें",
+    "earnAchievementsDesc": "अपने पाठ्यक्रमों और परीक्षणों में प्रगति करने के लिए बैज अनलॉक करें",
+    "selectStateFirst": "पहले राज्य चुनें",
     "title": "छात्र लीडरबोर्ड",
     "subtitle": "सीखते हुए सिक्का कमाएँ और रैंकिंग में ऊपर बढ़ें।",
     "yourRank": "आपकी रैंक: {{rank}}",
@@ -1354,6 +1382,7 @@
     "noCoursesFound": "कोई पाठ्यक्रम नहीं मिला।"
   },
   "instructorSessions": {
+    "starting": "शुरू हो रहा है…",
     "error": "त्रुटि",
     "noSessionUrl": "सत्र URL उपलब्ध नहीं है",
     "sessionLinkCopied": "सत्र लिंक कॉपी हो गया",
@@ -1489,6 +1518,9 @@
     "verifyPasswordSubtitle": "इस बदलाव की पुष्टि के लिए {{email}} पर भेजा गया 6-अंकों का कोड दर्ज करें"
   },
   "instructorMockTests": {
+    "subjectClassRequired": "एआई जनरेशन के लिए विषय और कक्षा आवश्यक हैं।",
+    "aiGeneratedSuccess": "एआई के साथ सफलतापूर्वक प्रश्न जनरेट किए गए!",
+    "aiGenerateFailed": "प्रश्न जनरेट करने में विफल।",
     "title": "अभ्यास परीक्षण",
     "testsCreated": "{{count}} परीक्षण बनाए गए",
     "newTest": "नया परीक्षण",
@@ -1812,26 +1844,5 @@
   "studentSessions": {
     "title": "लाइव सत्र",
     "subtitle": "आगामी और लाइव प्रशिक्षक सत्रों में शामिल हों।"
-  },
-  "studentSidebar": {
-    "coreLearning": "मुख्य शिक्षा",
-    "performanceTools": "प्रदर्शन और उपकरण",
-    "subscriptionsExtras": "सदस्यता और अतिरिक्त",
-    "account": "खाता",
-    "overview": "अवलोकन",
-    "myCourses": "मेरे पाठ्यक्रम",
-    "notes": "अध्ययन नोट्स",
-    "aiTutor": "एआई ट्यूटर",
-    "sessions": "सत्र",
-    "progress": "प्रगति",
-    "mockTests": "मॉक टेस्ट",
-    "leaderboard": "लीडरबोर्ड",
-    "achievements": "उपलब्धियां",
-    "certificates": "प्रमाण पत्र",
-    "referral": "संदर्भ",
-    "wallet": "बटुआ",
-    "purchaseHistory": "खरीद इतिहास",
-    "references": "संदर्भ",
-    "settings": "सेटिंग्स"
   }
 }

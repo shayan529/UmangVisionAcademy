@@ -128,6 +128,7 @@ export const createCourse = async (req, res) => {
       notes,
       subjectQuizzes,
       subjectDetails,
+      instructor,
     } = req.body;
 
     if (!title?.trim())
@@ -152,7 +153,7 @@ export const createCourse = async (req, res) => {
       quiz: quiz && typeof quiz === "object" ? quiz : undefined,
       published: false,
       approvalStatus: wantsPublish ? "pending" : "draft",
-      instructor: req.user._id,
+      instructor: (hasBaseRole(req.user, "admin") && instructor) ? instructor : req.user._id,
       board,
       language,
       students: [],
@@ -196,6 +197,11 @@ export const getPublishedCourses = async (req, res) => {
         .sort({ createdAt: -1 })
         .lean();
     });
+
+    if (process.env.NODE_ENV === "production") {
+      res.setHeader("Cache-Control", "public, max-age=60, s-maxage=600, stale-while-revalidate=1200");
+    }
+
     res.json(courses);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -210,6 +216,9 @@ export const getCourseByIdPublic = async (req, res) => {
       const cached = await getJson(cacheKey);
       if (cached !== null) {
         if (cached.notes !== undefined && (!cached.instructor || cached.instructor.avgRating !== undefined)) {
+          if (process.env.NODE_ENV === "production") {
+            res.setHeader("Cache-Control", "public, max-age=60, s-maxage=600, stale-while-revalidate=1200");
+          }
           return res.json(cached);
         }
       }
@@ -259,6 +268,10 @@ export const getCourseByIdPublic = async (req, res) => {
         durationMinutes: l.durationMinutes,
         type: l.type ?? "video",
         subject: l.subject,
+        chapterTitle: l.chapterTitle ?? "",
+        videoUrl: l.videoUrl ?? "",
+        content: l.content ?? "",
+        pdfUrl: l.pdfUrl ?? "",
       })),
       notes: (course.notes ?? [])
         .filter((note) => note.status === "approved")
@@ -283,6 +296,11 @@ export const getCourseByIdPublic = async (req, res) => {
 
     const cacheTtl = process.env.NODE_ENV === "development" ? 1 : 7200;
     await setJson(cacheKey, shaped, cacheTtl);
+    
+    if (process.env.NODE_ENV === "production") {
+      res.setHeader("Cache-Control", "public, max-age=60, s-maxage=600, stale-while-revalidate=1200");
+    }
+    
     res.json(shaped);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -748,12 +766,15 @@ export const updateCourse = async (req, res) => {
       notes,
       subjectQuizzes,
       subjectDetails,
+      instructor,
     } = req.body;
 
-    const existing = await Course.findOne({
-      _id: req.params.id,
-      instructor: req.user._id,
-    });
+    const isAdmin = hasBaseRole(req.user, "admin");
+    const query = isAdmin
+      ? { _id: req.params.id }
+      : { _id: req.params.id, instructor: req.user._id };
+
+    const existing = await Course.findOne(query);
     if (!existing) return res.status(404).json({ message: "Course not found" });
 
     if (published === true && !summary?.trim())
@@ -792,6 +813,7 @@ export const updateCourse = async (req, res) => {
       }),
       ...(subjectQuizzes !== undefined && { subjectQuizzes }),
       ...(subjectDetails !== undefined && { subjectDetails }),
+      ...(isAdmin && instructor !== undefined && { instructor }),
       published: newPublished,
       approvalStatus: newApprovalStatus,
       rejectionReason:
@@ -799,7 +821,7 @@ export const updateCourse = async (req, res) => {
     };
 
     const course = await Course.findOneAndUpdate(
-      { _id: req.params.id, instructor: req.user._id },
+      query,
       allowedUpdates,
       { new: true, runValidators: true },
     );
@@ -870,10 +892,12 @@ export const rateCourse = async (req, res) => {
 // ── deleteCourse ──────────────────────────────────────────────────────────────
 export const deleteCourse = async (req, res) => {
   try {
-    const course = await Course.findOneAndDelete({
-      _id: req.params.id,
-      instructor: req.user._id,
-    });
+    const isAdmin = hasBaseRole(req.user, "admin");
+    const query = isAdmin
+      ? { _id: req.params.id }
+      : { _id: req.params.id, instructor: req.user._id };
+
+    const course = await Course.findOneAndDelete(query);
     if (!course) return res.status(404).json({ message: "Course not found" });
     await invalidateCourseCache(req.params.id);
     res.json({ message: "Course deleted" });

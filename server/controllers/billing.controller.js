@@ -13,7 +13,8 @@ const razorpay = new Razorpay({
 });
 
 const PLANS = {
-  base: { id: "base", label: "Academy Access Plan", amount: 10000, durationDays: 30 },
+  base: { id: "base", label: "Academy Access Plan", amount: 10000, durationDays: 365 },
+  premium: { id: "premium", label: "Premium Plan", amount: 50000, durationDays: 365 },
 };
 
 const isPlaceholderRazorpayConfig = () => {
@@ -178,7 +179,7 @@ export const verifyPayment = async (req, res) => {
       if (selectedClass) {
         updateData.selectedClass = selectedClass;
       }
-      
+
       await User.findByIdAndUpdate(req.user._id, updateData);
 
       // ── Log it so Purchase History can show it ─────────────────────────────

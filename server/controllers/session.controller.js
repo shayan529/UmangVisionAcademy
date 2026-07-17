@@ -5,6 +5,7 @@ import {
   deleteKey,
   invalidateCache,
 } from "../utils/redisClient.js";
+import { scheduleSessionReminder, cancelSessionReminder } from "../utils/queue.js";
 
 // Helper to check if a user has admin or staff roles
 const checkIsAdminOrStaff = (user) => {
@@ -244,6 +245,11 @@ export const createSession = async (req, res) => {
       invalidateCache("student:sessions*"),
     ]);
 
+    // Schedule live session reminder
+    await scheduleSessionReminder(session).catch((e) =>
+      console.error("[BullMQ] Failed to schedule reminder for session:", e.message)
+    );
+
     res.status(201).json(session);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -300,6 +306,11 @@ export const updateSession = async (req, res) => {
       invalidateCache("student:sessions*"),
     ]);
 
+    // Reschedule/cancel live session reminder
+    await scheduleSessionReminder(session).catch((e) =>
+      console.error("[BullMQ] Failed to update reminder schedule for session:", e.message)
+    );
+
     res.json(session);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -326,6 +337,11 @@ export const deleteSession = async (req, res) => {
         : Promise.resolve(),
       invalidateCache("student:sessions*"),
     ]);
+
+    // Cancel live session reminder
+    await cancelSessionReminder(req.params.id).catch((e) =>
+      console.error("[BullMQ] Failed to cancel reminder for session:", e.message)
+    );
 
     res.json({ message: "Session deleted" });
   } catch (error) {

@@ -21,39 +21,11 @@ const EMPTY_LESSON = {
   type: "video",
   videoUrl: "",
   content: "",
+  pdfUrl: "",
   description: "",
 };
 
-// ── PDF text extraction (lazy-loaded pdf.js, client-side only) ────────────────
-let pdfjsLibPromise = null;
-const getPdfjs = () => {
-  if (!pdfjsLibPromise) {
-    pdfjsLibPromise = import("pdfjs-dist/build/pdf.mjs").then((lib) => {
-      lib.GlobalWorkerOptions.workerSrc = new URL(
-        "pdfjs-dist/build/pdf.worker.mjs",
-        import.meta.url,
-      ).toString();
-      return lib;
-    });
-  }
-  return pdfjsLibPromise;
-};
 
-const extractTextFromPdf = async (file) => {
-  const pdfjsLib = await getPdfjs();
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-  const pageTexts = [];
-  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-    const page = await pdf.getPage(pageNum);
-    const textContent = await page.getTextContent();
-    const pageText = textContent.items.map((item) => item.str).join(" ");
-    pageTexts.push(pageText.trim());
-  }
-
-  return pageTexts.join("\n\n").trim();
-};
 
 // ── TypeToggle ────────────────────────────────────────────────────────────────
 const TypeToggle = ({ value, onChange }) => (
@@ -311,15 +283,17 @@ const VideoUploadCell = ({ value, onUploaded }) => {
 const TextLessonEditor = ({
   value,
   onChange,
+  onPdfUploaded,
+  onPdfRemoved,
+  pdfUrl,
   lessonTitle,
   courseSubject,
   courseDescription,
 }) => {
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiError, setAiError] = useState("");
-  const [pdfParsing, setPdfParsing] = useState(false);
+  const [pdfUploading, setPdfUploading] = useState(false);
   const [pdfError, setPdfError] = useState("");
-  const [pdfFileName, setPdfFileName] = useState("");
   const pdfInputRef = useRef(null);
 
   const canGenerate = !!lessonTitle?.trim();
@@ -401,26 +375,21 @@ const TextLessonEditor = ({
       return;
     }
 
-    setPdfParsing(true);
+    setPdfUploading(true);
     setPdfError("");
-    setPdfFileName(file.name);
 
     try {
-      const text = await extractTextFromPdf(file);
-      if (!text) {
-        setPdfError(
-          "No selectable text found in this PDF (it may be scanned/image-only).",
-        );
+      const result = await uploadFile({ file, folder: "lesson-pdfs" });
+      if (result?.url) {
+        onPdfUploaded?.(result.url);
       } else {
-        // Append to existing content if there's already something there,
-        // otherwise replace — keeps behaviour predictable either way.
-        onChange(value?.trim() ? `${value.trim()}\n\n${text}` : text);
+        setPdfError("Upload failed — please try again.");
       }
     } catch (err) {
-      console.error("PDF text extraction failed:", err);
-      setPdfError("Couldn't read that PDF. Please try a different file.");
+      console.error("PDF upload failed:", err);
+      setPdfError("Couldn't upload that PDF. Please try again.");
     } finally {
-      setPdfParsing(false);
+      setPdfUploading(false);
       e.target.value = "";
     }
   };
@@ -480,8 +449,8 @@ const TextLessonEditor = ({
           <button
             type="button"
             onClick={handlePdfClick}
-            disabled={pdfParsing || aiGenerating}
-            title="Upload a PDF and extract its text into this lesson"
+            disabled={pdfUploading || aiGenerating}
+            title="Upload a PDF to show as the lesson content"
             style={{
               display: "flex",
               alignItems: "center",
@@ -489,17 +458,17 @@ const TextLessonEditor = ({
               padding: "5px 12px",
               borderRadius: 8,
               border: "1px solid #38bdf840",
-              background: pdfParsing ? "#334155" : "#0c2a3a",
-              color: pdfParsing ? "#475569" : "#38bdf8",
+              background: pdfUploading ? "#334155" : "#0c2a3a",
+              color: pdfUploading ? "#475569" : "#38bdf8",
               fontSize: 11,
               fontWeight: 700,
-              cursor: pdfParsing || aiGenerating ? "not-allowed" : "pointer",
+              cursor: pdfUploading || aiGenerating ? "not-allowed" : "pointer",
               opacity: aiGenerating ? 0.5 : 1,
               transition: "all 0.15s",
               whiteSpace: "nowrap",
             }}
           >
-            {pdfParsing ? (
+            {pdfUploading ? (
               <>
                 <svg
                   style={{
@@ -526,7 +495,7 @@ const TextLessonEditor = ({
                     strokeLinecap="round"
                   />
                 </svg>
-                Reading {pdfFileName ? `"${pdfFileName}"` : "PDF"}…
+                Uploading PDF…
               </>
             ) : (
               "📑 Upload PDF"
@@ -536,7 +505,7 @@ const TextLessonEditor = ({
           <button
             type="button"
             onClick={generateWithAI}
-            disabled={aiGenerating || !canGenerate || pdfParsing}
+            disabled={aiGenerating || !canGenerate || pdfUploading}
             title={
               !canGenerate
                 ? "Enter a lesson title first"
@@ -558,10 +527,10 @@ const TextLessonEditor = ({
               fontSize: 11,
               fontWeight: 700,
               cursor:
-                aiGenerating || !canGenerate || pdfParsing
+                aiGenerating || !canGenerate || pdfUploading
                   ? "not-allowed"
                   : "pointer",
-              opacity: aiGenerating || pdfParsing ? 0.75 : 1,
+              opacity: aiGenerating || pdfUploading ? 0.75 : 1,
               transition: "all 0.15s",
               whiteSpace: "nowrap",
             }}
@@ -602,6 +571,65 @@ const TextLessonEditor = ({
         </div>
       </div>
 
+      {/* ── PDF linked indicator ── */}
+      {pdfUrl && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "6px 12px",
+            background: "#0c2a1a",
+            borderBottom: "1px solid #14532d",
+          }}
+        >
+          <span style={{ fontSize: 12 }}>📄</span>
+          <span
+            style={{
+              fontSize: 11,
+              color: "#4ade80",
+              fontWeight: 600,
+              flex: 1,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            PDF linked — students will see the embedded file
+          </span>
+          <a
+            href={pdfUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: 10,
+              color: "#86efac",
+              textDecoration: "none",
+              fontWeight: 600,
+              flexShrink: 0,
+            }}
+          >
+            Preview ↗
+          </a>
+          <button
+            type="button"
+            onClick={() => onPdfRemoved?.()}
+            style={{
+              fontSize: 10,
+              color: "#f87171",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              flexShrink: 0,
+              fontWeight: 600,
+            }}
+            title="Remove linked PDF"
+          >
+            Remove
+          </button>
+        </div>
+      )}
+
       <textarea
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
@@ -609,10 +637,10 @@ const TextLessonEditor = ({
         placeholder={
           aiGenerating
             ? "AI is writing your lesson…"
-            : pdfParsing
-              ? "Extracting text from your PDF…"
+            : pdfUploading
+              ? "Uploading PDF…"
               : !canGenerate
-                ? "Enter a lesson title above, then click ✨ Generate with AI…\n\nOr click 📑 Upload PDF to pull in text from a file.\n\nOr write your content here using Markdown:\n# Heading\n**bold**, *italic*\n- bullet points\n> blockquotes"
+                ? "Enter a lesson title above, then click ✨ Generate with AI…\n\nOr click 📑 Upload PDF above to display the file directly in the lesson.\n\nOr write your content here using Markdown:\n# Heading\n**bold**, *italic*\n- bullet points\n> blockquotes"
                 : "Write your lesson content here…\n\nOr click ✨ Generate with AI, or 📑 Upload PDF, above.\n\nMarkdown:\n# Heading\n**bold**, *italic*\n- bullet points\n> blockquotes"
         }
         style={{
@@ -620,7 +648,7 @@ const TextLessonEditor = ({
           padding: "14px 16px",
           background: "#070e1a",
           border: "none",
-          color: aiGenerating || pdfParsing ? "#334155" : "#f1f5f9",
+          color: aiGenerating || pdfUploading ? "#334155" : "#f1f5f9",
           fontSize: 13,
           fontFamily: "monospace",
           resize: "vertical",
@@ -967,6 +995,13 @@ export default function ChapterManager({
                             onChange={(val) =>
                               updateLesson(ci, li, "content", val)
                             }
+                            onPdfUploaded={(url) =>
+                              updateLesson(ci, li, "pdfUrl", url)
+                            }
+                            onPdfRemoved={() =>
+                              updateLesson(ci, li, "pdfUrl", "")
+                            }
+                            pdfUrl={lesson.pdfUrl || ""}
                             lessonTitle={lesson.title}
                             courseSubject={courseSubject}
                             courseDescription={courseDescription}

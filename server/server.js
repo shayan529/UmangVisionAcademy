@@ -4,6 +4,14 @@ import { fileURLToPath } from "url";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cookieParser from "cookie-parser";
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("❌ Uncaught Exception:", error);
+});
 import mongoose from "mongoose";
 import "dotenv/config";
 import ConnectDb from "./utils/ConnectDb.js";
@@ -17,6 +25,10 @@ import sessionRoutes from "./routes/session.routes.js";
 import studentRoutes from "./routes/student.routes.js";
 import cors from "cors";
 import compression from "compression";
+import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
+import { RedisStore } from "rate-limit-redis";
+import { redisConnection } from "./utils/queue.js";
 import billingRoutes from "./routes/billing.route.js";
 import uploadRoutes from "./routes/upload.routes.js";
 import aiRoutes from "./routes/ai.routes.js";
@@ -113,10 +125,38 @@ const io = new Server(httpServer, {
 });
 
 // ── Middleware ────────────────────────────────────────────────────────────────
+app.use(helmet({
+  contentSecurityPolicy: false, // Disabled to prevent blocking dynamic third-party CDN assets and APIs
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  frameguard: false,
+}));
+
+// CORS middleware MUST be registered before rate limiters or routes so that
+// preflight requests and error/rate-limited responses include appropriate CORS headers.
+app.use(cors(corsOptions));
+
+// Rate limiting to protect endpoints against API abuse/DDoS
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: process.env.NODE_ENV === "development" ? 10000 : 200,
+  max: process.env.NODE_ENV === "development" ? 10000 : 200, // Fallback alias for older versions of express-rate-limit
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  store: new RedisStore({
+    sendCommand: (...args) => redisConnection.call(args[0], ...args.slice(1)),
+    prefix: "rl:gen:",
+  }),
+  message: {
+    success: false,
+    error: "Too many requests from this IP. Please try again in 15 minutes."
+  }
+});
+app.use("/api", apiLimiter);
+
 app.use(compression());
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors(corsOptions));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Debug logger for APK requests
@@ -208,7 +248,14 @@ registerSessionChat(io);
 const setupRedisAdapter = async () => {
   if (process.env.REDIS_URL) {
     try {
-      const pubClient = createClient({ url: process.env.REDIS_URL });
+      const redisOptions = { url: process.env.REDIS_URL };
+      if (process.env.REDIS_URL.startsWith("rediss://")) {
+        redisOptions.socket = {
+          tls: true,
+          rejectUnauthorized: false,
+        };
+      }
+      const pubClient = createClient(redisOptions);
       const subClient = pubClient.duplicate();
 
       pubClient.on("error", (err) => console.error("[Socket.IO Redis Pub] error:", err.message));

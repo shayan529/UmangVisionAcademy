@@ -22,6 +22,8 @@ import RoleManager from "./RoleManager";
 import AdminQuestionPapers from "./AdminQuestionPapers";
 import AdminReels from "./AdminReels";
 import AdminPayments from "./AdminPayments";
+import InstructorNotes from "../instructor/InstructorNotes";
+import { Toast } from "../instructor/InstructorUi";
 
 export default function AdminDashboard() {
   const dispatch = useDispatch();
@@ -53,6 +55,12 @@ export default function AdminDashboard() {
   const [sortDir, setSortDir] = useState("desc");
   const [sideOpen, setSideOpen] = useState(false);
   const [sideCollapsed, setSideCollapsed] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+
+  const showToast = (msg) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(""), 2500);
+  };
 
   // ── Fetch on mount ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -179,6 +187,7 @@ export default function AdminDashboard() {
       case "overview":
         return (
           <AdminOverview
+            user={user}
             students={students}
             instructors={instructors}
             courses={courses}
@@ -233,6 +242,8 @@ export default function AdminDashboard() {
             onRetry={() => dispatch(fetchAllCoursesAdmin())}
           />
         );
+      case "notes":
+        return <InstructorNotes showToast={showToast} />;
       case "sessions":
         return (
           <AdminSessions
@@ -334,6 +345,7 @@ export default function AdminDashboard() {
           </div>
         </main>
       </div>
+      <Toast msg={toastMsg} />
     </div>
   );
 }

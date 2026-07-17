@@ -22,7 +22,8 @@ const Sidebar = ({
   const hasStudentRole = hasBaseRole(user, "student");
   const hasAdminRole = hasBaseRole(user, "admin");
   const hasCustomRole = getCustomRoles(user).length > 0;
-  const isMultiRole = hasInstructorRole && hasStudentRole && !hasAdminRole && !hasCustomRole;
+  const isMultiRole =
+    hasInstructorRole && hasStudentRole && !hasAdminRole && !hasCustomRole;
 
   const dashboardPath = hasAdminRole
     ? "/admin-dashboard"
@@ -32,10 +33,16 @@ const Sidebar = ({
         ? "/instructor-dashboard"
         : "/student-dashboard";
 
-  const isInstructorDashboard = window.location.pathname.startsWith("/instructor-dashboard");
+  const isInstructorDashboard = window.location.pathname.startsWith(
+    "/instructor-dashboard",
+  );
   const goingToInstructor = !isInstructorDashboard;
-  const switchTarget = goingToInstructor ? "/instructor-dashboard" : "/student-dashboard";
-  const switchLabel = goingToInstructor ? t("nav.goToInstructor") : t("nav.goToStudent");
+  const switchTarget = goingToInstructor
+    ? "/instructor-dashboard"
+    : "/student-dashboard";
+  const switchLabel = goingToInstructor
+    ? t("nav.goToInstructor")
+    : t("nav.goToStudent");
 
   const [scrollTop, setScrollTop] = useState(0);
   const [rolesDropdownOpen, setRolesDropdownOpen] = useState(false);
@@ -48,13 +55,22 @@ const Sidebar = ({
 
   const dashboardOptions = [];
   if (hasBaseRole(user, "student")) {
-    dashboardOptions.push({ name: t("nav.roleStudent", "Student"), path: "/student-dashboard" });
+    dashboardOptions.push({
+      name: t("nav.roleStudent", "Student"),
+      path: "/student-dashboard",
+    });
   }
   if (hasBaseRole(user, "instructor")) {
-    dashboardOptions.push({ name: t("nav.roleInstructor", "Instructor"), path: "/instructor-dashboard" });
+    dashboardOptions.push({
+      name: t("nav.roleInstructor", "Instructor"),
+      path: "/instructor-dashboard",
+    });
   }
   if (hasBaseRole(user, "admin")) {
-    dashboardOptions.push({ name: t("nav.roleAdmin", "Admin"), path: "/admin-dashboard" });
+    dashboardOptions.push({
+      name: t("nav.roleAdmin", "Admin"),
+      path: "/admin-dashboard",
+    });
   }
   getCustomRoles(user).forEach((role) => {
     dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
@@ -93,43 +109,120 @@ const Sidebar = ({
       key: "core",
       title: t("studentSidebar.coreLearning", "Core Learning"),
       items: [
-        { label: t("studentSidebar.overview"), to: "/student-dashboard", end: true, icon: "📊" },
-        { label: t("studentSidebar.myCourses"), to: "/student-dashboard/my-courses", icon: "📚" },
-        { label: t("studentSidebar.notes", "Study Notes"), to: "/student-dashboard/notes", icon: "📝" },
-        { label: t("nav.questionBank", "Question Bank"), to: "/student-dashboard/question-bank", icon: "❓" },
-        { label: t("nav.blogs", "Blogs"), to: "/student-dashboard/blogs", icon: "📰" },
-        { label: t("studentSidebar.aiTutor"), to: "/student-dashboard/ai-tutor", icon: "🤖" },
-        { label: t("studentSidebar.sessions"), to: "/student-dashboard/sessions", icon: "🎥" },
+        {
+          label: t("studentSidebar.overview"),
+          to: "/student-dashboard",
+          end: true,
+          icon: "📊",
+        },
+        {
+          label: t("studentSidebar.myCourses"),
+          to: "/student-dashboard/my-courses",
+          icon: "📚",
+        },
+        {
+          label: t("studentSidebar.notes", "Study Notes"),
+          to: "/student-dashboard/notes",
+          icon: "📝",
+        },
+        {
+          label: t("nav.questionBank", "Question Bank"),
+          to: "/student-dashboard/question-bank",
+          icon: "❓",
+        },
+        {
+          label: t("nav.blogs", "Blogs"),
+          to: "/student-dashboard/blogs",
+          icon: "📰",
+        },
+        {
+          label: t("studentSidebar.aiTutor"),
+          to: "/student-dashboard/ai-tutor",
+          icon: "🤖",
+        },
+        {
+          label: t("studentSidebar.sessions"),
+          to: "/student-dashboard/sessions",
+          icon: "🎥",
+        },
       ],
     },
     {
       key: "performance",
       title: t("studentSidebar.performanceTools", "Performance & Tools"),
       items: [
-        { label: t("studentSidebar.progress"), to: "/student-dashboard/progress", icon: "📈" },
-        { label: t("studentSidebar.mockTests"), to: "/student-dashboard/mock-tests", icon: "📝" },
-        { label: t("studentSidebar.leaderboard"), to: "/student-dashboard/leaderboard", icon: "🏆" },
-        { label: t("studentSidebar.achievements"), to: "/student-dashboard/achievements", icon: "🎖️" },
-        { label: t("studentSidebar.certificates"), to: "/student-dashboard/certificates", icon: "📜" },
+        {
+          label: t("studentSidebar.progress"),
+          to: "/student-dashboard/progress",
+          icon: "📈",
+        },
+        {
+          label: t("studentSidebar.mockTests"),
+          to: "/student-dashboard/mock-tests",
+          icon: "📝",
+        },
+        {
+          label: t("studentSidebar.leaderboard"),
+          to: "/student-dashboard/leaderboard",
+          icon: "🏆",
+        },
+        {
+          label: t("studentSidebar.achievements"),
+          to: "/student-dashboard/achievements",
+          icon: "🎖️",
+        },
+        {
+          label: t("studentSidebar.certificates"),
+          to: "/student-dashboard/certificates",
+          icon: "📜",
+        },
       ],
     },
     {
       key: "extras",
       title: t("studentSidebar.subscriptionsExtras", "Subscriptions & Extras"),
       items: [
-        { label: t("nav.plans", "Plans"), to: "/student-dashboard/plans", icon: "💳" },
-        { label: t("nav.becomeInstructor", "Become Instructor"), to: "/student-dashboard/become-instructor", icon: "🎓" },
-        { label: t("studentSidebar.referral"), to: "/student-dashboard/referral", icon: "🎁" },
-        { label: t("studentSidebar.wallet"), to: "/student-dashboard/wallet", icon: "👛" },
-        { label: t("studentSidebar.purchaseHistory"), to: "/student-dashboard/purchase-history", icon: "📦" },
-        { label: t("studentSidebar.references"), to: "/student-dashboard/references", icon: "🗂️" },
+        {
+          label: t("nav.plans", "Plans"),
+          to: "/student-dashboard/plans",
+          icon: "💳",
+        },
+        {
+          label: t("nav.becomeInstructor", "Become Instructor"),
+          to: "/student-dashboard/become-instructor",
+          icon: "🎓",
+        },
+        {
+          label: t("studentSidebar.referral"),
+          to: "/student-dashboard/referral",
+          icon: "🎁",
+        },
+        {
+          label: t("studentSidebar.wallet"),
+          to: "/student-dashboard/wallet",
+          icon: "👛",
+        },
+        {
+          label: t("studentSidebar.purchaseHistory"),
+          to: "/student-dashboard/purchase-history",
+          icon: "📦",
+        },
+        {
+          label: t("studentSidebar.references"),
+          to: "/student-dashboard/references",
+          icon: "🗂️",
+        },
       ],
     },
     {
       key: "account",
       title: t("studentSidebar.account", "Account"),
       items: [
-        { label: t("studentSidebar.settings"), to: "/student-dashboard/settings", icon: "⚙️" },
+        {
+          label: t("studentSidebar.settings"),
+          to: "/student-dashboard/settings",
+          icon: "⚙️",
+        },
       ],
     },
   ];
@@ -147,22 +240,23 @@ const Sidebar = ({
       end={item.end}
       title={collapsed ? item.label : undefined}
       className={({ isActive }) => {
-        const isPlansBilling = item.to === "/student-dashboard/plans" && window.location.pathname === "/student-dashboard/billing";
+        const isPlansBilling =
+          item.to === "/student-dashboard/plans" &&
+          window.location.pathname === "/student-dashboard/billing";
         const active = isActive || isPlansBilling;
         return `flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 w-full text-left
         ${collapsed ? "justify-center" : "justify-start"}
-        ${active
-          ? "bg-indigo-950/40 text-indigo-300 border-l-2 border-indigo-500 pl-2.5"
-          : "text-slate-400 hover:bg-slate-900 hover:text-white border-l-2 border-transparent"
+        ${
+          active
+            ? "bg-indigo-950/40 text-indigo-300 border-l-2 border-indigo-500 pl-2.5"
+            : "text-slate-400 hover:bg-slate-900 hover:text-white border-l-2 border-transparent"
         }`;
       }}
       onClick={() => mobileOpen && setMobileOpen(false)}
     >
       <span className="shrink-0 text-lg leading-none">{item.icon}</span>
       {!collapsed && (
-        <span className="text-xs font-semibold flex-1">
-          {item.label}
-        </span>
+        <span className="text-xs font-semibold flex-1">{item.label}</span>
       )}
     </NavLink>
   );
@@ -210,7 +304,11 @@ const Sidebar = ({
                     }}
                     className="flex items-center gap-1 text-indigo-400 text-[10px] font-bold uppercase tracking-wider hover:text-indigo-300 transition-colors bg-indigo-950/40 border border-indigo-900/30 rounded-full px-2.5 py-0.5 mt-1 cursor-pointer"
                   >
-                    {dashboardOptions.length} Roles <ChevronDown size={10} className={`transition-transform duration-200 ${rolesDropdownOpen ? "rotate-180" : ""}`} />
+                    {dashboardOptions.length} Roles{" "}
+                    <ChevronDown
+                      size={10}
+                      className={`transition-transform duration-200 ${rolesDropdownOpen ? "rotate-180" : ""}`}
+                    />
                   </button>
                   {rolesDropdownOpen && (
                     <div className="absolute left-0 top-full mt-2 w-48 rounded-xl border border-slate-800 bg-[#0f172a] p-2 shadow-2xl z-[120] flex flex-col gap-1.5">
@@ -232,7 +330,13 @@ const Sidebar = ({
                 </div>
               ) : (
                 <p className="text-indigo-400 text-[10px] font-bold uppercase tracking-wider truncate mt-0.5">
-                  {hasAdminRole ? t("nav.roleAdmin") : isMultiRole ? t("nav.roleMultiple") : hasInstructorRole ? t("nav.roleInstructor") : t("nav.roleStudent")}
+                  {hasAdminRole
+                    ? t("nav.roleAdmin")
+                    : isMultiRole
+                      ? t("nav.roleMultiple")
+                      : hasInstructorRole
+                        ? t("nav.roleInstructor")
+                        : t("nav.roleStudent")}
                 </p>
               )}
             </div>
@@ -267,7 +371,9 @@ const Sidebar = ({
 
               {/* Render items if expanded or if sidebar is collapsed */}
               {(isOpen || collapsed) && (
-                <div className={`flex flex-col gap-0.5 ${!collapsed ? "pl-2 border-l border-white/10" : ""}`}>
+                <div
+                  className={`flex flex-col gap-0.5 ${!collapsed ? "pl-2 border-l border-white/10" : ""}`}
+                >
                   {group.items.map((item) => (
                     <NavItem key={item.to} item={item} />
                   ))}
@@ -276,22 +382,24 @@ const Sidebar = ({
             </div>
           );
         })}
-      {/* Profile & Logout Section (Mobile View Only) */}
-      <div className="md:hidden p-3 border-t border-slate-800 shrink-0">
-        {isMultiRole && (
-          <Link
-            to={switchTarget}
-            onClick={() => setMobileOpen(false)}
-            className="btn-indigo-shine mb-2 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold"
-          >
-            ⇄ {switchLabel}
-          </Link>
-        )}
-        <button
-            onClick={() => {
+        {/* Profile & Logout Section (Mobile View Only) */}
+        <div className="md:hidden p-3 border-t border-slate-800 shrink-0">
+          {isMultiRole && (
+            <Link
+              to={switchTarget}
+              onClick={() => setMobileOpen(false)}
+              className="btn-indigo-shine mb-2 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold"
+            >
+              ⇄ {switchLabel}
+            </Link>
+          )}
+          <button
+            onClick={async () => {
               mobileOpen && setMobileOpen(false);
-              dispatch(logoutUser());
-              navigate("/");
+              await dispatch(logoutUser())
+                .unwrap()
+                .catch(() => {});
+              navigate("/", { replace: true });
             }}
             className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
             title={t("nav.logout")}

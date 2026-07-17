@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../config/api.js";
+import { logoutUser } from "./authSlice.js";
 
 // ── Thunks ────────────────────────────────────────────────────────────────────
 
@@ -9,7 +10,11 @@ import api from "../../config/api.js";
  */
 export const fetchSubscription = createAsyncThunk(
   "billing/fetchSubscription",
-  async (_, { rejectWithValue }) => {
+  async (_, { getState, rejectWithValue }) => {
+    const state = getState();
+    if (!state.auth?.user) {
+      return rejectWithValue("Not authenticated");
+    }
     try {
       const { data } = await api.get("/billing/subscription");
       return data; // { plan, status, startDate, endDate, razorpaySubscriptionId }
@@ -159,7 +164,10 @@ const billingSlice = createSlice({
       .addCase(cancelSubscription.rejected, (state, { payload }) => {
         state.loading = false;
         state.error = payload;
-      });
+      })
+
+      // logout
+      .addCase(logoutUser.fulfilled, () => initialState);
   },
 });
 

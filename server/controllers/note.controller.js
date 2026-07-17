@@ -120,9 +120,10 @@ export const listNotes = async (req, res) => {
     }
 
     const isInstructor = req.user && hasBaseRole(req.user, "instructor");
+    const isAdmin = req.user && hasBaseRole(req.user, "admin");
 
-    // ── Instructor: everything *they* uploaded, across both sources ────────
-    if (isInstructor && req.query.mine === "1") {
+    // ── Instructor/Admin: everything *they* uploaded, across both sources ────────
+    if ((isInstructor || isAdmin) && req.query.mine === "1") {
       const [standaloneNotes, courses] = await Promise.all([
         Note.find({ instructor: req.user._id }).lean(),
         Course.find({ instructor: req.user._id }).lean(),

@@ -162,12 +162,50 @@ npm install
 
 ### Running Locally
 
+You can run the frontend, backend API, and background worker concurrently from the root directory:
+
 ```bash
-# Terminal 1 — start the backend
+npm run dev
+```
+
+Alternatively, you can run them in separate terminals:
+
+```bash
+# Terminal 1 — start the backend API
 cd server
 npm run dev          # runs on http://localhost:5000
 
-# Terminal 2 — start the frontend
+# Terminal 2 — start the frontend client
 cd client
 npm run dev          # runs on http://localhost:5173
+
+# Terminal 3 — start the background worker
+cd worker
+npm run dev          # runs on http://localhost:3001
 ```
+
+---
+
+## Background Worker Service (`/worker`)
+
+To support serverless deployment for the API (e.g., Vercel) while keeping asynchronous queues alive, the **BullMQ Background Worker** is separated into a standalone service located in the `/worker` directory.
+
+### Local Development
+1. Create a `worker/.env` file containing `MONGO_URI`, `REDIS_URL` (standard TCP/TLS endpoint like `redis://127.0.0.1:6379`), and dashboard basic auth credentials (`BULL_BOARD_USER`, `BULL_BOARD_PASSWORD`).
+2. Run the worker locally with `npm run dev` inside the `/worker` folder.
+
+### Separate Deployment
+Since Vercel serverless functions cannot host long-running background workers:
+- **API Serverless App**: Deployed on Vercel. Enqueues tasks to BullMQ (producing jobs).
+- **Background Worker**: Deployed separately on a persistent platform (e.g., Railway, Fly.io, or VM). It runs the persistent Node process that executes jobs, updates database models, and caches leaderboard rankings. It also hosts the Bull Board dashboard on port `3001` (protected by HTTP Basic Auth).
+
+The worker's container configuration is defined in [Dockerfile](file:///c:/AICoachingPlatform/worker/Dockerfile). Set `IS_WORKER=true` on the worker hosting platform to trigger the actual nodemailer/SMS notifications.
+
+---
+
+## Production & Scaling (5 Lakh+ Users)
+
+The platform is designed to scale horizontally to support **500,000+ active users**. 
+
+For complete documentation on the production infrastructure setup, caching strategies, WebSockets synchronization, background jobs, database indexing, and scaling configurations, see the [SCALING.md](file:///c:/AICoachingPlatform/SCALING.md) guide.
+

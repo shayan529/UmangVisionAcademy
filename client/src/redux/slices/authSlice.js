@@ -44,6 +44,14 @@ export const logoutUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       await api.post(API_ENDPOINTS.AUTH.LOGOUT);
+      // Clear persisted client-side auth/token and AI chat state so a fresh
+      // login starts with a clean AI conversation history.
+      try {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("desktop-ai-chat-state-v1");
+      } catch (e) {
+        // ignore storage failures
+      }
       return true;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);

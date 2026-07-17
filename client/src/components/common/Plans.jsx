@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { fetchSubscription } from '../../redux/slices/billingSlice';
 
-import BillingPage from '../../pages/BillingPage';
+const BillingPage = lazy(() => import('../../pages/BillingPage'));
 
 const Plans = () => {
   const { t } = useTranslation();
@@ -26,7 +26,7 @@ const Plans = () => {
       id: 'premium',
       title: t('plans.premium.title', { defaultValue: 'Premium' }),
       price: t('plans.premium.price', { defaultValue: '₹500' }),
-      period: t('plans.premium.period', { defaultValue: 'month' }),
+      period: t('plans.premium.period', { defaultValue: 'year' }),
       amount: 50000, // ₹500.00
       desc: t('plans.premium.desc', {
         defaultValue:
@@ -61,7 +61,11 @@ const Plans = () => {
   }, [user, dispatch]);
 
   if (subscription?.status === 'active' || subscription?.status === 'cancelled') {
-    return <BillingPage />;
+    return (
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-400">Loading Billing Info...</div>}>
+        <BillingPage />
+      </Suspense>
+    );
   }
 
   const handlePlanClick = (plan) => {

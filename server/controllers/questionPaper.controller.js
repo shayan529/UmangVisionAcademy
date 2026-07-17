@@ -124,9 +124,14 @@ export const getQuestionPapers = async (req, res) => {
     const keyClass =
       cls && cls !== "All" ? String(cls).replace(/\s+/g, "_") : "All";
     const cacheKey = `questionPapers:public:${keyBoard}:${keyClass}`;
-    const papers = await cacheResponse(cacheKey, 30, async () => {
+    const papers = await cacheResponse(cacheKey, 600, async () => {
       return await QuestionPaper.find(filter).lean();
     });
+
+    if (process.env.NODE_ENV === "production") {
+      res.setHeader("Cache-Control", "public, max-age=300, s-maxage=3600, stale-while-revalidate=7200");
+    }
+
     res.json(papers);
   } catch (err) {
     res.status(500).json({ message: err.message });

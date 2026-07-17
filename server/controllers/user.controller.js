@@ -15,6 +15,7 @@ import { invalidateCourseCache } from "./course.controller.js";
 import { sendRegistrationEmail, sendReferralSuccessEmail } from "../utils/Mailer.js";
 import { computeInstructorRating } from "../utils/instructorRating.js";
 import { deleteKey } from "../utils/redisClient.js";
+import { importQueue } from "../utils/queue.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -47,7 +48,7 @@ const getUniqueReferralCode = async () => {
   return code;
 };
 
-const ensureUserReferralCode = async (user) => {
+export const ensureUserReferralCode = async (user) => {
   if (user.referralCode) return user.referralCode;
 
   const code = await getUniqueReferralCode();
@@ -61,7 +62,7 @@ const normalizeString = (value) => {
   return String(value).trim();
 };
 
-const normalizeIndianPhoneNumber = (value) => {
+export const normalizeIndianPhoneNumber = (value) => {
   const raw = normalizeString(value);
   const digits = raw.replace(/\D/g, "");
 
@@ -74,7 +75,7 @@ const normalizeIndianPhoneNumber = (value) => {
   return raw;
 };
 
-const getPhoneLookupValues = (value) => {
+export const getPhoneLookupValues = (value) => {
   const normalized = normalizeIndianPhoneNumber(value);
   const digits = normalizeString(value).replace(/\D/g, "");
   const values = new Set([normalizeString(value), normalized]);
@@ -105,7 +106,7 @@ const pickRowValue = (row, aliases) => {
   return "";
 };
 
-const buildStudentPayload = (row) => {
+export const buildStudentPayload = (row) => {
   const name = normalizeString(
     pickRowValue(row, [
       "name",
@@ -175,7 +176,7 @@ const parseDelimitedText = (text) => {
   });
 };
 
-const generateStudentPassword = () =>
+export const generateStudentPassword = () =>
   `Student@${Math.random().toString(36).slice(-6).toUpperCase()}`;
 
 // ── Helper: check if two dates fall on the same IST calendar day ──────────────
@@ -495,110 +496,23 @@ export const bulkImportStudents = async (req, res) => {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
-    const created = [];
-    const skipped = [];
+    // Enqueue the bulk import job to be processed by the background worker
+    const job = await importQueue.add(`bulk-import-${Date.now()}`, {
+      rows,
+      targetRole,
+      courseIds,
+      source,
+    });
 
-    for (const [index, row] of rows.entries()) {
-      const payload = buildStudentPayload(row);
-      const rowNumber = row.__rowIndex ?? index + 2;
-
-      if (!payload.name || !payload.phoneNumber) {
-        skipped.push({
-          row: rowNumber,
-          reason: "Missing required name or phone number",
-        });
-        continue;
-      }
-
-      const cleanPhone = normalizeIndianPhoneNumber(payload.phoneNumber);
-      if (!/^\+?\d{8,15}$/.test(cleanPhone)) {
-        skipped.push({
-          row: rowNumber,
-          reason: "Invalid phone number format",
-        });
-        continue;
-      }
-
-      const normalizedEmail = payload.email ? payload.email.toLowerCase() : "";
-      const finalPassword = payload.password || generateStudentPassword();
-
-      const existing = await User.findOne({
-        $or: [
-          ...(normalizedEmail ? [{ email: normalizedEmail }] : []),
-          { phoneNumber: { $in: getPhoneLookupValues(cleanPhone) } },
-        ],
-      });
-
-      if (existing) {
-        skipped.push({
-          row: rowNumber,
-          reason: "Duplicate email or phone number already exists",
-        });
-        continue;
-      }
-
-      try {
-        const user = await User.create({
-          name: payload.name,
-          ...(normalizedEmail ? { email: normalizedEmail } : {}),
-          phoneNumber: cleanPhone,
-          password: finalPassword,
-          roles: [targetRole],
-          ...(payload.city ? { city: payload.city } : {}),
-          ...(payload.state ? { state: payload.state } : {}),
-          ...(payload.pincode ? { pincode: payload.pincode } : {}),
-        });
-
-        const referralCode = await ensureUserReferralCode(user);
-
-        created.push({
-          _id: user._id,
-          name: user.name,
-          email: user.email || null,
-          phoneNumber: user.phoneNumber,
-          referralCode,
-        });
-      } catch (error) {
-        skipped.push({
-          row: rowNumber,
-          reason: error.message || "Could not create student",
-        });
-      }
-    }
-
-    if (courseIds.length > 0 && created.length > 0) {
-      try {
-        const newStudentIds = created.map((c) => c._id);
-
-        await Course.updateMany(
-          { _id: { $in: courseIds } },
-          { $addToSet: { students: { $each: newStudentIds } } }
-        );
-
-        await User.updateMany(
-          { _id: { $in: newStudentIds } },
-          { $addToSet: { enrolledCourses: { $each: courseIds } } },
-        );
-
-        await Promise.all(
-          courseIds.map((id) =>
-            invalidateCourseCache(id).catch((e) => console.error(e)),
-          ),
-        );
-      } catch (err) {
-        console.error("Failed to assign courses in bulk import:", err);
-      }
-    }
-
-    res.status(201).json({
-      message: `Imported ${created.length} ${targetRole}s from ${source}`,
-      inserted: created.length,
-      skipped: skipped.length,
-      skippedRows: skipped,
+    res.status(202).json({
+      success: true,
+      message: `Bulk import of ${rows.length} records queued.`,
+      jobId: job.id,
     });
   } catch (error) {
     console.error("Bulk student import failed:", error);
     res.status(500).json({
+      success: false,
       message: error.message || "Bulk student import failed",
     });
   }
@@ -903,5 +817,32 @@ export const getInstructorPublicProfile = async (req, res) => {
   } catch (err) {
     console.error("Instructor public profile error:", err);
     res.status(500).json({ message: "Failed to load instructor profile." });
+  }
+};
+
+// GET /users/bulk-import/status/:jobId
+export const getBulkImportStatus = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const job = await importQueue.getJob(jobId);
+
+    if (!job) {
+      return res.status(404).json({ success: false, message: "Import job not found" });
+    }
+
+    const state = await job.getState();
+    const progress = job.progress;
+    const result = job.returnvalue;
+
+    res.json({
+      success: true,
+      jobId,
+      state,
+      progress,
+      result: result || null,
+    });
+  } catch (error) {
+    console.error("Failed to fetch import job status:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };

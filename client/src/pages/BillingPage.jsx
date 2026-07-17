@@ -86,7 +86,7 @@ export default function BillingPage() {
 
   useEffect(() => {
     if (!user)
-      navigate("/login", { state: { from: "/billing" }, replace: true });
+      navigate("/login", { state: { from: "/student-dashboard/billing" }, replace: true });
   }, [user, navigate]);
 
   useEffect(() => {
@@ -494,7 +494,7 @@ export default function BillingPage() {
                     id: "premium",
                     title: t("plans.premium.title", { defaultValue: "Premium" }),
                     price: t("plans.premium.price", { defaultValue: "₹500" }),
-                    period: t("plans.premium.period", { defaultValue: "month" }),
+                    period: t("plans.premium.period", { defaultValue: "year" }),
                     amount: 50000,
                     features: t("plans.premium.features", {
                       returnObjects: true,

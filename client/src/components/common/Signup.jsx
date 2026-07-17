@@ -106,8 +106,15 @@ const Signup = () => {
       const isInstructor =
         !isAdmin && !isStaff && hasBaseRole(user, "instructor");
 
-      const from = location.state?.from;
+      let from = location.state?.from;
       if (from) {
+        let path = typeof from === "string" ? from : from.pathname;
+        if (path && typeof path === "string") {
+          const lowerPath = path.toLowerCase();
+          if (user?.subscription?.status === "active" && (lowerPath.includes("billing") || lowerPath.includes("plans"))) {
+            from = "/student-dashboard";
+          }
+        }
         navigate(from, { replace: true });
         return;
       }
@@ -1488,6 +1495,7 @@ const Signup = () => {
                 {t("auth.alreadyHaveAccount")}{" "}
                 <Link
                   to="/login"
+                  state={{ from: location.state?.from }}
                   className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors"
                 >
                   {t("auth.signIn")}

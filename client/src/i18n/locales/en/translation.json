@@ -28,6 +28,8 @@
     "get_started": "Get Started"
   },
   "courses": {
+    "searchPlaceholder": "Search your courses...",
+    "allLanguages": "All Languages",
     "title": "Courses",
     "headerTag": "Explore Learning By Class",
     "select_class": "Select Class",
@@ -103,6 +105,7 @@
     "pyqBenefit": "Buy this course to unlock all 5 previous year question papers for this subject."
   },
   "auth": {
+    "loginFailed": "Login failed. Please check your credentials.",
     "signup": "Create Account",
     "mobilePlaceholder": "10-digit mobile number",
     "welcomeToast": "Welcome!",
@@ -240,7 +243,7 @@
     "base": {
       "title": "Academy Access Plan",
       "price": "₹100",
-      "period": "month",
+      "period": "year",
       "desc": "Get full access to all courses of your selected class (Class 9 to 12).",
       "features": [
         "Select one Class (Class 9 to 12)",
@@ -254,7 +257,7 @@
     "premium": {
       "title": "Premium",
       "price": "₹500",
-      "period": "month",
+      "period": "year",
       "desc": "Everything in Base, plus live support and deeper personalization for serious exam prep.",
       "button": "Go Premium",
       "features": [
@@ -634,6 +637,35 @@
     }
   },
   "aboutUs": {
+    "admitCard": {
+      "candidate": "CANDIDATE",
+      "candidateValue": "Every Learner",
+      "classField": "CLASS",
+      "classValue": "Class 9 to 12",
+      "board": "BOARD",
+      "boardValue": "CBSE · ICSE · MP Board",
+      "validity": "VALIDITY",
+      "validityValue": "Lifetime Access",
+      "eyebrow": "HALL TICKET",
+      "title": "Umang Vision Academy",
+      "stamp": "VERIFIED",
+      "footer": "NO EXAM · JUST ENROLL"
+    },
+    "stats": {
+      "tag": "PROGRESS REPORT",
+      "verified": "VERIFIED",
+      "activeStudents": "Active students",
+      "coursesPublished": "Courses published",
+      "passRate": "Pass rate",
+      "statesCovered": "States covered"
+    },
+    "cta": {
+      "tag": "ADMISSIONS OPEN",
+      "title": "Ready to start learning?",
+      "body": "Join 50,000+ students who are already learning smarter with Umang Vision Academy.",
+      "getStarted": "Get started free",
+      "browseCourses": "Browse courses"
+    },
     "hero": {
       "tag": "Our Story",
       "headingPrefix": "Built by educators,",
@@ -660,12 +692,6 @@
         "label": "Learning model",
         "value": "Hybrid — live + recorded + AI"
       }
-    },
-    "stats": {
-      "activeStudents": "Active students",
-      "coursesPublished": "Courses published",
-      "passRate": "Pass rate",
-      "statesCovered": "States covered"
     },
     "values": {
       "tag": "What we stand for",
@@ -710,12 +736,6 @@
         "role": "Head of Student Success",
         "bio": "Dedicated to closing the learning gap. Has personally mentored 500+ students from Tier-2 and Tier-3 cities."
       }
-    },
-    "cta": {
-      "title": "Ready to start learning?",
-      "body": "Join 50,000+ students who are already learning smarter with Umang Vision Academy.",
-      "getStarted": "Get started free",
-      "browseCourses": "Browse courses"
     }
   },
   "aiTutor": {
@@ -928,22 +948,25 @@
     "copied": "Link copied to clipboard!"
   },
   "studentSidebar": {
+    "coreLearning": "Core Learning",
+    "performanceTools": "Performance & Tools",
+    "subscriptionsExtras": "Subscriptions & Extras",
+    "account": "Account",
     "overview": "Overview",
     "myCourses": "My Courses",
-    "references": "References",
+    "notes": "Study Notes",
     "aiTutor": "AI Tutor",
     "sessions": "Sessions",
-    "certificates": "Certificates",
-    "achievements": "Achievements",
-    "leaderboard": "Leaderboard",
-    "purchaseHistory": "Purchase History",
-    "referral": "Referral",
-    "settings": "Settings",
-    "student": "Student",
     "progress": "Progress",
     "mockTests": "Mock Tests",
+    "leaderboard": "Leaderboard",
+    "achievements": "Achievements",
+    "certificates": "Certificates",
+    "referral": "Referral",
     "wallet": "Wallet",
-    "notes": "Study Notes"
+    "purchaseHistory": "Purchase History",
+    "references": "References",
+    "settings": "Settings"
   },
   "studyNotes": {
     "title": "Class Notes",
@@ -957,7 +980,9 @@
     "emptySubtitle": "Notes uploaded by your instructors will show up here as soon as they're posted.",
     "by": "By",
     "instructor": "Instructor",
-    "viewFile": "View File"
+    "viewFile": "View File",
+    "view": "View",
+    "download": "Download"
   },
   "studentReferral": {
     "title": "Referral Rewards",
@@ -1061,6 +1086,9 @@
     "noProgress": "No courses currently in progress."
   },
   "studentLeaderboard": {
+    "earnAchievements": "Earn Achievements",
+    "earnAchievementsDesc": "Unlock badges for making progress in your courses and tests",
+    "selectStateFirst": "Select a state first",
     "title": "Student Leaderboard",
     "subtitle": "Earn coins by learning and climb the rankings.",
     "yourRank": "Your Rank: {{rank}}",
@@ -1352,6 +1380,7 @@
     "noCoursesFound": "No courses found."
   },
   "instructorSessions": {
+    "starting": "Starting…",
     "error": "Error",
     "noSessionUrl": "No session URL available",
     "sessionLinkCopied": "Session link copied",
@@ -1487,6 +1516,9 @@
     "verifyPasswordSubtitle": "Enter the 6-digit code sent to {{email}} to confirm this change"
   },
   "instructorMockTests": {
+    "subjectClassRequired": "Subject and Class are required for AI generation.",
+    "aiGeneratedSuccess": "Successfully generated questions with AI!",
+    "aiGenerateFailed": "Failed to generate questions.",
     "title": "Mock Tests",
     "testsCreated": "{{count}} tests created",
     "newTest": "New Test",
@@ -1810,26 +1842,5 @@
   "studentSessions": {
     "title": "Live Sessions",
     "subtitle": "Join upcoming and live instructor sessions."
-  },
-  "studentSidebar": {
-    "coreLearning": "Core Learning",
-    "performanceTools": "Performance & Tools",
-    "subscriptionsExtras": "Subscriptions & Extras",
-    "account": "Account",
-    "overview": "Overview",
-    "myCourses": "My Courses",
-    "notes": "Study Notes",
-    "aiTutor": "AI Tutor",
-    "sessions": "Sessions",
-    "progress": "Progress",
-    "mockTests": "Mock Tests",
-    "leaderboard": "Leaderboard",
-    "achievements": "Achievements",
-    "certificates": "Certificates",
-    "referral": "Referral",
-    "wallet": "Wallet",
-    "purchaseHistory": "Purchase History",
-    "references": "References",
-    "settings": "Settings"
   }
 }

@@ -93,17 +93,27 @@ export default function InstructorDashboard() {
   const hasStudentRole = hasBaseRole(user, "student");
   const hasAdminRole = hasBaseRole(user, "admin");
   const hasCustomRole = getCustomRoles(user).length > 0;
-  const isMultiRole = hasInstructorRole && hasStudentRole && !hasAdminRole && !hasCustomRole;
+  const isMultiRole =
+    hasInstructorRole && hasStudentRole && !hasAdminRole && !hasCustomRole;
 
   const dashboardOptions = [];
   if (hasStudentRole) {
-    dashboardOptions.push({ name: t("nav.roleStudent", "Student"), path: "/student-dashboard" });
+    dashboardOptions.push({
+      name: t("nav.roleStudent", "Student"),
+      path: "/student-dashboard",
+    });
   }
   if (hasInstructorRole) {
-    dashboardOptions.push({ name: t("nav.roleInstructor", "Instructor"), path: "/instructor-dashboard" });
+    dashboardOptions.push({
+      name: t("nav.roleInstructor", "Instructor"),
+      path: "/instructor-dashboard",
+    });
   }
   if (hasAdminRole) {
-    dashboardOptions.push({ name: t("nav.roleAdmin", "Admin"), path: "/admin-dashboard" });
+    dashboardOptions.push({
+      name: t("nav.roleAdmin", "Admin"),
+      path: "/admin-dashboard",
+    });
   }
   getCustomRoles(user).forEach((role) => {
     dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
@@ -129,10 +139,16 @@ export default function InstructorDashboard() {
         ? "/instructor-dashboard"
         : "/student-dashboard";
 
-  const isInstructorDashboard = window.location.pathname.startsWith("/instructor-dashboard");
+  const isInstructorDashboard = window.location.pathname.startsWith(
+    "/instructor-dashboard",
+  );
   const goingToInstructor = !isInstructorDashboard;
-  const switchTarget = goingToInstructor ? "/instructor-dashboard" : "/student-dashboard";
-  const switchLabel = goingToInstructor ? t("nav.goToInstructor") : t("nav.goToStudent");
+  const switchTarget = goingToInstructor
+    ? "/instructor-dashboard"
+    : "/student-dashboard";
+  const switchLabel = goingToInstructor
+    ? t("nav.goToInstructor")
+    : t("nav.goToStudent");
 
   const unread = notifs.filter((n) => !n.read).length;
 
@@ -309,7 +325,11 @@ export default function InstructorDashboard() {
                     }}
                     className="flex items-center gap-1 text-indigo-400 text-[10px] font-bold uppercase tracking-wider hover:text-indigo-300 transition-colors bg-indigo-950/40 border border-indigo-900/30 rounded-full px-2.5 py-0.5 mt-1 cursor-pointer"
                   >
-                    {dashboardOptions.length} Roles <ChevronDown size={10} className={`transition-transform duration-200 ${rolesDropdownOpen ? "rotate-180" : ""}`} />
+                    {dashboardOptions.length} Roles{" "}
+                    <ChevronDown
+                      size={10}
+                      className={`transition-transform duration-200 ${rolesDropdownOpen ? "rotate-180" : ""}`}
+                    />
                   </button>
                   {rolesDropdownOpen && (
                     <div className="absolute left-0 top-full mt-2 w-48 rounded-xl border border-slate-800 bg-[#0f172a] p-2 shadow-2xl z-[120] flex flex-col gap-1.5">
@@ -331,7 +351,13 @@ export default function InstructorDashboard() {
                 </div>
               ) : (
                 <div className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider truncate mt-0.5">
-                  {hasAdminRole ? t("nav.roleAdmin") : isMultiRole ? t("nav.roleMultiple") : hasInstructorRole ? t("nav.roleInstructor") : t("nav.roleStudent")}
+                  {hasAdminRole
+                    ? t("nav.roleAdmin")
+                    : isMultiRole
+                      ? t("nav.roleMultiple")
+                      : hasInstructorRole
+                        ? t("nav.roleInstructor")
+                        : t("nav.roleStudent")}
                 </div>
               )}
             </div>
@@ -366,29 +392,31 @@ export default function InstructorDashboard() {
               </button>
             );
           })}
-        {/* Profile & Logout Section (Mobile View Only) */}
-        <div className="md:hidden p-3 border-t border-slate-800 shrink-0">
-          {isMultiRole && (
-            <Link
-              to={switchTarget}
-              onClick={() => setSidebarOpen(false)}
-              className="btn-indigo-shine mb-2 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold"
+          {/* Profile & Logout Section (Mobile View Only) */}
+          <div className="md:hidden p-3 border-t border-slate-800 shrink-0">
+            {isMultiRole && (
+              <Link
+                to={switchTarget}
+                onClick={() => setSidebarOpen(false)}
+                className="btn-indigo-shine mb-2 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold"
+              >
+                ⇄ {switchLabel}
+              </Link>
+            )}
+            <button
+              onClick={async () => {
+                setSidebarOpen(false);
+                await dispatch(logoutUser())
+                  .unwrap()
+                  .catch(() => {});
+                navigate("/", { replace: true });
+              }}
+              className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
             >
-              ⇄ {switchLabel}
-            </Link>
-          )}
-          <button
-            onClick={() => {
-              setSidebarOpen(false);
-              dispatch(logoutUser());
-              navigate("/");
-            }}
-            className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
-          >
-            <LogOut size={16} className="text-rose-400 shrink-0" />
-            <span className="text-sm font-semibold">{t("nav.logout")}</span>
-          </button>
-        </div>
+              <LogOut size={16} className="text-rose-400 shrink-0" />
+              <span className="text-sm font-semibold">{t("nav.logout")}</span>
+            </button>
+          </div>
         </nav>
       </>
     );

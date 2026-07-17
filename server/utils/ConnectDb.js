@@ -50,6 +50,7 @@ const ConnectDb = async () => {
         serverSelectionTimeoutMS: 30000,
         socketTimeoutMS: 45000,
         heartbeatFrequencyMS: 10000,
+        maxPoolSize: Number(process.env.MONGO_MAX_POOL_SIZE) || (process.env.NODE_ENV === "production" ? 10 : 100),
       };
 
       console.log("Creating new MongoDB connection...");

@@ -13,6 +13,7 @@ const lessonSchema = new Schema(
     subject: { type: String, trim: true, default: "" },
     type: { type: String, enum: ["video", "text"], default: "video" },
     content: { type: String, trim: true, default: "" },
+    pdfUrl: { type: String, trim: true, default: "" }, // URL of the original uploaded PDF file
   },
   { _id: false },
 );

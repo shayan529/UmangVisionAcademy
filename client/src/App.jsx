@@ -1,3 +1,4 @@
+import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -11,89 +12,89 @@ import { isNativeApp } from "./utils/appEnvironment";
 import { useSwipeable } from "react-swipeable";
 
 import Home from "./pages/Home";
-import MobileChat from "./components/mobile/MobileChat";
-import MobileNotes from "./components/mobile/MobileNotes";
-import MobileReels from "./components/mobile/MobileReels";
-import ReelsFeed from "./components/reels/ReelsFeed";
-import Contact from "./pages/Contact";
-import HelpCenter from "./pages/HelpCenter";
-import Faq from "./pages/Faq";
-import CartPage from "./pages/CartPage";
-import InstructorDetails from "./pages/InstructorDetails";
-import NotFound from "./pages/NotFound";
-import BillingPage from "./pages/BillingPage";
-
 import Courses from "./components/common/Courses";
-import Community from "./components/common/Community";
 import Instructors from "./components/common/Instructors";
-import BecomeInstructor from "./components/common/BecomeInstructor";
-import BecomeInstructorApplication from "./components/common/BecomeInstructorApplication";
 import Login from "./components/common/Login";
 import Signup from "./components/common/Signup";
-import Plans from "./components/common/Plans";
-import { SpeedInsights } from "@vercel/speed-insights/react"
-
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import NotFound from "./pages/NotFound";
+import { SpeedInsights } from "@vercel/speed-insights/react";
+
+// --- Lazy Loaded Components ---
+const MobileChat = lazy(() => import("./components/mobile/MobileChat"));
+const MobileNotes = lazy(() => import("./components/mobile/MobileNotes"));
+const MobileReels = lazy(() => import("./components/mobile/MobileReels"));
+const ReelsFeed = lazy(() => import("./components/reels/ReelsFeed"));
+const Contact = lazy(() => import("./pages/Contact"));
+const HelpCenter = lazy(() => import("./pages/HelpCenter"));
+const Faq = lazy(() => import("./pages/Faq"));
+const CartPage = lazy(() => import("./pages/CartPage"));
+const InstructorDetails = lazy(() => import("./pages/InstructorDetails"));
+const BillingPage = lazy(() => import("./pages/BillingPage"));
+
+const Community = lazy(() => import("./components/common/Community"));
+const BecomeInstructor = lazy(() => import("./components/common/BecomeInstructor"));
+const BecomeInstructorApplication = lazy(() => import("./components/common/BecomeInstructorApplication"));
+const Plans = lazy(() => import("./components/common/Plans"));
 
 /* Student Dashboard */
-import StudentDashboard, {
-  DashboardHome,
-} from "./components/student/StudentDashboard";
-import MyCoursesSection from "./components/student/MyCoursesSection";
-import AITutor from "./components/student/AITutor";
-import CommunitySection from "./components/student/CommunitySection";
-import CertificatesSection from "./components/student/CertificatesSection";
-import Achievements from "./components/student/Achievements";
-import SettingsSection from "./components/student/SettingsSection";
-import LeaderBoard from "./components/student/LeaderBoard";
-import StudentNotifications from "./components/student/StudentNotifications";
-import StudentSessions from "./components/student/StudentSessions";
-import StudentWallet from "./components/student/StudentWallet";
-import ReferralPage from "./components/student/ReferralPage";
-import StudentReferences from "./components/student/StudentReferences";
+const StudentDashboard = lazy(() => import("./components/student/StudentDashboard"));
+const DashboardHome = lazy(() => import("./components/student/StudentDashboard").then(module => ({ default: module.DashboardHome })));
+const MyCoursesSection = lazy(() => import("./components/student/MyCoursesSection"));
+const AITutor = lazy(() => import("./components/student/AITutor"));
+const CommunitySection = lazy(() => import("./components/student/CommunitySection"));
+const CertificatesSection = lazy(() => import("./components/student/CertificatesSection"));
+const Achievements = lazy(() => import("./components/student/Achievements"));
+const SettingsSection = lazy(() => import("./components/student/SettingsSection"));
+const LeaderBoard = lazy(() => import("./components/student/LeaderBoard"));
+const StudentNotifications = lazy(() => import("./components/student/StudentNotifications"));
+const StudentSessions = lazy(() => import("./components/student/StudentSessions"));
+const StudentWallet = lazy(() => import("./components/student/StudentWallet"));
+const ReferralPage = lazy(() => import("./components/student/ReferralPage"));
+const StudentReferences = lazy(() => import("./components/student/StudentReferences"));
 
 /* Mock Tests */
-import MockTestsLayout from "./components/student/MockTestsIndex";
-import AvailableMockTests from "./components/student/AvailableMockTests";
-import MockTestPlayer from "./components/student/MockTestPlayer";
-import MockTestResultsAnalytics from "./components/student/MockTestResultsAnalytics";
-import MockTestLeaderboard from "./components/student/MockTestLeaderboard";
+const MockTestsLayout = lazy(() => import("./components/student/MockTestsIndex"));
+const AvailableMockTests = lazy(() => import("./components/student/AvailableMockTests"));
+const MockTestPlayer = lazy(() => import("./components/student/MockTestPlayer"));
+const MockTestResultsAnalytics = lazy(() => import("./components/student/MockTestResultsAnalytics"));
+const MockTestLeaderboard = lazy(() => import("./components/student/MockTestLeaderboard"));
 
 /* Instructor Dashboard */
-import InstructorDashboard from "./components/instructor/InstructorDashboard";
-import InstructorHome from "./components/instructor/InstructorHome";
-import InstructorCourses from "./components/instructor/InstructorCourses";
-import InstructorStudents from "./components/instructor/InstructorStudents";
-import InstructorSessions from "./components/instructor/InstructorSessions";
-import InstructorAnalytics from "./components/instructor/InstructorAnalytics";
-import InstructorAI from "./components/instructor/InstructorAI";
-import InstructorNotifications from "./components/instructor/InstructorNotifications";
-import InstructorSettings from "./components/instructor/InstructorSettings";
-import InstructorMockTests from "./components/instructor/InstructorMockTests";
+const InstructorDashboard = lazy(() => import("./components/instructor/InstructorDashboard"));
+const InstructorHome = lazy(() => import("./components/instructor/InstructorHome"));
+const InstructorCourses = lazy(() => import("./components/instructor/InstructorCourses"));
+const InstructorStudents = lazy(() => import("./components/instructor/InstructorStudents"));
+const InstructorSessions = lazy(() => import("./components/instructor/InstructorSessions"));
+const InstructorAnalytics = lazy(() => import("./components/instructor/InstructorAnalytics"));
+const InstructorAI = lazy(() => import("./components/instructor/InstructorAI"));
+const InstructorNotifications = lazy(() => import("./components/instructor/InstructorNotifications"));
+const InstructorSettings = lazy(() => import("./components/instructor/InstructorSettings"));
+const InstructorMockTests = lazy(() => import("./components/instructor/InstructorMockTests"));
 
 /* Admin Dashboard */
-import AdminDashboard from "./components/admin/AdminDashboard";
-import StaffDashboard from "./components/admin/StaffDashboard";
-import AdminOverview from "./components/admin/AdminOverview";
-import AdminStudents from "./components/admin/AdminStudents";
-import AdminInstructors from "./components/admin/AdminInstructors";
-import AdminApplications from "./components/admin/AdminApplications";
-import AdminCourses from "./components/admin/AdminCourses";
-import AdminLeaderboard from "./components/admin/AdminLeaderboard";
-import AdminReels from "./components/admin/AdminReels";
-import MyReels from "./components/reels/MyReels";
-import InstructorApplicationStatus from "./components/common/InstructorApplicationStatus";
-import PrivacyPolicy from "./components/common/PrivacyPolicy";
-import TermsOfService from "./components/common/TermsOfService";
-import CourseDemo from "./components/course/CourseDemo";
-import AboutUs from "./pages/AboutUs";
-import QuestionBank from "./components/common/QuestionBank";
-import Blogs from "./components/common/Blogs";
-import BoardCourses from "./components/Boards/BoardCourses";
-import CoursePage from "./components/course/CoursePage";
-import ProgressPage from "./components/student/ProgressPage";
-import PurchaseHistory from "./components/student/PurchaseHistory";
-import InstructorAboutPage from "./components/common/InstructorAboutPage";
+const AdminDashboard = lazy(() => import("./components/admin/AdminDashboard"));
+const StaffDashboard = lazy(() => import("./components/admin/StaffDashboard"));
+const AdminOverview = lazy(() => import("./components/admin/AdminOverview"));
+const AdminStudents = lazy(() => import("./components/admin/AdminStudents"));
+const AdminInstructors = lazy(() => import("./components/admin/AdminInstructors"));
+const AdminApplications = lazy(() => import("./components/admin/AdminApplications"));
+const AdminCourses = lazy(() => import("./components/admin/AdminCourses"));
+const AdminLeaderboard = lazy(() => import("./components/admin/AdminLeaderboard"));
+const AdminReels = lazy(() => import("./components/admin/AdminReels"));
+const MyReels = lazy(() => import("./components/reels/MyReels"));
+const InstructorApplicationStatus = lazy(() => import("./components/common/InstructorApplicationStatus"));
+const PrivacyPolicy = lazy(() => import("./components/common/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./components/common/TermsOfService"));
+const CourseDemo = lazy(() => import("./components/course/CourseDemo"));
+const AboutUs = lazy(() => import("./pages/AboutUs"));
+const QuestionBank = lazy(() => import("./components/common/QuestionBank"));
+const Blogs = lazy(() => import("./components/common/Blogs"));
+const BoardCourses = lazy(() => import("./components/Boards/BoardCourses"));
+const CoursePage = lazy(() => import("./components/course/CoursePage"));
+const ProgressPage = lazy(() => import("./components/student/ProgressPage"));
+const PurchaseHistory = lazy(() => import("./components/student/PurchaseHistory"));
+const InstructorAboutPage = lazy(() => import("./components/common/InstructorAboutPage"));
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -212,7 +213,14 @@ const Layout = () => {
         className={showNavbarAndFooter ? "pb-8" : ""}
       >
         <div className={showMobileBottomBar ? slideAnim : ""}>
-          <Outlet />
+          <Suspense fallback={
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-400">
+              <div className="w-10 h-10 border-4 border-slate-800 border-t-purple-600 rounded-full animate-spin mb-4" />
+              <p className="text-sm">Loading page...</p>
+            </div>
+          }>
+            <Outlet />
+          </Suspense>
         </div>
       </div>
       

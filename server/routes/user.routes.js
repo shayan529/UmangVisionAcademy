@@ -9,6 +9,7 @@ import {
   updateUser,
   deleteUser,
   bulkImportStudents,
+  getBulkImportStatus,
   createStudentByAdmin,
   selectClass,
   getInstructorPublicProfile,
@@ -34,6 +35,12 @@ router.post(
   requirePermission("users", "create"),
   uploadStudentsImport,
   bulkImportStudents,
+);
+router.get(
+  "/bulk-import/status/:jobId",
+  protect,
+  requirePermission("users", "create"),
+  getBulkImportStatus,
 );
 
 router.post("/register", RegisterUser);

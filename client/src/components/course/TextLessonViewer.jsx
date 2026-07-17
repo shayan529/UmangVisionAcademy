@@ -56,8 +56,152 @@ const renderMarkdown = (text) => {
     .replace(/^(?!<[hublp])(.+)$/gm, "<p>$1</p>");
 };
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+// ── PdfViewer ─────────────────────────────────────────────────────────────────
+function PdfViewer({ pdfUrl }) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const iframeRef = useRef(null);
+
+  const displayUrl = useMemo(() => {
+    if (!pdfUrl) return "";
+    if (pdfUrl.includes("/uploads/")) {
+      return "/uploads/" + pdfUrl.split("/uploads/")[1];
+    }
+    return pdfUrl;
+  }, [pdfUrl]);
+
+  useEffect(() => {
+    const handleLoad = () => {
+      try {
+        const iframe = iframeRef.current;
+        if (!iframe) return;
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (iframeDoc) {
+          const block = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          };
+          iframeDoc.addEventListener("contextmenu", block, true);
+          iframeDoc.addEventListener("copy", block, true);
+          iframeDoc.addEventListener("cut", block, true);
+          iframeDoc.addEventListener("selectstart", block, true);
+          iframeDoc.addEventListener("keydown", (e) => {
+            if (e.ctrlKey && ["p", "P", "s", "S", "c", "C", "x", "X", "u", "U"].includes(e.key)) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+            if (e.key === "F12" || (e.ctrlKey && e.shiftKey && ["I", "i", "J", "j", "C", "c"].includes(e.key))) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }, true);
+        }
+      } catch (err) {
+        console.warn("Could not attach anti-theft listeners to same-origin PDF iframe:", err);
+      }
+    };
+
+    const iframe = iframeRef.current;
+    if (iframe) {
+      iframe.addEventListener("load", handleLoad);
+      try {
+        if (iframe.contentDocument || iframe.contentWindow?.document) {
+          handleLoad();
+        }
+      } catch (e) {}
+    }
+    return () => {
+      if (iframe) {
+        iframe.removeEventListener("load", handleLoad);
+      }
+    };
+  }, [pdfUrl]);
+
+  return (
+    <div
+      className="pdf-viewer-container"
+      style={
+        isFullscreen
+          ? {
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              zIndex: 9999,
+              background: "#000",
+              borderRadius: 0,
+            }
+          : {}
+      }
+    >
+      {/* Floating Fullscreen Toggle Button */}
+      <button
+        onClick={() => setIsFullscreen((prev) => !prev)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "rgba(0, 0, 0, 0.85)";
+          e.currentTarget.style.transform = "scale(1.05)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "rgba(0, 0, 0, 0.7)";
+          e.currentTarget.style.transform = "scale(1)";
+        }}
+        style={{
+          position: "absolute",
+          top: 12,
+          right: 12,
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          background: "rgba(0, 0, 0, 0.7)",
+          border: "1px solid rgba(255, 255, 255, 0.25)",
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          zIndex: 10,
+          transition: "all 0.2s ease",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+        }}
+        title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          {isFullscreen ? (
+            <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />
+          ) : (
+            <path d="M15 3h6v6M9 21H3v-6M21 15v6h-6M3 9V3h6" />
+          )}
+        </svg>
+      </button>
+
+      <iframe
+        ref={iframeRef}
+        src={`${displayUrl}#toolbar=0&navpanes=0&scrollbar=1`}
+        title="Lesson PDF"
+        style={{
+          width: "100%",
+          height: "100%",
+          border: "none",
+          background: "#000",
+          display: "block",
+        }}
+      />
+    </div>
+  );
+}
+
+// ── TextLessonViewer ──────────────────────────────────────────────────────────
 export default function TextLessonViewer({ lesson }) {
   const html = useMemo(
     () => renderMarkdown(lesson.content || ""),
@@ -66,7 +210,10 @@ export default function TextLessonViewer({ lesson }) {
   const [mode, setMode] = useState("dark");
   const t = THEMES[mode];
 
-  if (!lesson.content?.trim()) {
+  const hasPdf = !!lesson.pdfUrl?.trim();
+  const hasText = !!lesson.content?.trim();
+
+  if (!hasPdf && !hasText) {
     return (
       <div
         style={{
@@ -90,129 +237,154 @@ export default function TextLessonViewer({ lesson }) {
   }
 
   return (
-    <div
-      style={{
-        border: `1px solid ${t.border}`,
-        borderRadius: 12,
-        overflow: "hidden",
-        transition: "border-color 0.2s",
-      }}
-    >
-      {/* ── Toolbar ── */}
-      <div
-        style={{
-          padding: "10px 14px",
-          background: t.headerBg,
-          borderBottom: `1px solid ${t.border}`,
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          flexWrap: "wrap",
-          transition: "background 0.2s",
-        }}
-      >
-        {/* Left: icon + label */}
-        <span style={{ fontSize: 15, flexShrink: 0 }}>📝</span>
-        <span
-          style={{
-            fontSize: 13,
-            fontWeight: 700,
-            color: t.text,
-            flex: 1,
-            minWidth: 80,
-            transition: "color 0.2s",
-          }}
-        >
-          Written Lesson
-        </span>
-
-        {/* Toggle pill */}
-        <div
-          style={{
-            display: "flex",
-            background: mode === "dark" ? "#0b1120" : "#f1f5f9",
-            border: `1px solid ${t.border}`,
-            borderRadius: 10,
-            padding: 3,
-            gap: 2,
-            flexShrink: 0,
-            transition: "background 0.2s",
-          }}
-        >
-          {[
-            { key: "dark", icon: "🌙", label: "Dark" },
-            { key: "light", icon: "☀️", label: "Light" },
-          ].map(({ key, icon, label }) => (
-            <button
-              key={key}
-              onClick={() => setMode(key)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "4px 10px",
-                borderRadius: 7,
-                border: "none",
-                background: mode === key ? t.activeBg : "transparent",
-                color: mode === key ? t.activeColor : t.idleColor,
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: "pointer",
-                transition: "all 0.15s",
-                whiteSpace: "nowrap",
-              }}
-            >
-              <span>{icon}</span>
-              <span style={{ display: "inline" }}>{label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Badge */}
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            padding: "2px 8px",
-            borderRadius: 20,
-            background: "#0c2a1a",
-            color: "#4ade80",
-            letterSpacing: "0.05em",
-            flexShrink: 0,
-          }}
-        >
-          TEXT
-        </span>
-      </div>
-
-      {/* ── Scoped CSS ── */}
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Scoped CSS for responsive PDF sizing */}
       <style>{`
-        .tlv-body { padding: 24px 20px; overflow-y: auto; max-height: 70vh; transition: background 0.2s, color 0.2s; }
-        @media (min-width: 640px) { .tlv-body { padding: 28px 32px; } }
-        .tlv-body h1 { font-size: clamp(18px,4vw,22px); font-weight: 700; color: ${t.heading}; margin: 0 0 14px; line-height: 1.3; }
-        .tlv-body h2 { font-size: clamp(15px,3vw,18px); font-weight: 700; color: ${t.heading}; margin: 20px 0 10px; }
-        .tlv-body h3 { font-size: clamp(13px,2.5vw,15px); font-weight: 700; color: ${t.heading}; margin: 16px 0 8px; }
-        .tlv-body p  { margin: 0 0 12px; }
-        .tlv-body strong { color: ${t.strong}; font-weight: 700; }
-        .tlv-body em { color: ${t.em}; font-style: italic; }
-        .tlv-body code { background: ${t.codeBg}; color: ${t.codeColor}; padding: 2px 6px; border-radius: 5px; font-size: 12px; font-family: monospace; word-break: break-word; }
-        .tlv-body blockquote { border-left: 3px solid ${t.quoteBorder}; border-radius: 0; padding: 4px 0 4px 14px; color: ${t.quoteColor}; margin: 14px 0; font-style: italic; }
-        .tlv-body ul { padding-left: 18px; margin: 10px 0; }
-        .tlv-body li { margin: 5px 0; color: ${t.li}; }
+        .pdf-viewer-container {
+          position: relative;
+          aspect-ratio: 16/9;
+          background: #000;
+          border-radius: 12px;
+          overflow: hidden;
+          width: 100%;
+        }
+        @media (min-width: 1024px) {
+          .pdf-viewer-container {
+            aspect-ratio: auto;
+            height: 82vh;
+          }
+        }
       `}</style>
 
-      {/* ── Content ── */}
-      <div
-        className="tlv-body"
-        style={{
-          background: t.bg,
-          color: t.text,
-          fontSize: "clamp(13px, 2vw, 15px)",
-          lineHeight: 1.85,
-          fontFamily: "'Inter','Segoe UI',sans-serif",
-        }}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+      {/* ── PDF Viewer (primary when a PDF was uploaded) ── */}
+      {hasPdf && <PdfViewer pdfUrl={lesson.pdfUrl} />}
+
+      {/* ── Text / notes section ── */}
+      {hasText && (
+        <div
+          style={{
+            border: `1px solid ${t.border}`,
+            borderRadius: 12,
+            overflow: "hidden",
+            transition: "border-color 0.2s",
+          }}
+        >
+          {/* ── Toolbar ── */}
+          <div
+            style={{
+              padding: "10px 14px",
+              background: t.headerBg,
+              borderBottom: `1px solid ${t.border}`,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexWrap: "wrap",
+              transition: "background 0.2s",
+            }}
+          >
+            <span style={{ fontSize: 15, flexShrink: 0 }}>📝</span>
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: t.text,
+                flex: 1,
+                minWidth: 80,
+                transition: "color 0.2s",
+              }}
+            >
+              {hasPdf ? "Lesson Notes" : "Written Lesson"}
+            </span>
+
+            {/* Toggle pill */}
+            <div
+              style={{
+                display: "flex",
+                background: mode === "dark" ? "#0b1120" : "#f1f5f9",
+                border: `1px solid ${t.border}`,
+                borderRadius: 10,
+                padding: 3,
+                gap: 2,
+                flexShrink: 0,
+                transition: "background 0.2s",
+              }}
+            >
+              {[
+                { key: "dark", icon: "🌙", label: "Dark" },
+                { key: "light", icon: "☀️", label: "Light" },
+              ].map(({ key, icon, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setMode(key)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "4px 10px",
+                    borderRadius: 7,
+                    border: "none",
+                    background: mode === key ? t.activeBg : "transparent",
+                    color: mode === key ? t.activeColor : t.idleColor,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <span>{icon}</span>
+                  <span style={{ display: "inline" }}>{label}</span>
+                </button>
+              ))}
+            </div>
+
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                padding: "2px 8px",
+                borderRadius: 20,
+                background: "#0c2a1a",
+                color: "#4ade80",
+                letterSpacing: "0.05em",
+                flexShrink: 0,
+              }}
+            >
+              TEXT
+            </span>
+          </div>
+
+          {/* ── Scoped CSS ── */}
+          <style>{`
+            .tlv-body { padding: 24px 20px; overflow-y: auto; max-height: 70vh; transition: background 0.2s, color 0.2s; }
+            @media (min-width: 640px) { .tlv-body { padding: 28px 32px; } }
+            .tlv-body h1 { font-size: clamp(18px,4vw,22px); font-weight: 700; color: ${t.heading}; margin: 0 0 14px; line-height: 1.3; }
+            .tlv-body h2 { font-size: clamp(15px,3vw,18px); font-weight: 700; color: ${t.heading}; margin: 20px 0 10px; }
+            .tlv-body h3 { font-size: clamp(13px,2.5vw,15px); font-weight: 700; color: ${t.heading}; margin: 16px 0 8px; }
+            .tlv-body p  { margin: 0 0 12px; }
+            .tlv-body strong { color: ${t.strong}; font-weight: 700; }
+            .tlv-body em { color: ${t.em}; font-style: italic; }
+            .tlv-body code { background: ${t.codeBg}; color: ${t.codeColor}; padding: 2px 6px; border-radius: 5px; font-size: 12px; font-family: monospace; word-break: break-word; }
+            .tlv-body blockquote { border-left: 3px solid ${t.quoteBorder}; border-radius: 0; padding: 4px 0 4px 14px; color: ${t.quoteColor}; margin: 14px 0; font-style: italic; }
+            .tlv-body ul { padding-left: 18px; margin: 10px 0; }
+            .tlv-body li { margin: 5px 0; color: ${t.li}; }
+          `}</style>
+
+          {/* ── Content ── */}
+          <div
+            className="tlv-body"
+            style={{
+              background: t.bg,
+              color: t.text,
+              fontSize: "clamp(13px, 2vw, 15px)",
+              lineHeight: 1.85,
+              fontFamily: "'Inter','Segoe UI',sans-serif",
+            }}
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        </div>
+      )}
     </div>
   );
 }
+

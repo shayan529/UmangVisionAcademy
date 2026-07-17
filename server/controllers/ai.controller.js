@@ -72,8 +72,7 @@ export const chatWithAI = async (req, res) => {
       resolvedConversationId,
     );
 
-    // Allow saving for both authenticated and anonymous users
-    const saveUserId = userId || conversationId || "anonymous";
+    // The userId is used when creating AiChatMessage, falling back to null for anonymous users.
 
     const targetLang = normalizeLanguage(requestedLanguage) || requestedLanguage;
     const languageHint = targetLang
@@ -98,7 +97,7 @@ export const chatWithAI = async (req, res) => {
     if (userMessageText) {
       try {
         const saved = await AiChatMessage.create({
-          userId: saveUserId !== "anonymous" ? saveUserId : null,
+          userId: userId || null,
           conversationId: resolvedConversationId,
           role: "user",
           content: userMessageText,
@@ -144,7 +143,7 @@ export const chatWithAI = async (req, res) => {
     if (assistantText.trim()) {
       try {
         const saved = await AiChatMessage.create({
-          userId: saveUserId !== "anonymous" ? saveUserId : null,
+          userId: userId || null,
           conversationId: resolvedConversationId,
           role: "assistant",
           content: assistantText.trim(),

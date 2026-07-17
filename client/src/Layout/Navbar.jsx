@@ -193,7 +193,10 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="w-full sticky top-0 z-50 bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10">
+      <nav
+        className="w-full sticky top-0 z-50 bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10"
+        style={{ zIndex: 9999, pointerEvents: "auto" }}
+      >
         <style>{`
 .btn-navy,
 .btn-indigo-shine,
@@ -263,6 +266,7 @@ button.btn-red:hover,
             to="/"
             className="flex items-center shrink-0"
             aria-label="Go to home"
+            onClick={() => console.debug("Navbar: logo click -> /")}
           >
             <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex items-center justify-center">
               <img
@@ -295,6 +299,7 @@ button.btn-red:hover,
               <Link
                 to="/plans"
                 className="hover:text-indigo-300 transition duration-300"
+                onClick={() => console.debug("Navbar: plans click -> /plans")}
               >
                 {t("nav.plans")}
               </Link>
@@ -481,9 +486,11 @@ button.btn-red:hover,
                 )}
 
                 <button
-                  onClick={() => {
-                    dispatch(logoutUser());
-                    navigate("/");
+                  onClick={async () => {
+                    await dispatch(logoutUser())
+                      .unwrap()
+                      .catch(() => {});
+                    navigate("/", { replace: true });
                   }}
                   className="btn-red"
                 >
@@ -596,14 +603,10 @@ button.btn-red:hover,
         <div className="px-4 pt-3 pb-6 space-y-1">
           {[
             ...(!isStaffOrAdmin && !user
-              ? [
-                  { to: "/courses", label: t("nav.courses") },
-                ]
+              ? [{ to: "/courses", label: t("nav.courses") }]
               : []),
             ...(!isStaffOrAdmin && !user
-              ? [
-                  { to: "/plans", label: t("nav.plans") },
-                ]
+              ? [{ to: "/plans", label: t("nav.plans") }]
               : []),
             ...(!hasInstructorRole && !isStaffOrAdmin && !user
               ? [{ to: "/become-instructor", label: t("nav.becomeInstructor") }]
@@ -710,10 +713,12 @@ button.btn-red:hover,
                   </Link>
                 )}
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     closeMobile();
-                    dispatch(logoutUser());
-                    navigate("/");
+                    await dispatch(logoutUser())
+                      .unwrap()
+                      .catch(() => {});
+                    navigate("/", { replace: true });
                   }}
                   className="btn-red flex-1 text-xs text-center"
                   style={{

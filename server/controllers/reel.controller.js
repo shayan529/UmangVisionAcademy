@@ -50,6 +50,11 @@ export const listReels = async (req, res) => {
         .sort({ createdAt: -1 })
         .lean();
     });
+
+    if (process.env.NODE_ENV === "production") {
+      res.setHeader("Cache-Control", "public, max-age=30, s-maxage=300, stale-while-revalidate=600");
+    }
+
     res.json(reels);
   } catch (err) {
     console.error("listReels", err);

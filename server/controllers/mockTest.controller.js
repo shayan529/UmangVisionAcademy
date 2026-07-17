@@ -2,6 +2,7 @@
 import MockTest from "../models/mockTest.model.js";
 import MockTestAttempt from "../models/mockTestAttempt.model.js";
 import { cacheResponse, invalidateCache } from "../utils/redisClient.js";
+import { gradingQueue } from "../utils/queue.js";
 
 // ─── INSTRUCTOR ──────────────────────────────────────────────────────────────
 
@@ -245,47 +246,22 @@ export const submitTest = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Active attempt not found" });
 
-    const test = await MockTest.findById(attempt.mockTest);
-
-    let score = 0;
-    const gradedAnswers = answers.map((a) => {
-      const question = test.questions[a.questionIndex];
-      const isCorrect = question && a.selectedOption === question.correctOption;
-      const marksEarned = isCorrect ? question.marks : 0;
-      score += marksEarned;
-      return {
-        questionIndex: a.questionIndex,
-        selectedOption: a.selectedOption,
-        isCorrect,
-        marksEarned,
-      };
-    });
-
-    const percentage = Math.round((score / test.totalMarks) * 100);
-    const passed = score >= test.passingMarks;
-
-    attempt.answers = gradedAnswers;
-    attempt.score = score;
-    attempt.percentage = percentage;
-    attempt.passed = passed;
-    attempt.timeTaken = timeTaken;
-    attempt.submittedAt = new Date();
-    attempt.status = "completed";
+    // Mark the attempt as queued for grading
+    attempt.status = "queued";
     await attempt.save();
 
-    // Increment test attempt counter
-    await MockTest.findByIdAndUpdate(test._id, { $inc: { attempts: 1 } });
-    await invalidateCache(`mocktests:leaderboard:${test._id}`);
+    // Enqueue the grading job
+    const job = await gradingQueue.add(`grade-${attempt._id}`, {
+      attemptId: attempt._id,
+      answers,
+      timeTaken,
+    });
 
     res.json({
       success: true,
-      result: {
-        score,
-        totalMarks: test.totalMarks,
-        percentage,
-        passed,
-        passingMarks: test.passingMarks,
-      },
+      message: "Test submitted successfully. Grading is in progress.",
+      attemptId: attempt._id,
+      jobId: job.id,
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -298,13 +274,20 @@ export const getAttemptResult = async (req, res) => {
     const attempt = await MockTestAttempt.findOne({
       _id: req.params.attemptId,
       student: req.user._id,
-      status: "completed",
     }).populate("mockTest");
 
     if (!attempt)
       return res
         .status(404)
         .json({ success: false, message: "Result not found" });
+
+    if (attempt.status !== "completed") {
+      return res.json({
+        success: true,
+        status: attempt.status,
+        message: `Grading is currently ${attempt.status}. Please poll again in a moment.`,
+      });
+    }
 
     const test = attempt.mockTest;
 

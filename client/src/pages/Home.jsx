@@ -2,7 +2,6 @@ import AISection from "../components/common/AiSection";
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 
-import Community from "../components/common/Community";
 import Footer from "../Layout/Footer";
 import Hero from "../components/common/Hero";
 import Instructors from "../components/common/Instructors";

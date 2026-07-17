@@ -8,7 +8,6 @@ import {
   BarChart2,
   Trophy,
   ChevronLeft,
-
   Shield,
   UploadCloud,
   FileQuestion,
@@ -18,7 +17,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../../redux/slices/authSlice";
-import { Lock, CreditCard, LogOut } from "lucide-react";
+import { Lock, CreditCard, LogOut, FileText } from "lucide-react";
 
 const AdminSidebar = ({
   tab,
@@ -37,12 +36,29 @@ const AdminSidebar = ({
     { id: "overview", label: t("adminSidebar.overview"), icon: BarChart2 },
     { id: "leaderboard", label: t("adminSidebar.leaderboard"), icon: Trophy },
     { id: "students", label: t("adminSidebar.students"), icon: Users },
-    { id: "instructors", label: t("adminSidebar.instructors"), icon: GraduationCap },
+    {
+      id: "instructors",
+      label: t("adminSidebar.instructors"),
+      icon: GraduationCap,
+    },
     { id: "courses", label: t("adminSidebar.courses"), icon: BookOpen },
+    { id: "notes", label: t("adminSidebar.notes", "Notes"), icon: FileText },
     { id: "sessions", label: t("adminSidebar.sessions"), icon: Calendar },
-    { id: "question-papers", label: t("adminSidebar.questionPapers"), icon: FileQuestion },
-    { id: "bulk-import", label: t("adminSidebar.bulkImport"), icon: UploadCloud },
-    { id: "payments", label: t("adminSidebar.payments", "Payments"), icon: CreditCard },
+    {
+      id: "question-papers",
+      label: t("adminSidebar.questionPapers"),
+      icon: FileQuestion,
+    },
+    {
+      id: "bulk-import",
+      label: t("adminSidebar.bulkImport"),
+      icon: UploadCloud,
+    },
+    {
+      id: "payments",
+      label: t("adminSidebar.payments", "Payments"),
+      icon: CreditCard,
+    },
     { id: "reels", label: t("adminSidebar.reels"), icon: Film },
     {
       id: "applications",
@@ -75,8 +91,9 @@ const AdminSidebar = ({
         {/* User Card */}
         <div className="px-3 mt-3 mb-4">
           <div
-            className={`flex items-center rounded-xl ${collapsed ? "justify-center gap-1 p-2" : "gap-3 p-3"
-              } bg-indigo-950/20 border border-indigo-900/30`}
+            className={`flex items-center rounded-xl ${
+              collapsed ? "justify-center gap-1 p-2" : "gap-3 p-3"
+            } bg-indigo-950/20 border border-indigo-900/30`}
           >
             {user?.avatarUrl ? (
               <img
@@ -129,11 +146,13 @@ const AdminSidebar = ({
                   if (mobileOpen) setMobileOpen(false);
                 }}
                 title={collapsed ? item.label : undefined}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 w-full text-left ${collapsed ? "justify-center" : "justify-start"
-                  } ${isActive
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 w-full text-left ${
+                  collapsed ? "justify-center" : "justify-start"
+                } ${
+                  isActive
                     ? "bg-indigo-950/40 text-indigo-300 border-l-2 border-indigo-500 pl-2.5"
                     : "text-slate-400 hover:bg-slate-900 hover:text-white border-l-2 border-transparent"
-                  }`}
+                }`}
               >
                 <Icon size={16} className="shrink-0" />
                 {!collapsed && (
@@ -149,20 +168,22 @@ const AdminSidebar = ({
               </button>
             );
           })}
-        <div className="md:hidden p-3 border-t border-slate-800 shrink-0">
-          <button
-            onClick={() => {
-              if (mobileOpen) setMobileOpen(false);
-              dispatch(logoutUser());
-              navigate("/");
-            }}
-            className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
-            title={t("nav.logout")}
-          >
-            <LogOut size={16} className="text-rose-400 shrink-0" />
-            <span className="text-sm font-semibold">{t("nav.logout")}</span>
-          </button>
-        </div>
+          <div className="md:hidden p-3 border-t border-slate-800 shrink-0">
+            <button
+              onClick={async () => {
+                if (mobileOpen) setMobileOpen(false);
+                await dispatch(logoutUser())
+                  .unwrap()
+                  .catch(() => {});
+                navigate("/", { replace: true });
+              }}
+              className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
+              title={t("nav.logout")}
+            >
+              <LogOut size={16} className="text-rose-400 shrink-0" />
+              <span className="text-sm font-semibold">{t("nav.logout")}</span>
+            </button>
+          </div>
         </nav>
       </aside>
     </>

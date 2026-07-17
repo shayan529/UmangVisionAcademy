@@ -59,6 +59,34 @@ const levelColor = {
   Advanced: "#f87171",
 };
 
+const downloadFile = async (url, filename) => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error("Download failed", error);
+    window.open(url, "_blank");
+  }
+};
+
+const getDocViewUrl = (url) => {
+  if (!url) return "";
+  const ext = url.split(".").pop()?.toLowerCase().split("?")[0] ?? "";
+  const isLocal = url.includes("localhost") || url.includes("127.0.0.1") || url.includes("192.168.");
+  if (!isLocal && ["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(ext)) {
+    return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+  }
+  return url;
+};
+
 const fmt = (mins) => {
   if (!mins) return null;
   const h = Math.floor(mins / 60),
@@ -1008,25 +1036,44 @@ export default function CourseDemo() {
                             )}
                           </div>
                           {canAccess ? (
-                            <a
-                              href={note.fileUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              style={{
-                                padding: "7px 12px",
-                                background:
-                                  "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                                color: "#fff",
-                                borderRadius: 8,
-                                fontSize: 11,
-                                fontWeight: 700,
-                                textDecoration: "none",
-                                whiteSpace: "nowrap",
-                                flexShrink: 0,
-                              }}
-                            >
-                              Download
-                            </a>
+                            <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                              <a
+                                href={getDocViewUrl(note.fileUrl)}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  padding: "7px 12px",
+                                  background: "#334155",
+                                  color: "#e2e8f0",
+                                  borderRadius: 8,
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  textDecoration: "none",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                View
+                              </a>
+                              <button
+                                onClick={() => {
+                                  const ext = note.fileUrl.split(".").pop() || "pdf";
+                                  downloadFile(note.fileUrl, `${note.title}.${ext}`);
+                                }}
+                                style={{
+                                  padding: "7px 12px",
+                                  background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                                  color: "#fff",
+                                  borderRadius: 8,
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  border: "none",
+                                  cursor: "pointer",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                Download
+                              </button>
+                            </div>
                           ) : (
                             <span
                               style={{

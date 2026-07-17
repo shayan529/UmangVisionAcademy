@@ -1390,7 +1390,7 @@ export default function Settings() {
                 </p>
               </div>
               <Link
-                to="/billing"
+                to="/student-dashboard/billing"
                 style={{
                   padding: "10px 20px",
                   background: "linear-gradient(135deg,#7c3aed,#06b6d4)",

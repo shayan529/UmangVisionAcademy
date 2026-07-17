@@ -271,9 +271,8 @@ const PasswordResetModal = ({ onClose }) => {
   return (
     <div
       style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 100,
+        minHeight: "100vh",
+        position: "relative",
         background: "rgba(2,8,23,0.75)",
         backdropFilter: "blur(8px)",
         display: "flex",
@@ -863,24 +862,36 @@ const Login = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const { t } = useTranslation();
-  
+
   const { user, isAuthenticated } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (isAuthenticated && user) {
       const isAdmin = hasBaseRole(user, "admin");
       const isStaff = !isAdmin && getCustomRoles(user).length > 0;
-      const isInstructor = !isAdmin && !isStaff && hasBaseRole(user, "instructor");
-      
-      const from = location.state?.from;
+      const isInstructor =
+        !isAdmin && !isStaff && hasBaseRole(user, "instructor");
+
+      let from = location.state?.from;
       if (from) {
+        let path = typeof from === "string" ? from : from.pathname;
+        if (path && typeof path === "string") {
+          const lowerPath = path.toLowerCase();
+          if (
+            user?.subscription?.status === "active" &&
+            (lowerPath.includes("billing") || lowerPath.includes("plans"))
+          ) {
+            from = "/student-dashboard";
+          }
+        }
         navigate(from, { replace: true });
         return;
       }
-      
+
       if (isAdmin) navigate("/admin-dashboard", { replace: true });
       else if (isStaff) navigate("/staff-dashboard", { replace: true });
-      else if (isInstructor) navigate("/instructor-dashboard", { replace: true });
+      else if (isInstructor)
+        navigate("/instructor-dashboard", { replace: true });
       else navigate("/student-dashboard", { replace: true });
     }
   }, [isAuthenticated, user, navigate, location.state]);
@@ -936,9 +947,19 @@ const Login = () => {
       const isStaff = !isAdmin && getCustomRoles(user).length > 0;
       const isInstructor =
         !isAdmin && !isStaff && hasBaseRole(user, "instructor");
-      const from = location.state?.from;
+      let from = location.state?.from;
 
       if (from) {
+        let path = typeof from === "string" ? from : from.pathname;
+        if (path && typeof path === "string") {
+          const lowerPath = path.toLowerCase();
+          if (
+            user?.subscription?.status === "active" &&
+            (lowerPath.includes("billing") || lowerPath.includes("plans"))
+          ) {
+            from = "/student-dashboard";
+          }
+        }
         navigate(from, { replace: true });
         return;
       }
@@ -965,7 +986,10 @@ const Login = () => {
     }`;
 
   return (
-    <div className="min-h-screen bg-[#0B1120] flex flex-col overflow-hidden relative login-page-wrapper">
+    <div
+      className="min-h-screen bg-[#0B1120] flex flex-col overflow-hidden relative login-page-wrapper"
+      style={{ pointerEvents: "none" }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=DM+Sans:wght@400;500&display=swap');
         .df { font-family:'Outfit',sans-serif; }
@@ -1126,7 +1150,10 @@ const Login = () => {
 
       {/* ── Content ── */}
       <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-10">
-        <div className="w-full max-w-5xl flex items-center gap-14">
+        <div
+          className="w-full max-w-5xl flex items-center gap-14"
+          style={{ pointerEvents: "auto" }}
+        >
           {/* Left hero */}
           <div
             className="hidden lg:flex flex-col flex-1 gap-8 su"
@@ -1279,6 +1306,7 @@ const Login = () => {
             <div
               className="card-glow rounded-3xl p-9 w-full"
               style={{
+                pointerEvents: "auto",
                 background:
                   "linear-gradient(160deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%)",
                 backdropFilter: "blur(24px)",
@@ -1286,7 +1314,11 @@ const Login = () => {
             >
               {/* Mobile Logo & Title */}
               <div className="flex lg:hidden items-center justify-start mb-6">
-                <img src="/Logo.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14 object-contain mr-3" />
+                <img
+                  src="/Logo.png"
+                  alt="Logo"
+                  className="w-12 h-12 sm:w-14 sm:h-14 object-contain mr-3"
+                />
                 <div className="flex flex-wrap items-center">
                   <span className="text-lg sm:text-xl font-extrabold text-white tracking-wide">
                     Umang Vision
@@ -1440,6 +1472,7 @@ const Login = () => {
                 {t("auth.newHere")}{" "}
                 <Link
                   to="/signup"
+                  state={{ from: location.state?.from }}
                   onClick={() => dispatch(clearError())}
                   className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors"
                 >
