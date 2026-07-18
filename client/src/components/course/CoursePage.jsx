@@ -6,7 +6,7 @@ import api from "../../config/api.js";
 import { updateUserScoreAndSubmissions } from "../../redux/slices/authSlice.js";
 import { checkAndAwardAchievements } from "../../redux/slices/achievementSlice.js";
 import TextLessonViewer from "./TextLessonViewer.jsx";
-import WatermarkOverlay from "./WatermarkOverlay.jsx";
+import WatermarkOverlay from "./WaterMarkOverlay.jsx";
 
 const downloadFile = async (url, filename) => {
   try {
