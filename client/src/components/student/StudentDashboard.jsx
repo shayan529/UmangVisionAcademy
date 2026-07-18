@@ -142,7 +142,11 @@ const StudentDetailsFormModal = ({
   return createPortal(
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center p-4"
-      style={{ background: "rgba(10,14,26,0.75)", backdropFilter: "blur(6px)" }}
+      style={{
+        background: "rgba(10,14,26,0.75)",
+        backdropFilter: "blur(6px)",
+        zIndex: 9999,
+      }}
     >
       <div
         className="w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
