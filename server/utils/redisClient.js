@@ -123,14 +123,34 @@ const normalizeRedisValue = (raw, key) => {
   return raw;
 };
 
+const REDIS_TIMEOUT_MS = 1500; // 1.5 seconds
+
+const runWithTimeout = async (promise, fallbackValue = null) => {
+  let timeoutId;
+  const timeoutPromise = new Promise((resolve) => {
+    timeoutId = setTimeout(() => {
+      console.warn("[Redis] Operation timed out, returning fallback");
+      resolve(fallbackValue);
+    }, REDIS_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } catch (err) {
+    console.error("[Redis] Operation error:", err?.message || err);
+    return fallbackValue;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 export const getJson = async (key) => {
   if (!isRedisReady()) return null;
   try {
     if (useUpstash) {
-      const raw = await cached.upstash.get(key);
+      const raw = await runWithTimeout(cached.upstash.get(key), null);
       return normalizeRedisValue(raw, key);
     }
-    const raw = await cached.client.get(key);
+    const raw = await runWithTimeout(cached.client.get(key), null);
     return normalizeRedisValue(raw, key);
   } catch (error) {
     console.error("[Redis] getJson error:", error?.message || error);
@@ -143,19 +163,17 @@ export const setJson = async (key, value, ttlSeconds) => {
   try {
     const payload = JSON.stringify(value);
     if (useUpstash) {
-      if (ttlSeconds) {
-        await cached.upstash.set(key, payload, { ex: ttlSeconds });
-      } else {
-        await cached.upstash.set(key, payload);
-      }
+      const promise = ttlSeconds
+        ? cached.upstash.set(key, payload, { ex: ttlSeconds })
+        : cached.upstash.set(key, payload);
+      await runWithTimeout(promise, null);
       return true;
     }
 
-    if (ttlSeconds) {
-      await cached.client.set(key, payload, { EX: ttlSeconds });
-    } else {
-      await cached.client.set(key, payload);
-    }
+    const promise = ttlSeconds
+      ? cached.client.set(key, payload, { EX: ttlSeconds })
+      : cached.client.set(key, payload);
+    await runWithTimeout(promise, null);
     return true;
   } catch (error) {
     console.error("[Redis] setJson error:", error?.message || error);
@@ -167,10 +185,11 @@ export const deleteKeys = async (keys) => {
   if (!isRedisReady() || !Array.isArray(keys) || keys.length === 0) return 0;
   try {
     if (useUpstash) {
-      const results = await Promise.all(keys.map((k) => cached.upstash.del(k)));
-      return results.reduce((acc, r) => acc + (r || 0), 0);
+      const promise = Promise.all(keys.map((k) => cached.upstash.del(k)));
+      const results = await runWithTimeout(promise, []);
+      return (results || []).reduce((acc, r) => acc + (r || 0), 0);
     }
-    return cached.client.del(keys);
+    return await runWithTimeout(cached.client.del(keys), 0);
   } catch (error) {
     console.error("[Redis] deleteKeys error:", error?.message || error);
     return 0;
@@ -181,9 +200,9 @@ export const deleteKey = async (key) => {
   if (!isRedisReady() || !key) return 0;
   try {
     if (useUpstash) {
-      return await cached.upstash.del(key);
+      return await runWithTimeout(cached.upstash.del(key), 0);
     }
-    return cached.client.del(key);
+    return await runWithTimeout(cached.client.del(key), 0);
   } catch (error) {
     console.error("[Redis] deleteKey error:", error?.message || error);
     return 0;
@@ -194,31 +213,36 @@ export const scanKeys = async (pattern) => {
   if (!isRedisReady()) return [];
   try {
     if (useUpstash) {
-      // Upstash supports `keys` and `scan` — prefer `scan` when available.
-      if (typeof cached.upstash.scanIterator === "function") {
-        const matched = [];
-        for await (const k of cached.upstash.scanIterator({
-          MATCH: pattern,
-          COUNT: 100,
-        })) {
-          matched.push(k);
-        }
-        return matched;
-      }
       if (typeof cached.upstash.keys === "function") {
-        return await cached.upstash.keys(pattern);
+        return await runWithTimeout(cached.upstash.keys(pattern), []);
+      }
+      if (typeof cached.upstash.scanIterator === "function") {
+        const scanPromise = (async () => {
+          const matched = [];
+          for await (const k of cached.upstash.scanIterator({
+            MATCH: pattern,
+            COUNT: 100,
+          })) {
+            matched.push(k);
+          }
+          return matched;
+        })();
+        return await runWithTimeout(scanPromise, []);
       }
       return [];
     }
 
-    const matchedKeys = [];
-    for await (const key of cached.client.scanIterator({
-      MATCH: pattern,
-      COUNT: 100,
-    })) {
-      matchedKeys.push(key);
-    }
-    return matchedKeys;
+    const scanPromise = (async () => {
+      const matchedKeys = [];
+      for await (const key of cached.client.scanIterator({
+        MATCH: pattern,
+        COUNT: 100,
+      })) {
+        matchedKeys.push(key);
+      }
+      return matchedKeys;
+    })();
+    return await runWithTimeout(scanPromise, []);
   } catch (error) {
     console.error("[Redis] scanKeys error:", error?.message || error);
     return [];

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Users,
@@ -8,6 +8,7 @@ import {
   BarChart2,
   Trophy,
   ChevronLeft,
+  ChevronDown,
   Shield,
   UploadCloud,
   FileQuestion,
@@ -18,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { Lock, CreditCard, LogOut, FileText } from "lucide-react";
+import { getCustomRoles, hasBaseRole } from "../../utils/permissions";
 
 const AdminSidebar = ({
   tab,
@@ -32,6 +34,54 @@ const AdminSidebar = ({
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+
+  const [rolesDropdownOpen, setRolesDropdownOpen] = useState(false);
+
+  const hasInstructorRole = hasBaseRole(user, "instructor");
+  const hasStudentRole = hasBaseRole(user, "student");
+  const hasAdminRole = hasBaseRole(user, "admin");
+  const hasCustomRole = getCustomRoles(user).length > 0;
+
+  const dashboardOptions = [];
+  if (hasBaseRole(user, "student")) {
+    dashboardOptions.push({
+      name: t("nav.roleStudent", "Student"),
+      path: "/student-dashboard",
+    });
+  }
+  if (hasBaseRole(user, "instructor")) {
+    dashboardOptions.push({
+      name: t("nav.roleInstructor", "Instructor"),
+      path: "/instructor-dashboard",
+    });
+  }
+  if (hasBaseRole(user, "admin")) {
+    dashboardOptions.push({
+      name: t("nav.roleAdmin", "Admin"),
+      path: "/admin-dashboard",
+    });
+  }
+  getCustomRoles(user).forEach((role) => {
+    dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
+  });
+
+  const activeOption = dashboardOptions.find((opt) =>
+    window.location.pathname.startsWith(opt.path),
+  );
+  const activeRoleName = activeOption ? activeOption.name : "";
+
+  useEffect(() => {
+    if (!rolesDropdownOpen) return;
+    const handleClose = () => setRolesDropdownOpen(false);
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("click", handleClose);
+    }, 0);
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("click", handleClose);
+    };
+  }, [rolesDropdownOpen]);
+
   const navItems = [
     { id: "overview", label: t("adminSidebar.overview"), icon: BarChart2 },
     { id: "leaderboard", label: t("adminSidebar.leaderboard"), icon: Trophy },
@@ -111,9 +161,50 @@ const AdminSidebar = ({
                 <div className="truncate text-xs font-bold text-white">
                   {user?.name || "Admin User"}
                 </div>
-                <div className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider truncate">
-                  {t("nav.roleAdmin", "Admin")}
-                </div>
+                {dashboardOptions.length > 1 ? (
+                  <div className="relative">
+                    {activeRoleName && (
+                      <div className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider truncate mt-0.5">
+                        {activeRoleName}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRolesDropdownOpen(!rolesDropdownOpen);
+                      }}
+                      className="flex items-center gap-1 text-indigo-400 text-[10px] font-bold uppercase tracking-wider hover:text-indigo-300 transition-colors bg-indigo-950/40 border border-indigo-900/30 rounded-full px-2.5 py-0.5 mt-1 cursor-pointer w-fit"
+                    >
+                      {dashboardOptions.length} Roles{" "}
+                      <ChevronDown
+                        size={10}
+                        className={`transition-transform duration-200 ${rolesDropdownOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {rolesDropdownOpen && (
+                      <div className="absolute left-0 top-full mt-2 w-48 rounded-xl border border-slate-800 bg-[#0f172a] p-2 shadow-2xl z-[120] flex flex-col gap-1.5">
+                        {dashboardOptions.map((opt, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setRolesDropdownOpen(false);
+                              navigate(opt.path);
+                            }}
+                            className="w-full text-center text-[10px] font-bold uppercase tracking-wider text-indigo-300 hover:text-white hover:bg-slate-900 border border-indigo-900/20 rounded-lg px-2 py-1.5 transition-all cursor-pointer"
+                          >
+                            {opt.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider truncate mt-0.5">
+                    {t("nav.roleAdmin", "Admin")}
+                  </div>
+                )}
               </div>
             )}
             <button

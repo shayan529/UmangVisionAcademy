@@ -364,7 +364,7 @@ const IconBtn = ({ onClick, title, children, color, t }) => (
       transition: "color .15s, background .15s",
     }}
     onMouseEnter={(e) => {
-      e.currentTarget.style.color = t.text;
+    e.currentTarget.style.color = t.text;
       e.currentTarget.style.background = t.iconHoverBg;
     }}
     onMouseLeave={(e) => {
@@ -377,6 +377,27 @@ const IconBtn = ({ onClick, title, children, color, t }) => (
 );
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+const getChatStorageKey = (role) => `mobile-ai-chat-state-${role}-v1`;
+
+const readPersistedChatState = (role) => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(getChatStorageKey(role));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writePersistedChatState = (role, state) => {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(getChatStorageKey(role), JSON.stringify(state));
+  } catch {
+    // Ignore storage failures so the UI still works.
+  }
+};
+
 const dateLabel = (d) => {
   const diff = Math.floor((new Date() - d) / 86400000);
   if (diff === 0) return "Today";
@@ -397,27 +418,6 @@ const GROUP_ORDER = [
   "Older",
 ];
 
-const CHAT_STORAGE_KEY = "mobile-ai-chat-state-v1";
-
-const readPersistedChatState = () => {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(CHAT_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-};
-
-const writePersistedChatState = (state) => {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // Ignore storage failures so the UI still works.
-  }
-};
-
 // ── useIsMobile hook ──────────────────────────────────────────────────────────
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
@@ -436,9 +436,19 @@ export default function MobileChat() {
   const { messages, input, streaming, error, mode } = useSelector(
     (s) => s.aiTutor,
   );
-  const { isAuthenticated } = useSelector((s) => s.auth);
+  const { isAuthenticated, user } = useSelector((s) => s.auth);
   const { t: translate, i18n } = useTranslation();
   const isMobile = useIsMobile();
+
+  const [activeRole, setActiveRole] = useState(() => {
+    if (!user) return "student";
+    const hasStudent = user.roles?.includes("student");
+    const hasInstructor = user.roles?.includes("instructor");
+    if (hasStudent && !hasInstructor) return "student";
+    if (hasInstructor && !hasStudent) return "instructor";
+    return window.localStorage.getItem("mobile-chat-role") || "student";
+  });
+  const lastLoadedRoleRef = useRef(activeRole);
 
   const [dark, setDark] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -498,9 +508,6 @@ export default function MobileChat() {
         ? window.visualViewport.height
         : window.innerHeight;
 
-      // Detect any fixed-position element pinned to the bottom of the
-      // viewport (e.g. a mobile bottom nav bar) that isn't part of this
-      // component's own DOM tree, and subtract its height too.
       let bottomNavHeight = 0;
       document.querySelectorAll("body *").forEach((el) => {
         if (containerRef.current.contains(el)) return;
@@ -558,20 +565,27 @@ export default function MobileChat() {
     );
   }, [messages]);
 
+  // On mount and role change:
+  // 1. Restore sessions/activeId/messages/input/mode from localStorage
+  // 2. Fetch the latest sessions list from MongoDB and update the state/cache
   useEffect(() => {
-    const persisted = readPersistedChatState();
+    const persisted = readPersistedChatState(activeRole);
+
+    let initialSessions = [];
+    let initialActiveId = null;
 
     if (persisted?.sessions?.length) {
-      const restoredActiveId = persisted.activeId || persisted.sessions[0].id;
+      initialActiveId = persisted.activeId || persisted.sessions[0].id;
+      initialSessions = persisted.sessions;
       setSessions(persisted.sessions);
-      setActiveId(restoredActiveId);
-      activeIdRef.current = restoredActiveId;
+      setActiveId(initialActiveId);
+      activeIdRef.current = initialActiveId;
 
       if (Array.isArray(persisted.messages)) {
         dispatch({ type: "aiTutor/setMessages", payload: persisted.messages });
-      } else if (restoredActiveId) {
+      } else if (initialActiveId) {
         const restoredSession = persisted.sessions.find(
-          (s) => s.id === restoredActiveId,
+          (s) => s.id === initialActiveId,
         );
         dispatch({
           type: "aiTutor/setMessages",
@@ -846,6 +860,7 @@ export default function MobileChat() {
           body: JSON.stringify({
             messages: history,
             language: requestedLanguage,
+            userRole: activeRole,
             ...(conversationId ? { conversationId } : {}),
           }),
           signal: ctrl.signal,
@@ -1296,18 +1311,40 @@ export default function MobileChat() {
             </div>
           )}
 
-          {/* Title */}
-          <span
-            style={{
-              fontSize: isMobile ? 14 : 15,
-              fontWeight: 700,
-              color: t.text,
-              flex: 1,
-              userSelect: "none",
-            }}
-          >
-            AI Tutor
-          </span>
+          {/* Title / Role Selector */}
+          <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
+            {user?.roles?.includes("student") && user?.roles?.includes("instructor") ? (
+              <select
+                value={activeRole}
+                onChange={(e) => handleRoleChange(e.target.value)}
+                style={{
+                  background: t.bgToggle,
+                  color: t.text,
+                  border: `1px solid ${t.border}`,
+                  borderRadius: 8,
+                  fontSize: isMobile ? 13 : 14,
+                  fontWeight: 700,
+                  padding: "4px 8px",
+                  cursor: "pointer",
+                  outline: "none"
+                }}
+              >
+                <option value="student">AI Tutor (Student)</option>
+                <option value="instructor">Teaching Assistant (Instructor)</option>
+              </select>
+            ) : (
+              <span
+                style={{
+                  fontSize: isMobile ? 14 : 15,
+                  fontWeight: 700,
+                  color: t.text,
+                  userSelect: "none",
+                }}
+              >
+                {user?.roles?.includes("instructor") ? "Teaching Assistant" : "AI Tutor"}
+              </span>
+            )}
+          </div>
 
           {/* Right controls */}
           <div

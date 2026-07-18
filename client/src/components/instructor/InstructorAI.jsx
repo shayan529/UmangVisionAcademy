@@ -403,7 +403,7 @@ const GROUP_ORDER = [
 
 // FIX #1: persistence layer — AITutor.jsx previously had none at all,
 // so sessions/messages were wiped on every refresh.
-const CHAT_STORAGE_KEY = "desktop-ai-chat-state-v1";
+const CHAT_STORAGE_KEY = "instructor-ai-chat-state-v1";
 
 const readPersistedChatState = () => {
   if (typeof window === "undefined") return null;
@@ -521,20 +521,25 @@ export default function AITutor() {
     );
   }, [messages]);
 
-  // FIX #1: on mount, restore sessions/activeId/messages/input/mode from
-  // localStorage instead of always starting a brand-new empty session.
+  // On mount:
+  // 1. Restore sessions/activeId/messages/input/mode from localStorage
+  // 2. Fetch the latest sessions list from MongoDB and update the state/cache
   useEffect(() => {
     const persisted = readPersistedChatState();
 
+    let initialSessions = [];
+    let initialActiveId = null;
+
     if (persisted?.sessions?.length) {
-      const restoredActiveId = persisted.activeId || persisted.sessions[0].id;
+      initialActiveId = persisted.activeId || persisted.sessions[0].id;
+      initialSessions = persisted.sessions;
       setSessions(persisted.sessions);
-      setActiveId(restoredActiveId);
-      activeIdRef.current = restoredActiveId;
+      setActiveId(initialActiveId);
+      activeIdRef.current = initialActiveId;
 
       if (Array.isArray(persisted.messages)) {
         dispatch({ type: "aiTutor/setMessages", payload: persisted.messages });
-      } else if (restoredActiveId) {
+      } else if (initialActiveId) {
         const restoredSession = persisted.sessions.find(
           (s) => s.id === restoredActiveId,
         );
@@ -802,6 +807,7 @@ export default function AITutor() {
           body: JSON.stringify({
             messages: history,
             language: requestedLanguage,
+            userRole: "instructor",
             ...(conversationId ? { conversationId } : {}),
           }),
           signal: ctrl.signal,

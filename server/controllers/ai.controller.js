@@ -1,13 +1,15 @@
 import Groq from "groq-sdk";
 import NewsCache from "../models/newsCache.model.js";
 import AiChatMessage from "../models/aiChatMessage.model.js";
+import AiConversation from "../models/aiConversation.model.js";
+import { getJson, setJson, deleteKey } from "../utils/redisClient.js";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // Default model — fast & capable Groq-hosted model
 const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
-// System prompt — scoped to Umang Vision Academy's EdTech context
+// System prompt — scoped to Umang Vision Academy's EdTech context (Students)
 const SYSTEM_PROMPT = `You are an expert AI Tutor for Umang Vision Academy, an EdTech platform for Indian students in Classes 1–12 studying under CBSE, ICSE, and MP Board curricula.
 
 Your role:
@@ -21,25 +23,34 @@ Your role:
 
 Always be encouraging, patient, and supportive.`;
 
+// System prompt for instructors — scoped to teacher assistance context
+const SYSTEM_PROMPT_INSTRUCTOR = `You are an expert AI Teaching Assistant for Umang Vision Academy, an EdTech platform for Indian students and educators.
+
+Your role:
+- Assist instructors and teachers with creating lesson plans, syllabus mapping, and pedagogical strategies
+- Help draft quizzes, assignments, and mock test questions aligned with CBSE, ICSE, and MP Board curricula for Classes 1–12
+- Provide ideas for classroom activities, teaching aids, and explanation methods for complex topics
+- Offer advice on student engagement, class management, and addressing learning gaps
+- Support subjects: Mathematics, Science, Physics, Chemistry, Biology, English, Hindi, Social Studies, History, Geography, Computer Science
+- Maintain a professional, collaborative, and resource-rich tone suitable for educators
+- Respond in the same language the instructor uses (Hindi or English)`;
+
+const dateLabel = (date) => {
+  const d = new Date(date);
+  const diff = Math.floor((new Date() - d) / 86400000);
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Yesterday";
+  if (diff < 7) return "Previous 7 Days";
+  if (diff < 30) return "Previous 30 Days";
+  return "Older";
+};
+
 const normalizeLanguage = (lang) => {
   if (!lang) return null;
   const normalized = String(lang).trim().toLowerCase();
   if (normalized === "hi" || normalized.startsWith("hi")) return "Hindi";
   if (normalized === "en" || normalized.startsWith("en")) return "English";
   return null;
-};
-
-const detectLanguage = (text) => {
-  if (!text) return "English";
-  if (/[^\u0000-\u007F]/.test(text)) return "Hindi";
-  if (
-    /\b(?:kya|hai|nahi|ka|ke|ki|aur|toh|hoga|hogi|maine|tum|aap|hum|yeh|woh|ye|wo|hain)\b/i.test(
-      text,
-    )
-  ) {
-    return "Hindi";
-  }
-  return "English";
 };
 
 /**
@@ -53,6 +64,7 @@ export const chatWithAI = async (req, res) => {
       messages = [],
       language: requestedLanguage,
       conversationId,
+      userRole = "student",
     } = req.body;
 
     if (!messages.length) {
@@ -70,6 +82,8 @@ export const chatWithAI = async (req, res) => {
       conversationId,
       "resolved:",
       resolvedConversationId,
+      "role:",
+      userRole,
     );
 
     // The userId is used when creating AiChatMessage, falling back to null for anonymous users.
@@ -79,8 +93,10 @@ export const chatWithAI = async (req, res) => {
       ? `CRITICAL: You MUST respond entirely in ${targetLang}. Ignore the language of the student's query and respond in ${targetLang}.`
       : "";
 
+    const activePrompt = userRole === "instructor" ? SYSTEM_PROMPT_INSTRUCTOR : SYSTEM_PROMPT;
+
     const groqMessages = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: activePrompt },
       { role: "system", content: languageHint },
       // Only send last 20 messages to stay within context limits
       ...messages.slice(-20).map((m) => ({
@@ -103,8 +119,34 @@ export const chatWithAI = async (req, res) => {
           content: userMessageText,
         });
         console.log("[AI Chat] User message saved:", saved._id);
+
+        if (userId) {
+          const existingConv = await AiConversation.findOne({ conversationId: resolvedConversationId });
+          const defaultTitle = userMessageText.length > 42 ? userMessageText.slice(0, 42) + "…" : userMessageText;
+          
+          const updateData = {
+            userId,
+            userRole,
+            lastMessageAt: new Date(),
+          };
+          
+          if (!existingConv || existingConv.title === "New conversation") {
+            updateData.title = defaultTitle;
+          }
+          
+          await AiConversation.findOneAndUpdate(
+            { conversationId: resolvedConversationId },
+            updateData,
+            { upsert: true }
+          );
+
+          // Invalidate Redis list cache
+          await deleteKey(`ai:conversations:${userId}:${userRole}`);
+        }
+        // Invalidate Redis history cache
+        await deleteKey(`ai:history:${resolvedConversationId}`);
       } catch (err) {
-        console.error("[AI Chat] Error saving user message:", err.message);
+        console.error("[AI Chat] Error saving user message and metadata:", err.message);
       }
     } else {
       console.log(
@@ -149,6 +191,8 @@ export const chatWithAI = async (req, res) => {
           content: assistantText.trim(),
         });
         console.log("[AI Chat] Assistant message saved:", saved._id);
+        // Invalidate history cache
+        await deleteKey(`ai:history:${resolvedConversationId}`);
       } catch (err) {
         console.error("[AI Chat] Error saving assistant message:", err.message);
       }
@@ -185,6 +229,7 @@ export const chatWithAI = async (req, res) => {
 export const getChatHistory = async (req, res) => {
   try {
     const { conversationId } = req.params;
+    const userId = req.user?._id;
 
     if (!conversationId) {
       return res.status(400).json({
@@ -192,11 +237,30 @@ export const getChatHistory = async (req, res) => {
       });
     }
 
+    // Security check: ensure the conversation belongs to the logged-in user
+    if (userId) {
+      const conv = await AiConversation.findOne({ conversationId });
+      if (conv && String(conv.userId) !== String(userId)) {
+        return res.status(403).json({
+          message: "Forbidden: You do not own this conversation.",
+        });
+      }
+    }
+
+    const cacheKey = `ai:history:${conversationId}`;
+    const cachedData = await getJson(cacheKey);
+    if (cachedData !== null) {
+      return res.json(cachedData);
+    }
+
     const messages = await AiChatMessage.find({ conversationId })
       .sort({ createdAt: 1 })
       .select("role content createdAt");
 
-    res.json({ conversationId, messages });
+    const responseData = { conversationId, messages };
+    await setJson(cacheKey, responseData, 1800); // cache for 30 minutes
+
+    res.json(responseData);
   } catch (err) {
     console.error("Get AI chat history error:", err);
     res.status(500).json({
@@ -532,6 +596,7 @@ Return a JSON object with a single key "articles" whose value is an array of 6 o
 export const deleteChatHistory = async (req, res) => {
   try {
     const { conversationId } = req.params;
+    const userId = req.user?._id;
 
     if (!conversationId) {
       return res.status(400).json({
@@ -539,7 +604,25 @@ export const deleteChatHistory = async (req, res) => {
       });
     }
 
+    // Security check: ensure the conversation belongs to the logged-in user
+    if (userId) {
+      const conv = await AiConversation.findOne({ conversationId });
+      if (conv && String(conv.userId) !== String(userId)) {
+        return res.status(403).json({
+          message: "Forbidden: You do not own this conversation.",
+        });
+      }
+    }
+
     const result = await AiChatMessage.deleteMany({ conversationId });
+    const conv = await AiConversation.findOneAndDelete({ conversationId });
+
+    // Invalidate Redis caches
+    await deleteKey(`ai:history:${conversationId}`);
+    if (userId) {
+      const userRole = conv?.userRole || "student";
+      await deleteKey(`ai:conversations:${userId}:${userRole}`);
+    }
 
     res.json({
       conversationId,
@@ -550,5 +633,41 @@ export const deleteChatHistory = async (req, res) => {
     res.status(500).json({
       message: err.message || "Failed to delete chat history.",
     });
+  }
+};
+
+export const getConversations = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized." });
+    }
+
+    const { role = "student" } = req.query;
+
+    const cacheKey = `ai:conversations:${userId}:${role}`;
+    const cachedData = await getJson(cacheKey);
+    if (cachedData !== null) {
+      return res.json(cachedData);
+    }
+
+    const conversations = await AiConversation.find({ userId, userRole: role })
+      .sort({ lastMessageAt: -1 });
+
+    const formattedSessions = conversations.map((c) => ({
+      id: c.conversationId,
+      title: c.title,
+      time: c.lastMessageAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      dateLabel: dateLabel(c.lastMessageAt),
+      messages: [],
+    }));
+
+    const responseData = { sessions: formattedSessions };
+    await setJson(cacheKey, responseData, 600); // cache for 10 minutes
+
+    res.json(responseData);
+  } catch (err) {
+    console.error("Get conversations error:", err);
+    res.status(500).json({ message: err.message || "Failed to fetch conversations." });
   }
 };

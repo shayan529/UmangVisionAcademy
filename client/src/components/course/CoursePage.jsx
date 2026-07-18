@@ -6,6 +6,7 @@ import api from "../../config/api.js";
 import { updateUserScoreAndSubmissions } from "../../redux/slices/authSlice.js";
 import { checkAndAwardAchievements } from "../../redux/slices/achievementSlice.js";
 import TextLessonViewer from "./TextLessonViewer.jsx";
+import WatermarkOverlay from "./WatermarkOverlay.jsx";
 
 const downloadFile = async (url, filename) => {
   try {
@@ -355,7 +356,7 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
 }
 
 // ── Video Player ──────────────────────────────────────────────────────────────
-const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0 }) => {
+const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0, user }) => {
   const ref = useRef(null);
   const playingRef = useRef(false);
   const hideTimer = useRef(null);
@@ -445,6 +446,7 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0 }) => {
         poster={poster}
         playsInline
         muted={muted}
+        controlsList="nodownload"
         onTimeUpdate={onTimeUpdate}
         onLoadedMetadata={() => {
           const v = ref.current;
@@ -485,6 +487,7 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0 }) => {
       {playing && (
         <div onClick={toggle} className="absolute inset-0 cursor-pointer" />
       )}
+      <WatermarkOverlay user={user} dense />
       <div
         onClick={(e) => e.stopPropagation()}
         className="absolute inset-x-0 bottom-0 px-3.5 pb-3 pt-2 transition-opacity duration-[250ms]"
@@ -909,14 +912,46 @@ export default function CoursePage() {
   const { user, loading: authLoading } = useSelector((s) => s.auth);
 
   const [isFocused, setIsFocused] = useState(true);
+  const mainContentRef = useRef(null);
+
+  // Direct DOM blur — bypasses React re-render latency for instant effect
+  const applyBlurNow = useCallback(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.style.filter = "blur(20px)";
+      mainContentRef.current.style.transition = "none";
+    }
+    setIsFocused(false);
+  }, []);
+
+  const removeBlurNow = useCallback(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.style.filter = "none";
+      mainContentRef.current.style.transition = "filter 0.3s ease";
+    }
+    setIsFocused(true);
+  }, []);
 
   // Security and focus monitoring listeners
   useEffect(() => {
-    const handleContextMenu = (e) => e.preventDefault();
     const handleCopy = (e) => e.preventDefault();
     const handleSelectStart = (e) => e.preventDefault();
 
     const handleKeyDown = (e) => {
+      // PrintScreen / Meta / OS: blur IMMEDIATELY via direct DOM (bypasses React async re-render)
+      if (e.key === "PrintScreen" || e.key === "Meta" || e.key === "OS") {
+        applyBlurNow();
+        try {
+          navigator.clipboard.writeText("");
+        } catch (err) { }
+        return; // handled
+      }
+
+      // Win+Shift+S (Snipping Tool): Shift+S while Meta is held
+      if (e.shiftKey && (e.key === "s" || e.key === "S") && !e.ctrlKey) {
+        applyBlurNow();
+        try { navigator.clipboard.writeText(""); } catch (err) { }
+      }
+
       // Disable Ctrl+P (Print)
       if (e.ctrlKey && (e.key === "p" || e.key === "P")) {
         e.preventDefault();
@@ -929,10 +964,12 @@ export default function CoursePage() {
       // Disable Ctrl+C (Copy)
       if (e.ctrlKey && (e.key === "c" || e.key === "C")) {
         e.preventDefault();
+        try { navigator.clipboard.writeText(""); } catch (err) { }
       }
       // Disable Ctrl+X (Cut)
       if (e.ctrlKey && (e.key === "x" || e.key === "X")) {
         e.preventDefault();
+        try { navigator.clipboard.writeText(""); } catch (err) { }
       }
       // Disable Ctrl+U (View Source)
       if (e.ctrlKey && (e.key === "u" || e.key === "U")) {
@@ -947,35 +984,46 @@ export default function CoursePage() {
       }
     };
 
-    const handleFocus = () => setIsFocused(true);
+    const handleKeyUp = (e) => {
+      if (e.key === "PrintScreen" || e.key === "Meta" || e.key === "OS") {
+        // Keep blurred for 1s after keyup so delayed screenshot tools also get the blur
+        setTimeout(() => removeBlurNow(), 1000);
+      }
+    };
+
+    const handleFocus = () => {
+      if (window.innerWidth < 768) return;
+      removeBlurNow();
+    };
     const handleBlur = () => {
+      if (window.innerWidth < 768) return;
       setTimeout(() => {
         if (!document.hasFocus()) {
-          setIsFocused(false);
+          applyBlurNow();
         }
       }, 150);
     };
     const handleVisibility = () => {
-      if (document.hidden) setIsFocused(false);
-      else setIsFocused(true);
+      if (document.hidden) applyBlurNow();
+      else removeBlurNow();
     };
 
-    document.addEventListener("contextmenu", handleContextMenu);
     document.addEventListener("copy", handleCopy);
     document.addEventListener("cut", handleCopy);
     document.addEventListener("selectstart", handleSelectStart);
     document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
 
     window.addEventListener("focus", handleFocus);
     window.addEventListener("blur", handleBlur);
     document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
-      document.removeEventListener("contextmenu", handleContextMenu);
       document.removeEventListener("copy", handleCopy);
       document.removeEventListener("cut", handleCopy);
       document.removeEventListener("selectstart", handleSelectStart);
       document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keyup", handleKeyUp);
 
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("blur", handleBlur);
@@ -983,11 +1031,7 @@ export default function CoursePage() {
     };
   }, []);
 
-  const watermarkText = useMemo(() => {
-    if (!user) return "Umang Vision Academy";
-    const details = user.phoneNumber || user.email || "";
-    return `${user.name} ${details ? `(${details})` : ""} | Umang Vision Academy`;
-  }, [user]);
+
 
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1531,11 +1575,10 @@ export default function CoursePage() {
                                     setActiveIdx(lesson.globalIdx);
                                     if (!isDesktop) setMobileSidebarOpen(false);
                                   }}
-                                  className={`flex w-full items-start gap-3 border-none py-3.5 pl-[42px] pr-5 text-left transition-all duration-150 ${
-                                    isActive
+                                  className={`flex w-full items-start gap-3 border-none py-3.5 pl-[42px] pr-5 text-left transition-all duration-150 ${isActive
                                       ? "bg-violet-950/40 text-violet-300 font-bold border-l-[3px] border-violet-500"
                                       : "text-slate-400 hover:bg-[#1a2b47]/30 hover:text-slate-200"
-                                  }`}
+                                    }`}
                                   style={{
                                     borderBottom: "1px solid rgba(30, 41, 59, 0.2)",
                                     cursor: isLocked ? "not-allowed" : "pointer",
@@ -1594,7 +1637,7 @@ export default function CoursePage() {
                                       return (
                                         <div className="mt-2 flex items-center gap-2 max-w-[150px]">
                                           <div className="h-1 flex-1 rounded-full bg-slate-800 overflow-hidden">
-                                            <div 
+                                            <div
                                               className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-300"
                                               style={{ width: `${pct}%` }}
                                             />
@@ -1625,11 +1668,10 @@ export default function CoursePage() {
                       const quizLocked = !subjAllDone;
                       return (
                         <button
-                          className={`flex w-full items-center gap-3 border-none py-4 pl-[30px] pr-5 text-left transition-colors duration-150 ${
-                            isActiveQuiz
+                          className={`flex w-full items-center gap-3 border-none py-4 pl-[30px] pr-5 text-left transition-colors duration-150 ${isActiveQuiz
                               ? "bg-violet-950/40 text-violet-300 font-bold border-l-[3px] border-violet-500"
                               : "text-slate-400 hover:bg-[#1a2b47]/30 hover:text-slate-200"
-                          }`}
+                            }`}
                           disabled={quizLocked}
                           onClick={() => {
                             if (quizLocked) return;
@@ -1687,11 +1729,10 @@ export default function CoursePage() {
 
         {course?.quiz?.questions?.length > 0 && (
           <button
-            className={`flex w-full items-center gap-3 border-none border-t border-[#1e293b] px-5 py-4.5 text-left transition-colors duration-150 ${
-              activeQuiz === course.quiz
+            className={`flex w-full items-center gap-3 border-none border-t border-[#1e293b] px-5 py-4.5 text-left transition-colors duration-150 ${activeQuiz === course.quiz
                 ? "bg-violet-950/40 text-violet-300 font-bold border-l-[3px] border-violet-500"
                 : "text-slate-400 hover:bg-[#1a2b47]/30 hover:text-slate-200"
-            }`}
+              }`}
             disabled={!courseComplete}
             onClick={() => {
               if (!courseComplete) return;
@@ -1788,33 +1829,6 @@ export default function CoursePage() {
         @media print {
           body { display: none !important; }
         }
-        .watermark-overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          pointer-events: none;
-          z-index: 40;
-          overflow: hidden;
-          opacity: 0.05;
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          grid-template-rows: repeat(3, 1fr);
-          gap: 24px;
-          user-select: none;
-          -webkit-user-select: none;
-        }
-        .watermark-text {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 11px;
-          font-weight: 800;
-          color: #94a3b8;
-          transform: rotate(-25deg);
-          white-space: nowrap;
-        }
         .quiz-btn-hover:hover { background:#111827 !important; }
         .rate-btn:hover { background:#1e293b !important; }
       `}</style>
@@ -1840,32 +1854,19 @@ export default function CoursePage() {
 
       {/* ── Main layout ── */}
       <div className="cp-layout">
-        <div 
+        <div
           className="cp-main"
           style={{
             position: "relative",
-            filter: isFocused ? "none" : "blur(12px)",
-            transition: "filter 0.2s ease",
           }}
         >
-          {/* Watermark overlay */}
-          <div className="watermark-overlay">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <div key={i} className="watermark-text">
-                {watermarkText}
-              </div>
-            ))}
-          </div>
-
-          {!isFocused && (
-            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-sm text-center p-4">
-              <span className="text-4xl mb-2">🔒</span>
-              <h3 className="text-lg font-bold text-white">Security Mode Active</h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-[280px]">
-                Content is blurred because the page lost focus. Click back inside the window to resume.
-              </p>
-            </div>
-          )}
+          <div
+            ref={mainContentRef}
+            style={{
+              filter: isFocused ? "none" : "blur(20px)",
+              transition: "filter 0.3s ease",
+            }}
+          >
           {activeQuiz ? (
             <div className="rounded-[18px] border border-[#1e293b] bg-[#111827] p-4 sm:p-8">
               <QuizViewer
@@ -1904,16 +1905,21 @@ export default function CoursePage() {
                 }}
               />
             </div>
-          ) : isTextLesson ? (
-            <TextLessonViewer lesson={activeLesson} />
           ) : (
-            <VideoPlayer
-              url={activeLesson?.videoUrl}
-              poster={course?.thumbnailUrl}
-              initialTime={initialTime}
-              onEnded={handleLessonEnd}
-              onProgress={handleVideoProgress}
-            />
+            <div onContextMenu={(e) => e.preventDefault()}>
+              {isTextLesson ? (
+                <TextLessonViewer lesson={activeLesson} user={user} />
+              ) : (
+                <VideoPlayer
+                  url={activeLesson?.videoUrl}
+                  poster={course?.thumbnailUrl}
+                  initialTime={initialTime}
+                  onEnded={handleLessonEnd}
+                  onProgress={handleVideoProgress}
+                  user={user}
+                />
+              )}
+            </div>
           )}
 
           {!activeQuiz && (
@@ -2170,72 +2176,89 @@ export default function CoursePage() {
                         >
                           View
                         </a>
-                        <button
-                          onClick={() => {
-                            const ext = note.fileUrl.split(".").pop() || "pdf";
-                            downloadFile(note.fileUrl, `${note.title}.${ext}`);
-                          }}
-                          className="whitespace-nowrap rounded-lg border-none bg-gradient-to-br from-violet-600 to-cyan-500 px-3 py-1.5 text-[10px] font-bold text-white hover:opacity-90"
-                        >
-                          Download
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => {
+                          const ext = note.fileUrl.split(".").pop() || "pdf";
+                          downloadFile(note.fileUrl, `${note.title}.${ext}`);
+                        }}
+                        className="whitespace-nowrap rounded-lg border-none bg-gradient-to-br from-violet-600 to-cyan-500 px-3 py-1.5 text-[10px] font-bold text-white hover:opacity-90"
+                      >
+                        Download
+                      </button>
+                    </div>
                     </div>
                   ))}
-                </div>
+              </div>
               </div>
             )}
-          </div>
+        </div>
         </div>
 
-        {/* ── Sidebar (desktop) ── */}
-        {isDesktop && <div className="cp-sidebar">{sidebarContent}</div>}
+        {!isFocused && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-sm text-center p-4">
+            <span className="text-4xl mb-2">🔒</span>
+            <h3 className="text-lg font-bold text-white">Security Mode Active</h3>
+            <p className="text-xs text-slate-400 mt-1 max-w-[280px]">
+              Content is blurred because the page lost focus. Click back inside the window to resume.
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* ── Sidebar (mobile) ── */}
-      {!isDesktop &&
-        createPortal(
-          <>
-            {mobileSidebarOpen && (
-              <div
-                className="cp-mobile-sidebar-overlay"
-                onClick={() => setMobileSidebarOpen(false)}
-              />
-            )}
-            <div className={`cp-mobile-sidebar${mobileSidebarOpen ? " open" : ""}`}>
-              {sidebarContent}
-            </div>
-          </>,
-          document.body,
-        )}
-
-      {showCertModal && (
-        <CertificateEarnedModal
-          course={course}
-          onClose={() => setShowCertModal(false)}
-          onViewCertificates={() => navigate("/student-dashboard/certificates")}
-        />
-      )}
-
-      {showRating && (
-        <RatingModal
-          course={course}
-          user={user}
-          onClose={() => setShowRating(false)}
-          onSubmitted={(stars) => {
-            setLocalRated(stars);
-            setShowRating(false);
-            const existing = course?.ratings ?? [];
-            const alreadyRated = existing.some((r) => r.user?.toString() === user._id?.toString());
-            const total = existing.reduce((s, r) => s + (r.rating ?? 0), 0);
-            const newTotal = alreadyRated
-              ? total - (userExistingRating?.rating ?? 0) + stars
-              : total + stars;
-            const newCount = alreadyRated ? existing.length : existing.length + 1;
-            setLocalRatingAvg((newTotal / newCount).toFixed(1));
-          }}
-        />
-      )}
+      {/* ── Sidebar (desktop) ── */}
+      {isDesktop && <div className="cp-sidebar">{sidebarContent}</div>}
     </div>
+
+      {/* ── Sidebar (mobile) ── */ }
+  {
+    !isDesktop &&
+    createPortal(
+      <>
+        {mobileSidebarOpen && (
+          <div
+            className="cp-mobile-sidebar-overlay"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+        )}
+        <div className={`cp-mobile-sidebar${mobileSidebarOpen ? " open" : ""}`}>
+          {sidebarContent}
+        </div>
+      </>,
+      document.body,
+    )
+  }
+
+  {
+    showCertModal && (
+      <CertificateEarnedModal
+        course={course}
+        onClose={() => setShowCertModal(false)}
+        onViewCertificates={() => navigate("/student-dashboard/certificates")}
+      />
+    )
+  }
+
+  {
+    showRating && (
+      <RatingModal
+        course={course}
+        user={user}
+        onClose={() => setShowRating(false)}
+        onSubmitted={(stars) => {
+          setLocalRated(stars);
+          setShowRating(false);
+          const existing = course?.ratings ?? [];
+          const alreadyRated = existing.some((r) => r.user?.toString() === user._id?.toString());
+          const total = existing.reduce((s, r) => s + (r.rating ?? 0), 0);
+          const newTotal = alreadyRated
+            ? total - (userExistingRating?.rating ?? 0) + stars
+            : total + stars;
+          const newCount = alreadyRated ? existing.length : existing.length + 1;
+          setLocalRatingAvg((newTotal / newCount).toFixed(1));
+        }}
+      />
+    )
+  }
+    </div >
   );
 }

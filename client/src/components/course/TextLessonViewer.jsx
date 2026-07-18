@@ -57,11 +57,16 @@ const renderMarkdown = (text) => {
 };
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import * as pdfjsLib from "pdfjs-dist";
+
+// Use CDN for worker to avoid local build issues
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 // ── PdfViewer ─────────────────────────────────────────────────────────────────
 function PdfViewer({ pdfUrl }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const iframeRef = useRef(null);
+  const containerRef = useRef(null);
+  const [loading, setLoading] = useState(true);
 
   const displayUrl = useMemo(() => {
     if (!pdfUrl) return "";
@@ -72,55 +77,51 @@ function PdfViewer({ pdfUrl }) {
   }, [pdfUrl]);
 
   useEffect(() => {
-    const handleLoad = () => {
+    let active = true;
+    const renderPdf = async () => {
+      if (!displayUrl) return;
       try {
-        const iframe = iframeRef.current;
-        if (!iframe) return;
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-        if (iframeDoc) {
-          const block = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          };
-          iframeDoc.addEventListener("contextmenu", block, true);
-          iframeDoc.addEventListener("copy", block, true);
-          iframeDoc.addEventListener("cut", block, true);
-          iframeDoc.addEventListener("selectstart", block, true);
-          iframeDoc.addEventListener("keydown", (e) => {
-            if (e.ctrlKey && ["p", "P", "s", "S", "c", "C", "x", "X", "u", "U"].includes(e.key)) {
-              e.preventDefault();
-              e.stopPropagation();
-            }
-            if (e.key === "F12" || (e.ctrlKey && e.shiftKey && ["I", "i", "J", "j", "C", "c"].includes(e.key))) {
-              e.preventDefault();
-              e.stopPropagation();
-            }
-          }, true);
+        setLoading(true);
+        const container = containerRef.current;
+        if (container) container.innerHTML = '';
+        
+        const loadingTask = pdfjsLib.getDocument(displayUrl);
+        const pdf = await loadingTask.promise;
+        
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          if (!active) break;
+          const page = await pdf.getPage(pageNum);
+          const viewport = page.getViewport({ scale: 1.5 });
+          
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          canvas.style.width = "100%";
+          canvas.style.display = "block";
+          canvas.style.marginBottom = "8px";
+          canvas.oncontextmenu = (e) => e.preventDefault();
+          canvas.ondragstart = (e) => e.preventDefault();
+          
+          if (container) container.appendChild(canvas);
+          
+          // Render the actual PDF page content
+          await page.render({ canvasContext: ctx, viewport: viewport }).promise;
         }
       } catch (err) {
-        console.warn("Could not attach anti-theft listeners to same-origin PDF iframe:", err);
+        console.warn("Failed to render PDF:", err);
+      } finally {
+        if (active) setLoading(false);
       }
     };
-
-    const iframe = iframeRef.current;
-    if (iframe) {
-      iframe.addEventListener("load", handleLoad);
-      try {
-        if (iframe.contentDocument || iframe.contentWindow?.document) {
-          handleLoad();
-        }
-      } catch (e) {}
-    }
-    return () => {
-      if (iframe) {
-        iframe.removeEventListener("load", handleLoad);
-      }
-    };
-  }, [pdfUrl]);
+    renderPdf();
+    return () => { active = false; };
+  }, [displayUrl]);
 
   return (
     <div
       className="pdf-viewer-container"
+      onContextMenu={(e) => e.preventDefault()}
       style={
         isFullscreen
           ? {
@@ -130,12 +131,19 @@ function PdfViewer({ pdfUrl }) {
               width: "100vw",
               height: "100vh",
               zIndex: 9999,
-              background: "#000",
+              background: "#0f172a",
               borderRadius: 0,
+              overflowY: "auto",
+              padding: "20px",
             }
-          : {}
+          : { overflowY: "auto", background: "#0f172a", padding: "10px" }
       }
     >
+      {loading && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#94a3b8' }}>
+          Loading document...
+        </div>
+      )}
       {/* Floating Fullscreen Toggle Button */}
       <button
         onClick={() => setIsFullscreen((prev) => !prev)}
@@ -150,7 +158,7 @@ function PdfViewer({ pdfUrl }) {
         style={{
           position: "absolute",
           top: 12,
-          right: 12,
+          right: 32, // Moved slightly left to clear scrollbar
           width: 36,
           height: 36,
           borderRadius: 10,
@@ -185,18 +193,7 @@ function PdfViewer({ pdfUrl }) {
         </svg>
       </button>
 
-      <iframe
-        ref={iframeRef}
-        src={`${displayUrl}#toolbar=0&navpanes=0&scrollbar=1`}
-        title="Lesson PDF"
-        style={{
-          width: "100%",
-          height: "100%",
-          border: "none",
-          background: "#000",
-          display: "block",
-        }}
-      />
+      <div ref={containerRef} style={{ width: "100%", maxWidth: "900px", margin: "0 auto" }} />
     </div>
   );
 }

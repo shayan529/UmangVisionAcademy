@@ -76,6 +76,11 @@ const StaffSidebar = ({
     dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
   });
 
+  const activeOption = dashboardOptions.find((opt) =>
+    window.location.pathname.startsWith(opt.path),
+  );
+  const activeRoleName = activeOption ? activeOption.name : "";
+
   useEffect(() => {
     if (!rolesDropdownOpen) return;
     const handleClose = () => setRolesDropdownOpen(false);
@@ -190,6 +195,11 @@ const StaffSidebar = ({
                 </p>
                 {dashboardOptions.length > 1 ? (
                   <div className="relative">
+                    {activeRoleName && (
+                      <p className="text-indigo-400 text-[10px] font-bold uppercase tracking-wider truncate mt-0.5">
+                        {activeRoleName}
+                      </p>
+                    )}
                     <button
                       type="button"
                       onClick={(e) => {

@@ -929,16 +929,13 @@ function CourseCard({ course, animDelay = 0, onRate }) {
               gap: 8,
             }}
           >
-            <div style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <h3
                 style={{
                   fontSize: 16,
                   fontWeight: 700,
                   color: "#f1f5f9",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  maxWidth: "36ch",
+                  lineHeight: "1.3",
                 }}
               >
                 {course.title}

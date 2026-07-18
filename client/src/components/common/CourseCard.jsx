@@ -42,36 +42,36 @@ const CourseCard = ({ course }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-row md:flex-col h-[150px] md:h-auto p-2.5 md:p-0 gap-3 md:gap-0">
+    <div className="bg-[#111827] border border-slate-800/80 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.4)] hover:shadow-[0_8px_30px_rgba(99,102,241,0.15)] hover:border-indigo-500/50 transition-all duration-300 flex flex-row md:flex-col min-h-[160px] md:min-h-0 md:h-auto p-3.5 md:p-0 gap-3.5 md:gap-0">
       {/* Image */}
       <img
         src={getOptimizedImageUrl(course.image)}
         alt={course.title}
         loading="lazy"
-        className="w-32 h-full md:w-full md:h-48 object-cover rounded-md md:rounded-none shrink-0"
+        className="w-32 h-full md:w-full md:h-48 object-cover rounded-xl md:rounded-none shrink-0"
       />
 
       {/* Content */}
       <div className="flex-1 min-w-0 flex flex-col justify-between p-1 md:p-5">
         <div>
           {/* Title */}
-          <h3 className="text-sm md:text-lg font-semibold text-gray-800 line-clamp-1 md:line-clamp-2 md:min-h-[48px]">
+          <h3 className="text-sm md:text-lg font-bold text-slate-100 line-clamp-2 md:min-h-[48px] leading-snug">
             {course.title}
           </h3>
 
           {/* Instructor */}
-          <div className="mt-0.5 md:mt-1 flex items-center justify-between">
+          <div className="mt-1 md:mt-1.5 flex items-center justify-between">
             {course.instructorId ? (
               <Link
                 to={`/instructors/${course.instructorId}`}
                 onClick={(e) => e.stopPropagation()}
-                className="text-[11px] md:text-sm text-gray-500 hover:text-indigo-600 hover:underline truncate"
+                className="text-[11px] md:text-sm text-slate-400 hover:text-indigo-400 hover:underline truncate"
                 title={course.instructor}
               >
                 {course.instructor}
               </Link>
             ) : (
-              <p className="text-[11px] md:text-sm text-gray-500 truncate">
+              <p className="text-[11px] md:text-sm text-slate-400 truncate">
                 {course.instructor}
               </p>
             )}
@@ -79,7 +79,7 @@ const CourseCard = ({ course }) => {
               <Link
                 to={`/instructors/${course.instructorId}`}
                 onClick={(e) => e.stopPropagation()}
-                className="text-[10px] md:text-[11px] text-indigo-500 hover:text-indigo-600 hover:underline shrink-0 ml-2"
+                className="text-[10px] md:text-[11px] text-indigo-400 hover:text-indigo-300 hover:underline shrink-0 ml-2"
               >
                 {t("courseCard.viewInstructor")}
               </Link>
@@ -87,21 +87,21 @@ const CourseCard = ({ course }) => {
           </div>
 
           {/* Class, board & language */}
-          <div className="flex flex-wrap gap-1.5 md:gap-2 mt-1.5 md:mt-3">
+          <div className="flex flex-wrap gap-1.5 md:gap-2 mt-2 md:mt-3.5">
             {course.category && (
-              <span className="px-2 py-0.5 md:px-3 md:py-1 text-[9px] md:text-xs font-medium rounded-full bg-purple-100 text-purple-700">
+              <span className="px-2 py-0.5 md:px-3 md:py-1 text-[9px] md:text-xs font-semibold rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20">
                 {course.category}
               </span>
             )}
 
             {course.board && (
-              <span className="px-2 py-0.5 md:px-3 md:py-1 text-[9px] md:text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+              <span className="px-2 py-0.5 md:px-3 md:py-1 text-[9px] md:text-xs font-semibold rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">
                 {course.board}
               </span>
             )}
 
             {course.language && (
-              <span className="px-2 py-0.5 md:px-3 md:py-1 text-[9px] md:text-xs font-medium rounded-full bg-emerald-100 text-emerald-700">
+              <span className="px-2 py-0.5 md:px-3 md:py-1 text-[9px] md:text-xs font-semibold rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 {course.language}
               </span>
             )}
@@ -113,24 +113,24 @@ const CourseCard = ({ course }) => {
           <div className="flex items-center justify-between">
             {/* Rating */}
             <div className="flex items-center gap-1">
-              <span className="text-yellow-500 text-xs md:text-sm font-medium">
+              <span className="text-amber-400 text-xs md:text-sm font-bold">
                 ★ {course.rating}
               </span>
-              <span className="text-gray-400 text-[10px] md:text-xs">
+              <span className="text-slate-500 text-[10px] md:text-xs">
                 ({course.reviews})
               </span>
             </div>
 
             {/* Price */}
-            <h2 className="text-sm md:text-xl font-bold text-gray-800">
+            <h2 className="text-sm md:text-xl font-extrabold text-slate-100">
               {course.price}
             </h2>
           </div>
 
-          <div className="mt-2">
+          <div className="mt-2.5">
             {course.enrolled ? (
               <Link to={`/courses/${course._id}`} className="block">
-                <button className="w-full bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 transition text-white py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center">
+                <button className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 hover:shadow-[0_0_15px_rgba(124,58,237,0.4)] transition duration-200 text-white py-1.5 md:py-2.5 rounded-lg text-xs md:text-sm font-bold text-center cursor-pointer border-none">
                   {t("courseCard.continueLearning")}
                 </button>
               </Link>
@@ -139,7 +139,7 @@ const CourseCard = ({ course }) => {
                 <Link to={`/courses/${course._id}/demo`} className="flex-1">
                   <button
                     onClick={(e) => e.stopPropagation()}
-                    className="w-full border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center"
+                    className="w-full border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white hover:bg-slate-800/40 transition py-1.5 md:py-2.5 rounded-lg text-xs md:text-sm font-bold text-center cursor-pointer"
                   >
                     {t("courseCard.viewDemo")}
                   </button>
@@ -148,18 +148,17 @@ const CourseCard = ({ course }) => {
                 <button
                   onClick={handleBuy}
                   disabled={!canEnroll && user}
-                  className={`flex-1 transition text-white py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium text-center ${
-                    (!canEnroll && user)
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-indigo-600 hover:bg-indigo-700"
-                  }`}
+                  className={`flex-1 transition py-1.5 md:py-2.5 rounded-lg text-xs md:text-sm font-bold text-center cursor-pointer border-none ${(!canEnroll && user)
+                      ? "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
+                      : "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white hover:shadow-[0_0_15px_rgba(124,58,237,0.4)]"
+                    }`}
                   title={(!canEnroll && user) ? "Not available for admins or staff" : ""}
                 >
                   {(!canEnroll && user)
                     ? "Locked"
                     : course.rawPrice > 0
-                    ? t("courseCard.buyNow")
-                    : t("courseCard.enrollNow")}
+                      ? t("courseCard.buyNow")
+                      : t("courseCard.enrollNow")}
                 </button>
               </div>
             )}

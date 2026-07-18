@@ -119,6 +119,11 @@ export default function InstructorDashboard() {
     dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
   });
 
+  const activeOption = dashboardOptions.find((opt) =>
+    window.location.pathname.startsWith(opt.path),
+  );
+  const activeRoleName = activeOption ? activeOption.name : "";
+
   useEffect(() => {
     if (!rolesDropdownOpen) return;
     const handleClose = () => setRolesDropdownOpen(false);
@@ -317,6 +322,11 @@ export default function InstructorDashboard() {
               </div>
               {dashboardOptions.length > 1 ? (
                 <div className="relative">
+                  {activeRoleName && (
+                    <div className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider truncate mt-0.5">
+                      {activeRoleName}
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={(e) => {

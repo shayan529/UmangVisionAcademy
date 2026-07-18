@@ -8,10 +8,17 @@ const seedAdminUser = async () => {
   try {
     const existingAdmin = await User.findOne({ phoneNumber: adminPhone });
     if (existingAdmin) {
+      // Check if roles are already ['admin']. If so, avoid bcrypt hashing and DB write on cold starts.
+      const hasAdminRole = existingAdmin.roles && existingAdmin.roles.length === 1 && existingAdmin.roles[0] === "admin";
+      if (hasAdminRole) {
+        console.log("Admin account already exists and is configured correctly:", adminPhone);
+        return;
+      }
+
       existingAdmin.roles = ["admin"];
       existingAdmin.password = adminPassword;
       await existingAdmin.save();
-      console.log("Admin account ensured:", adminPhone);
+      console.log("Admin account updated and ensured:", adminPhone);
       return;
     }
 
