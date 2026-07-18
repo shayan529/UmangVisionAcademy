@@ -9,7 +9,7 @@ import {
   setOtpRecord,
   updateOtpRecord,
 } from "../utils/otpStore.js";
-import { notificationsQueue } from "../utils/queue.js";
+import { getNotificationsQueue } from "../utils/queue.js";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -69,7 +69,7 @@ const sendOtpEmail = async (email, otp, name = "") => {
       </html>
     `;
 
-  await notificationsQueue.add(`email-reset-${email}-${Date.now()}`, {
+  await getNotificationsQueue().add(`email-reset-${email}-${Date.now()}`, {
     type: "email-raw",
     to: email,
     subject: "Password Reset OTP",

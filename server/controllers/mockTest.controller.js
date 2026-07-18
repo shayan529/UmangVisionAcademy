@@ -2,7 +2,7 @@
 import MockTest from "../models/mockTest.model.js";
 import MockTestAttempt from "../models/mockTestAttempt.model.js";
 import { cacheResponse, invalidateCache } from "../utils/redisClient.js";
-import { gradingQueue } from "../utils/queue.js";
+import { getGradingQueue } from "../utils/queue.js";
 
 // ─── INSTRUCTOR ──────────────────────────────────────────────────────────────
 
@@ -251,7 +251,7 @@ export const submitTest = async (req, res) => {
     await attempt.save();
 
     // Enqueue the grading job
-    const job = await gradingQueue.add(`grade-${attempt._id}`, {
+    const job = await getGradingQueue().add(`grade-${attempt._id}`, {
       attemptId: attempt._id,
       answers,
       timeTaken,

@@ -15,7 +15,7 @@ import { invalidateCourseCache } from "./course.controller.js";
 import { sendRegistrationEmail, sendReferralSuccessEmail } from "../utils/Mailer.js";
 import { computeInstructorRating } from "../utils/instructorRating.js";
 import { deleteKey } from "../utils/redisClient.js";
-import { importQueue } from "../utils/queue.js";
+import { getImportQueue } from "../utils/queue.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -497,7 +497,7 @@ export const bulkImportStudents = async (req, res) => {
     // ─────────────────────────────────────────────────────────────────────────
 
     // Enqueue the bulk import job to be processed by the background worker
-    const job = await importQueue.add(`bulk-import-${Date.now()}`, {
+    const job = await getImportQueue().add(`bulk-import-${Date.now()}`, {
       rows,
       targetRole,
       courseIds,
@@ -824,7 +824,7 @@ export const getInstructorPublicProfile = async (req, res) => {
 export const getBulkImportStatus = async (req, res) => {
   try {
     const { jobId } = req.params;
-    const job = await importQueue.getJob(jobId);
+    const job = await getImportQueue().getJob(jobId);
 
     if (!job) {
       return res.status(404).json({ success: false, message: "Import job not found" });

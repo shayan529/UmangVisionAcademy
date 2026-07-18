@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { notificationsQueue } from './queue.js';
+import { getNotificationsQueue } from './queue.js';
 
 /* ──────────────────────────────────────────────
    Required .env variables:
@@ -145,7 +145,7 @@ const buildOtpEmail = (otp, recipientEmail) => ({
 /* ── Exported send function ── */
 export const sendOtpEmail = async (recipientEmail, otp) => {
   if (process.env.IS_WORKER !== "true") {
-    const job = await notificationsQueue.add(`email-otp-${recipientEmail}-${Date.now()}`, {
+    const job = await getNotificationsQueue().add(`email-otp-${recipientEmail}-${Date.now()}`, {
       type: "email-otp",
       recipientEmail,
       otp,
@@ -164,7 +164,7 @@ export const sendOtpEmail = async (recipientEmail, otp) => {
 export const sendThemedEmail = async (to, subject, title, bodyHtml) => {
   if (!to) return null;
   if (process.env.IS_WORKER !== "true") {
-    const job = await notificationsQueue.add(`email-themed-${to}-${Date.now()}`, {
+    const job = await getNotificationsQueue().add(`email-themed-${to}-${Date.now()}`, {
       type: "email-themed",
       to,
       subject,
@@ -301,7 +301,7 @@ export const sendSubscriptionCancellationEmail = (email, name, planName) => {
 
 export const sendContactEmail = async (name, email, subject, message) => {
   if (process.env.IS_WORKER !== "true") {
-    const job = await notificationsQueue.add(`email-contact-${Date.now()}`, {
+    const job = await getNotificationsQueue().add(`email-contact-${Date.now()}`, {
       type: "email-contact",
       name,
       email,

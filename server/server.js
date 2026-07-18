@@ -215,6 +215,34 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Ensure DB is connected before handling any API request (critical for Vercel) ──
+// On Vercel Serverless, the module is imported and the first request arrives
+// immediately — before the async ConnectDb().then() at the bottom has resolved.
+// Without this middleware, Mongoose buffers operations for up to 30 seconds.
+let dbReady = false;
+let dbConnectPromise = null;
+
+const ensureDbConnected = async (req, res, next) => {
+  if (dbReady) return next();
+
+  try {
+    if (!dbConnectPromise) {
+      dbConnectPromise = (async () => {
+        await ConnectDb();
+        await connectRedis().catch(() => undefined);
+        dbReady = true;
+      })();
+    }
+    await dbConnectPromise;
+    next();
+  } catch (err) {
+    console.error("[ensureDbConnected] Failed:", err);
+    res.status(503).json({ success: false, message: "Service temporarily unavailable" });
+  }
+};
+
+app.use("/api", ensureDbConnected);
+
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.get("/api", (req, res) => {
   res.json({ message: "API is running" });
@@ -318,24 +346,28 @@ const setupRedisAdapter = async () => {
 };
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-ConnectDb()
-  .then(async () => {
-    await connectRedis().catch(() => undefined);
-    
-    if (!isVercel) {
+// On Vercel, @vercel/node imports this file and uses the default export (the
+// Express app) as the serverless handler. DB connection is handled lazily by
+// the ensureDbConnected middleware above, so we only need to start an HTTP
+// server in non-Vercel environments (local dev, Render, etc.).
+if (!isVercel) {
+  ConnectDb()
+    .then(async () => {
+      dbReady = true;
+      await connectRedis().catch(() => undefined);
       await setupRedisAdapter();
-      // Start live session reminders scheduler
       startSessionReminderScheduler();
-    } else {
-      console.log("[Server] Running in Vercel Serverless environment - skipping Socket.IO Redis adapter & session scheduler");
-    }
 
-    httpServer.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log(`Allowed CORS origins: ${ALLOWED_ORIGINS.join(", ")}`);
+      httpServer.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+        console.log(`Allowed CORS origins: ${ALLOWED_ORIGINS.join(", ")}`);
+      });
+    })
+    .catch((err) => {
+      console.error("Error connecting to MongoDB:", err);
+      process.exit(1);
     });
-  })
-  .catch((err) => {
-    console.error("Error connecting to MongoDB:", err);
-    process.exit(1);
-  });
+}
+
+// Export for Vercel Serverless (@vercel/node uses the default export)
+export default app;
