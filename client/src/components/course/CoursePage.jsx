@@ -1824,7 +1824,7 @@ export default function CoursePage() {
           position:fixed; inset:0; top:57px; background:rgba(0,0,0,0.5); z-index:1000;
           touch-action:none;
         }
-        .cp-topbar-title { font-size:14px; font-weight:700; color:#f1f5f9; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .cp-topbar-title { font-size:14px; font-weight:700; color:#f1f5f9; flex:1; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; line-height:1.25; }
         @media (min-width:768px) { .cp-topbar-title { font-size:15px; } }
         @media print {
           body { display: none !important; }
