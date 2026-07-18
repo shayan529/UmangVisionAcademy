@@ -187,7 +187,8 @@
     "invalidOtp": "Invalid OTP. Please try again.",
     "failedOtp": "Failed to send OTP. Please try again.",
     "failedResend": "Failed to resend OTP.",
-    "enterFullOtp": "Please enter the full 6-digit OTP."
+    "enterFullOtp": "Please enter the full 6-digit OTP.",
+    "notifyReset": "Notify on reset"
   },
   "wallet": {
     "title": "My Wallet",
@@ -760,7 +761,7 @@
     "supportCards": {
       "email": {
         "title": "📧 Email Support",
-        "detail": "umangvisionacademy@gmail.com "
+        "detail": "umangvisionacademy@gmail.com"
       },
       "business": {
         "title": "🏢 Business Inquiries",
@@ -1006,6 +1007,7 @@
     "aiTutor": "AI Tutor",
     "community": "Community",
     "certificates": "Certificates",
+    "achievements": "Achievements",
     "settings": "Settings",
     "leaderboard": "Leaderboard",
     "welcomeBack": "Welcome Back, {{name}} 👋",
@@ -1151,6 +1153,7 @@
     "noTransactionsFiltered": "Nothing matches this filter yet.",
     "showingRecent": "Showing your most recent {{count}} transaction.",
     "showingRecent_plural": "Showing your most recent {{count}} transactions.",
+    "showingRecent_one": "Showing your most recent {{count}} transaction.",
     "filter": {
       "all": "All",
       "purchase": "Course Purchases",
@@ -1697,7 +1700,7 @@
   "adminSidebar": {
     "panel": "Admin Panel",
     "overview": "Overview",
-    "leaderboard": "Leaderboard",
+    "leaderboard": "Instructor Leaderboard",
     "students": "Students",
     "instructors": "Instructors",
     "courses": "Courses",
@@ -1710,7 +1713,8 @@
     "roles": "Roles & Permissions",
     "devices": "Logged In Devices",
     "logout": "Logout",
-    "payments": "Payments"
+    "payments": "Payments",
+    "mockTests": "Mock Tests"
   },
   "adminOverview": {
     "totalRevenue": "Total Revenue",

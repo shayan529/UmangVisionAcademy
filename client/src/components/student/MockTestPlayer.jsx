@@ -96,7 +96,8 @@ export default function MockTestPlayer() {
     }));
 
     try {
-      const result = await dispatch(
+      // Submit queues grading — response has { attemptId } not a full result
+      await dispatch(
         submitMockTest({
           attemptId: activeTest.attemptId,
           answers: answersArray,
@@ -106,9 +107,6 @@ export default function MockTestPlayer() {
       dispatch(
         checkAndAwardAchievements({
           mockTestsCompleted: 1,
-          leaderboardFirst: result.percentage === 100,
-          perfectQuiz: result.percentage === 100,
-          fullMarks: result.percentage === 100,
         }),
       );
       toast.success(
@@ -116,7 +114,7 @@ export default function MockTestPlayer() {
       );
       navigate(`/student-dashboard/mock-tests/result/${activeTest.attemptId}`);
     } catch (err) {
-      toast.error(err || "Submission failed");
+      toast.error(typeof err === "string" ? err : "Submission failed. Please try again.");
       setSubmitting(false);
     }
   };

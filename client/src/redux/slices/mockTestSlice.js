@@ -39,7 +39,9 @@ export const submitMockTest = createAsyncThunk(
         `${BASE}/attempts/${attemptId}/submit`,
         { answers, timeTaken },
       );
-      return data.result;
+      // Grading is async (queued) — the API returns { success, attemptId, jobId }.
+      // We store the attemptId so the result page can poll for completion.
+      return { attemptId: data.attemptId || attemptId };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -164,6 +166,9 @@ const mockTestSlice = createSlice({
       state.activeTest = null;
       state.currentResult = null;
     },
+    clearCurrentResult: (state) => {
+      state.currentResult = null;
+    },
     clearError: (state) => {
       state.error = null;
     },
@@ -197,18 +202,21 @@ const mockTestSlice = createSlice({
 
       // Submit test
       .addCase(submitMockTest.pending, setLoading)
-      .addCase(submitMockTest.fulfilled, (state, action) => {
+      .addCase(submitMockTest.fulfilled, (state) => {
         state.loading = false;
-        state.currentResult = action.payload;
+        // Grading is async — currentResult stays null until fetchAttemptResult resolves.
+        // The player navigates to the result page which polls fetchAttemptResult.
         state.activeTest = null;
       })
       .addCase(submitMockTest.rejected, setError)
 
-      // Fetch result
+      // Fetch result — grading is synchronous so result is always complete
       .addCase(fetchAttemptResult.pending, setLoading)
       .addCase(fetchAttemptResult.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentResult = action.payload;
+        if (action.payload) {
+          state.currentResult = action.payload;
+        }
       })
       .addCase(fetchAttemptResult.rejected, setError)
 
@@ -269,5 +277,5 @@ const mockTestSlice = createSlice({
   },
 });
 
-export const { clearActiveTest, clearError } = mockTestSlice.actions;
+export const { clearActiveTest, clearCurrentResult, clearError } = mockTestSlice.actions;
 export default mockTestSlice.reducer;

@@ -57,8 +57,6 @@ const StudentReferences = lazy(() => import("./components/student/StudentReferen
 const MockTestsLayout = lazy(() => import("./components/student/MockTestsIndex"));
 const AvailableMockTests = lazy(() => import("./components/student/AvailableMockTests"));
 const MockTestPlayer = lazy(() => import("./components/student/MockTestPlayer"));
-const MockTestResultsAnalytics = lazy(() => import("./components/student/MockTestResultsAnalytics"));
-const MockTestLeaderboard = lazy(() => import("./components/student/MockTestLeaderboard"));
 
 /* Instructor Dashboard */
 const InstructorDashboard = lazy(() => import("./components/instructor/InstructorDashboard"));
@@ -382,13 +380,10 @@ function App() {
             <Route path="my-reels" element={<MyReels />} />
             <Route path="purchase-history" element={<PurchaseHistory />} />
 
-            {/* ── Mock Tests (nested layout with sub-nav) ── */}
+            {/* ── Mock Tests ── */}
             <Route path="mock-tests" element={<MockTestsLayout />}>
               <Route index element={<AvailableMockTests />} />
-              <Route path="results" element={<MockTestResultsAnalytics />} />
-              <Route path="leaderboard" element={<MockTestLeaderboard />} />
-              <Route path="leaderboard/:testId" element={<MockTestLeaderboard />} />
-              <Route path="result/:attemptId" element={<MockTestResultsAnalytics />} />
+              <Route path="result/:attemptId" element={<AvailableMockTests />} />
             </Route>
           </Route>
 

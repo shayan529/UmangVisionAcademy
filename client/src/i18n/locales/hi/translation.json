@@ -270,7 +270,7 @@
     "base": {
       "title": "एकेडमी एक्सेस प्लान",
       "price": "₹100",
-      "period": "महीना",
+      "period": "वर्ष",
       "desc": "अपनी चुनी हुई कक्षा (कक्षा 9 से 12) के सभी पाठ्यक्रमों तक पूरी पहुँच प्राप्त करें।",
       "features": [
         "एक कक्षा चुनें (कक्षा 9 से 12)",
@@ -284,7 +284,7 @@
     "premium": {
       "title": "प्रीमियम",
       "price": "₹500",
-      "period": "महीना",
+      "period": "वर्ष",
       "desc": "बेस के अलावा सब कुछ, साथ ही गंभीर परीक्षा की तैयारी के लिए लाइव सपोर्ट और गहन वैयक्तिकरण।",
       "button": "प्रीमियम लें",
       "features": [
@@ -602,7 +602,7 @@
       },
       "contact": {
         "title": "9. संपर्क सूचना",
-        "body": "इन शर्तों के बारे में प्रश्नों के लिए, support@umangacademy.com पर हमसे संपर्क करें।"
+        "body": "इन शर्तों के बारे में प्रश्नों के लिए, umangvisionacademy@gmail.com पर हमसे संपर्क करें।"
       }
     }
   },
@@ -761,11 +761,11 @@
     "supportCards": {
       "email": {
         "title": "📧 ईमेल सहायता",
-        "detail": "umangvisionacademy@gmail.com "
+        "detail": "umangvisionacademy@gmail.com"
       },
       "business": {
         "title": "🏢 व्यावसायिक पूछताछ",
-        "detail": "umangvisionacademy@gmail.com "
+        "detail": "umangvisionacademy@gmail.com"
       }
     },
     "form": {
@@ -1152,6 +1152,7 @@
     "noTransactionsAll": "आपकी खरीद, सदस्यता, धन जोड़ना और रिडेम्प्शन यहाँ दिखाई देंगे।",
     "noTransactionsFiltered": "इस फ़िल्टर से कोई रिकॉर्ड नहीं मिला।",
     "showingRecent": "आपके हाल के {{count}} लेन-देन दिखाए जा रहे हैं।",
+    "showingRecent_plural": "आपके हाल के {{count}} लेन-देन दिखाए जा रहे हैं।",
     "showingRecent_one": "आपका हाल का {{count}} लेन-देन दिखाया जा रहा है।",
     "filter": {
       "all": "सभी",
@@ -1699,7 +1700,7 @@
   "adminSidebar": {
     "panel": "एडमिन पैनल",
     "overview": "अवलोकन",
-    "leaderboard": "लीडरबोर्ड",
+    "leaderboard": "शिक्षक लीडरबोर्ड",
     "students": "छात्र",
     "instructors": "शिक्षक",
     "courses": "पाठ्यक्रम",
@@ -1712,7 +1713,8 @@
     "roles": "भूमिकाएं और अनुमतियां",
     "devices": "लॉग इन किए गए उपकरण",
     "logout": "लॉगआउट",
-    "payments": "भुगतान"
+    "payments": "भुगतान",
+    "mockTests": "मॉक टेस्ट"
   },
   "adminOverview": {
     "totalRevenue": "कुल राजस्व",

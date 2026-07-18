@@ -2,7 +2,7 @@ import React from "react";
 import { Star, Trophy, Medal, Award, ChevronUp, ChevronDown } from "lucide-react";
 
 /* ─── helpers ─────────────────────────────────────────── */
-const fmt = (n) => (n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n}`);
+const fmt = (n) => (n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : `₹${n}`);
 const hue = (name = "?") => {
   const palette = [
     "#7c3aed",

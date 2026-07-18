@@ -377,7 +377,7 @@ const IconBtn = ({ onClick, title, children, color, t }) => (
 );
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-const getChatStorageKey = (role) => `mobile-ai-chat-state-${role}-v1`;
+const getChatStorageKey = (role) => `${role}-ai-chat-state-v1`;
 
 const readPersistedChatState = (role) => {
   if (typeof window === "undefined") return null;
@@ -618,14 +618,86 @@ export default function MobileChat() {
   }, [dispatch]);
 
   useEffect(() => {
-    writePersistedChatState({
-      sessions,
-      activeId: activeIdRef.current,
-      messages,
-      input,
-      mode,
-    });
-  }, [sessions, activeId, messages, input, mode]);
+    if (activeRole === lastLoadedRoleRef.current) {
+      writePersistedChatState(activeRole, {
+        sessions,
+        activeId: activeIdRef.current,
+        messages,
+        input,
+        mode,
+      });
+    }
+  }, [activeRole, sessions, activeId, messages, input, mode]);
+
+  const handleRoleChange = useCallback(
+    (newRole) => {
+      if (newRole === activeRole) return;
+
+      cancelStream();
+
+      // 1. Save current role's state to localStorage under the current activeRole
+      writePersistedChatState(activeRole, {
+        sessions,
+        activeId: activeIdRef.current,
+        messages,
+        input,
+        mode,
+      });
+
+      // 2. Persist the active role preference
+      window.localStorage.setItem("mobile-chat-role", newRole);
+
+      // 3. Update activeRole and lastLoadedRoleRef
+      setActiveRole(newRole);
+      lastLoadedRoleRef.current = newRole;
+
+      // 4. Load the new role's state from localStorage
+      const persisted = readPersistedChatState(newRole);
+      if (persisted?.sessions?.length) {
+        const newActiveId = persisted.activeId || persisted.sessions[0].id;
+        setSessions(persisted.sessions);
+        setActiveId(newActiveId);
+        activeIdRef.current = newActiveId;
+
+        if (Array.isArray(persisted.messages)) {
+          dispatch({ type: "aiTutor/setMessages", payload: persisted.messages });
+        } else if (newActiveId) {
+          const restoredSession = persisted.sessions.find(
+            (s) => s.id === newActiveId,
+          );
+          dispatch({
+            type: "aiTutor/setMessages",
+            payload: restoredSession?.messages || [],
+          });
+        }
+
+        dispatch(
+          setInput(persisted.input !== undefined ? persisted.input : ""),
+        );
+        dispatch(setMode(persisted.mode || "text"));
+      } else {
+        // Initialize clean state for new role
+        const id = newId();
+        const created = new Date();
+        setSessions([
+          {
+            id,
+            title: "New conversation",
+            time: timeStr(created),
+            dateLabel: dateLabel(created),
+            messages: [],
+          },
+        ]);
+        setActiveId(id);
+        activeIdRef.current = id;
+        dispatch({ type: "aiTutor/clearMessages" });
+        dispatch(setInput(""));
+        dispatch(setMode("text"));
+      }
+      dispatch(setError(null));
+    },
+    [activeRole, sessions, messages, input, mode, dispatch, cancelStream],
+  );
 
   // Close sidebar on mobile when navigating
   useEffect(() => {

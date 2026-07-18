@@ -13,8 +13,14 @@ import {
   getMyResults,
   getLeaderboard,
   getStudentAnalytics,
+  adminGetAllTests,
+  adminCreateMockTest,
+  adminUpdateMockTest,
+  adminDeleteMockTest,
+  adminAssignMockTest,
+  adminTogglePublish,
 } from "../controllers/mockTest.controller.js";
-import { protect, authorizeRoles } from "../middleware/auth.middleware.js";
+import { protect, authorizeRoles, adminOnly } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
@@ -48,5 +54,14 @@ router.patch(
   authorizeRoles("instructor", "admin"),
   togglePublish,
 ); // PATCH /api/mock-tests/:id/publish
+
+// ── Admin routes ────────────────────────────────────────────
+// All admin routes require the "admin" base role.
+router.get("/admin/all", adminOnly, adminGetAllTests);               // GET    /api/mock-tests/admin/all
+router.post("/admin", adminOnly, adminCreateMockTest);               // POST   /api/mock-tests/admin
+router.put("/admin/:id", adminOnly, adminUpdateMockTest);            // PUT    /api/mock-tests/admin/:id
+router.delete("/admin/:id", adminOnly, adminDeleteMockTest);         // DELETE /api/mock-tests/admin/:id
+router.patch("/admin/:id/assign", adminOnly, adminAssignMockTest);   // PATCH  /api/mock-tests/admin/:id/assign
+router.patch("/admin/:id/publish", adminOnly, adminTogglePublish);   // PATCH  /api/mock-tests/admin/:id/publish
 
 export default router;

@@ -1,9 +1,79 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback, memo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchLeaderboard } from "../../redux/slices/studentSlice";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { getCitiesForState, INDIA_STATES } from "../../data/indiaLocations";
+
+// ── LeaderBoard row — memoised so unchanged rows never re-render ──────────────
+const LeaderRow = memo(({ student, rank, isCurrentUser, coinsToRupees, t }) => {
+  const studentCoins = student.coins ?? 0;
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "16px",
+        borderRadius: 14,
+        marginBottom: 10,
+        background: isCurrentUser ? "rgba(124,58,237,0.12)" : "#0f172a",
+        border: isCurrentUser ? "1px solid #7c3aed" : "1px solid #1e293b",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div
+          style={{
+            width: 42,
+            height: 42,
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: 800,
+            fontSize: rank <= 3 ? 20 : 15,
+            color: "#fff",
+            background:
+              rank === 1
+                ? "#eab308"
+                : rank === 2
+                  ? "#94a3b8"
+                  : rank === 3
+                    ? "#d97706"
+                    : "#334155",
+          }}
+        >
+          {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : rank}
+        </div>
+        <div>
+          <p style={{ margin: 0, color: "#f8fafc", fontWeight: 700 }}>
+            {student.name}
+          </p>
+          <p style={{ margin: 0, color: "#64748b", fontSize: 12 }}>
+            {[student.city, student.state].filter(Boolean).join(", ") ||
+              t("studentLeaderboard.student")}
+          </p>
+        </div>
+      </div>
+      <div style={{ textAlign: "right" }}>
+        <div style={{ color: "#fde68a", fontWeight: 700, fontSize: 15 }}>
+          🪙 {studentCoins} coins
+        </div>
+        <div style={{ color: "#94a3b8", fontSize: 11, marginTop: 2 }}>
+          ≈ ₹{coinsToRupees(studentCoins)}
+        </div>
+      </div>
+    </div>
+  );
+});
+LeaderRow.displayName = "LeaderRow";
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+const COINS_PER_RUPEE = 25;
+const coinsToRupees = (c) => (c / COINS_PER_RUPEE).toFixed(2);
+
+// How many rows to render initially — the rest load on scroll
+const INITIAL_VISIBLE = 50;
 
 const LeaderBoard = () => {
   const dispatch = useDispatch();
@@ -14,6 +84,7 @@ const LeaderBoard = () => {
   const [selectedState, setSelectedState] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [showPointsInfo, setShowPointsInfo] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
 
   useEffect(() => {
     dispatch(fetchLeaderboard());
@@ -21,67 +92,108 @@ const LeaderBoard = () => {
 
   const currentUserId = user?._id ?? user?.id;
 
-  const states = INDIA_STATES;
-  const cities = selectedState ? getCitiesForState(selectedState) : [];
-
-  const rankedLeaderboard = [...(leaderboard ?? [])].sort(
-    (a, b) => (b.coins ?? 0) - (a.coins ?? 0),
+  const cities = useMemo(
+    () => (selectedState ? getCitiesForState(selectedState) : []),
+    [selectedState],
   );
 
-  const filteredLeaderboard = rankedLeaderboard.filter((student) => {
-    const stateMatch = !selectedState || student.state === selectedState;
-    const cityMatch = !selectedCity || student.city === selectedCity;
-    return stateMatch && cityMatch;
-  });
-
-  const sorted = filteredLeaderboard;
-
-  const currentRank =
-    rankedLeaderboard.findIndex(
-      (student) =>
-        student._id === currentUserId || student.id === currentUserId,
-    ) + 1;
-
-  const currentUser = rankedLeaderboard.find(
-    (s) => s._id === currentUserId || s.id === currentUserId,
+  // Sort once — useMemo prevents a re-sort on every render caused by parent
+  // state changes that have nothing to do with the leaderboard data.
+  const rankedLeaderboard = useMemo(
+    () =>
+      [...(leaderboard ?? [])].sort((a, b) => (b.coins ?? 0) - (a.coins ?? 0)),
+    [leaderboard],
   );
-  const myCoins = currentUser?.coins ?? 0;
 
-  const COINS_PER_RUPEE = 25;
-  const coinsToRupees = (c) => (c / COINS_PER_RUPEE).toFixed(2);
+  const filteredLeaderboard = useMemo(() => {
+    if (!selectedState && !selectedCity) return rankedLeaderboard;
+    return rankedLeaderboard.filter((s) => {
+      const stateMatch = !selectedState || s.state === selectedState;
+      const cityMatch = !selectedCity || s.city === selectedCity;
+      return stateMatch && cityMatch;
+    });
+  }, [rankedLeaderboard, selectedState, selectedCity]);
 
-  const COIN_ACTIVITIES = [
-    {
-      icon: "📅",
-      label: t("studentLeaderboard.dailyLogin"),
-      coins: 1,
-      desc: t("studentLeaderboard.dailyLoginDesc"),
-    },
-    {
-      icon: "📚",
-      label: t("studentLeaderboard.completeCourse"),
-      coins: 25,
-      desc: t("studentLeaderboard.completeCourseDesc"),
-    },
-    {
-      icon: "🏆",
-      label: t("studentLeaderboard.earnCertificate"),
-      coins: 25,
-      desc: t("studentLeaderboard.earnCertificateDesc"),
-    },
-    {
-      icon: "🏅",
-      label: t("studentLeaderboard.earnAchievements", "Earn Achievements"),
-      coins: "10-50",
-      desc: t("studentLeaderboard.earnAchievementsDesc", "Unlock badges for making progress in your courses and tests"),
-    },
-    {
-      icon: "✉️",
-      label: t("studentLeaderboard.inviteFriends", "Invite Friends"),
-      coins: 50,
-      desc: t("studentLeaderboard.inviteFriendsDesc", "Get bonus coins when a friend registers using your link"),
-    },
-  ];
+  // Reset visible count when the filter changes
+  useEffect(() => {
+    setVisibleCount(INITIAL_VISIBLE);
+  }, [filteredLeaderboard]);
+
+  const currentRank = useMemo(
+    () =>
+      rankedLeaderboard.findIndex(
+        (s) => s._id === currentUserId || s.id === currentUserId,
+      ) + 1,
+    [rankedLeaderboard, currentUserId],
+  );
+
+  const myCoins = useMemo(() => {
+    const me = rankedLeaderboard.find(
+      (s) => s._id === currentUserId || s.id === currentUserId,
+    );
+    return me?.coins ?? 0;
+  }, [rankedLeaderboard, currentUserId]);
+
+  const COIN_ACTIVITIES = useMemo(
+    () => [
+      {
+        icon: "📅",
+        label: t("studentLeaderboard.dailyLogin"),
+        coins: 1,
+        desc: t("studentLeaderboard.dailyLoginDesc"),
+      },
+      {
+        icon: "📚",
+        label: t("studentLeaderboard.completeCourse"),
+        coins: 25,
+        desc: t("studentLeaderboard.completeCourseDesc"),
+      },
+      {
+        icon: "🏆",
+        label: t("studentLeaderboard.earnCertificate"),
+        coins: 25,
+        desc: t("studentLeaderboard.earnCertificateDesc"),
+      },
+      {
+        icon: "🏅",
+        label: t("studentLeaderboard.earnAchievements"),
+        coins: "10-50",
+        desc: t("studentLeaderboard.earnAchievementsDesc"),
+      },
+      {
+        icon: "✉️",
+        label: t("studentLeaderboard.inviteFriends"),
+        coins: 50,
+        desc: t("studentLeaderboard.inviteFriendsDesc"),
+      },
+    ],
+    [t],
+  );
+
+  const handleStateChange = useCallback((e) => {
+    setSelectedState(e.target.value);
+    setSelectedCity("");
+  }, []);
+
+  const handleCityChange = useCallback((e) => {
+    setSelectedCity(e.target.value);
+  }, []);
+
+  const togglePointsInfo = useCallback(
+    () => setShowPointsInfo((prev) => !prev),
+    [],
+  );
+
+  const closePointsInfo = useCallback(() => setShowPointsInfo(false), []);
+
+  // Visible slice — render only what fits on screen initially; "load more"
+  // on scroll prevents the DOM from having 500 nodes at once.
+  const visibleRows = filteredLeaderboard.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredLeaderboard.length;
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleCount((c) => c + 50);
+  }, []);
 
   return (
     <div
@@ -105,36 +217,17 @@ const LeaderBoard = () => {
       >
         <div>
           <h2
-            style={{
-              fontSize: 24,
-              fontWeight: 800,
-              color: "#f8fafc",
-              margin: 0,
-            }}
+            style={{ fontSize: 24, fontWeight: 800, color: "#f8fafc", margin: 0 }}
           >
             🏆 {t("studentLeaderboard.title")}
           </h2>
-          <p
-            style={{
-              color: "#64748b",
-              marginTop: 6,
-              fontSize: 14,
-              margin: "6px 0 0",
-            }}
-          >
+          <p style={{ color: "#64748b", marginTop: 6, fontSize: 14, margin: "6px 0 0" }}>
             {t("studentLeaderboard.subtitle")}
           </p>
         </div>
 
         {/* Rank + coin badge */}
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
-        >
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           {/* My coins */}
           <div
             style={{
@@ -155,7 +248,7 @@ const LeaderBoard = () => {
               (₹{coinsToRupees(myCoins)})
             </span>
             <button
-              onClick={() => setShowPointsInfo((prev) => !prev)}
+              onClick={togglePointsInfo}
               style={{
                 width: 20,
                 height: 20,
@@ -177,7 +270,7 @@ const LeaderBoard = () => {
             </button>
           </div>
 
-          {/* Rank badge with ? tooltip */}
+          {/* Rank badge */}
           <div style={{ position: "relative" }}>
             <div
               style={{
@@ -193,7 +286,7 @@ const LeaderBoard = () => {
               }}
             >
               <button
-                onClick={() => setShowPointsInfo((prev) => !prev)}
+                onClick={togglePointsInfo}
                 style={{
                   width: 22,
                   height: 22,
@@ -220,11 +313,11 @@ const LeaderBoard = () => {
               })}
             </div>
 
-            {/* Info modal */}
+            {/* Info modal — rendered via portal so it escapes any overflow:hidden parent */}
             {showPointsInfo &&
               createPortal(
                 <div
-                  onClick={() => setShowPointsInfo(false)}
+                  onClick={closePointsInfo}
                   style={{
                     position: "fixed",
                     inset: 0,
@@ -247,7 +340,6 @@ const LeaderBoard = () => {
                       margin: "0 16px",
                     }}
                   >
-                    {/* Modal header */}
                     <div
                       style={{
                         display: "flex",
@@ -257,28 +349,15 @@ const LeaderBoard = () => {
                       }}
                     >
                       <div>
-                        <h3
-                          style={{
-                            margin: 0,
-                            fontSize: 18,
-                            fontWeight: 800,
-                            color: "#f8fafc",
-                          }}
-                        >
+                        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#f8fafc" }}>
                           🪙 {t("studentLeaderboard.howCoinsEarned")}
                         </h3>
-                        <p
-                          style={{
-                            margin: "4px 0 0",
-                            fontSize: 13,
-                            color: "#64748b",
-                          }}
-                        >
+                        <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>
                           {t("studentLeaderboard.completeActivities")}
                         </p>
                       </div>
                       <button
-                        onClick={() => setShowPointsInfo(false)}
+                        onClick={closePointsInfo}
                         style={{
                           background: "#0f172a",
                           border: "1px solid #334155",
@@ -298,14 +377,7 @@ const LeaderBoard = () => {
                       </button>
                     </div>
 
-                    {/* Coin activities */}
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 10,
-                      }}
-                    >
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       {COIN_ACTIVITIES.map(({ icon, label, coins, desc }) => (
                         <div
                           key={label}
@@ -319,26 +391,12 @@ const LeaderBoard = () => {
                             padding: "14px 16px",
                           }}
                         >
-                          <span style={{ fontSize: 24, flexShrink: 0 }}>
-                            {icon}
-                          </span>
+                          <span style={{ fontSize: 24, flexShrink: 0 }}>{icon}</span>
                           <div style={{ flex: 1 }}>
-                            <div
-                              style={{
-                                fontSize: 14,
-                                color: "#f8fafc",
-                                fontWeight: 700,
-                              }}
-                            >
+                            <div style={{ fontSize: 14, color: "#f8fafc", fontWeight: 700 }}>
                               {label}
                             </div>
-                            <div
-                              style={{
-                                fontSize: 12,
-                                color: "#64748b",
-                                marginTop: 2,
-                              }}
-                            >
+                            <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
                               {desc}
                             </div>
                           </div>
@@ -360,7 +418,6 @@ const LeaderBoard = () => {
                       ))}
                     </div>
 
-                    {/* Conversion note */}
                     <div
                       style={{
                         marginTop: 16,
@@ -371,23 +428,10 @@ const LeaderBoard = () => {
                         textAlign: "center",
                       }}
                     >
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: 13,
-                          color: "#c4b5fd",
-                          fontWeight: 700,
-                        }}
-                      >
+                      <p style={{ margin: 0, fontSize: 13, color: "#c4b5fd", fontWeight: 700 }}>
                         💡 {t("studentLeaderboard.coinsConversion")}
                       </p>
-                      <p
-                        style={{
-                          margin: "4px 0 0",
-                          fontSize: 12,
-                          color: "#7c3aed",
-                        }}
-                      >
+                      <p style={{ margin: "4px 0 0", fontSize: 12, color: "#7c3aed" }}>
                         {t("studentLeaderboard.coinsRedeemHint")}
                       </p>
                     </div>
@@ -400,15 +444,10 @@ const LeaderBoard = () => {
       </div>
 
       {/* Filters */}
-      <div
-        style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}
-      >
+      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         <select
           value={selectedState}
-          onChange={(e) => {
-            setSelectedState(e.target.value);
-            setSelectedCity("");
-          }}
+          onChange={handleStateChange}
           style={{
             padding: "10px 14px",
             borderRadius: 10,
@@ -419,7 +458,7 @@ const LeaderBoard = () => {
           }}
         >
           <option value="">{t("studentLeaderboard.allStates")}</option>
-          {states.map((state) => (
+          {INDIA_STATES.map((state) => (
             <option key={state} value={state}>
               {state}
             </option>
@@ -428,7 +467,7 @@ const LeaderBoard = () => {
 
         <select
           value={selectedCity}
-          onChange={(e) => setSelectedCity(e.target.value)}
+          onChange={handleCityChange}
           disabled={!selectedState}
           style={{
             padding: "10px 14px",
@@ -444,7 +483,7 @@ const LeaderBoard = () => {
           <option value="">
             {selectedState
               ? t("studentLeaderboard.allCities")
-              : t("studentLeaderboard.selectStateFirst", "Select a state first")}
+              : t("studentLeaderboard.selectStateFirst")}
           </option>
           {cities.map((city) => (
             <option key={city} value={city}>
@@ -456,92 +495,51 @@ const LeaderBoard = () => {
 
       {/* Leaderboard list */}
       {leaderboardLoading ? (
-        <div style={{ color: "#94a3b8" }}>
-          {t("studentLeaderboard.loading")}
-        </div>
-      ) : sorted.length === 0 ? (
+        <div style={{ color: "#94a3b8" }}>{t("studentLeaderboard.loading")}</div>
+      ) : visibleRows.length === 0 ? (
         <div style={{ color: "#94a3b8" }}>{t("studentLeaderboard.empty")}</div>
       ) : (
-        sorted.map((student) => {
-          const rank =
-            rankedLeaderboard.findIndex(
-              (rankedStudent) =>
-                rankedStudent._id === student._id ||
-                rankedStudent.id === student.id,
-            ) + 1;
-          const isCurrentUser =
-            student._id === currentUserId || student.id === currentUserId;
-          const studentCoins = student.coins ?? 0;
+        <>
+          {visibleRows.map((student) => {
+            const rank =
+              rankedLeaderboard.findIndex(
+                (s) => s._id === student._id || s.id === student.id,
+              ) + 1;
+            const isCurrentUser =
+              student._id === currentUserId || student.id === currentUserId;
 
-          return (
-            <div
-              key={student._id ?? student.id ?? rank}
+            return (
+              <LeaderRow
+                key={student._id ?? student.id ?? rank}
+                student={student}
+                rank={rank}
+                isCurrentUser={isCurrentUser}
+                coinsToRupees={coinsToRupees}
+                t={t}
+              />
+            );
+          })}
+
+          {/* Progressive load — avoids rendering 500 DOM nodes at once */}
+          {hasMore && (
+            <button
+              onClick={handleLoadMore}
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "16px",
-                borderRadius: 14,
-                marginBottom: 10,
-                background: isCurrentUser ? "rgba(124,58,237,0.12)" : "#0f172a",
-                border: isCurrentUser
-                  ? "1px solid #7c3aed"
-                  : "1px solid #1e293b",
+                width: "100%",
+                marginTop: 8,
+                padding: "12px",
+                borderRadius: 12,
+                background: "#0f172a",
+                border: "1px solid #334155",
+                color: "#94a3b8",
+                cursor: "pointer",
+                fontSize: 13,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <div
-                  style={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 800,
-                    fontSize: rank <= 3 ? 20 : 15,
-                    color: "#fff",
-                    background:
-                      rank === 1
-                        ? "#eab308"
-                        : rank === 2
-                          ? "#94a3b8"
-                          : rank === 3
-                            ? "#d97706"
-                            : "#334155",
-                  }}
-                >
-                  {rank === 1
-                    ? "🥇"
-                    : rank === 2
-                      ? "🥈"
-                      : rank === 3
-                        ? "🥉"
-                        : rank}
-                </div>
-                <div>
-                  <p style={{ margin: 0, color: "#f8fafc", fontWeight: 700 }}>
-                    {student.name}
-                  </p>
-                  <p style={{ margin: 0, color: "#64748b", fontSize: 12 }}>
-                    {[student.city, student.state].filter(Boolean).join(", ") ||
-                      t("studentLeaderboard.student")}
-                  </p>
-                </div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div
-                  style={{ color: "#fde68a", fontWeight: 700, fontSize: 15 }}
-                >
-                  🪙 {studentCoins} coins
-                </div>
-                <div style={{ color: "#94a3b8", fontSize: 11, marginTop: 2 }}>
-                  ≈ ₹{coinsToRupees(studentCoins)}
-                </div>
-              </div>
-            </div>
-          );
-        })
+              Show more ({filteredLeaderboard.length - visibleCount} remaining)
+            </button>
+          )}
+        </>
       )}
     </div>
   );

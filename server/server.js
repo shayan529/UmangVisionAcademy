@@ -137,17 +137,23 @@ app.use(helmet({
 app.use(cors(corsOptions));
 
 // Rate limiting to protect endpoints against API abuse/DDoS
+// Production limit is set to 1000 req / 15 min per IP. This is generous
+// enough for legitimate users (a heavy session is ~200–300 API calls/hour)
+// while still blocking automated scrapers and brute-force attacks.
+// The old limit of 200/15 min was too restrictive for 500k concurrent users
+// and caused false positives for active students on dashboard-heavy pages.
+// Sensitive auth routes (login, OTP) should have their own tighter limiters.
 const isVercel = !!process.env.VERCEL;
 const rateLimitOptions = {
   windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: process.env.NODE_ENV === "development" ? 10000 : 200,
-  max: process.env.NODE_ENV === "development" ? 10000 : 200, // Fallback alias for older versions of express-rate-limit
+  limit: process.env.NODE_ENV === "development" ? 50000 : 1000,
+  max: process.env.NODE_ENV === "development" ? 50000 : 1000, // Fallback alias for older versions of express-rate-limit
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: {
     success: false,
-    error: "Too many requests from this IP. Please try again in 15 minutes."
-  }
+    error: "Too many requests from this IP. Please try again in 15 minutes.",
+  },
 };
 
 if (!isVercel) {
@@ -200,9 +206,22 @@ const apiLimiter = rateLimit(rateLimitOptions);
 app.use("/api", apiLimiter);
 
 app.use(compression());
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Serve user-uploaded files with a long cache TTL and security headers.
+// Content-Disposition: inline lets browsers preview PDFs/images without a
+// forced download.
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"), {
+    maxAge: "30d",
+    etag: true,
+    setHeaders: (res) => {
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("Vary", "Accept-Encoding");
+    },
+  }),
+);
 
 // Debug logger for APK requests
 app.use((req, res, next) => {
@@ -278,14 +297,23 @@ if (process.env.NODE_ENV === "production") {
       maxAge: "1y",
       etag: true,
       setHeaders: (res, filePath) => {
+        // HTML must never be cached — it contains hashed asset references
+        // that change on every deploy.
         if (filePath.endsWith(".html")) {
           res.setHeader(
             "Cache-Control",
             "no-store, no-cache, must-revalidate, proxy-revalidate",
           );
         } else {
+          // Hashed JS/CSS/image assets are immutable — safe to cache for 1 year.
           res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
         }
+        // Tell CDNs and proxies to cache separate copies per encoding
+        // (gzip vs br vs identity), otherwise a brotli-compressed asset can
+        // be served to a client that only accepts gzip.
+        res.setHeader("Vary", "Accept-Encoding");
+        // Prevent MIME-type sniffing attacks
+        res.setHeader("X-Content-Type-Options", "nosniff");
       },
     }),
   );

@@ -32,6 +32,14 @@ const MODULE_LABELS = {
   moderation: "Moderation",
   notes: "Notes Moderation",
   reels: "Reels Moderation",
+  mock_tests: "Mock Tests",
+  question_bank: "Question Bank",
+  sessions: "Sessions",
+  ai_tutor: "AI Tutor",
+  wallet: "Wallet",
+  references: "References",
+  student_assignment: "Student Assignment",
+  applications: "Applications",
 };
 
 const ACTION_LABELS = {
@@ -46,6 +54,23 @@ const ACTION_LABELS = {
   flag: "Flag",
   remove: "Remove",
   ban: "Ban",
+  // mock_tests
+  assign: "Assign",
+  publish: "Publish",
+  // question_bank
+  import: "Import",
+  // ai_tutor
+  manage_prompts: "Manage Prompts",
+  view_conversations: "View Conversations",
+  disable: "Disable",
+  // wallet
+  credit: "Credit",
+  debit: "Debit",
+  manage_settings: "Manage Settings",
+  // student_assignment
+  assign_instructor: "Assign Instructor",
+  reassign: "Reassign",
+  unenroll: "Unenroll",
 };
 
 const EMPTY_ROLE = { name: "", description: "", permissions: [] };

@@ -48,6 +48,9 @@ export const logoutUser = createAsyncThunk(
       // login starts with a clean AI conversation history.
       try {
         localStorage.removeItem("authToken");
+        localStorage.removeItem("student-ai-chat-state-v1");
+        localStorage.removeItem("instructor-ai-chat-state-v1");
+        localStorage.removeItem("mobile-chat-role");
         localStorage.removeItem("desktop-ai-chat-state-v1");
       } catch (e) {
         // ignore storage failures

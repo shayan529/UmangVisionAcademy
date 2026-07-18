@@ -14,6 +14,7 @@ import {
   FileQuestion,
   Film,
   Calendar,
+  ClipboardList,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -94,6 +95,11 @@ const AdminSidebar = ({
     { id: "courses", label: t("adminSidebar.courses"), icon: BookOpen },
     { id: "notes", label: t("adminSidebar.notes", "Notes"), icon: FileText },
     { id: "sessions", label: t("adminSidebar.sessions"), icon: Calendar },
+    {
+      id: "mock-tests",
+      label: t("adminSidebar.mockTests", "Mock Tests"),
+      icon: ClipboardList,
+    },
     {
       id: "question-papers",
       label: t("adminSidebar.questionPapers"),

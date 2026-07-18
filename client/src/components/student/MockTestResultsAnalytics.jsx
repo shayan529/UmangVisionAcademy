@@ -1,5 +1,5 @@
 // pages/student/MockTests/MockTestResultsAnalytics.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
@@ -12,12 +12,15 @@ import {
   FaLightbulb,
   FaArrowLeft,
   FaTrophy,
+  FaSpinner,
 } from "react-icons/fa";
 import {
   fetchAttemptResult,
   fetchMyResults,
   fetchAnalytics,
+  clearCurrentResult,
 } from "../../redux/slices/mockTestSlice";
+import { checkAndAwardAchievements } from "../../redux/slices/achievementSlice";
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
 const TABS = ["Review", "My History", "Analytics"];
@@ -332,17 +335,58 @@ export default function MockTestResultsAnalytics() {
   const [activeTab, setActiveTab] = useState(
     attemptId ? "Review" : "My History",
   );
+  const [polling, setPolling] = useState(false);
+  const pollRef = useRef(null);
 
+  // Clear stale result immediately when attemptId changes so we never show
+  // the previous test's data while the new one is loading/grading.
   useEffect(() => {
-    if (attemptId) {
+    dispatch(clearCurrentResult());
+  }, [attemptId, dispatch]);
+
+  // If grading is still queued/in-progress, poll every 2 seconds until complete
+  useEffect(() => {
+    if (!attemptId) return;
+
+    const tryFetch = () => {
       dispatch(fetchAttemptResult(attemptId))
         .unwrap()
+        .then((result) => {
+          if (result && result.status && result.status !== "completed") {
+            // Still processing — poll again
+            setPolling(true);
+            pollRef.current = setTimeout(tryFetch, 2000);
+          } else {
+            setPolling(false);
+            // Re-fetch history and analytics now that a new result is available
+            dispatch(fetchMyResults());
+            dispatch(fetchAnalytics());
+            // Award achievements once result is available
+            if (result?.percentage === 100) {
+              dispatch(
+                checkAndAwardAchievements?.({
+                  leaderboardFirst: true,
+                  perfectQuiz: true,
+                  fullMarks: true,
+                }),
+              );
+            }
+          }
+        })
         .catch(() => {
+          setPolling(false);
           toast.error("Could not load result");
         });
-    }
+    };
+
+    tryFetch();
+    // Also fetch history/analytics in parallel (may already be up-to-date)
     dispatch(fetchMyResults());
     dispatch(fetchAnalytics());
+
+    return () => {
+      if (pollRef.current) clearTimeout(pollRef.current);
+    };
   }, [attemptId, dispatch]);
 
   const handleViewAttempt = (id) => {
@@ -350,36 +394,51 @@ export default function MockTestResultsAnalytics() {
     setActiveTab("Review");
   };
 
+  // Grading still in progress — show a waiting screen instead of crashing
+  const isGrading =
+    polling ||
+    (currentResult && typeof currentResult === "object" && currentResult.status && currentResult.status !== "completed");
+
   return (
     <div className="min-h-screen bg-[#060d1a] p-4 md:p-8 max-w-4xl mx-auto">
 
+      {/* Grading in progress */}
+      {isGrading && (
+        <div className="flex flex-col items-center justify-center py-32 gap-4">
+          <FaSpinner className="text-4xl text-violet-400 animate-spin" />
+          <p className="text-slate-300 font-semibold">Grading your test…</p>
+          <p className="text-slate-500 text-sm">This usually takes a few seconds.</p>
+        </div>
+      )}
 
       {/* Score card */}
-      {currentResult && activeTab === "Review" && (
+      {!isGrading && currentResult && currentResult.score !== undefined && activeTab === "Review" && (
         <div className="mb-5">
           <ScoreCard result={currentResult} />
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-[#0b1628] border border-[#1a2e48] rounded-xl p-1 mb-5">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-              activeTab === tab
-                ? "bg-violet-700 text-white"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+      {/* Tabs — hidden while grading */}
+      {!isGrading && (
+        <div className="flex gap-1 bg-[#0b1628] border border-[#1a2e48] rounded-xl p-1 mb-5">
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                activeTab === tab
+                  ? "bg-violet-700 text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Tab content */}
-      {loading ? (
+      {!isGrading && (loading ? (
         <div className="space-y-3">
           {[...Array(4)].map((_, i) => (
             <div
@@ -393,7 +452,7 @@ export default function MockTestResultsAnalytics() {
           {activeTab === "Review" && currentResult?.questions && (
             <QuestionReview questions={currentResult.questions} />
           )}
-          {activeTab === "Review" && !currentResult?.questions && (
+          {activeTab === "Review" && !currentResult?.questions && !isGrading && (
             <p className="text-slate-500 text-sm text-center py-12">
               Select a test from My History to review.
             </p>
@@ -403,7 +462,7 @@ export default function MockTestResultsAnalytics() {
           )}
           {activeTab === "Analytics" && <AnalyticsTab analytics={analytics} />}
         </>
-      )}
+      ))}
     </div>
   );
 }

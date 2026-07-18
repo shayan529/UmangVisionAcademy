@@ -8,9 +8,16 @@ import {
 import { getJson, setJson } from "../utils/redisClient.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
+const IS_DEV = process.env.NODE_ENV !== "production";
 
 // ── protect ───────────────────────────────────────────────────────────────────
-// Verifies the JWT and attaches req.user
+// Verifies the JWT and attaches req.user.
+//
+// Performance note: every authenticated API request runs through this
+// function. The console.log calls that were here previously write to stdout
+// on EVERY request — at 500k users that is millions of synchronous string
+// allocations per hour and measurably slows the event loop. Logging is now
+// gated to development mode only.
 export const protect = async (req, res, next) => {
   try {
     // Prefer the httpOnly cookie (used by the website). Fall back to a
@@ -25,14 +32,16 @@ export const protect = async (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
     }
 
-    console.log(
-      "[protect] Checking auth - token exists:",
-      !!token,
-      "source:",
-      req.cookies?.token ? "cookie" : token ? "bearer" : "none",
-      "path:",
-      req.path,
-    );
+    if (IS_DEV) {
+      console.log(
+        "[protect] Checking auth - token exists:",
+        !!token,
+        "source:",
+        req.cookies?.token ? "cookie" : token ? "bearer" : "none",
+        "path:",
+        req.path,
+      );
+    }
 
     if (!token) {
       return res.status(401).json({
@@ -46,10 +55,10 @@ export const protect = async (req, res, next) => {
     const cacheKey = `user:${decoded.id}`;
     let user = await getJson(cacheKey);
 
-    if (user) {
-      console.log(`[protect] User cache HIT for ID: ${decoded.id}`);
-    } else {
-      console.log(`[protect] User cache MISS for ID: ${decoded.id}. Querying DB.`);
+    if (!user) {
+      if (IS_DEV) {
+        console.log(`[protect] User cache MISS for ID: ${decoded.id}. Querying DB.`);
+      }
       const dbUser = await User.findById(decoded.id).select("-password");
       if (dbUser) {
         user = await hydrateUserRoles(dbUser);
@@ -63,15 +72,6 @@ export const protect = async (req, res, next) => {
         message: "User no longer exists",
       });
     }
-
-    console.log(
-      "[protect] User found:",
-      user._id,
-      "name:",
-      user.name,
-      "path:",
-      req.path,
-    );
 
     if (user.isActive === false) {
       return res.status(403).json({
@@ -104,7 +104,7 @@ export const protect = async (req, res, next) => {
 // otherwise continues anonymously with req.user left undefined.
 //
 // Use this for routes that serve different data to logged-in vs anonymous
-// callers (e.g. a public listing that also personalizes for enrolled
+// callers (e.g. a public listing that also personalises for enrolled
 // students) instead of hand-rolling a cookie-only check, which silently
 // breaks for anyone authenticated via Bearer token.
 export const optionalAuth = async (req, res, next) => {
@@ -116,7 +116,7 @@ export const optionalAuth = async (req, res, next) => {
     if (!token) return next();
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    
+
     const cacheKey = `user:${decoded.id}`;
     let user = await getJson(cacheKey);
 

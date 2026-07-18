@@ -2,7 +2,6 @@
 import MockTest from "../models/mockTest.model.js";
 import MockTestAttempt from "../models/mockTestAttempt.model.js";
 import { cacheResponse, invalidateCache } from "../utils/redisClient.js";
-import { getGradingQueue } from "../utils/queue.js";
 
 // ─── INSTRUCTOR ──────────────────────────────────────────────────────────────
 
@@ -124,6 +123,181 @@ export const deleteMockTest = async (req, res) => {
   }
 };
 
+// ─── ADMIN ───────────────────────────────────────────────────────────────────
+
+// GET /api/mock-tests/admin/all  (all tests across all instructors)
+export const adminGetAllTests = async (req, res) => {
+  try {
+    const { subject, class: className, board, difficulty, instructor, published } = req.query;
+    const filter = {};
+    if (subject) filter.subject = subject;
+    if (className) filter.class = className;
+    if (board) filter.board = board;
+    if (difficulty) filter.difficulty = difficulty;
+    if (instructor) filter.instructor = instructor;
+    if (published !== undefined) filter.isPublished = published === "true";
+
+    const tests = await MockTest.find(filter)
+      .populate("instructor", "name email avatarUrl")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({ success: true, tests });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/mock-tests/admin  (admin creates a test and assigns to any instructor)
+export const adminCreateMockTest = async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      subject,
+      class: className,
+      board,
+      duration,
+      totalMarks,
+      passingMarks,
+      questions,
+      tags,
+      difficulty,
+      instructorId,
+      isPublished,
+    } = req.body;
+
+    if (!questions || questions.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "At least one question is required" });
+    }
+
+    if (!instructorId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "An instructor must be assigned" });
+    }
+
+    const mockTest = await MockTest.create({
+      title,
+      description,
+      subject,
+      class: className,
+      board,
+      duration,
+      totalMarks,
+      passingMarks,
+      questions,
+      tags,
+      difficulty,
+      instructor: instructorId,
+      isPublished: isPublished !== undefined ? isPublished : true,
+    });
+
+    await invalidateCache("mocktests:available*");
+    const populated = await mockTest.populate("instructor", "name email avatarUrl");
+    res.status(201).json({ success: true, mockTest: populated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// PUT /api/mock-tests/admin/:id  (admin can edit any test)
+export const adminUpdateMockTest = async (req, res) => {
+  try {
+    const updatePayload = { ...req.body };
+    // Allow reassigning instructor via instructorId field
+    if (req.body.instructorId) {
+      updatePayload.instructor = req.body.instructorId;
+      delete updatePayload.instructorId;
+    }
+
+    const test = await MockTest.findByIdAndUpdate(
+      req.params.id,
+      updatePayload,
+      { new: true, runValidators: true },
+    ).populate("instructor", "name email avatarUrl");
+
+    if (!test)
+      return res
+        .status(404)
+        .json({ success: false, message: "Test not found" });
+
+    await invalidateCache("mocktests:available*");
+    await invalidateCache(`mocktests:leaderboard:${req.params.id}`);
+    res.json({ success: true, test });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// DELETE /api/mock-tests/admin/:id  (admin can delete any test)
+export const adminDeleteMockTest = async (req, res) => {
+  try {
+    const test = await MockTest.findByIdAndDelete(req.params.id);
+    if (!test)
+      return res
+        .status(404)
+        .json({ success: false, message: "Test not found" });
+
+    // Also clean up all attempts for this test
+    await MockTestAttempt.deleteMany({ mockTest: req.params.id });
+
+    await invalidateCache("mocktests:available*");
+    await invalidateCache(`mocktests:leaderboard:${req.params.id}`);
+    res.json({ success: true, message: "Test and all attempts deleted" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// PATCH /api/mock-tests/admin/:id/assign  (reassign test to a different instructor)
+export const adminAssignMockTest = async (req, res) => {
+  try {
+    const { instructorId } = req.body;
+    if (!instructorId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "instructorId is required" });
+    }
+
+    const test = await MockTest.findByIdAndUpdate(
+      req.params.id,
+      { instructor: instructorId },
+      { new: true },
+    ).populate("instructor", "name email avatarUrl");
+
+    if (!test)
+      return res
+        .status(404)
+        .json({ success: false, message: "Test not found" });
+
+    await invalidateCache("mocktests:available*");
+    res.json({ success: true, test });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// PATCH /api/mock-tests/admin/:id/publish  (admin toggle publish on any test)
+export const adminTogglePublish = async (req, res) => {
+  try {
+    const test = await MockTest.findById(req.params.id);
+    if (!test)
+      return res
+        .status(404)
+        .json({ success: false, message: "Test not found" });
+
+    test.isPublished = !test.isPublished;
+    await test.save();
+    await invalidateCache("mocktests:available*");
+    res.json({ success: true, isPublished: test.isPublished });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // ─── STUDENT ─────────────────────────────────────────────────────────────────
 
 // GET /api/mock-tests  (available published tests for students)
@@ -234,34 +408,66 @@ export const startTest = async (req, res) => {
 // POST /api/mock-tests/attempts/:attemptId/submit
 export const submitTest = async (req, res) => {
   try {
-    const { answers, timeTaken } = req.body; // answers: [{questionIndex, selectedOption}]
+    const { answers = [], timeTaken = 0 } = req.body;
 
     const attempt = await MockTestAttempt.findOne({
       _id: req.params.attemptId,
       student: req.user._id,
       status: "in-progress",
-    });
+    }).populate("mockTest");
+
     if (!attempt)
       return res
         .status(404)
         .json({ success: false, message: "Active attempt not found" });
 
-    // Mark the attempt as queued for grading
-    attempt.status = "queued";
+    const test = attempt.mockTest;
+
+    // ── Grade synchronously ───────────────────────────────────────────────
+    let totalScore = 0;
+
+    const gradedAnswers = test.questions.map((q, i) => {
+      const studentAnswer = answers.find((a) => a.questionIndex === i);
+      const selectedOption =
+        studentAnswer?.selectedOption !== undefined && studentAnswer?.selectedOption !== null
+          ? studentAnswer.selectedOption
+          : null;
+      const isCorrect =
+        selectedOption !== null && selectedOption === q.correctOption;
+      const marksEarned = isCorrect ? (q.marks ?? 1) : 0;
+      totalScore += marksEarned;
+
+      return {
+        questionIndex: i,
+        selectedOption,
+        isCorrect,
+        marksEarned,
+      };
+    });
+
+    const percentage   = Math.round((totalScore / test.totalMarks) * 100);
+    const passed       = totalScore >= test.passingMarks;
+
+    attempt.answers      = gradedAnswers;
+    attempt.score        = totalScore;
+    attempt.percentage   = percentage;
+    attempt.passed       = passed;
+    attempt.timeTaken    = timeTaken;
+    attempt.submittedAt  = new Date();
+    attempt.status       = "completed";
+
     await attempt.save();
 
-    // Enqueue the grading job
-    const job = await getGradingQueue().add(`grade-${attempt._id}`, {
-      attemptId: attempt._id,
-      answers,
-      timeTaken,
-    });
+    // Bump attempt counter on the test (best-effort, don't fail the submit)
+    MockTest.findByIdAndUpdate(test._id, { $inc: { attempts: 1 } }).catch(() => {});
+
+    await invalidateCache("mocktests:available*");
+    await invalidateCache(`mocktests:leaderboard:${test._id}`);
 
     res.json({
       success: true,
-      message: "Test submitted successfully. Grading is in progress.",
+      message: "Test submitted and graded.",
       attemptId: attempt._id,
-      jobId: job.id,
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

@@ -78,20 +78,7 @@ const StatCard = ({ value, label, accentColorClass }) => (
   </div>
 );
 
-/* ─── Goal Card ───────────────────────────────────────── */
-const GoalCard = ({ tag, tagColorClass, title, desc }) => (
-  <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 shadow-sm">
-    <p
-      className={`text-[10px] font-bold tracking-widest uppercase ${tagColorClass} mb-2`}
-    >
-      {tag}
-    </p>
-    <h3 className="text-base font-extrabold text-white mb-2 leading-tight">
-      {title}
-    </h3>
-    <p className="text-xs text-slate-400 leading-relaxed">{desc}</p>
-  </div>
-);
+
 
 const MODULE_LABELS = {
   courses: 'Courses',
@@ -240,27 +227,7 @@ const AdminOverview = ({
         />
       </div>
 
-      {/* Goal Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <GoalCard
-          tag={t("adminOverview.nextMilestone")}
-          tagColorClass="text-indigo-400"
-          title={t("adminOverview.scaleToStudents", { count: students.length + 10 })}
-          desc={t("adminOverview.expandStudentOutreach")}
-        />
-        <GoalCard
-          tag={t("adminOverview.pendingActions")}
-          tagColorClass="text-cyan-400"
-          title={t("adminOverview.reviewRegistrations")}
-          desc={t("adminOverview.monitorSignups")}
-        />
-        <GoalCard
-          tag={t("adminOverview.catalogSize")}
-          tagColorClass="text-pink-400"
-          title={t("adminOverview.liveCourses", { count: courses.length })}
-          desc={t("adminOverview.trackEnrollment")}
-        />
-      </div>
+
 
       {/* Detail Rows (Top Instructors + Recent Courses) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

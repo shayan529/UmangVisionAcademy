@@ -22,6 +22,7 @@ import RoleManager from "./RoleManager";
 import AdminQuestionPapers from "./AdminQuestionPapers";
 import AdminReels from "./AdminReels";
 import AdminPayments from "./AdminPayments";
+import AdminMockTests from "./AdminMockTests";
 import InstructorNotes from "../instructor/InstructorNotes";
 import { Toast } from "../instructor/InstructorUi";
 
@@ -252,6 +253,8 @@ export default function AdminDashboard() {
         );
       case "question-papers":
         return <AdminQuestionPapers />;
+      case "mock-tests":
+        return <AdminMockTests showToast={showToast} />;
       case "bulk-import":
         return <AdminBulkImport refreshUsers={refreshUsersAndCourses} />;
       case "payments":
