@@ -132,14 +132,14 @@ export const Toast = ({ msg }) =>
         position: "fixed",
         bottom: 24,
         right: 24,
-        background: "#7c3aed",
+        background: "linear-gradient(135deg, #ec4899, #db2777)",
         color: "#fff",
         padding: "12px 20px",
         borderRadius: 12,
         fontSize: 14,
         fontWeight: 600,
-        zIndex: 9999,
-        boxShadow: "0 8px 32px rgba(124,58,237,0.4)",
+        zIndex: 99999,
+        boxShadow: "0 8px 32px rgba(236, 72, 153, 0.4)",
       }}
     >
       {msg}

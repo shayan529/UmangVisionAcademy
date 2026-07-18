@@ -36,8 +36,8 @@ export const listReels = async (req, res) => {
       return res.json(all);
     }
 
-    // If instructor and ?mine=1, return their reels
-    if (isInstructor && req.query.mine === "1") {
+    // If instructor or admin and ?mine=1, return only their own uploaded reels
+    if ((isInstructor || isModerator) && req.query.mine === "1") {
       const mine = await Reel.find({ instructor: req.user._id }).sort({
         createdAt: -1,
       });

@@ -479,7 +479,7 @@ export default function InstructorDashboard() {
               position: "fixed",
               inset: 0,
               background: "rgba(2,8,23,0.75)",
-              zIndex: 40,
+              zIndex: 9998,
               backdropFilter: "blur(2px)",
             }}
           />
@@ -487,7 +487,7 @@ export default function InstructorDashboard() {
 
         {/* Mobile drawer */}
         <aside
-          className={`bg-slate-950 border-r border-slate-800 flex-col transition-all duration-300 z-50 md:hidden
+          className={`bg-slate-950 border-r border-slate-800 flex-col transition-all duration-300 z-[10000] md:hidden
             ${
               sidebarOpen
                 ? "fixed top-0 bottom-0 left-0 h-full w-[220px] shadow-[4px_0_24px_rgba(0,0,0,0.6)] flex"

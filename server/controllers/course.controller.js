@@ -153,7 +153,9 @@ export const createCourse = async (req, res) => {
       quiz: quiz && typeof quiz === "object" ? quiz : undefined,
       published: false,
       approvalStatus: wantsPublish ? "pending" : "draft",
-      instructor: (hasBaseRole(req.user, "admin") && instructor) ? instructor : req.user._id,
+      instructor: (hasBaseRole(req.user, "admin") || hasPermissionGrant(req.user, "courses", "create")) && instructor
+        ? instructor 
+        : req.user._id,
       board,
       language,
       students: [],
@@ -769,8 +771,8 @@ export const updateCourse = async (req, res) => {
       instructor,
     } = req.body;
 
-    const isAdmin = hasBaseRole(req.user, "admin");
-    const query = isAdmin
+    const hasAdminOrEdit = hasBaseRole(req.user, "admin") || hasPermissionGrant(req.user, "courses", "edit") || hasPermissionGrant(req.user, "courses", "create");
+    const query = hasAdminOrEdit
       ? { _id: req.params.id }
       : { _id: req.params.id, instructor: req.user._id };
 
@@ -813,7 +815,7 @@ export const updateCourse = async (req, res) => {
       }),
       ...(subjectQuizzes !== undefined && { subjectQuizzes }),
       ...(subjectDetails !== undefined && { subjectDetails }),
-      ...(isAdmin && instructor !== undefined && { instructor }),
+      ...(hasAdminOrEdit && instructor !== undefined && { instructor }),
       published: newPublished,
       approvalStatus: newApprovalStatus,
       rejectionReason:

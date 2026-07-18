@@ -3118,7 +3118,7 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
 
   useEffect(() => {
     if (isAdmin) {
-      api.get("/users")
+      api.get("/users?role=instructor")
         .then(({ data }) => {
           const raw = Array.isArray(data) ? data : (data.users ?? []);
           const instList = raw.filter((u) => u.roles?.includes("instructor"));

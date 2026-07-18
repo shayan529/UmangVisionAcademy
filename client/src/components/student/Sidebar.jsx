@@ -236,7 +236,7 @@ const Sidebar = ({
     relative flex flex-col overflow-x-hidden bg-slate-950 border-r border-slate-800
     transition-all duration-300 ease-in-out
     ${collapsed ? "w-[76px] min-w-[76px]" : "w-[260px] min-w-[260px]"}
-    ${mobileOpen ? "fixed inset-y-0 left-0 h-dvh w-[260px] shadow-[4px_0_24px_rgba(0,0,0,0.6)] z-50" : "hidden md:flex z-40 md:relative md:h-auto md:min-h-screen"}
+    ${mobileOpen ? "fixed inset-y-0 left-0 h-dvh w-[260px] shadow-[4px_0_24px_rgba(0,0,0,0.6)] z-[10000]" : "hidden md:flex z-40 md:relative md:h-auto md:min-h-screen"}
   `;
 
   const NavItem = ({ item }) => (

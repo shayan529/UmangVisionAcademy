@@ -19,6 +19,7 @@ import {
   requirePermission,
   selfOrPermission,
 } from "../middleware/auth.middleware.js";
+import { hasPermissionGrant } from "../utils/userRoles.js";
 import { uploadStudentsImport } from "../middleware/upload.middleware.js";
 
 const router = express.Router();
@@ -28,7 +29,20 @@ const router = express.Router();
 // Bulk Import tabs in the Staff dashboard depend on. Previously these were
 // adminOnly, which silently 403'd any non-admin Staff member even when the
 // sidebar correctly showed them the tab.
-router.get("/", protect, requirePermission("users", "view"), getUsers);
+router.get("/", protect, (req, res, next) => {
+  const isRequestingInstructors = req.query.role === "instructor";
+  const hasUsersView = hasPermissionGrant(req.user, "users", "view");
+  const hasCoursesPermission =
+    hasPermissionGrant(req.user, "courses", "create") ||
+    hasPermissionGrant(req.user, "courses", "edit") ||
+    hasPermissionGrant(req.user, "courses", "view");
+
+  if (hasUsersView || (isRequestingInstructors && hasCoursesPermission)) {
+    return next();
+  }
+
+  return requirePermission("users", "view")(req, res, next);
+}, getUsers);
 router.post(
   "/bulk-import",
   protect,

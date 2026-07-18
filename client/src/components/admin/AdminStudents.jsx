@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Search,
   Trash2,
@@ -307,9 +308,9 @@ const AddStudentModal = ({ courses = [], onClose, onCreated }) => {
     }
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      className="fixed inset-0 z-[100001] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
@@ -524,7 +525,8 @@ const AddStudentModal = ({ courses = [], onClose, onCreated }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -596,9 +598,9 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
     }
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      className="fixed inset-0 z-[100001] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
@@ -742,7 +744,8 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -767,9 +770,9 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
   const coins = typeof student.coins === "number" ? student.coins : 0;
   const rupeeValue = (coins / 25).toFixed(2);
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      className="fixed inset-0 z-[100001] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
@@ -1101,7 +1104,8 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -1110,6 +1114,9 @@ const AssignCourseModal = ({ student, courses = [], onClose, onAssigned }) => {
   const [selectedCourses, setSelectedCourses] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [classFilter, setClassFilter] = useState("");
+  const [subjectFilter, setSubjectFilter] = useState("");
 
   const enrolledCourseIds = new Set(
     courses
@@ -1118,6 +1125,30 @@ const AssignCourseModal = ({ student, courses = [], onClose, onAssigned }) => {
   );
 
   const availableCourses = courses.filter((c) => !enrolledCourseIds.has(c._id));
+
+  const uniqueClasses = Array.from(
+    new Set(availableCourses.map((c) => c.category).filter(Boolean))
+  ).sort();
+
+  const uniqueSubjects = Array.from(
+    new Set(availableCourses.map((c) => subjectOf(c.title)).filter(Boolean))
+  ).sort();
+
+  const filteredCourses = availableCourses.filter((c) => {
+    const subject = subjectOf(c.title);
+    const matchesSearch =
+      !searchQuery ||
+      c.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.category && c.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (subject && subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (c.instructor?.name && c.instructor.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (c.instructor?.email && c.instructor.email.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesClass = !classFilter || c.category === classFilter;
+    const matchesSubject = !subjectFilter || subject === subjectFilter;
+
+    return matchesSearch && matchesClass && matchesSubject;
+  });
 
   const toggleCourse = (courseId) => {
     setSelectedCourses((prev) =>
@@ -1150,13 +1181,13 @@ const AssignCourseModal = ({ student, courses = [], onClose, onAssigned }) => {
     }
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      className="fixed inset-0 z-[100001] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl"
+        className="w-full max-w-3xl max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-5 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
@@ -1178,15 +1209,74 @@ const AssignCourseModal = ({ student, courses = [], onClose, onAssigned }) => {
         </div>
 
         <div className="p-6 flex flex-col gap-4">
-          <FieldLabel>Select courses to assign</FieldLabel>
+          <div className="flex items-center justify-between">
+            <FieldLabel>Select courses to assign</FieldLabel>
+            {availableCourses.length > 0 && (
+              <span className="text-[11px] font-semibold text-slate-500 bg-slate-900/60 border border-slate-800 rounded-md px-2 py-0.5">
+                Showing {filteredCourses.length} of {availableCourses.length}
+              </span>
+            )}
+          </div>
+
+          {availableCourses.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-900/20 p-3 rounded-xl border border-slate-800/80">
+              <div className="sm:col-span-2 relative">
+                <Search
+                  size={14}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+                />
+                <input
+                  type="text"
+                  placeholder="Search courses..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 transition duration-150"
+                />
+              </div>
+
+              <div>
+                <select
+                  value={classFilter}
+                  onChange={(e) => setClassFilter(e.target.value)}
+                  className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2 px-3 text-xs text-white transition duration-150"
+                >
+                  <option value="">All Classes</option>
+                  {uniqueClasses.map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <select
+                  value={subjectFilter}
+                  onChange={(e) => setSubjectFilter(e.target.value)}
+                  className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2 px-3 text-xs text-white transition duration-150"
+                >
+                  <option value="">All Subjects</option>
+                  {uniqueSubjects.map((sub) => (
+                    <option key={sub} value={sub}>
+                      {sub}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
 
           {availableCourses.length === 0 ? (
             <p className="text-sm text-slate-500 italic">
               This student is already enrolled in all available courses.
             </p>
+          ) : filteredCourses.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-slate-500 italic text-sm border border-dashed border-slate-800 rounded-xl">
+              No courses match your filter criteria.
+            </div>
           ) : (
             <div className="flex flex-col gap-2.5 max-h-[26rem] overflow-y-auto pr-1">
-              {availableCourses.map((c) => {
+              {filteredCourses.map((c) => {
                 const active = selectedCourses.includes(c._id);
                 const subject = subjectOf(c.title);
                 return (
@@ -1316,7 +1406,8 @@ const AssignCourseModal = ({ student, courses = [], onClose, onAssigned }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -1642,9 +1733,9 @@ const AdminStudents = ({
         />
       )}
 
-      {showBulkImportModal && (
+      {showBulkImportModal && createPortal(
         <div
-          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+          className="fixed inset-0 z-[100001] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
           onClick={() => setShowBulkImportModal(false)}
         >
           <div
@@ -1887,7 +1978,8 @@ const AdminStudents = ({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

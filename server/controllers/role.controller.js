@@ -145,6 +145,16 @@ export const setUserRoles = async (req, res) => {
       systemRoleMap[r.name.toLowerCase()] = r._id.toString();
     }
 
+    // Prevent assigning the admin base role through this endpoint.
+    // Admin is a privileged system role that must be set directly by a
+    // super-admin, not through the Roles & Permissions UI.
+    const adminRoleId = systemRoleMap["admin"];
+    if (adminRoleId && roleIds.includes(adminRoleId)) {
+      return res.status(403).json({
+        message: "Cannot assign the admin role through this endpoint",
+      });
+    }
+
     let baseRoles = (user.roles || []).filter(isBaseRole);
 
     // Update baseRoles according to selection/deselection of corresponding system roles

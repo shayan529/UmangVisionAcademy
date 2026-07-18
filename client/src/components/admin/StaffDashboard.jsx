@@ -29,6 +29,8 @@ import AdminCourses from "./AdminCourses";
 import AdminApplications from "./AdminApplications";
 import StaffPayments from "./StaffPayments";
 import RoleManager from "./RoleManager";
+import { Toast } from "../instructor/InstructorUi";
+import InstructorAI from "../instructor/InstructorAI";
 
 const StaffSidebar = ({
   user,
@@ -109,7 +111,7 @@ const StaffSidebar = ({
     hasPermission(user, "payments", "export")
       ? [{ id: "payments", label: "Payments", icon: "💳" }]
       : []),
-    ...(hasPermission(user, "moderation", "view")
+    ...(hasPermission(user, "applications", "view")
       ? [
           {
             id: "applications",
@@ -121,6 +123,9 @@ const StaffSidebar = ({
       : []),
     ...(hasPermission(user, "reels", "view")
       ? [{ id: "reels", label: "Reels Moderation", icon: "🎥" }]
+      : []),
+    ...(hasPermission(user, "ai_tutor", "access")
+      ? [{ id: "ai", label: "AI Tutor", icon: "🤖" }]
       : []),
     ...(hasBaseRole(user, "admin")
       ? [{ id: "roles", label: "Roles & Permissions", icon: "🔒" }]
@@ -146,7 +151,7 @@ const StaffSidebar = ({
     ${collapsed ? "w-[76px] min-w-[76px]" : "w-[260px] min-w-[260px]"}
     ${
       mobileOpen
-        ? "fixed inset-y-0 left-0 h-dvh w-[260px] shadow-[4px_0_24px_rgba(0,0,0,0.6)] z-50"
+        ? "fixed inset-y-0 left-0 h-dvh w-[260px] shadow-[4px_0_24px_rgba(0,0,0,0.6)] z-[10000]"
         : "hidden md:flex z-40 md:relative md:h-auto md:min-h-screen"
     }
   `;
@@ -156,7 +161,7 @@ const StaffSidebar = ({
       {/* ── Mobile backdrop ── */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-[90] bg-black/50 md:hidden"
+          className="fixed inset-0 z-[9998] bg-black/50 md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -350,6 +355,12 @@ export default function StaffDashboard() {
   const sortDir = "desc";
   const [sideOpen, setSideOpen] = useState(false);
   const [sideCollapsed, setSideCollapsed] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+
+  const showToast = (msg) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(""), 2500);
+  };
 
   useEffect(() => {
     if (hasPermission(user, "users", "view")) {
@@ -512,10 +523,14 @@ export default function StaffDashboard() {
           />
         ) : null;
       case "applications":
-        return hasPermission(user, "moderation", "view") ? (
+        return hasPermission(user, "applications", "view") ? (
           <AdminApplications
-            canModerate={hasPermission(user, "moderation", "remove")}
+            canModerate={hasPermission(user, "applications", "approve")}
           />
+        ) : null;
+      case "ai":
+        return hasPermission(user, "ai_tutor", "access") ? (
+          <InstructorAI showToast={showToast} />
         ) : null;
       case "reels":
         return hasPermission(user, "reels", "view") ? <AdminReels /> : null;
@@ -531,7 +546,7 @@ export default function StaffDashboard() {
         return hasBaseRole(user, "admin") ? (
           <RoleManager
             currentUser={user}
-            showToast={(msg) => console.log(msg)}
+            showToast={showToast}
             onUserRolesUpdated={(updatedUser) => {
               dispatch(replaceUser(updatedUser));
               dispatch(replaceCurrentUser(updatedUser));
@@ -597,6 +612,7 @@ export default function StaffDashboard() {
           </div>
         </main>
       </div>
+      <Toast msg={toastMsg} />
     </div>
   );
 }

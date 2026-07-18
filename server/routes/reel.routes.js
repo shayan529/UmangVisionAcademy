@@ -47,7 +47,9 @@ const optionalAuth = async (req, _res, next) => {
 router.get("/", optionalAuth, listReels);
 router.get("/:id", getReel);
 
-// Instructor upload (protected)
+// Instructor or admin upload (protected)
+// instructorOnly already passes admin users through, so no change needed
+// to the middleware — but the comment is updated for clarity.
 router.post("/", protect, instructorOnly, createReel);
 
 // Admin / Moderator review

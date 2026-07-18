@@ -60,9 +60,7 @@ const ACTION_LABELS = {
   // question_bank
   import: "Import",
   // ai_tutor
-  manage_prompts: "Manage Prompts",
-  view_conversations: "View Conversations",
-  disable: "Disable",
+  access: "Access",
   // wallet
   credit: "Credit",
   debit: "Debit",
@@ -85,41 +83,7 @@ const BASE_ROLE_OPTIONS = [
   { value: "instructor", label: "Instructor" },
 ];
 
-const INDIAN_CITIES_BY_STATE = {
-  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati"],
-  "Arunachal Pradesh": ["Itanagar", "Tawang", "Naharlagun"],
-  Assam: ["Guwahati", "Dibrugarh", "Jorhat", "Silchar"],
-  Bihar: ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur"],
-  Chhattisgarh: ["Raipur", "Bhilai", "Korba", "Durg"],
-  Goa: ["Panaji", "Margao", "Vasco da Gama"],
-  Gujarat: ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
-  Haryana: ["Gurugram", "Faridabad", "Panipat", "Karnal"],
-  "Himachal Pradesh": ["Shimla", "Dharamshala", "Manali"],
-  Jharkhand: ["Ranchi", "Jamshedpur", "Dhanbad"],
-  Karnataka: ["Bengaluru", "Mysuru", "Mangalore", "Hubli"],
-  Kerala: ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam"],
-  "Madhya Pradesh": ["Bhopal", "Indore", "Gwalior", "Jabalpur"],
-  Maharashtra: ["Mumbai", "Pune", "Nagpur", "Nashik"],
-  Manipur: ["Imphal", "Churachandpur"],
-  Meghalaya: ["Shillong", "Tura"],
-  Mizoram: ["Aizawl", "Lunglei"],
-  Nagaland: ["Kohima", "Dimapur"],
-  Odisha: ["Bhubaneswar", "Cuttack", "Rourkela"],
-  Punjab: ["Chandigarh", "Amritsar", "Ludhiana", "Jalandhar"],
-  Rajasthan: ["Jaipur", "Jodhpur", "Udaipur", "Kota"],
-  Sikkim: ["Gangtok", "Namchi"],
-  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli"],
-  Telangana: ["Hyderabad", "Warangal", "Nizamabad"],
-  Tripura: ["Agartala", "Udaipur"],
-  "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra"],
-  Uttarakhand: ["Dehradun", "Haridwar", "Nainital"],
-  "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Siliguri"],
-  Delhi: ["New Delhi", "Dwarka", "Rohini"],
-  "Jammu & Kashmir": ["Srinagar", "Jammu"],
-  Ladakh: ["Leh", "Kargil"],
-  Puducherry: ["Puducherry", "Karaikal"],
-  ...INDIA_CITIES_BY_STATE,
-};
+const INDIAN_CITIES_BY_STATE = INDIA_CITIES_BY_STATE;
 const INDIAN_STATES = INDIA_STATES;
 
 const normalizeIndianPhoneNumber = (value) => {
@@ -270,8 +234,16 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
   const isSystem = Boolean(initial?.isSystem);
 
   const handleSave = async () => {
+    if (!form.name.trim() && !form.description.trim()) {
+      showToast?.("Role name and description are required.");
+      return;
+    }
     if (!form.name.trim()) {
       showToast?.("Role name is required.");
+      return;
+    }
+    if (!form.description.trim()) {
+      showToast?.("Role description is required.");
       return;
     }
     setSaving(true);
@@ -303,7 +275,7 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-700 bg-[#111827] p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold text-white">
@@ -416,7 +388,7 @@ const AssignRolesModal = ({ user, roles, onClose, onSaved, showToast }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-[#111827] p-6">
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-lg font-bold text-white">Assign Roles</h3>
@@ -544,7 +516,7 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-700 bg-[#111827] p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold text-white">Add User</h3>
@@ -1095,7 +1067,9 @@ const RoleManager = ({ showToast, currentUser }) => {
       {assignTarget && (
         <AssignRolesModal
           user={assignTarget}
-          roles={roles}
+          roles={roles.filter(
+            (r) => !(r.isSystem && r.name?.toLowerCase() === "admin"),
+          )}
           onClose={() => setAssignTarget(null)}
           onSaved={() => {
             setAssignTarget(null);
@@ -1107,7 +1081,9 @@ const RoleManager = ({ showToast, currentUser }) => {
 
       {addUserOpen && (
         <AddUserModal
-          roles={roles}
+          roles={roles.filter(
+            (r) => !(r.isSystem && r.name?.toLowerCase() === "admin"),
+          )}
           onClose={() => setAddUserOpen(false)}
           onSaved={() => {
             setAddUserOpen(false);
@@ -1118,7 +1094,7 @@ const RoleManager = ({ showToast, currentUser }) => {
       )}
 
       {deleteTarget && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="w-full max-w-sm rounded-2xl border border-slate-700 bg-[#111827] p-6">
             <h3 className="text-lg font-bold text-white mb-2">Delete Role?</h3>
             <p className="text-sm text-slate-400 mb-6 leading-relaxed">

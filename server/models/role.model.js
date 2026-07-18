@@ -15,7 +15,7 @@ export const PERMISSION_MODULES = {
   mock_tests: ["view", "create", "edit", "delete", "assign", "publish"],
   question_bank: ["view", "create", "edit", "delete", "import", "export"],
   sessions: ["view", "create", "edit", "delete", "approve"],
-  ai_tutor: ["view", "manage_prompts", "view_conversations", "disable"],
+  ai_tutor: ["access"],
   wallet: ["view", "credit", "debit", "export", "manage_settings"],
   references: ["view", "create", "edit", "delete", "approve"],
   student_assignment: ["view", "assign_instructor", "reassign", "unenroll"],
