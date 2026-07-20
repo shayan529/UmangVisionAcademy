@@ -71,6 +71,8 @@ const ALLOWED_ORIGINS = [
   "https://localhost",
   "http://localhost",
   "capacitor://localhost",
+  "https://umangvisionacademy.com",
+  "https://www.umangvisionacademy.com",
 ];
 
 if (process.env.CLIENT_URL) ALLOWED_ORIGINS.push(process.env.CLIENT_URL);
@@ -87,6 +89,8 @@ const corsOptions = {
       const originUrl = new URL(origin);
       const hostname = originUrl.hostname;
       if (
+        hostname === "umangvisionacademy.com" ||
+        hostname === "www.umangvisionacademy.com" ||
         hostname === "umangvisionacademy.onrender.com" ||
         hostname === "umang-vision-academy.vercel.app" ||
         hostname.endsWith(".vercel.app") ||
