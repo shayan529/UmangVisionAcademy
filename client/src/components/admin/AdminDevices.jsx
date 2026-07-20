@@ -122,7 +122,12 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
       u.state?.toLowerCase().includes(ql) ||
       u.pincode?.toLowerCase().includes(ql) ||
       u.phoneNumber?.toLowerCase().includes(ql) ||
-      u.roles?.some((role) => role.toLowerCase().includes(ql));
+      u.roles?.some((role) => {
+        if (typeof role === "string") return role.toLowerCase().includes(ql);
+        // Custom role objects have a .name property
+        if (typeof role === "object" && role?.name) return role.name.toLowerCase().includes(ql);
+        return false;
+      });
 
     // 2. Filter by role
     if (roleFilter === "students") {
