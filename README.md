@@ -8,98 +8,45 @@ An AI-powered EdTech platform for Indian students (Classes 1–12) featuring liv
 
 | Layer    | Technology                                             |
 | -------- | ------------------------------------------------------ |
-| Frontend | React 18, Redux Toolkit, React Router v6, Tailwind CSS |
+| Frontend | React 19, Redux Toolkit, React Router v7, Tailwind CSS v4, Framer Motion, Socket.io-client, i18next, Three.js |
 | Backend  | Node.js, Express.js                                    |
-| Database | MongoDB (Mongoose)                                     |
-| Auth     | JWT                                                    |
+| Database | MongoDB (Mongoose), Redis (Upstash)                    |
+| Auth     | JWT, Twilio, Fast2SMS                                  |
 | Payments | Razorpay                                               |
-| Media    | ImageKit (thumbnails, demo videos)                     |
-| State    | Redux Toolkit                                          |
+| Media    | Cloudinary, ImageKit, Fluent-FFmpeg, Multer            |
+| AI       | Groq SDK (Llama 3.3)                                   |
+| Other    | Nodemailer, Socket.io                                  |
 
 ---
 
 ## Project Structure
 
-```
+```text
 Umang Vision Academy/
-├── client/                          # React frontend
+├── client/                          # React frontend (Vite)
 │   ├── public/
 │   └── src/
-│       ├── config/
-│       │   └── api.js               # Axios instance + API_ENDPOINTS map
-│       ├── redux/
-│       │   ├── store.js
-│       │   └── slices/
-│       │       ├── authSlice.js
-│       │       ├── courseSlice.js   # fetchCourses, fetchEnrolledCourses, fetchAllCoursesAdmin, fetchPublishedCourses
-│       │       ├── cartSlice.js     # addToCart, removeFromCart, checkoutAndEnroll
-│       │       ├── billingSlice.js  # fetchSubscription, createOrder, verifyPayment, cancelSubscription
-│       │       ├── studentSlice.js  # fetchStudents, fetchStudentActivity
-│       │       └── usersSlice.js    # fetchUsers, deleteUser
-│       ├── pages/
-│       │   ├── Home.jsx
-│       │   ├── AboutUs.jsx
-│       │   ├── Signup.jsx
-│       │   ├── Login.jsx
-│       │   ├── CartPage.jsx
-│       │   ├── BillingPage.jsx
-│       │   └── CourseDemo.jsx       # Public demo page — /courses/:id/demo
-│       └── components/
-│           ├── landing/
-│           │   ├── Navbar.jsx
-│           │   ├── Hero.jsx
-│           │   ├── Courses.jsx      # Mock data (Class + Subject filters)
-│           │   ├── Plans.jsx        # Redirects to /billing with selected plan
-│           │   └── Footer.jsx
-│           ├── student/
-│           │   ├── StudentDashboard.jsx
-│           │   ├── DashboardHome.jsx
-│           │   ├── MyCourses.jsx
-│           │   ├── Sidebar.jsx
-│           │   └── ...
-│           ├── instructor/
-│           │   ├── InstructorDashboard.jsx
-│           │   ├── InstructorCourses.jsx
-│           │   ├── InstructorHome.jsx
-│           │   ├── InstructorStudents.jsx
-│           │   ├── InstructorSessions.jsx
-│           │   ├── InstructorAnalytics.jsx
-│           │   ├── InstructorAI.jsx
-│           │   ├── InstructorSettings.jsx
-│           │   ├── InstructorData.js
-│           │   └── InstructorUi.jsx  # Shared UI — Toast, AddCourseModal, Btn
-│           └── admin/
-│               ├── AdminDashboard.jsx
-│               ├── AdminOverview.jsx
-│               ├── AdminCourses.jsx
-│               ├── AdminStudents.jsx
-│               ├── AdminInstructors.jsx
-│               ├── AdminLeaderboard.jsx
-│               ├── AdminApplications.jsx
-│               └── AdminSidebar.jsx
+│       ├── assets/                  # Images, SVGs, etc.
+│       ├── components/              # Reusable React components (admin, common, instructor, student, landing, etc.)
+│       ├── config/                  # Configuration files
+│       ├── data/                    # Static data or constants
+│       ├── i18n/                    # Internationalization config
+│       ├── Layout/                  # Layout wrappers
+│       ├── pages/                   # Page components
+│       ├── redux/                   # Redux slices and store
+│       └── utils/                   # Helper functions
 │
 └── server/                          # Express backend
-    ├── .env
-    ├── server.js
-    ├── models/
-    │   ├── courses.model.js         # Course schema (demoVideoUrl, students[], lessons[])
-    │   └── user.model.js            # User schema (roles[], subscription{}, enrolledCourses[])
-    ├── controllers/
-    │   ├── course.controller.js
-    │   ├── billing.controller.js
-    │   ├── student.controller.js
-    │   ├── user.controller.js
-    │   ├── instructorApplication.controller.js
-    │   └── session.controller.js
-    ├── routes/
-    │   ├── course.routes.js
-    │   ├── billing.routes.js
-    │   ├── student.routes.js
-    │   ├── user.routes.js
-    │   ├── instructorApplication.routes.js
-    │   └── session.routes.js
-    └── middleware/
-        └── auth.middleware.js       # protect, isAdmin
+    ├── controllers/                 # Request handlers for routes (course, user, mockTest, reel, ai, etc.)
+    ├── middleware/                  # Custom middlewares (auth, upload, etc.)
+    ├── models/                      # Mongoose schemas (user, courses, mockTest, reel, role, etc.)
+    ├── routes/                      # API route definitions
+    ├── scripts/                     # Utility scripts
+    ├── tests/                       # Test files
+    ├── uploads/                     # Temporary upload directory
+    ├── utils/                       # Helper functions
+    ├── .env.example                 # Example environment variables
+    └── server.js                    # Server entry point
 ```
 
 ---
@@ -108,31 +55,51 @@ Umang Vision Academy/
 
 ### Server — `server/.env`
 
-````env
-# ── Server ────────────────────────────────────────
+```env
+# Server Configuration
 PORT=5000
 NODE_ENV=development
-
-# ── MongoDB ───────────────────────────────────────
-MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/Umang Vision Academy
-
-# ── JWT ───────────────────────────────────────────
 JWT_SECRET=your_jwt_secret_key_here
 JWT_EXPIRES_IN=7d
-
-# ── Razorpay ──────────────────────────────────────
-# Get these from https://dashboard.razorpay.com/app/keys
-RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
-RAZORPAY_KEY_SECRET=your_razorpay_secret_here
-
-# ── ImageKit ──────────────────────────────────────
-# Get these from https://imagekit.io/dashboard/developer/api-keys
-IMAGEKIT_PUBLIC_KEY=public_xxxxxxxxxxxx
-IMAGEKIT_PRIVATE_KEY=private_xxxxxxxxxxxx
-IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_id
-
-# ── CORS ──────────────────────────────────────────
 CLIENT_URL=http://localhost:5173
+
+# MongoDB Connection
+MONGO_URI=mongodb://localhost:27017/umang_vision_academy
+MONGO_MAX_POOL_SIZE=100
+
+# Redis Config
+UPSTASH_REDIS_REST_URL=https://your-upstash-redis-rest-url.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_upstash_rest_token_here
+REDIS_URL=redis://127.0.0.1:6379
+
+# Nodemailer / Gmail Configuration
+GMAIL_USER=umangvisionacademy@gmail.com
+GMAIL_APP_PASSWORD=your_gmail_app_password_here
+
+# ImageKit Configuration (Media Uploads)
+IMAGEKIT_PUBLIC_KEY=your_imagekit_public_key_here
+IMAGEKIT_PRIVATE_KEY=your_imagekit_private_key_here
+IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_endpoint_id
+
+# Razorpay Configuration
+RAZORPAY_KEY_ID=your_razorpay_key_id_here
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret_here
+
+# Groq SDK Configuration (AI Assistant)
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=llama-3.3-70b-versatile
+
+# Twilio Configuration
+TWILIO_ACCOUNT_SID=your_twilio_account_sid_here
+TWILIO_AUTH_TOKEN=your_twilio_auth_token_here
+TWILIO_PHONE_NUMBER=your_twilio_phone_number_here
+TWILIO_VERIFY_SERVICE_SID=your_twilio_verify_service_sid_here
+
+# Fast2SMS Configuration
+FAST2SMS_API_KEY=your_fast2sms_api_key_here
+FAST2SMS_OTP_ID=your_fast2sms_otp_id_here
+```
+
 ---
 
 ## Getting Started
@@ -162,7 +129,7 @@ npm install
 
 ### Running Locally
 
-You can run the frontend, backend API, and background worker concurrently from the root directory:
+You can run the frontend and backend API concurrently from the root directory:
 
 ```bash
 npm run dev
@@ -178,34 +145,5 @@ npm run dev          # runs on http://localhost:5000
 # Terminal 2 — start the frontend client
 cd client
 npm run dev          # runs on http://localhost:5173
-
-# Terminal 3 — start the background worker
-cd worker
-npm run dev          # runs on http://localhost:3001
 ```
-
----
-
-## Background Worker Service (`/worker`)
-
-To support serverless deployment for the API (e.g., Vercel) while keeping asynchronous queues alive, the **BullMQ Background Worker** is separated into a standalone service located in the `/worker` directory.
-
-### Local Development
-1. Create a `worker/.env` file containing `MONGO_URI`, `REDIS_URL` (standard TCP/TLS endpoint like `redis://127.0.0.1:6379`), and dashboard basic auth credentials (`BULL_BOARD_USER`, `BULL_BOARD_PASSWORD`).
-2. Run the worker locally with `npm run dev` inside the `/worker` folder.
-
-### Separate Deployment
-Since Vercel serverless functions cannot host long-running background workers:
-- **API Serverless App**: Deployed on Vercel. Enqueues tasks to BullMQ (producing jobs).
-- **Background Worker**: Deployed separately on a persistent platform (e.g., Railway, Fly.io, or VM). It runs the persistent Node process that executes jobs, updates database models, and caches leaderboard rankings. It also hosts the Bull Board dashboard on port `3001` (protected by HTTP Basic Auth).
-
-The worker's container configuration is defined in [Dockerfile](file:///c:/AICoachingPlatform/worker/Dockerfile). Set `IS_WORKER=true` on the worker hosting platform to trigger the actual nodemailer/SMS notifications.
-
----
-
-## Production & Scaling (5 Lakh+ Users)
-
-The platform is designed to scale horizontally to support **500,000+ active users**. 
-
-For complete documentation on the production infrastructure setup, caching strategies, WebSockets synchronization, background jobs, database indexing, and scaling configurations, see the [SCALING.md](file:///c:/AICoachingPlatform/SCALING.md) guide.
 
