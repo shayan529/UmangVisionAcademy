@@ -55,7 +55,7 @@ const shapeCourseNote = (note, course) => ({
 
 export const createNote = async (req, res) => {
   try {
-    const { title, description, fileUrl } = req.body;
+    const { title, description, fileUrl, instructorId } = req.body;
     if (!fileUrl) {
       return res.status(400).json({ message: "fileUrl required" });
     }
@@ -63,12 +63,28 @@ export const createNote = async (req, res) => {
       return res.status(400).json({ message: "title required" });
     }
 
+    let noteInstructorId = req.user._id;
+    let noteInstructorName = req.user.name || req.user.email || "Instructor";
+
+    if (instructorId) {
+      if (!hasBaseRole(req.user, "admin")) {
+        return res.status(403).json({ message: "Only admins can assign notes to other instructors" });
+      }
+      const User = mongoose.model("User");
+      const assignedInstructor = await User.findById(instructorId);
+      if (!assignedInstructor) {
+        return res.status(404).json({ message: "Assigned instructor not found" });
+      }
+      noteInstructorId = assignedInstructor._id;
+      noteInstructorName = assignedInstructor.name || assignedInstructor.email || "Instructor";
+    }
+
     const note = await Note.create({
       title,
       description,
       fileUrl,
-      instructor: req.user._id,
-      instructorName: req.user.name || req.user.email || "Instructor",
+      instructor: noteInstructorId,
+      instructorName: noteInstructorName,
       status: "pending",
     });
 

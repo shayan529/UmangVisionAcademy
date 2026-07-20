@@ -82,6 +82,32 @@ const ParticleCanvas = () => {
   );
 };
 
+const getPostLoginPath = (user, from) => {
+  const isAdmin = hasBaseRole(user, "admin");
+  const isStaff = !isAdmin && getCustomRoles(user).length > 0;
+  const isInstructor =
+    !isAdmin && !isStaff && hasBaseRole(user, "instructor");
+
+  if (from) {
+    let path = typeof from === "string" ? from : from.pathname;
+    if (path && typeof path === "string") {
+      const lowerPath = path.toLowerCase();
+      if (
+        user?.subscription?.status === "active" &&
+        (lowerPath.includes("billing") || lowerPath.includes("plans"))
+      ) {
+        return "/student-dashboard";
+      }
+      return path;
+    }
+  }
+
+  if (isAdmin) return "/admin-dashboard";
+  if (isStaff) return "/staff-dashboard";
+  if (isInstructor) return "/instructor-dashboard";
+  return "/student-dashboard";
+};
+
 // ── Password Reset Modal ──────────────────────────────────────────────────────
 // step: 'phone' | 'otp' | 'password' | 'done'
 const PasswordResetModal = ({ onClose }) => {
@@ -864,34 +890,9 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const isAdmin = hasBaseRole(user, "admin");
-      const isStaff = !isAdmin && getCustomRoles(user).length > 0;
-      const isInstructor =
-        !isAdmin && !isStaff && hasBaseRole(user, "instructor");
-
-      let from = location.state?.from;
-      if (from) {
-        let path = typeof from === "string" ? from : from.pathname;
-        if (path && typeof path === "string") {
-          const lowerPath = path.toLowerCase();
-          if (
-            user?.subscription?.status === "active" &&
-            (lowerPath.includes("billing") || lowerPath.includes("plans"))
-          ) {
-            from = "/student-dashboard";
-          }
-        }
-        navigate(from, { replace: true });
-        return;
-      }
-
-      if (isAdmin) navigate("/admin-dashboard", { replace: true });
-      else if (isStaff) navigate("/staff-dashboard", { replace: true });
-      else if (isInstructor)
-        navigate("/instructor-dashboard", { replace: true });
-      else navigate("/student-dashboard", { replace: true });
+      navigate(getPostLoginPath(user, location.state?.from), { replace: true });
     }
-  }, [isAuthenticated, user, navigate, location.state]);
+  }, [isAuthenticated, user, navigate, location.state?.from]);
 
   const [countryCode] = useState("+91");
   const [formData, setFormData] = useState({ phoneNumber: "", password: "" });
@@ -918,12 +919,15 @@ const Login = () => {
         }),
       ).unwrap();
 
+      navigate(getPostLoginPath(user, location.state?.from), { replace: true });
+
+      toast(t("auth.welcomeToast"), { icon: "👋", duration: 3000 });
+
       const now = new Date();
       const hour = now.getHours();
       const isEarlyBird = hour < 7;
       const isNightOwl = hour >= 22;
 
-      // Fire and forget achievements to avoid blocking UI navigation
       dispatch(
         checkAndAwardAchievements({
           firstLogin: true,
@@ -931,39 +935,6 @@ const Login = () => {
           nightStudy: isNightOwl,
         }),
       ).then(() => dispatch(fetchAchievements()));
-
-      toast(t("auth.welcomeToast"), { icon: "👋", duration: 3000 });
-
-      const isAdmin = hasBaseRole(user, "admin");
-      // Custom-role staff (HR Manager, Payroll Admin, etc.) are detected by
-      // PRESENCE of a custom role on the account, not by whether any of
-      // their granted permissions happen to be non-empty. A custom-role
-      // user with zero permissions assigned should still land on the staff
-      // panel (where they'll simply see nothing they can't access) rather
-      // than silently falling through to the student dashboard.
-      const isStaff = !isAdmin && getCustomRoles(user).length > 0;
-      const isInstructor =
-        !isAdmin && !isStaff && hasBaseRole(user, "instructor");
-      let from = location.state?.from;
-
-      if (from) {
-        let path = typeof from === "string" ? from : from.pathname;
-        if (path && typeof path === "string") {
-          const lowerPath = path.toLowerCase();
-          if (
-            user?.subscription?.status === "active" &&
-            (lowerPath.includes("billing") || lowerPath.includes("plans"))
-          ) {
-            from = "/student-dashboard";
-          }
-        }
-        navigate(from, { replace: true });
-        return;
-      }
-      if (isAdmin) navigate("/admin-dashboard");
-      else if (isStaff) navigate("/staff-dashboard");
-      else if (isInstructor) navigate("/instructor-dashboard");
-      else navigate("/student-dashboard");
     } catch (error) {
       const message =
         error?.response?.data?.message ||

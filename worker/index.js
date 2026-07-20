@@ -1,11 +1,19 @@
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import Redis from "ioredis";
 import mongoose from "mongoose";
 import express from "express";
 import { Worker, Queue } from "bullmq";
 import { createBullBoard } from "@bull-board/api";
-import { BullMQAdapter } from "@bull-board/api/bullMQAdapter.js";
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
-import "dotenv/config";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Load worker/.env first, then fall back to server/.env for local `npm run dev`
+// when only the server env file has been configured.
+dotenv.config({ path: path.join(__dirname, ".env") });
+dotenv.config({ path: path.join(__dirname, "../server/.env") });
 
 // Set flag so Mailer.js operates in worker mode (actually dispatching SMTP)
 process.env.IS_WORKER = "true";
@@ -313,7 +321,7 @@ workers.forEach((w) => {
 
 // ── Express Server for Queue Dashboard (Bull Board) ──────────────────────────
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.WORKER_PORT || 3001;
 
 // Simple HTTP Basic Auth middleware (Zero-dependency)
 const basicAuth = (req, res, next) => {

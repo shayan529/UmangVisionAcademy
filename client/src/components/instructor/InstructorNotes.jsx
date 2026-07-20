@@ -1,33 +1,74 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchUsers } from "../../redux/slices/usersSlice";
 import api from "../../config/api";
 import { Toast } from "./InstructorUi";
 import { uploadFile } from "../../utils/uploadFile";
-import { FileText, Plus, X, Upload } from "lucide-react";
+import { FileText, Plus, X, Upload, Search, Check, XCircle } from "lucide-react";
+
+const STATUS_STYLE = {
+  approved: { bg: "bg-green-950", text: "text-green-400", border: "border-green-800", label: "Approved" },
+  rejected: { bg: "bg-red-950", text: "text-red-400", border: "border-red-900", label: "Rejected" },
+  pending: { bg: "bg-yellow-950", text: "text-amber-400", border: "border-yellow-900", label: "Pending" },
+};
 
 export default function InstructorNotes({ showToast }) {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const { users } = useSelector((state) => state.users);
+
+  const isAdmin = user?.roles?.includes("admin") || user?.role === "admin";
+  const instructors = users.filter((u) => u.roles?.includes("instructor") || u.role === "instructor");
+
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
 
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    fileUrl: "",
+  const filteredNotes = notes.filter((n) => {
+    const matchesStatus = statusFilter === "all" || n.status === statusFilter;
+    const q = searchQuery.toLowerCase();
+    const matchesSearch =
+      n.title?.toLowerCase().includes(q) ||
+      n.description?.toLowerCase().includes(q) ||
+      n.courseTitle?.toLowerCase().includes(q);
+    return matchesStatus && matchesSearch;
   });
 
+  const [form, setForm] = useState({ title: "", description: "", fileUrl: "", instructorId: "" });
+
   const fileInputRef = useRef(null);
+  const titleInputRef = useRef(null);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedFileName, setUploadedFileName] = useState("");
 
   useEffect(() => {
     fetchNotes();
-  }, []);
+    if (isAdmin && users.length === 0) {
+      dispatch(fetchUsers());
+    }
+  }, [isAdmin, dispatch, users.length]);
+
+  // Focus the title field and allow Escape-to-close whenever the modal opens
+  useEffect(() => {
+    if (!showModal) return;
+    titleInputRef.current?.focus();
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setShowModal(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showModal]);
 
   const fetchNotes = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get("/notes?mine=1");
+      const endpoint = isAdmin ? "/notes?all=1" : "/notes?mine=1";
+      const { data } = await api.get(endpoint);
       setNotes(Array.isArray(data) ? data : []);
     } catch (error) {
       showToast?.(error.response?.data?.message || "Failed to load notes");
@@ -36,10 +77,8 @@ export default function InstructorNotes({ showToast }) {
     }
   };
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0];
+  const doUpload = useCallback(async (file) => {
     if (!file) return;
-
     try {
       setUploadingFile(true);
       setUploadProgress(0);
@@ -47,18 +86,26 @@ export default function InstructorNotes({ showToast }) {
         file,
         folder: "/notes",
         onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(percentCompleted);
         },
       });
       setForm((prev) => ({ ...prev, fileUrl: data.url }));
+      setUploadedFileName(file.name);
     } catch (error) {
       showToast?.("File upload failed");
     } finally {
       setUploadingFile(false);
     }
+  }, [showToast]);
+
+  const handleFileChange = (e) => doUpload(e.target.files?.[0]);
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (uploadingFile) return;
+    doUpload(e.dataTransfer.files?.[0]);
   };
 
   const handleCreate = async () => {
@@ -75,14 +122,19 @@ export default function InstructorNotes({ showToast }) {
       setSaving(true);
       const { data } = await api.post("/notes", form);
       setNotes([data, ...notes]);
-      setShowModal(false);
-      setForm({ title: "", description: "", fileUrl: "" });
+      closeModal();
       showToast?.("Note uploaded successfully and is pending approval.");
     } catch (error) {
       showToast?.(error.response?.data?.message || "Failed to upload note");
     } finally {
       setSaving(false);
     }
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setForm({ title: "", description: "", fileUrl: "", instructorId: "" });
+    setUploadedFileName("");
   };
 
   const handleDelete = async (note) => {
@@ -98,102 +150,189 @@ export default function InstructorNotes({ showToast }) {
     }
   };
 
-  const statusStyle = (status) => {
-    switch (status) {
-      case "approved":
-        return { bg: "#052e16", text: "#4ade80", border: "#166534", label: "Approved" };
-      case "rejected":
-        return { bg: "#2d0a0a", text: "#f87171", border: "#7f1d1d", label: "Rejected" };
-      default:
-        return { bg: "#1c1a00", text: "#fbbf24", border: "#854d0e", label: "Pending" };
+  const handleApprove = async (note) => {
+    try {
+      await api.put(`/notes/${note._id}/approve`, {
+        source: note.source || "standalone",
+        courseId: note.courseId || undefined,
+      });
+      setNotes(notes.map((n) => (n._id === note._id ? { ...n, status: "approved", rejectedReason: "" } : n)));
+      showToast?.("Note approved");
+    } catch (error) {
+      showToast?.(error.response?.data?.message || "Failed to approve note");
+    }
+  };
+
+  const handleReject = async (note) => {
+    const reason = window.prompt("Reason for rejection:");
+    if (reason === null) return;
+    try {
+      await api.put(`/notes/${note._id}/reject`, {
+        source: note.source || "standalone",
+        courseId: note.courseId || undefined,
+        reason,
+      });
+      setNotes(notes.map((n) => (n._id === note._id ? { ...n, status: "rejected", rejectedReason: reason } : n)));
+      showToast?.("Note rejected");
+    } catch (error) {
+      showToast?.(error.response?.data?.message || "Failed to reject note");
     }
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24, padding: "20px 0" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className="flex flex-col gap-6 py-5">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: "#f1f5f9" }}>Study Notes</h2>
-          <p style={{ color: "#94a3b8", fontSize: 14, marginTop: 4 }}>
-            Study notes and documents uploaded for your courses.
-          </p>
+          <h2 className="text-2xl font-extrabold text-slate-100">Study Notes</h2>
+          <p className="mt-1 text-sm text-slate-400">Study notes and documents uploaded for your courses.</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative">
+            <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              placeholder="Search notes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full min-w-[180px] rounded-lg border border-slate-800 bg-slate-950 py-2.5 pl-8 pr-8 text-sm text-slate-100 outline-none transition-colors focus:border-violet-600 sm:w-[200px]"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <div className="flex rounded-lg border border-slate-800 bg-slate-950 p-1">
+            {[
+              { id: "all", label: "All" },
+              { id: "pending", label: "Pending" },
+              { id: "approved", label: "Approved" },
+              { id: "rejected", label: "Rejected" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setStatusFilter(tab.id)}
+                className={`rounded-md px-3 py-1.5 text-[13px] font-semibold transition-colors ${statusFilter === tab.id ? "bg-slate-700 text-slate-100" : "text-slate-500 hover:text-slate-300"
+                  }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-500 active:bg-violet-700"
+          >
+            <Plus size={18} /> Upload Note
+          </button>
         </div>
       </div>
 
+      {/* Body */}
       {loading ? (
-        <div style={{ color: "#94a3b8", padding: 20 }}>Loading...</div>
-      ) : notes.length === 0 ? (
-        <div style={{
-          textAlign: "center", padding: "60px 20px",
-          background: "#0b1120", border: "1px dashed #1e293b", borderRadius: 16
-        }}>
-          <FileText size={48} color="#334155" style={{ margin: "0 auto 16px" }} />
-          <h3 style={{ fontSize: 16, color: "#f1f5f9", fontWeight: 700 }}>No notes found</h3>
-          <p style={{ color: "#64748b", fontSize: 13, marginTop: 8 }}>
-            Add study notes inside your courses via the Course Creator / Editor.
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="animate-pulse rounded-2xl border border-slate-800 bg-slate-950 p-5">
+              <div className="mb-3 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-slate-800" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-3/4 rounded bg-slate-800" />
+                  <div className="h-2 w-1/2 rounded bg-slate-800" />
+                </div>
+              </div>
+              <div className="h-2 w-full rounded bg-slate-800" />
+            </div>
+          ))}
+        </div>
+      ) : filteredNotes.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-800 bg-slate-950 px-5 py-16 text-center">
+          <FileText size={44} className="mx-auto mb-4 text-slate-700" />
+          <h3 className="text-base font-bold text-slate-100">
+            {notes.length === 0 ? "No notes yet" : "No notes match your filters"}
+          </h3>
+          <p className="mt-2 text-[13px] text-slate-500">
+            {notes.length === 0
+              ? "Add study notes inside your courses via the Course Creator / Editor, or upload one directly."
+              : "Try a different search term or status filter."}
           </p>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
-          {notes.map((note) => {
-            const st = statusStyle(note.status);
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredNotes.map((note) => {
+            const st = STATUS_STYLE[note.status] || STATUS_STYLE.pending;
             return (
-              <div key={note._id} style={{
-                background: "#0b1120", border: "1px solid #1e293b",
-                borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", gap: 12
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{
-                      width: 40, height: 40, borderRadius: 10,
-                      background: "rgba(124, 58, 237, 0.1)", color: "#7c3aed",
-                      display: "flex", alignItems: "center", justifyContent: "center"
-                    }}>
-                      <FileText size={20} />
-                    </div>
-                    <div>
-                      <h4 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>
-                        {note.title}
-                      </h4>
-                      <span style={{ fontSize: 11, color: "#64748b" }}>
-                        {new Date(note.createdAt).toLocaleDateString()}
-                        {note.courseTitle ? ` · ${note.courseTitle}` : " · General upload"}
-                      </span>
-                    </div>
+              <div
+                key={note._id}
+                className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-5 transition-colors hover:border-slate-700"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-600/10 text-violet-400">
+                    <FileText size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="truncate text-[15px] font-bold text-slate-100">{note.title}</h4>
+                    <span className="text-[11px] text-slate-500">
+                      {new Date(note.createdAt).toLocaleDateString()}
+                      {note.courseTitle ? ` · ${note.courseTitle}` : " · General upload"}
+                    </span>
                   </div>
                 </div>
 
                 {note.description && (
-                  <p style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.5, margin: 0 }}>
-                    {note.description}
-                  </p>
+                  <p className="line-clamp-2 text-[13px] leading-relaxed text-slate-400">{note.description}</p>
                 )}
 
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: 12, borderTop: "1px solid #1e293b" }}>
-                  <div style={{
-                    fontSize: 10, fontWeight: 700, padding: "4px 10px",
-                    borderRadius: 20, background: st.bg, color: st.text, border: `1px solid ${st.border}`
-                  }}>
+                <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-800 pt-3">
+                  <div
+                    className={`rounded-full border px-2.5 py-1 text-[10px] font-bold ${st.bg} ${st.text} ${st.border}`}
+                  >
                     {st.label}
                   </div>
 
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <a href={note.fileUrl} target="_blank" rel="noreferrer" style={{
-                      fontSize: 12, fontWeight: 600, color: "#38bdf8", textDecoration: "none",
-                      padding: "6px 12px", borderRadius: 8, background: "rgba(56,189,248,0.1)"
-                    }}>
+                  <div className="flex flex-wrap justify-end gap-1.5">
+                    {isAdmin && note.status === "pending" && (
+                      <>
+                        <button
+                          onClick={() => handleApprove(note)}
+                          className="flex items-center gap-1 rounded-lg bg-green-400/10 px-2.5 py-1.5 text-xs font-semibold text-green-400 transition-colors hover:bg-green-400/20"
+                        >
+                          <Check size={13} /> Approve
+                        </button>
+                        <button
+                          onClick={() => handleReject(note)}
+                          className="flex items-center gap-1 rounded-lg bg-red-400/10 px-2.5 py-1.5 text-xs font-semibold text-red-400 transition-colors hover:bg-red-400/20"
+                        >
+                          <XCircle size={13} /> Reject
+                        </button>
+                      </>
+                    )}
+                    <a
+                      href={note.fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-lg bg-sky-400/10 px-2.5 py-1.5 text-xs font-semibold text-sky-400 no-underline transition-colors hover:bg-sky-400/20"
+                    >
                       View
                     </a>
-                    <button onClick={() => handleDelete(note)} style={{
-                      fontSize: 12, fontWeight: 600, color: "#f87171", border: "none",
-                      padding: "6px 12px", borderRadius: 8, background: "rgba(248,113,113,0.1)", cursor: "pointer"
-                    }}>
+                    <button
+                      onClick={() => handleDelete(note)}
+                      className="rounded-lg bg-red-400/10 px-2.5 py-1.5 text-xs font-semibold text-red-400 transition-colors hover:bg-red-400/20"
+                    >
                       Delete
                     </button>
                   </div>
                 </div>
+
                 {note.status === "rejected" && note.rejectedReason && (
-                  <div style={{ marginTop: 8, padding: 8, background: "rgba(248,113,113,0.1)", borderRadius: 8, fontSize: 11, color: "#fca5a5" }}>
+                  <div className="rounded-lg bg-red-400/10 px-2.5 py-2 text-[11px] text-red-300">
                     Reason: {note.rejectedReason}
                   </div>
                 )}
@@ -203,101 +342,136 @@ export default function InstructorNotes({ showToast }) {
         </div>
       )}
 
+      {/* Upload modal */}
       {showModal && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(2,8,23,0.8)", backdropFilter: "blur(4px)"
-        }}>
-          <div style={{
-            background: "#0b1120", border: "1px solid #1e293b", borderRadius: 20,
-            width: "100%", maxWidth: 500, padding: 24
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: "#f1f5f9", margin: 0 }}>Upload Note</h3>
-              <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer" }}>
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          onClick={(e) => e.target === e.currentTarget && closeModal()}
+        >
+          <div className="w-full max-w-[500px] rounded-2xl border border-slate-800 bg-slate-950 p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="text-lg font-extrabold text-slate-100">Upload Note</h3>
+              <button onClick={closeModal} aria-label="Close" className="text-slate-500 hover:text-slate-300">
                 <X size={20} />
               </button>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="flex flex-col gap-4">
+              {isAdmin && (
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-400">Assign Instructor (Optional)</label>
+                  <select
+                    value={form.instructorId}
+                    onChange={(e) => setForm({ ...form, instructorId: e.target.value })}
+                    className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-slate-100 outline-none focus:border-violet-600"
+                  >
+                    <option value="">-- Assign to yourself --</option>
+                    {instructors.map((inst) => (
+                      <option key={inst._id} value={inst._id}>
+                        {inst.name || inst.email}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 6 }}>Title *</label>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-400">Title *</label>
                 <input
-                  type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  ref={titleInputRef}
+                  type="text"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="e.g. Chapter 1: Introduction"
-                  style={{
-                    width: "100%", padding: "10px 14px", borderRadius: 10, background: "#111827",
-                    border: "1px solid #1e293b", color: "#f1f5f9", outline: "none", boxSizing: "border-box"
-                  }}
+                  className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-slate-100 outline-none focus:border-violet-600"
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 6 }}>Description</label>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-400">Description</label>
                 <textarea
-                  value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="Brief description of the notes..."
                   rows={3}
-                  style={{
-                    width: "100%", padding: "10px 14px", borderRadius: 10, background: "#111827",
-                    border: "1px solid #1e293b", color: "#f1f5f9", outline: "none", boxSizing: "border-box", resize: "vertical"
-                  }}
+                  className="w-full resize-y rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-slate-100 outline-none focus:border-violet-600"
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 6 }}>File (PDF/Document) *</label>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-400">File (PDF/Document) *</label>
                 <input
-                  type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: "none" }}
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
                   accept=".pdf,.doc,.docx,.ppt,.pptx"
                 />
 
                 {form.fileUrl ? (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 12, background: "#111827", border: "1px solid #1e293b", borderRadius: 10 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#4ade80", fontSize: 13, fontWeight: 600 }}>
-                      <FileText size={16} /> File Uploaded
+                  <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-3">
+                    <div className="flex min-w-0 items-center gap-2 text-[13px] font-semibold text-green-400">
+                      <FileText size={16} className="shrink-0" />
+                      <span className="truncate">{uploadedFileName || "File uploaded"}</span>
                     </div>
-                    <button onClick={() => setForm({ ...form, fileUrl: "" })} style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
+                    <button
+                      onClick={() => {
+                        setForm({ ...form, fileUrl: "" });
+                        setUploadedFileName("");
+                      }}
+                      className="shrink-0 text-xs font-semibold text-red-400 hover:text-red-300"
+                    >
                       Remove
                     </button>
                   </div>
                 ) : (
                   <div
                     onClick={() => !uploadingFile && fileInputRef.current?.click()}
-                    style={{
-                      border: "2px dashed #1e293b", borderRadius: 12, padding: 24, textAlign: "center",
-                      cursor: uploadingFile ? "default" : "pointer", background: "#0d1526"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (!uploadingFile) setIsDragging(true);
                     }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={handleDrop}
+                    className={`rounded-xl border-2 border-dashed p-6 text-center transition-colors ${uploadingFile ? "cursor-default" : "cursor-pointer"
+                      } ${isDragging ? "border-violet-500 bg-violet-500/5" : "border-slate-800 bg-slate-900/60"}`}
                   >
                     {uploadingFile ? (
                       <div>
-                        <div style={{ color: "#818cf8", fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Uploading {uploadProgress}%</div>
-                        <div style={{ width: "100%", height: 4, background: "#1e293b", borderRadius: 2 }}>
-                          <div style={{ width: `${uploadProgress}%`, height: "100%", background: "#818cf8", borderRadius: 2 }} />
+                        <div className="mb-2 text-[13px] font-semibold text-indigo-400">
+                          Uploading {uploadProgress}%
+                        </div>
+                        <div className="h-1 w-full rounded-full bg-slate-800">
+                          <div
+                            className="h-full rounded-full bg-indigo-400 transition-all"
+                            style={{ width: `${uploadProgress}%` }}
+                          />
                         </div>
                       </div>
                     ) : (
                       <>
-                        <Upload size={24} color="#64748b" style={{ margin: "0 auto 8px" }} />
-                        <div style={{ fontSize: 13, color: "#94a3b8", fontWeight: 500 }}>Click to upload file</div>
-                        <div style={{ fontSize: 11, color: "#475569", marginTop: 4 }}>PDF, DOC, DOCX up to 10MB</div>
+                        <Upload size={22} className="mx-auto mb-2 text-slate-500" />
+                        <div className="text-[13px] font-medium text-slate-400">
+                          Click to upload, or drag a file here
+                        </div>
+                        <div className="mt-1 text-[11px] text-slate-600">PDF, DOC, DOCX up to 10MB</div>
                       </>
                     )}
                   </div>
                 )}
               </div>
 
-              <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
+              <div className="mt-2 flex gap-3">
                 <button
-                  onClick={() => setShowModal(false)}
-                  style={{ flex: 1, padding: "12px", borderRadius: 10, background: "transparent", border: "1px solid #1e293b", color: "#cbd5e1", fontWeight: 700, cursor: "pointer" }}
+                  onClick={closeModal}
+                  className="flex-1 rounded-lg border border-slate-800 bg-transparent py-3 font-bold text-slate-300 transition-colors hover:bg-slate-900"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreate}
                   disabled={saving || uploadingFile}
-                  style={{ flex: 1, padding: "12px", borderRadius: 10, background: "#7c3aed", border: "none", color: "#fff", fontWeight: 700, cursor: saving || uploadingFile ? "not-allowed" : "pointer", opacity: saving || uploadingFile ? 0.7 : 1 }}
+                  className="flex-1 rounded-lg bg-violet-600 py-3 font-bold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {saving ? "Saving..." : "Upload"}
                 </button>

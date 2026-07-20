@@ -7,10 +7,16 @@ import cookieParser from "cookie-parser";
 
 process.on("unhandledRejection", (reason, promise) => {
   console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
+  // Do NOT exit here — unhandled rejections in async route handlers are
+  // recoverable; logging is sufficient. Only uncaughtException (synchronous
+  // throw outside any async boundary) requires a hard exit.
 });
 
 process.on("uncaughtException", (error) => {
   console.error("❌ Uncaught Exception:", error);
+  // After an uncaughtException the process is in an undefined state.
+  // Node.js docs explicitly recommend exiting. Nodemon will restart.
+  process.exit(1);
 });
 import mongoose from "mongoose";
 import "dotenv/config";
@@ -290,6 +296,20 @@ app.use("/api/references", referenceRoutes);
 app.use("/api/reels", reelRoutes);
 app.use("/api/notes", noteRoutes);
 
+// ── Global error-handling middleware ──────────────────────────────────────────
+// Must be registered AFTER all routes. Express routes that call next(err) or
+// throw inside an async handler (when wrapped with express-async-handler or
+// similar) will land here instead of crashing the process.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error("[Global Error Handler]", err);
+  if (res.headersSent) return next(err);
+  res.status(err.status || err.statusCode || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
+});
+
 // Serve frontend build in production
 if (process.env.NODE_ENV === "production") {
   app.use(
@@ -372,6 +392,47 @@ const setupRedisAdapter = async () => {
     console.warn("[Socket.IO] REDIS_URL not set, running without Redis adapter");
   }
 };
+
+// ── Graceful shutdown (nodemon restarts, Ctrl+C) ─────────────────────────────
+// Without closing the HTTP server first, nodemon can restart while port ${PORT}
+// is still bound by the old process → EADDRINUSE → "[nodemon] app crashed".
+let isShuttingDown = false;
+
+const gracefulShutdown = (signal) => {
+  if (isShuttingDown || isVercel) return;
+  isShuttingDown = true;
+  console.log(`\n[Server] ${signal} received — shutting down gracefully...`);
+
+  httpServer.close((err) => {
+    if (err) {
+      console.error("[Server] Error while closing HTTP server:", err.message);
+    }
+    mongoose.connection
+      .close(false)
+      .catch(() => undefined)
+      .finally(() => process.exit(0));
+  });
+
+  setTimeout(() => {
+    console.error("[Server] Forced shutdown after timeout");
+    process.exit(1);
+  }, 10_000).unref();
+};
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.once("SIGUSR2", () => gracefulShutdown("SIGUSR2"));
+
+httpServer.on("error", (err) => {
+  if (err.code === "EADDRINUSE") {
+    console.error(
+      `❌ Port ${PORT} is already in use. Stop the other server instance or change PORT in server/.env`,
+    );
+  } else {
+    console.error("❌ HTTP server error:", err);
+  }
+  process.exit(1);
+});
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 // On Vercel, @vercel/node imports this file and uses the default export (the
