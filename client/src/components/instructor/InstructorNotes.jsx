@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchUsers } from "../../redux/slices/usersSlice";
+import { fetchAllCoursesAdmin, fetchCourses } from "../../redux/slices/courseSlice";
 import api from "../../config/api";
 import { Toast } from "./InstructorUi";
 import { uploadFile } from "../../utils/uploadFile";
@@ -16,6 +17,7 @@ export default function InstructorNotes({ showToast }) {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { users } = useSelector((state) => state.users);
+  const { courses } = useSelector((state) => state.courses);
 
   const isAdmin = user?.roles?.includes("admin") || user?.role === "admin";
   const instructors = users.filter((u) => u.roles?.includes("instructor") || u.role === "instructor");
@@ -38,7 +40,26 @@ export default function InstructorNotes({ showToast }) {
     return matchesStatus && matchesSearch;
   });
 
-  const [form, setForm] = useState({ title: "", description: "", fileUrl: "", instructorId: "" });
+  const [form, setForm] = useState({ title: "", description: "", fileUrl: "", instructorId: "", courseId: "" });
+
+  const [courseSearch, setCourseSearch] = useState("");
+  const [courseInstructor, setCourseInstructor] = useState("");
+  const [courseSubject, setCourseSubject] = useState("");
+  const [courseClass, setCourseClass] = useState("");
+
+  // Derived filter options for courses
+  const uniqueCourseSubjects = [...new Set(courses.map(c => c.category).filter(Boolean))];
+  const uniqueCourseClasses = [...new Set(courses.map(c => c.board).filter(Boolean))]; // assuming 'board' or 'category' might be used for classes, or we just map everything to category
+  const uniqueCourseInstructors = [...new Set(courses.map(c => c.instructor?.name || c.instructor?.email).filter(Boolean))];
+
+  const filteredCourses = courses.filter((c) => {
+    const q = courseSearch.toLowerCase();
+    const matchesSearch = c.title?.toLowerCase().includes(q);
+    const matchesInstructor = courseInstructor ? (c.instructor?.name === courseInstructor || c.instructor?.email === courseInstructor) : true;
+    const matchesSubject = courseSubject ? c.category === courseSubject : true;
+    const matchesClass = courseClass ? c.board === courseClass : true; // Assuming class maps to board, wait let's adjust this later if needed
+    return matchesSearch && matchesInstructor && matchesSubject && matchesClass;
+  });
 
   const fileInputRef = useRef(null);
   const titleInputRef = useRef(null);
@@ -51,7 +72,14 @@ export default function InstructorNotes({ showToast }) {
     if (isAdmin && users.length === 0) {
       dispatch(fetchUsers());
     }
-  }, [isAdmin, dispatch, users.length]);
+    if (courses.length === 0) {
+      if (isAdmin) {
+        dispatch(fetchAllCoursesAdmin());
+      } else {
+        dispatch(fetchCourses());
+      }
+    }
+  }, [isAdmin, dispatch, users.length, courses.length]);
 
   // Focus the title field and allow Escape-to-close whenever the modal opens
   useEffect(() => {
@@ -133,7 +161,7 @@ export default function InstructorNotes({ showToast }) {
 
   const closeModal = () => {
     setShowModal(false);
-    setForm({ title: "", description: "", fileUrl: "", instructorId: "" });
+    setForm({ title: "", description: "", fileUrl: "", instructorId: "", courseId: "" });
     setUploadedFileName("");
   };
 
@@ -348,7 +376,7 @@ export default function InstructorNotes({ showToast }) {
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
           onClick={(e) => e.target === e.currentTarget && closeModal()}
         >
-          <div className="w-full max-w-[500px] rounded-2xl border border-slate-800 bg-slate-950 p-6">
+          <div className="w-full max-w-[650px] rounded-2xl border border-slate-800 bg-slate-950 p-6 max-h-[90vh] overflow-y-auto">
             <div className="mb-5 flex items-center justify-between">
               <h3 className="text-lg font-extrabold text-slate-100">Upload Note</h3>
               <button onClick={closeModal} aria-label="Close" className="text-slate-500 hover:text-slate-300">
@@ -358,21 +386,82 @@ export default function InstructorNotes({ showToast }) {
 
             <div className="flex flex-col gap-4">
               {isAdmin && (
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-400">Assign Instructor (Optional)</label>
-                  <select
-                    value={form.instructorId}
-                    onChange={(e) => setForm({ ...form, instructorId: e.target.value })}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-slate-100 outline-none focus:border-violet-600"
-                  >
-                    <option value="">-- Assign to yourself --</option>
-                    {instructors.map((inst) => (
-                      <option key={inst._id} value={inst._id}>
-                        {inst.name || inst.email}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-400">Assign Instructor (Optional)</label>
+                    <select
+                      value={form.instructorId}
+                      onChange={(e) => setForm({ ...form, instructorId: e.target.value })}
+                      disabled={!!form.courseId}
+                      className={`w-full rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-slate-100 outline-none focus:border-violet-600 ${form.courseId ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      <option value="">-- Assign to yourself --</option>
+                      {instructors.map((inst) => (
+                        <option key={inst._id} value={inst._id}>
+                          {inst.name || inst.email}
+                        </option>
+                      ))}
+                    </select>
+                    {form.courseId && <p className="mt-1 text-xs text-slate-500">Instructor is inherited from the selected course.</p>}
+                  </div>
+
+                  <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+                    <label className="mb-2 block text-xs font-semibold text-slate-300">Assign to Course (Optional)</label>
+                    
+                    <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      <input
+                        type="text"
+                        placeholder="Search..."
+                        value={courseSearch}
+                        onChange={(e) => setCourseSearch(e.target.value)}
+                        className="w-full rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-violet-600"
+                      />
+                      <select
+                        value={courseInstructor}
+                        onChange={(e) => setCourseInstructor(e.target.value)}
+                        className="w-full rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-violet-600"
+                      >
+                        <option value="">Instructors (All)</option>
+                        {uniqueCourseInstructors.map((inst, idx) => (
+                          <option key={idx} value={inst}>{inst}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={courseSubject}
+                        onChange={(e) => setCourseSubject(e.target.value)}
+                        className="w-full rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-violet-600"
+                      >
+                        <option value="">Subjects (All)</option>
+                        {uniqueCourseSubjects.map((sub, idx) => (
+                          <option key={idx} value={sub}>{sub}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={courseClass}
+                        onChange={(e) => setCourseClass(e.target.value)}
+                        className="w-full rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-violet-600"
+                      >
+                        <option value="">Classes (All)</option>
+                        {uniqueCourseClasses.map((cls, idx) => (
+                          <option key={idx} value={cls}>{cls}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <select
+                      value={form.courseId}
+                      onChange={(e) => setForm({ ...form, courseId: e.target.value })}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3.5 py-2 text-sm text-slate-100 outline-none focus:border-violet-600"
+                    >
+                      <option value="">-- No Course (Standalone Note) --</option>
+                      {filteredCourses.map((c) => (
+                        <option key={c._id} value={c._id}>
+                          {c.title} {c.instructor ? `(${c.instructor.name || c.instructor.email})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
               )}
 
               <div>

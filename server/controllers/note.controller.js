@@ -55,12 +55,39 @@ const shapeCourseNote = (note, course) => ({
 
 export const createNote = async (req, res) => {
   try {
-    const { title, description, fileUrl, instructorId } = req.body;
+    const { title, description, fileUrl, instructorId, courseId } = req.body;
     if (!fileUrl) {
       return res.status(400).json({ message: "fileUrl required" });
     }
     if (!title) {
       return res.status(400).json({ message: "title required" });
+    }
+
+    if (courseId) {
+      const course = await Course.findById(courseId).populate("instructor");
+      if (!course) {
+        return res.status(404).json({ message: "Assigned course not found" });
+      }
+      if (!hasBaseRole(req.user, "admin") && course.instructor._id.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: "You don't have permission to add notes to this course" });
+      }
+
+      const newNote = {
+        title,
+        description,
+        fileUrl,
+        status: "pending",
+        createdAt: new Date(),
+      };
+      
+      course.notes = course.notes || [];
+      course.notes.push(newNote);
+      await course.save();
+
+      const pushedNote = course.notes[course.notes.length - 1];
+      await invalidateNoteCaches(course._id);
+
+      return res.json(shapeCourseNote(pushedNote, course));
     }
 
     let noteInstructorId = req.user._id;
