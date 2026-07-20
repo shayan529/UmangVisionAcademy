@@ -9,7 +9,7 @@ import {
   setOtpRecord,
   updateOtpRecord,
 } from "../utils/otpStore.js";
-import { getNotificationsQueue } from "../utils/queue.js";
+import { transporter } from "../utils/Mailer.js";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -69,8 +69,8 @@ const sendOtpEmail = async (email, otp, name = "") => {
       </html>
     `;
 
-  await getNotificationsQueue().add(`email-reset-${email}-${Date.now()}`, {
-    type: "email-raw",
+  await transporter.sendMail({
+    from: `"Umang Vision Academy" <${process.env.GMAIL_USER}>`,
     to: email,
     subject: "Password Reset OTP",
     html,

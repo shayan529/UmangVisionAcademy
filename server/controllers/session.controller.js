@@ -247,7 +247,7 @@ export const createSession = async (req, res) => {
 
     // Schedule live session reminder
     await scheduleSessionReminder(session).catch((e) =>
-      console.error("[BullMQ] Failed to schedule reminder for session:", e.message)
+      console.error("[Scheduler] Failed to schedule reminder for session:", e.message)
     );
 
     res.status(201).json(session);
@@ -308,7 +308,7 @@ export const updateSession = async (req, res) => {
 
     // Reschedule/cancel live session reminder
     await scheduleSessionReminder(session).catch((e) =>
-      console.error("[BullMQ] Failed to update reminder schedule for session:", e.message)
+      console.error("[Scheduler] Failed to update reminder schedule for session:", e.message)
     );
 
     res.json(session);
@@ -340,7 +340,7 @@ export const deleteSession = async (req, res) => {
 
     // Cancel live session reminder
     await cancelSessionReminder(req.params.id).catch((e) =>
-      console.error("[BullMQ] Failed to cancel reminder for session:", e.message)
+      console.error("[Scheduler] Failed to cancel reminder for session:", e.message)
     );
 
     res.json({ message: "Session deleted" });

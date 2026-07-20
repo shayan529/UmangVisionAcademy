@@ -33,8 +33,6 @@ import cors from "cors";
 import compression from "compression";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
-import { RedisStore } from "rate-limit-redis";
-import { redisConnection } from "./utils/queue.js";
 import billingRoutes from "./routes/billing.route.js";
 import uploadRoutes from "./routes/upload.routes.js";
 import aiRoutes from "./routes/ai.routes.js";
@@ -162,52 +160,8 @@ const rateLimitOptions = {
   },
 };
 
-if (!isVercel) {
-  rateLimitOptions.store = new RedisStore({
-    sendCommand: async (...args) => {
-      const command = args[0]?.toUpperCase();
-      
-      // Let script loading commands pass through directly to avoid breaking initialization
-      if (command === "SCRIPT") {
-        if (!redisConnection) throw new Error("redisConnection not initialized");
-        return redisConnection.call(args[0], ...args.slice(1));
-      }
-
-      // If Redis connection is completely offline/closed, fail-open immediately
-      const status = redisConnection?.status;
-      const isOnline = status === "ready" || status === "connecting" || status === "connect" || status === "reconnecting";
-      if (!redisConnection || !isOnline) {
-        console.warn("[RateLimit Redis] Redis connection offline. Status:", status || "missing", "- Bypassing rate limit check");
-        return [1, 900]; // Return dummy response: 1 hit, 900s TTL (fail open)
-      }
-
-      let timeoutId;
-      const timeoutPromise = new Promise((resolve) => {
-        timeoutId = setTimeout(() => {
-          console.warn("[RateLimit Redis] Command timed out - Bypassing rate limit check");
-          resolve([1, 900]); // Return dummy response: 1 hit, 900s TTL (fail open)
-        }, 1000); // 1 second timeout
-      });
-
-      try {
-        const result = await Promise.race([
-          redisConnection.call(args[0], ...args.slice(1)),
-          timeoutPromise
-        ]);
-        return result;
-      } catch (err) {
-        console.error("[RateLimit Redis] Command failed:", err.message);
-        return [1, 900]; // Return dummy response: 1 hit, 900s TTL (fail open)
-      } finally {
-        clearTimeout(timeoutId);
-      }
-    },
-    prefix: "rl:gen:",
-  });
-} else {
-  console.log("[Server] Running in Vercel Serverless environment - using memory store for rate limiting");
-}
-
+// Rate limiting uses the default in-memory store — sufficient for a single
+// Hostinger process. Swap back to RedisStore if you move to multi-instance.
 const apiLimiter = rateLimit(rateLimitOptions);
 app.use("/api", apiLimiter);
 

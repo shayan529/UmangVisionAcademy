@@ -1,5 +1,4 @@
 import nodemailer from 'nodemailer';
-import { getNotificationsQueue } from './queue.js';
 
 /* ──────────────────────────────────────────────
    Required .env variables:
@@ -17,16 +16,14 @@ export const transporter = nodemailer.createTransport({
   },
 });
 
-// Verify connection once on startup only in the background worker
-if (process.env.IS_WORKER === 'true') {
-  transporter.verify((err) => {
-    if (err) {
-      console.error('❌ Mailer connection failed:', err.message);
-    } else {
-      console.log('✅ Mailer ready — connected to Gmail');
-    }
-  });
-}
+// Verify connection once on startup
+transporter.verify((err) => {
+  if (err) {
+    console.error('❌ Mailer connection failed:', err.message);
+  } else {
+    console.log('✅ Mailer ready — connected to Gmail');
+  }
+});
 
 /* ── HTML email template ── */
 const buildOtpEmail = (otp, recipientEmail) => ({
@@ -144,14 +141,6 @@ const buildOtpEmail = (otp, recipientEmail) => ({
 
 /* ── Exported send function ── */
 export const sendOtpEmail = async (recipientEmail, otp) => {
-  if (process.env.IS_WORKER !== "true" && process.env.NODE_ENV !== "development" && !process.env.VERCEL) {
-    const job = await getNotificationsQueue().add(`email-otp-${recipientEmail}-${Date.now()}`, {
-      type: "email-otp",
-      recipientEmail,
-      otp,
-    });
-    return { success: true, queued: true, jobId: job.id };
-  }
   const mailOptions = buildOtpEmail(otp, recipientEmail);
   const info = await transporter.sendMail(mailOptions);
   console.log(
@@ -163,16 +152,6 @@ export const sendOtpEmail = async (recipientEmail, otp) => {
 /* ── Generic Email Sender for Notifications ── */
 export const sendThemedEmail = async (to, subject, title, bodyHtml) => {
   if (!to) return null;
-  if (process.env.IS_WORKER !== "true" && process.env.NODE_ENV !== "development" && !process.env.VERCEL) {
-    const job = await getNotificationsQueue().add(`email-themed-${to}-${Date.now()}`, {
-      type: "email-themed",
-      to,
-      subject,
-      title,
-      bodyHtml,
-    });
-    return { success: true, queued: true, jobId: job.id };
-  }
   const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -339,31 +318,7 @@ const sendContactEmailDirect = async (name, email, subject, message) => {
 };
 
 export const sendContactEmail = async (name, email, subject, message) => {
-  if (process.env.IS_WORKER === "true") {
-    return sendContactEmailDirect(name, email, subject, message);
-  }
-
-  // BullMQ is unavailable on Vercel serverless or dev — send synchronously instead.
-  if (process.env.VERCEL || process.env.NODE_ENV === "development") {
-    return sendContactEmailDirect(name, email, subject, message);
-  }
-
-  try {
-    const job = await getNotificationsQueue().add(`email-contact-${Date.now()}`, {
-      type: "email-contact",
-      name,
-      email,
-      subject,
-      message,
-    });
-    return { success: true, queued: true, jobId: job.id };
-  } catch (err) {
-    console.warn(
-      "Contact email queue unavailable, sending directly:",
-      err.message,
-    );
-    return sendContactEmailDirect(name, email, subject, message);
-  }
+  return sendContactEmailDirect(name, email, subject, message);
 };
 
 export const sendNewCourseAlertEmail = (email, studentName, instructorName, courseTitle, courseSummary, courseId) => {

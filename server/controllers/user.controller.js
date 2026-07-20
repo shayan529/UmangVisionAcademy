@@ -15,7 +15,6 @@ import { invalidateCourseCache } from "./course.controller.js";
 import { sendRegistrationEmail, sendReferralSuccessEmail } from "../utils/Mailer.js";
 import { computeInstructorRating } from "../utils/instructorRating.js";
 import { deleteKey } from "../utils/redisClient.js";
-import { getImportQueue } from "../utils/queue.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -500,18 +499,92 @@ export const bulkImportStudents = async (req, res) => {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
-    // Enqueue the bulk import job to be processed by the background worker
-    const job = await getImportQueue().add(`bulk-import-${Date.now()}`, {
-      rows,
-      targetRole,
-      courseIds,
-      source,
-    });
+    // ── Run import synchronously (no background worker) ──────────────────────
+    const created = [];
+    const skipped = [];
+    const totalRows = rows.length;
 
-    res.status(202).json({
+    for (const [index, row] of rows.entries()) {
+      const payload = buildStudentPayload(row);
+      const rowNumber = row.__rowIndex ?? index + 2;
+
+      if (!payload.name || !payload.phoneNumber) {
+        skipped.push({ row: rowNumber, reason: "Missing required name or phone number" });
+        continue;
+      }
+
+      const cleanPhone = normalizeIndianPhoneNumber(payload.phoneNumber);
+      if (!/^\+?\d{8,15}$/.test(cleanPhone)) {
+        skipped.push({ row: rowNumber, reason: "Invalid phone number format" });
+        continue;
+      }
+
+      const normalizedEmail = payload.email ? payload.email.toLowerCase() : "";
+      const finalPassword = payload.password || generateStudentPassword();
+
+      const existing = await User.findOne({
+        $or: [
+          ...(normalizedEmail ? [{ email: normalizedEmail }] : []),
+          { phoneNumber: { $in: getPhoneLookupValues(cleanPhone) } },
+        ],
+      });
+
+      if (existing) {
+        skipped.push({ row: rowNumber, reason: "Duplicate email or phone number already exists" });
+        continue;
+      }
+
+      try {
+        const user = await User.create({
+          name: payload.name,
+          ...(normalizedEmail ? { email: normalizedEmail } : {}),
+          phoneNumber: cleanPhone,
+          password: finalPassword,
+          roles: [targetRole],
+          ...(payload.city ? { city: payload.city } : {}),
+          ...(payload.state ? { state: payload.state } : {}),
+          ...(payload.pincode ? { pincode: payload.pincode } : {}),
+        });
+
+        const referralCode = await ensureUserReferralCode(user);
+        created.push({
+          _id: user._id,
+          name: user.name,
+          email: user.email || null,
+          phoneNumber: user.phoneNumber,
+          referralCode,
+        });
+      } catch (error) {
+        skipped.push({ row: rowNumber, reason: error.message || "Could not create user" });
+      }
+    }
+
+    if (courseIds.length > 0 && created.length > 0) {
+      try {
+        const newUserIds = created.map((c) => c._id);
+        await Course.updateMany(
+          { _id: { $in: courseIds } },
+          { $addToSet: { students: { $each: newUserIds } } }
+        );
+        await User.updateMany(
+          { _id: { $in: newUserIds } },
+          { $addToSet: { enrolledCourses: { $each: courseIds } } }
+        );
+        await Promise.all(
+          courseIds.map((id) => invalidateCourseCache(id).catch((e) => console.error(e)))
+        );
+      } catch (err) {
+        console.error("[Bulk Import] Failed to assign courses:", err);
+      }
+    }
+
+    console.log(`[Bulk Import] Finished. Imported: ${created.length}, Skipped: ${skipped.length}`);
+    res.status(200).json({
       success: true,
-      message: `Bulk import of ${rows.length} records queued.`,
-      jobId: job.id,
+      message: `Bulk import complete. Imported ${created.length} of ${totalRows} record(s).`,
+      inserted: created.length,
+      skipped: skipped.length,
+      skippedRows: skipped,
     });
   } catch (error) {
     console.error("Bulk student import failed:", error);
@@ -825,28 +898,10 @@ export const getInstructorPublicProfile = async (req, res) => {
 };
 
 // GET /users/bulk-import/status/:jobId
+// Bulk imports now run synchronously — there are no background jobs to poll.
 export const getBulkImportStatus = async (req, res) => {
-  try {
-    const { jobId } = req.params;
-    const job = await getImportQueue().getJob(jobId);
-
-    if (!job) {
-      return res.status(404).json({ success: false, message: "Import job not found" });
-    }
-
-    const state = await job.getState();
-    const progress = job.progress;
-    const result = job.returnvalue;
-
-    res.json({
-      success: true,
-      jobId,
-      state,
-      progress,
-      result: result || null,
-    });
-  } catch (error) {
-    console.error("Failed to fetch import job status:", error);
-    res.status(500).json({ success: false, message: error.message });
-  }
+  res.status(410).json({
+    success: false,
+    message: "Bulk imports are now processed synchronously. No job status to poll.",
+  });
 };

@@ -75,7 +75,7 @@ export const sendSessionReminder = async (sessionId) => {
 
 export const syncScheduledSessionReminders = async () => {
   try {
-    console.log("⏰ Syncing upcoming live class reminders with BullMQ...");
+    console.log("⏰ Syncing upcoming live class reminders...");
     const now = new Date();
 
     const upcomingSessions = await Session.find({
@@ -97,14 +97,13 @@ export const syncScheduledSessionReminders = async () => {
         scheduledCount++;
       }
     }
-    console.log(`⏰ Reminder sync complete. Scheduled ${scheduledCount} session reminder(s) in BullMQ.`);
+    console.log(`⏰ Reminder sync complete. Scheduled ${scheduledCount} session reminder(s).`);
   } catch (error) {
     console.error("Error in syncScheduledSessionReminders:", error);
   }
 };
 
 export const startSessionReminderScheduler = () => {
-  console.log("⏰ Session reminder scheduler initialization (delegating to BullMQ)...");
-  // Sync reminders on startup
+  console.log("⏰ Starting session reminder scheduler (in-process timers)...");
   syncScheduledSessionReminders().catch(console.error);
 };
