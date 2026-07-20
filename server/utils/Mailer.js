@@ -144,7 +144,7 @@ const buildOtpEmail = (otp, recipientEmail) => ({
 
 /* ── Exported send function ── */
 export const sendOtpEmail = async (recipientEmail, otp) => {
-  if (process.env.IS_WORKER !== "true") {
+  if (process.env.IS_WORKER !== "true" && process.env.NODE_ENV !== "development" && !process.env.VERCEL) {
     const job = await getNotificationsQueue().add(`email-otp-${recipientEmail}-${Date.now()}`, {
       type: "email-otp",
       recipientEmail,
@@ -163,7 +163,7 @@ export const sendOtpEmail = async (recipientEmail, otp) => {
 /* ── Generic Email Sender for Notifications ── */
 export const sendThemedEmail = async (to, subject, title, bodyHtml) => {
   if (!to) return null;
-  if (process.env.IS_WORKER !== "true") {
+  if (process.env.IS_WORKER !== "true" && process.env.NODE_ENV !== "development" && !process.env.VERCEL) {
     const job = await getNotificationsQueue().add(`email-themed-${to}-${Date.now()}`, {
       type: "email-themed",
       to,
@@ -299,8 +299,56 @@ export const sendSubscriptionCancellationEmail = (email, name, planName) => {
   );
 };
 
+const escapeHtml = (value = "") =>
+  String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const sendContactEmailDirect = async (name, email, subject, message) => {
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    throw new Error("Email service is not configured");
+  }
+
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email);
+  const safeSubject = escapeHtml(subject);
+  const safeMessage = escapeHtml(message);
+
+  const info = await transporter.sendMail({
+    from: `"Umang Vision Academy Contact" <${process.env.GMAIL_USER}>`,
+    to: process.env.CONTACT_INBOX || "umangvisionacademy@gmail.com",
+    replyTo: email,
+    subject: `Contact Form: ${subject}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #6366f1;">New Contact Form Submission</h2>
+        <p><strong>Name:</strong> ${safeName}</p>
+        <p><strong>Email:</strong> ${safeEmail}</p>
+        <p><strong>Subject:</strong> ${safeSubject}</p>
+        <hr />
+        <p><strong>Message:</strong></p>
+        <p style="white-space: pre-wrap;">${safeMessage}</p>
+      </div>
+    `,
+  });
+  console.log(`📧 Contact email sent from ${name}`);
+  return info;
+};
+
 export const sendContactEmail = async (name, email, subject, message) => {
-  if (process.env.IS_WORKER !== "true") {
+  if (process.env.IS_WORKER === "true") {
+    return sendContactEmailDirect(name, email, subject, message);
+  }
+
+  // BullMQ is unavailable on Vercel serverless or dev — send synchronously instead.
+  if (process.env.VERCEL || process.env.NODE_ENV === "development") {
+    return sendContactEmailDirect(name, email, subject, message);
+  }
+
+  try {
     const job = await getNotificationsQueue().add(`email-contact-${Date.now()}`, {
       type: "email-contact",
       name,
@@ -309,30 +357,12 @@ export const sendContactEmail = async (name, email, subject, message) => {
       message,
     });
     return { success: true, queued: true, jobId: job.id };
-  }
-  try {
-    const info = await transporter.sendMail({
-      from: `"${name}" <${process.env.GMAIL_USER}>`, 
-      to: 'umangvisionacademy@gmail.com', // Explicitly stated by the user
-      replyTo: email,
-      subject: `Contact Form: ${subject}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-          <h2 style="color: #6366f1;">New Contact Form Submission</h2>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Subject:</strong> ${subject}</p>
-          <hr />
-          <p><strong>Message:</strong></p>
-          <p style="white-space: pre-wrap;">${message}</p>
-        </div>
-      `,
-    });
-    console.log(`📧 Contact email sent from ${name}`);
-    return info;
   } catch (err) {
-    console.error(`❌ Failed to send contact email from ${name}:`, err.message);
-    throw err;
+    console.warn(
+      "Contact email queue unavailable, sending directly:",
+      err.message,
+    );
+    return sendContactEmailDirect(name, email, subject, message);
   }
 };
 

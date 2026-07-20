@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { FiEye, FiEyeOff } from "react-icons/fi";
@@ -268,17 +269,12 @@ const PasswordResetModal = ({ onClose }) => {
     boxSizing: "border-box",
   };
 
-  return (
+  return createPortal(
     <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
       style={{
-        minHeight: "100vh",
-        position: "relative",
         background: "rgba(2,8,23,0.75)",
         backdropFilter: "blur(8px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "20px",
       }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
@@ -852,7 +848,8 @@ const PasswordResetModal = ({ onClose }) => {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 
