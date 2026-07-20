@@ -119,7 +119,7 @@ function AssignInstructorModal({ test, instructors, onClose, onAssigned, showToa
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="w-full max-w-sm rounded-2xl border border-slate-700 bg-[#111827] p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-bold text-white">Assign Instructor</h3>
@@ -346,7 +346,7 @@ function MockTestModal({ initial, instructors, onClose, onSaved, showToast }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-2xl border border-slate-700 bg-[#111827] p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold text-white">

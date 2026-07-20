@@ -292,7 +292,7 @@ export default function MockTestPlayer() {
 
       {/* Confirm submit modal */}
       {showConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
           <div className="bg-[#0f1c30] border border-[#1a2e48] rounded-2xl p-6 max-w-sm w-full">
             <FaExclamationTriangle className="text-amber-400 text-2xl mb-3" />
             <h3 className="text-slate-100 font-bold text-lg mb-2">

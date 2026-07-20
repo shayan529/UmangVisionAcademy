@@ -61,7 +61,7 @@ const Skeleton = ({ className = "" }) => (
 );
 
 const SuccessOverlay = ({ count, onClose }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
     <div
       style={{ animation: "fadeUp 0.35s ease" }}
       className="flex flex-col items-center gap-6 rounded-3xl border border-emerald-400/20 bg-[#0b1326] p-10 shadow-2xl text-center max-w-sm w-full"
@@ -96,7 +96,7 @@ const WalletConfirmModal = ({
 }) => {
   const insufficient = balance < total;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
       <div
         className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#0b1120] p-6 shadow-2xl space-y-5"
         style={{ animation: "fadeUp 0.25s ease" }}
@@ -760,7 +760,7 @@ export default function CartPage() {
       {/* ── Browse modal ── */}
       {showBrowser && (
         <div
-          className="modal-bg fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4"
+          className="modal-bg fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center px-4"
           onClick={(e) => e.target === e.currentTarget && setShowBrowser(false)}
         >
           <div className="modal-card w-full max-w-xl max-h-[85vh] flex flex-col rounded-3xl border border-white/[0.09] bg-[#0b1120] shadow-2xl overflow-hidden">

@@ -275,7 +275,7 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-700 bg-[#111827] p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold text-white">
@@ -388,7 +388,7 @@ const AssignRolesModal = ({ user, roles, onClose, onSaved, showToast }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-[#111827] p-6">
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-lg font-bold text-white">Assign Roles</h3>
@@ -516,7 +516,7 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-700 bg-[#111827] p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold text-white">Add User</h3>
@@ -1094,7 +1094,7 @@ const RoleManager = ({ showToast, currentUser }) => {
       )}
 
       {deleteTarget && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="w-full max-w-sm rounded-2xl border border-slate-700 bg-[#111827] p-6">
             <h3 className="text-lg font-bold text-white mb-2">Delete Role?</h3>
             <p className="text-sm text-slate-400 mb-6 leading-relaxed">

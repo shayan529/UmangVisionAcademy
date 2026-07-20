@@ -332,7 +332,7 @@ export default function AdminQuestionPapers() {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border text-sm font-semibold animate-in fade-in slide-in-from-top-3 ${
+          className={`fixed top-5 right-5 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border text-sm font-semibold animate-in fade-in slide-in-from-top-3 ${
             toast.type === "success"
               ? "bg-green-950 border-green-500/30 text-green-300"
               : "bg-red-950 border-red-500/30 text-red-300"

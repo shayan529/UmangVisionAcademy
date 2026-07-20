@@ -11,8 +11,10 @@ import {
     Loader2,
     GraduationCap,
 } from "lucide-react";
+import { useSelector } from "react-redux";
 import api from "../../config/api";
 import CourseCard from "./CourseCard"; // adjust path to match your project
+import { hasBaseRole } from "../../utils/permissions";
 
 const fmtDate = (d) => {
     if (!d) return "—";
@@ -72,9 +74,25 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
 const InstructorAboutPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { user } = useSelector((s) => s.auth);
     const [instructor, setInstructor] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+
+    const handleCourseClick = (courseId) => {
+        if (!user) {
+            navigate(`/courses/${courseId}/demo`);
+            return;
+        }
+        
+        // Custom-role staff / admins are not allowed to view demos or full course pages.
+        const canEnroll = hasBaseRole(user, "student") || hasBaseRole(user, "instructor");
+        if (!canEnroll) {
+            return;
+        }
+
+        navigate(`/courses/${courseId}/demo`);
+    };
 
     useEffect(() => {
         let active = true;
@@ -201,7 +219,7 @@ const InstructorAboutPage = () => {
                             {courses.map((course) => (
                                 <div
                                     key={course._id}
-                                    onClick={() => navigate(`/courses/${course._id}/demo`)}
+                                    onClick={() => handleCourseClick(course._id)}
                                     className="cursor-pointer"
                                 >
                                     <CourseCard

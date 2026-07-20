@@ -43,7 +43,7 @@ const RatingModal = ({ course, onClose, onSubmit }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
       <div className="bg-[#111827] border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
@@ -396,10 +396,8 @@ const Courses = () => {
       navigate(`/courses/${course._id}/demo`);
       return;
     }
-    // Custom-role staff / admins always go to the demo page, regardless of
-    // enrollment status — they're not meant to land on the full course view.
+    // Custom-role staff / admins are not allowed to view demos or full course pages.
     if (!canEnroll) {
-      navigate(`/courses/${course._id}/demo`);
       return;
     }
     if (isEnrolled(course)) {

@@ -21,8 +21,8 @@ const CourseCard = ({ course }) => {
   const { t } = useTranslation();
 
   // Only base "student" or "instructor" accounts can enroll / add to cart.
-  // Custom-role staff (HR Manager, etc.) and base "admin" only ever get
-  // View Demo — they're not meant to be purchasing or enrolling in courses.
+  // Custom-role staff (HR Manager, etc.) and base "admin" are not meant 
+  // to be purchasing or enrolling in courses, and they don't see the View Demo button.
   const canEnroll =
     hasBaseRole(user, "student") || hasBaseRole(user, "instructor");
 
@@ -137,14 +137,16 @@ const CourseCard = ({ course }) => {
               </Link>
             ) : (
               <div className="flex gap-2">
-                <Link to={`/courses/${course._id}/demo`} className="flex-1">
-                  <button
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-full border border-slate-500 hover:border-slate-300 text-slate-200 hover:text-white hover:bg-slate-600/40 transition py-1.5 md:py-2.5 rounded-lg text-xs md:text-sm font-bold text-center cursor-pointer"
-                  >
-                    {t("courseCard.viewDemo")}
-                  </button>
-                </Link>
+                {(canEnroll || !user) && (
+                  <Link to={`/courses/${course._id}/demo`} className="flex-1">
+                    <button
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full border border-slate-500 hover:border-slate-300 text-slate-200 hover:text-white hover:bg-slate-600/40 transition py-1.5 md:py-2.5 rounded-lg text-xs md:text-sm font-bold text-center cursor-pointer"
+                    >
+                      {t("courseCard.viewDemo")}
+                    </button>
+                  </Link>
+                )}
 
                 <button
                   onClick={handleBuy}

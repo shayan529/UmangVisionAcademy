@@ -11,6 +11,34 @@ import {
 import { uploadFile } from "../../utils/uploadFile.js";
 import ChapterManager from "../course/ChapterManager.jsx";
 import api from "../../config/api";
+import {
+  GraduationCap,
+  Trophy,
+  ImageIcon,
+  Video,
+  CheckCircle2,
+  XCircle,
+  FileText,
+  Sparkles,
+  Loader2,
+  FolderOpen,
+  Link2,
+  Trash2,
+  Pencil,
+  X,
+  Package,
+  FileQuestion,
+  Users,
+  User,
+  ClipboardList,
+  Clock,
+  AlertTriangle,
+  Inbox,
+  ListChecks,
+  Info,
+  BookOpen,
+  Award,
+} from "lucide-react";
 
 const EMPTY_FORM = {
   subject: "",
@@ -816,7 +844,7 @@ const FileUploader = ({
         )}
         {status === "idle" && !preview && (
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 24, marginBottom: 4 }}>{icon}</div>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 6, color: "#64748b" }}>{icon}</div>
             <p style={{ fontSize: 13, color: "#94a3b8", fontWeight: 500 }}>
               Click or drag & drop
             </p>
@@ -835,8 +863,8 @@ const FileUploader = ({
               alignItems: "center",
             }}
           >
-            <p style={{ fontSize: 13, color: "#94a3b8" }}>
-              Uploading… {progress}%
+            <p style={{ fontSize: 13, color: "#94a3b8", display: "flex", alignItems: "center", gap: 6 }}>
+              <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> Uploading… {progress}%
             </p>
             <div
               style={{
@@ -861,14 +889,16 @@ const FileUploader = ({
         )}
         {status === "done" && !preview && (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 18 }}>✅</span>
+            <CheckCircle2 size={17} color="#4ade80" />
             <p style={{ fontSize: 13, color: "#4ade80", fontWeight: 600 }}>
               {isImage ? "Image" : "Video"} uploaded
             </p>
           </div>
         )}
         {status === "error" && (
-          <p style={{ fontSize: 13, color: "#f87171" }}>❌ {errMsg}</p>
+          <p style={{ fontSize: 13, color: "#f87171", display: "flex", alignItems: "center", gap: 6 }}>
+            <XCircle size={14} /> {errMsg}
+          </p>
         )}
       </div>
       <div
@@ -1047,8 +1077,8 @@ const Sel = ({ value, onChange, options }) => {
 // ── CourseTypeSelector (circular toggle: Classes vs Competitive Exam) ────────
 const CourseTypeSelector = ({ value, onChange }) => {
   const options = [
-    { key: "classes", label: "Classes", icon: "🎓" },
-    { key: "competitive", label: "Competitive Exam", icon: "🏆" },
+    { key: "classes", label: "Classes", icon: <GraduationCap size={22} /> },
+    { key: "competitive", label: "Competitive Exam", icon: <Trophy size={22} /> },
   ];
   return (
     <div style={{ display: "flex", gap: 28 }}>
@@ -1082,7 +1112,7 @@ const CourseTypeSelector = ({ value, onChange }) => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 22,
+                color: selected ? "#fff" : "#64748b",
                 transition: "all 0.2s ease",
                 boxShadow: selected
                   ? "0 4px 14px rgba(124,58,237,.35)"
@@ -1189,6 +1219,9 @@ function NotesManager({ notes = [], onChange, showToast }) {
             type="button"
             onClick={() => setShowAddForm(true)}
             style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
               padding: "6px 12px",
               borderRadius: 8,
               border: "none",
@@ -1199,7 +1232,7 @@ function NotesManager({ notes = [], onChange, showToast }) {
               cursor: "pointer",
             }}
           >
-            + Add Note
+            <FileText size={13} /> Add Note
           </button>
         )}
       </div>
@@ -1230,7 +1263,7 @@ function NotesManager({ notes = [], onChange, showToast }) {
             <label style={{ fontSize: 11, fontWeight: 600, color: "#ffffff", display: "block", marginBottom: 4 }}>File Upload * (PDF, DOCX, etc.)</label>
             {newNote.fileUrl ? (
               <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#111827", padding: "8px 12px", borderRadius: 8, border: "1px solid #16a34a" }}>
-                <span style={{ fontSize: 14 }}>📄</span>
+                <FileText size={15} color="#4ade80" />
                 <span style={{ fontSize: 12, color: "#4ade80", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {newNote.fileName || newNote.fileUrl}
                 </span>
@@ -1272,11 +1305,13 @@ function NotesManager({ notes = [], onChange, showToast }) {
                     userSelect: "none",
                   }}
                 >
-                  {uploading
-                    ? `Uploading… ${progress}%`
-                    : uploadError
-                      ? `❌ ${uploadError} — click to retry`
-                      : "📁 Choose File to Upload"}
+                  {uploading ? (
+                    <><Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> Uploading… {progress}%</>
+                  ) : uploadError ? (
+                    <><XCircle size={13} /> {uploadError} — click to retry</>
+                  ) : (
+                    <><FolderOpen size={13} /> Choose File to Upload</>
+                  )}
                 </label>
                 {uploading && (
                   <div style={{ marginTop: 6, height: 4, background: "#1e293b", borderRadius: 4, overflow: "hidden" }}>
@@ -1355,9 +1390,9 @@ function NotesManager({ notes = [], onChange, showToast }) {
                   href={note.fileUrl}
                   target="_blank"
                   rel="noreferrer"
-                  style={{ fontSize: 10, color: "#818cf8", textDecoration: "none", display: "inline-block", marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}
+                  style={{ fontSize: 10, color: "#818cf8", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}
                 >
-                  🔗 {note.fileName || note.fileUrl.split("/").pop() || note.fileUrl}
+                  <Link2 size={11} /> {note.fileName || note.fileUrl.split("/").pop() || note.fileUrl}
                 </a>
               </div>
               <button
@@ -1478,7 +1513,7 @@ function QuizManager({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 16 }}>📝</span>
+          <FileQuestion size={16} color="#818cf8" />
           <span style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
             Final Quiz
           </span>
@@ -1518,34 +1553,13 @@ function QuizManager({
         >
           {aiLoading ? (
             <>
-              <svg
-                style={{
-                  animation: "spin 1s linear infinite",
-                  width: 12,
-                  height: 12,
-                }}
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="white"
-                  strokeWidth="3"
-                  opacity=".3"
-                />
-                <path
-                  d="M12 2a10 10 0 0 1 10 10"
-                  stroke="white"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-              </svg>
+              <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
               Generating…
             </>
           ) : (
-            "✨ Generate with AI"
+            <>
+              <Sparkles size={12} /> Generate with AI
+            </>
           )}
         </button>
       </div>
@@ -1624,7 +1638,7 @@ function QuizManager({
                 color: "#475569",
               }}
             >
-              <span style={{ fontSize: 28 }}>🗒️</span>
+              <ListChecks size={26} />
               <p style={{ fontSize: 13 }}>No questions yet</p>
               <div style={{ display: "flex", gap: 8 }}>
                 <button
@@ -1648,6 +1662,9 @@ function QuizManager({
                   onClick={generateWithAI}
                   disabled={aiLoading}
                   style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
                     padding: "7px 14px",
                     borderRadius: 10,
                     border: "none",
@@ -1659,7 +1676,7 @@ function QuizManager({
                     opacity: aiLoading ? 0.5 : 1,
                   }}
                 >
-                  ✨ Generate with AI
+                  <Sparkles size={13} /> Generate with AI
                 </button>
               </div>
             </div>
@@ -1902,7 +1919,7 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
           >
             ▼
           </span>
-          <span style={{ fontSize: 18 }}>🎓</span>
+          <Award size={17} color="#c4b5fd" />
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
               Course Certificate
@@ -2110,7 +2127,7 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
                       Verify ID: CERT-XXXXXX
                     </div>
                   </div>
-                  <div style={{ fontSize: "clamp(18px,2.8vw,32px)" }}>🏅</div>
+                  <Award size={22} color={at.accent} style={{ opacity: 0.9 }} />
                 </div>
                 <div style={{ textAlign: "center", padding: "0 4%" }}>
                   <div
@@ -2237,10 +2254,9 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
                         alignItems: "center",
                         justifyContent: "center",
                         margin: "0 auto 2px",
-                        fontSize: "clamp(9px,1.5vw,16px)",
                       }}
                     >
-                      🎓
+                      <GraduationCap size={14} color={at.accent} />
                     </div>
                     <div
                       style={{
@@ -2449,7 +2465,7 @@ const CourseForm = ({
           hint="JPG, PNG, WEBP"
           accept="image/jpeg,image/png,image/webp,image/gif"
           folder="Umang Vision Academy/thumbnails"
-          icon="🖼️"
+          icon={<ImageIcon size={22} />}
           currentUrl={form.thumbnailUrl}
           onUploaded={(url) => setForm((f) => ({ ...f, thumbnailUrl: url }))}
         />
@@ -2458,7 +2474,7 @@ const CourseForm = ({
           hint="MP4, WEBM — max 200 MB"
           accept="video/mp4,video/webm,video/quicktime"
           folder="Umang Vision Academy/demos"
-          icon="🎬"
+          icon={<Video size={22} />}
           currentUrl={form.demoVideoUrl}
           onUploaded={(url) => setForm((f) => ({ ...f, demoVideoUrl: url }))}
         />
@@ -2710,7 +2726,7 @@ const BulkCourseForm = ({
           hint="JPG, PNG, WEBP — shared by all courses in this batch"
           accept="image/jpeg,image/png,image/webp,image/gif"
           folder="Umang Vision Academy/thumbnails"
-          icon="🖼️"
+          icon={<ImageIcon size={22} />}
           currentUrl={form.thumbnailUrl}
           onUploaded={(url) => setForm((f) => ({ ...f, thumbnailUrl: url }))}
         />
@@ -2719,7 +2735,7 @@ const BulkCourseForm = ({
           hint="MP4, WEBM — shared by all courses in this batch"
           accept="video/mp4,video/webm,video/quicktime"
           folder="Umang Vision Academy/demos"
-          icon="🎬"
+          icon={<Video size={22} />}
           currentUrl={form.demoVideoUrl}
           onUploaded={(url) => setForm((f) => ({ ...f, demoVideoUrl: url }))}
         />
@@ -2795,7 +2811,7 @@ const BulkCourseForm = ({
               fontSize: 13,
             }}
           >
-            <span style={{ fontSize: 18 }}>☝️</span>
+            <Info size={18} style={{ flexShrink: 0 }} />
             {!form.className || !form.board
               ? "Select a class and board above to see available subjects."
               : "Select a branch above to see available subjects."}
@@ -3801,11 +3817,11 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
               }}
             >
               {[
-                { label: "Total", value: counts.total, color: "#818cf8" },
-                { label: "Pending", value: counts.pending, color: "#fbbf24" },
-                { label: "Live", value: counts.approved, color: "#4ade80" },
-                { label: "Rejected", value: counts.rejected, color: "#f87171" },
-                { label: "Drafts", value: counts.draft, color: "#64748b" },
+                { label: "Total", value: counts.total, color: "#818cf8", Icon: BookOpen },
+                { label: "Pending", value: counts.pending, color: "#fbbf24", Icon: Clock },
+                { label: "Live", value: counts.approved, color: "#4ade80", Icon: CheckCircle2 },
+                { label: "Rejected", value: counts.rejected, color: "#f87171", Icon: XCircle },
+                { label: "Drafts", value: counts.draft, color: "#64748b", Icon: FileText },
               ].map((s) => (
                 <div
                   key={s.label}
@@ -3816,10 +3832,11 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                     padding: "16px 18px",
                   }}
                 >
-                  <div
-                    style={{ fontSize: 26, fontWeight: 800, color: s.color }}
-                  >
-                    {s.value}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ fontSize: 26, fontWeight: 800, color: s.color }}>
+                      {s.value}
+                    </div>
+                    <s.Icon size={16} color={s.color} style={{ opacity: 0.7 }} />
                   </div>
                   <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
                     {s.label}
@@ -3904,9 +3921,12 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                   padding: "12px 16px",
                   color: "#f87171",
                   fontSize: 13,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
                 }}
               >
-                ⚠️ {error}
+                <AlertTriangle size={15} /> {error}
               </div>
             )}
 
@@ -3924,7 +3944,7 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
               ))
             ) : filtered.length === 0 ? (
               <div style={{ textAlign: "center", padding: "64px 0" }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
+                <Inbox size={38} color="#334155" style={{ marginBottom: 12 }} />
                 <p style={{ color: "#64748b", fontWeight: 600 }}>
                   {courses.length === 0
                     ? "No courses yet. Create your first one!"
@@ -3968,7 +3988,6 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            fontSize: 22,
                           }}
                         >
                           {course.thumbnailUrl ? (
@@ -3985,7 +4004,7 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                               }}
                             />
                           ) : (
-                            "📚"
+                            <BookOpen size={22} color="#64748b" />
                           )}
                         </div>
                         <div style={{ flex: 1, minWidth: 180 }}>
@@ -4027,6 +4046,9 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                             {isBulkCourse(course) && (
                               <span
                                 style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 4,
                                   fontSize: 10,
                                   fontWeight: 700,
                                   padding: "2px 8px",
@@ -4036,12 +4058,15 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                                   flexShrink: 0,
                                 }}
                               >
-                                📦 Bundle
+                                <Package size={11} /> Bundle
                               </span>
                             )}
                             {course.quiz?.questions?.length > 0 && (
                               <span
                                 style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 4,
                                   fontSize: 10,
                                   fontWeight: 700,
                                   padding: "2px 8px",
@@ -4051,7 +4076,7 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                                   flexShrink: 0,
                                 }}
                               >
-                                📝 {course.quiz.questions.length}Q Quiz
+                                <FileQuestion size={11} /> {course.quiz.questions.length}Q Quiz
                               </span>
                             )}
                           </div>
@@ -4069,16 +4094,16 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                               </span>
                             )}
                             {course.board && (
-                              <span style={{ fontSize: 11, color: "#64748b" }}>
-                                📋 {course.board}
+                              <span style={{ fontSize: 11, color: "#64748b", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                <ClipboardList size={11} /> {course.board}
                               </span>
                             )}
-                            <span style={{ fontSize: 11, color: "#64748b" }}>
-                              👥 {course.enrolledCount ?? 0}
+                            <span style={{ fontSize: 11, color: "#64748b", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                              <Users size={11} /> {course.enrolledCount ?? 0}
                             </span>
                             {isAdmin && course.instructor && (
-                              <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 700 }}>
-                                👤 {course.instructor.name || course.instructor.email}
+                              <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                <User size={11} /> {course.instructor.name || course.instructor.email}
                               </span>
                             )}
                             {course.price > 0 && (
@@ -4107,9 +4132,12 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                                 borderRadius: 8,
                                 border: "1px solid #854d0e",
                                 fontWeight: 600,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
                               }}
                             >
-                              ⏳ In review
+                              <Clock size={12} /> In review
                             </span>
                           )}
                           {course.approvalStatus !== "pending" && (
@@ -4119,6 +4147,9 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                                 isOpen ? closeEdit() : openEdit(course)
                               }
                               style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
                                 padding: "8px 14px",
                                 borderRadius: 8,
                                 border: `1px solid ${isOpen ? "#7c3aed" : "#334155"}`,
@@ -4131,13 +4162,19 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                                 minHeight: 36,
                               }}
                             >
-                              {isOpen ? "✕ Close" : "Edit / Manage"}
+                              {isOpen ? (
+                                <><X size={13} /> Close</>
+                              ) : (
+                                <><Pencil size={13} /> Edit / Manage</>
+                              )}
                             </button>
                           )}
                           <button
                             className="ic-btn"
                             onClick={() => setDeleteId(course._id)}
                             style={{
+                              display: "flex",
+                              alignItems: "center",
                               padding: "8px 12px",
                               borderRadius: 8,
                               border: "1px solid #7f1d1d30",
@@ -4149,7 +4186,7 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                               minHeight: 36,
                             }}
                           >
-                            🗑
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </div>
@@ -4173,9 +4210,12 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                               textTransform: "uppercase",
                               letterSpacing: "0.12em",
                               marginBottom: 16,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
                             }}
                           >
-                            ✏️ Editing: {course.title}
+                            <Pencil size={12} /> Editing: {course.title}
                             {editMode === "bulk" ? " (Bundle)" : ""}
                           </p>
 
@@ -4193,9 +4233,7 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                                   alignItems: "flex-start",
                                 }}
                               >
-                                <span style={{ fontSize: 20, flexShrink: 0 }}>
-                                  ❌
-                                </span>
+                                <XCircle size={20} color="#f87171" style={{ flexShrink: 0 }} />
                                 <div>
                                   <p
                                     style={{
@@ -4337,6 +4375,7 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
             zIndex: 100,
             padding: 16,
           }}
+          onClick={(e) => e.target === e.currentTarget && setDeleteId(null)}
         >
           <div
             style={{
@@ -4349,6 +4388,20 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
               animation: "slideDown 0.25s ease",
             }}
           >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                background: "#2d0a0a",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 16,
+              }}
+            >
+              <Trash2 size={20} color="#f87171" />
+            </div>
             <h3
               style={{
                 fontSize: 18,

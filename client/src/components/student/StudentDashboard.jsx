@@ -141,7 +141,7 @@ const StudentDetailsFormModal = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       style={{
         background: "rgba(10,14,26,0.75)",
         backdropFilter: "blur(6px)",
@@ -1199,7 +1199,7 @@ const StudentDashboard = () => {
     <div className="min-h-screen bg-[#0b1120] text-[#f1f5f9] md:flex">
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -1257,7 +1257,7 @@ const StudentDashboard = () => {
         </main>
       </div>
       {user?.subscription?.status === "active" && !user?.selectedClass && (
-        <div className="fixed inset-0 z-50 bg-[#070b13]/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] bg-[#070b13]/90 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl animate-fadeIn">
             <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-3xl mx-auto mb-5">
               🎓

@@ -195,7 +195,7 @@ const Navbar = () => {
     <>
       <nav
         className="w-full sticky top-0 z-50 bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10"
-        style={{ zIndex: 9999, pointerEvents: "auto" }}
+        style={{ pointerEvents: "auto" }}
       >
         <style>{`
 .btn-navy,
@@ -337,7 +337,11 @@ button.btn-red:hover,
               <div ref={dropdownRef} className="relative">
                 <button
                   type="button"
-                  onClick={() => setBoardOpen((prev) => !prev)}
+                  onClick={() => {
+                    setBoardOpen((prev) => !prev);
+                    setLangDropdownOpen(false);
+                    setRolesDropdownOpen(false);
+                  }}
                   className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800 transition cursor-pointer"
                 >
                   {t("nav.board")}
@@ -376,7 +380,11 @@ button.btn-red:hover,
             <div ref={languageRef} className="relative">
               <button
                 type="button"
-                onClick={() => setLangDropdownOpen((prev) => !prev)}
+                onClick={() => {
+                  setLangDropdownOpen((prev) => !prev);
+                  setBoardOpen(false);
+                  setRolesDropdownOpen(false);
+                }}
                 className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800 transition"
               >
                 {isHindi ? "हिन्दी" : "EN"}
@@ -452,7 +460,11 @@ button.btn-red:hover,
                   <div className="relative" ref={rolesDropdownRef}>
                     <button
                       type="button"
-                      onClick={() => setRolesDropdownOpen(!rolesDropdownOpen)}
+                      onClick={() => {
+                        setRolesDropdownOpen(!rolesDropdownOpen);
+                        setBoardOpen(false);
+                        setLangDropdownOpen(false);
+                      }}
                       className="btn-indigo-shine flex items-center gap-1.5"
                     >
                       {t("nav.dashboard", "Dashboard")}{" "}

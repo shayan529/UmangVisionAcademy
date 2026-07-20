@@ -310,7 +310,7 @@ const AddStudentModal = ({ courses = [], onClose, onCreated }) => {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100001] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
@@ -600,7 +600,7 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100001] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
@@ -772,7 +772,7 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100001] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
@@ -1183,7 +1183,7 @@ const AssignCourseModal = ({ student, courses = [], onClose, onAssigned }) => {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100001] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
@@ -1735,7 +1735,7 @@ const AdminStudents = ({
 
       {showBulkImportModal && createPortal(
         <div
-          className="fixed inset-0 z-[100001] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
           onClick={() => setShowBulkImportModal(false)}
         >
           <div

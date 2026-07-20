@@ -121,7 +121,8 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
       u.city?.toLowerCase().includes(ql) ||
       u.state?.toLowerCase().includes(ql) ||
       u.pincode?.toLowerCase().includes(ql) ||
-      u.phoneNumber?.toLowerCase().includes(ql);
+      u.phoneNumber?.toLowerCase().includes(ql) ||
+      u.roles?.some((role) => role.toLowerCase().includes(ql));
 
     // 2. Filter by role
     if (roleFilter === "students") {

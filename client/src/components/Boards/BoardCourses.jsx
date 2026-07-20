@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { fetchPublishedCourses } from "../../redux/slices/courseSlice";
 import CourseCard from "../common/CourseCard";
+import { hasBaseRole } from "../../utils/permissions";
 
 // ── Skeleton card ─────────────────────────────────────────────────────────────
 const SkeletonCard = () => (
@@ -161,6 +162,13 @@ const BoardCourses = () => {
       navigate("/login", { state: { from: `/board/${board}` } });
       return;
     }
+    
+    // Custom-role staff / admins are not allowed to view demos or full course pages.
+    const canEnroll = hasBaseRole(user, "student") || hasBaseRole(user, "instructor");
+    if (!canEnroll) {
+      return;
+    }
+
     navigate(`/courses/${courseId}/demo`);
   };
 

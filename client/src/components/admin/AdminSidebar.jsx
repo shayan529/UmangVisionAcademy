@@ -131,7 +131,7 @@ const AdminSidebar = ({
       {/* ── Mobile backdrop ── */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-[9998] bg-black/50 md:hidden"
+          className="fixed inset-0 z-[9999] bg-black/50 md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}

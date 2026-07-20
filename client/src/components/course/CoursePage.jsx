@@ -97,7 +97,7 @@ function CertificateEarnedModal({ course, onClose, onViewCertificates }) {
   return createPortal(
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -238,7 +238,7 @@ function RatingModal({ course, user, onClose, onSubmitted }) {
   return createPortal(
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/65 p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/65 p-4"
     >
       <div
         onClick={(e) => e.stopPropagation()}
