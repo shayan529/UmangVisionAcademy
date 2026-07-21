@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import api from '../config/api';
+import SEO from '../components/common/SEO';
 
 const Contact = () => {
   const { t } = useTranslation();
@@ -43,6 +44,7 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-[#0B1120] text-white">
+      <SEO title="Contact Us" description="Get in touch with Umang Vision Academy for any inquiries or support." />
       {/* Hero Section */}
 
       <section className="px-6 md:px-10 py-20">

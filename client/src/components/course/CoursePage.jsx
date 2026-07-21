@@ -2048,14 +2048,13 @@ export default function CoursePage() {
                 const goToFinalQuiz = !goToSubjectQuiz && isLastLesson && hasFinalQuiz && !isFinalQuizSubmitted;
 
                 const isCurrentCompleted = completed.has(activeIdx);
-                const disabledNext =
-                  !isCurrentCompleted || (isLastLesson && !goToSubjectQuiz && !goToFinalQuiz && !hasFinalQuiz);
+                const isCourseFinished = isLastLesson && !goToSubjectQuiz && !goToFinalQuiz && !hasFinalQuiz;
+                const disabledNext = !isCurrentCompleted || isCourseFinished;
 
-                const btnLabel = goToSubjectQuiz
-                  ? "Finish → Take Subject Quiz"
-                  : goToFinalQuiz
-                    ? "Finish → Take Final Quiz"
-                    : "Next →";
+                let btnLabel = "Next →";
+                if (goToSubjectQuiz) btnLabel = "Finish → Take Subject Quiz";
+                else if (goToFinalQuiz) btnLabel = "Finish → Take Final Quiz";
+                else if (isCourseFinished) btnLabel = "Course Completed";
 
                 return (
                   <button

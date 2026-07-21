@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import SEO from "../components/common/SEO";
 import {
   GraduationCap,
   Users,
@@ -51,6 +52,7 @@ const InstructorDetails = () => {
 
   return (
     <div className="min-h-screen bg-[#020817] text-white">
+      <SEO title="Instructor Details" description="Learn more about our expert instructors at Umang Vision Academy." />
       {/* HERO SECTION */}
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.15),_transparent_20%),radial-gradient(circle_at_top_right,_rgba(168,85,247,0.18),_transparent_20%),linear-gradient(135deg,#020817_0%,#111827_50%,#1e1b4b_100%)]" />

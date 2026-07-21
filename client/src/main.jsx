@@ -32,18 +32,22 @@ import { BrowserRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import store from "./redux/store.js";
 import "./i18n/index.js";
+import { HelmetProvider } from "react-helmet-async";
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>
-    <BrowserRouter>
-      <App />
-      <Toaster
-        containerStyle={{
-          top: 70,
-        }}
-        toastOptions={{
-          duration: 4000,
-        }}
-      />
-    </BrowserRouter>
+    <HelmetProvider>
+      <BrowserRouter>
+        <App />
+        <Toaster
+          containerStyle={{
+            top: 70,
+            zIndex: 999999,
+          }}
+          toastOptions={{
+            duration: 4000,
+          }}
+        />
+      </BrowserRouter>
+    </HelmetProvider>
   </Provider>,
 );

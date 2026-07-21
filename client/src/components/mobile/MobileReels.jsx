@@ -149,13 +149,11 @@ export default function MobileReels() {
               >
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-linear-to-br from-indigo-500 to-indigo-700 border border-indigo-400 flex items-center justify-center text-xs font-bold text-white shadow-lg flex-none">
-                    {(reel.instructorName || "Instructor")
-                      .slice(0, 2)
-                      .toUpperCase()}
+                    {(reel.instructorName === "Admin User" ? "UV" : (reel.instructorName || "Instructor").slice(0, 2).toUpperCase())}
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-extrabold text-white flex items-center gap-1 drop-shadow-md truncate">
-                      {reel.instructorName || "Instructor"}
+                      {reel.instructorName === "Admin User" ? "Umang Vision Academy" : reel.instructorName || "Instructor"}
                       <Star
                         size={11}
                         className="text-amber-500 fill-amber-500 flex-none"
@@ -185,7 +183,7 @@ export default function MobileReels() {
                   />
                   <span className="text-[9px] text-slate-400 font-medium truncate max-w-[180px] drop-shadow-md">
                     Original Audio &middot;{" "}
-                    {reel.instructorName || "Instructor"}
+                    {reel.instructorName === "Admin User" ? "Umang Vision Academy" : reel.instructorName || "Instructor"}
                   </span>
                 </div>
               </div>

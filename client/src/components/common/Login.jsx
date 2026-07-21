@@ -146,14 +146,16 @@ const PasswordResetModal = ({ onClose }) => {
   const displayPhone = `${countryCode} ${phoneNumber}`;
 
   const handleSendOtp = async () => {
+    if (loading) return;
     if (!/^[0-9]{10}$/.test(phoneNumber))
-      return toast.error(t("passwordReset.toast.invalidPhone"));
+      return toast.error(t("passwordReset.toast.invalidPhone"), { id: "invalid-phone" });
     setLoading(true);
+    const fullPhone = "+91" + phoneNumber;
     try {
       await axios.post("/auth/forgot-password-phone", {
         phoneNumber: fullPhone,
       });
-      toast.success(t("passwordReset.toast.otpSentPhone"));
+      toast.success(t("passwordReset.toast.otpSentPhone"), { id: "otp-sent" });
       setStep("otp");
       setCooldown(60);
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
@@ -162,6 +164,7 @@ const PasswordResetModal = ({ onClose }) => {
         err.response?.data?.message ||
           err.message ||
           t("passwordReset.toast.failedSendOtp"),
+        { id: "otp-error" }
       );
     } finally {
       setLoading(false);
@@ -169,17 +172,18 @@ const PasswordResetModal = ({ onClose }) => {
   };
 
   const handleResend = async () => {
-    if (cooldown > 0) return;
+    if (loading || cooldown > 0) return;
     setLoading(true);
     try {
       await axios.post("/auth/forgot-password-phone", {
         phoneNumber: fullPhone,
       });
-      toast.success(t("passwordReset.toast.otpResent"));
+      toast.success(t("passwordReset.toast.otpResent"), { id: "otp-resent" });
       setCooldown(60);
     } catch (err) {
       toast.error(
         err.response?.data?.message || t("passwordReset.toast.failedResend"),
+        { id: "otp-resend-error" }
       );
     } finally {
       setLoading(false);
@@ -211,9 +215,10 @@ const PasswordResetModal = ({ onClose }) => {
   };
 
   const handleVerifyOtp = async () => {
+    if (loading) return;
     const otpStr = otp.join("");
     if (otpStr.length < 6)
-      return toast.error(t("passwordReset.toast.enterFullOtp"));
+      return toast.error(t("passwordReset.toast.enterFullOtp"), { id: "enter-full-otp" });
     setLoading(true);
     try {
       const { data } = await axios.post("/auth/verify-reset-phone-otp", {
@@ -221,11 +226,12 @@ const PasswordResetModal = ({ onClose }) => {
         otp: otpStr,
       });
       setResetToken(data.resetToken);
-      toast.success(t("passwordReset.toast.otpVerified"));
+      toast.success(t("passwordReset.toast.otpVerified"), { id: "otp-verified" });
       setStep("password");
     } catch (err) {
       toast.error(
         err.response?.data?.message || t("passwordReset.toast.invalidOtp"),
+        { id: "otp-verify-error" }
       );
     } finally {
       setLoading(false);
@@ -233,10 +239,11 @@ const PasswordResetModal = ({ onClose }) => {
   };
 
   const handleResetPassword = async () => {
+    if (loading) return;
     if (newPassword.length < 6)
-      return toast.error(t("passwordReset.toast.passwordMin6"));
+      return toast.error(t("passwordReset.toast.passwordMin6"), { id: "pass-min-6" });
     if (newPassword !== confirmPassword)
-      return toast.error(t("passwordReset.toast.passwordsDoNotMatch"));
+      return toast.error(t("passwordReset.toast.passwordsDoNotMatch"), { id: "pass-mismatch" });
     setLoading(true);
     try {
       await axios.post("/auth/reset-password", {
@@ -249,6 +256,7 @@ const PasswordResetModal = ({ onClose }) => {
       toast.error(
         err.response?.data?.message ||
           t("passwordReset.toast.failedResetPassword"),
+        { id: "reset-error" }
       );
     } finally {
       setLoading(false);

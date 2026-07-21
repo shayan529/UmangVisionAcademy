@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import SEO from "../components/common/SEO";
 import { hasBaseRole } from "../utils/permissions";
 import {
   addToCart,
@@ -263,6 +265,7 @@ export default function CartPage() {
     setTimeout(() => {
       dispatch(removeFromCart(id));
       setRemovingId(null);
+      toast.success("Removed from cart");
     }, 280);
   };
 
@@ -375,6 +378,7 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-[#020817] text-white">
+      <SEO title="Cart" description="Review items in your cart." />
       <style>{`
         @keyframes slideOut { to { opacity:0; transform:translateX(28px) scale(0.97); } }
         @keyframes slideIn  { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }

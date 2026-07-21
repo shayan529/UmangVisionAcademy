@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
+import SEO from "../components/common/SEO";
 import {
   fetchSubscription,
   createOrder,
@@ -208,6 +209,7 @@ export default function BillingPage() {
 
   return (
     <>
+      <SEO title="Billing" description="Manage your billing and subscriptions at Umang Vision Academy." />
       <style>{`
         @keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
         @keyframes fadeUp  { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }

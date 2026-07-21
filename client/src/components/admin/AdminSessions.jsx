@@ -269,27 +269,27 @@ const AdminSessions = ({ instructors = [] }) => {
 
       {/* Schedule Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-[#111827] border border-slate-800 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#111827] border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Calendar size={18} className="text-indigo-400" />
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900/50 shrink-0 rounded-t-2xl">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Calendar size={17} className="text-indigo-400" />
                 Schedule Live Session
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-white transition duration-200"
+                className="text-slate-400 hover:text-white transition duration-200 p-1 rounded-lg hover:bg-slate-800"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            {/* Scrollable Form */}
+            <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-5 space-y-4">
               {/* Session Title */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                   Session Title
                 </label>
                 <input
@@ -304,7 +304,7 @@ const AdminSessions = ({ instructors = [] }) => {
 
               {/* Instructor */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                   Assign Instructor
                 </label>
                 <select
@@ -324,45 +324,46 @@ const AdminSessions = ({ instructors = [] }) => {
                 </select>
               </div>
 
-              {/* Class */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                  Class
-                </label>
-                <select
-                  value={form.classVal}
-                  onChange={(e) => setForm({ ...form, classVal: e.target.value })}
-                  className="w-full bg-[#1e293b] border border-slate-700/60 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:border-indigo-500 outline-none transition"
-                  required
-                >
-                  <option value="">Select Class</option>
-                  {classesOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Class & Subject side by side on sm+ */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Class
+                  </label>
+                  <select
+                    value={form.classVal}
+                    onChange={(e) => setForm({ ...form, classVal: e.target.value })}
+                    className="w-full bg-[#1e293b] border border-slate-700/60 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:border-indigo-500 outline-none transition"
+                    required
+                  >
+                    <option value="">Select Class</option>
+                    {classesOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              {/* Subject */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                  Subject
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Mathematics"
-                  value={form.subject}
-                  onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                  className="w-full bg-[#1e293b] border border-slate-700/60 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:border-indigo-500 outline-none transition"
-                  required
-                />
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Subject
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Mathematics"
+                    value={form.subject}
+                    onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                    className="w-full bg-[#1e293b] border border-slate-700/60 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:border-indigo-500 outline-none transition"
+                    required
+                  />
+                </div>
               </div>
 
               {/* Date & Time */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                     Date
                   </label>
                   <input
@@ -374,7 +375,7 @@ const AdminSessions = ({ instructors = [] }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                     Time
                   </label>
                   <input
@@ -389,7 +390,7 @@ const AdminSessions = ({ instructors = [] }) => {
 
               {/* Meeting Link */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                   Meeting Link URL (Google Meet / Zoom)
                 </label>
                 <input
@@ -404,7 +405,7 @@ const AdminSessions = ({ instructors = [] }) => {
 
               {/* Initial Status */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                   Initial Status
                 </label>
                 <select
@@ -418,8 +419,8 @@ const AdminSessions = ({ instructors = [] }) => {
                 </select>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3 pt-2">
+              {/* Action Buttons — pinned inside scroll area at bottom */}
+              <div className="flex justify-end gap-3 pt-2 pb-1">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}

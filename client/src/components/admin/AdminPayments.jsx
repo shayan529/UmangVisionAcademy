@@ -230,7 +230,7 @@ export default function AdminPayments() {
     : [];
 
   return (
-    <div className="relative overflow-hidden rounded-3xl">
+    <div className="relative rounded-3xl">
       <style>{`
         @keyframes drift1 {
           0%, 100% { transform: translate(0, 0) scale(1); }
@@ -253,7 +253,7 @@ export default function AdminPayments() {
       `}</style>
 
       {/* ── Ambient background: deep navy-violet field + drifting aurora blobs ── */}
-      <div className="absolute inset-0 -z-10 bg-[#07060f]">
+      <div className="absolute inset-0 -z-10 overflow-hidden rounded-3xl bg-[#07060f]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_#181234_0%,_#0a0818_55%,_#07060f_100%)]" />
         <div className="ap-blob-1 absolute -top-32 -left-24 h-[420px] w-[420px] rounded-full bg-indigo-500/25 blur-[110px]" />
         <div className="ap-blob-2 absolute top-1/3 -right-24 h-[380px] w-[380px] rounded-full bg-emerald-500/15 blur-[110px]" />

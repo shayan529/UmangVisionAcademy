@@ -64,6 +64,7 @@ const UploadModal = ({ onClose, onUploaded }) => {
   };
 
   const handleSubmit = async () => {
+    if (!title.trim()) { setError("Reel title is required."); return; }
     if (!file) { setError("Select a video first."); return; }
     setUploading(true);
     setError("");
@@ -77,7 +78,7 @@ const UploadModal = ({ onClose, onUploaded }) => {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim() || file.name, videoUrl: data.url }),
+        body: JSON.stringify({ title: title.trim(), videoUrl: data.url }),
       });
       if (!res.ok) throw new Error("Failed to create reel");
       const reel = await res.json();
@@ -110,7 +111,7 @@ const UploadModal = ({ onClose, onUploaded }) => {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Reel title (optional)"
+            placeholder="Reel title"
             className="w-full px-3 py-2.5 rounded-lg text-sm bg-[#0b1120] border border-slate-700 text-white outline-none focus:border-indigo-500 transition"
           />
 

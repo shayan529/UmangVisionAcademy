@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import SEO from '../components/common/SEO';
 
 const faqData = [
   {
@@ -76,6 +77,7 @@ const Faq = () => {
 
   return (
     <div className="min-h-screen bg-[#0B1120] text-white">
+      <SEO title="FAQ" description="Frequently asked questions about Umang Vision Academy courses and policies." />
       {/* Hero Section */}
 
       <section className="px-6 md:px-10 py-20">

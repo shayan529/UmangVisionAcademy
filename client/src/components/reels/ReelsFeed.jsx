@@ -42,7 +42,7 @@ const ReelsFeed = () => {
             <div key={r._id} className="bg-slate-900 p-3 rounded-xl">
               <div className="mb-2 flex items-center justify-between">
                 <div>
-                  <div className="font-semibold">{r.instructorName}</div>
+                  <div className="font-semibold">{r.instructorName === "Admin User" ? "Umang Vision Academy" : r.instructorName}</div>
                   <div className="text-xs text-slate-400">
                     {new Date(r.createdAt).toLocaleString()}
                   </div>

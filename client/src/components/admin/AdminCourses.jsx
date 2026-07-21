@@ -1354,13 +1354,15 @@ export default function AdminCourses({
       <div
         style={{
           display: "flex",
+          flexWrap: "wrap",
           gap: 12,
           marginBottom: 24,
           padding: 4,
           background: "#0b1120",
           borderRadius: 12,
           border: "1px solid #1e293b",
-          width: "max-content",
+          width: "100%",
+          maxWidth: "100%",
         }}
       >
         <button

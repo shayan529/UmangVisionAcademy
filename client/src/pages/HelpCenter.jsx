@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import SEO from "../components/common/SEO";
 
 const faqs = [
   {
@@ -40,6 +41,7 @@ const HelpCenter = () => {
 
   return (
     <div className="min-h-screen bg-[#0B1120] text-white">
+      <SEO title="Help Center" description="Get help and support for Umang Vision Academy." />
       {/* Hero */}
 
       <section className="px-6 md:px-10 py-20">

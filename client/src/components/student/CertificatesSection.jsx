@@ -708,8 +708,13 @@ export default function Certificates() {
   const user = useSelector((s) => s.auth?.user);
 
   useEffect(() => {
-    dispatch(loadCurrentUser());
-    dispatch(fetchEnrolledCourses());
+    // Load user first so earnedCertificates is fresh before we classify
+    // enrolled courses as "in progress" vs "earned". Firing both in parallel
+    // caused a race where fetchEnrolledCourses resolved first, rendering the
+    // page with a stale (pre-award) earnedCertificates array.
+    dispatch(loadCurrentUser()).finally(() => {
+      dispatch(fetchEnrolledCourses());
+    });
   }, [dispatch]);
 
   const copyId = (id) => {
@@ -755,6 +760,11 @@ export default function Certificates() {
 
   const studentCourses = (enrolled ?? []).map((c) => {
     const totalLessons = c.lessons?.length ?? c.totalLessons ?? 0;
+    
+    if (typeof c.progress === "number") {
+      return { ...c, totalLessons, progress: c.progress };
+    }
+
     const progObj = user?.courseProgress?.[c._id] || null;
     const completedLessons = progObj ? (progObj.completed || []).length : 0;
     const progress = progObj

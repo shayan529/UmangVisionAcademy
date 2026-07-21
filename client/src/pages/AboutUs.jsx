@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import SEO from "../components/common/SEO";
 
 const team = [
   {
@@ -156,6 +157,7 @@ export default function AboutUs() {
         position: "relative",
       }}
     >
+      <SEO title="About Us" description="Learn more about Umang Vision Academy and our team of expert instructors." />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
 

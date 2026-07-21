@@ -639,7 +639,7 @@ export default function AdminMockTests({ showToast }) {
                 className="bg-[#0b1628] border border-[#1a2e48] rounded-2xl overflow-hidden"
               >
                 {/* Row */}
-                <div className="flex items-start gap-4 px-5 py-4">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-4 px-5 py-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <h3 className="text-sm font-semibold text-white">{test.title}</h3>

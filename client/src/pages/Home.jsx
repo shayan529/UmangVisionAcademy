@@ -1,3 +1,4 @@
+import SEO from "../components/common/SEO";
 import AISection from "../components/common/AiSection";
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
@@ -15,6 +16,7 @@ const Home = () => {
   
   return (
     <div>
+      <SEO title="Home" description="Explore Umang Vision Academy - the best place to elevate your skills with top-notch coaching." />
       <Hero />
 
       <FeaturedCourses />

@@ -556,7 +556,7 @@ export default function InstructorMockTests() {
               key={test._id}
               className="bg-[#0b1628] border border-[#1a2e48] rounded-2xl overflow-hidden"
             >
-              <div className="flex items-center gap-4 px-5 py-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4">
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   {/* Title + pill on same row, wraps on small screens */}

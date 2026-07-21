@@ -530,6 +530,9 @@ export const saveCourseProgress = async (req, res) => {
       lessonProgress = {},
     } = req.body || {};
 
+    const course = await Course.findById(courseId).populate("instructor", "name");
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
     // Merge into user's courseProgress map
     const update = {};
     update[`courseProgress.${courseId}`] = {
@@ -539,7 +542,42 @@ export const saveCourseProgress = async (req, res) => {
       updatedAt: new Date(),
     };
 
-    await User.findByIdAndUpdate(studentId, { $set: update });
+    const student = await User.findByIdAndUpdate(studentId, { $set: update }, { new: true });
+
+    if (course.certificate?.enabled) {
+      const totalLessons = course.lessons?.length || course.totalLessons || 0;
+      const completedCount = Array.isArray(completed) ? completed.length : 0;
+      const isProgressComplete = completedCount >= totalLessons && totalLessons > 0;
+
+      if (isProgressComplete) {
+        const requiresFinalQuiz = course.quiz?.questions?.length > 0;
+        const hasSubjectQuizzes = course.subjectQuizzes?.length > 0;
+
+        let allPassed = true;
+        if (requiresFinalQuiz || hasSubjectQuizzes) {
+          allPassed = requiresFinalQuiz
+            ? student.quizSubmissions.some(
+                (submission) =>
+                  submission.courseId.toString() === course._id.toString() &&
+                  submission.title === "Final Quiz",
+              )
+            : (course.subjectQuizzes || []).every((requiredQuiz) =>
+                student.quizSubmissions.some(
+                  (submission) =>
+                    submission.courseId.toString() === course._id.toString() &&
+                    submission.title === requiredQuiz.title,
+                ),
+              );
+        }
+
+        if (allPassed) {
+          await issueCertificateIfEarned(studentId, course);
+        }
+      }
+    }
+
+    // Bust the user cache so courseProgress changes are visible on next /users/me
+    await deleteKey(`user:${studentId}`).catch(() => {});
 
     return res.json({ success: true, message: "Progress saved" });
   } catch (err) {
@@ -584,7 +622,7 @@ const issueCertificateIfEarned = async (studentId, course) => {
           course.certificate?.title || "Certificate of Completion",
         signatoryName: course.certificate?.signatoryName || "",
         signatoryTitle: course.certificate?.signatoryTitle || "",
-        instructorName: "", // filled below
+        instructorName: course.instructor?.name || "",
       },
     },
   });
@@ -682,6 +720,9 @@ export const enrollCourses = async (req, res) => {
         ),
       ),
     );
+
+    // Bust the user cache so the next /users/me reflects the new enrolledCourses
+    await deleteKey(`user:${studentId}`).catch(() => {});
 
     await Cart.findOneAndUpdate(
       { user: studentId },
@@ -1022,6 +1063,12 @@ export const submitQuiz = async (req, res) => {
     }
 
     await student.save();
+
+    // Bust the user cache so the next /users/me request (e.g. Certificates
+    // page load) returns the freshly saved earnedCertificates instead of the
+    // stale cached copy that predates this quiz submission.
+    await deleteKey(`user:${student._id}`);
+
     const updatedCoinBalance = (await User.findById(student._id).select("coins"))
       ?.coins;
 
