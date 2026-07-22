@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import SEO from "../components/common/SEO";
 import { hasBaseRole } from "../utils/permissions";
@@ -33,6 +33,7 @@ import {
   BookOpen,
   Wallet,
   AlertCircle,
+  ShieldCheck,
 } from "lucide-react";
 
 // ── Load Razorpay script ──────────────────────────────────────────────────────
@@ -751,9 +752,24 @@ export default function CartPage() {
                 </button>
               )}
 
+              {/* ── Refund Policy Notice & Guarantee ── */}
+              <div className="flex items-start gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3.5 text-xs text-slate-300">
+                <ShieldCheck size={18} className="text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold text-emerald-300">7-Day Money Back Guarantee</span>
+                  <p className="text-slate-400 mt-0.5 leading-relaxed">
+                    Not satisfied? Request a refund within 7 days (credited directly to your platform Wallet). Read our{" "}
+                    <Link to="/refund-policy" className="text-emerald-400 underline hover:text-emerald-300 font-medium">
+                      Refund Policy
+                    </Link>
+                    .
+                  </p>
+                </div>
+              </div>
+
               <p className="text-center text-xs text-slate-600">
                 {total > 0
-                  ? "Secure checkout · Wallet or Razorpay"
+                  ? "Secure 256-Bit SSL Encrypted Checkout"
                   : "No payment required for free courses"}
               </p>
             </div>

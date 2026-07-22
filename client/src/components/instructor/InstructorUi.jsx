@@ -125,23 +125,43 @@ export const SectionHeader = ({ title, action }) => (
 );
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
-export const Toast = ({ msg }) =>
-  msg ? (
+export const Toast = ({ msg }) => {
+  if (!msg) return null;
+  const isObject = typeof msg === "object" && msg !== null;
+  const text = isObject ? msg.text || msg.msg : msg;
+  const type = isObject ? msg.type : "info";
+
+  let bg = "linear-gradient(135deg, #4f46e5, #7c3aed)";
+  let shadow = "0 8px 32px rgba(79, 70, 229, 0.4)";
+
+  if (type === "success") {
+    bg = "linear-gradient(135deg, #059669, #10b981)";
+    shadow = "0 8px 32px rgba(16, 185, 129, 0.4)";
+  } else if (type === "error") {
+    bg = "linear-gradient(135deg, #dc2626, #f43f5e)";
+    shadow = "0 8px 32px rgba(220, 38, 38, 0.4)";
+  }
+
+  return (
     <div
       style={{
         position: "fixed",
         bottom: 24,
         right: 24,
-        background: "linear-gradient(135deg, #ec4899, #db2777)",
+        background: bg,
         color: "#fff",
         padding: "12px 20px",
         borderRadius: 12,
         fontSize: 14,
         fontWeight: 600,
         zIndex: 99999,
-        boxShadow: "0 8px 32px rgba(236, 72, 153, 0.4)",
+        boxShadow: shadow,
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
       }}
     >
-      {msg}
+      {text}
     </div>
-  ) : null;
+  );
+};

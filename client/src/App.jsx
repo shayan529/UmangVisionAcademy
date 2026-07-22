@@ -84,6 +84,7 @@ const MyReels = lazy(() => import("./components/reels/MyReels"));
 const InstructorApplicationStatus = lazy(() => import("./components/common/InstructorApplicationStatus"));
 const PrivacyPolicy = lazy(() => import("./components/common/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./components/common/TermsOfService"));
+const RefundPolicy = lazy(() => import("./components/common/RefundPolicy"));
 const CourseDemo = lazy(() => import("./components/course/CourseDemo"));
 const AboutUs = lazy(() => import("./pages/AboutUs"));
 const QuestionBank = lazy(() => import("./components/common/QuestionBank"));
@@ -313,6 +314,8 @@ function App() {
           <Route path="become-instructor" element={<BecomeInstructor />} />
           <Route path="privacy" element={<PrivacyPolicy />} />
           <Route path="terms" element={<TermsOfService />} />
+          <Route path="refund-policy" element={<RefundPolicy />} />
+          <Route path="refunds" element={<RefundPolicy />} />
           <Route path="about-us" element={<AboutUs />} />
           <Route path="courses/:id/demo" element={<CourseDemo />} />
           <Route path="question-bank" element={<QuestionBank />} />

@@ -5,7 +5,7 @@ const Footer = () => {
   const { t } = useTranslation(); // add this
 
   return (
-    <footer className="hidden md:block px-6 md:px-10 py-16 border-t border-slate-800 bg-slate-950">
+    <footer className="hidden md:block px-6 md:px-5 py-5 border-t border-slate-800 bg-slate-950">
       <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-10 w-full">
         {/* Logo Section */}
         <div className="flex items-start gap-4">
@@ -48,6 +48,21 @@ const Footer = () => {
               </Link>
               <Link to="/faq" className="block hover:text-white transition">
                 {t("footer.faq")}
+              </Link>
+            </div>
+          </div>
+
+          <div className="m-10">
+            <h3 className="font-bold mb-5">{t("footer.legal", "Legal")}</h3>
+            <div className="space-y-3 text-slate-400">
+              <Link to="/privacy" className="block hover:text-white transition">
+                {t("footer.privacyPolicy", "Privacy Policy")}
+              </Link>
+              <Link to="/terms" className="block hover:text-white transition">
+                {t("footer.termsOfService", "Terms of Service")}
+              </Link>
+              <Link to="/refund-policy" className="block hover:text-white transition">
+                {t("footer.refundPolicy", "Refund Policy")}
               </Link>
             </div>
           </div>

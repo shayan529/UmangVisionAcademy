@@ -637,6 +637,57 @@
       }
     }
   },
+  "refundPolicy": {
+    "badge": "100% Satisfaction Guarantee",
+    "title": "Refund & Cancellation Policy",
+    "description": "At Umang Vision Academy, we strive to deliver the highest quality education and student satisfaction. All approved refunds are credited directly to your platform Wallet.",
+    "lastUpdated": "Last Updated: July 2026",
+    "highlights": {
+      "windowTitle": "7-Day Refund Window",
+      "windowDesc": "Request a refund within 7 calendar days of course purchase if you are unsatisfied.",
+      "walletTitle": "Instant Wallet Credit",
+      "walletDesc": "Approved refunds are credited directly & instantly to your Umang Vision Academy Wallet balance.",
+      "supportTitle": "Dedicated Support",
+      "supportDesc": "Submit your request via our Help Center or email support@umangvisionacademy.com."
+    },
+    "sections": {
+      "eligibility": {
+        "title": "1. Refund Eligibility",
+        "intro": "To be eligible for a refund on any course or batch purchased on Umang Vision Academy:",
+        "item1": "The request must be submitted within 7 calendar days from the original date of purchase.",
+        "item2": "You must have completed less than 25% of the total course video/lesson content.",
+        "item3": "Course certificates or downloadable bonus materials must not have been claimed."
+      },
+      "walletCredit": {
+        "title": "2. Wallet Refund Policy (Wallet Credit Only)",
+        "body": "All approved refunds will be credited exclusively to your Umang Vision Academy Wallet balance. Wallet funds can be used immediately to purchase any other course, mock test series, or batch on our platform. Wallet credits are non-transferable and non-refundable to external bank accounts."
+      },
+      "nonRefundable": {
+        "title": "3. Non-Refundable Items",
+        "intro": "The following items and services are strictly non-refundable:",
+        "item1": "One-on-one live tutoring or doubt-clearing sessions already conducted.",
+        "item2": "Attempted mock test paper submissions or evaluated test series.",
+        "item3": "Printed study materials or physical books shipped to your address.",
+        "item4": "Refund requests submitted after the 7-day refund window."
+      },
+      "process": {
+        "title": "4. Refund Request Process",
+        "intro": "To request a refund to your wallet, follow these simple steps:",
+        "step1": "Visit the Contact Page or email support@umangvisionacademy.com.",
+        "step2": "Provide your Order ID, registered email address, and reason for the request.",
+        "step3": "Our team will review your eligibility within 24-48 hours.",
+        "step4": "Once approved, the refund amount will be credited directly into your Wallet balance."
+      },
+      "exchanges": {
+        "title": "5. Course Exchanges & Upgrades",
+        "body": "If you accidentally purchased the wrong subject or class batch, you can request an instant course transfer or upgrade within 7 days without needing a cancellation. Contact our support team for immediate assistance."
+      },
+      "contact": {
+        "title": "Have questions?",
+        "body": "If you have any questions regarding our Refund Policy or Wallet balance, please contact us at support@umangvisionacademy.com or visit our Contact Page."
+      }
+    }
+  },
   "aboutUs": {
     "admitCard": {
       "candidate": "CANDIDATE",
@@ -789,7 +840,11 @@
     "support": "Support",
     "contact": "Contact",
     "helpCenter": "Help Center",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "legal": "Legal",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "refundPolicy": "Refund Policy"
   },
   "helpCenter": {
     "tag": "HELP CENTER",
