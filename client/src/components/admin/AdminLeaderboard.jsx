@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Star, Trophy, Medal, Award, ChevronUp, ChevronDown, X, Phone, MapPin, BookOpen, Users, TrendingUp, Calendar, Link as LinkIcon, GraduationCap } from "lucide-react";
+import { Star, Trophy, Medal, Award, ChevronUp, ChevronDown, X, Phone, MapPin, BookOpen, Users, TrendingUp, Calendar, Link as LinkIcon } from "lucide-react";
 
 /* ─── helpers ─────────────────────────────────────────── */
 const fmt = (n) => (n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : `₹${n}`);
@@ -304,7 +304,7 @@ const AdminLeaderboard = ({
                       {selectedInstructor.specialization}
                     </p>
                   )}
-                  <p className="text-sm text-slate-400 mt-0.5 truncate">
+                  <p className="text-xs sm:text-sm text-slate-400 mt-0.5 break-all leading-snug">
                     {selectedInstructor.email}
                   </p>
                 </div>
@@ -414,15 +414,6 @@ const AdminLeaderboard = ({
                       </p>
                     </div>
                   </div>
-                  {typeof selectedInstructor.coins === "number" && (
-                    <div className="flex items-center gap-3 bg-slate-800/30 border border-slate-700/30 rounded-xl px-4 py-3">
-                      <GraduationCap size={14} className="text-amber-400 shrink-0" />
-                      <div>
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Coins</p>
-                        <p className="text-sm text-amber-300 font-bold">{selectedInstructor.coins}</p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 

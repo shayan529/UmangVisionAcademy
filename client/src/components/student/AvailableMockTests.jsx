@@ -336,7 +336,7 @@ export default function AvailableMockTests() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#060d1a] p-4 md:p-8">
+    <div className="w-full text-slate-100 p-4 md:p-6 lg:p-8 space-y-6">
 
       {/* Tab bar */}
       <div className="flex gap-1 bg-[#0b1628] border border-[#1a2e48] rounded-xl p-1 mb-6">

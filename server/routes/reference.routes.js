@@ -1,5 +1,5 @@
 import express from "express";
-import { protect } from "../middleware/auth.middleware.js";
+import { protect, requirePermission } from "../middleware/auth.middleware.js";
 import {
   listReferences,
   getReferenceById,
@@ -10,10 +10,12 @@ import {
 
 const router = express.Router();
 
-router.get("/", protect, listReferences);
-router.get("/:id", protect, getReferenceById);
-router.post("/", protect, createReference);
-router.put("/:id", protect, updateReference);
-router.delete("/:id", protect, deleteReference);
+// All reference routes require authentication AND a reference permission grant.
+// Admins always pass; staff need the corresponding references:* grant.
+router.get("/", protect, requirePermission("references", "view"), listReferences);
+router.get("/:id", protect, requirePermission("references", "view"), getReferenceById);
+router.post("/", protect, requirePermission("references", "create"), createReference);
+router.put("/:id", protect, requirePermission("references", "edit"), updateReference);
+router.delete("/:id", protect, requirePermission("references", "delete"), deleteReference);
 
 export default router;

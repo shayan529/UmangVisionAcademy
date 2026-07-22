@@ -378,7 +378,8 @@ export const approveCourse = async (req, res) => {
             instructorName,
             course.title,
             course.summary,
-            course._id
+            course._id,
+            student._id
           ).catch(err => console.error(`Failed to send new course alert to ${student.email}:`, err));
         }
       }
@@ -734,7 +735,7 @@ export const enrollCourses = async (req, res) => {
       if (user && user.email && user.notificationSettings?.emailNotifications !== false) {
         const enrolledCourses = await Course.find({ _id: { $in: enrolled } }).select("title").lean();
         const courseTitles = enrolledCourses.map(c => c.title);
-        sendCourseEnrollmentEmail(user.email, user.name, courseTitles).catch(console.error);
+        sendCourseEnrollmentEmail(user.email, user.name, courseTitles, studentId).catch(console.error);
       }
     }
 

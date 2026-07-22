@@ -29,16 +29,13 @@ const MODULE_LABELS = {
   courses: "Courses",
   users: "Users",
   payments: "Payments",
-  moderation: "Moderation",
   notes: "Notes Moderation",
   reels: "Reels Moderation",
   mock_tests: "Mock Tests",
   question_bank: "Question Bank",
   sessions: "Sessions",
   ai_tutor: "AI Tutor",
-  wallet: "Wallet",
   references: "References",
-  student_assignment: "Student Assignment",
   applications: "Applications",
 };
 
@@ -51,9 +48,7 @@ const ACTION_LABELS = {
   reject: "Reject",
   refund: "Refund",
   export: "Export",
-  flag: "Flag",
   remove: "Remove",
-  ban: "Ban",
   // mock_tests
   assign: "Assign",
   publish: "Publish",
@@ -61,14 +56,6 @@ const ACTION_LABELS = {
   import: "Import",
   // ai_tutor
   access: "Access",
-  // wallet
-  credit: "Credit",
-  debit: "Debit",
-  manage_settings: "Manage Settings",
-  // student_assignment
-  assign_instructor: "Assign Instructor",
-  reassign: "Reassign",
-  unenroll: "Unenroll",
 };
 
 const EMPTY_ROLE = { name: "", description: "", permissions: [] };

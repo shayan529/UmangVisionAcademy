@@ -261,12 +261,12 @@ export const RegisterUser = async (req, res) => {
       await referrer.save();
       await deleteKey("students:leaderboard");
       if (referrer.email && referrer.notificationSettings?.emailNotifications !== false) {
-        sendReferralSuccessEmail(referrer.email, referrer.name, user.name, 50).catch(console.error);
+        sendReferralSuccessEmail(referrer.email, referrer.name, user.name, 50, referrer._id).catch(console.error);
       }
     }
 
     if (user.email) {
-      sendRegistrationEmail(user.email, user.name).catch(console.error);
+      sendRegistrationEmail(user.email, user.name, user._id).catch(console.error);
     }
 
     const userAgent = req.headers["user-agent"] || "Unknown Device";
@@ -770,12 +770,12 @@ export const createStudentByAdmin = async (req, res) => {
       referrer.referralsCount = (referrer.referralsCount ?? 0) + 1;
       await referrer.save();
       if (referrer.email && referrer.notificationSettings?.emailNotifications !== false) {
-        sendReferralSuccessEmail(referrer.email, referrer.name, user.name, 50).catch(console.error);
+        sendReferralSuccessEmail(referrer.email, referrer.name, user.name, 50, referrer._id).catch(console.error);
       }
     }
 
     if (user.email) {
-      sendRegistrationEmail(user.email, user.name).catch(console.error);
+      sendRegistrationEmail(user.email, user.name, user._id).catch(console.error);
     }
 
     if (Array.isArray(courseIds) && courseIds.length > 0) {
@@ -904,4 +904,216 @@ export const getBulkImportStatus = async (req, res) => {
     success: false,
     message: "Bulk imports are now processed synchronously. No job status to poll.",
   });
+};
+
+// ── Moderation: Ban user ──────────────────────────────────────────────────────
+// PATCH /users/:id/ban
+// Requires moderation:ban permission. Sets isActive=false on the target user.
+export const banUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason = "" } = req.body;
+
+    if (id === req.user._id.toString()) {
+      return res.status(400).json({ message: "You cannot ban yourself." });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { isActive: false, banReason: reason.trim() },
+      { new: true },
+    ).select("-password");
+
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    // Bust the user cache so the next request through protect sees isActive=false
+    await deleteKey(`user:${id}`);
+
+    res.json({ message: `User "${user.name}" has been banned.`, user: await hydrateUserRoles(user) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── Moderation: Unban user ────────────────────────────────────────────────────
+// PATCH /users/:id/unban
+// Requires moderation:ban permission.
+export const unbanUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { isActive: true, $unset: { banReason: "" } },
+      { new: true },
+    ).select("-password");
+
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    await deleteKey(`user:${id}`);
+
+    res.json({ message: `User "${user.name}" has been unbanned.`, user: await hydrateUserRoles(user) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── Moderation: Flag user ─────────────────────────────────────────────────────
+// PATCH /users/:id/flag
+// Requires moderation:flag permission. Adds a flag to the user's record for review.
+export const flagUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason = "" } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { isFlagged: true, flagReason: reason.trim() },
+      { new: true },
+    ).select("-password");
+
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    await deleteKey(`user:${id}`);
+
+    res.json({ message: `User "${user.name}" has been flagged for review.`, user: await hydrateUserRoles(user) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── Moderation: Unflag user ───────────────────────────────────────────────────
+// PATCH /users/:id/unflag
+// Requires moderation:flag permission.
+export const unflagUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { isFlagged: false, $unset: { flagReason: "" } },
+      { new: true },
+    ).select("-password");
+
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    await deleteKey(`user:${id}`);
+
+    res.json({ message: `Flag removed from user "${user.name}".`, user: await hydrateUserRoles(user) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── Student Assignment: View enrolled students (with instructor info) ──────────
+// GET /users/student-assignments
+// Requires student_assignment:view permission.
+export const getStudentAssignments = async (req, res) => {
+  try {
+    const students = await User.find({ roles: { $in: ["student"] } })
+      .select("name email phoneNumber enrolledCourses")
+      .populate("enrolledCourses", "title instructor")
+      .lean();
+
+    res.json(students);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── Student Assignment: Assign instructor to a course ────────────────────────
+// PATCH /users/student-assignments/assign-instructor
+// Requires student_assignment:assign_instructor permission.
+// Body: { courseId, instructorId }
+export const assignInstructorToCourse = async (req, res) => {
+  try {
+    const { courseId, instructorId } = req.body;
+    if (!courseId || !instructorId) {
+      return res.status(400).json({ message: "courseId and instructorId are required." });
+    }
+
+    const instructor = await User.findOne({
+      _id: instructorId,
+      roles: { $in: ["instructor"] },
+    }).select("name");
+    if (!instructor) return res.status(404).json({ message: "Instructor not found." });
+
+    const Course = (await import("../models/courses.model.js")).default;
+    const course = await Course.findByIdAndUpdate(
+      courseId,
+      { instructor: instructorId },
+      { new: true },
+    ).select("title instructor");
+
+    if (!course) return res.status(404).json({ message: "Course not found." });
+
+    // Invalidate course cache
+    const { invalidateCourseCache } = await import("./course.controller.js");
+    await invalidateCourseCache(courseId);
+    await deleteKey(`user:${instructorId}`);
+
+    res.json({ message: `Instructor "${instructor.name}" assigned to "${course.title}".`, course });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── Student Assignment: Reassign student to a different course ────────────────
+// PATCH /users/student-assignments/reassign
+// Requires student_assignment:reassign permission.
+// Body: { studentId, fromCourseId, toCourseId }
+export const reassignStudent = async (req, res) => {
+  try {
+    const { studentId, fromCourseId, toCourseId } = req.body;
+    if (!studentId || !fromCourseId || !toCourseId) {
+      return res.status(400).json({ message: "studentId, fromCourseId, and toCourseId are required." });
+    }
+
+    const Course = (await import("../models/courses.model.js")).default;
+
+    // Remove from old course
+    await Course.findByIdAndUpdate(fromCourseId, { $pull: { students: studentId } });
+    await User.findByIdAndUpdate(studentId, { $pull: { enrolledCourses: fromCourseId } });
+
+    // Add to new course
+    await Course.findByIdAndUpdate(toCourseId, { $addToSet: { students: studentId } });
+    await User.findByIdAndUpdate(studentId, { $addToSet: { enrolledCourses: toCourseId } });
+
+    const { invalidateCourseCache } = await import("./course.controller.js");
+    await Promise.all([
+      invalidateCourseCache(fromCourseId),
+      invalidateCourseCache(toCourseId),
+    ]);
+    await deleteKey(`user:${studentId}`);
+
+    res.json({ message: "Student reassigned successfully." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── Student Assignment: Unenroll student from a course ───────────────────────
+// DELETE /users/student-assignments/unenroll
+// Requires student_assignment:unenroll permission.
+// Body: { studentId, courseId }
+export const unenrollStudent = async (req, res) => {
+  try {
+    const { studentId, courseId } = req.body;
+    if (!studentId || !courseId) {
+      return res.status(400).json({ message: "studentId and courseId are required." });
+    }
+
+    const Course = (await import("../models/courses.model.js")).default;
+
+    await Course.findByIdAndUpdate(courseId, { $pull: { students: studentId } });
+    await User.findByIdAndUpdate(studentId, { $pull: { enrolledCourses: courseId } });
+
+    const { invalidateCourseCache } = await import("./course.controller.js");
+    await invalidateCourseCache(courseId);
+    await deleteKey(`user:${studentId}`);
+
+    res.json({ message: "Student unenrolled successfully." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };

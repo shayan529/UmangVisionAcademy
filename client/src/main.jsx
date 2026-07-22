@@ -33,6 +33,11 @@ import { Provider } from "react-redux";
 import store from "./redux/store.js";
 import "./i18n/index.js";
 import { HelmetProvider } from "react-helmet-async";
+import { registerSW } from "virtual:pwa-register";
+
+if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  registerSW({ immediate: true });
+}
 
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>

@@ -27,7 +27,7 @@ export default function MockTestsLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#060d1a]">
+    <div className="w-full">
       <Outlet />
     </div>
   );

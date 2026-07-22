@@ -513,46 +513,54 @@ const QuestionBank = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white px-6 md:px-12 py-10">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold mb-3">{t("questionBank.title")}</h1>
-          <p className="text-slate-400">{t("questionBank.description")}</p>
+    <div className="w-full text-slate-100 p-4 md:p-6 lg:p-8 space-y-6">
+      {/* Header & Filters (Seamless flow with zero outer gap) */}
+      <div className="space-y-4">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[10px] font-bold uppercase tracking-wider mb-2">
+            <FileText size={12} />
+            EXAM PREPARATION
+          </div>
+          <h1 className="text-xl md:text-3xl font-black text-white tracking-tight leading-tight">
+            {t("questionBank.title")}
+          </h1>
+          <p className="text-xs md:text-sm text-slate-400 font-medium mt-1">
+            {t("questionBank.description")}
+          </p>
         </div>
 
         {/* Filters */}
-        <div className="grid gap-4 mb-10 md:grid-cols-[minmax(0,1fr)_230px_230px]">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_220px]">
           <div className="flex flex-col">
-            <label className="mb-2 text-sm text-slate-400">
+            <label className="mb-1.5 text-xs font-semibold text-slate-300">
               {t("questionBank.subjectLabel")}
             </label>
             <div className="relative w-full">
               <Search
-                size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
               />
               <input
                 type="text"
                 placeholder={t("questionBank.searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-cyan-500"
+                className="w-full bg-[#111827]/80 text-slate-100 placeholder-slate-500 border border-slate-800 rounded-2xl py-3 pl-10 pr-4 text-xs md:text-sm focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 transition shadow-inner"
               />
             </div>
           </div>
 
           <div className="flex flex-col">
-            <label className="mb-2 text-sm text-slate-400">
+            <label className="mb-1.5 text-xs font-semibold text-slate-300">
               {t("questionBank.boardLabel")}
             </label>
             <select
               value={selectedBoard}
               onChange={(e) => setSelectedBoard(e.target.value)}
-              className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3"
+              className="bg-[#111827]/80 text-slate-100 border border-slate-800 rounded-2xl px-4 py-3 text-xs md:text-sm focus:outline-none focus:border-cyan-500/60 transition shadow-inner"
             >
               {boardOptions.map((o) => (
-                <option key={o.value} value={o.value}>
+                <option key={o.value} value={o.value} className="bg-slate-900 text-slate-100">
                   {o.label}
                 </option>
               ))}
@@ -560,25 +568,26 @@ const QuestionBank = () => {
           </div>
 
           <div className="flex flex-col">
-            <label className="mb-2 text-sm text-slate-400">
+            <label className="mb-1.5 text-xs font-semibold text-slate-300">
               {t("questionBank.classLabel")}
             </label>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3"
+              className="bg-[#111827]/80 text-slate-100 border border-slate-800 rounded-2xl px-4 py-3 text-xs md:text-sm focus:outline-none focus:border-cyan-500/60 transition shadow-inner"
             >
               {classOptions.map((o) => (
-                <option key={o.value} value={o.value}>
+                <option key={o.value} value={o.value} className="bg-slate-900 text-slate-100">
                   {o.label}
                 </option>
               ))}
             </select>
           </div>
         </div>
+      </div>
 
-        {/* Content */}
-        <div className="space-y-10">
+      {/* Content */}
+      <div className="space-y-8">
           {/* ── Global empty state ── */}
           {filteredData.length === 0 && (
             <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -701,7 +710,6 @@ const QuestionBank = () => {
             );
           })}
         </div>
-      </div>
 
       {/* Payment Modal */}
       {showModal && modalData && (

@@ -198,7 +198,7 @@ export const verifyPayment = async (req, res) => {
 
       const user = await User.findById(req.user._id);
       if (user && user.email && user.notificationSettings?.emailNotifications !== false) {
-        sendPlanPurchaseEmail(user.email, user.name, plan.label).catch(console.error);
+        sendPlanPurchaseEmail(user.email, user.name, plan.label, user._id).catch(console.error);
       }
 
       return res.json({ message: "Plan activated.", subscription });
@@ -256,7 +256,7 @@ export const verifyPayment = async (req, res) => {
       const user = await User.findById(req.user._id);
       if (user && user.email && user.notificationSettings?.emailNotifications !== false) {
         const courseTitles = courses.map((c) => c.title);
-        sendCourseEnrollmentEmail(user.email, user.name, courseTitles).catch(console.error);
+        sendCourseEnrollmentEmail(user.email, user.name, courseTitles, user._id).catch(console.error);
       }
 
       return res.json({
@@ -287,7 +287,7 @@ export const cancelSubscription = async (req, res) => {
     });
 
     if (user.email && user.notificationSettings?.emailNotifications !== false) {
-      sendSubscriptionCancellationEmail(user.email, user.name, planLabel).catch(console.error);
+      sendSubscriptionCancellationEmail(user.email, user.name, planLabel, user._id).catch(console.error);
     }
 
     res.json({

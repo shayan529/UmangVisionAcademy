@@ -20,7 +20,13 @@ import {
   adminAssignMockTest,
   adminTogglePublish,
 } from "../controllers/mockTest.controller.js";
-import { protect, authorizeRoles, adminOnly } from "../middleware/auth.middleware.js";
+import { protect, authorizeRoles, adminOnly, requirePermission } from "../middleware/auth.middleware.js";
+
+// Grants access to admins OR staff with the given mock_tests permission.
+const mockTestPermission = (action) => (req, res, next) => {
+  // Full admins always pass via requirePermission
+  return requirePermission("mock_tests", action)(req, res, next);
+};
 
 const router = express.Router();
 
@@ -56,12 +62,12 @@ router.patch(
 ); // PATCH /api/mock-tests/:id/publish
 
 // ── Admin routes ────────────────────────────────────────────
-// All admin routes require the "admin" base role.
-router.get("/admin/all", adminOnly, adminGetAllTests);               // GET    /api/mock-tests/admin/all
-router.post("/admin", adminOnly, adminCreateMockTest);               // POST   /api/mock-tests/admin
-router.put("/admin/:id", adminOnly, adminUpdateMockTest);            // PUT    /api/mock-tests/admin/:id
-router.delete("/admin/:id", adminOnly, adminDeleteMockTest);         // DELETE /api/mock-tests/admin/:id
-router.patch("/admin/:id/assign", adminOnly, adminAssignMockTest);   // PATCH  /api/mock-tests/admin/:id/assign
-router.patch("/admin/:id/publish", adminOnly, adminTogglePublish);   // PATCH  /api/mock-tests/admin/:id/publish
+// Admin base role OR staff with the corresponding mock_tests permission grant.
+router.get("/admin/all", requirePermission("mock_tests", "view"), adminGetAllTests);           // GET    /api/mock-tests/admin/all
+router.post("/admin", requirePermission("mock_tests", "create"), adminCreateMockTest);         // POST   /api/mock-tests/admin
+router.put("/admin/:id", requirePermission("mock_tests", "edit"), adminUpdateMockTest);        // PUT    /api/mock-tests/admin/:id
+router.delete("/admin/:id", requirePermission("mock_tests", "delete"), adminDeleteMockTest);   // DELETE /api/mock-tests/admin/:id
+router.patch("/admin/:id/assign", requirePermission("mock_tests", "assign"), adminAssignMockTest);   // PATCH  /api/mock-tests/admin/:id/assign
+router.patch("/admin/:id/publish", requirePermission("mock_tests", "publish"), adminTogglePublish);  // PATCH  /api/mock-tests/admin/:id/publish
 
 export default router;

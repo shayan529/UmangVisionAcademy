@@ -6,15 +6,18 @@ import {
   invalidateCache,
 } from "../utils/redisClient.js";
 import { scheduleSessionReminder, cancelSessionReminder } from "../utils/queue.js";
+import { hasBaseRole, hasPermissionGrant } from "../utils/userRoles.js";
 
-// Helper to check if a user has admin or staff roles
+// Helper to check if a user has admin or staff roles or session permissions
 const checkIsAdminOrStaff = (user) => {
   if (!user) return false;
   return (
     user.role === "admin" ||
     user.role === "staff" ||
-    (user.roles &&
-      (user.roles.includes("admin") || user.roles.includes("staff")))
+    hasBaseRole(user, "admin") ||
+    hasPermissionGrant(user, "sessions", "view") ||
+    hasPermissionGrant(user, "sessions", "create") ||
+    hasPermissionGrant(user, "sessions", "edit")
   );
 };
 

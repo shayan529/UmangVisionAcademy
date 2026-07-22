@@ -375,7 +375,7 @@ export const verifyDeposit = async (req, res) => {
 
     const user = await User.findById(req.user._id);
     if (user && user.email && user.notificationSettings?.emailNotifications !== false) {
-      sendWalletDepositEmail(user.email, user.name, amountInRupees).catch(console.error);
+      sendWalletDepositEmail(user.email, user.name, amountInRupees, user._id).catch(console.error);
     }
 
     res.json({
@@ -529,7 +529,7 @@ export const payWithWallet = async (req, res) => {
 
     const user = await User.findById(req.user._id);
     if (user && user.email) {
-      sendCourseEnrollmentEmail(user.email, user.name, [course.title]).catch(console.error);
+      sendCourseEnrollmentEmail(user.email, user.name, [course.title], user._id).catch(console.error);
     }
 
     res.json({
@@ -539,5 +539,82 @@ export const payWithWallet = async (req, res) => {
   } catch (err) {
     console.error("[Wallet] payWithWallet:", err.message);
     res.status(500).json({ message: "Payment failed." });
+  }
+};
+
+// ── POST /api/wallet/admin/credit ────────────────────────────────────────────
+// Requires wallet:credit permission. Manually adds funds to a user's wallet.
+// Body: { userId, amount, description? }
+export const adminCreditWallet = async (req, res) => {
+  try {
+    const { userId, amount, description } = req.body;
+    const numAmount = Number(amount);
+
+    if (!userId) return res.status(400).json({ message: "userId is required." });
+    if (!numAmount || numAmount <= 0) return res.status(400).json({ message: "Amount must be a positive number." });
+
+    const targetUser = await User.findById(userId).select("name email");
+    if (!targetUser) return res.status(404).json({ message: "User not found." });
+
+    const wallet = await getOrCreateWallet(userId);
+    wallet.balance += numAmount;
+    wallet.transactions.push({
+      type: "deposit",
+      amount: numAmount,
+      description: description?.trim() || `Manual credit by staff (${req.user.name || req.user._id})`,
+      paymentMethod: "internal",
+      status: "success",
+    });
+    await wallet.save();
+
+    res.json({
+      message: `₹${numAmount} credited to ${targetUser.name}'s wallet.`,
+      balance: wallet.balance,
+    });
+  } catch (err) {
+    console.error("[Wallet] adminCreditWallet:", err.message);
+    res.status(500).json({ message: "Failed to credit wallet." });
+  }
+};
+
+// ── POST /api/wallet/admin/debit ─────────────────────────────────────────────
+// Requires wallet:debit permission. Manually deducts funds from a user's wallet.
+// Body: { userId, amount, description? }
+export const adminDebitWallet = async (req, res) => {
+  try {
+    const { userId, amount, description } = req.body;
+    const numAmount = Number(amount);
+
+    if (!userId) return res.status(400).json({ message: "userId is required." });
+    if (!numAmount || numAmount <= 0) return res.status(400).json({ message: "Amount must be a positive number." });
+
+    const targetUser = await User.findById(userId).select("name email");
+    if (!targetUser) return res.status(404).json({ message: "User not found." });
+
+    const wallet = await getOrCreateWallet(userId);
+    if (wallet.balance < numAmount) {
+      return res.status(402).json({
+        message: `Insufficient balance. User has ₹${wallet.balance.toFixed(2)} but you tried to debit ₹${numAmount}.`,
+        available: wallet.balance,
+      });
+    }
+
+    wallet.balance -= numAmount;
+    wallet.transactions.push({
+      type: "debit",
+      amount: numAmount,
+      description: description?.trim() || `Manual debit by staff (${req.user.name || req.user._id})`,
+      paymentMethod: "internal",
+      status: "success",
+    });
+    await wallet.save();
+
+    res.json({
+      message: `₹${numAmount} debited from ${targetUser.name}'s wallet.`,
+      balance: wallet.balance,
+    });
+  } catch (err) {
+    console.error("[Wallet] adminDebitWallet:", err.message);
+    res.status(500).json({ message: "Failed to debit wallet." });
   }
 };

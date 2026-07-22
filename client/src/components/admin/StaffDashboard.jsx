@@ -29,6 +29,9 @@ import AdminCourses from "./AdminCourses";
 import AdminApplications from "./AdminApplications";
 import StaffPayments from "./StaffPayments";
 import RoleManager from "./RoleManager";
+import AdminSessions from "./AdminSessions";
+import AdminMockTests from "./AdminMockTests";
+import AdminQuestionPapers from "./AdminQuestionPapers";
 import { Toast } from "../instructor/InstructorUi";
 import InstructorAI from "../instructor/InstructorAI";
 
@@ -106,9 +109,11 @@ const StaffSidebar = ({
           { id: "instructors", label: "Instructors", icon: "🎓" },
         ]
       : []),
-    ...(hasPermission(user, "payments", "view") ||
-    hasPermission(user, "payments", "refund") ||
-    hasPermission(user, "payments", "export")
+    ...(hasAnyPermission(user, [
+      ["payments", "view"],
+      ["payments", "refund"],
+      ["payments", "export"],
+    ])
       ? [{ id: "payments", label: "Payments", icon: "💳" }]
       : []),
     ...(hasPermission(user, "applications", "view")
@@ -121,11 +126,28 @@ const StaffSidebar = ({
           },
         ]
       : []),
+    ...(hasPermission(user, "notes", "view") ||
+    hasPermission(user, "notes", "approve") ||
+    hasPermission(user, "notes", "reject")
+      ? [{ id: "notes", label: "Notes Moderation", icon: "📄" }]
+      : []),
     ...(hasPermission(user, "reels", "view")
       ? [{ id: "reels", label: "Reels Moderation", icon: "🎥" }]
       : []),
+    ...(hasPermission(user, "mock_tests", "view")
+      ? [{ id: "mock_tests", label: "Mock Tests", icon: "📋" }]
+      : []),
+    ...(hasPermission(user, "question_bank", "view")
+      ? [{ id: "question_bank", label: "Question Bank", icon: "🗂️" }]
+      : []),
+    ...(hasPermission(user, "sessions", "view")
+      ? [{ id: "sessions", label: "Sessions", icon: "📅" }]
+      : []),
     ...(hasPermission(user, "ai_tutor", "access")
       ? [{ id: "ai", label: "AI Tutor", icon: "🤖" }]
+      : []),
+    ...(hasPermission(user, "references", "view")
+      ? [{ id: "references", label: "References", icon: "🔗" }]
       : []),
     ...(hasBaseRole(user, "admin")
       ? [{ id: "roles", label: "Roles & Permissions", icon: "🔒" }]
@@ -146,14 +168,12 @@ const StaffSidebar = ({
       .join(", ") || "Staff";
 
   const sidebarClass = `
-    relative flex flex-col bg-slate-950 border-r border-slate-800
-    transition-all duration-300 ease-in-out
+    bg-slate-950 border-r border-slate-800 flex flex-col overflow-hidden
+    transition-transform duration-300 ease-in-out
+    fixed top-0 bottom-0 h-full left-0 z-[10000] shadow-[4px_0_24px_rgba(0,0,0,0.6)]
+    md:relative md:top-auto md:bottom-auto md:h-auto md:shadow-none md:translate-x-0
     ${collapsed ? "w-[76px] min-w-[76px]" : "w-[260px] min-w-[260px]"}
-    ${
-      mobileOpen
-        ? "fixed inset-y-0 left-0 h-dvh w-[260px] shadow-[4px_0_24px_rgba(0,0,0,0.6)] z-[10000]"
-        : "hidden md:flex z-40 md:relative md:h-auto md:min-h-screen"
-    }
+    ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
   `;
 
   return (
@@ -167,16 +187,21 @@ const StaffSidebar = ({
       )}
 
       <aside className={sidebarClass}>
-        {/* Mobile close button */}
-        <button
-          onClick={() => setMobileOpen(false)}
-          className="md:hidden self-end bg-transparent border-none text-[#64748b] hover:text-slate-300 text-[22px] cursor-pointer mr-4 mt-3 mb-1 leading-none p-0 transition-colors"
-        >
-          ✕
-        </button>
+        {/* Mobile close header */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-1 md:hidden shrink-0">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            Menu
+          </span>
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="text-slate-400 hover:text-white p-1 rounded-lg text-lg leading-none transition-colors"
+          >
+            ✕
+          </button>
+        </div>
 
         {/* User Card */}
-        <div className="px-3 mt-3 mb-4">
+        <div className="px-3 mt-3 mb-4 shrink-0">
           <div
             className={`flex items-center gap-3 p-3 bg-indigo-950/20 border border-indigo-900/30 rounded-xl ${
               collapsed ? "justify-center p-2" : ""
@@ -275,7 +300,7 @@ const StaffSidebar = ({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 flex flex-col gap-1.5 px-3 pb-4 overflow-y-auto">
+        <nav className="flex-1 flex flex-col gap-1.5 px-3 pb-8 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = tab === item.id;
             return (
@@ -310,21 +335,20 @@ const StaffSidebar = ({
               </button>
             );
           })}
-        </nav>
 
-        {/* Logout */}
-        <div className="p-3 border-t border-slate-800 shrink-0">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
-            title={collapsed ? "Logout" : undefined}
-          >
-            <LogOut size={16} className="text-rose-400 shrink-0" />
-            {!collapsed && (
-              <span className="text-sm font-semibold">Logout</span>
-            )}
-          </button>
-        </div>
+          <div className="mt-auto pt-3 border-t border-slate-800 shrink-0 md:hidden">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
+              title={collapsed ? "Logout" : undefined}
+            >
+              <LogOut size={16} className="text-rose-400 shrink-0" />
+              {!collapsed && (
+                <span className="text-sm font-semibold">Logout</span>
+              )}
+            </button>
+          </div>
+        </nav>
       </aside>
     </>
   );
@@ -528,12 +552,6 @@ export default function StaffDashboard() {
             canModerate={hasPermission(user, "applications", "approve")}
           />
         ) : null;
-      case "ai":
-        return hasPermission(user, "ai_tutor", "access") ? (
-          <InstructorAI showToast={showToast} />
-        ) : null;
-      case "reels":
-        return hasPermission(user, "reels", "view") ? <AdminReels /> : null;
       case "payments":
         return hasAnyPermission(user, [
           ["payments", "view"],
@@ -541,6 +559,52 @@ export default function StaffDashboard() {
           ["payments", "export"],
         ]) ? (
           <StaffPayments user={user} />
+        ) : null;
+      case "notes":
+        return hasAnyPermission(user, [
+          ["notes", "view"],
+          ["notes", "approve"],
+          ["notes", "reject"],
+        ]) ? (
+          <div className="p-4 text-slate-300 text-sm">
+            <p className="text-base font-bold text-white mb-2">Notes Moderation</p>
+            <p className="text-slate-500">
+              Use the instructor panel or navigate to the notes moderation queue.
+            </p>
+          </div>
+        ) : null;
+      case "mock_tests":
+        return hasPermission(user, "mock_tests", "view") ? (
+          <AdminMockTests showToast={showToast} />
+        ) : null;
+      case "question_bank":
+        return hasPermission(user, "question_bank", "view") ? (
+          <AdminQuestionPapers />
+        ) : null;
+      case "ai":
+        return hasPermission(user, "ai_tutor", "access") ? (
+          <InstructorAI showToast={showToast} />
+        ) : null;
+      case "reels":
+        return hasPermission(user, "reels", "view") ? <AdminReels /> : null;
+      case "sessions":
+        return hasPermission(user, "sessions", "view") ? (
+          <AdminSessions
+            instructors={instructors}
+            canCreate={hasPermission(user, "sessions", "create")}
+            canEdit={hasPermission(user, "sessions", "edit")}
+            canDelete={hasPermission(user, "sessions", "delete")}
+            canApprove={hasPermission(user, "sessions", "approve")}
+          />
+        ) : null;
+      case "references":
+        return hasPermission(user, "references", "view") ? (
+          <div className="p-4 text-slate-300 text-sm">
+            <p className="text-base font-bold text-white mb-2">References</p>
+            <p className="text-slate-500">
+              Reference management is available to staff with the References permission.
+            </p>
+          </div>
         ) : null;
       case "roles":
         return hasBaseRole(user, "admin") ? (

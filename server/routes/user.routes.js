@@ -24,11 +24,20 @@ import { uploadStudentsImport } from "../middleware/upload.middleware.js";
 
 const router = express.Router();
 
-// Staff with a "users" / "view" permission grant (or full admin) can list
-// users and run bulk imports — this is what the Students / Instructors /
-// Bulk Import tabs in the Staff dashboard depend on. Previously these were
-// adminOnly, which silently 403'd any non-admin Staff member even when the
-// sidebar correctly showed them the tab.
+// ── Public ────────────────────────────────────────────────────────────────────
+router.post("/register", RegisterUser);
+router.post("/login", LoginUser);
+router.post("/logout", LogoutUser);
+router.get("/instructors/:id/public", getInstructorPublicProfile);
+
+// ── Authenticated self ────────────────────────────────────────────────────────
+router.get("/me", protect, getCurrentUser);
+router.put("/me/select-class", protect, selectClass);
+
+// ── User listing / bulk import ────────────────────────────────────────────────
+// Staff with users:view (or full admin) can list users. Instructors who have
+// a courses permission can also list instructors (for the assign-instructor
+// dropdown in mock tests / courses, etc.).
 router.get("/", protect, (req, res, next) => {
   const isRequestingInstructors = req.query.role === "instructor";
   const hasUsersView = hasPermissionGrant(req.user, "users", "view");
@@ -43,6 +52,7 @@ router.get("/", protect, (req, res, next) => {
 
   return requirePermission("users", "view")(req, res, next);
 }, getUsers);
+
 router.post(
   "/bulk-import",
   protect,
@@ -57,28 +67,17 @@ router.get(
   getBulkImportStatus,
 );
 
-router.post("/register", RegisterUser);
-router.post("/login", LoginUser);
-router.post("/logout", LogoutUser);
-
-router.get("/me", protect, getCurrentUser);
-router.put("/me/select-class", protect, selectClass);
-
-router.get("/instructors/:id/public", getInstructorPublicProfile);
-
-router.get("/:id", protect, selfOrPermission("users", "view"), getUserById);
-router.put("/:id", protect, selfOrPermission("users", "edit"), updateUser);
-router.delete("/:id", protect, selfOrPermission("users", "delete"), deleteUser);
-
-// NOTE: left as adminOnly intentionally — creating new accounts on someone
-// else's behalf is a higher-stakes action than just viewing the list. If you
-// want Staff with a "users":"create" permission to be able to do this too,
-// swap this the same way: requirePermission("users", "create").
+// ── Admin create ──────────────────────────────────────────────────────────────
 router.post(
   "/admin-create",
   protect,
   requirePermission("users", "create"),
   createStudentByAdmin,
 );
+
+// ── User CRUD ─────────────────────────────────────────────────────────────────
+router.get("/:id",    protect, selfOrPermission("users", "view"),   getUserById);
+router.put("/:id",    protect, selfOrPermission("users", "edit"),   updateUser);
+router.delete("/:id", protect, selfOrPermission("users", "delete"), deleteUser);
 
 export default router;

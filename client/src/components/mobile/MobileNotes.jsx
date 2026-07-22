@@ -1,7 +1,20 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, FileText, Download, Lock, FileImage, File, Sparkles, Eye, Search } from "lucide-react";
+import {
+  BookOpen,
+  FileText,
+  Download,
+  Lock,
+  FileImage,
+  File,
+  Sparkles,
+  Eye,
+  Search,
+  User,
+  Calendar,
+  Zap,
+} from "lucide-react";
 import api from "../../config/api";
 import { useTranslation } from "react-i18next";
 
@@ -26,9 +39,14 @@ const downloadFile = async (url, filename) => {
 const getDocViewUrl = (url) => {
   if (!url) return "";
   const ext = url.split(".").pop()?.toLowerCase().split("?")[0] ?? "";
-  const isLocal = url.includes("localhost") || url.includes("127.0.0.1") || url.includes("192.168.");
+  const isLocal =
+    url.includes("localhost") ||
+    url.includes("127.0.0.1") ||
+    url.includes("192.168.");
   if (!isLocal && ["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(ext)) {
-    return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+    return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(
+      url
+    )}`;
   }
   return url;
 };
@@ -36,27 +54,52 @@ const getDocViewUrl = (url) => {
 const getFileMeta = (url = "") => {
   const ext = url.split(".").pop()?.toLowerCase().split("?")[0] ?? "";
   if (["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) {
-    return { icon: FileImage, label: ext.toUpperCase(), color: "#2dd4bf" };
+    return {
+      icon: FileImage,
+      label: ext.toUpperCase(),
+      color: "#2dd4bf",
+      badgeClass: "bg-teal-500/10 text-teal-400 border-teal-500/20",
+    };
   }
   if (ext === "pdf") {
-    return { icon: FileText, label: "PDF", color: "#fb7185" };
+    return {
+      icon: FileText,
+      label: "PDF",
+      color: "#fb7185",
+      badgeClass: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+    };
   }
   if (["doc", "docx"].includes(ext)) {
-    return { icon: FileText, label: "DOC", color: "#a78bfa" };
+    return {
+      icon: FileText,
+      label: "DOC",
+      color: "#818cf8",
+      badgeClass: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+    };
   }
   if (["ppt", "pptx"].includes(ext)) {
-    return { icon: FileText, label: "PPT", color: "#fbbf24" };
+    return {
+      icon: FileText,
+      label: "PPT",
+      color: "#facc15",
+      badgeClass: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    };
   }
-  return { icon: File, label: "FILE", color: "#38bdf8" };
+  return {
+    icon: File,
+    label: "FILE",
+    color: "#38bdf8",
+    badgeClass: "bg-sky-500/10 text-sky-400 border-sky-500/20",
+  };
 };
 
-const Skeleton = ({ w = "100%", h = 14, radius = 6, style = {} }) => (
+const Skeleton = ({ w = "100%", h = 14, radius = 8, style = {} }) => (
   <div
     style={{
       width: w,
       height: h,
       borderRadius: radius,
-      background: "linear-gradient(90deg,#1e293b 25%,#263348 50%,#1e293b 75%)",
+      background: "linear-gradient(90deg,#1e293b 25%,#334155 50%,#1e293b 75%)",
       backgroundSize: "200% 100%",
       animation: "notesShimmer 1.4s infinite",
       ...style,
@@ -65,17 +108,18 @@ const Skeleton = ({ w = "100%", h = 14, radius = 6, style = {} }) => (
 );
 
 const NoteCardSkeleton = () => (
-  <div className="p-4 bg-slate-900/40 border border-slate-800/70 rounded-xl flex flex-col gap-3">
+  <div className="p-5 bg-[#111827]/80 border border-slate-800/80 rounded-2xl flex flex-col gap-4 shadow-md">
     <div className="flex items-start gap-3">
-      <Skeleton w={4} h={40} radius={4} />
+      <Skeleton w={40} h={40} radius={12} />
       <div className="flex-1 flex flex-col gap-2 pt-0.5">
-        <Skeleton w="70%" h={13} />
-        <Skeleton w="45%" h={11} />
+        <Skeleton w="80%" h={15} />
+        <Skeleton w="50%" h={12} />
       </div>
     </div>
-    <div className="flex items-center justify-between border-t border-slate-800/50 pt-3">
-      <Skeleton w={70} h={10} />
-      <Skeleton w={84} h={26} radius={8} />
+    <Skeleton w="100%" h={24} radius={6} />
+    <div className="grid grid-cols-2 gap-2 border-t border-slate-800/60 pt-3">
+      <Skeleton w="100%" h={36} radius={10} />
+      <Skeleton w="100%" h={36} radius={10} />
     </div>
   </div>
 );
@@ -116,209 +160,238 @@ export default function MobileNotes() {
   });
 
   return (
-    <div
-      className="
-        w-full flex flex-col bg-slate-950/30 border border-slate-900
-        rounded-2xl overflow-hidden shadow-2xl
-        h-[calc(100vh-140px)]
-        md:h-screen md:rounded-none md:border-0 md:shadow-none
-      "
-    >
+    <div className="w-full text-slate-100 p-4 md:p-6 lg:p-8 space-y-6">
       <style>{`
         @keyframes notesShimmer {
           0%   { background-position: 200% 0; }
           100% { background-position: -200% 0; }
         }
         @keyframes notesFadeUp {
-          from { opacity: 0; transform: translateY(8px); }
+          from { opacity: 0; transform: translateY(10px); }
           to   { opacity: 1; transform: translateY(0); }
         }
         .note-card {
-          animation: notesFadeUp 0.3s ease both;
-          transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
-        }
-        .note-card:hover {
-          transform: translateY(-2px);
-          background: rgba(15, 23, 42, 0.6);
+          animation: notesFadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
       `}</style>
 
-      {/* Header */}
-      <div className="flex flex-col border-b border-slate-800 bg-gradient-to-r from-slate-950 via-slate-950 to-teal-950/30 backdrop-blur">
+      {/* ── HEADER & SEARCH (Seamless flow with zero outer gap) ── */}
+      <div className="space-y-4">
         {/* Title row */}
-        <div className="flex items-center justify-between p-4 md:px-10 md:pt-6 md:pb-3">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-gradient-to-br from-teal-500/25 to-violet-500/10 flex items-center justify-center text-teal-300 border border-teal-500/30">
-              <BookOpen size={20} className="md:hidden" />
-              <BookOpen size={26} className="hidden md:block" />
+            <div className="w-11 h-11 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-teal-500/20 to-indigo-500/20 flex items-center justify-center text-teal-400 border border-teal-500/30 shadow-lg shadow-teal-500/10 shrink-0">
+              <BookOpen size={22} className="md:hidden" />
+              <BookOpen size={28} className="hidden md:block" />
             </div>
+
             <div>
-              <h3 className="text-sm md:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-                {t("studyNotes.title", "Class Notes")}
-                <Sparkles size={14} className="hidden md:inline text-teal-400" />
-              </h3>
-              <p className="text-[10px] md:text-sm text-slate-500 font-medium">
-                {t("studyNotes.subtitle", "Study materials from your instructors")}
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[10px] font-bold uppercase tracking-wider mb-1">
+                <Sparkles size={12} />
+                {t("studyNotes.eyebrow", "STUDY MATERIALS")}
+              </div>
+              <h1 className="text-xl md:text-3xl font-black text-white tracking-tight leading-tight">
+                {t("studyNotes.title", "Class Notes & Resources")}
+              </h1>
+              <p className="text-xs md:text-sm text-slate-400 font-medium">
+                {t("studyNotes.subtitle", "Study materials uploaded by your course instructors.")}
               </p>
             </div>
           </div>
+
           {!requireLogin && !loadingClassNotes && classNotes.length > 0 && (
-            <span className="inline-flex items-center px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[11px] md:text-xs font-bold text-teal-300 bg-teal-500/10 border border-teal-500/20 whitespace-nowrap">
-              {classNotes.length} {classNotes.length === 1 ? t("studyNotes.note", "note") : t("studyNotes.notes", "notes")}
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold text-teal-300 bg-teal-500/10 border border-teal-500/20 shadow-sm shrink-0">
+              <Zap size={14} className="text-amber-400 fill-amber-400" />
+              {classNotes.length}{" "}
+              {classNotes.length === 1
+                ? t("studyNotes.note", "note")
+                : t("studyNotes.notes", "notes")}
             </span>
           )}
         </div>
 
-        {/* Search bar row — full width on all screen sizes */}
+        {/* Search Input */}
         {!requireLogin && (
-          <div className="px-4 pb-4 md:px-10 md:pb-5">
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-              <input
-                type="text"
-                placeholder={t("studyNotes.searchPlaceholder", "Search by title, description or instructor…")}
-                value={filterTerm}
-                onChange={(e) => setFilterTerm(e.target.value)}
-                className="w-full pl-8 pr-4 py-2 text-sm bg-slate-900/60 text-white placeholder-slate-500 border border-slate-700/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500/50 transition"
-              />
-            </div>
+          <div className="relative">
+            <Search
+              size={16}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+            />
+            <input
+              type="text"
+              placeholder={t(
+                "studyNotes.searchPlaceholder",
+                "Search notes by title, topic, or instructor name…"
+              )}
+              value={filterTerm}
+              onChange={(e) => setFilterTerm(e.target.value)}
+              className="w-full pl-11 pr-4 py-3.5 text-xs md:text-sm bg-[#111827]/80 text-slate-100 placeholder-slate-500 border border-slate-800 rounded-2xl focus:outline-none focus:border-teal-500/60 focus:ring-2 focus:ring-teal-500/20 transition shadow-inner"
+            />
           </div>
         )}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-10">
+      {/* ── CONTENT GRID ── */}
+      <div>
         {requireLogin ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-950/80 p-7 text-center shadow-2xl">
-              <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-300">
-                <Lock size={22} />
+          /* LOGIN REQUIRED STATE */
+          <div className="flex min-h-[360px] items-center justify-center py-8">
+            <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-[#111827]/90 backdrop-blur-2xl p-8 text-center shadow-2xl space-y-4">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 shadow-lg">
+                <Lock size={28} />
               </div>
-              <h3 className="text-sm font-extrabold text-white">
-                {t("studyNotes.loginRequired", "Please login to view notes")}
-              </h3>
-              <p className="mt-2 text-[11px] leading-5 text-slate-400">
-                {t("studyNotes.loginRequiredSubtitle", "Sign in to access your class notes and study materials.")}
-              </p>
+              <div className="space-y-1">
+                <h3 className="text-lg font-black text-white">
+                  {t("studyNotes.loginRequired", "Please Login to Access Class Notes")}
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  {t(
+                    "studyNotes.loginRequiredSubtitle",
+                    "Sign in with your student account to view and download study materials."
+                  )}
+                </p>
+              </div>
               <button
+                type="button"
                 onClick={() => navigate("/login")}
-                className="mt-5 inline-flex items-center justify-center rounded-full bg-gradient-to-r from-teal-600 to-violet-600 px-5 py-2.5 text-[11px] font-bold text-white transition hover:brightness-110 shadow-lg shadow-teal-500/20"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-teal-600 via-emerald-600 to-indigo-600 hover:from-teal-500 hover:to-indigo-500 px-6 py-3.5 text-xs font-bold text-white transition transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-teal-600/20"
               >
-                {t("studyNotes.login", "Login")}
+                {t("studyNotes.login", "Login to Account")}
               </button>
             </div>
           </div>
         ) : loadingClassNotes ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 md:gap-5">
+          /* SKELETON LOADING GRID */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
             {[...Array(10)].map((_, i) => (
               <NoteCardSkeleton key={i} />
             ))}
           </div>
         ) : classNotes.length === 0 ? (
-          <div className="h-full flex items-center justify-center">
-            <div className="py-16 px-6 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-950/20 max-w-md w-full">
-              <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600">
-                <BookOpen size={24} />
+          /* EMPTY STATE */
+          <div className="flex min-h-[360px] items-center justify-center py-8">
+            <div className="py-12 px-6 text-center border border-dashed border-slate-800 rounded-3xl bg-[#111827]/60 max-w-md w-full space-y-3">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 shadow-md">
+                <BookOpen size={26} />
               </div>
-              <p className="text-xs font-bold text-slate-300">
-                {t("studyNotes.emptyTitle", "No class notes yet")}
-              </p>
-              <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
-                {t("studyNotes.emptySubtitle", "Notes uploaded by your instructors will show up here as soon as they're posted.")}
+              <h3 className="text-sm font-bold text-white">
+                {t("studyNotes.emptyTitle", "No Class Notes Available Yet")}
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                {t(
+                  "studyNotes.emptySubtitle",
+                  "Notes uploaded by your instructors will appear here automatically."
+                )}
               </p>
             </div>
           </div>
         ) : filteredNotes.length === 0 ? (
-          <div className="h-full flex items-center justify-center">
-            <div className="py-16 px-6 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-950/20 max-w-md w-full">
-              <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600">
-                <Search size={24} />
+          /* NO SEARCH MATCH */
+          <div className="flex min-h-[360px] items-center justify-center py-8">
+            <div className="py-12 px-6 text-center border border-dashed border-slate-800 rounded-3xl bg-[#111827]/60 max-w-md w-full space-y-3">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 shadow-md">
+                <Search size={26} />
               </div>
-              <p className="text-xs font-bold text-slate-300">No notes match your search</p>
-              <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
-                Try a different keyword or clear the search.
+              <h3 className="text-sm font-bold text-white">No Notes Match Your Search</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Try searching with a different keyword or clear the search field.
               </p>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 md:gap-5">
+          /* NOTES CARDS GRID */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
             {filteredNotes.map((note, i) => {
               const meta = getFileMeta(note.fileUrl);
               const FileIcon = meta.icon;
+
               return (
                 <div
                   key={note._id}
-                  className="note-card relative p-4 pl-5 bg-slate-900/35 border border-slate-800/80 rounded-xl hover:border-slate-700/60 flex flex-col gap-3 overflow-hidden"
+                  className="note-card group relative p-5 bg-[#111827]/90 border border-slate-800/90 hover:border-teal-500/40 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col justify-between gap-4 overflow-hidden"
                   style={{ animationDelay: `${Math.min(i, 10) * 0.04}s` }}
                 >
-                  {/* Left accent bar */}
-                  <span
-                    className="absolute left-0 top-0 bottom-0 w-1"
+                  {/* Top Accent Strip */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-1 transition-all group-hover:h-1.5"
                     style={{ background: meta.color }}
                   />
 
-                  <div className="flex items-start gap-3">
-                    <FileIcon size={20} style={{ color: meta.color }} className="flex-shrink-0 mt-0.5" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className="text-sm font-bold text-slate-200 break-words" title={note.title}>
-                          {note.title}
-                        </h4>
-                        <span
-                          className="text-[9px] font-extrabold px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5"
-                          style={{
-                            background: `${meta.color}18`,
-                            color: meta.color,
-                          }}
-                        >
-                          {meta.label}
-                        </span>
+                  <div className="space-y-3 pt-1">
+                    {/* Header Row: Icon + Title + File Type Badge */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+                        <FileIcon size={20} style={{ color: meta.color }} />
                       </div>
-                      <div className="flex items-center gap-1.5 mt-1 text-[10px] font-medium text-slate-400">
-                        <span className="text-teal-300 font-semibold truncate">
-                          {note.instructorName || t("studyNotes.instructor", "Instructor")}
-                        </span>
-                        <span className="text-slate-600 flex-shrink-0">•</span>
-                        <span className="flex-shrink-0">
-                          {new Date(note.createdAt).toLocaleDateString(
-                            i18n.language === "hi" ? "hi-IN" : "en-IN",
-                            {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            }
-                          )}
-                        </span>
-                      </div>
-                      {note.description && (
-                        <p className="text-[11px] text-slate-400 mt-2 leading-relaxed line-clamp-2">
-                          {note.description}
-                        </p>
-                      )}
+
+                      <span
+                        className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-md border shrink-0 ${meta.badgeClass}`}
+                      >
+                        {meta.label}
+                      </span>
                     </div>
+
+                    {/* Note Title */}
+                    <h3
+                      className="text-sm md:text-base font-bold text-white group-hover:text-teal-300 transition-colors line-clamp-2 leading-snug"
+                      title={note.title}
+                    >
+                      {note.title}
+                    </h3>
+
+                    {/* Description */}
+                    {note.description && (
+                      <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                        {note.description}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="grid grid-cols-2 gap-2 mt-2 pt-3 border-t border-slate-800/50">
-                    <a
-                      href={getDocViewUrl(note.fileUrl)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white transition text-xs font-bold border border-slate-700/40"
-                    >
-                      <Eye size={13} />
-                      {t("studyNotes.view", "View")}
-                    </a>
-                    <button
-                      onClick={() => {
-                        const ext = note.fileUrl.split(".").pop() || "pdf";
-                        downloadFile(note.fileUrl, `${note.title}.${ext}`);
-                      }}
-                      className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500/20 hover:text-teal-300 transition text-xs font-bold border border-teal-500/10"
-                    >
-                      <Download size={13} />
-                      {t("studyNotes.download", "Download")}
-                    </button>
+                  {/* Footer Info & Actions */}
+                  <div className="space-y-3 pt-3 border-t border-slate-800/80">
+                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                      <span className="flex items-center gap-1 font-semibold text-teal-400 truncate max-w-[55%]">
+                        <User size={12} />
+                        {note.instructorName || t("studyNotes.instructor", "Instructor")}
+                      </span>
+
+                      <span className="flex items-center gap-1 shrink-0 text-slate-500">
+                        <Calendar size={12} />
+                        {new Date(note.createdAt).toLocaleDateString(
+                          i18n.language === "hi" ? "hi-IN" : "en-IN",
+                          {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          }
+                        )}
+                      </span>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <a
+                        href={getDocViewUrl(note.fileUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white transition text-xs font-bold border border-slate-700/60 shadow-sm"
+                      >
+                        <Eye size={14} />
+                        {t("studyNotes.view", "View")}
+                      </a>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const ext = note.fileUrl.split(".").pop() || "pdf";
+                          downloadFile(note.fileUrl, `${note.title}.${ext}`);
+                        }}
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white transition text-xs font-bold shadow-md shadow-teal-600/20"
+                      >
+                        <Download size={14} />
+                        {t("studyNotes.download", "Download")}
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

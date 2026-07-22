@@ -13,13 +13,13 @@ const router = express.Router();
 
 router.post("/", protect, uploadResume, submitApplication);
 router.get("/me", protect, getMyApplication); // ← key route for status page
-router.get("/", protect, requirePermission("moderation", "view"), getAllApplications);
+router.get("/", protect, requirePermission("applications", "view"), getAllApplications);
 router.put(
   "/:id/approve",
   protect,
-  requirePermission("moderation", "remove"),
+  requirePermission("applications", "approve"),
   approveApplication,
 );
-router.delete("/:id", protect, requirePermission("moderation", "remove"), rejectApplication);
+router.delete("/:id", protect, requirePermission("applications", "reject"), rejectApplication);
 
 export default router;

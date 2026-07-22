@@ -630,10 +630,10 @@ export default function Blogs() {
   };
 
   return (
-    <div className="bg-[#0b1329] min-h-screen text-slate-100 font-sans selection:bg-violet-500/30 selection:text-violet-200">
+    <div className="w-full text-slate-100 font-sans p-4 md:p-6 lg:p-8 space-y-6">
       {/* ── Page Header ── */}
-      <header className="border-b border-slate-900 bg-[#0b1329]/95 backdrop-blur sticky top-0 z-40 shadow-sm shadow-black/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between flex-wrap gap-4">
+      <header className="border-b border-slate-800/80 pb-5">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <span className="text-xs font-bold text-violet-400 uppercase tracking-widest block mb-1">
               {t("blogs.knowledgeHub")}

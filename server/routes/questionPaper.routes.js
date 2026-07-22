@@ -1,7 +1,7 @@
 // routes/questionPaper.routes.js
 import express from "express";
 import multer from "multer";
-import { protect, adminOnly } from "../middleware/auth.middleware.js";
+import { protect, adminOnly, requirePermission } from "../middleware/auth.middleware.js";
 import {
   uploadQuestionPaper,
   getAllQuestionPapers,
@@ -24,14 +24,14 @@ router.post("/access", protect, checkPYQAccess);
 router.post("/purchase/order", protect, createPYQOrder);
 router.post("/purchase/verify", protect, verifyPYQPayment);
 router.post("/purchase", protect, purchasePYQ);
-router.get("/all", protect, adminOnly, getAllQuestionPapers); // admin
+router.get("/all", protect, requirePermission("question_bank", "view"), getAllQuestionPapers);
 router.post(
   "/upload",
   protect,
-  adminOnly,
+  requirePermission("question_bank", "create"),
   upload.single("file"),
   uploadQuestionPaper,
-); // admin
-router.delete("/:id", protect, adminOnly, deleteQuestionPaper); // admin
+);
+router.delete("/:id", protect, requirePermission("question_bank", "delete"), deleteQuestionPaper);
 
 export default router;

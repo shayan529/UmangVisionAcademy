@@ -21,7 +21,7 @@ const Footer = () => {
         <div className="flex flex-col sm:flex-row gap-12 md:gap-20">
           <div className="m-10">
             <h3 className="font-bold mb-5">{t("footer.platform")}</h3>
-            <div className="space-y-3 text-slate-400">
+            <div className="space-y-3 text-white">
               <Link to="/courses" className="block hover:text-white transition">
                 {t("footer.courses")}
               </Link>
@@ -36,7 +36,7 @@ const Footer = () => {
 
           <div className="m-10">
             <h3 className="font-bold mb-5">{t("footer.support")}</h3>
-            <div className="space-y-3 text-slate-400">
+            <div className="space-y-3 text-white">
               <Link to="/contact" className="block hover:text-white transition">
                 {t("footer.contact")}
               </Link>
@@ -54,7 +54,7 @@ const Footer = () => {
 
           <div className="m-10">
             <h3 className="font-bold mb-5">{t("footer.legal", "Legal")}</h3>
-            <div className="space-y-3 text-slate-400">
+            <div className="space-y-3 text-white">
               <Link to="/privacy" className="block hover:text-white transition">
                 {t("footer.privacyPolicy", "Privacy Policy")}
               </Link>

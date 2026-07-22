@@ -50,6 +50,7 @@ import questionPaperRoutes from "./routes/questionPaper.routes.js";
 import referenceRoutes from "./routes/reference.routes.js";
 import reelRoutes from "./routes/reel.routes.js";
 import noteRoutes from "./routes/note.routes.js";
+import unsubscribeRoutes from "./routes/unsubscribe.routes.js";
 import contactRoutes from "./routes/contact.routes.js";
 import { startSessionReminderScheduler } from "./utils/sessionScheduler.js";
 
@@ -253,6 +254,7 @@ app.use("/api/question-papers", questionPaperRoutes);
 app.use("/api/references", referenceRoutes);
 app.use("/api/reels", reelRoutes);
 app.use("/api/notes", noteRoutes);
+app.use("/api/unsubscribe", unsubscribeRoutes);
 
 // ── Global error-handling middleware ──────────────────────────────────────────
 // Must be registered AFTER all routes. Express routes that call next(err) or

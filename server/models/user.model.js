@@ -212,6 +212,15 @@ const userSchema = new Schema(
       },
     ],
     purchasedPYQs: [{ type: String }],
+    // ── Moderation fields ────────────────────────────────────────────────────
+    isActive: { type: Boolean, default: true },
+    banReason: { type: String, default: "" },
+    isFlagged: { type: Boolean, default: false },
+    flagReason: { type: String, default: "" },
+    // ── Email unsubscribe ─────────────────────────────────────────────────────
+    // A stable, random token used in one-click unsubscribe links. Generated
+    // once and never rotated so old links in sent emails keep working.
+    unsubscribeToken: { type: String, default: null, index: true },
   },
   {
     timestamps: true,

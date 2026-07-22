@@ -65,7 +65,8 @@ export const sendSessionReminder = async (sessionId) => {
         session.title,
         session.date,
         session.time,
-        session.url
+        session.url,
+        student._id
       ).catch(err => console.error(`Failed to send session reminder to ${student.email}:`, err));
     }
   } catch (error) {

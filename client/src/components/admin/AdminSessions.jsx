@@ -12,7 +12,12 @@ import {
 } from "../../redux/slices/sessionSlice";
 import { toast } from "react-hot-toast";
 
-const AdminSessions = ({ instructors = [] }) => {
+const AdminSessions = ({
+  instructors = [],
+  canCreate = true,
+  canEdit = true,
+  canDelete = true,
+}) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const { sessions, loading, success, error } = useSelector((s) => s.sessions);
@@ -51,14 +56,13 @@ const AdminSessions = ({ instructors = [] }) => {
       });
     }
     if (error) {
-      toast.error(error);
+      toast.error(error || "An error occurred");
       dispatch(clearSessionError());
     }
   }, [success, error, dispatch]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!form.title.trim()) {
       return toast.error("Session title is required");
     }
@@ -86,13 +90,13 @@ const AdminSessions = ({ instructors = [] }) => {
 
     dispatch(
       createSession({
-        title: form.title,
+        title: form.title.trim(),
         instructor: form.instructorId,
         subject: form.subject.trim(),
         class: form.classVal,
         date: form.date,
         time: form.time,
-        url: form.url,
+        url: form.url.trim(),
         status: form.status,
       })
     );
@@ -109,7 +113,7 @@ const AdminSessions = ({ instructors = [] }) => {
   };
 
   const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this scheduled session?")) {
+    if (window.confirm("Are you sure you want to delete this session?")) {
       dispatch(deleteSession(id));
     }
   };
@@ -133,13 +137,15 @@ const AdminSessions = ({ instructors = [] }) => {
             Schedule and manage live classes across courses and batches.
           </p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 transition duration-200 text-white font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 text-sm"
-        >
-          <Plus size={16} />
-          Schedule Session
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 transition duration-200 text-white font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 text-sm"
+          >
+            <Plus size={16} />
+            Schedule Session
+          </button>
+        )}
       </div>
 
       {/* Sessions List */}
@@ -223,7 +229,7 @@ const AdminSessions = ({ instructors = [] }) => {
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-3">
-                        {session.status === "upcoming" && (
+                        {canEdit && session.status === "upcoming" && (
                           <button
                             onClick={() => handleStartSession(session._id)}
                             className="p-2 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white rounded-lg transition duration-200"
@@ -232,7 +238,7 @@ const AdminSessions = ({ instructors = [] }) => {
                             <Play size={14} />
                           </button>
                         )}
-                        {session.status === "live" && (
+                        {canEdit && session.status === "live" && (
                           <button
                             onClick={() => handleEndSession(session._id)}
                             className="p-2 bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white rounded-lg transition duration-200"
@@ -250,13 +256,15 @@ const AdminSessions = ({ instructors = [] }) => {
                         >
                           <LinkIcon size={14} />
                         </a>
-                        <button
-                          onClick={() => handleDelete(session._id)}
-                          className="p-2 bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white rounded-lg transition duration-200"
-                          title="Delete Session"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        {canDelete && (
+                          <button
+                            onClick={() => handleDelete(session._id)}
+                            className="p-2 bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white rounded-lg transition duration-200"
+                            title="Delete Session"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
