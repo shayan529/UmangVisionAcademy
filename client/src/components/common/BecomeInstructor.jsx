@@ -1,21 +1,77 @@
-import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { fetchMyApplication } from '../../redux/slices/applicationsSlice';
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { fetchMyApplication } from "../../redux/slices/applicationsSlice";
+import {
+  GraduationCap,
+  Sparkles,
+  Rocket,
+  CheckCircle2,
+  Users,
+  Video,
+  Award,
+  ArrowRight,
+  FileText,
+  UploadCloud,
+  BookOpen,
+  Zap,
+} from "lucide-react";
 
 const steps = [
   {
-    titleKey: 'becomeInstructor.steps.apply.title',
-    descriptionKey: 'becomeInstructor.steps.apply.description',
+    icon: FileText,
+    stepNum: "01",
+    titleKey: "becomeInstructor.steps.apply.title",
+    defaultTitle: "Apply & Submit Demo",
+    descriptionKey: "becomeInstructor.steps.apply.description",
+    defaultDesc: "Submit your bio, expertise, and sample lesson content so our academic review team can evaluate your teaching style.",
+    badgeColor: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
   },
   {
-    titleKey: 'becomeInstructor.steps.upload.title',
-    descriptionKey: 'becomeInstructor.steps.upload.description',
+    icon: UploadCloud,
+    stepNum: "02",
+    titleKey: "becomeInstructor.steps.upload.title",
+    defaultTitle: "Start Creating Content",
+    descriptionKey: "becomeInstructor.steps.upload.description",
+    defaultDesc: "Use our AI-assisted course builder to record videos, generate practice quizzes, and organize subject modules.",
+    badgeColor: "text-purple-400 bg-purple-500/10 border-purple-500/20",
   },
   {
-    titleKey: 'becomeInstructor.steps.teach.title',
-    descriptionKey: 'becomeInstructor.steps.teach.description',
+    icon: Rocket,
+    stepNum: "03",
+    titleKey: "becomeInstructor.steps.teach.title",
+    defaultTitle: "Launch & Earn",
+    descriptionKey: "becomeInstructor.steps.teach.description",
+    defaultDesc: "Publish your course to thousands of enrolled students, host live doubt clearing sessions, and earn competitive payouts.",
+    badgeColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+  },
+];
+
+const instructorPerks = [
+  {
+    icon: Users,
+    title: "Reach Thousands of Students",
+    desc: "Teach motivated learners across Class 9-12, competitive exams, and specialized skill tracks.",
+    color: "#818cf8",
+  },
+  {
+    icon: Sparkles,
+    title: "AI-Powered Course Builder",
+    desc: "Auto-generate practice quizzes, lesson notes, and student progress reports effortlessly.",
+    color: "#c084fc",
+  },
+  {
+    icon: Award,
+    title: "Transparent & Timely Earnings",
+    desc: "Earn competitive revenues per enrollment with direct payouts and clear performance analytics.",
+    color: "#4ade80",
+  },
+  {
+    icon: Video,
+    title: "High-Quality Streaming Tools",
+    desc: "Host live video classes or publish self-paced HD video courses with automatic PDF material attachments.",
+    color: "#38bdf8",
   },
 ];
 
@@ -30,129 +86,242 @@ const BecomeInstructor = () => {
     if (isAuthenticated) dispatch(fetchMyApplication());
   }, [isAuthenticated, dispatch]);
 
-  // Already an instructor — no need to be here
+  // Already an instructor — navigate to instructor dashboard
   useEffect(() => {
-    if (user?.roles?.includes('instructor'))
-      navigate('/instructor-dashboard', { replace: true });
+    if (user?.roles?.includes("instructor"))
+      navigate("/instructor-dashboard", { replace: true });
   }, [user, navigate]);
 
   const handleBecomeInstructor = () => {
-    if (!isAuthenticated) return navigate('/login');
-    if (myApplication) return navigate('/instructor-application/status');
-    navigate('/become-instructor/apply');
+    if (!isAuthenticated) return navigate("/login");
+    if (myApplication) return navigate("/instructor-application/status");
+    navigate("/become-instructor/apply");
   };
 
   const buttonLabel = loading
-    ? t('becomeInstructor.buttonChecking')
+    ? t("becomeInstructor.buttonChecking", "Checking status…")
     : myApplication
-      ? t('becomeInstructor.buttonStatus')
-      : t('becomeInstructor.buttonBecome');
-
-
+    ? t("becomeInstructor.buttonStatus", "View Application Status →")
+    : t("becomeInstructor.buttonBecome", "Become an Instructor");
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <main className="max-w-7xl mx-auto px-6 py-16 lg:py-24">
-        <div className="grid gap-12 lg:grid-cols-[1.2fr_0.8fr] items-center">
-          <div className="space-y-8">
-            <span className="inline-flex rounded-full bg-indigo-500/10 text-indigo-300 px-4 py-2 text-sm font-semibold tracking-wide">
-              {t('becomeInstructor.tag')}
-            </span>
+    <div className="min-h-screen bg-[#0B1120] text-slate-100 relative overflow-hidden py-16 lg:py-24 px-6 md:px-10">
+      {/* Background Glow Accents */}
+      <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-indigo-600/10 blur-[140px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-cyan-600/10 blur-[140px] rounded-full pointer-events-none" />
 
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white">
-              {t('becomeInstructor.headlinePart1')}
-              <span className="ml-4 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
-                {t('becomeInstructor.headlinePart2')}
+      <main className="max-w-7xl mx-auto space-y-20 relative z-10">
+
+        {/* ── HERO & APPLICATION CARD GRID ── */}
+        <div className="grid gap-12 lg:grid-cols-[1.2fr_0.8fr] items-center">
+          
+          {/* Left Hero Content */}
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider">
+              <GraduationCap size={16} />
+              {t("becomeInstructor.tag", "Teach on Umang Vision Academy")}
+            </div>
+
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
+              {t("becomeInstructor.headlinePart1", "Share Your")}{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400">
+                {t("becomeInstructor.headlinePart2", "Knowledge.")}
               </span>
             </h1>
 
-            <p className="max-w-2xl text-slate-400 text-lg leading-8">
-              {t('becomeInstructor.subtitle')}
+            <p className="max-w-2xl text-slate-400 text-base md:text-lg leading-relaxed">
+              {t(
+                "becomeInstructor.subtitle",
+                "Join 300+ instructors building courses that reach thousands of learners. Submit your application, get verified fast, and start teaching with AI-supported tools."
+              )}
             </p>
-          </div>
 
-          <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 shadow-2xl shadow-indigo-500/10 flex flex-col justify-between">
-            <div className="space-y-4 mb-6">
-              <p className="text-sm uppercase tracking-[0.3em] text-indigo-300">
-                {t('becomeInstructor.applyNow')}
-              </p>
-              <h2 className="text-3xl font-bold text-white">
-                {t('becomeInstructor.startJourney')}
-              </h2>
-              <p className="text-slate-400 leading-7">
-                {t('becomeInstructor.cardBody')}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleBecomeInstructor}
-              disabled={loading}
-              className="inline-flex items-center justify-center rounded-3xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-6 py-4 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-indigo-500/20 w-full text-center disabled:opacity-50"
-            >
-              {buttonLabel}
-            </button>
-          </div>
-        </div>
-
-        <section className="mt-16 grid gap-12 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="space-y-8">
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 shadow-lg shadow-indigo-500/5">
-              <p className="text-sm uppercase tracking-[0.3em] text-indigo-300">
-                {t('becomeInstructor.howItWorks')}
-              </p>
-              <h2 className="mt-4 text-3xl font-bold text-white">
-                {t('becomeInstructor.howItWorksHeading')}
-              </h2>
-              <p className="mt-4 text-slate-400 leading-7">
-                {t('becomeInstructor.howItWorksBody')}
-              </p>
-
-              <div className="mt-8 space-y-4">
-                {steps.map((step, index) => (
-                  <div
-                    key={step.title}
-                    className="flex gap-4 rounded-3xl border border-white/10 bg-slate-900/80 p-6"
-                  >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-300 text-lg font-semibold">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-white">
-                        {t(step.titleKey)}
-                      </h3>
-                      <p className="mt-2 text-slate-400 leading-6">
-                        {t(step.descriptionKey)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-3 gap-4 pt-4 max-w-lg border-t border-slate-800">
+              <div>
+                <div className="text-2xl font-black text-white">300+</div>
+                <div className="text-xs text-slate-400 font-medium">Expert Educators</div>
+              </div>
+              <div>
+                <div className="text-2xl font-black text-indigo-400">10k+</div>
+                <div className="text-xs text-slate-400 font-medium">Enrolled Students</div>
+              </div>
+              <div>
+                <div className="text-2xl font-black text-cyan-400">24h</div>
+                <div className="text-xs text-slate-400 font-medium">Fast Approval</div>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-8 shadow-2xl shadow-indigo-500/10 flex flex-col justify-center items-center text-center">
-            <div className="space-y-6 max-w-md my-auto">
-              <p className="text-sm uppercase tracking-[0.3em] text-indigo-300">
-                {t('becomeInstructor.readyToJoin')}
-              </p>
-              <h2 className="text-3xl font-bold text-white">
-                {t('becomeInstructor.applyToTeach')}
-              </h2>
-              <p className="text-slate-400 leading-7">
-                {t('becomeInstructor.readyBody')}
-              </p>
-              <div className="pt-6">
+          {/* Right Application CTA Card */}
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-[36px] blur-xl opacity-30 group-hover:opacity-50 transition duration-1000" />
+
+            <div className="relative rounded-[32px] border border-slate-800/90 bg-[#111827]/90 backdrop-blur-2xl p-8 sm:p-10 shadow-2xl flex flex-col justify-between space-y-8 overflow-hidden">
+              <Rocket size={100} className="absolute -bottom-8 -right-8 text-indigo-500/10 pointer-events-none" />
+
+              <div className="space-y-4 relative z-10">
+                <div className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+                  <Zap size={13} className="text-amber-400 fill-amber-400" />
+                  {t("becomeInstructor.applyNow", "APPLY NOW")}
+                </div>
+
+                <h2 className="text-2xl sm:text-3xl font-black text-white leading-snug">
+                  {t("becomeInstructor.startJourney", "Start your instructor journey")}
+                </h2>
+
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  {t(
+                    "becomeInstructor.cardBody",
+                    "Fill in your expertise and sample content to get started. Our team will reach out within 24 hours with next steps."
+                  )}
+                </p>
+              </div>
+
+              <div className="space-y-3 relative z-10 pt-2">
                 <button
                   type="button"
                   onClick={handleBecomeInstructor}
                   disabled={loading}
-                  className="inline-flex items-center justify-center rounded-3xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-6 py-4 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-indigo-500/20 w-full text-center disabled:opacity-50"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 px-6 py-4 text-sm font-bold text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-indigo-600/25 disabled:opacity-50"
                 >
-                  {buttonLabel}
+                  <span>{buttonLabel}</span>
+                  <ArrowRight size={16} />
                 </button>
+
+                <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
+                  <CheckCircle2 size={13} className="text-emerald-400" />
+                  <span>No upfront fees • Free onboarding</span>
+                </div>
               </div>
             </div>
           </div>
+
+        </div>
+
+        {/* ── WHY TEACH WITH US (PERKS GRID) ── */}
+        <div className="space-y-8 pt-6 border-t border-slate-800/80">
+          <div className="text-center space-y-3 max-w-2xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Why Instructors Choose Umang Vision Academy
+            </h2>
+            <p className="text-slate-400 text-sm sm:text-base">
+              Everything you need to build, market, and monetize high-impact online courses.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {instructorPerks.map((perk, i) => {
+              const Icon = perk.icon;
+              return (
+                <div
+                  key={i}
+                  className="p-6 rounded-2xl border border-slate-800/80 bg-[#111827]/60 backdrop-blur-md hover:-translate-y-1 hover:border-indigo-500/40 hover:shadow-lg transition-all duration-300 space-y-4 group"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                    <Icon size={24} style={{ color: perk.color }} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-base group-hover:text-indigo-300 transition-colors">
+                      {perk.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">
+                      {perk.desc}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── HOW IT WORKS STEPS & READY BANNER ── */}
+        <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] items-stretch">
+          
+          {/* Steps Container */}
+          <div className="rounded-[32px] border border-slate-800/90 bg-[#111827]/80 p-8 sm:p-10 shadow-xl space-y-8">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-2">
+                <Sparkles size={14} />
+                {t("becomeInstructor.howItWorks", "How it works")}
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-white">
+                {t("becomeInstructor.howItWorksHeading", "A simple process to launch your first course")}
+              </h2>
+              <p className="mt-2 text-slate-400 text-sm leading-relaxed">
+                {t(
+                  "becomeInstructor.howItWorksBody",
+                  "Apply with your expertise, get verified quickly, and publish your first course to start earning from day one."
+                )}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {steps.map((step) => {
+                const Icon = step.icon;
+                const title = t(step.titleKey, step.defaultTitle);
+                const desc = t(step.descriptionKey, step.defaultDesc);
+
+                return (
+                  <div
+                    key={step.stepNum}
+                    className="flex items-start gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 hover:border-slate-700 transition"
+                  >
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border ${step.badgeColor} font-black text-sm shadow-md`}>
+                      {step.stepNum}
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-base font-bold text-white flex items-center gap-2">
+                        <Icon size={16} className="text-indigo-400" />
+                        {title}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                        {desc}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right Final Ready Banner */}
+          <div className="rounded-[32px] border border-slate-800/90 bg-gradient-to-br from-slate-900 via-[#111827] to-indigo-950/40 p-8 sm:p-10 shadow-2xl flex flex-col justify-center items-center text-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-3xl rounded-full pointer-events-none" />
+
+            <div className="space-y-6 max-w-md my-auto relative z-10">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mx-auto text-indigo-400 shadow-xl">
+                <Rocket size={32} />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-indigo-400">
+                  {t("becomeInstructor.readyToJoin", "Ready to join?")}
+                </p>
+                <h2 className="text-2xl sm:text-3xl font-black text-white">
+                  {t("becomeInstructor.applyToTeach", "Apply to teach today")}
+                </h2>
+              </div>
+
+              <p className="text-slate-400 text-sm leading-relaxed">
+                {t(
+                  "becomeInstructor.readyBody",
+                  "Are you ready to share your expertise and shape the future of learning? Submit your application and become part of our world-class coaching community."
+                )}
+              </p>
+
+              <button
+                type="button"
+                onClick={handleBecomeInstructor}
+                disabled={loading}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 px-6 py-4 text-sm font-bold text-white transition transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-indigo-600/25 disabled:opacity-50"
+              >
+                <span>{buttonLabel}</span>
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+
         </section>
       </main>
     </div>

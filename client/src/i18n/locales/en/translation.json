@@ -956,21 +956,83 @@
       "helpCenter": "Help Center"
     }
   },
+  "aiSection": {
+    "tag": "AI-POWERED LEARNING ENGINE",
+    "heading": "Next-Gen AI Tutor Built for Academic Success",
+    "description": "Unlock personalized, instant study assistance 24/7. From step-by-step doubt resolution to automated practice quizzes and voice-guided explanations.",
+    "panelTitle": "AI Learning Assistant",
+    "panelSubtitle": "Powered by Advanced Educational LLMs",
+    "statusOnline": "AI Engine Online",
+    "tutorCardTitle": "Personalized Concept Master",
+    "tutorCardDesc": "Adapts to your individual learning pace and curriculum.",
+    "tutorProgress": "99.4% Accuracy",
+    "supportStatTitle": "Instant Doubt Resolution",
+    "sessionsStatTitle": "Active AI Study Sessions",
+    "recommendationsTitle": "Smart Recommendations",
+    "recommendationsDesc": "AI analyzes your test scores to auto-generate targeted revision modules.",
+    "feature1": {
+      "title": "24/7 AI Tutor",
+      "desc": "Ask any question in physics, math, chemistry, or biology and get instant step-by-step answers."
+    },
+    "feature2": {
+      "title": "Smart Quiz Generator",
+      "desc": "Generate custom practice quizzes tailored to your specific class, board, and subject."
+    },
+    "feature3": {
+      "title": "Voice Doubt Clearing",
+      "desc": "Speak your questions naturally and listen to clear, interactive audio explanations."
+    },
+    "feature4": {
+      "title": "Concept Breakdown",
+      "desc": "Simplifies complex scientific formulas and theorems into bite-sized visual summaries."
+    },
+    "feature5": {
+      "title": "Question Paper Scanner",
+      "desc": "Upload past question papers or handwritten doubts for instant AI solutions."
+    },
+    "feature6": {
+      "title": "Real-time AI Analytics",
+      "desc": "Track your learning velocity, weak topics, and mastery level in real time."
+    }
+  },
   "testimonials": {
-    "heading": "What students say",
+    "eyebrow": "Student Success Stories",
+    "heading": "What Our Students Say",
+    "subheading": "Real stories and inspiring feedback from learners who achieved academic excellence with Umang Vision Academy.",
     "items": {
       "priya": {
-        "name": "Priya",
-        "quote": "Transformed my career in 6 months — amazing content!"
+        "name": "Priya Sharma",
+        "quote": "Transformed my learning experience in 6 months — the interactive video lectures and doubt-solving sessions are top notch!"
       },
       "mark": {
-        "name": "Mark",
-        "quote": "Practical, hands-on, and the community helped a lot."
+        "name": "Mark D'Souza",
+        "quote": "Practical, hands-on lessons, and the active student community helped me clear all my doubts before board exams."
       },
       "lina": {
-        "name": "Lina",
-        "quote": "Clear courses and great instructors — highly recommend."
+        "name": "Lina Verma",
+        "quote": "Crystal clear course structures and exceptional instructors. Highly recommended for any student preparing for board exams!"
+      },
+      "rohan": {
+        "name": "Rohan Gupta",
+        "quote": "The AI quiz generator and mock test analytics allowed me to pinpoint my weaknesses and boost my scores significantly."
+      },
+      "ananya": {
+        "name": "Ananya Roy",
+        "quote": "Learning in both Hindi and English made complex physics and math concepts so much easier to understand."
+      },
+      "aditya": {
+        "name": "Aditya Kumar",
+        "quote": "The live doubt sessions and structured notes gave me complete confidence to top my school examinations."
       }
+    },
+    "metrics": {
+      "ratingTitle": "4.9 / 5 Rating",
+      "ratingSubtitle": "From 10,000+ happy learners",
+      "passRateTitle": "95%+ Pass Rate",
+      "passRateSubtitle": "Across all board examinations",
+      "verifiedTitle": "100% Verified",
+      "verifiedSubtitle": "Authentic student feedback",
+      "verifiedBadge": "Verified"
     }
   },
   "blogs": {

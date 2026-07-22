@@ -13,6 +13,7 @@ server/node_modules/
 dist/
 build/
 client/dist/
+client/dev-dist/
 server/dist/
 
 # Logs

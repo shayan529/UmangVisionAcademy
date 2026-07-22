@@ -274,9 +274,6 @@ const Courses = () => {
 
   return (
     <section className="px-6 md:px-10 py-20 bg-[#0B1120]">
-      <style>{`
-        select option { background: #111827; color: #f1f5f9; }
-      `}</style>
 
       <div className="max-w-7xl mx-auto">
         {/* Header */}
