@@ -43,3 +43,5 @@ coverage/
 # Uploaded files (user content — ephemeral on Render, do not commit)
 server/uploads/*
 !server/uploads/.gitkeep
+.vercel
+.env*

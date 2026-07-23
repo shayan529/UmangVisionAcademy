@@ -7,16 +7,6 @@ import Wallet from "../models/wallet.model.js";
 import { invalidateCourseCache } from "./course.controller.js";
 import { sendPlanPurchaseEmail, sendCourseEnrollmentEmail, sendSubscriptionCancellationEmail } from "../utils/Mailer.js";
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
-const PLANS = {
-  base: { id: "base", label: "Academy Access Plan", amount: 10000, durationDays: 365 },
-  premium: { id: "premium", label: "Premium Plan", amount: 50000, durationDays: 365 },
-};
-
 const isPlaceholderRazorpayConfig = () => {
   const keyId = process.env.RAZORPAY_KEY_ID || "";
   const keySecret = process.env.RAZORPAY_KEY_SECRET || "";
@@ -27,6 +17,19 @@ const isPlaceholderRazorpayConfig = () => {
     /xxxx|your_secret|your_razorpay_secret_here/i.test(keyId) ||
     /xxxx|your_secret|your_razorpay_secret_here/i.test(keySecret)
   );
+};
+
+const getRazorpayInstance = () => {
+  if (isPlaceholderRazorpayConfig()) return null;
+  return new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+};
+
+const PLANS = {
+  base: { id: "base", label: "Academy Access Plan", amount: 10000, durationDays: 365 },
+  premium: { id: "premium", label: "Premium Plan", amount: 50000, durationDays: 365 },
 };
 
 // ── Helper: get or create wallet for a user ──────────────────────────────────
@@ -111,6 +114,11 @@ export const createOrder = async (req, res) => {
           message: "Something went wrong.",
         });
       }
+    }
+
+    const razorpay = getRazorpayInstance();
+    if (!razorpay) {
+      return res.status(500).json({ message: "Razorpay client is not initialized properly." });
     }
 
     const order = await razorpay.orders.create({

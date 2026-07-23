@@ -3,12 +3,10 @@ import QuestionPaper from "../models/questionPaper.model.js";
 import { cacheResponse, invalidateCache } from "../utils/redisClient.js";
 import User from "../models/user.model.js";
 import Wallet from "../models/wallet.model.js";
-import fsPromises from "fs/promises";
-import path from "path";
 import crypto from "crypto";
-import { fileURLToPath } from "url";
 import Razorpay from "razorpay";
 import { getPYQAccessResult, PYQ_PRICE } from "../utils/pyqAccess.js";
+import { uploadFileToStorage, deleteFileFromStorage } from "../utils/vercelBlob.js";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -27,10 +25,6 @@ const isPlaceholderRazorpayConfig = () => {
   );
 };
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const UPLOADS_DIR = path.resolve(__dirname, "../uploads");
-
 export const uploadQuestionPaper = async (req, res) => {
   try {
     const { board, class: cls, subject, year } = req.body;
@@ -46,17 +40,13 @@ export const uploadQuestionPaper = async (req, res) => {
         "_",
       );
 
-    const folder = "question-papers";
-    const targetDir = path.join(UPLOADS_DIR, folder);
-    await fsPromises.mkdir(targetDir, { recursive: true });
-
-    const filePath = path.join(targetDir, fileName);
-    await fsPromises.writeFile(filePath, req.file.buffer);
-
-    const baseUrl =
-      process.env.SERVER_URL || `${req.protocol}://${req.get("host")}`;
-    const fileUrl = `${baseUrl}/uploads/${folder}/${fileName}`;
-    const fileId = `${folder}/${fileName}`;
+    const uploadResult = await uploadFileToStorage({
+      folder: "question-papers",
+      fileName,
+      buffer: req.file.buffer,
+      filePath: req.file.path,
+      contentType: req.file.mimetype || "application/pdf",
+    });
 
     const paper = await QuestionPaper.findOneAndUpdate(
       { board, class: cls, subject, year: Number(year) },
@@ -65,8 +55,8 @@ export const uploadQuestionPaper = async (req, res) => {
         class: cls,
         subject,
         year: Number(year),
-        fileUrl,
-        fileId, // store for deletion
+        fileUrl: uploadResult.url,
+        fileId: uploadResult.fileId, // store for deletion
         fileName,
         uploadedBy: req.user._id,
       },
@@ -95,14 +85,9 @@ export const deleteQuestionPaper = async (req, res) => {
     const paper = await QuestionPaper.findById(req.params.id);
     if (!paper) return res.status(404).json({ message: "Paper not found." });
 
-    // Delete from local storage
-    if (paper.fileId) {
-      try {
-        const filePath = path.join(UPLOADS_DIR, paper.fileId);
-        await fsPromises.unlink(filePath);
-      } catch (err) {
-        console.error("Failed to delete local file:", err);
-      }
+    // Delete file using storage utility (Vercel Blob or local)
+    if (paper.fileId || paper.fileUrl) {
+      await deleteFileFromStorage(paper.fileId || paper.fileUrl);
     }
 
     await paper.deleteOne();

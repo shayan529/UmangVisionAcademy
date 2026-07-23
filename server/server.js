@@ -1,3 +1,4 @@
+import "./config/env.js";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -19,7 +20,6 @@ process.on("uncaughtException", (error) => {
   process.exit(1);
 });
 import mongoose from "mongoose";
-import "dotenv/config";
 import ConnectDb from "./utils/ConnectDb.js";
 import { connectRedis } from "./utils/redisClient.js";
 import { createAdapter } from "@socket.io/redis-adapter";

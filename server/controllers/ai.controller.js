@@ -123,17 +123,17 @@ export const chatWithAI = async (req, res) => {
         if (userId) {
           const existingConv = await AiConversation.findOne({ conversationId: resolvedConversationId });
           const defaultTitle = userMessageText.length > 42 ? userMessageText.slice(0, 42) + "…" : userMessageText;
-          
+
           const updateData = {
             userId,
             userRole,
             lastMessageAt: new Date(),
           };
-          
+
           if (!existingConv || existingConv.title === "New conversation") {
             updateData.title = defaultTitle;
           }
-          
+
           await AiConversation.findOneAndUpdate(
             { conversationId: resolvedConversationId },
             updateData,
@@ -363,7 +363,7 @@ Each question must have exactly 4 options and a correctOptionIndex between 0 and
 export const generateMockTestQuestionsAI = async (req, res) => {
   try {
     const { subject, className, board, difficulty, topic, count } = req.body;
-    
+
     if (!subject || !className) {
       return res.status(400).json({ message: "Subject and class are required." });
     }

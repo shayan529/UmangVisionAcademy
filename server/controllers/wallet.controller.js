@@ -25,11 +25,11 @@ const serializeTransaction = (wallet, transaction) => ({
   _id: transaction._id || transaction.id,
   user: wallet?.userId
     ? {
-        _id: wallet.userId._id || wallet.userId,
-        name: wallet.userId.name || "Unknown User",
-        email: wallet.userId.email || "",
-        phoneNumber: wallet.userId.phoneNumber || "",
-      }
+      _id: wallet.userId._id || wallet.userId,
+      name: wallet.userId.name || "Unknown User",
+      email: wallet.userId.email || "",
+      phoneNumber: wallet.userId.phoneNumber || "",
+    }
     : null,
   type: transaction.type || "other",
   amount: Number(transaction.amount) || 0,

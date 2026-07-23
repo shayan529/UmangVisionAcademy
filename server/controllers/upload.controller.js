@@ -1,15 +1,6 @@
-import fs from "fs";
 import fsPromises from "fs/promises";
-import path from "path";
 import sharp from "sharp";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-// UPLOADS_DIR must match the directory served by express.static in server.js:
-// app.use("/uploads", express.static(path.join(__dirname_server, "uploads")))
-// server.js __dirname = .../server, so uploads live at .../server/uploads
-const UPLOADS_DIR = path.resolve(__dirname, "../uploads");
+import { uploadFileToStorage } from "../utils/vercelBlob.js";
 
 export const uploadFile = async (req, res) => {
   try {
@@ -17,61 +8,60 @@ export const uploadFile = async (req, res) => {
       return res.status(400).json({ message: "No file provided." });
 
     const rawFolder = req.body.folder || "Umang Vision Academy";
-    const folder = rawFolder.trim().replace(/[^a-zA-Z0-9_\-\/]/g, "_").replace(/\/+/g, "/").replace(/^\/+/, ''); // Ensure no leading slash for local directory logic
-    
-    // Create the target directory locally
-    const targetDir = path.join(UPLOADS_DIR, folder);
-    await fsPromises.mkdir(targetDir, { recursive: true });
+    const folder = rawFolder.trim().replace(/[^a-zA-Z0-9_\-\/]/g, "_").replace(/\/+/g, "/").replace(/^\/+/, '');
+    const fileName = req.file.filename || `${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
 
-    // Sanitize the file name to avoid errors on Windows (e.g. colons, slashes)
-    // In multer diskStorage we already have a generated filename, but we want to store it in targetDir
-    const fileName = req.file.filename;
-    const filePath = path.join(targetDir, fileName);
-
-    let isImageCompressed = false;
+    let compressedBuffer = null;
 
     try {
       if (
         req.file.mimetype.startsWith("image/") &&
         req.file.mimetype !== "image/gif"
       ) {
-        const pipeline = sharp(req.file.path).withMetadata();
-        if (req.file.mimetype === "image/jpeg" || req.file.mimetype === "image/jpg") {
-          pipeline.jpeg({ quality: 75, mozjpeg: true });
-        } else if (req.file.mimetype === "image/png") {
-          pipeline.png({ compressionLevel: 8, adaptiveFiltering: true });
-        } else if (req.file.mimetype === "image/webp") {
-          pipeline.webp({ quality: 75 });
+        const inputSource = req.file.path || req.file.buffer;
+        if (inputSource) {
+          const pipeline = sharp(inputSource).withMetadata();
+          if (req.file.mimetype === "image/jpeg" || req.file.mimetype === "image/jpg") {
+            pipeline.jpeg({ quality: 75, mozjpeg: true });
+          } else if (req.file.mimetype === "image/png") {
+            pipeline.png({ compressionLevel: 8, adaptiveFiltering: true });
+          } else if (req.file.mimetype === "image/webp") {
+            pipeline.webp({ quality: 75 });
+          }
+          compressedBuffer = await pipeline.toBuffer();
         }
-        await pipeline.toFile(filePath);
-        isImageCompressed = true;
       }
     } catch (compressionError) {
       console.warn(
         "Compression failed, using original file:",
-        compressionError.message || compressionError,
+        compressionError.message || compressionError
       );
     }
 
-    if (!isImageCompressed) {
-      // Save to disk
-      await fsPromises.copyFile(req.file.path, filePath);
-    }
-    
-    // Clean up temporary file
-    await fsPromises.unlink(req.file.path).catch(e => console.error("Temp file cleanup failed:", e));
+    const uploadResult = await uploadFileToStorage({
+      folder,
+      fileName,
+      buffer: compressedBuffer || req.file.buffer,
+      filePath: !compressedBuffer && req.file.path ? req.file.path : undefined,
+      contentType: req.file.mimetype,
+    });
 
-    // Construct the local URL
-    const baseUrl = process.env.SERVER_URL || `${req.protocol}://${req.get("host")}`;
-    const fileUrl = `${baseUrl}/uploads/${folder}/${fileName}`;
+    // Clean up temporary file if diskStorage was used
+    if (req.file.path) {
+      await fsPromises.unlink(req.file.path).catch((e) =>
+        console.error("Temp file cleanup failed:", e)
+      );
+    }
 
     res.json({
-      url: fileUrl,
-      fileId: `${folder}/${fileName}`, // Store relative path as ID for easy deletion
-      name: fileName,
+      url: uploadResult.url,
+      fileId: uploadResult.fileId,
+      name: uploadResult.name,
+      storageProvider: uploadResult.storageProvider,
     });
   } catch (err) {
-    console.error("Local upload error:", err);
+    console.error("Upload error:", err);
     res.status(500).json({ message: err.message || "Upload failed." });
   }
 };
+

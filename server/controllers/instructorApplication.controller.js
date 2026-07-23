@@ -1,12 +1,6 @@
 import InstructorApplication from "../models/instructorApplication.model.js";
 import User from "../models/user.model.js";
-import fsPromises from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const UPLOADS_DIR = path.resolve(__dirname, "../uploads");
+import { uploadFileToStorage } from "../utils/vercelBlob.js";
 
 // POST /instructor-applications
 export const submitApplication = async (req, res) => {
@@ -27,17 +21,17 @@ export const submitApplication = async (req, res) => {
     if (req.body?.resumeUrl) {
       resumeUrl = req.body.resumeUrl;
     } else if (req.file) {
-      const folder = "instructor-resumes";
-      const targetDir = path.join(UPLOADS_DIR, folder);
-      await fsPromises.mkdir(targetDir, { recursive: true });
-
       const fileName = `${Date.now()}-${req.file.originalname.replace(/\s+/g, "_")}`;
-      const filePath = path.join(targetDir, fileName);
-      await fsPromises.writeFile(filePath, req.file.buffer);
+      const uploadResult = await uploadFileToStorage({
+        folder: "instructor-resumes",
+        fileName,
+        buffer: req.file.buffer,
+        filePath: req.file.path,
+        contentType: req.file.mimetype,
+      });
 
-      const baseUrl = process.env.SERVER_URL || `${req.protocol}://${req.get("host")}`;
-      resumeUrl = `${baseUrl}/uploads/${folder}/${fileName}`;
-      resumeFileId = `${folder}/${fileName}`;
+      resumeUrl = uploadResult.url;
+      resumeFileId = uploadResult.fileId;
     }
 
     const application = await InstructorApplication.create({
