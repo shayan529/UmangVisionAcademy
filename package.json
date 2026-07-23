@@ -9,6 +9,7 @@
     "build:client": "cd client && npm install --include=dev && npm run build",
     "build:server": "cd server && npm install",
     "start": "cd server && npm run start",
+    "upload:blob": "node server/scripts/upload-uploads-to-blob.js",
     "render-build": "npm run build"
   },
   "keywords": [],

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon server.js",
     "build": "echo \"Build complete\"",
-    "start": "node server.js"
+    "start": "node server.js",
+    "upload:blob": "node scripts/upload-uploads-to-blob.js"
   },
   "keywords": [],
   "author": "",
