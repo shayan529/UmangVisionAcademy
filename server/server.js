@@ -188,6 +188,20 @@ app.use(
   }),
 );
 
+// Fallback: Redirect /uploads/* requests to Vercel Blob storage if file is not found on local disk
+app.use("/uploads", (req, res, next) => {
+  const blobBaseUrl = (
+    process.env.VERCEL_BLOB_BASE_URL ||
+    "https://rfo7jqxbmriqdgqo.public.blob.vercel-storage.com"
+  ).replace(/\/$/, "");
+
+  const relativePath = req.url.split("?")[0].replace(/^\/+/, "");
+  if (relativePath) {
+    return res.redirect(302, `${blobBaseUrl}/${relativePath}`);
+  }
+  next();
+});
+
 // Debug logger for APK requests
 app.use((req, res, next) => {
   const userAgent = req.headers["user-agent"] || "";

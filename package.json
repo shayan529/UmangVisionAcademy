@@ -10,6 +10,7 @@
     "build:server": "cd server && npm install",
     "start": "cd server && npm run start",
     "upload:blob": "node server/scripts/upload-uploads-to-blob.js",
+    "migrate:db-urls": "node server/scripts/migrate-db-urls-to-blob.js",
     "render-build": "npm run build"
   },
   "keywords": [],
