@@ -22,30 +22,30 @@ const escapeCsv = (value) => {
 };
 
 const serializeTransaction = (wallet, transaction) => ({
-  _id: transaction._id,
-  user: wallet.userId
+  _id: transaction._id || transaction.id,
+  user: wallet?.userId
     ? {
-      _id: wallet.userId._id,
-      name: wallet.userId.name,
-      email: wallet.userId.email,
-      phoneNumber: wallet.userId.phoneNumber,
-    }
+        _id: wallet.userId._id || wallet.userId,
+        name: wallet.userId.name || "Unknown User",
+        email: wallet.userId.email || "",
+        phoneNumber: wallet.userId.phoneNumber || "",
+      }
     : null,
-  type: transaction.type,
-  amount: transaction.amount,
-  description: transaction.description,
-  paymentMethod: transaction.paymentMethod,
-  razorpayOrderId: transaction.razorpayOrderId,
-  razorpayPaymentId: transaction.razorpayPaymentId,
-  courseId: transaction.courseId,
-  courseIds: transaction.courseIds,
-  planId: transaction.planId,
-  status: transaction.status,
+  type: transaction.type || "other",
+  amount: Number(transaction.amount) || 0,
+  description: transaction.description || "",
+  paymentMethod: transaction.paymentMethod || "wallet",
+  razorpayOrderId: transaction.razorpayOrderId || null,
+  razorpayPaymentId: transaction.razorpayPaymentId || null,
+  courseId: transaction.courseId || null,
+  courseIds: transaction.courseIds || [],
+  planId: transaction.planId || null,
+  status: transaction.status || "success",
   refundStatus: transaction.refundStatus || "none",
   refundReason: transaction.refundReason || "",
-  refundRequestedAt: transaction.refundRequestedAt,
-  refundedAt: transaction.refundedAt,
-  createdAt: transaction.createdAt,
+  refundRequestedAt: transaction.refundRequestedAt || null,
+  refundedAt: transaction.refundedAt || null,
+  createdAt: transaction.createdAt || wallet?.createdAt || new Date(),
 });
 
 const getAdminTransactions = async (query = {}) => {
@@ -57,7 +57,7 @@ const getAdminTransactions = async (query = {}) => {
   const status = String(query.status || "all");
   const refundStatus = String(query.refundStatus || "all");
 
-  return wallets
+  return (wallets || [])
     .flatMap((wallet) =>
       (wallet.transactions || []).map((transaction) =>
         serializeTransaction(wallet, transaction),
@@ -82,7 +82,7 @@ const getAdminTransactions = async (query = {}) => {
         transaction.razorpayPaymentId,
       ].some((value) => String(value || "").toLowerCase().includes(search));
     })
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 };
 
 // ── Helper: get or create wallet for a user ──────────────────────────────────

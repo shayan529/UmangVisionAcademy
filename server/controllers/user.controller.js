@@ -31,6 +31,7 @@ const setTokenCookie = (res, token) => {
     secure: process.env.NODE_ENV === "production",
     sameSite: "Lax",
     maxAge: 1000 * 60 * 60 * 24 * 7,
+    path: "/",
   });
 };
 
@@ -685,6 +686,7 @@ export const LogoutUser = (req, res) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "Lax",
+    path: "/",
   });
   res.json({ message: "Logged out successfully" });
 };

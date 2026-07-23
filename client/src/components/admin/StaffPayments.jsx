@@ -273,6 +273,8 @@ const StaffPayments = ({ user }) => {
             <option value="deposit">Deposits</option>
             <option value="refund">Refunds</option>
             <option value="coin_redeem">Coin redemptions</option>
+            <option value="debit">Debits</option>
+            <option value="credit">Credits</option>
           </select>
         )}
         <button
@@ -323,8 +325,8 @@ const StaffPayments = ({ user }) => {
                   </td>
                   <td className="max-w-[280px] px-4 py-3">
                     <div className="text-xs font-semibold capitalize text-slate-200">
-                      {transaction.type.replace("_", " ")} ·{" "}
-                      {transaction.paymentMethod}
+                      {(transaction.type || "").replace("_", " ")} ·{" "}
+                      {transaction.paymentMethod || "wallet"}
                     </div>
                     <div
                       className="mt-1 truncate text-[11px] text-slate-500"

@@ -5,7 +5,6 @@ import {
   Trash2,
   User,
   Upload,
-  CheckCircle2,
   AlertCircle,
   X,
   Mail,
@@ -917,14 +916,6 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
                 {fmtDate(student.lastLoginReward)}
               </p>
             </div>
-            <div className="flex-1 min-w-[140px] rounded-xl border border-slate-800 bg-slate-900/40 p-3.5">
-              <p className="text-xs uppercase tracking-wider text-slate-500 font-bold">
-                Quiz Score
-              </p>
-              <p className="text-sm font-semibold text-slate-200 mt-2">
-                {student.score ?? 0}
-              </p>
-            </div>
           </div>
 
           {/* Subscription */}
@@ -1021,33 +1012,6 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
             </p>
           )}
 
-          {/* Quiz Submissions */}
-          <SectionTitle icon={CheckCircle2}>
-            Quiz Submissions ({student.quizSubmissions?.length || 0})
-          </SectionTitle>
-          {student.quizSubmissions?.length > 0 ? (
-            <ul className="flex flex-col gap-2">
-              {student.quizSubmissions.map((qs, i) => (
-                <li
-                  key={i}
-                  className="flex items-center justify-between gap-3 text-sm text-slate-300 bg-slate-900/40 border border-slate-800/70 rounded-lg px-4 py-3"
-                >
-                  <span className="truncate font-medium">
-                    {courses.find(
-                      (c) => c._id === (qs.courseId?._id || qs.courseId),
-                    )?.title || "Course"}
-                  </span>
-                  <span className="text-xs text-slate-400 flex-none">
-                    Score: {qs.score} · {fmtDate(qs.completedAt)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-slate-500 italic">
-              No quiz submissions yet.
-            </p>
-          )}
 
           {/* Devices */}
           <SectionTitle icon={Monitor}>

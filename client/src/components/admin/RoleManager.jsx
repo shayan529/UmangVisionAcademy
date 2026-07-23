@@ -13,6 +13,8 @@ import {
   UserPlus,
   Eye,
   EyeOff,
+  Mail,
+  Phone,
 } from "lucide-react";
 import apiClient from "../../config/api";
 import {
@@ -169,46 +171,120 @@ const PermissionMatrix = ({ modules, value, onChange }) => {
   );
 };
 
+// Helper to format permission summary for role cards
+const formatPermissionSummary = (role) => {
+  if (role.isSystem) return "System Default Role";
+  if (!role.permissions || role.permissions.length === 0)
+    return "No custom permissions assigned";
+  const moduleNames = role.permissions
+    .map((p) => MODULE_LABELS[p.module] || p.module)
+    .filter(Boolean);
+  if (moduleNames.length === 0) return "No permissions assigned";
+  if (moduleNames.length <= 2) return moduleNames.join(", ");
+  return `${moduleNames.slice(0, 2).join(", ")} +${moduleNames.length - 2} more`;
+};
+
 // ── Reusable role checklist ───────────────────────────────────────────────────
-const RoleChecklist = ({ roles, selected, onToggle, emptyHint }) => {
+const RoleChecklist = ({ roles = [], selected = [], onToggle, emptyHint }) => {
+  const [query, setQuery] = useState("");
+
+  const filteredRoles = React.useMemo(() => {
+    if (!query.trim()) return roles;
+    const q = query.toLowerCase().trim();
+    return roles.filter(
+      (r) =>
+        r.name?.toLowerCase().includes(q) ||
+        r.description?.toLowerCase().includes(q),
+    );
+  }, [roles, query]);
+
   if (roles.length === 0) {
-    return <p className="text-xs text-slate-500">{emptyHint}</p>;
+    return (
+      <div className="rounded-xl border border-dashed border-slate-800 p-6 text-center text-xs text-slate-500">
+        {emptyHint}
+      </div>
+    );
   }
+
   return (
-    <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
-      {roles.map((role) => {
-        const checked = selected.includes(role._id);
-        return (
-          <button
-            key={role._id}
-            type="button"
-            onClick={() => onToggle(role._id)}
-            className={`flex items-center justify-between rounded-xl border px-4 py-2.5 text-left transition-colors ${
-              checked
-                ? "border-indigo-500 bg-indigo-950/30"
-                : "border-slate-800 bg-[#0b1120] hover:border-slate-600"
-            }`}
-          >
-            <div>
-              <div className="text-sm font-semibold text-white">
-                {role.name}
-              </div>
-              {role.description && (
-                <div className="text-[11px] text-slate-500">
-                  {role.description}
+    <div className="flex flex-col gap-3">
+      {roles.length > 4 && (
+        <div className="relative">
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Filter roles..."
+            className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2 pl-9 pr-3 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500 transition-colors"
+          />
+        </div>
+      )}
+
+      <div className="flex flex-col gap-2.5 max-h-72 overflow-y-auto pr-1">
+        {filteredRoles.length === 0 ? (
+          <p className="text-xs text-slate-500 text-center py-6">
+            No roles match your search.
+          </p>
+        ) : (
+          filteredRoles.map((role) => {
+            const checked = selected.includes(role._id);
+            const permSummary = formatPermissionSummary(role);
+            return (
+              <button
+                key={role._id}
+                type="button"
+                onClick={() => onToggle(role._id)}
+                className={`group flex items-start justify-between gap-3 rounded-xl border p-3.5 text-left transition-all duration-150 ${
+                  checked
+                    ? "border-indigo-500/80 bg-indigo-950/40 text-white shadow-md shadow-indigo-950/50"
+                    : "border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700 hover:bg-slate-800/80"
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-bold text-white tracking-wide group-hover:text-indigo-300 transition-colors">
+                      {role.name}
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        role.isSystem
+                          ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                          : "border-indigo-500/30 bg-indigo-500/10 text-indigo-300"
+                      }`}
+                    >
+                      {role.isSystem ? "System" : "Custom"}
+                    </span>
+                  </div>
+                  {role.description && (
+                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                      {role.description}
+                    </p>
+                  )}
+                  {permSummary && (
+                    <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
+                      <Shield size={12} className="text-indigo-400 flex-none" />
+                      <span className="truncate">{permSummary}</span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <div
-              className={`h-5 w-5 rounded-md border flex items-center justify-center shrink-0 ${
-                checked ? "bg-indigo-600 border-indigo-500" : "border-slate-600"
-              }`}
-            >
-              {checked && <Check size={12} className="text-white" />}
-            </div>
-          </button>
-        );
-      })}
+                <div
+                  className={`h-5 w-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+                    checked
+                      ? "bg-indigo-600 border-indigo-500 shadow-sm"
+                      : "border-slate-600 bg-slate-950 group-hover:border-slate-500"
+                  }`}
+                >
+                  {checked && <Check size={13} className="text-white stroke-[3]" />}
+                </div>
+              </button>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 };
@@ -343,7 +419,7 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
 };
 
 // ── Assign roles modal ────────────────────────────────────────────────────────
-const AssignRolesModal = ({ user, roles, onClose, onSaved, showToast }) => {
+const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => {
   const [selected, setSelected] = useState(() => {
     const customIds = getCustomRoleIds(user);
     const systemRoleIds = (roles || [])
@@ -357,6 +433,14 @@ const AssignRolesModal = ({ user, roles, onClose, onSaved, showToast }) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id],
     );
+
+  const handleSelectAll = () => {
+    if (selected.length === roles.length) {
+      setSelected([]);
+    } else {
+      setSelected(roles.map((r) => r._id));
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -374,42 +458,120 @@ const AssignRolesModal = ({ user, roles, onClose, onSaved, showToast }) => {
     }
   };
 
+  const initials = (user?.name || "U")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const userRolesList = Array.isArray(user?.roles)
+    ? user.roles.map((r) => (typeof r === "string" ? r : r.name)).filter(Boolean)
+    : [];
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-[#111827] p-6">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-lg font-bold text-white">Assign Roles</h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-white">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
+      <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
+              <Shield size={18} />
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-white">Assign Roles</h3>
+              <p className="text-xs text-slate-400">Manage user access permissions</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+          >
             <X size={18} />
           </button>
         </div>
-        <p className="text-xs text-slate-500 mb-5">
-          {user.name} · {user.phoneNumber}
-        </p>
 
+        {/* User Details Banner */}
+        <div className="mb-5 rounded-xl border border-indigo-500/20 bg-indigo-950/30 p-3.5 flex items-center gap-3">
+          <div className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 text-sm font-extrabold text-white shadow-md">
+            {initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-bold text-white truncate">
+                {user.name}
+              </span>
+              {userRolesList.map((r, i) => (
+                <span
+                  key={i}
+                  className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 capitalize"
+                >
+                  {r}
+                </span>
+              ))}
+            </div>
+            <div className="mt-1 flex items-center gap-3 text-xs text-slate-400 flex-wrap">
+              {user.email && (
+                <span className="flex items-center gap-1">
+                  <Mail size={12} className="text-slate-400" />
+                  {user.email}
+                </span>
+              )}
+              {user.phoneNumber && (
+                <span className="flex items-center gap-1">
+                  <Phone size={12} className="text-slate-400" />
+                  {user.phoneNumber}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Action / Selection Summary bar */}
+        <div className="flex items-center justify-between mb-3 px-0.5">
+          <span className="text-xs font-bold text-slate-300">
+            Select Roles ({selected.length} of {roles.length} selected)
+          </span>
+          {roles.length > 1 && (
+            <button
+              type="button"
+              onClick={handleSelectAll}
+              className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+            >
+              {selected.length === roles.length ? "Deselect All" : "Select All"}
+            </button>
+          )}
+        </div>
+
+        {/* Roles List */}
         <div className="mb-6">
           <RoleChecklist
             roles={roles}
             selected={selected}
             onToggle={toggleRole}
-            emptyHint="No custom roles yet — create one first."
+            emptyHint="No custom roles yet — create one first in Roles & Permissions."
           />
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-slate-700 text-slate-300 text-sm font-semibold hover:bg-slate-900"
+            className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-xs font-bold hover:bg-slate-800 hover:text-white transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold disabled:opacity-60 flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all disabled:opacity-60 flex items-center gap-2"
           >
-            {saving && <Loader2 size={14} className="animate-spin" />}
-            Save
+            {saving ? (
+              <Loader2 size={15} className="animate-spin" />
+            ) : (
+              <Check size={15} />
+            )}
+            Save Changes
           </button>
         </div>
       </div>
@@ -503,180 +665,219 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-700 bg-[#111827] p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold text-white">Add User</h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-white">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
+      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-800/80 px-6 py-4 bg-slate-950/90 backdrop-blur shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
+              <UserPlus size={18} />
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-white">Add New User</h3>
+              <p className="text-xs text-slate-400">Create a user profile & assign roles</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+          >
             <X size={18} />
           </button>
         </div>
 
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-              Full Name
-            </label>
-            <input
-              value={form.name}
-              onChange={handleChange("name")}
-              placeholder="Jane Doe"
-              className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
-            />
+        {/* Form Body */}
+        <div className="overflow-y-auto p-6 space-y-6 flex-1">
+          {error && (
+            <div className="rounded-xl border border-red-900/50 bg-red-950/30 p-3.5 text-xs font-semibold text-red-200">
+              {error}
+            </div>
+          )}
+
+          {/* Section: Personal Info */}
+          <div>
+            <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-3">
+              Personal Information
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
+                <label className="text-xs font-bold text-slate-300">
+                  Full Name <span className="text-indigo-400">*</span>
+                </label>
+                <input
+                  value={form.name}
+                  onChange={handleChange("name")}
+                  placeholder="e.g. Jane Doe"
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900/70 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-300">Email Address</label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={handleChange("email")}
+                  placeholder="jane@example.com"
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900/70 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-300">
+                  Phone Number <span className="text-indigo-400">*</span>
+                </label>
+                <input
+                  value={form.phoneNumber}
+                  onChange={handlePhoneChange}
+                  maxLength={16}
+                  placeholder="9876543210 or +91..."
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900/70 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
+                <label className="text-xs font-bold text-slate-300">
+                  Password <span className="text-indigo-400">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={form.password}
+                    onChange={handleChange("password")}
+                    placeholder="Enter account password"
+                    className="w-full rounded-xl border border-slate-800 bg-slate-900/70 px-3.5 py-2.5 pr-10 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                Email
-              </label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={handleChange("email")}
-                placeholder="jane@example.com"
-                className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                Phone Number
-              </label>
-              <input
-                value={form.phoneNumber}
-                onChange={handlePhoneChange}
-                maxLength={16}
-                placeholder="9876543210 or +91..."
-                className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={form.password}
-                onChange={handleChange("password")}
-                placeholder="Enter password"
-                className="w-full rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 pr-10 text-sm text-white outline-none focus:border-indigo-500"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
-              >
-                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                State
-              </label>
-              <select
-                value={form.state}
-                onChange={handleStateChange}
-                className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
-              >
-                <option value="" disabled>
-                  Select a state…
-                </option>
-                {INDIAN_STATES.map((state) => (
-                  <option key={state} value={state}>
-                    {state}
+          {/* Section: Location */}
+          <div>
+            <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-3">
+              Location Details
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-300">
+                  State <span className="text-indigo-400">*</span>
+                </label>
+                <select
+                  value={form.state}
+                  onChange={handleStateChange}
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900/70 px-3.5 py-2.5 text-sm text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                >
+                  <option value="" disabled>
+                    Select state…
                   </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                City
-              </label>
-              <select
-                value={form.city}
-                onChange={handleChange("city")}
-                disabled={!form.state}
-                className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500 disabled:opacity-50"
-              >
-                <option value="" disabled>
-                  {form.state ? "Select a city…" : "Select a state first"}
-                </option>
-                {cityOptions.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
+                  {INDIAN_STATES.map((state) => (
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-300">
+                  City <span className="text-indigo-400">*</span>
+                </label>
+                <select
+                  value={form.city}
+                  onChange={handleChange("city")}
+                  disabled={!form.state}
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900/70 px-3.5 py-2.5 text-sm text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-50"
+                >
+                  <option value="" disabled>
+                    {form.state ? "Select city…" : "Select state first"}
                   </option>
-                ))}
-              </select>
+                  {cityOptions.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-300">
+                  Pincode <span className="text-indigo-400">*</span>
+                </label>
+                <input
+                  value={form.pincode}
+                  onChange={handleChange("pincode")}
+                  placeholder="e.g. 110001"
+                  required
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900/70 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-              Pincode
-            </label>
-            <input
-              value={form.pincode}
-              onChange={handleChange("pincode")}
-              required
-              className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
-            />
-          </div>
+          {/* Section: Roles & Access */}
+          <div>
+            <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-3">
+              Role & Permissions
+            </span>
+            <div className="space-y-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-300">
+                  Primary Account Type <span className="text-indigo-400">*</span>
+                </label>
+                <select
+                  value={form.baseRole}
+                  onChange={handleChange("baseRole")}
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900/70 px-3.5 py-2.5 text-sm text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                >
+                  {BASE_ROLE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-              Account Type
-            </label>
-            <select
-              value={form.baseRole}
-              onChange={handleChange("baseRole")}
-              className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
-            >
-              {BASE_ROLE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-              Custom Role (optional)
-            </label>
-            <RoleChecklist
-              roles={roles}
-              selected={selectedRoles}
-              onToggle={toggleRole}
-              emptyHint="No custom roles yet — you can assign one later from Roles & Permissions."
-            />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-300">
+                  Custom Roles (Optional)
+                </label>
+                <RoleChecklist
+                  roles={roles}
+                  selected={selectedRoles}
+                  onToggle={toggleRole}
+                  emptyHint="No custom roles available yet — you can assign custom roles later."
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        {error && (
-          <div className="mb-4 rounded-lg border border-red-900/50 bg-red-950/20 px-3 py-2 text-xs font-semibold text-red-200">
-            {error}
-          </div>
-        )}
-
-        <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
+        {/* Footer Bar */}
+        <div className="flex items-center justify-end gap-3 border-t border-slate-800/80 px-6 py-4 bg-slate-950/90 backdrop-blur shrink-0">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-slate-700 text-slate-300 text-sm font-semibold hover:bg-slate-900"
+            className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-xs font-bold hover:bg-slate-800 hover:text-white transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold disabled:opacity-60 flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all disabled:opacity-60 flex items-center gap-2"
           >
-            {saving && <Loader2 size={14} className="animate-spin" />}
+            {saving ? (
+              <Loader2 size={15} className="animate-spin" />
+            ) : (
+              <UserPlus size={15} />
+            )}
             Add User
           </button>
         </div>
@@ -1023,8 +1224,9 @@ const RoleManager = ({ showToast, currentUser }) => {
                 </div>
                 <button
                   onClick={() => setAssignTarget(u)}
-                  className="shrink-0 px-3 py-1.5 rounded-lg border border-slate-700 text-xs font-semibold text-slate-200 hover:border-indigo-500 hover:text-indigo-300"
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 text-xs font-bold text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-500/50 transition-all"
                 >
+                  <Shield size={13} />
                   Assign Roles
                 </button>
               </div>

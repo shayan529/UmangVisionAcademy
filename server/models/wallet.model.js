@@ -4,7 +4,7 @@ const transactionSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ["deposit", "purchase", "refund", "coin_redeem", "subscription"],
+      enum: ["deposit", "purchase", "refund", "coin_redeem", "subscription", "debit", "credit"],
       required: true,
     },
     amount: { type: Number, required: true }, // always positive, in ₹

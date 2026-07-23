@@ -53,9 +53,11 @@ export const getOrCreateUnsubscribeToken = async (userId) => {
 // Build the full unsubscribe URL from a token
 const buildUnsubscribeUrl = (token) => {
   if (!token) return null;
-  const base = process.env.SERVER_URL
-    || process.env.CLIENT_URL?.replace(/\/$/, '')
-    || 'https://umangvisionacademy.onrender.com';
+  const base = (
+    process.env.CLIENT_URL?.replace(/\/$/, '') ||
+    process.env.SERVER_URL?.replace(/\/$/, '') ||
+    'https://umang-vision-academy.vercel.app'
+  );
   return `${base}/api/unsubscribe?token=${token}`;
 };
 
