@@ -65,6 +65,8 @@ export const uploadFileToStorage = async ({
         access: "public",
         token,
         contentType,
+        addRandomSuffix: false,
+        allowOverwrite: true,
       });
 
       return {

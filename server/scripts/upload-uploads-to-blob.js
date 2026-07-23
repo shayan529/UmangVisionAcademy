@@ -98,6 +98,8 @@ async function uploadAllLocalFiles() {
         access: "public",
         token,
         contentType,
+        addRandomSuffix: false,
+        allowOverwrite: true,
       });
 
       console.log(`   ✅ Success! Blob URL: ${blob.url}`);
