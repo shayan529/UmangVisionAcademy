@@ -7,6 +7,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const UPLOADS_DIR = path.resolve(__dirname, "../uploads");
 
+const isVercelEnvironment = () => {
+  return Boolean(
+    process.env.VERCEL === "1" ||
+    process.env.VERCEL_ENV ||
+    __dirname.includes("/var/task")
+  );
+};
+
 /**
  * Checks if Vercel Blob storage is configured via environment variables.
  * Vercel automatically populates BLOB_READ_WRITE_TOKEN when Blob storage is attached.
@@ -66,11 +74,20 @@ export const uploadFileToStorage = async ({
         storageProvider: "vercel_blob",
       };
     } catch (err) {
-      console.error("[Vercel Blob Upload Error - Fallback to Local]:", err.message || err);
+      console.error("[Vercel Blob Upload Error]:", err.message || err);
+      if (isVercelEnvironment()) {
+        throw new Error(`Vercel Blob Upload Failed: ${err.message || err}`);
+      }
     }
   }
 
-  // Fallback: Save to Local Storage
+  if (isVercelEnvironment()) {
+    throw new Error(
+      "Vercel Blob Storage token (BLOB_READ_WRITE_TOKEN) is not configured in your Vercel project environment variables. Please attach a Vercel Blob store to this project in the Vercel Dashboard."
+    );
+  }
+
+  // Fallback: Save to Local Storage (only allowed in local development)
   const targetDir = path.join(UPLOADS_DIR, folder);
   await fsPromises.mkdir(targetDir, { recursive: true });
   const localFilePath = path.join(targetDir, fileName);
@@ -120,16 +137,18 @@ export const deleteFileFromStorage = async (fileUrlOrId) => {
   }
 
   // Local Storage Deletion Fallback
-  try {
-    const relativePath = fileUrlOrId.startsWith("http")
-      ? fileUrlOrId.split("/uploads/")[1]
-      : fileUrlOrId;
+  if (!isVercelEnvironment()) {
+    try {
+      const relativePath = fileUrlOrId.startsWith("http")
+        ? fileUrlOrId.split("/uploads/")[1]
+        : fileUrlOrId;
 
-    if (relativePath) {
-      const localPath = path.join(UPLOADS_DIR, relativePath);
-      await fsPromises.unlink(localPath);
+      if (relativePath) {
+        const localPath = path.join(UPLOADS_DIR, relativePath);
+        await fsPromises.unlink(localPath).catch(() => {});
+      }
+    } catch (err) {
+      console.error("[Local Storage Delete Error]:", err.message || err);
     }
-  } catch (err) {
-    console.error("[Local Storage Delete Error]:", err.message || err);
   }
 };
