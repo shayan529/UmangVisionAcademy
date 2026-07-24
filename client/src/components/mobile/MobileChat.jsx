@@ -1380,39 +1380,20 @@ export default function MobileChat() {
             </div>
           )}
 
-          {/* Title / Role Selector */}
+          {/* Title */}
           <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
-            {user?.role === "instructor" ? (
-              <select
-                value={activeRole}
-                onChange={(e) => handleRoleChange(e.target.value)}
-                style={{
-                  background: t.bgToggle,
-                  color: t.text,
-                  border: `1px solid ${t.border}`,
-                  borderRadius: 8,
-                  fontSize: isMobile ? 13 : 14,
-                  fontWeight: 700,
-                  padding: "4px 8px",
-                  cursor: "pointer",
-                  outline: "none"
-                }}
-              >
-                <option value="student">AI Tutor (Student)</option>
-                <option value="instructor">Teaching Assistant (Instructor)</option>
-              </select>
-            ) : (
-              <span
-                style={{
-                  fontSize: isMobile ? 14 : 15,
-                  fontWeight: 700,
-                  color: t.text,
-                  userSelect: "none",
-                }}
-              >
-                {user?.role === "instructor" ? "Teaching Assistant" : "AI Tutor"}
-              </span>
-            )}
+            <span
+              style={{
+                fontSize: isMobile ? 14 : 15,
+                fontWeight: 700,
+                color: t.text,
+                userSelect: "none",
+              }}
+            >
+              {activeRole === "instructor" || user?.role === "instructor"
+                ? "Teaching Assistant"
+                : "AI Tutor"}
+            </span>
           </div>
 
           {/* Right controls */}
