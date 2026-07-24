@@ -944,6 +944,7 @@ export default function ChapterManager({
                           display: "flex",
                           alignItems: "center",
                           gap: 8,
+                          flexWrap: "wrap",
                         }}
                       >
                         <span
@@ -951,7 +952,7 @@ export default function ChapterManager({
                             fontSize: 11,
                             color: "#475569",
                             flexShrink: 0,
-                            minWidth: 20,
+                            minWidth: 16,
                           }}
                         >
                           {li + 1}.
@@ -961,7 +962,7 @@ export default function ChapterManager({
                           onChange={(e) =>
                             updateLesson(ci, li, "title", e.target.value)
                           }
-                          style={{ ...iStyle, flex: 1 }}
+                          style={{ ...iStyle, flex: "1 1 120px", minWidth: 0 }}
                           onFocus={focus}
                           onBlur={blur}
                           placeholder="Lesson title *"
@@ -988,7 +989,7 @@ export default function ChapterManager({
                       </div>
 
                       {/* Content area */}
-                      <div style={{ paddingLeft: 28 }}>
+                      <div style={{ paddingLeft: "min(28px, 2vw)" }}>
                         {isText ? (
                           <TextLessonEditor
                             value={lesson.content || ""}
@@ -1027,7 +1028,7 @@ export default function ChapterManager({
                           ...iStyle,
                           resize: "vertical",
                           fontFamily: "inherit",
-                          marginLeft: 28,
+                          marginLeft: "min(28px, 2vw)",
                           fontSize: 12,
                         }}
                         onFocus={focus}

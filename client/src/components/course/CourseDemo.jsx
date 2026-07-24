@@ -7,6 +7,7 @@ import { loadCurrentUser } from "../../redux/slices/authSlice";
 import { fetchEnrolledCourses } from "../../redux/slices/courseSlice";
 import { hasBaseRole } from "../../utils/permissions.js";
 import { useTranslation } from "react-i18next";
+import { normalizeVideoUrl, isImageFile, isEmbedVideo, getEmbedUrl } from "../../utils/media.js";
 
 // ── Local state ───────────────────────────────────────────────────────────────
 const useCourseDemo = (id) => {
@@ -127,11 +128,26 @@ const VideoPlayer = ({ url, poster }) => {
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState("");
 
   const toggle = () => {
     if (!ref.current) return;
-    playing ? ref.current.pause() : ref.current.play();
-    setPlaying(!playing);
+    if (playing) {
+      ref.current.pause();
+      setPlaying(false);
+    } else {
+      ref.current.play().then(() => {
+        setPlaying(true);
+      }).catch((e) => {
+        // Autoplay blocked — try muted first
+        if (e.name === "NotAllowedError") {
+          ref.current.muted = true;
+          setMuted(true);
+          ref.current.play().then(() => setPlaying(true)).catch(() => {});
+        }
+        console.warn("Demo video play() failed:", e.message);
+      });
+    }
   };
 
   const onTimeUpdate = () => {
@@ -145,6 +161,58 @@ const VideoPlayer = ({ url, poster }) => {
     ref.current.currentTime =
       ((e.clientX - rect.left) / rect.width) * ref.current.duration;
   };
+
+  const normalizedUrl = normalizeVideoUrl(url);
+
+  if (isImageFile(normalizedUrl)) {
+    return (
+      <div
+        style={{
+          position: "relative",
+          borderRadius: 20,
+          overflow: "hidden",
+          background: "#0b1120",
+          aspectRatio: "16/9",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 16,
+        }}
+      >
+        <img
+          src={normalizedUrl}
+          alt="Course Demo Asset"
+          style={{ maxHeight: "80%", maxWidth: "90%", objectFit: "contain", borderRadius: 12 }}
+        />
+        <p style={{ marginTop: 12, fontSize: 12, color: "#94a3b8" }}>
+          🖼️ Image asset loaded for demo (Upload an MP4 / WebM video file for video playback)
+        </p>
+      </div>
+    );
+  }
+
+  if (isEmbedVideo(normalizedUrl)) {
+    return (
+      <div
+        style={{
+          position: "relative",
+          borderRadius: 20,
+          overflow: "hidden",
+          background: "#000",
+          aspectRatio: "16/9",
+        }}
+      >
+        <iframe
+          src={getEmbedUrl(normalizedUrl)}
+          style={{ width: "100%", height: "100%", border: "none" }}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title="Demo Video"
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -160,19 +228,51 @@ const VideoPlayer = ({ url, poster }) => {
     >
       <video
         ref={ref}
-        src={url}
+        src={normalizedUrl}
         poster={poster}
+        playsInline
+        preload="metadata"
         muted={muted}
         onTimeUpdate={onTimeUpdate}
         onEnded={() => setPlaying(false)}
+        onError={(e) => {
+          const v = e.currentTarget;
+          const code = v.error?.code;
+          const msg = v.error?.message || "Unknown error";
+          setError(`Video failed to load (code ${code}): ${msg}`);
+          console.error("Demo video error:", code, msg, normalizedUrl);
+        }}
         style={{
           width: "100%",
           height: "100%",
-          objectFit: "cover",
+          objectFit: "contain",
           display: "block",
         }}
       />
-      {!playing && (
+      {error && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.85)",
+            padding: 20,
+            gap: 8,
+          }}
+        >
+          <span style={{ fontSize: 32 }}>⚠️</span>
+          <p style={{ color: "#f87171", fontSize: 13, fontWeight: 600, textAlign: "center" }}>
+            {error}
+          </p>
+          <p style={{ color: "#94a3b8", fontSize: 11, textAlign: "center", wordBreak: "break-all" }}>
+            {normalizedUrl}
+          </p>
+        </div>
+      )}
+      {!playing && !error && (
         <div
           style={{
             position: "absolute",

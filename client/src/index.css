@@ -97,3 +97,18 @@ input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0px 1000px #1e293b inset !important;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+/* Utility for smooth scrollable pill bars without scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Enforce viewport constraints */
+#root {
+  max-width: 100vw;
+  overflow-x: hidden;
+}

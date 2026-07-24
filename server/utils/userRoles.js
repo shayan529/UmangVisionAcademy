@@ -134,9 +134,27 @@ export const hydrateUsersRoles = async (users = []) =>
 
 // ── hasPermissionGrant ────────────────────────────────────────────────────────
 // Admins have all permissions.
+// Instructors have default permissions for courses, sessions, notes, mock tests, reels, and question bank.
 // Custom-role users get permissions from their hydrated role object.
 export const hasPermissionGrant = (user, moduleName, actionName = "view") => {
   if (hasBaseRole(user, "admin")) return true;
+
+  if (hasBaseRole(user, "instructor")) {
+    const instructorModules = new Set([
+      "courses",
+      "sessions",
+      "notes",
+      "mock_tests",
+      "mockTests",
+      "reels",
+      "question_bank",
+      "questionPapers",
+    ]);
+    const allowedActions = new Set(["create", "edit", "view", "delete"]);
+    if (instructorModules.has(moduleName) && allowedActions.has(actionName)) {
+      return true;
+    }
+  }
 
   const role = user?.role;
   if (!role || typeof role === "string") return false;

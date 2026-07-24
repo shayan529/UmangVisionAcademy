@@ -43,20 +43,23 @@ const CourseCard = ({ course }) => {
   };
 
   return (
-    <div className="bg-[#1e293b] border border-slate-600/70 rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_32px_rgba(99,102,241,0.25)] hover:border-indigo-500/70 transition-all duration-300 flex flex-row md:flex-col min-h-[160px] md:min-h-0 md:h-auto p-3.5 md:p-0 gap-3.5 md:gap-0">
+    <div className="bg-[#1e293b] border border-slate-600/70 rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_32px_rgba(99,102,241,0.25)] hover:border-indigo-500/70 transition-all duration-300 flex flex-col h-full p-0">
       {/* Image */}
       <img
         src={getOptimizedImageUrl(course.image)}
         alt={course.title}
         loading="lazy"
-        className="w-32 h-full md:w-full md:h-48 object-cover rounded-xl md:rounded-none shrink-0"
+        className="w-full h-44 sm:h-48 object-cover shrink-0"
       />
 
       {/* Content */}
-      <div className="flex-1 min-w-0 flex flex-col justify-between p-1 md:p-5 bg-[#1e293b]">
+      <div className="flex-1 min-w-0 flex flex-col justify-between p-4 sm:p-5 bg-[#1e293b]">
         <div>
           {/* Title */}
-          <h3 className="text-sm md:text-lg font-bold text-white line-clamp-2 md:min-h-[48px] leading-snug">
+          <h3
+            className="text-base sm:text-lg font-bold text-white leading-snug line-clamp-3 sm:line-clamp-2 min-h-[48px]"
+            title={course.title}
+          >
             {course.title}
           </h3>
 

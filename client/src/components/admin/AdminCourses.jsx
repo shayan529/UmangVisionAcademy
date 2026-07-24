@@ -5,6 +5,7 @@ import api from "../../config/api.js";
 import { fetchAllCoursesAdmin } from "../../redux/slices/courseSlice";
 import InstructorCourses from "../instructor/InstructorCourses.jsx";
 import { Toast } from "../instructor/InstructorUi.jsx";
+import { normalizeVideoUrl, isEmbedVideo, getEmbedUrl } from "../../utils/media.js";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -179,20 +180,23 @@ function IKVideoPlayer({ src }) {
   const [status, setStatus] = React.useState("loading"); // loading | playing | error
   const [errorMsg, setErrorMsg] = React.useState("");
 
+  const cleanUrl = normalizeVideoUrl(src);
+
   React.useEffect(() => {
-    if (!src || !videoRef.current) return;
+    if (!cleanUrl || !videoRef.current) return;
+    if (isEmbedVideo(cleanUrl)) {
+      setStatus("playing");
+      return;
+    }
+
     const video = videoRef.current;
+    const mp4Src = cleanUrl;
 
-    // Strip query params and try plain MP4 first
-    const mp4Src = toIkMp4(src);
-
-    // Try native MP4 — works for most direct video URLs
     video.src = mp4Src;
     video.load();
 
     const onCanPlay = () => setStatus("playing");
     const onError = async () => {
-      // Native MP4 failed → try HLS.js with the original URL
       try {
         const HlsModule =
           await import("https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js");
@@ -200,7 +204,7 @@ function IKVideoPlayer({ src }) {
 
         if (Hls.isSupported()) {
           const hls = new Hls({ enableWorker: false });
-          hls.loadSource(src);
+          hls.loadSource(cleanUrl);
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
             setStatus("playing");
@@ -212,21 +216,20 @@ function IKVideoPlayer({ src }) {
               setErrorMsg("Could not load video stream.");
             }
           });
-          video._hls = hls; // keep ref for cleanup
+          video._hls = hls;
         } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-          // Safari native HLS
-          video.src = src;
+          video.src = cleanUrl;
           video.load();
           video.addEventListener("canplay", () => setStatus("playing"), {
             once: true,
           });
         } else {
           setStatus("error");
-          setErrorMsg("HLS is not supported in this browser.");
+          setErrorMsg("Video stream format not supported natively.");
         }
       } catch {
         setStatus("error");
-        setErrorMsg("Failed to load video player library.");
+        setErrorMsg("Failed to load video player.");
       }
     };
 
@@ -241,7 +244,29 @@ function IKVideoPlayer({ src }) {
         delete video._hls;
       }
     };
-  }, [src]);
+  }, [cleanUrl]);
+
+  if (isEmbedVideo(cleanUrl)) {
+    return (
+      <div
+        style={{
+          position: "relative",
+          background: "#000",
+          borderRadius: 12,
+          overflow: "hidden",
+          aspectRatio: "16/9",
+        }}
+      >
+        <iframe
+          src={getEmbedUrl(cleanUrl)}
+          style={{ width: "100%", height: "100%", border: "none" }}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title="Lesson Video"
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -319,7 +344,7 @@ function IKVideoPlayer({ src }) {
             {errorMsg}
           </p>
           <a
-            href={src}
+            href={cleanUrl}
             target="_blank"
             rel="noreferrer"
             style={{
@@ -339,6 +364,7 @@ function IKVideoPlayer({ src }) {
         controls
         controlsList="nodownload"
         playsInline
+        preload="metadata"
         style={{
           width: "100%",
           display: "block",
@@ -1474,7 +1500,15 @@ export default function AdminCourses({
 
       {/* Status filter tabs */}
       <div
-        style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}
+        className="no-scrollbar"
+        style={{
+          display: "flex",
+          gap: 8,
+          overflowX: "auto",
+          paddingBottom: 4,
+          marginBottom: 16,
+          maxWidth: "100%",
+        }}
       >
         {[
           { key: "pending", label: `Pending (${counts.pending})` },
@@ -1499,6 +1533,8 @@ export default function AdminCourses({
                 background: active ? st.bg : "transparent",
                 color: active ? st.text : "#64748b",
                 transition: "all 0.15s",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
               }}
             >
               {label}
@@ -1584,7 +1620,7 @@ export default function AdminCourses({
           </p>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {filtered.map((course) => {
             const st = STATUS_CONFIG[course.approvalStatus ?? "draft"];
             return (
@@ -1596,112 +1632,131 @@ export default function AdminCourses({
                   background: "#111827",
                   border: "1px solid #1e293b",
                   borderRadius: 14,
-                  padding: "14px 18px",
+                  padding: "14px 16px",
                   display: "flex",
-                  alignItems: "center",
-                  gap: 14,
+                  flexDirection: "column",
+                  gap: 12,
                   cursor: "pointer",
                   transition: "all 0.15s",
                   animation: "fadeIn 0.2s ease",
                 }}
               >
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 10,
-                    background: "#1e293b",
-                    flexShrink: 0,
-                    overflow: "hidden",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 20,
-                  }}
-                >
-                  {course.thumbnailUrl ? (
-                    <img
-                      src={course.thumbnailUrl}
-                      alt=""
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                      onError={(e) => {
-                        e.target.style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    "📚"
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 12, width: "100%" }}>
                   <div
                     style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 10,
+                      background: "#1e293b",
+                      flexShrink: 0,
+                      overflow: "hidden",
                       display: "flex",
                       alignItems: "center",
-                      gap: 8,
-                      flexWrap: "wrap",
+                      justifyContent: "center",
+                      fontSize: 20,
                     }}
                   >
-                    <p
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 700,
-                        color: "#f1f5f9",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        maxWidth: "28ch",
-                      }}
-                    >
-                      {course.title}
-                    </p>
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        padding: "2px 8px",
-                        borderRadius: 20,
-                        background: st.bg,
-                        color: st.text,
-                        border: `1px solid ${st.border}`,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {st.icon} {st.label}
-                    </span>
+                    {course.thumbnailUrl ? (
+                      <img
+                        src={course.thumbnailUrl}
+                        alt=""
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                        onError={(e) => {
+                          e.target.style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      "📚"
+                    )}
                   </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 8,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: "#f1f5f9",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                        title={course.title}
+                      >
+                        {course.title}
+                      </p>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: "2px 8px",
+                          borderRadius: 20,
+                          background: st.bg,
+                          color: st.text,
+                          border: `1px solid ${st.border}`,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {st.icon} {st.label}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 10,
+                        marginTop: 4,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <span style={{ fontSize: 11, color: "#64748b" }}>
+                        👤 {course.instructor?.name ?? "Unknown"}
+                      </span>
+                      {course.category && (
+                        <span style={{ fontSize: 11, color: "#64748b" }}>
+                          {course.category}
+                        </span>
+                      )}
+                      <span style={{ fontSize: 11, color: "#64748b" }}>
+                        📚 {course.lessons?.length ?? 0} lessons
+                      </span>
+                      {course.price > 0 && (
+                        <span style={{ fontSize: 11, color: "#64748b" }}>
+                          ₹{course.price}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <span style={{ color: "#334155", fontSize: 16, flexShrink: 0, alignSelf: "center" }}>
+                    ›
+                  </span>
+                </div>
+
+                {canApprove && course.approvalStatus === "pending" && (
                   <div
                     style={{
                       display: "flex",
-                      gap: 10,
-                      marginTop: 3,
-                      flexWrap: "wrap",
+                      gap: 8,
+                      width: "100%",
+                      paddingTop: 8,
+                      borderTop: "1px solid #1e293b",
+                      justifyContent: "flex-end",
                     }}
-                  >
-                    <span style={{ fontSize: 11, color: "#64748b" }}>
-                      👤 {course.instructor?.name ?? "Unknown"}
-                    </span>
-                    {course.category && (
-                      <span style={{ fontSize: 11, color: "#64748b" }}>
-                        {course.category}
-                      </span>
-                    )}
-                    <span style={{ fontSize: 11, color: "#64748b" }}>
-                      📚 {course.lessons?.length ?? 0} lessons
-                    </span>
-                    {course.price > 0 && (
-                      <span style={{ fontSize: 11, color: "#64748b" }}>
-                        ₹{course.price}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {canApprove && course.approvalStatus === "pending" && (
-                  <div
-                    style={{ display: "flex", gap: 8, flexShrink: 0 }}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <button
@@ -1711,7 +1766,9 @@ export default function AdminCourses({
                       }}
                       disabled={actioning}
                       style={{
-                        padding: "6px 12px",
+                        flex: 1,
+                        maxWidth: 120,
+                        padding: "7px 14px",
                         borderRadius: 8,
                         border: "1px solid #7f1d1d",
                         background: "#2d0a0a",
@@ -1719,6 +1776,7 @@ export default function AdminCourses({
                         fontSize: 11,
                         fontWeight: 700,
                         cursor: "pointer",
+                        textAlign: "center",
                       }}
                     >
                       Reject
@@ -1730,7 +1788,9 @@ export default function AdminCourses({
                       }}
                       disabled={actioning}
                       style={{
-                        padding: "6px 14px",
+                        flex: 1,
+                        maxWidth: 140,
+                        padding: "7px 16px",
                         borderRadius: 8,
                         border: "none",
                         background: "linear-gradient(135deg,#16a34a,#15803d)",
@@ -1738,15 +1798,13 @@ export default function AdminCourses({
                         fontSize: 11,
                         fontWeight: 700,
                         cursor: "pointer",
+                        textAlign: "center",
                       }}
                     >
                       Approve
                     </button>
                   </div>
                 )}
-                <span style={{ color: "#334155", fontSize: 14, flexShrink: 0 }}>
-                  ›
-                </span>
               </div>
             );
           })}

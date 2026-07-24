@@ -111,6 +111,23 @@ export const hasPermission = (user, moduleName, actionName = "view") => {
   if (!user) return false;
   if (hasBaseRole(user, "admin")) return true;
 
+  if (hasBaseRole(user, "instructor")) {
+    const instructorModules = new Set([
+      "courses",
+      "sessions",
+      "notes",
+      "mock_tests",
+      "mockTests",
+      "reels",
+      "question_bank",
+      "questionPapers",
+    ]);
+    const allowedActions = new Set(["create", "edit", "view", "delete"]);
+    if (instructorModules.has(moduleName) && allowedActions.has(actionName)) {
+      return true;
+    }
+  }
+
   const customRole = getCustomRole(user);
   if (customRole && Array.isArray(customRole.permissions)) {
     return Boolean(

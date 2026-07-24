@@ -1904,9 +1904,10 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
           alignItems: "center",
           cursor: "pointer",
           userSelect: "none",
+          gap: 12,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
           <span
             style={{
               display: "inline-block",
@@ -1915,16 +1916,17 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
               transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)",
               transition: "transform 0.2s ease",
               lineHeight: 1,
+              flexShrink: 0,
             }}
           >
             ▼
           </span>
-          <Award size={17} color="#c4b5fd" />
-          <div>
+          <Award size={17} color="#c4b5fd" style={{ flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
               Course Certificate
             </div>
-            <div style={{ fontSize: 11, color: "#64748b" }}>
+            <div style={{ fontSize: 11, color: "#64748b", lineHeight: 1.3 }}>
               Award a customized certificate to students who complete this
               course
             </div>
@@ -1938,6 +1940,7 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
             width: 44,
             height: 22,
             cursor: "pointer",
+            flexShrink: 0,
           }}
         >
           <input

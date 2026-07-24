@@ -8,6 +8,8 @@ import { checkAndAwardAchievements } from "../../redux/slices/achievementSlice.j
 import TextLessonViewer from "./TextLessonViewer.jsx";
 import WatermarkOverlay from "./WaterMarkOverlay.jsx";
 
+import { normalizeVideoUrl, isImageFile, isEmbedVideo, getEmbedUrl } from "../../utils/media.js";
+
 const downloadFile = async (url, filename) => {
   try {
     const response = await fetch(url);
@@ -426,13 +428,44 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0, user }
     setPlaybackRate(next);
   }, [playbackRate]);
 
-  if (!url)
+  const normalizedUrl = normalizeVideoUrl(url);
+
+  if (!normalizedUrl)
     return (
       <div className="flex aspect-video flex-col items-center justify-center gap-3 rounded-xl bg-[#0f172a]">
         <span className="text-5xl">🎬</span>
         <p className="text-sm text-slate-600">No video for this lesson</p>
       </div>
     );
+
+  if (isImageFile(normalizedUrl)) {
+    return (
+      <div className="relative aspect-video select-none overflow-hidden rounded-xl bg-[#0b1120] flex flex-col items-center justify-center p-4">
+        <img
+          src={normalizedUrl}
+          alt="Lesson Asset"
+          className="max-h-[80%] max-w-[90%] object-contain rounded-lg shadow-lg"
+        />
+        <p className="mt-3 text-xs text-slate-400 font-medium">
+          🖼️ Image asset loaded for this lesson (Upload an MP4 / WebM file for video playback)
+        </p>
+      </div>
+    );
+  }
+
+  if (isEmbedVideo(normalizedUrl)) {
+    return (
+      <div className="relative aspect-video select-none overflow-hidden rounded-xl bg-black">
+        <iframe
+          src={getEmbedUrl(normalizedUrl)}
+          className="h-full w-full border-0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title="Lesson Video"
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -442,9 +475,10 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0, user }
     >
       <video
         ref={ref}
-        src={url}
+        src={normalizedUrl}
         poster={poster}
         playsInline
+        preload="metadata"
         muted={muted}
         controlsList="nodownload"
         onTimeUpdate={onTimeUpdate}
@@ -471,6 +505,12 @@ const VideoPlayer = ({ url, poster, onEnded, onProgress, initialTime = 0, user }
           setPlaying(false);
           setShowControls(true);
           onEnded?.();
+        }}
+        onError={(e) => {
+          const v = e.currentTarget;
+          const code = v.error?.code;
+          const msg = v.error?.message || "Unknown error";
+          console.error("[VideoPlayer] Video load error:", code, msg, normalizedUrl);
         }}
         className="block h-full w-full object-contain"
       />
@@ -998,10 +1038,18 @@ export default function CoursePage() {
     const handleBlur = () => {
       if (window.innerWidth < 768) return;
       setTimeout(() => {
+        // Don't blur if focus moved to a video/audio element or stayed on the page.
+        // Some browsers briefly fire window.blur when the <video> element takes focus.
+        const active = document.activeElement;
+        const isMediaElement =
+          active instanceof HTMLVideoElement ||
+          active instanceof HTMLAudioElement ||
+          active instanceof HTMLIFrameElement;
+        if (isMediaElement) return;
         if (!document.hasFocus()) {
           applyBlurNow();
         }
-      }, 150);
+      }, 300);
     };
     const handleVisibility = () => {
       if (document.hidden) applyBlurNow();
