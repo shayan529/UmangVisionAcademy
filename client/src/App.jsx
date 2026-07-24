@@ -229,6 +229,11 @@ function App() {
   const location = useLocation();
 
   useEffect(() => {
+    // If we already have a cached user, fire /users/me silently in the
+    // background to pick up any server-side changes (role changes, bans,
+    // subscription updates). The UI renders immediately from the cache —
+    // no spinner — and updates once the refresh resolves.
+    // If there is no cached user but a token exists, we must wait (loading=true).
     dispatch(loadCurrentUser());
   }, [dispatch]);
 

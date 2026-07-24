@@ -58,16 +58,21 @@ export const hydrateUserRoles = async (user) => {
   if (!plainUser) return null;
 
   // Support legacy documents that still have the old roles[] array in cache.
-  // Promote the first base-role string found into user.role so the rest of
-  // the app sees a consistent shape after hydration.
   if (!plainUser.role && Array.isArray(plainUser.roles)) {
     const firstBase = plainUser.roles.find(isBaseRole);
     plainUser.role = firstBase || "student";
   }
 
-  try {
-    const rawAssigned = plainUser.assignedRoles || [];
+  // Fast path: most users have no custom permission roles — skip all async work
+  const rawAssigned = plainUser.assignedRoles || [];
+  if (rawAssigned.length === 0) {
+    plainUser.assignedRoles = [];
+    delete plainUser.roles;
+    delete plainUser.password;
+    return plainUser;
+  }
 
+  try {
     // Extract ObjectId strings — skip anything already a populated object
     const idsToFetch = [];
     const alreadyPopulated = [];
@@ -88,11 +93,15 @@ export const hydrateUserRoles = async (user) => {
     const fetchedRoles = [...alreadyPopulated];
 
     if (idsToFetch.length > 0) {
+      // Check Redis for all IDs in parallel rather than sequentially
+      const cacheResults = await Promise.all(
+        idsToFetch.map((id) => getJson(`role:${id}`).then((v) => ({ id, v })))
+      );
+
       const toQuery = [];
-      for (const id of idsToFetch) {
-        const cached = await getJson(`role:${id}`);
-        if (cached) {
-          fetchedRoles.push(cached);
+      for (const { id, v } of cacheResults) {
+        if (v) {
+          fetchedRoles.push(v);
         } else {
           toQuery.push(id);
         }
@@ -100,10 +109,13 @@ export const hydrateUserRoles = async (user) => {
 
       if (toQuery.length > 0) {
         const docs = await Role.find({ _id: { $in: toQuery } }).lean();
-        for (const doc of docs) {
-          await setJson(`role:${doc._id.toString()}`, doc, 3600 * 24);
-          fetchedRoles.push(doc);
-        }
+        // Cache all fetched role docs in parallel
+        await Promise.all(
+          docs.map((doc) =>
+            setJson(`role:${doc._id.toString()}`, doc, 3600 * 24)
+          )
+        );
+        fetchedRoles.push(...docs);
       }
     }
 
@@ -113,7 +125,6 @@ export const hydrateUserRoles = async (user) => {
     plainUser.assignedRoles = [];
   }
 
-  // Never expose the password or the legacy roles array downstream
   delete plainUser.roles;
   delete plainUser.password;
   return plainUser;

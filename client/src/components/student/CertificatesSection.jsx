@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchEnrolledCourses } from "../../redux/slices/courseSlice";
-import { loadCurrentUser } from "../../redux/slices/authSlice";
 import { Link } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
@@ -708,13 +707,9 @@ export default function Certificates() {
   const user = useSelector((s) => s.auth?.user);
 
   useEffect(() => {
-    // Load user first so earnedCertificates is fresh before we classify
-    // enrolled courses as "in progress" vs "earned". Firing both in parallel
-    // caused a race where fetchEnrolledCourses resolved first, rendering the
-    // page with a stale (pre-award) earnedCertificates array.
-    dispatch(loadCurrentUser()).finally(() => {
-      dispatch(fetchEnrolledCourses());
-    });
+    // earnedCertificates is already in Redux state from the initial auth load.
+    // Just fetch enrolled courses — no need to re-fetch the full user here.
+    dispatch(fetchEnrolledCourses());
   }, [dispatch]);
 
   const copyId = (id) => {

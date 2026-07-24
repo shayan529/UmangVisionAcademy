@@ -59,10 +59,12 @@ export const protect = async (req, res, next) => {
       if (IS_DEV) {
         console.log(`[protect] User cache MISS for ID: ${decoded.id}. Querying DB.`);
       }
-      const dbUser = await User.findById(decoded.id).select("-password");
+      const dbUser = await User.findById(decoded.id).select(
+        "-password -courseProgress -coinRewardKeys -devices -quizSubmissions -purchasedPYQs -resetPasswordToken -resetPasswordExpires"
+      );
       if (dbUser) {
         user = await hydrateUserRoles(dbUser);
-        await setJson(cacheKey, user, 3600); // cache for 1 hour
+        await setJson(cacheKey, user, 3600 * 4); // cache for 4 hours (busted on save)
       }
     }
 
@@ -121,10 +123,12 @@ export const optionalAuth = async (req, res, next) => {
     let user = await getJson(cacheKey);
 
     if (!user) {
-      const dbUser = await User.findById(decoded.id).select("-password");
+      const dbUser = await User.findById(decoded.id).select(
+        "-password -courseProgress -coinRewardKeys -devices -quizSubmissions -purchasedPYQs -resetPasswordToken -resetPasswordExpires"
+      );
       if (dbUser && dbUser.isActive !== false) {
         user = await hydrateUserRoles(dbUser);
-        await setJson(cacheKey, user, 3600); // cache for 1 hour
+        await setJson(cacheKey, user, 3600 * 4); // cache for 4 hours
       }
     }
 

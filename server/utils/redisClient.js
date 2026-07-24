@@ -123,7 +123,7 @@ const normalizeRedisValue = (raw, key) => {
   return raw;
 };
 
-const REDIS_TIMEOUT_MS = 1500; // 1.5 seconds
+const REDIS_TIMEOUT_MS = 600; // 600 ms — fast enough for Upstash REST, avoids blocking protect()
 
 const runWithTimeout = async (promise, fallbackValue = null) => {
   let timeoutId;

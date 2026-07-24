@@ -1,6 +1,49 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api, { API_ENDPOINTS } from "../../config/api";
 
+// ── Persisted user cache ──────────────────────────────────────────────────────
+// Store a slim copy of the user in localStorage so the auth state is
+// immediately available on the next page load without waiting for /users/me.
+// We only store the fields the UI actually needs for routing and display.
+const USER_CACHE_KEY = "auth_user_v2";
+
+const SLIM_FIELDS = [
+  "_id", "name", "email", "phoneNumber", "avatarUrl",
+  "role", "assignedRoles", "coins", "subscription",
+  "selectedClass", "referralCode", "isActive",
+  "enrolledCourses", "teachingCourses", "notificationSettings",
+];
+
+const slimUser = (user) => {
+  if (!user) return null;
+  const out = {};
+  for (const key of SLIM_FIELDS) {
+    if (key in user) out[key] = user[key];
+  }
+  return out;
+};
+
+export const persistUserCache = (user) => {
+  try {
+    if (user) {
+      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(slimUser(user)));
+    } else {
+      localStorage.removeItem(USER_CACHE_KEY);
+    }
+  } catch {
+    // ignore storage errors
+  }
+};
+
+export const loadUserCache = () => {
+  try {
+    const raw = localStorage.getItem(USER_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
 // ── Async thunks ──────────────────────────────────────────────────────────────
 
 export const login = createAsyncThunk(
@@ -48,6 +91,7 @@ export const logoutUser = createAsyncThunk(
       // login starts with a clean AI conversation history.
       try {
         localStorage.removeItem("authToken");
+        localStorage.removeItem(USER_CACHE_KEY);
         localStorage.removeItem("student-ai-chat-state-v1");
         localStorage.removeItem("instructor-ai-chat-state-v1");
         localStorage.removeItem("mobile-chat-role");
@@ -64,11 +108,18 @@ export const logoutUser = createAsyncThunk(
 
 // ── Slice ─────────────────────────────────────────────────────────────────────
 
+// Boot from localStorage so the UI renders immediately on refresh —
+// no spinner, no /users/me round-trip before the page is usable.
+const _cachedUser = loadUserCache();
+const _hasToken = !!localStorage.getItem("authToken");
+
 const initialState = {
-  user: null,
-  loading: true, // ← true on boot so ProtectedRoute shows spinner
+  user: _cachedUser || null,
+  // loading=false when we have a cached user (we background-refresh below).
+  // loading=true only when there is no cached user and we must wait for /me.
+  loading: !_cachedUser && _hasToken,
   error: null,
-  isAuthenticated: false,
+  isAuthenticated: !!(_cachedUser && _hasToken),
 };
 
 // Login/Register responses now come back as { user, token } — the cookie is
@@ -140,9 +191,11 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user ?? action.payload;
+        const user = action.payload.user ?? action.payload;
+        state.user = user;
         state.isAuthenticated = true;
         persistToken(action.payload);
+        persistUserCache(user);
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -156,16 +209,20 @@ const authSlice = createSlice({
       })
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user ?? action.payload;
+        const user = action.payload.user ?? action.payload;
+        state.user = user;
         state.isAuthenticated = true;
         persistToken(action.payload);
+        persistUserCache(user);
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
 
-    // ── Load current user (called on every page load / refresh) ───────────
+    // ── Load current user ─────────────────────────────────────────────────
+    // When a cached user exists this runs silently in the background —
+    // loading stays false so the UI doesn't show a spinner.
     builder
       .addCase(loadCurrentUser.pending, (state) => {
         if (!state.isAuthenticated) {
@@ -175,15 +232,18 @@ const authSlice = createSlice({
       })
       .addCase(loadCurrentUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user ?? action.payload;
+        const user = action.payload.user ?? action.payload;
+        state.user = user;
         state.isAuthenticated = true;
+        persistUserCache(user);
       })
       .addCase(loadCurrentUser.rejected, (state) => {
-        // Session expired or no cookie/token — user must log in again
+        // Session expired or no cookie/token — clear everything
         state.loading = false;
         state.user = null;
         state.isAuthenticated = false;
         clearPersistedToken();
+        persistUserCache(null);
       });
 
     // ── Logout ─────────────────────────────────────────────────────────────
@@ -193,11 +253,13 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       clearPersistedToken();
+      persistUserCache(null);
     });
 
     // ── Profile Updates ──────────────────────────────────────────────────
     builder.addCase("settings/updateProfile/fulfilled", (state, action) => {
       state.user = action.payload;
+      persistUserCache(action.payload);
     });
   },
 });
