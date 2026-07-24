@@ -467,11 +467,12 @@ const Courses = () => {
         )}
 
         {/* Course type toggle */}
-        <div className="mb-8">
-          <label className="block text-white font-semibold mb-3">
+        {/* Course type toggle */}
+        <div className="mb-6">
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
             {t("courses.select_course_type", "Course Type")}
           </label>
-          <div className="inline-flex flex-wrap gap-2 p-1 rounded-xl border border-slate-700 bg-[#111827]">
+          <div className="inline-flex items-center gap-1.5 p-1.5 rounded-2xl border border-slate-800 bg-[#0f172a]/90 backdrop-blur-md shadow-inner max-w-full overflow-x-auto no-scrollbar">
             {[
               { key: TYPE_ALL, label: t("courses.courseTypeAll", "All") },
               { key: TYPE_CLASSES, label: t("courses.courseTypeClasses", "Classes") },
@@ -481,10 +482,11 @@ const Courses = () => {
                 key={opt.key}
                 type="button"
                 onClick={() => handleCourseTypeChange(opt.key)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${selectedCourseType === opt.key
-                  ? "bg-gradient-to-r from-indigo-600 to-cyan-500 text-white shadow-lg shadow-indigo-500/20"
-                  : "text-slate-400 hover:text-white"
-                  }`}
+                className={`px-3.5 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 whitespace-nowrap shrink-0 ${
+                  selectedCourseType === opt.key
+                    ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 text-white shadow-lg shadow-indigo-500/25 border border-cyan-400/30 font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                }`}
               >
                 {opt.label}
               </button>
@@ -493,111 +495,202 @@ const Courses = () => {
         </div>
 
         {/* Filters */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
           {selectedCourseType === TYPE_COMPETITIVE ? (
             <div>
-              <label className="block text-white font-semibold mb-3">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-indigo-300/90 mb-1.5 truncate">
                 {t("courses.select_exam", "Select Exam")}
               </label>
-              <select
-                value={selectedExam}
-                onChange={(e) => setSelectedExam(e.target.value)}
-                className="w-full bg-[#111827] border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500"
-              >
-                <option key={ALL_EXAMS} value={ALL_EXAMS}>
-                  {t("courses.allExams", "All Exams")}
-                </option>
-                {dynamicExams.map((exam) => (
-                  <option key={exam} value={exam}>
-                    {exam}
+              <div className="relative">
+                <select
+                  value={selectedExam}
+                  onChange={(e) => setSelectedExam(e.target.value)}
+                  className="w-full bg-[#111827]/90 border border-slate-700/80 hover:border-indigo-500/50 text-white rounded-xl pl-3 pr-8 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm appearance-none outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition-all cursor-pointer truncate"
+                >
+                  <option key={ALL_EXAMS} value={ALL_EXAMS}>
+                    {t("courses.allExams", "All Exams")}
                   </option>
-                ))}
-              </select>
+                  {dynamicExams.map((exam) => (
+                    <option key={exam} value={exam}>
+                      {exam}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                  <svg className="w-4 h-4 fill-current opacity-70" viewBox="0 0 20 20">
+                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                  </svg>
+                </div>
+              </div>
             </div>
           ) : (
             <div>
-              <label className="block text-white font-semibold mb-3">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-indigo-300/90 mb-1.5 truncate">
                 {t("courses.select_class")}
               </label>
-              <select
-                value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
-                className="w-full bg-[#111827] border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500"
-              >
-                <option key={ALL} value={ALL}>
-                  {t("courses.all")}
-                </option>
-                {sortedClasses.map((cls) => (
-                  <option key={cls} value={cls}>
-                    {cls}
+              <div className="relative">
+                <select
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  className="w-full bg-[#111827]/90 border border-slate-700/80 hover:border-indigo-500/50 text-white rounded-xl pl-3 pr-8 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm appearance-none outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition-all cursor-pointer truncate"
+                >
+                  <option key={ALL} value={ALL}>
+                    {t("courses.all")}
                   </option>
-                ))}
-              </select>
+                  {sortedClasses.map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                  <svg className="w-4 h-4 fill-current opacity-70" viewBox="0 0 20 20">
+                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                  </svg>
+                </div>
+              </div>
             </div>
           )}
 
           <div>
-            <label className="block text-white font-semibold mb-3">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-cyan-300/90 mb-1.5 truncate">
               {t("courses.select_subject")}
             </label>
-            <select
-              value={selectedSubject}
-              onChange={(e) => setSelectedSubject(e.target.value)}
-              className="w-full bg-[#111827] border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500"
-            >
-              <option key={ALL_SUBJECTS} value={ALL_SUBJECTS}>
-                {t("courses.allSubjects")}
-              </option>
-              {dynamicSubjects.map((subject) => (
-                <option key={subject} value={subject}>
-                  {subject}
+            <div className="relative">
+              <select
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+                className="w-full bg-[#111827]/90 border border-slate-700/80 hover:border-cyan-500/50 text-white rounded-xl pl-3 pr-8 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm appearance-none outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition-all cursor-pointer truncate"
+              >
+                <option key={ALL_SUBJECTS} value={ALL_SUBJECTS}>
+                  {t("courses.allSubjects")}
                 </option>
-              ))}
-            </select>
+                {dynamicSubjects.map((subject) => (
+                  <option key={subject} value={subject}>
+                    {subject}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                <svg className="w-4 h-4 fill-current opacity-70" viewBox="0 0 20 20">
+                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                </svg>
+              </div>
+            </div>
           </div>
 
           {selectedCourseType !== TYPE_COMPETITIVE && (
             <div>
-              <label className="block text-white font-semibold mb-3">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-purple-300/90 mb-1.5 truncate">
                 {t("courses.select_board")}
               </label>
-              <select
-                value={selectedBoard}
-                onChange={(e) => setSelectedBoard(e.target.value)}
-                className="w-full bg-[#111827] border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500"
-              >
-                <option key={ALL_BOARDS} value={ALL_BOARDS}>
-                  {t("courses.allBoards")}
-                </option>
-                {dynamicBoards.map((board) => (
-                  <option key={board} value={board}>
-                    {board}
+              <div className="relative">
+                <select
+                  value={selectedBoard}
+                  onChange={(e) => setSelectedBoard(e.target.value)}
+                  className="w-full bg-[#111827]/90 border border-slate-700/80 hover:border-purple-500/50 text-white rounded-xl pl-3 pr-8 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm appearance-none outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition-all cursor-pointer truncate"
+                >
+                  <option key={ALL_BOARDS} value={ALL_BOARDS}>
+                    {t("courses.allBoards")}
                   </option>
-                ))}
-              </select>
+                  {dynamicBoards.map((board) => (
+                    <option key={board} value={board}>
+                      {board}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                  <svg className="w-4 h-4 fill-current opacity-70" viewBox="0 0 20 20">
+                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                  </svg>
+                </div>
+              </div>
             </div>
           )}
 
           <div>
-            <label className="block text-white font-semibold mb-3">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-emerald-300/90 mb-1.5 truncate">
               {t("courses.select_language", "Select Language")}
             </label>
-            <select
-              value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="w-full bg-[#111827] border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500"
-            >
-              <option key={ALL_LANGUAGES} value={ALL_LANGUAGES}>
-                {t("courses.multilanguage", "Multilanguage")}
-              </option>
-              {LANGUAGE_OPTIONS.map((lang) => (
-                <option key={lang} value={lang}>
-                  {t(`courses.language${lang}`, lang)}
+            <div className="relative">
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="w-full bg-[#111827]/90 border border-slate-700/80 hover:border-emerald-500/50 text-white rounded-xl pl-3 pr-8 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm appearance-none outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition-all cursor-pointer truncate"
+              >
+                <option key={ALL_LANGUAGES} value={ALL_LANGUAGES}>
+                  {t("courses.multilanguage", "Multilanguage")}
                 </option>
-              ))}
-            </select>
+                {LANGUAGE_OPTIONS.map((lang) => (
+                  <option key={lang} value={lang}>
+                    {t(`courses.language${lang}`, lang)}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                <svg className="w-4 h-4 fill-current opacity-70" viewBox="0 0 20 20">
+                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Active Filters Bar */}
+        {(selectedCourseType !== TYPE_ALL || selectedClass !== ALL || selectedExam !== ALL_EXAMS || selectedSubject !== ALL_SUBJECTS || selectedBoard !== ALL_BOARDS || selectedLanguage !== ALL_LANGUAGES) && (
+          <div className="flex flex-wrap items-center gap-2 mb-8 p-3 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs">
+            <span className="text-slate-400 font-semibold mr-1">Active:</span>
+            {selectedCourseType !== TYPE_ALL && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-medium">
+                {selectedCourseType}
+                <button onClick={() => handleCourseTypeChange(TYPE_ALL)} className="hover:text-white font-bold">✕</button>
+              </span>
+            )}
+            {selectedClass !== ALL && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
+                Class: {selectedClass}
+                <button onClick={() => setSelectedClass(ALL)} className="hover:text-white font-bold">✕</button>
+              </span>
+            )}
+            {selectedExam !== ALL_EXAMS && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
+                Exam: {selectedExam}
+                <button onClick={() => setSelectedExam(ALL_EXAMS)} className="hover:text-white font-bold">✕</button>
+              </span>
+            )}
+            {selectedSubject !== ALL_SUBJECTS && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 font-medium">
+                Subject: {selectedSubject}
+                <button onClick={() => setSelectedSubject(ALL_SUBJECTS)} className="hover:text-white font-bold">✕</button>
+              </span>
+            )}
+            {selectedBoard !== ALL_BOARDS && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-medium">
+                Board: {selectedBoard}
+                <button onClick={() => setSelectedBoard(ALL_BOARDS)} className="hover:text-white font-bold">✕</button>
+              </span>
+            )}
+            {selectedLanguage !== ALL_LANGUAGES && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 font-medium">
+                Lang: {selectedLanguage}
+                <button onClick={() => setSelectedLanguage(ALL_LANGUAGES)} className="hover:text-white font-bold">✕</button>
+              </span>
+            )}
+            <button
+              onClick={() => {
+                handleCourseTypeChange(TYPE_ALL);
+                setSelectedClass(ALL);
+                setSelectedExam(ALL_EXAMS);
+                setSelectedSubject(ALL_SUBJECTS);
+                setSelectedBoard(ALL_BOARDS);
+                setSelectedLanguage(ALL_LANGUAGES);
+              }}
+              className="text-cyan-400 hover:text-cyan-300 font-bold underline ml-auto text-xs"
+            >
+              Reset All
+            </button>
+          </div>
+        )}
 
         {/* Grid */}
         {loading ? (
