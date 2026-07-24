@@ -436,7 +436,7 @@ const Signup = () => {
   };
 
   const inputCls = (name) =>
-    `w-full border rounded-2xl px-5 py-3.5 text-white text-sm outline-none transition-all duration-300 placeholder-slate-500 bg-white/5 ${
+    `w-full border rounded-2xl px-5 py-3.5 text-white text-sm outline-none transition-all duration-300 placeholder-slate-500 bg-[#1e293b] ${
       focused === name
         ? "border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]"
         : "border-white/10 hover:border-white/20"
@@ -850,9 +850,9 @@ const Signup = () => {
                   </label>
 
                   <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
-                    <div className="flex gap-2 flex-1">
+                    <div className="flex gap-2 flex-1 min-w-0">
                       <div
-                        className="border border-white/10 rounded-2xl px-5 py-3.5 bg-white/5 text-slate-400 text-sm font-semibold flex items-center justify-center transition-all duration-300"
+                        className="w-16 sm:w-20 shrink-0 border border-white/10 rounded-2xl px-2.5 sm:px-3 py-3.5 bg-[#1e293b] text-white text-sm font-bold flex items-center justify-center transition-all duration-300"
                         style={
                           focused === "countryCode"
                             ? {
@@ -865,7 +865,7 @@ const Signup = () => {
                         +91
                       </div>
 
-                      <div className="relative flex-1">
+                      <div className="relative flex-1 min-w-0">
                         <input
                           type="tel"
                           name="phoneNumber"
@@ -879,7 +879,7 @@ const Signup = () => {
                           disabled={phoneVerified}
                           className={
                             inputCls("phoneNumber") +
-                            " pr-10 disabled:opacity-50"
+                            " px-3.5 sm:px-5 pr-10 disabled:opacity-50 flex-1 min-w-0"
                           }
                         />
                         {phoneVerified && (

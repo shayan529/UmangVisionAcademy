@@ -48,7 +48,8 @@ export default function MobileBottomBar() {
         {uniqueNavItems.map((item) => {
           const isActive =
             pathname === item.path ||
-            (item.path !== "/" && pathname.startsWith(item.path));
+            (item.path !== "/" && pathname.startsWith(item.path)) ||
+            (item.path === "/mobile/chat" && pathname.includes("ai-tutor"));
           const Icon = item.icon;
 
           return (

@@ -13,6 +13,7 @@ import {
 } from "../../redux/slices/aiTutorSlice.js";
 import { useTranslation } from "react-i18next";
 import { API_BASE_URL } from "../../config/api.js";
+import MobileChat from "../mobile/MobileChat";
 
 // ── Theme tokens ─────────────────────────────────────────────────────────────
 const DARK = {
@@ -443,6 +444,10 @@ export default function AITutor() {
   );
   const { t: translate, i18n } = useTranslation();
   const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return <MobileChat />;
+  }
 
   const [dark, setDark] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -1448,46 +1453,10 @@ export default function AITutor() {
                       style={{
                         fontSize: isMobile ? 13 : 14,
                         color: t.textMuted,
-                        marginBottom: isMobile ? 20 : 28,
+                        marginBottom: isMobile ? 4 : 28,
                       }}
                     >
                       {translate("aiTutor.emptySubtitle")}
-                    </div>
-                    {/* Quick prompts — 2-col on all sizes */}
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        gap: isMobile ? 6 : 8,
-                        maxWidth: isMobile ? "100%" : 520,
-                        margin: "0 auto",
-                      }}
-                    >
-                      {translate("aiTutor.quickPrompts", {
-                        returnObjects: true,
-                      }).map((p) => (
-                        <button
-                          key={p}
-                          className="prompt-card"
-                          onClick={() => sendMessage(p)}
-                          disabled={streaming}
-                          style={{
-                            padding: isMobile ? "10px 10px" : "12px 14px",
-                            borderRadius: 12,
-                            border: `1px solid ${t.border}`,
-                            background: t.bgCard,
-                            color: t.textMuted,
-                            cursor: "pointer",
-                            fontSize: isMobile ? 11 : 12,
-                            textAlign: "left",
-                            lineHeight: 1.5,
-                            transition: "all .15s",
-                            fontFamily: "inherit",
-                          }}
-                        >
-                          {p}
-                        </button>
-                      ))}
                     </div>
                   </div>
                 )}

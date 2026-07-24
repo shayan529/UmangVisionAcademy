@@ -421,11 +421,14 @@ const PasswordResetModal = ({ onClose }) => {
                   <div
                     style={{
                       ...inputStyle,
-                      width: 100,
+                      width: 70,
+                      flexShrink: 0,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       background: "#1e293b",
+                      color: "#ffffff",
+                      fontWeight: 700,
                       userSelect: "none",
                     }}
                   >
@@ -442,7 +445,7 @@ const PasswordResetModal = ({ onClose }) => {
                     onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
                     placeholder={t("passwordReset.mobilePlaceholder")}
                     maxLength={10}
-                    style={{ ...inputStyle, flex: 1 }}
+                    style={{ ...inputStyle, flex: 1, minWidth: 0, paddingLeft: 14, paddingRight: 14 }}
                     onFocus={(e) =>
                       (e.target.style.borderColor = "rgba(56,189,248,0.6)")
                     }
@@ -960,7 +963,7 @@ const Login = () => {
   };
 
   const inputCls = (name) =>
-    `w-full bg-white/5 border rounded-2xl px-5 py-3.5 text-white text-sm outline-none transition-all duration-300 placeholder-slate-500 ${
+    `w-full bg-[#1e293b] border rounded-2xl px-5 py-3.5 text-white text-sm outline-none transition-all duration-300 placeholder-slate-500 ${
       focused === name
         ? "border-cyan-400/70 shadow-[0_0_0_3px_rgba(34,211,238,0.1)]"
         : "border-white/10 hover:border-white/20"
@@ -1327,7 +1330,7 @@ const Login = () => {
                   </label>
                   <div className="flex gap-2">
                     <div
-                      className="w-28 rounded-2xl px-3 py-3.5 bg-[#1e293b] text-white text-sm flex items-center justify-center border border-white/10"
+                      className="w-16 sm:w-20 shrink-0 rounded-2xl px-2.5 sm:px-3 py-3.5 bg-[#1e293b] text-white text-sm font-bold flex items-center justify-center border border-white/10"
                       style={
                         focused === "countryCode"
                           ? {
@@ -1356,7 +1359,7 @@ const Login = () => {
                       placeholder={t("auth.mobilePlaceholder")}
                       required
                       maxLength={10}
-                      className={inputCls("phoneNumber") + " flex-1"}
+                      className={inputCls("phoneNumber") + " flex-1 min-w-0 px-3.5 sm:px-5"}
                     />
                   </div>
                 </div>
