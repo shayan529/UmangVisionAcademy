@@ -1,27 +1,23 @@
-// src/utils/permissions.js
+// server/utils/permissions.js
 //
-// Single source of truth for permission checks on the frontend.
-// Mirrors the backend's requirePermission logic exactly (see
-// middleware/requirePermission.js) so the UI and API never disagree about
-// who can do what.
+// Server-side permission check helpers.
+// Mirrors the logic in middleware/permission.middleware.js and
+// server/utils/userRoles.js so any code that imports this file
+// stays in sync with the single-role refactor.
+
+import { hasBaseRole, hasPermissionGrant } from "./userRoles.js";
 
 /**
- * @param {object} user - the logged-in user (from redux state.auth.user)
- * @param {string} moduleName - e.g. "courses", "users", "payments", "moderation"
- * @param {string} actionName - e.g. "view", "create", "edit", "delete", "refund"...
+ * Returns true if the user has the given permission on the given module.
+ * Admins implicitly have every permission.
+ *
+ * @param {object} user - hydrated user object (user.role + user.assignedRoles[])
+ * @param {string} moduleName - e.g. "courses", "users", "payments"
+ * @param {string} actionName - e.g. "view", "create", "edit", "delete"
  */
 export const hasPermission = (user, moduleName, actionName = "view") => {
   if (!user) return false;
-  if (user.roles?.some((role) => role === "admin")) return true;
-  return (
-    user.roles?.some(
-      (role) =>
-        typeof role === "object" &&
-        role.permissions?.some(
-          (p) => p.module === moduleName && p.actions?.includes(actionName),
-        ),
-    ) || false
-  );
+  return hasPermissionGrant(user, moduleName, actionName);
 };
 
 /** True if the user has ANY of the given [module, action] pairs. */

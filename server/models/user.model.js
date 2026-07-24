@@ -24,11 +24,23 @@ const userSchema = new Schema(
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
     },
-    roles: {
-      type: [Schema.Types.Mixed],
-      default: ["student"],
+    // Single role per user. Custom/staff permissions are handled separately
+    // through the assignedRoles array of Role ObjectIds below.
+    role: {
+      type: String,
+      enum: ["student", "instructor", "admin", "staff"],
+      default: "student",
+      required: true,
     },
-    // Independent of `roles` above — a user can be `roles: ["instructor"]`
+    // Custom permission roles assigned by admin (staff panel). These are Role
+    // ObjectIds that carry a permissions matrix; they do NOT change the user's
+    // base role — a user is still "staff" (or whatever their role is) but can
+    // also have fine-grained module permissions via these documents.
+    assignedRoles: {
+      type: [Schema.Types.ObjectId],
+      ref: "Role",
+      default: [],
+    },
     bio: {
       type: String,
       trim: true,
@@ -227,7 +239,7 @@ const userSchema = new Schema(
   },
 );
 
-userSchema.index({ roles: 1, coins: -1, updatedAt: -1 });
+userSchema.index({ role: 1, coins: -1, updatedAt: -1 });
 
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) {

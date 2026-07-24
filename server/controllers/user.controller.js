@@ -8,7 +8,6 @@ import {
   hasBaseRole,
   hydrateUserRoles,
   hydrateUsersRoles,
-  mergeBaseAndCustomRoles,
 } from "../utils/userRoles.js";
 import Course from "../models/courses.model.js";
 import { invalidateCourseCache } from "./course.controller.js";
@@ -247,7 +246,7 @@ export const RegisterUser = async (req, res) => {
       name,
       ...(email && { email }),
       password,
-      roles: [normalizedRole],
+      role: normalizedRole,
       city: city ? city.charAt(0).toUpperCase() + city.slice(1) : city,
       state,
       phoneNumber: normalizedPhoneNumber,
@@ -332,7 +331,7 @@ export const LoginUser = async (req, res) => {
     // ── Daily login coin reward ───────────────────────────────────────────────
     // Award 1 coin per calendar day (IST). Only students earn login coins.
     let loginCoinAwarded = false;
-    const isStudent = user.roles?.includes("student");
+    const isStudent = user.role === "student";
     const now = new Date();
 
     if (isStudent) {
@@ -401,7 +400,7 @@ export const getUsers = async (req, res) => {
   try {
     const query = {};
     if (req.query.role) {
-      query.roles = req.query.role;
+      query.role = req.query.role;
     }
     const users = await User.find(query).select("-password");
     res.json(await hydrateUsersRoles(users));
@@ -541,7 +540,7 @@ export const bulkImportStudents = async (req, res) => {
           ...(normalizedEmail ? { email: normalizedEmail } : {}),
           phoneNumber: cleanPhone,
           password: finalPassword,
-          roles: [targetRole],
+          role: targetRole,
           ...(payload.city ? { city: payload.city } : {}),
           ...(payload.state ? { state: payload.state } : {}),
           ...(payload.pincode ? { pincode: payload.pincode } : {}),
@@ -625,7 +624,7 @@ export const updateUser = async (req, res) => {
     const isAdmin = hasBaseRole(req.user, "admin");
 
     if (!isAdmin) {
-      delete updates.roles;
+      delete updates.role;
       delete updates.assignedRoles;
       delete updates.isActive;
       delete updates.password;
@@ -647,31 +646,9 @@ export const updateUser = async (req, res) => {
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { role } = req.query;
 
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
-
-    if (role) {
-      const otherRoles = user.roles.filter((r) => {
-        if (typeof r === "string") {
-          return r !== role;
-        }
-        // Keep custom role objects
-        return true;
-      });
-
-      if (otherRoles.length > 0) {
-        user.roles = otherRoles;
-        await user.save();
-        const hydrated = await hydrateUserRoles(user);
-        return res.json({
-          deleted: false,
-          user: hydrated,
-          message: `Role ${role} removed`,
-        });
-      }
-    }
 
     await User.findByIdAndDelete(id);
     res.json({ deleted: true, message: "User deleted" });
@@ -704,9 +681,7 @@ export const createStudentByAdmin = async (req, res) => {
     email,
     password,
     role,
-    roles,
     assignedRoles,
-    customRoleIds,
     city,
     state,
     phoneNumber,
@@ -738,15 +713,10 @@ export const createStudentByAdmin = async (req, res) => {
       }
     }
 
-    const allowedRoles = ["student", "instructor", "admin"];
+    const allowedRoles = ["student", "instructor", "admin", "staff"];
     const normalizedRole = allowedRoles.includes(role) ? role : "student";
-    const finalBaseRoles =
-      Array.isArray(roles) && roles.length > 0
-        ? roles.filter((r) => allowedRoles.includes(r))
-        : [normalizedRole];
-    const finalCustomRoleIds = Array.isArray(customRoleIds)
-      ? customRoleIds
-      : assignedRoles || [];
+    // assignedRoles: optional array of custom Role ObjectIds for staff permissions
+    const finalAssignedRoles = Array.isArray(assignedRoles) ? assignedRoles : [];
 
     const referrer = referralCodeParam
       ? await User.findOne({
@@ -758,7 +728,8 @@ export const createStudentByAdmin = async (req, res) => {
       name,
       ...(email && { email }),
       password,
-      roles: mergeBaseAndCustomRoles(finalBaseRoles, finalCustomRoleIds),
+      role: normalizedRole,
+      assignedRoles: finalAssignedRoles,
       city: city ? city.charAt(0).toUpperCase() + city.slice(1) : "",
       state: state || "",
       phoneNumber: normalizedPhoneNumber,
@@ -854,14 +825,14 @@ export const getInstructorPublicProfile = async (req, res) => {
     const { id } = req.params;
 
     const instructor = await User.findById(id).select(
-      "name bio specialization city state createdAt roles avatarUrl",
+      "name bio specialization city state createdAt role avatarUrl",
     );
     if (!instructor) {
       return res.status(404).json({ message: "Instructor not found." });
     }
 
     const hydrated = await hydrateUserRoles(instructor);
-    if (!hydrated || !hydrated.roles?.includes("instructor")) {
+    if (!hydrated || hydrated.role !== "instructor") {
       return res.status(404).json({ message: "Instructor not found." });
     }
 
@@ -1012,7 +983,7 @@ export const unflagUser = async (req, res) => {
 // Requires student_assignment:view permission.
 export const getStudentAssignments = async (req, res) => {
   try {
-    const students = await User.find({ roles: { $in: ["student"] } })
+    const students = await User.find({ role: "student" })
       .select("name email phoneNumber enrolledCourses")
       .populate("enrolledCourses", "title instructor")
       .lean();
@@ -1036,7 +1007,7 @@ export const assignInstructorToCourse = async (req, res) => {
 
     const instructor = await User.findOne({
       _id: instructorId,
-      roles: { $in: ["instructor"] },
+      role: "instructor",
     }).select("name");
     if (!instructor) return res.status(404).json({ message: "Instructor not found." });
 

@@ -139,6 +139,8 @@ export const optionalAuth = async (req, res, next) => {
 };
 
 // ── authorizeRoles ────────────────────────────────────────────────────────────
+// Middleware factory. Pass any number of base role names; the request proceeds
+// if the authenticated user's single role matches any of them.
 export const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     const hasRole = roles.some((r) => hasBaseRole(req.user, r));
@@ -160,12 +162,12 @@ export const adminOnly = authorizeRoles("admin");
 // Grants access if the user is a full admin, OR if any of their assignedRoles
 // grants the given action on the given module. This mirrors the frontend's
 // hasPermission() helper (used in StaffDashboard.jsx / StaffSidebar.jsx)
-// exactly, so a Staff member who can see a tab in the sidebar will actually
+// exactly, so a staff member who can see a tab in the sidebar will actually
 // be allowed to hit the API routes that tab depends on.
 //
-// Must run after `protect`, since it reads req.user.assignedRoles — protect
-// already calls .populate("assignedRoles") so role.permissions is available
-// here rather than just a bare ObjectId.
+// Must run after `protect`. hydrateUserRoles (called inside protect) already
+// populates req.user.assignedRoles into full Role documents, so
+// role.permissions is available here rather than just a bare ObjectId.
 export const requirePermission = (moduleName, actionName = "view") => {
   return (req, res, next) => {
     const hasGrant = hasPermissionGrant(req.user, moduleName, actionName);

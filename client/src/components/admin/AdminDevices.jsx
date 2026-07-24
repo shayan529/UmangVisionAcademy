@@ -107,10 +107,10 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
     }));
   };
 
-  const currentIsAdmin = currentUser?.roles?.includes("admin");
+  const currentIsAdmin = currentUser?.role === "admin";
   const visibleUsers = currentIsAdmin
     ? users
-    : users.filter((u) => !u.roles?.includes("admin"));
+    : users.filter((u) => u.role !== "admin");
 
   const filteredUsers = visibleUsers.filter((u) => {
     // 1. Filter by search query
@@ -122,31 +122,26 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
       u.state?.toLowerCase().includes(ql) ||
       u.pincode?.toLowerCase().includes(ql) ||
       u.phoneNumber?.toLowerCase().includes(ql) ||
-      u.roles?.some((role) => {
-        if (typeof role === "string") return role.toLowerCase().includes(ql);
-        // Custom role objects have a .name property
-        if (typeof role === "object" && role?.name) return role.name.toLowerCase().includes(ql);
-        return false;
-      });
+      u.role?.toLowerCase().includes(ql);
 
     // 2. Filter by role
     if (roleFilter === "students") {
-      return matchesQuery && u.roles?.includes("student");
+      return matchesQuery && u.role === "student";
     }
     if (roleFilter === "instructors") {
-      return matchesQuery && u.roles?.includes("instructor");
+      return matchesQuery && u.role === "instructor";
     }
     if (roleFilter === "admins") {
-      return matchesQuery && u.roles?.includes("admin");
+      return matchesQuery && u.role === "admin";
     }
     return matchesQuery;
   });
 
   const studentsCount = visibleUsers.filter((u) =>
-    u.roles?.includes("student"),
+    u.role === "student",
   ).length;
   const instructorsCount = visibleUsers.filter((u) =>
-    u.roles?.includes("instructor"),
+    u.role === "instructor",
   ).length;
 
   return (
@@ -231,42 +226,17 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
                     <p className="text-sm font-bold text-slate-200 truncate">
                       {user.name}
                     </p>
-                    {user.roles?.map((r, i) => {
-                      // Post-migration, user.roles is a MIXED array: base
-                      // role strings ("student", "admin") alongside embedded
-                      // custom-role objects ({ _id, name, permissions, ... }).
-                      // Rendering `r` directly crashes React the moment a
-                      // user has a custom role assigned — render the
-                      // object's .name instead, and skip a bare string key.
-                      if (r && typeof r === "object") {
-                        return (
-                          <span
-                            key={r._id || `custom-${i}`}
-                            className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-violet-500/10 border-violet-500/20 text-violet-400"
-                          >
-                            {r.name}
-                          </span>
-                        );
-                      }
-
-                      let roleClass =
-                        "bg-indigo-500/10 border-indigo-500/20 text-indigo-400";
-                      if (r === "instructor") {
-                        roleClass =
-                          "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
-                      } else if (r === "admin") {
-                        roleClass =
-                          "bg-amber-500/10 border-amber-500/20 text-amber-400";
-                      }
+                    {user.role && (() => {
+                      let roleClass = "bg-indigo-500/10 border-indigo-500/20 text-indigo-400";
+                      if (user.role === "instructor") roleClass = "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
+                      else if (user.role === "admin") roleClass = "bg-amber-500/10 border-amber-500/20 text-amber-400";
+                      else if (user.role === "staff") roleClass = "bg-violet-500/10 border-violet-500/20 text-violet-400";
                       return (
-                        <span
-                          key={r}
-                          className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${roleClass}`}
-                        >
-                          {r}
+                        <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${roleClass}`}>
+                          {user.role}
                         </span>
                       );
-                    })}
+                    })()}
                   </div>
                   <p className="text-xs text-slate-500 truncate mt-0.5">
                     {user.email}

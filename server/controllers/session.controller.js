@@ -142,9 +142,7 @@ export const getSessionById = async (req, res) => {
       return res.json(session);
     }
 
-    const isInstructor =
-      req.user.role === "instructor" ||
-      (req.user.roles && req.user.roles.includes("instructor"));
+    const isInstructor = req.user.role === "instructor";
 
     if (isInstructor) {
       const session = await Session.findOne({

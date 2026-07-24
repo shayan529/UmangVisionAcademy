@@ -1,13 +1,12 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { getCustomRoles, hasBaseRole } from "../../utils/permissions";
+import { hasBaseRole, hasAssignedPermissions } from "../../utils/permissions";
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
-
   const location = useLocation();
 
-  // Wait for auth check to finish
+  // Wait for auth check to complete
   if (loading) {
     return (
       <div
@@ -33,15 +32,8 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
           />
           <p style={{ color: "#64748b", fontSize: 14 }}>Loading...</p>
         </div>
-
         <style>
-          {`
-            @keyframes spin {
-              to {
-                transform: rotate(360deg);
-              }
-            }
-          `}
+          {`@keyframes spin { to { transform: rotate(360deg); } }`}
         </style>
       </div>
     );
@@ -52,48 +44,31 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // A custom role (e.g. "HR Manager", "Payroll Admin") is detected by
-  // PRESENCE of an embedded role object in user.roles — not by whether any
-  // of its granted permissions happen to be non-empty. This must stay in
-  // sync with the same check in Login.jsx's post-login redirect, or a
-  // custom-role user can end up bounced to a different dashboard by the
-  // route guard than the one they were sent to right after logging in.
-  const isAdmin = hasBaseRole(user, "admin");
-  const isCustomRoleUser = !isAdmin && getCustomRoles(user).length > 0;
-
-  // Base role strings only (filters out embedded custom-role objects).
-  const baseRoles = (user?.roles || []).filter(
-    (role) => typeof role === "string",
-  );
-
-  // User has no role of any kind — neither a base role string nor a
-  // custom role object. Nothing to grant access with.
-  if (baseRoles.length === 0 && !isCustomRoleUser) {
+  // Every user must have a base role string
+  if (!user.role && !Array.isArray(user.roles)) {
     return <Navigate to="/login" replace />;
   }
 
+  // Determine role membership for redirect fallback
+  const isAdmin = hasBaseRole(user, "admin");
+  const isStaff = hasBaseRole(user, "staff");
+  const isInstructor = hasBaseRole(user, "instructor");
+  // A staff user who also has assigned permission-roles gets staff dashboard
+  const isPermissionStaff = isStaff && hasAssignedPermissions(user);
+
   // Check access.
-  // A custom-role user (who isn't also a base admin) is restricted to the
-  // "staff" route ONLY — even if their account also carries a base role
-  // string like "student" or "instructor" from how the account was
-  // originally created. Without this, a custom-role user would pass the
-  // base-role check below and be allowed onto /student-dashboard or
-  // /instructor-dashboard directly, bypassing the staff panel entirely.
+  // "staff" in allowedRoles matches any user whose role is "staff"
+  // (with or without assigned permission-roles).
   const hasAccess =
     allowedRoles.length === 0 ||
-    allowedRoles.some(
-      (allowedRole) =>
-        allowedRole === "staff"
-          ? isCustomRoleUser
-          : hasBaseRole(user, allowedRole),
-    );
+    allowedRoles.some((allowedRole) => hasBaseRole(user, allowedRole));
 
   if (!hasAccess) {
     const fallback = isAdmin
       ? "/admin-dashboard"
-      : isCustomRoleUser
+      : isPermissionStaff
         ? "/staff-dashboard"
-        : hasBaseRole(user, "instructor")
+        : isInstructor
           ? "/instructor-dashboard"
           : "/student-dashboard";
 

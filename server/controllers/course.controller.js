@@ -10,7 +10,7 @@ import {
   setJson,
 } from "../utils/redisClient.js";
 import { hasBaseRole, hasPermissionGrant } from "../utils/userRoles.js";
-import { sendCourseEnrollmentEmail, sendNewCourseAlertEmail } from "../utils/Mailer.js";
+import { sendCourseEnrollmentEmail } from "../utils/Mailer.js";
 import { computeInstructorRating } from "../utils/instructorRating.js";
 
 // ── notes sanitizer ────────────────────────────────────────────────────────────
@@ -349,41 +349,7 @@ export const approveCourse = async (req, res) => {
     if (!course) return res.status(404).json({ message: "Course not found" });
     await invalidateCourseCache(course._id);
 
-    // If newly approved, send email notifications to students enrolled in this instructor's other courses
-    if (!wasAlreadyApproved) {
-      // Find other courses taught by this instructor
-      const instructorCourses = await Course.find({
-        instructor: course.instructor?._id,
-        _id: { $ne: course._id },
-      }).select("students");
 
-      // Extract unique student IDs
-      const studentIds = [...new Set(instructorCourses.flatMap(c => c.students.map(id => id.toString())))];
-
-      if (studentIds.length > 0) {
-        // Find these students, check if they have newCourse notifications enabled
-        const students = await User.find({
-          _id: { $in: studentIds },
-          "notificationSettings.newCourse": { $ne: false },
-          email: { $exists: true, $ne: "" },
-        }).select("email name");
-
-        const instructorName = course.instructor?.name || "Instructor";
-
-        // Send email to each student
-        for (const student of students) {
-          sendNewCourseAlertEmail(
-            student.email,
-            student.name,
-            instructorName,
-            course.title,
-            course.summary,
-            course._id,
-            student._id
-          ).catch(err => console.error(`Failed to send new course alert to ${student.email}:`, err));
-        }
-      }
-    }
 
     res.json({
       success: true,

@@ -11,7 +11,7 @@ import {
   checkAndAwardAchievements,
   fetchAchievements,
 } from "../../redux/slices/achievementSlice";
-import { getCustomRoles, hasBaseRole } from "../../utils/permissions";
+import { getAssignedRoles, hasBaseRole } from "../../utils/permissions";
 
 /* ── Animated particle canvas ── */
 const ParticleCanvas = () => {
@@ -84,7 +84,7 @@ const ParticleCanvas = () => {
 
 const getPostLoginPath = (user, from) => {
   const isAdmin = hasBaseRole(user, "admin");
-  const isStaff = !isAdmin && getCustomRoles(user).length > 0;
+  const isStaff = !isAdmin && getAssignedRoles(user).length > 0;
   const isInstructor =
     !isAdmin && !isStaff && hasBaseRole(user, "instructor");
 

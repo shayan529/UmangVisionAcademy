@@ -93,8 +93,8 @@ export const approveApplication = async (req, res) => {
       return res.status(404).json({ message: "Application not found" });
 
     const user = await User.findById(application.user._id);
-    if (user && !user.roles.includes("instructor")) {
-      user.roles.push("instructor");
+    if (user && user.role !== "instructor") {
+      user.role = "instructor";
       await user.save();
     }
 
@@ -116,9 +116,10 @@ export const rejectApplication = async (req, res) => {
     if (!application)
       return res.status(404).json({ message: "Application not found" });
 
+    // Demote back to student if the user's role is currently instructor
     const user = await User.findById(application.user._id);
-    if (user && user.roles.includes("instructor")) {
-      user.roles = user.roles.filter((role) => role !== "instructor");
+    if (user && user.role === "instructor") {
+      user.role = "student";
       await user.save();
     }
 
@@ -144,16 +145,15 @@ export const updateApplicationStatus = async (req, res) => {
     // If approved, update user role
     if (status === "approved") {
       const user = await User.findById(application.user._id);
-      if (user && !user.roles.includes("instructor")) {
-        user.roles.push("instructor");
+      if (user && user.role !== "instructor") {
+        user.role = "instructor";
         await user.save();
       }
     } else if (status === "rejected") {
-      // Optional: remove role if rejected and previously approved,
-      // but usually rejected means they just don't get it.
+      // Demote back to student if the user's role is currently instructor
       const user = await User.findById(application.user._id);
-      if (user && user.roles.includes("instructor")) {
-        user.roles = user.roles.filter((role) => role !== "instructor");
+      if (user && user.role === "instructor") {
+        user.role = "student";
         await user.save();
       }
     }

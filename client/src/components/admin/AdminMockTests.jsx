@@ -504,11 +504,7 @@ export default function AdminMockTests({ showToast }) {
       // The users endpoint may return all users — filter for instructors
       const all = res.data.users || res.data || [];
       setInstructors(
-        all.filter((u) =>
-          Array.isArray(u.roles)
-            ? u.roles.includes("instructor") || u.roles.some((r) => r?.name === "instructor")
-            : u.role === "instructor",
-        ),
+        all.filter((u) => u.role === "instructor"),
       );
     } catch {
       // Non-fatal — instructor list just won't populate

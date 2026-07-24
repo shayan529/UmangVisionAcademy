@@ -6,7 +6,7 @@ import { toast } from "react-hot-toast";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
-import { getCustomRoles, hasBaseRole } from "../../utils/permissions";
+import { getAssignedRoles, hasBaseRole } from "../../utils/permissions";
 import { getCitiesForState, INDIA_STATES } from "../../data/indiaLocations";
 
 /* ── Animated particle canvas ── */
@@ -102,7 +102,7 @@ const Signup = () => {
   useEffect(() => {
     if (isAuthenticated && user) {
       const isAdmin = hasBaseRole(user, "admin");
-      const isStaff = !isAdmin && getCustomRoles(user).length > 0;
+      const isStaff = !isAdmin && getAssignedRoles(user).length > 0;
       const isInstructor =
         !isAdmin && !isStaff && hasBaseRole(user, "instructor");
 

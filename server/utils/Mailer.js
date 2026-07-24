@@ -357,27 +357,7 @@ export const sendSubscriptionCancellationEmail = async (email, name, planName, u
   );
 };
 
-export const sendNewCourseAlertEmail = async (email, studentName, instructorName, courseTitle, courseSummary, courseId, userId = null) => {
-  const token = await getOrCreateUnsubscribeToken(userId);
-  const unsubscribeUrl = buildUnsubscribeUrl(token);
-  const clientUrl = process.env.CLIENT_URL || 'https://umang-vision-academy.vercel.app';
-  return sendThemedEmail(
-    email,
-    `New Course Alert: ${courseTitle}`,
-    'New Course Published!',
-    `<p>Hi ${studentName},</p>
-     <p>Good news! Instructor <strong style="color:#e2e8f0;">${instructorName}</strong> has just published a new course: <strong style="color:#38bdf8;">${courseTitle}</strong>.</p>
-     ${courseSummary ? `<p>${courseSummary}</p>` : ''}
-     <p>Since you are enrolled in one of their courses, we wanted to let you know. Click the button below to check it out!</p>
-     <div style="text-align:center;margin:20px 0;">
-       <a href="${clientUrl}/courses/${courseId}"
-          style="background:linear-gradient(135deg,#7c3aed,#06b6d4);color:white;padding:10px 20px;text-decoration:none;border-radius:8px;font-weight:bold;display:inline-block;">
-         View Course
-       </a>
-     </div>`,
-    unsubscribeUrl,
-  );
-};
+
 
 export const sendLiveClassReminderEmail = async (email, studentName, instructorName, sessionTitle, date, time, url, userId = null) => {
   const token = await getOrCreateUnsubscribeToken(userId);

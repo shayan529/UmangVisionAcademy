@@ -88,7 +88,7 @@ const BecomeInstructor = () => {
 
   // Already an instructor — navigate to instructor dashboard
   useEffect(() => {
-    if (user?.roles?.includes("instructor"))
+    if (user?.role === "instructor")
       navigate("/instructor-dashboard", { replace: true });
   }, [user, navigate]);
 

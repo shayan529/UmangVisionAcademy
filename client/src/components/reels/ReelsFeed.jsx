@@ -20,7 +20,7 @@ const ReelsFeed = () => {
     <div className="min-h-screen p-4 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Reels</h1>
-        {user?.roles?.includes("instructor") && (
+        {user?.role === "instructor" && (
           <button
             onClick={() => setUploadOpen(true)}
             className="px-3 py-2 rounded-xl bg-purple-600 text-white"

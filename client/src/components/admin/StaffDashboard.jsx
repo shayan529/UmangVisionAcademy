@@ -15,7 +15,7 @@ import {
   replaceCurrentUser,
 } from "../../redux/slices/authSlice";
 import {
-  getCustomRoles,
+  getAssignedRoles,
   hasAnyPermission,
   hasBaseRole,
   hasPermission,
@@ -54,7 +54,7 @@ const StaffSidebar = ({
   const hasInstructorRole = hasBaseRole(user, "instructor");
   const hasStudentRole = hasBaseRole(user, "student");
   const hasAdminRole = hasBaseRole(user, "admin");
-  const hasCustomRole = getCustomRoles(user).length > 0;
+  const hasCustomRole = getAssignedRoles(user).length > 0;
   const isMultiRole =
     hasInstructorRole && hasStudentRole && !hasAdminRole && !hasCustomRole;
 
@@ -77,7 +77,7 @@ const StaffSidebar = ({
       path: "/admin-dashboard",
     });
   }
-  getCustomRoles(user).forEach((role) => {
+  getAssignedRoles(user).forEach((role) => {
     dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
   });
 
@@ -163,7 +163,7 @@ const StaffSidebar = ({
 
   const username = user?.name || user?.email?.split("@")[0] || "Staff Member";
   const customRoleNames =
-    getCustomRoles(user)
+    getAssignedRoles(user)
       .map((r) => r.name)
       .join(", ") || "Staff";
 

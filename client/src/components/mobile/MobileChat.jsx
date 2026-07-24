@@ -442,10 +442,7 @@ export default function MobileChat() {
 
   const [activeRole, setActiveRole] = useState(() => {
     if (!user) return "student";
-    const hasStudent = user.roles?.includes("student");
-    const hasInstructor = user.roles?.includes("instructor");
-    if (hasStudent && !hasInstructor) return "student";
-    if (hasInstructor && !hasStudent) return "instructor";
+    if (user.role === "instructor") return "instructor";
     return window.localStorage.getItem("mobile-chat-role") || "student";
   });
   const lastLoadedRoleRef = useRef(activeRole);
@@ -1385,7 +1382,7 @@ export default function MobileChat() {
 
           {/* Title / Role Selector */}
           <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
-            {user?.roles?.includes("student") && user?.roles?.includes("instructor") ? (
+            {user?.role === "instructor" ? (
               <select
                 value={activeRole}
                 onChange={(e) => handleRoleChange(e.target.value)}
@@ -1413,7 +1410,7 @@ export default function MobileChat() {
                   userSelect: "none",
                 }}
               >
-                {user?.roles?.includes("instructor") ? "Teaching Assistant" : "AI Tutor"}
+                {user?.role === "instructor" ? "Teaching Assistant" : "AI Tutor"}
               </span>
             )}
           </div>

@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import apiClient from "../../config/api";
 import {
-  getCustomRoles,
+  getAssignedRoles,
   hasBaseRole,
   isBaseRole,
 } from "../../utils/permissions";
@@ -63,7 +63,7 @@ const ACTION_LABELS = {
 const EMPTY_ROLE = { name: "", description: "", permissions: [] };
 
 const getCustomRoleIds = (user) =>
-  getCustomRoles(user)
+  getAssignedRoles(user)
     .map((role) => role._id || role)
     .filter(Boolean);
 
@@ -422,8 +422,9 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
 const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => {
   const [selected, setSelected] = useState(() => {
     const customIds = getCustomRoleIds(user);
+    // Pre-select any system role whose name matches the user's base role
     const systemRoleIds = (roles || [])
-      .filter((r) => r.isSystem && hasBaseRole(user, r.name))
+      .filter((r) => r.isSystem && r.name?.toLowerCase() === user?.role?.toLowerCase())
       .map((r) => r._id);
     return [...customIds, ...systemRoleIds];
   });
@@ -445,9 +446,26 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Separate system base-role selections from custom permission-role selections
+      const systemRoleMap = {};
+      for (const r of roles) {
+        if (r.isSystem) systemRoleMap[r._id] = r.name?.toLowerCase();
+      }
+
+      let newBaseRole = user.role; // keep existing role by default
+      const customRoleIds = [];
+
+      for (const id of selected) {
+        if (systemRoleMap[id]) {
+          newBaseRole = systemRoleMap[id]; // last system role selected wins
+        } else {
+          customRoleIds.push(id);
+        }
+      }
+
       await api(`${API_BASE}/assign/${user._id}`, {
         method: "PUT",
-        body: JSON.stringify({ roleIds: selected }),
+        body: JSON.stringify({ role: newBaseRole, assignedRoleIds: customRoleIds }),
       });
       showToast?.(`Roles updated for ${user.name}.`);
       onSaved();
@@ -465,9 +483,7 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
     .slice(0, 2)
     .toUpperCase();
 
-  const userRolesList = Array.isArray(user?.roles)
-    ? user.roles.map((r) => (typeof r === "string" ? r : r.name)).filter(Boolean)
-    : [];
+  const userRolesList = user?.role ? [user.role] : [];
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
@@ -645,8 +661,8 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
           city: form.city,
           state: form.state,
           pincode: form.pincode,
-          roles: [form.baseRole],
-          customRoleIds: selectedRoles,
+          role: form.baseRole,
+          assignedRoles: selectedRoles,
         }),
       });
       showToast?.(`${form.name} added.`);
@@ -1191,27 +1207,19 @@ const RoleManager = ({ showToast, currentUser }) => {
                     <span className="text-sm font-semibold text-white truncate">
                       {u.name}
                     </span>
-                    {(u.roles || []).filter(isBaseRole).map((r) => {
-                      const label =
-                        typeof r === "string" ? r : r?.name || "role";
-                      const k = typeof r === "string" ? r : r?._id || label;
-                      return (
-                        <span
-                          key={k}
-                          className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-800 text-slate-400"
-                        >
-                          {label}
-                        </span>
-                      );
-                    })}
+                    {u.role && isBaseRole(u.role) && (
+                      <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
+                        {u.role}
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-slate-500">
                     {u.phoneNumber}
                     {u.email ? ` · ${u.email}` : ""}
                   </div>
-                  {getCustomRoles(u).length > 0 && (
+                  {getAssignedRoles(u).length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1.5">
-                      {getCustomRoles(u).map((r) => (
+                      {getAssignedRoles(u).map((r) => (
                         <span
                           key={r._id || r}
                           className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-950/40 text-indigo-300 border border-indigo-900/40"

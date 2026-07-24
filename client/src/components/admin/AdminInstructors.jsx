@@ -445,20 +445,12 @@ const EditInstructorModal = ({ instructor, onClose, onSaved }) => {
     pincode: instructor.pincode || "",
     specialization: instructor.specialization || "",
     bio: instructor.bio || "",
-    roles: instructor.roles?.length ? instructor.roles : ["instructor"],
+    role: instructor.role || "instructor",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const set = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
-
-  const toggleRole = (role) => {
-    setForm((f) => {
-      const has = f.roles.includes(role);
-      const next = has ? f.roles.filter((r) => r !== role) : [...f.roles, role];
-      return { ...f, roles: next.length ? next : ["instructor"] };
-    });
-  };
 
   const handleSubmit = async () => {
     if (!form.name.trim()) {
@@ -474,7 +466,7 @@ const EditInstructorModal = ({ instructor, onClose, onSaved }) => {
         city: form.city.trim(),
         state: form.state.trim(),
         pincode: form.pincode.trim(),
-        roles: form.roles,
+        role: form.role,
         specialization: form.specialization.trim(),
         bio: form.bio.trim(),
       };
@@ -593,25 +585,16 @@ const EditInstructorModal = ({ instructor, onClose, onSaved }) => {
           />
 
           <div>
-            <FieldLabel>Roles</FieldLabel>
-            <div className="flex flex-wrap gap-2">
-              {ROLE_OPTIONS.map((role) => {
-                const active = form.roles.includes(role);
-                return (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => toggleRole(role)}
-                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${active
-                      ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"
-                      : "bg-slate-900/40 border-slate-700 text-slate-500 hover:border-slate-600"
-                      }`}
-                  >
-                    {role}
-                  </button>
-                );
-              })}
-            </div>
+            <FieldLabel>Role</FieldLabel>
+            <select
+              value={form.role}
+              onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+              className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+            >
+              {ROLE_OPTIONS.map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
           </div>
 
           {error && (
@@ -817,22 +800,12 @@ const InstructorDetailsModal = ({ instructor, onClose, onEdit }) => {
             </p>
           )}
 
-          {/* Roles */}
-          {/* Roles */}
-          <SectionTitle icon={Shield}>Account Roles</SectionTitle>
+          {/* Role */}
+          <SectionTitle icon={Shield}>Account Role</SectionTitle>
           <div className="flex flex-wrap gap-2">
-            {(instructor.roles || ["instructor"]).map((r) => {
-              const roleName = typeof r === "string" ? r : r?.name || "unknown";
-              const roleKey = typeof r === "string" ? r : r?._id || roleName;
-              return (
-                <span
-                  key={roleKey}
-                  className="text-xs font-semibold px-3 py-1.5 rounded-full border bg-indigo-500/10 border-indigo-500/20 text-indigo-300"
-                >
-                  {roleName}
-                </span>
-              );
-            })}
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full border bg-indigo-500/10 border-indigo-500/20 text-indigo-300">
+              {instructor.role || "instructor"}
+            </span>
           </div>
         </div>
       </div>
@@ -1051,36 +1024,11 @@ const AdminInstructors = ({
                   {inst.email}
                 </p>
 
-                {/* Badges row */}
+                {/* Badge row */}
                 <div className="flex flex-wrap gap-1.5 mb-4">
-                  {(() => {
-                    const rls = inst.roles || ["instructor"];
-                    if (rls.length === 1) {
-                      return (
-                        <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full">
-                          {roleLabel(rls[0])}
-                        </span>
-                      );
-                    }
-                    return (
-                      <div tabIndex={0} className="relative group outline-none">
-                        <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full cursor-pointer flex items-center gap-1">
-                          {rls.length} Roles
-                          <span className="text-[8px] transition-transform duration-200 group-hover:rotate-90 group-focus:rotate-90 group-focus-within:rotate-90 inline-block">▶</span>
-                        </span>
-                        <div className="absolute top-full left-0 mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus:opacity-100 group-focus:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 flex flex-col gap-1.5 bg-slate-800 border border-slate-700 p-2.5 rounded-xl shadow-xl z-[60] min-w-[120px]">
-                          {rls.map((role, idx) => (
-                            <span
-                              key={idx}
-                              className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-full text-center"
-                            >
-                              {roleLabel(role)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
+                  <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full">
+                    {inst.role || "instructor"}
+                  </span>
                   <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
                     {inst.mc?.length || 0} course
                     {inst.mc?.length !== 1 ? "s" : ""}

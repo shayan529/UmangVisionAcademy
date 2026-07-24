@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight, LogOut } from "lucide-react";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { useNavigate, Link, NavLink } from "react-router-dom";
-import { getCustomRoles, hasBaseRole } from "../../utils/permissions";
+import { getAssignedRoles, hasBaseRole } from "../../utils/permissions";
 
 const Sidebar = ({
   user,
@@ -21,7 +21,7 @@ const Sidebar = ({
   const hasInstructorRole = hasBaseRole(user, "instructor");
   const hasStudentRole = hasBaseRole(user, "student");
   const hasAdminRole = hasBaseRole(user, "admin");
-  const hasCustomRole = getCustomRoles(user).length > 0;
+  const hasCustomRole = getAssignedRoles(user).length > 0;
   const isMultiRole =
     hasInstructorRole && hasStudentRole && !hasAdminRole && !hasCustomRole;
 
@@ -46,7 +46,7 @@ const Sidebar = ({
     dashboardOptions.push({ name: t("nav.roleInstructor", "Instructor"), path: "/instructor-dashboard" });
   if (hasBaseRole(user, "admin"))
     dashboardOptions.push({ name: t("nav.roleAdmin", "Admin"), path: "/admin-dashboard" });
-  getCustomRoles(user).forEach((role) =>
+  getAssignedRoles(user).forEach((role) =>
     dashboardOptions.push({ name: role.name, path: "/staff-dashboard" })
   );
 

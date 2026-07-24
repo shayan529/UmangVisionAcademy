@@ -42,7 +42,7 @@ export const getStudents = async (req, res) => {
 
     const users = await User.find({
       _id: { $in: studentIds },
-      roles: { $in: ["student"] },
+      role: "student",
     })
       .select("-password -resetPasswordToken -resetPasswordExpires")
       .lean();
@@ -83,7 +83,7 @@ export const getLeaderboard = async (req, res) => {
       "students:leaderboard",
       60, // seconds — was 15
       async () => {
-        return await User.find({ roles: { $in: ["student"] } })
+        return await User.find({ role: "student" })
           .select("name email avatarUrl coins referralsCount state city")
           .sort({ coins: -1, updatedAt: -1 })
           // Cap at 500 entries — sending the full 500k user list to the
@@ -130,7 +130,7 @@ export const getStudentActivity = async (req, res) => {
 
     const recentUsers = await User.find({
       _id: { $in: studentIds },
-      roles: { $in: ["student"] },
+      role: "student",
       updatedAt: { $gte: sevenDaysAgo },
     })
       .select("name updatedAt")
@@ -157,7 +157,7 @@ export const getStudentById = async (req, res) => {
   try {
     const student = await User.findOne({
       _id: req.params.id,
-      roles: { $in: ["student"] },
+      role: "student",
     })
       .select("-password -resetPasswordToken -resetPasswordExpires")
       .populate("enrolledCourses", "title summary");

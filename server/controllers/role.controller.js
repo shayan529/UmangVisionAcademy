@@ -1,11 +1,7 @@
 import Role, { PERMISSION_MODULES } from "../models/role.model.js";
 import User from "../models/user.model.js";
-import {
-  hydrateUserRoles,
-  isBaseRole,
-  mergeBaseAndCustomRoles,
-} from "../utils/userRoles.js";
-import { deleteKeys } from "../utils/redisClient.js";
+import { hydrateUserRoles } from "../utils/userRoles.js";
+import { deleteKey, deleteKeys } from "../utils/redisClient.js";
 
 // ── List available modules/actions (for building the UI matrix) ─────────────
 export const getPermissionModules = async (req, res) => {
@@ -22,7 +18,7 @@ export const getRoles = async (req, res) => {
   }
 };
 
-// ── Create role ────────────────────────────────────────────────────────────────
+// ── Create role ───────────────────────────────────────────────────────────────
 export const createRole = async (req, res) => {
   try {
     const { name, description, permissions } = req.body;
@@ -49,7 +45,7 @@ export const createRole = async (req, res) => {
   }
 };
 
-// ── Update role ────────────────────────────────────────────────────────────────
+// ── Update role ───────────────────────────────────────────────────────────────
 export const updateRole = async (req, res) => {
   try {
     const role = await Role.findById(req.params.id);
@@ -58,9 +54,7 @@ export const updateRole = async (req, res) => {
     const { name, description, permissions } = req.body;
 
     if (role.isSystem && name && name.trim() !== role.name) {
-      return res.status(400).json({
-        message: "Can't rename a system role",
-      });
+      return res.status(400).json({ message: "Can't rename a system role" });
     }
 
     if (name?.trim()) role.name = name.trim();
@@ -69,7 +63,7 @@ export const updateRole = async (req, res) => {
 
     await role.save();
 
-    // Invalidate cache
+    // Invalidate per-role cache so hydrateUserRoles picks up the new permissions
     await deleteKeys([`role:${role._id.toString()}`]);
 
     res.json(role);
@@ -78,7 +72,7 @@ export const updateRole = async (req, res) => {
   }
 };
 
-// ── Delete role ────────────────────────────────────────────────────────────────
+// ── Delete role ───────────────────────────────────────────────────────────────
 export const deleteRole = async (req, res) => {
   try {
     const role = await Role.findById(req.params.id);
@@ -88,25 +82,16 @@ export const deleteRole = async (req, res) => {
       return res.status(400).json({ message: "System roles can't be deleted" });
     }
 
-    // Unassign from all users first. Pulling assignedRoles also cleans up old
-    // documents that haven't been touched since the storage unification.
+    // Remove this custom role from every user's assignedRoles array.
+    // (user.role — the base role string — is unaffected.)
     await User.updateMany(
-      { $or: [{ roles: role._id }, { assignedRoles: role._id }] },
-      { $pull: { roles: role._id, assignedRoles: role._id } },
+      { assignedRoles: role._id },
+      { $pull: { assignedRoles: role._id } },
     );
-
-    // Autodelete users who have no roles left after the unassignment
-    await User.deleteMany({
-      $or: [
-        { roles: [] },
-        { roles: { $exists: false } },
-        { roles: null }
-      ]
-    });
 
     await role.deleteOne();
 
-    // Invalidate cache
+    // Invalidate the role cache entry
     await deleteKeys([`role:${role._id.toString()}`]);
 
     res.json({ message: "Role deleted" });
@@ -115,88 +100,55 @@ export const deleteRole = async (req, res) => {
   }
 };
 
-// ── Assign / unassign roles to a user ────────────────────────────────────────
+// ── Set role + assigned permission-roles for a user ───────────────────────────
+// Body: { role: "student"|"instructor"|"admin"|"staff",
+//         assignedRoleIds: ["<ObjectId>", ...] }
+//
+// `role` sets the user's single base role.
+// `assignedRoleIds` replaces the user's custom permission roles (staff panel).
+// Admins cannot be demoted through this endpoint — only a super-admin can
+// change an admin's base role directly.
 export const setUserRoles = async (req, res) => {
   try {
-    const { roleIds } = req.body; // array of Role ObjectIds, full replacement
-    if (!Array.isArray(roleIds)) {
-      return res.status(400).json({ message: "roleIds must be an array" });
+    const { role, assignedRoleIds = [] } = req.body;
+
+    const ALLOWED_BASE_ROLES = ["student", "instructor", "staff"];
+
+    if (role !== undefined && !ALLOWED_BASE_ROLES.includes(role)) {
+      return res.status(400).json({
+        message: `Invalid role. Allowed values: ${ALLOWED_BASE_ROLES.join(", ")}`,
+      });
     }
 
-    const validRoles = await Role.find({ _id: { $in: roleIds } });
-    if (validRoles.length !== roleIds.length) {
-      return res
-        .status(400)
-        .json({ message: "One or more role IDs are invalid" });
+    if (!Array.isArray(assignedRoleIds)) {
+      return res.status(400).json({ message: "assignedRoleIds must be an array" });
     }
 
     const user = await User.findById(req.params.id).select("-password");
-
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Fetch all system roles representing base roles so we know what options were presented to the user
-    const systemRoles = await Role.find({
-      isSystem: true,
-      name: { $in: ["Student", "Instructor", "Admin", "student", "instructor", "admin"] },
-    });
-
-    const systemRoleMap = {};
-    for (const r of systemRoles) {
-      systemRoleMap[r.name.toLowerCase()] = r._id.toString();
-    }
-
-    // Prevent assigning the admin base role through this endpoint.
-    // Admin is a privileged system role that must be set directly by a
-    // super-admin, not through the Roles & Permissions UI.
-    const adminRoleId = systemRoleMap["admin"];
-    if (adminRoleId && roleIds.includes(adminRoleId)) {
-      return res.status(403).json({
-        message: "Cannot assign the admin role through this endpoint",
-      });
-    }
-
-    let baseRoles = (user.roles || []).filter(isBaseRole);
-
-    // Update baseRoles according to selection/deselection of corresponding system roles
-    for (const roleName of ["student", "instructor", "admin"]) {
-      const roleIdStr = systemRoleMap[roleName];
-      if (roleIdStr) {
-        const isSelected = roleIds.includes(roleIdStr);
-        if (isSelected) {
-          if (!baseRoles.includes(roleName)) {
-            baseRoles.push(roleName);
-          }
-        } else {
-          baseRoles = baseRoles.filter((r) => r !== roleName);
-        }
+    // Validate all provided custom role IDs exist
+    if (assignedRoleIds.length > 0) {
+      const validRoles = await Role.find({ _id: { $in: assignedRoleIds } });
+      if (validRoles.length !== assignedRoleIds.length) {
+        return res
+          .status(400)
+          .json({ message: "One or more assignedRoleIds are invalid" });
       }
     }
 
-    const trueCustomRoleIds = [];
-    for (const role of validRoles) {
-      const normalizedName = role.name?.toLowerCase();
-      const isSystemBase = role.isSystem && ["student", "instructor", "admin"].includes(normalizedName);
-      if (!isSystemBase) {
-        trueCustomRoleIds.push(role._id.toString());
-      }
+    // Update base role if provided
+    if (role !== undefined) {
+      user.role = role;
     }
 
-    user.roles = mergeBaseAndCustomRoles(baseRoles, trueCustomRoleIds);
-
-    if (user.roles.length === 0) {
-      await User.findByIdAndDelete(user._id);
-      return res.json({
-        success: true,
-        message: "User autodeleted because no roles were assigned",
-        deleted: true,
-      });
-    }
+    // Replace custom permission roles
+    user.assignedRoles = assignedRoleIds;
 
     await user.save();
-    await User.collection.updateOne(
-      { _id: user._id },
-      { $unset: { assignedRoles: "" } },
-    );
+
+    // Bust the user's Redis cache so the next protect() call re-hydrates fresh
+    await deleteKey(`user:${user._id.toString()}`);
 
     res.json(await hydrateUserRoles(user));
   } catch (error) {

@@ -1,124 +1,120 @@
 import mongoose from "mongoose";
 import Role from "../models/role.model.js";
-import User from "../models/user.model.js";
 import { getJson, setJson } from "./redisClient.js";
 
 const { Types } = mongoose;
 
-export const BASE_ROLES = ["student", "instructor", "admin"];
+// ── Base role constants ───────────────────────────────────────────────────────
+export const BASE_ROLES = ["student", "instructor", "admin", "staff"];
 const BASE_ROLE_SET = new Set(BASE_ROLES);
 
 export const isBaseRole = (role) =>
   typeof role === "string" && BASE_ROLE_SET.has(role);
 
-export const roleIdString = (role) => {
-  if (!role) return "";
-  if (typeof role === "string") return isBaseRole(role) ? "" : role;
-  if (role instanceof Types.ObjectId) return role.toString();
-  if (role._id) return role._id.toString();
-  return "";
+// ── Single-role helpers ───────────────────────────────────────────────────────
+// user.role is now a plain string. All helpers accept either shape so the
+// transition is safe during the migration window.
+
+export const hasBaseRole = (user, roleName) => {
+  if (!user || !roleName) return false;
+  const name = roleName.toLowerCase();
+
+  // New shape: user.role is a string
+  if (typeof user.role === "string") {
+    return user.role.toLowerCase() === name;
+  }
+
+  // Legacy shape (pre-migration documents still in cache): user.roles array
+  if (Array.isArray(user.roles)) {
+    return user.roles.some((r) => {
+      if (typeof r === "string") return r.toLowerCase() === name;
+      if (r && typeof r === "object" && r.name) return r.name.toLowerCase() === name;
+      return false;
+    });
+  }
+
+  return false;
 };
 
-export const hasBaseRole = (user, roleName) =>
-  Array.isArray(user?.roles) &&
-  user.roles.some((role) => {
-    if (typeof role === "string") {
-      return role.toLowerCase() === roleName.toLowerCase();
-    }
-    if (role && typeof role === "object" && role.name) {
-      return role.name.toLowerCase() === roleName.toLowerCase();
-    }
-    return false;
-  });
-
-export const customRoleIdsFromRoles = (roles = []) =>
-  roles.map(roleIdString).filter((id) => Types.ObjectId.isValid(id));
-
-export const mergeBaseAndCustomRoles = (baseRoles = [], customRoleIds = []) => {
-  const cleanBaseRoles = [...new Set(baseRoles.filter(isBaseRole))];
-  const cleanCustomRoleIds = [
-    ...new Set(
-      customRoleIds
-        .map(roleIdString)
-        .filter((id) => Types.ObjectId.isValid(id)),
-    ),
-  ].map((id) => new Types.ObjectId(id));
-
-  return [...cleanBaseRoles, ...cleanCustomRoleIds];
-};
+// ── Custom / permission-role helpers ─────────────────────────────────────────
+// assignedRoles is an array of Role ObjectIds (or populated Role documents).
+// These carry a permissions matrix and are separate from the base role.
 
 const toPlainUser = (user) => {
   if (!user) return null;
   return typeof user.toObject === "function" ? user.toObject() : { ...user };
 };
 
+/**
+ * Populate assignedRoles ObjectIds into full Role documents and attach them
+ * back onto the plain user object as `assignedRoles`. Returns the plain user.
+ *
+ * The returned object shape is:
+ *   { ...userFields, role: "student"|"instructor"|"admin"|"staff",
+ *     assignedRoles: [ { _id, name, permissions, ... }, ... ] }
+ */
 export const hydrateUserRoles = async (user) => {
   const plainUser = toPlainUser(user);
   if (!plainUser) return null;
 
-  try {
-    const roles = plainUser.roles || [];
-
-    const baseRoles = roles.filter(isBaseRole);
-    const customRoleIds = customRoleIdsFromRoles(roles);
-
-    const customRoles = [];
-    if (customRoleIds.length > 0) {
-      const rolesToFetchFromDb = [];
-      for (const id of customRoleIds) {
-        const cached = await getJson(`role:${id}`);
-        if (cached) {
-          customRoles.push(cached);
-        } else {
-          rolesToFetchFromDb.push(id);
-        }
-      }
-
-      if (rolesToFetchFromDb.length > 0) {
-        const fetchedRoles = await Role.find({
-          _id: { $in: rolesToFetchFromDb },
-        }).lean();
-        for (const role of fetchedRoles) {
-          await setJson(`role:${role._id.toString()}`, role, 3600 * 24); // Cache for 24 hours
-          customRoles.push(role);
-        }
-      }
-    }
-    const customRoleById = new Map(
-      customRoles.map((role) => [role._id.toString(), role]),
-    );
-
-    // System roles whose name matches a base role (e.g. the "Student" or
-    // "Instructor" system role documents) should be treated as base role
-    // strings, not kept as custom role objects. This prevents the mismatch
-    // where a user has a system role ObjectId for "Student" but no base
-    // role string "student" — which breaks every `.includes("student")`
-    // and `{ roles: { $in: ["student"] } }` filter.
-    const trueCustomRoles = [];
-    for (const id of customRoleIds) {
-      const roleDoc = customRoleById.get(id);
-      if (!roleDoc) continue;
-      const normalizedName = roleDoc.name?.toLowerCase();
-      if (roleDoc.isSystem && BASE_ROLE_SET.has(normalizedName)) {
-        // Promote to base role string if not already present
-        if (!baseRoles.includes(normalizedName)) {
-          baseRoles.push(normalizedName);
-        }
-      } else {
-        trueCustomRoles.push(roleDoc);
-      }
-    }
-
-    plainUser.roles = [
-      ...baseRoles,
-      ...trueCustomRoles,
-    ];
-  } catch (error) {
-    console.error("[Roles] hydrateUserRoles failed:", error);
-    plainUser.roles = (plainUser.roles || []).filter(isBaseRole);
+  // Support legacy documents that still have the old roles[] array in cache.
+  // Promote the first base-role string found into user.role so the rest of
+  // the app sees a consistent shape after hydration.
+  if (!plainUser.role && Array.isArray(plainUser.roles)) {
+    const firstBase = plainUser.roles.find(isBaseRole);
+    plainUser.role = firstBase || "student";
   }
 
-  delete plainUser.assignedRoles;
+  try {
+    const rawAssigned = plainUser.assignedRoles || [];
+
+    // Extract ObjectId strings — skip anything already a populated object
+    const idsToFetch = [];
+    const alreadyPopulated = [];
+
+    for (const entry of rawAssigned) {
+      if (entry && typeof entry === "object" && entry._id) {
+        alreadyPopulated.push(entry);
+      } else {
+        const idStr = entry instanceof Types.ObjectId
+          ? entry.toString()
+          : typeof entry === "string" && Types.ObjectId.isValid(entry)
+            ? entry
+            : null;
+        if (idStr) idsToFetch.push(idStr);
+      }
+    }
+
+    const fetchedRoles = [...alreadyPopulated];
+
+    if (idsToFetch.length > 0) {
+      const toQuery = [];
+      for (const id of idsToFetch) {
+        const cached = await getJson(`role:${id}`);
+        if (cached) {
+          fetchedRoles.push(cached);
+        } else {
+          toQuery.push(id);
+        }
+      }
+
+      if (toQuery.length > 0) {
+        const docs = await Role.find({ _id: { $in: toQuery } }).lean();
+        for (const doc of docs) {
+          await setJson(`role:${doc._id.toString()}`, doc, 3600 * 24);
+          fetchedRoles.push(doc);
+        }
+      }
+    }
+
+    plainUser.assignedRoles = fetchedRoles;
+  } catch (error) {
+    console.error("[Roles] hydrateUserRoles failed:", error);
+    plainUser.assignedRoles = [];
+  }
+
+  // Never expose the password or the legacy roles array downstream
+  delete plainUser.roles;
   delete plainUser.password;
   return plainUser;
 };
@@ -126,11 +122,16 @@ export const hydrateUserRoles = async (user) => {
 export const hydrateUsersRoles = async (users = []) =>
   Promise.all(users.map((user) => hydrateUserRoles(user)));
 
+// ── Permission grant check ────────────────────────────────────────────────────
+// Admins have every permission implicitly.
+// All other users need an explicit permission entry in one of their
+// assignedRoles documents.
 export const hasPermissionGrant = (user, moduleName, actionName = "view") => {
   if (hasBaseRole(user, "admin")) return true;
 
+  const assigned = user?.assignedRoles || [];
   return Boolean(
-    user?.roles?.some(
+    assigned.some(
       (role) =>
         typeof role === "object" &&
         role.permissions?.some(

@@ -3137,7 +3137,7 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
       api.get("/users?role=instructor")
         .then(({ data }) => {
           const raw = Array.isArray(data) ? data : (data.users ?? []);
-          const instList = raw.filter((u) => u.roles?.includes("instructor"));
+          const instList = raw.filter((u) => u.role === "instructor");
           setInstructors(instList);
         })
         .catch((err) => console.error("Failed to load instructors", err));

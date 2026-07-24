@@ -121,16 +121,10 @@ const Layout = () => {
 
   const getProfileLink = () => {
     if (!user) return "/login";
-    const hasAdminRole = user.roles?.includes("admin");
-    const hasCustomRole = user.roles?.some((r) => typeof r === "object");
-    const hasInstructorRole = user.roles?.includes("instructor");
-    return hasAdminRole
-      ? "/admin-dashboard"
-      : hasCustomRole
-        ? "/staff-dashboard"
-        : hasInstructorRole
-          ? "/instructor-dashboard"
-          : "/student-dashboard/settings";
+    if (user.role === "admin") return "/admin-dashboard";
+    if (user.role === "staff") return "/staff-dashboard";
+    if (user.role === "instructor") return "/instructor-dashboard";
+    return "/student-dashboard/settings";
   };
 
   const tabs = [

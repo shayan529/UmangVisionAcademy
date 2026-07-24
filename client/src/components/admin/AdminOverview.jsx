@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
-  getCustomRoles,
+  getAssignedRoles,
   hasBaseRole,
   hasPermission,
 } from '../../utils/permissions';
@@ -128,7 +128,7 @@ const ACTION_LABELS = {
 const getGrantedPermissions = (user) => {
   const grouped = new Map();
 
-  getCustomRoles(user).forEach((role) => {
+  getAssignedRoles(user).forEach((role) => {
     (role.permissions || []).forEach((permission) => {
       const current = grouped.get(permission.module) || new Set();
       (permission.actions || []).forEach((action) => current.add(action));
@@ -161,7 +161,7 @@ const AdminOverview = ({
   const firstName = user?.name?.split(' ')[0];
   const greetingName = isFullAdmin ? 'Admin' : firstName || 'Admin';
   const roleLabel =
-    getCustomRoles(user).map((r) => r.name).join(', ') ||
+    getAssignedRoles(user).map((r) => r.name).join(', ') ||
     (isFullAdmin ? 'Administrator' : 'Staff Member');
   const grantedPermissions = getGrantedPermissions(user);
   const canViewUsers = hasPermission(user, 'users', 'view');

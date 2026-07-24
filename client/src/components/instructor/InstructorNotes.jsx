@@ -19,8 +19,8 @@ export default function InstructorNotes({ showToast }) {
   const { users } = useSelector((state) => state.users);
   const { courses } = useSelector((state) => state.courses);
 
-  const isAdmin = user?.roles?.includes("admin") || user?.role === "admin";
-  const instructors = users.filter((u) => u.roles?.includes("instructor") || u.role === "instructor");
+  const isAdmin = user?.role === "admin";
+  const instructors = users.filter((u) => u.role === "instructor");
 
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);

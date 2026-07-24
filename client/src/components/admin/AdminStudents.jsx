@@ -98,16 +98,7 @@ const indianCitiesByState = {
   ...INDIA_CITIES_BY_STATE,
 };
 
-const ROLE_OPTIONS = ["student", "instructor"];
-
-// user.roles is a MIXED array post-migration: base role strings
-// ("student", "admin") alongside embedded custom-role objects
-// ({ _id, name, permissions, ... }). Anywhere we need a human-readable
-// label for a role entry — display text, .join(), etc. — use this so a
-// custom-role object never gets coerced into "[object Object]" by
-// Array.prototype.join() or rendered directly.
-const roleLabel = (role) =>
-  role && typeof role === "object" ? role.name || "Custom Role" : role;
+const ROLE_OPTIONS = ["student", "instructor", "admin", "staff"];
 
 /* ─── Avatar ──────────────────────────────────────────── */
 const Av = ({ name = "?", size = 36, src }) => {
@@ -539,25 +530,13 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
     state: student.state || "",
     pincode: student.pincode || "",
     coins: typeof student.coins === "number" ? student.coins : 0,
-    // Only base roles are editable here — custom roles (objects) are
-    // managed from Roles & Permissions, not this dropdown, so they're
-    // filtered out of the editable set rather than passed through.
-    roles: student.roles?.filter((r) => typeof r === "string").length
-      ? student.roles.filter((r) => typeof r === "string")
-      : ["student"],
+    // Single role field — editable here as a simple select
+    role: student.role || "student",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const set = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
-
-  const toggleRole = (role) => {
-    setForm((f) => {
-      const has = f.roles.includes(role);
-      const next = has ? f.roles.filter((r) => r !== role) : [...f.roles, role];
-      return { ...f, roles: next.length ? next : ["student"] };
-    });
-  };
 
   const handleSubmit = async () => {
     if (!form.name.trim()) {
@@ -574,13 +553,8 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
         state: form.state.trim(),
         pincode: form.pincode.trim(),
         coins: Number(form.coins) || 0,
-        roles: form.roles,
+        role: form.role,
       };
-      // email and phoneNumber are unique+sparse on the schema. Sending an
-      // empty string (rather than omitting the field) would not be treated
-      // as "no value" by the unique index, and could collide with another
-      // user who also has an empty string there. Only include them if the
-      // admin actually typed something.
       if (form.email.trim()) payload.email = form.email.trim();
       if (form.phoneNumber.trim())
         payload.phoneNumber = form.phoneNumber.trim();
@@ -687,25 +661,16 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
           />
 
           <div>
-            <FieldLabel>Roles</FieldLabel>
-            <div className="flex flex-wrap gap-2">
-              {ROLE_OPTIONS.map((role) => {
-                const active = form.roles.includes(role);
-                return (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => toggleRole(role)}
-                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${active
-                      ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"
-                      : "bg-slate-900/40 border-slate-700 text-slate-500 hover:border-slate-600"
-                      }`}
-                  >
-                    {role}
-                  </button>
-                );
-              })}
-            </div>
+            <FieldLabel>Role</FieldLabel>
+            <select
+              value={form.role}
+              onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+              className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+            >
+              {ROLE_OPTIONS.map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
           </div>
 
           {error && (
@@ -871,11 +836,8 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 divide-y divide-slate-800/60 sm:divide-y-0">
             <InfoRow
               icon={Shield}
-              label="Roles"
-              value={(student.roles || ["student"])
-                .map(roleLabel)
-                .filter(Boolean)
-                .join(", ")}
+              label="Role"
+              value={student.role || "student"}
             />
             <InfoRow
               icon={CalendarClock}
@@ -1555,33 +1517,13 @@ const AdminStudents = ({
               </div>
 
               <div className="flex flex-wrap items-center gap-2 sm:gap-4 shrink-0 justify-start sm:justify-end w-full sm:w-auto">
-                {/* Custom tags */}
+                {/* Role tag */}
                 {(() => {
-                  const rls = s.roles || ["student"];
-                  if (rls.length === 1) {
-                    return (
-                      <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full">
-                        {roleLabel(rls[0])}
-                      </span>
-                    );
-                  }
+                  const role = s.role || "student";
                   return (
-                    <div tabIndex={0} className="relative group outline-none">
-                      <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full cursor-pointer flex items-center gap-1">
-                        {rls.length} Roles
-                        <span className="text-[8px] transition-transform duration-200 group-hover:rotate-90 group-focus:rotate-90 group-focus-within:rotate-90 inline-block">▶</span>
-                      </span>
-                      <div className="absolute top-full right-0 mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus:opacity-100 group-focus:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 flex flex-col gap-1.5 bg-slate-800 border border-slate-700 p-2.5 rounded-xl shadow-xl z-[60] min-w-[120px]">
-                        {rls.map((role, idx) => (
-                          <span
-                            key={idx}
-                            className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-full text-center"
-                          >
-                            {roleLabel(role)}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full">
+                      {role}
+                    </span>
                   );
                 })()}
                 <span className="text-xs font-semibold text-slate-400 min-w-[4.375rem] text-right">
