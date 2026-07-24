@@ -3085,7 +3085,13 @@ const BulkCourseForm = ({
 };
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-export default function InstructorCourses({ showToast, isAdmin = false }) {
+export default function InstructorCourses({
+  showToast,
+  isAdmin = false,
+  canCreate = true,
+  canEdit = true,
+  canDelete = true,
+}) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const { courses = [], loading, error } = useSelector((s) => s.courses);
@@ -3691,27 +3697,29 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
             </h2>
           </div>
           {view === "list" ? (
-            <button
-              onClick={() => {
-                loadSavedDraft();
-                setView("create");
-                closeEdit();
-              }}
-              style={{
-                padding: "10px 20px",
-                borderRadius: 12,
-                border: "none",
-                background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                color: "#fff",
-                fontWeight: 700,
-                fontSize: 13,
-                cursor: "pointer",
-                boxShadow: "0 4px 16px rgba(124,58,237,.3)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              + New Course
-            </button>
+            canCreate && (
+              <button
+                onClick={() => {
+                  loadSavedDraft();
+                  setView("create");
+                  closeEdit();
+                }}
+                style={{
+                  padding: "10px 20px",
+                  borderRadius: 12,
+                  border: "none",
+                  background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                  color: "#fff",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  boxShadow: "0 4px 16px rgba(124,58,237,.3)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                + New Course
+              </button>
+            )
           ) : (
             <button
               onClick={() => setView("list")}
@@ -4140,7 +4148,7 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                               <Clock size={12} /> In review
                             </span>
                           )}
-                          {course.approvalStatus !== "pending" && (
+                          {canEdit && course.approvalStatus !== "pending" && (
                             <button
                               className="ic-btn"
                               onClick={() =>
@@ -4169,25 +4177,28 @@ export default function InstructorCourses({ showToast, isAdmin = false }) {
                               )}
                             </button>
                           )}
-                          <button
-                            className="ic-btn"
-                            onClick={() => setDeleteId(course._id)}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              padding: "8px 12px",
-                              borderRadius: 8,
-                              border: "1px solid #7f1d1d30",
-                              background: "#2d0a0a",
-                              color: "#f87171",
-                              fontSize: 11,
-                              cursor: "pointer",
-                              transition: "opacity 0.15s",
-                              minHeight: 36,
-                            }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          {canDelete && (
+                            <button
+                              className="ic-btn"
+                              onClick={() => setDeleteId(course._id)}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                padding: "8px 12px",
+                                borderRadius: 8,
+                                border: "1px solid #7f1d1d30",
+                                background: "#2d0a0a",
+                                color: "#f87171",
+                                fontSize: 11,
+                                cursor: "pointer",
+                                transition: "opacity 0.15s",
+                                minHeight: 36,
+                              }}
+                              title="Delete Course"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                         </div>
                       </div>
 

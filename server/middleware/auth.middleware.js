@@ -64,7 +64,24 @@ export const protect = async (req, res, next) => {
       );
       if (dbUser) {
         user = await hydrateUserRoles(dbUser);
-        await setJson(cacheKey, user, 3600 * 4); // cache for 4 hours (busted on save)
+        await setJson(cacheKey, user, 3600 * 4);
+      }
+    } else {
+      // Cache hit — but role may be a raw ObjectId string if it was cached
+      // before the custom-role was hydrated. Re-hydrate in that case.
+      const cachedRole = user.role;
+      const isUnpopulatedObjectId =
+        cachedRole &&
+        typeof cachedRole === "string" &&
+        !["student", "instructor", "admin", "staff"].includes(cachedRole.toLowerCase()) &&
+        cachedRole.length === 24;
+
+      if (isUnpopulatedObjectId) {
+        if (IS_DEV) {
+          console.log(`[protect] Cached role is raw ObjectId — re-hydrating user ${decoded.id}`);
+        }
+        user = await hydrateUserRoles(user);
+        await setJson(cacheKey, user, 3600 * 4);
       }
     }
 

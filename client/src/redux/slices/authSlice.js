@@ -80,6 +80,25 @@ export const loadCurrentUser = createAsyncThunk(
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   },
+  {
+    // Skip the network call only if the user is already loaded AND their
+    // role is a proper base-role string or a populated object (not a raw ObjectId).
+    condition: (_, { getState }) => {
+      const { user, isAuthenticated } = getState().auth;
+      if (!isAuthenticated || !user) return true; // must fetch
+
+      const role = user?.role;
+      // Raw ObjectId string — must re-fetch to get hydrated role
+      if (
+        role &&
+        typeof role === "string" &&
+        !BASE_ROLE_STRINGS.has(role.toLowerCase()) &&
+        IS_OBJECT_ID.test(role)
+      ) return true;
+
+      return true; // always refresh (background update)
+    },
+  },
 );
 
 export const logoutUser = createAsyncThunk(
@@ -108,9 +127,23 @@ export const logoutUser = createAsyncThunk(
 
 // ── Slice ─────────────────────────────────────────────────────────────────────
 
-// Boot from localStorage so the UI renders immediately on refresh —
-// no spinner, no /users/me round-trip before the page is usable.
-const _cachedUser = loadUserCache();
+const IS_OBJECT_ID = /^[a-f0-9]{24}$/i;
+const BASE_ROLE_STRINGS = new Set(["student", "instructor", "admin", "staff"]);
+
+// If the cached user has an unpopulated ObjectId as their role, discard the
+// cache so the app waits for the server to return the hydrated Role object.
+const _rawCached = loadUserCache();
+const _cachedRoleIsObjectId =
+  _rawCached?.role &&
+  typeof _rawCached.role === "string" &&
+  !BASE_ROLE_STRINGS.has(_rawCached.role.toLowerCase()) &&
+  IS_OBJECT_ID.test(_rawCached.role);
+
+if (_cachedRoleIsObjectId) {
+  persistUserCache(null); // wipe stale cache
+}
+
+const _cachedUser = _cachedRoleIsObjectId ? null : _rawCached;
 const _hasToken = !!localStorage.getItem("authToken");
 
 const initialState = {

@@ -4,14 +4,14 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
-import { clearError, login } from "../../redux/slices/authSlice";
+import { clearError, login, loadCurrentUser } from "../../redux/slices/authSlice";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 import {
   checkAndAwardAchievements,
   fetchAchievements,
 } from "../../redux/slices/achievementSlice";
-import { getAssignedRoles, hasBaseRole } from "../../utils/permissions";
+import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from "../../utils/permissions";
 
 /* ── Animated particle canvas ── */
 const ParticleCanvas = () => {
@@ -84,7 +84,7 @@ const ParticleCanvas = () => {
 
 const getPostLoginPath = (user, from) => {
   const isAdmin = hasBaseRole(user, "admin");
-  const isStaff = !isAdmin && getAssignedRoles(user).length > 0;
+  const isStaff = !isAdmin && checkHasCustomRole(user);
   const isInstructor =
     !isAdmin && !isStaff && hasBaseRole(user, "instructor");
 
@@ -920,12 +920,17 @@ const Login = () => {
     }
     setLoading(true);
     try {
-      const user = await dispatch(
+      const loggedUser = await dispatch(
         login({
           phoneNumber: `${countryCode}${formData.phoneNumber}`,
           password: formData.password,
         }),
       ).unwrap();
+
+      const refreshed = await dispatch(loadCurrentUser())
+        .unwrap()
+        .catch(() => loggedUser);
+      const user = refreshed || loggedUser;
 
       navigate(getPostLoginPath(user, location.state?.from), { replace: true });
 

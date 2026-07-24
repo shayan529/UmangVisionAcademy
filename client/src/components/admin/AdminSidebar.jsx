@@ -20,7 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { Lock, CreditCard, LogOut, FileText } from "lucide-react";
-import { getAssignedRoles, hasBaseRole } from "../../utils/permissions";
+import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from "../../utils/permissions";
 
 const AdminSidebar = ({
   tab,
@@ -41,7 +41,7 @@ const AdminSidebar = ({
   const hasInstructorRole = hasBaseRole(user, "instructor");
   const hasStudentRole = hasBaseRole(user, "student");
   const hasAdminRole = hasBaseRole(user, "admin");
-  const hasCustomRole = getAssignedRoles(user).length > 0;
+  const hasCustomRole = checkHasCustomRole(user);
 
   const dashboardOptions = [];
   if (hasBaseRole(user, "student")) {
@@ -62,9 +62,10 @@ const AdminSidebar = ({
       path: "/admin-dashboard",
     });
   }
-  getAssignedRoles(user).forEach((role) => {
-    dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
-  });
+  const customRole = getCustomRole(user);
+  if (customRole) {
+    dashboardOptions.push({ name: customRole.name, path: "/staff-dashboard" });
+  }
 
   const activeOption = dashboardOptions.find((opt) =>
     window.location.pathname.startsWith(opt.path),

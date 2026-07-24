@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { logoutUser } from "../../redux/slices/authSlice";
-import { getAssignedRoles, hasBaseRole } from "../../utils/permissions";
+import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from "../../utils/permissions";
 import { ChevronDown, LogOut } from "lucide-react";
 
 // UI primitives & modal
@@ -92,7 +92,7 @@ export default function InstructorDashboard() {
   const hasInstructorRole = hasBaseRole(user, "instructor");
   const hasStudentRole = hasBaseRole(user, "student");
   const hasAdminRole = hasBaseRole(user, "admin");
-  const hasCustomRole = getAssignedRoles(user).length > 0;
+  const hasCustomRole = checkHasCustomRole(user);
   const isMultiRole =
     hasInstructorRole && hasStudentRole && !hasAdminRole && !hasCustomRole;
 
@@ -115,9 +115,10 @@ export default function InstructorDashboard() {
       path: "/admin-dashboard",
     });
   }
-  getAssignedRoles(user).forEach((role) => {
-    dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
-  });
+  const customRole = getCustomRole(user);
+  if (customRole) {
+    dashboardOptions.push({ name: customRole.name, path: "/staff-dashboard" });
+  }
 
   const activeOption = dashboardOptions.find((opt) =>
     window.location.pathname.startsWith(opt.path),

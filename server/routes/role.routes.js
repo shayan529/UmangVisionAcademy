@@ -19,15 +19,16 @@ const router = express.Router();
 router.get("/modules", protect, adminOnly, getPermissionModules);
 router.get("/", protect, adminOnly, getRoles);
 router.post("/", protect, adminOnly, createRole);
-router.put("/:id", protect, adminOnly, updateRole);
-router.delete("/:id", protect, adminOnly, deleteRole);
 router.post(
   "/admin-create",
   protect,
   adminOnly,
-  createStudentByAdmin, // new controller, see below
+  createStudentByAdmin,
 );
-
+// IMPORTANT: /assign/:id must be registered BEFORE /:id, otherwise Express
+// matches "assign" as the :id param and routes to updateRole instead.
 router.put("/assign/:id", protect, adminOnly, setUserRoles); // :id = user ID
+router.put("/:id", protect, adminOnly, updateRole);
+router.delete("/:id", protect, adminOnly, deleteRole);
 
 export default router;

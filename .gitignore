@@ -40,8 +40,9 @@ coverage/
 *.tmp
 .tmp/
 
-# Uploaded files (user content — ephemeral on Render, do not commit)
+# Uploaded files & archives
 server/uploads/*
 !server/uploads/.gitkeep
+*.zip
 .vercel
 .env*

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
-  getAssignedRoles,
+  getCustomRole,
   hasBaseRole,
   hasPermission,
 } from '../../utils/permissions';
@@ -127,15 +127,14 @@ const ACTION_LABELS = {
 
 const getGrantedPermissions = (user) => {
   const grouped = new Map();
-
-  getAssignedRoles(user).forEach((role) => {
-    (role.permissions || []).forEach((permission) => {
+  const customRole = getCustomRole(user);
+  if (customRole) {
+    (customRole.permissions || []).forEach((permission) => {
       const current = grouped.get(permission.module) || new Set();
       (permission.actions || []).forEach((action) => current.add(action));
       grouped.set(permission.module, current);
     });
-  });
-
+  }
   return [...grouped.entries()].map(([module, actions]) => ({
     module,
     actions: [...actions],
@@ -160,9 +159,14 @@ const AdminOverview = ({
   const isFullAdmin = hasBaseRole(user, 'admin');
   const firstName = user?.name?.split(' ')[0];
   const greetingName = isFullAdmin ? 'Admin' : firstName || 'Admin';
-  const roleLabel =
-    getAssignedRoles(user).map((r) => r.name).join(', ') ||
-    (isFullAdmin ? 'Administrator' : 'Staff Member');
+
+  // Get the role name safely — guard against unpopulated ObjectId strings
+  const rawRoleName = getCustomRole(user)?.name;
+  const isObjectId = rawRoleName && /^[a-f0-9]{24}$/i.test(rawRoleName);
+  const roleLabel = isObjectId
+    ? (isFullAdmin ? 'Administrator' : 'Staff Member')
+    : rawRoleName || (isFullAdmin ? 'Administrator' : 'Staff Member');
+
   const grantedPermissions = getGrantedPermissions(user);
   const canViewUsers = hasPermission(user, 'users', 'view');
   const canViewCourses = hasPermission(user, 'courses', 'view');

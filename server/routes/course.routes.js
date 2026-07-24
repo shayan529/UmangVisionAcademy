@@ -44,7 +44,12 @@ router.post("/enroll", protect, enrollCourses);
 
 // ── Protected: CRUD + actions ─────────────────────────────────────────────────
 router.get("/", protect, getCourses);
-router.post("/", protect, createCourse);
+router.post(
+  "/",
+  protect,
+  requirePermission("courses", "create"),
+  createCourse,
+);
 router.post("/:id/quiz/submit", protect, submitQuiz);
 router.post("/:id/rate", protect, rateCourse);
 
@@ -69,7 +74,17 @@ router.post(
 );
 
 router.get("/:id", protect, getCourseById);
-router.put("/:id", protect, updateCourse);
-router.delete("/:id", protect, deleteCourse);
+router.put(
+  "/:id",
+  protect,
+  requirePermission("courses", "edit"),
+  updateCourse,
+);
+router.delete(
+  "/:id",
+  protect,
+  requirePermission("courses", "delete"),
+  deleteCourse,
+);
 
 export default router;

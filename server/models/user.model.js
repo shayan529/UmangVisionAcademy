@@ -24,22 +24,14 @@ const userSchema = new Schema(
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
     },
-    // Single role per user. Custom/staff permissions are handled separately
-    // through the assignedRoles array of Role ObjectIds below.
+    // Single role per user.
+    // • Base roles are stored as strings: "student" | "instructor" | "admin" | "staff"
+    // • Custom roles (staff panel) are stored as a Role ObjectId
+    // Both live in this one field — no separate assignedRoles array.
     role: {
-      type: String,
-      enum: ["student", "instructor", "admin", "staff"],
+      type: Schema.Types.Mixed,
       default: "student",
       required: true,
-    },
-    // Custom permission roles assigned by admin (staff panel). These are Role
-    // ObjectIds that carry a permissions matrix; they do NOT change the user's
-    // base role — a user is still "staff" (or whatever their role is) but can
-    // also have fine-grained module permissions via these documents.
-    assignedRoles: {
-      type: [Schema.Types.ObjectId],
-      ref: "Role",
-      default: [],
     },
     bio: {
       type: String,

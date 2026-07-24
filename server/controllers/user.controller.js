@@ -372,6 +372,8 @@ export const LoginUser = async (req, res) => {
       await deleteKey("students:leaderboard");
     }
 
+    await deleteKey(`user:${user._id.toString()}`);
+
     const token = createToken(user._id);
     setTokenCookie(res, token);
 
@@ -681,7 +683,6 @@ export const createStudentByAdmin = async (req, res) => {
     email,
     password,
     role,
-    assignedRoles,
     city,
     state,
     phoneNumber,
@@ -715,8 +716,6 @@ export const createStudentByAdmin = async (req, res) => {
 
     const allowedRoles = ["student", "instructor", "admin", "staff"];
     const normalizedRole = allowedRoles.includes(role) ? role : "student";
-    // assignedRoles: optional array of custom Role ObjectIds for staff permissions
-    const finalAssignedRoles = Array.isArray(assignedRoles) ? assignedRoles : [];
 
     const referrer = referralCodeParam
       ? await User.findOne({
@@ -729,7 +728,6 @@ export const createStudentByAdmin = async (req, res) => {
       ...(email && { email }),
       password,
       role: normalizedRole,
-      assignedRoles: finalAssignedRoles,
       city: city ? city.charAt(0).toUpperCase() + city.slice(1) : "",
       state: state || "",
       phoneNumber: normalizedPhoneNumber,

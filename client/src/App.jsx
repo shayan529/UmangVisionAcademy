@@ -122,6 +122,8 @@ const Layout = () => {
   const getProfileLink = () => {
     if (!user) return "/login";
     if (user.role === "admin") return "/admin-dashboard";
+    // Custom role object → staff dashboard
+    if (user.role && typeof user.role === "object") return "/staff-dashboard";
     if (user.role === "staff") return "/staff-dashboard";
     if (user.role === "instructor") return "/instructor-dashboard";
     return "/student-dashboard/settings";

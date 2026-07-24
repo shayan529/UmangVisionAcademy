@@ -15,7 +15,8 @@ import {
   replaceCurrentUser,
 } from "../../redux/slices/authSlice";
 import {
-  getAssignedRoles,
+  getCustomRole,
+  hasCustomRole as checkHasCustomRole,
   hasAnyPermission,
   hasBaseRole,
   hasPermission,
@@ -54,7 +55,7 @@ const StaffSidebar = ({
   const hasInstructorRole = hasBaseRole(user, "instructor");
   const hasStudentRole = hasBaseRole(user, "student");
   const hasAdminRole = hasBaseRole(user, "admin");
-  const hasCustomRole = getAssignedRoles(user).length > 0;
+  const hasCustomRole = checkHasCustomRole(user);
   const isMultiRole =
     hasInstructorRole && hasStudentRole && !hasAdminRole && !hasCustomRole;
 
@@ -77,9 +78,10 @@ const StaffSidebar = ({
       path: "/admin-dashboard",
     });
   }
-  getAssignedRoles(user).forEach((role) => {
-    dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
-  });
+  const customRole = getCustomRole(user);
+  if (customRole) {
+    dashboardOptions.push({ name: customRole.name, path: "/staff-dashboard" });
+  }
 
   const activeOption = dashboardOptions.find((opt) =>
     window.location.pathname.startsWith(opt.path),
@@ -162,10 +164,9 @@ const StaffSidebar = ({
   };
 
   const username = user?.name || user?.email?.split("@")[0] || "Staff Member";
-  const customRoleNames =
-    getAssignedRoles(user)
-      .map((r) => r.name)
-      .join(", ") || "Staff";
+  const rawCustomRoleName = getCustomRole(user)?.name;
+  const isObjectId = rawCustomRoleName && /^[a-f0-9]{24}$/i.test(rawCustomRoleName);
+  const customRoleNames = isObjectId ? "Staff" : (rawCustomRoleName || "Staff");
 
   const sidebarClass = `
     bg-slate-950 border-r border-slate-800 flex flex-col overflow-hidden
@@ -386,6 +387,20 @@ export default function StaffDashboard() {
     setTimeout(() => setToastMsg(""), 2500);
   };
 
+  // If the user's role is still a raw ObjectId (not yet hydrated by the
+  // server), force a fresh /users/me call. The protect middleware will
+  // re-hydrate and return the populated Role document.
+  useEffect(() => {
+    const role = user?.role;
+    const isUnpopulatedObjectId =
+      role &&
+      typeof role === "string" &&
+      /^[a-f0-9]{24}$/i.test(role);
+    if (isUnpopulatedObjectId) {
+      dispatch(loadCurrentUser());
+    }
+  }, [user?.role, dispatch]);
+
   useEffect(() => {
     if (hasPermission(user, "users", "view")) {
       dispatch(fetchUsers());
@@ -466,23 +481,25 @@ export default function StaffDashboard() {
       courses.length === 0 &&
       hasPermission(user, "courses", "view"));
 
-  const globalError =
-    (hasPermission(user, "users", "view") ? usersError : null) ||
-    (hasPermission(user, "courses", "view") ? coursesError : null);
+  const currentTabError =
+    (tab === "students" || tab === "instructors") && hasPermission(user, "users", "view")
+      ? usersError
+      : tab === "courses" && hasPermission(user, "courses", "view")
+        ? coursesError
+        : null;
 
   const renderTabContent = () => {
     if (isInitialLoad) return <DashboardSkeleton />;
 
-    if (globalError)
+    if (currentTabError)
       return (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
           <div className="text-4xl">⚠️</div>
-          <p className="text-red-400 font-semibold text-sm">{globalError}</p>
+          <p className="text-red-400 font-semibold text-sm">{currentTabError}</p>
           <button
             onClick={() => {
-              if (hasPermission(user, "users", "view")) dispatch(fetchUsers());
-              if (hasPermission(user, "courses", "view"))
-                dispatch(fetchAllCoursesAdmin());
+              if (tab === "courses") dispatch(fetchAllCoursesAdmin());
+              else dispatch(fetchUsers());
             }}
             className="rounded-xl border border-red-500/20 bg-red-500/10 px-5 py-2.5 text-sm text-red-300 hover:bg-red-500/20 transition"
           >
@@ -515,6 +532,9 @@ export default function StaffDashboard() {
             error={coursesError}
             onRetry={() => dispatch(fetchAllCoursesAdmin())}
             canApprove={hasPermission(user, "courses", "approve")}
+            canCreate={hasPermission(user, "courses", "create")}
+            canEdit={hasPermission(user, "courses", "edit")}
+            canDelete={hasPermission(user, "courses", "delete")}
           />
         ) : null;
       case "students":

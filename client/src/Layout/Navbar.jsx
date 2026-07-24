@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../redux/slices/authSlice";
 import { ChevronDown, ShoppingCart } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { getAssignedRoles, hasBaseRole } from "../utils/permissions";
+import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from "../utils/permissions";
 
 const Navbar = () => {
   const { user, loading } = useSelector((state) => state.auth);
@@ -25,7 +25,7 @@ const Navbar = () => {
   const hasInstructorRole = hasBaseRole(user, "instructor");
   const hasStudentRole = hasBaseRole(user, "student");
   const hasAdminRole = hasBaseRole(user, "admin");
-  const hasCustomRole = getAssignedRoles(user).length > 0;
+  const hasCustomRole = checkHasCustomRole(user);
   const isMultiRole =
     hasInstructorRole && hasStudentRole && !hasAdminRole && !hasCustomRole;
   const cartCount = cartIds.length;
@@ -186,9 +186,10 @@ const Navbar = () => {
         path: "/admin-dashboard",
       });
     }
-    getAssignedRoles(user).forEach((role) => {
-      dashboardOptions.push({ name: role.name, path: "/staff-dashboard" });
-    });
+    const customRole = getCustomRole(user);
+    if (customRole) {
+      dashboardOptions.push({ name: customRole.name, path: "/staff-dashboard" });
+    }
   }
 
   return (

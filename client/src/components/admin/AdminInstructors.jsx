@@ -265,7 +265,6 @@ const AddInstructorModal = ({ onClose, onCreated }) => {
         state: form.state.trim(),
         pincode: form.pincode.trim(),
         role: "instructor",
-        roles: ["instructor"],
       };
       if (form.email.trim()) payload.email = form.email.trim();
       if (form.specialization.trim())

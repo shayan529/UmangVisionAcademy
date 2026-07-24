@@ -1263,8 +1263,12 @@ export default function AdminCourses({
   error,
   onRetry,
   canApprove = true,
+  canCreate = false,
+  canEdit = false,
+  canDelete = false,
 }) {
   const dispatch = useDispatch();
+  const canManage = canCreate || canEdit || canDelete;
   const [mode, setMode] = useState("review"); // "review" | "manage"
   const [toastMsg, setToastMsg] = useState("");
   const [filterStatus, setFilterStatus] = useState("pending");
@@ -1351,56 +1355,64 @@ export default function AdminCourses({
       `}</style>
 
       {/* Mode Switcher */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 12,
-          marginBottom: 24,
-          padding: 4,
-          background: "#0b1120",
-          borderRadius: 12,
-          border: "1px solid #1e293b",
-          width: "100%",
-          maxWidth: "100%",
-        }}
-      >
-        <button
-          onClick={() => setMode("review")}
+      {canManage && (
+        <div
           style={{
-            padding: "8px 18px",
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: "pointer",
-            border: "none",
-            background: mode === "review" ? "linear-gradient(135deg,#7c3aed,#db2777)" : "transparent",
-            color: mode === "review" ? "#fff" : "#94a3b8",
-            transition: "all 0.2s",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 12,
+            marginBottom: 24,
+            padding: 4,
+            background: "#0b1120",
+            borderRadius: 12,
+            border: "1px solid #1e293b",
+            width: "100%",
+            maxWidth: "100%",
           }}
         >
-          Review Submissions
-        </button>
-        <button
-          onClick={() => setMode("manage")}
-          style={{
-            padding: "8px 18px",
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: "pointer",
-            border: "none",
-            background: mode === "manage" ? "linear-gradient(135deg,#7c3aed,#db2777)" : "transparent",
-            color: mode === "manage" ? "#fff" : "#94a3b8",
-            transition: "all 0.2s",
-          }}
-        >
-          Manage & Edit Courses
-        </button>
-      </div>
+          <button
+            onClick={() => setMode("review")}
+            style={{
+              padding: "8px 18px",
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+              border: "none",
+              background: mode === "review" ? "linear-gradient(135deg,#7c3aed,#db2777)" : "transparent",
+              color: mode === "review" ? "#fff" : "#94a3b8",
+              transition: "all 0.2s",
+            }}
+          >
+            Review Submissions
+          </button>
+          <button
+            onClick={() => setMode("manage")}
+            style={{
+              padding: "8px 18px",
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+              border: "none",
+              background: mode === "manage" ? "linear-gradient(135deg,#7c3aed,#db2777)" : "transparent",
+              color: mode === "manage" ? "#fff" : "#94a3b8",
+              transition: "all 0.2s",
+            }}
+          >
+            Manage & Edit Courses
+          </button>
+        </div>
+      )}
 
-      {mode === "manage" ? (
-        <InstructorCourses showToast={showToast} isAdmin={true} />
+      {canManage && mode === "manage" ? (
+        <InstructorCourses
+          showToast={showToast}
+          isAdmin={true}
+          canCreate={canCreate}
+          canEdit={canEdit}
+          canDelete={canDelete}
+        />
       ) : (
         <>
 

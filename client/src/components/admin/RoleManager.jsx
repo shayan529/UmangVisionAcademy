@@ -18,7 +18,8 @@ import {
 } from "lucide-react";
 import apiClient from "../../config/api";
 import {
-  getAssignedRoles,
+  getCustomRole,
+  hasCustomRole,
   hasBaseRole,
   isBaseRole,
 } from "../../utils/permissions";
@@ -26,6 +27,19 @@ import { INDIA_CITIES_BY_STATE, INDIA_STATES } from "../../data/indiaLocations";
 
 const API_BASE = "/admin/roles";
 const USERS_API = "/users/admin-create";
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+// Returns the effective role ID string for a user regardless of whether
+// their role is a base-role string or a populated custom Role object.
+const getUserRoleId = (user) => {
+  const role = user?.role;
+  if (!role) return null;
+  if (typeof role === "object" && role._id) return role._id.toString();
+  // Raw ObjectId string stored without population
+  if (typeof role === "string" && role.length === 24) return role;
+  return null; // base-role string — no ObjectId
+};
 
 const MODULE_LABELS = {
   courses: "Courses",
@@ -62,15 +76,11 @@ const ACTION_LABELS = {
 
 const EMPTY_ROLE = { name: "", description: "", permissions: [] };
 
-const getCustomRoleIds = (user) =>
-  getAssignedRoles(user)
-    .map((role) => role._id || role)
-    .filter(Boolean);
-
 const BASE_ROLE_OPTIONS = [
   { value: "student", label: "Student" },
   { value: "instructor", label: "Instructor" },
 ];
+
 
 const INDIAN_CITIES_BY_STATE = INDIA_CITIES_BY_STATE;
 const INDIAN_STATES = INDIA_STATES;
@@ -420,57 +430,63 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
 
 // ── Assign roles modal ────────────────────────────────────────────────────────
 const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => {
-  const [selected, setSelected] = useState(() => {
-    const customIds = getCustomRoleIds(user);
-    // Pre-select any system role whose name matches the user's base role
-    const systemRoleIds = (roles || [])
-      .filter((r) => r.isSystem && r.name?.toLowerCase() === user?.role?.toLowerCase())
-      .map((r) => r._id);
-    return [...customIds, ...systemRoleIds];
-  });
-  const [saving, setSaving] = useState(false);
+  const BASE_ROLE_VALUES = ["student", "instructor", "admin", "staff"];
 
-  const toggleRole = (id) =>
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id],
-    );
+  const systemRoles = roles.filter(
+    (r) => r.isSystem && BASE_ROLE_VALUES.includes(r.name?.toLowerCase()),
+  );
+  const customRoles = roles.filter(
+    (r) => !(r.isSystem && BASE_ROLE_VALUES.includes(r.name?.toLowerCase())),
+  );
+  const allRoles = [...systemRoles, ...customRoles];
 
-  const handleSelectAll = () => {
-    if (selected.length === roles.length) {
-      setSelected([]);
-    } else {
-      setSelected(roles.map((r) => r._id));
+  // Pre-select the user's current role:
+  // – If role is a populated object  → match by _id
+  // – If role is an ObjectId string  → match by that string
+  // – If role is a base-role string  → find the matching system Role document
+  const getDefaultSelected = () => {
+    const existingId = getUserRoleId(user); // ObjectId string or null
+    if (existingId) {
+      const match = allRoles.find((r) => r._id?.toString() === existingId);
+      if (match) return match._id?.toString();
     }
+
+    // Base-role string — find the system role document
+    const userRoleName = (
+      typeof user?.role === "string" ? user.role : "student"
+    ).toLowerCase();
+    const sysMatch = allRoles.find(
+      (r) => r.isSystem && r.name?.toLowerCase() === userRoleName,
+    );
+    if (sysMatch) return sysMatch._id?.toString();
+
+    // Final fallback — Student system role
+    return (
+      allRoles.find((r) => r.isSystem && r.name?.toLowerCase() === "student")
+        ?._id?.toString() ?? null
+    );
   };
 
+  const [selectedRoleId, setSelectedRoleId] = useState(getDefaultSelected);
+  const [saving, setSaving] = useState(false);
+
   const handleSave = async () => {
+    if (!selectedRoleId) {
+      showToast?.("Please select a role.");
+      return;
+    }
     setSaving(true);
     try {
-      // Separate system base-role selections from custom permission-role selections
-      const systemRoleMap = {};
-      for (const r of roles) {
-        if (r.isSystem) systemRoleMap[r._id] = r.name?.toLowerCase();
-      }
-
-      let newBaseRole = user.role; // keep existing role by default
-      const customRoleIds = [];
-
-      for (const id of selected) {
-        if (systemRoleMap[id]) {
-          newBaseRole = systemRoleMap[id]; // last system role selected wins
-        } else {
-          customRoleIds.push(id);
-        }
-      }
-
       await api(`${API_BASE}/assign/${user._id}`, {
         method: "PUT",
-        body: JSON.stringify({ role: newBaseRole, assignedRoleIds: customRoleIds }),
+        // Single field: roleId is either a base-role string (from system role
+        // name) or a custom Role ObjectId string.
+        body: JSON.stringify({ roleId: selectedRoleId }),
       });
-      showToast?.(`Roles updated for ${user.name}.`);
+      showToast?.(`Role updated for ${user.name}.`);
       onSaved();
     } catch (err) {
-      showToast?.(err.message || "Failed to assign roles.");
+      showToast?.(err.response?.data?.message || err.message || "Failed to assign role.");
     } finally {
       setSaving(false);
     }
@@ -483,8 +499,6 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
     .slice(0, 2)
     .toUpperCase();
 
-  const userRolesList = user?.role ? [user.role] : [];
-
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
       <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl">
@@ -495,8 +509,8 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
               <Shield size={18} />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-white">Assign Roles</h3>
-              <p className="text-xs text-slate-400">Manage user access permissions</p>
+              <h3 className="text-base font-extrabold text-white">Assign Role</h3>
+              <p className="text-xs text-slate-400">Set the user's role — select exactly one</p>
             </div>
           </div>
           <button
@@ -513,29 +527,19 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
             {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-bold text-white truncate">
-                {user.name}
-              </span>
-              {userRolesList.map((r, i) => (
-                <span
-                  key={i}
-                  className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 capitalize"
-                >
-                  {r}
-                </span>
-              ))}
-            </div>
+            <span className="text-sm font-bold text-white truncate block">
+              {user.name}
+            </span>
             <div className="mt-1 flex items-center gap-3 text-xs text-slate-400 flex-wrap">
               {user.email && (
                 <span className="flex items-center gap-1">
-                  <Mail size={12} className="text-slate-400" />
+                  <Mail size={12} />
                   {user.email}
                 </span>
               )}
               {user.phoneNumber && (
                 <span className="flex items-center gap-1">
-                  <Phone size={12} className="text-slate-400" />
+                  <Phone size={12} />
                   {user.phoneNumber}
                 </span>
               )}
@@ -543,34 +547,71 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
           </div>
         </div>
 
-        {/* Action / Selection Summary bar */}
-        <div className="flex items-center justify-between mb-3 px-0.5">
-          <span className="text-xs font-bold text-slate-300">
-            Select Roles ({selected.length} of {roles.length} selected)
-          </span>
-          {roles.length > 1 && (
-            <button
-              type="button"
-              onClick={handleSelectAll}
-              className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
-            >
-              {selected.length === roles.length ? "Deselect All" : "Select All"}
-            </button>
+        {/* ── Unified role list (radio) ── */}
+        <div className="flex flex-col gap-2.5 max-h-[55vh] overflow-y-auto pr-1">
+          {allRoles.length === 0 && (
+            <p className="text-xs text-slate-500 text-center py-6">No roles available.</p>
           )}
-        </div>
-
-        {/* Roles List */}
-        <div className="mb-6">
-          <RoleChecklist
-            roles={roles}
-            selected={selected}
-            onToggle={toggleRole}
-            emptyHint="No custom roles yet — create one first in Roles & Permissions."
-          />
+          {allRoles.map((role) => {
+            const active = selectedRoleId?.toString() === role._id?.toString();
+            const permSummary = formatPermissionSummary(role);
+            return (
+              <button
+                key={role._id}
+                type="button"
+                onClick={() => setSelectedRoleId(role._id)}
+                className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 text-left transition-all ${
+                  active
+                    ? "border-indigo-500/80 bg-indigo-950/40 shadow-md shadow-indigo-950/50"
+                    : "border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-800/80"
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-sm font-bold tracking-wide ${
+                      active ? "text-white" : "text-slate-300"
+                    }`}>
+                      {role.name}
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        role.isSystem
+                          ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                          : "border-indigo-500/30 bg-indigo-500/10 text-indigo-300"
+                      }`}
+                    >
+                      {role.isSystem ? "System" : "Custom"}
+                    </span>
+                  </div>
+                  {role.description && (
+                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                      {role.description}
+                    </p>
+                  )}
+                  {permSummary && (
+                    <div className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
+                      <Shield size={12} className="text-indigo-400 flex-none" />
+                      <span className="truncate">{permSummary}</span>
+                    </div>
+                  )}
+                </div>
+                {/* Radio circle */}
+                <div
+                  className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                    active
+                      ? "border-indigo-400 bg-indigo-500"
+                      : "border-slate-600 bg-slate-950"
+                  }`}
+                >
+                  {active && <div className="h-2 w-2 rounded-full bg-white" />}
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+        <div className="flex items-center justify-end gap-3 pt-4 mt-4 border-t border-slate-800">
           <button
             onClick={onClose}
             className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-xs font-bold hover:bg-slate-800 hover:text-white transition-colors"
@@ -607,15 +648,9 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
     pincode: "",
     baseRole: "student",
   });
-  const [selectedRoles, setSelectedRoles] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  const toggleRole = (id) =>
-    setSelectedRoles((prev) =>
-      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id],
-    );
 
   const handleChange = (field) => (e) =>
     setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -662,7 +697,6 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
           state: form.state,
           pincode: form.pincode,
           role: form.baseRole,
-          assignedRoles: selectedRoles,
         }),
       });
       showToast?.(`${form.name} added.`);
@@ -838,40 +872,38 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
             </div>
           </div>
 
-          {/* Section: Roles & Access */}
+          {/* Section: Role (single radio select) */}
           <div>
             <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-3">
-              Role & Permissions
+              Role
             </span>
-            <div className="space-y-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Primary Account Type <span className="text-indigo-400">*</span>
-                </label>
-                <select
-                  value={form.baseRole}
-                  onChange={handleChange("baseRole")}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/70 px-3.5 py-2.5 text-sm text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-                >
-                  {BASE_ROLE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Custom Roles (Optional)
-                </label>
-                <RoleChecklist
-                  roles={roles}
-                  selected={selectedRoles}
-                  onToggle={toggleRole}
-                  emptyHint="No custom roles available yet — you can assign custom roles later."
-                />
-              </div>
+            <div className="flex flex-col gap-2">
+              {["student", "instructor", "staff"].map((roleValue) => {
+                const active = form.baseRole === roleValue;
+                return (
+                  <button
+                    key={roleValue}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, baseRole: roleValue }))}
+                    className={`flex items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left transition-all ${
+                      active
+                        ? "border-indigo-500/80 bg-indigo-950/40 text-white shadow-md shadow-indigo-950/50"
+                        : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-600 hover:text-white"
+                    }`}
+                  >
+                    <span className="text-sm font-bold capitalize">{roleValue}</span>
+                    <div
+                      className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                        active
+                          ? "border-indigo-400 bg-indigo-500"
+                          : "border-slate-600 bg-slate-950"
+                      }`}
+                    >
+                      {active && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -969,15 +1001,32 @@ const RoleManager = ({ showToast, currentUser }) => {
 
     if (!matchesSearch) return false;
     if (!roleFilter) return true;
-    const assignedIds = getCustomRoleIds(u);
-    if (roleFilter === "__none__") return assignedIds.length === 0;
-    return assignedIds.includes(roleFilter);
+
+    if (roleFilter === "__none__") {
+      // No custom role: role is a plain base-role string
+      return typeof u.role === "string" && isBaseRole(u.role);
+    }
+
+    // Match by role ObjectId or system role name
+    const userRoleId = getUserRoleId(u);
+    if (userRoleId) return userRoleId === roleFilter;
+
+    // Fallback: system role filter matched by name
+    const filterRole = roles.find((r) => r._id?.toString() === roleFilter);
+    if (filterRole?.isSystem) {
+      return (
+        typeof u.role === "string" &&
+        u.role.toLowerCase() === filterRole.name?.toLowerCase()
+      );
+    }
+    return false;
   });
 
+  // Users who have a specific custom Role ObjectId stored as their role
   const usersForRole = (roleId) =>
     users.filter((u) => {
-      const isAssigned = getCustomRoleIds(u).includes(roleId);
-      if (!isAssigned) return false;
+      const userRoleId = getUserRoleId(u);
+      if (userRoleId !== roleId?.toString()) return false;
       const currentIsAdmin = hasBaseRole(currentUser, "admin");
       if (!currentIsAdmin && hasBaseRole(u, "admin")) return false;
       return true;
@@ -1207,28 +1256,39 @@ const RoleManager = ({ showToast, currentUser }) => {
                     <span className="text-sm font-semibold text-white truncate">
                       {u.name}
                     </span>
-                    {u.role && isBaseRole(u.role) && (
-                      <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
-                        {u.role}
-                      </span>
-                    )}
+                    {(() => {
+                      const userRoleId = getUserRoleId(u);
+                      const customRole =
+                        getCustomRole(u, roles) ||
+                        (userRoleId ? roles.find((r) => r._id?.toString() === userRoleId) : null);
+                      if (customRole) {
+                        return (
+                          <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-indigo-950/60 text-indigo-300 border border-indigo-500/30">
+                            {customRole.name}
+                          </span>
+                        );
+                      }
+                      if (u.role && isBaseRole(u.role)) {
+                        return (
+                          <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
+                            {u.role}
+                          </span>
+                        );
+                      }
+                      if (userRoleId) {
+                        return (
+                          <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-indigo-950/60 text-indigo-300 border border-indigo-500/30">
+                            Custom Role
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                   <div className="text-xs text-slate-500">
                     {u.phoneNumber}
                     {u.email ? ` · ${u.email}` : ""}
                   </div>
-                  {getAssignedRoles(u).length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {getAssignedRoles(u).map((r) => (
-                        <span
-                          key={r._id || r}
-                          className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-950/40 text-indigo-300 border border-indigo-900/40"
-                        >
-                          {r.name || "Role"}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
                 <button
                   onClick={() => setAssignTarget(u)}

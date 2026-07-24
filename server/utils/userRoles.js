@@ -4,27 +4,41 @@ import { getJson, setJson } from "./redisClient.js";
 
 const { Types } = mongoose;
 
-// ── Base role constants ───────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
 export const BASE_ROLES = ["student", "instructor", "admin", "staff"];
 const BASE_ROLE_SET = new Set(BASE_ROLES);
 
-export const isBaseRole = (role) =>
-  typeof role === "string" && BASE_ROLE_SET.has(role);
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-// ── Single-role helpers ───────────────────────────────────────────────────────
-// user.role is now a plain string. All helpers accept either shape so the
-// transition is safe during the migration window.
+/** True if the value is one of the fixed base-role strings. */
+export const isBaseRole = (value) =>
+  typeof value === "string" && BASE_ROLE_SET.has(value.toLowerCase());
 
+/** True if the value looks like a Mongo ObjectId (custom role reference). */
+export const isRoleObjectId = (value) =>
+  value instanceof Types.ObjectId ||
+  (typeof value === "string" && Types.ObjectId.isValid(value) && !isBaseRole(value));
+
+// ── hasBaseRole ───────────────────────────────────────────────────────────────
+// Works with both the new single-field shape and the legacy array shape that
+// may still live in Redis cache from before the migration.
 export const hasBaseRole = (user, roleName) => {
   if (!user || !roleName) return false;
   const name = roleName.toLowerCase();
 
-  // New shape: user.role is a string
-  if (typeof user.role === "string") {
-    return user.role.toLowerCase() === name;
+  const role = user.role;
+
+  // New shape: role is a string
+  if (typeof role === "string") {
+    return role.toLowerCase() === name;
   }
 
-  // Legacy shape (pre-migration documents still in cache): user.roles array
+  // New shape: role is a populated custom Role object — check its name
+  if (role && typeof role === "object" && role.name) {
+    return role.name.toLowerCase() === name;
+  }
+
+  // Legacy shape: user.roles is an array (pre-migration cache)
   if (Array.isArray(user.roles)) {
     return user.roles.some((r) => {
       if (typeof r === "string") return r.toLowerCase() === name;
@@ -36,120 +50,103 @@ export const hasBaseRole = (user, roleName) => {
   return false;
 };
 
-// ── Custom / permission-role helpers ─────────────────────────────────────────
-// assignedRoles is an array of Role ObjectIds (or populated Role documents).
-// These carry a permissions matrix and are separate from the base role.
-
+// ── hydrateUserRoles ──────────────────────────────────────────────────────────
+// Converts a raw Mongoose user document into a plain object with:
+//   • role: string  — if a base role
+//   • role: { _id, name, permissions, ... }  — if a custom Role document
+// The caller (protect middleware) caches the result in Redis.
 const toPlainUser = (user) => {
   if (!user) return null;
   return typeof user.toObject === "function" ? user.toObject() : { ...user };
 };
 
-/**
- * Populate assignedRoles ObjectIds into full Role documents and attach them
- * back onto the plain user object as `assignedRoles`. Returns the plain user.
- *
- * The returned object shape is:
- *   { ...userFields, role: "student"|"instructor"|"admin"|"staff",
- *     assignedRoles: [ { _id, name, permissions, ... }, ... ] }
- */
 export const hydrateUserRoles = async (user) => {
-  const plainUser = toPlainUser(user);
-  if (!plainUser) return null;
+  const plain = toPlainUser(user);
+  if (!plain) return null;
 
-  // Support legacy documents that still have the old roles[] array in cache.
-  if (!plainUser.role && Array.isArray(plainUser.roles)) {
-    const firstBase = plainUser.roles.find(isBaseRole);
-    plainUser.role = firstBase || "student";
+  // ── Legacy migration fallback ────────────────────────────────────────────
+  // Old shape had roles[] array + assignedRoles[]. Promote to new single field.
+  if (!plain.role && Array.isArray(plain.roles)) {
+    const firstBase = plain.roles.find(isBaseRole);
+    plain.role = firstBase || "student";
   }
 
-  // Fast path: most users have no custom permission roles — skip all async work
-  const rawAssigned = plainUser.assignedRoles || [];
-  if (rawAssigned.length === 0) {
-    plainUser.assignedRoles = [];
-    delete plainUser.roles;
-    delete plainUser.password;
-    return plainUser;
+  const roleValue = plain.role;
+
+  // Base-role string — nothing to populate
+  if (isBaseRole(roleValue) || roleValue == null) {
+    if (roleValue == null) plain.role = "student";
+    delete plain.roles;
+    delete plain.assignedRoles;
+    delete plain.password;
+    return plain;
+  }
+
+  // Already a populated object (e.g. came from a .populate() call)
+  if (roleValue && typeof roleValue === "object" && roleValue._id) {
+    delete plain.roles;
+    delete plain.assignedRoles;
+    delete plain.password;
+    return plain;
+  }
+
+  // ObjectId reference — fetch the Role document
+  const idStr = roleValue instanceof Types.ObjectId
+    ? roleValue.toString()
+    : typeof roleValue === "string"
+      ? roleValue
+      : null;
+
+  if (!idStr || !Types.ObjectId.isValid(idStr)) {
+    // Unrecognised value — fall back to student
+    plain.role = "student";
+    delete plain.roles;
+    delete plain.assignedRoles;
+    delete plain.password;
+    return plain;
   }
 
   try {
-    // Extract ObjectId strings — skip anything already a populated object
-    const idsToFetch = [];
-    const alreadyPopulated = [];
+    const cacheKey = `role:${idStr}`;
+    let roleDoc = await getJson(cacheKey);
 
-    for (const entry of rawAssigned) {
-      if (entry && typeof entry === "object" && entry._id) {
-        alreadyPopulated.push(entry);
-      } else {
-        const idStr = entry instanceof Types.ObjectId
-          ? entry.toString()
-          : typeof entry === "string" && Types.ObjectId.isValid(entry)
-            ? entry
-            : null;
-        if (idStr) idsToFetch.push(idStr);
+    if (!roleDoc) {
+      roleDoc = await Role.findById(idStr).lean();
+      if (roleDoc) {
+        await setJson(cacheKey, roleDoc, 3600 * 24);
       }
     }
 
-    const fetchedRoles = [...alreadyPopulated];
-
-    if (idsToFetch.length > 0) {
-      // Check Redis for all IDs in parallel rather than sequentially
-      const cacheResults = await Promise.all(
-        idsToFetch.map((id) => getJson(`role:${id}`).then((v) => ({ id, v })))
-      );
-
-      const toQuery = [];
-      for (const { id, v } of cacheResults) {
-        if (v) {
-          fetchedRoles.push(v);
-        } else {
-          toQuery.push(id);
-        }
-      }
-
-      if (toQuery.length > 0) {
-        const docs = await Role.find({ _id: { $in: toQuery } }).lean();
-        // Cache all fetched role docs in parallel
-        await Promise.all(
-          docs.map((doc) =>
-            setJson(`role:${doc._id.toString()}`, doc, 3600 * 24)
-          )
-        );
-        fetchedRoles.push(...docs);
-      }
-    }
-
-    plainUser.assignedRoles = fetchedRoles;
-  } catch (error) {
-    console.error("[Roles] hydrateUserRoles failed:", error);
-    plainUser.assignedRoles = [];
+    plain.role = roleDoc || "student"; // fallback if role was deleted
+  } catch (err) {
+    console.error("[Roles] hydrateUserRoles failed to fetch role doc:", err);
+    plain.role = "student";
   }
 
-  delete plainUser.roles;
-  delete plainUser.password;
-  return plainUser;
+  delete plain.roles;
+  delete plain.assignedRoles;
+  delete plain.password;
+  return plain;
 };
 
 export const hydrateUsersRoles = async (users = []) =>
-  Promise.all(users.map((user) => hydrateUserRoles(user)));
+  Promise.all(users.map(hydrateUserRoles));
 
-// ── Permission grant check ────────────────────────────────────────────────────
-// Admins have every permission implicitly.
-// All other users need an explicit permission entry in one of their
-// assignedRoles documents.
+// ── hasPermissionGrant ────────────────────────────────────────────────────────
+// Admins have all permissions.
+// Custom-role users get permissions from their hydrated role object.
 export const hasPermissionGrant = (user, moduleName, actionName = "view") => {
   if (hasBaseRole(user, "admin")) return true;
 
-  const assigned = user?.assignedRoles || [];
+  const role = user?.role;
+  if (!role || typeof role === "string") return false;
+
+  // role is a populated custom Role document
   return Boolean(
-    assigned.some(
-      (role) =>
-        typeof role === "object" &&
-        role.permissions?.some(
-          (permission) =>
-            permission.module === moduleName &&
-            permission.actions?.includes(actionName),
-        ),
+    role.permissions?.some(
+      (p) =>
+        p.module === moduleName &&
+        p.actions?.includes(actionName),
     ),
   );
 };
