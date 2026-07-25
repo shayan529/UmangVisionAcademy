@@ -58,6 +58,18 @@ export const login = createAsyncThunk(
   },
 );
 
+export const loginWithOtp = createAsyncThunk(
+  "auth/loginWithOtp",
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const { data } = await api.post("/users/login-otp", credentials);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  },
+);
+
 export const register = createAsyncThunk(
   "auth/register",
   async (values, { rejectWithValue }) => {
@@ -232,6 +244,21 @@ const authSlice = createSlice({
         persistUserCache(user);
       })
       .addCase(login.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(loginWithOtp.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(loginWithOtp.fulfilled, (state, action) => {
+        state.loading = false;
+        const user = action.payload.user ?? action.payload;
+        state.user = user;
+        state.isAuthenticated = true;
+        persistToken(action.payload);
+        persistUserCache(user);
+      })
+      .addCase(loginWithOtp.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

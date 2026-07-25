@@ -4,14 +4,21 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
-import { clearError, login, loadCurrentUser } from "../../redux/slices/authSlice";
+import { clearError, login, loginWithOtp, loadCurrentUser } from "../../redux/slices/authSlice";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
+import api from "../../config/api";
 import {
   checkAndAwardAchievements,
   fetchAchievements,
 } from "../../redux/slices/achievementSlice";
 import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from "../../utils/permissions";
+import { isFirebaseConfigured } from "../../config/firebase";
+import {
+  sendFirebasePhoneOtp,
+  verifyFirebasePhoneOtp,
+  clearRecaptcha,
+} from "../../services/firebasePhoneAuth";
 
 /* ── Animated particle canvas ── */
 const ParticleCanvas = () => {
@@ -123,7 +130,14 @@ const PasswordResetModal = ({ onClose }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [firebaseConfirmationResult, setFirebaseConfirmationResult] = useState(null);
   const otpRefs = useRef([]);
+
+  useEffect(() => {
+    return () => {
+      clearRecaptcha("recaptcha-container-reset");
+    };
+  }, []);
 
   const countryCodes = [
     { code: "+91", country: "India" },
@@ -155,6 +169,28 @@ const PasswordResetModal = ({ onClose }) => {
       await axios.post("/auth/forgot-password-phone", {
         phoneNumber: fullPhone,
       });
+
+      if (isFirebaseConfigured()) {
+        try {
+          const confirmation = await sendFirebasePhoneOtp(fullPhone, "recaptcha-container-reset");
+          setFirebaseConfirmationResult(confirmation);
+        } catch (fbErr) {
+          console.warn("Firebase Reset Phone OTP error:", fbErr.code, fbErr.message);
+          const fbMsg =
+            fbErr?.code === "auth/invalid-app-credential"
+              ? "Firebase Auth Setup Required: Enable Phone provider in Firebase Console (Authentication -> Sign-in method) & add localhost to Authorized domains."
+              : fbErr?.code === "auth/unauthorized-domain"
+              ? "This domain is not added to Firebase Console (Authentication -> Settings -> Authorized domains)."
+              : fbErr?.message || "Firebase SMS Error";
+          toast.error(fbMsg);
+          // Fallback to dev mode OTP so reset flow is testable locally
+          setStep("otp");
+          setCooldown(60);
+          setTimeout(() => otpRefs.current[0]?.focus(), 100);
+          return;
+        }
+      }
+
       toast.success(t("passwordReset.toast.otpSentPhone"), { id: "otp-sent" });
       setStep("otp");
       setCooldown(60);
@@ -178,6 +214,16 @@ const PasswordResetModal = ({ onClose }) => {
       await axios.post("/auth/forgot-password-phone", {
         phoneNumber: fullPhone,
       });
+
+      if (isFirebaseConfigured()) {
+        try {
+          const confirmation = await sendFirebasePhoneOtp(fullPhone, "recaptcha-container-reset");
+          setFirebaseConfirmationResult(confirmation);
+        } catch (fbErr) {
+          console.warn("Firebase Resend error:", fbErr.message);
+        }
+      }
+
       toast.success(t("passwordReset.toast.otpResent"), { id: "otp-resent" });
       setCooldown(60);
     } catch (err) {
@@ -221,9 +267,20 @@ const PasswordResetModal = ({ onClose }) => {
       return toast.error(t("passwordReset.toast.enterFullOtp"), { id: "enter-full-otp" });
     setLoading(true);
     try {
+      let firebaseToken = null;
+      if (isFirebaseConfigured() && firebaseConfirmationResult) {
+        try {
+          const res = await verifyFirebasePhoneOtp(firebaseConfirmationResult, otpStr);
+          firebaseToken = res.idToken;
+        } catch (fbVerifyErr) {
+          console.warn("Firebase verify token failed:", fbVerifyErr.message);
+        }
+      }
+
       const { data } = await axios.post("/auth/verify-reset-phone-otp", {
         phoneNumber: fullPhone,
         otp: otpStr,
+        firebaseToken,
       });
       setResetToken(data.resetToken);
       toast.success(t("passwordReset.toast.otpVerified"), { id: "otp-verified" });
@@ -907,13 +964,76 @@ const Login = () => {
 
   const [countryCode] = useState("+91");
   const [formData, setFormData] = useState({ phoneNumber: "", password: "" });
+  const [loginMode, setLoginMode] = useState("password"); // "password" | "otp"
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const [firebaseConfirmationResult, setFirebaseConfirmationResult] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [focused, setFocused] = useState("");
   const [loading, setLoading] = useState(false);
   const [showReset, setShowReset] = useState(false);
 
+  useEffect(() => {
+    return () => {
+      clearRecaptcha("recaptcha-container");
+    };
+  }, []);
+
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const timer = setTimeout(() => setOtpCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [otpCooldown]);
+
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const handleSendLoginOtp = async () => {
+    if (!/^[0-9]{10}$/.test(formData.phoneNumber)) {
+      toast.error(t("auth.invalidPhone") || "Please enter a valid 10-digit phone number.");
+      return;
+    }
+    setSendingOtp(true);
+    const fullPhone = `${countryCode}${formData.phoneNumber}`;
+    try {
+      await api.post("/users/send-login-otp", {
+        phoneNumber: fullPhone,
+      });
+
+      let sentViaFirebase = false;
+      if (isFirebaseConfigured()) {
+        try {
+          const confirmation = await sendFirebasePhoneOtp(fullPhone, "recaptcha-container");
+          setFirebaseConfirmationResult(confirmation);
+          sentViaFirebase = true;
+        } catch (fbErr) {
+          console.warn("Firebase sendPhoneOtp error:", fbErr.code, fbErr.message);
+          const isInvalidCred = fbErr?.code === "auth/invalid-app-credential";
+          const fbMsg = isInvalidCred
+            ? "Firebase Phone Auth is disabled in Firebase Console. Using Dev OTP (123456). Enable 'Phone' under Authentication -> Sign-in method to send real SMS."
+            : fbErr?.code === "auth/unauthorized-domain"
+            ? "Domain 'localhost' is not in Firebase Console -> Authorized domains. Using Dev OTP (123456)."
+            : fbErr?.message || "Firebase SMS Error.";
+          toast.error(fbMsg, { duration: 7000 });
+          // Fallback to dev mode OTP so local testing is never blocked
+          setOtpSent(true);
+          setOtpCooldown(30);
+          return;
+        }
+      }
+
+      toast.success(sentViaFirebase ? "OTP sent to your phone via Firebase!" : "OTP sent (dev mode)!");
+      setOtpSent(true);
+      setOtpCooldown(30);
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || "Failed to send OTP.";
+      toast.error(message);
+    } finally {
+      setSendingOtp(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -921,6 +1041,61 @@ const Login = () => {
       toast.error(t("auth.invalidPhone"));
       return;
     }
+
+    if (loginMode === "otp") {
+      if (!otpCode || otpCode.trim().length < 6) {
+        toast.error("Please enter the full 6-digit OTP.");
+        return;
+      }
+      setLoading(true);
+      try {
+        let firebaseToken = null;
+        if (isFirebaseConfigured() && firebaseConfirmationResult) {
+          try {
+            const res = await verifyFirebasePhoneOtp(firebaseConfirmationResult, otpCode.trim());
+            firebaseToken = res.idToken;
+          } catch (fbVerifyErr) {
+            console.warn("Firebase token verification failed:", fbVerifyErr.message);
+          }
+        }
+
+        const loggedUser = await dispatch(
+          loginWithOtp({
+            phoneNumber: `${countryCode}${formData.phoneNumber}`,
+            otp: otpCode.trim(),
+            firebaseToken,
+          }),
+        ).unwrap();
+
+        const refreshed = await dispatch(loadCurrentUser())
+          .unwrap()
+          .catch(() => loggedUser);
+        const user = refreshed || loggedUser;
+
+        navigate(getPostLoginPath(user, location.state?.from), { replace: true });
+        toast(t("auth.welcomeToast"), { icon: "👋", duration: 3000 });
+
+        const now = new Date();
+        const hour = now.getHours();
+        dispatch(
+          checkAndAwardAchievements({
+            firstLogin: true,
+            earlyBird: hour < 7,
+            nightStudy: hour >= 22,
+          }),
+        ).then(() => dispatch(fetchAchievements()));
+      } catch (error) {
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          (typeof error === "string" ? error : t("auth.loginFailed"));
+        toast.error(message);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     setLoading(true);
     try {
       const loggedUser = await dispatch(
@@ -1364,46 +1539,131 @@ const Login = () => {
                   </div>
                 </div>
 
-                {/* Password */}
+                {/* Login With (OTP | Password) */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
-                    {t("auth.password")}
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      onFocus={() => setFocused("password")}
-                      onBlur={() => setFocused("")}
-                      placeholder={t("auth.passwordPlaceholder")}
-                      required
-                      className={inputCls("password") + " pr-12"}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((s) => !s)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-cyan-300 transition-colors"
-                    >
-                      {showPassword ? (
-                        <FiEyeOff size={18} />
-                      ) : (
-                        <FiEye size={18} />
-                      )}
-                    </button>
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <label className="text-xs font-semibold text-slate-300 tracking-widest uppercase shrink-0">
+                      LOGIN WITH
+                    </label>
+                    <div className="flex items-center bg-[#1e293b] border border-white/10 rounded-xl p-0.5 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLoginMode("otp");
+                          setFocused("");
+                        }}
+                        className={`px-3 py-1 rounded-lg font-bold transition-all duration-200 cursor-pointer ${
+                          loginMode === "otp"
+                            ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md shadow-cyan-500/20"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        OTP
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLoginMode("password");
+                          setFocused("");
+                        }}
+                        className={`px-3 py-1 rounded-lg font-bold transition-all duration-200 cursor-pointer ${
+                          loginMode === "password"
+                            ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md shadow-cyan-500/20"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Password
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {/* Forgot password */}
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setShowReset(true)}
-                    className="text-xs cursor-pointer text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
-                  >
-                    {t("auth.forgotPassword")}
-                  </button>
+                  {loginMode === "password" ? (
+                    <>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          name="password"
+                          value={formData.password}
+                          onChange={handleChange}
+                          onFocus={() => setFocused("password")}
+                          onBlur={() => setFocused("")}
+                          placeholder={t("auth.passwordPlaceholder")}
+                          required={loginMode === "password"}
+                          className={inputCls("password") + " pr-12"}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((s) => !s)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-cyan-300 transition-colors cursor-pointer"
+                        >
+                          {showPassword ? (
+                            <FiEyeOff size={18} />
+                          ) : (
+                            <FiEye size={18} />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Forgot password */}
+                      <div className="flex justify-end mt-2 h-5 items-center">
+                        <button
+                          type="button"
+                          onClick={() => setShowReset(true)}
+                          className="text-xs cursor-pointer text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+                        >
+                          {t("auth.forgotPassword")}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div>
+                      <div className="relative flex items-center">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          name="otpCode"
+                          value={otpCode}
+                          onChange={(e) =>
+                            setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                          }
+                          onFocus={() => setFocused("otp")}
+                          onBlur={() => setFocused("")}
+                          placeholder="Enter 6-digit OTP"
+                          maxLength={6}
+                          required={loginMode === "otp"}
+                          className={
+                            inputCls("otp") +
+                            " pr-32 font-mono tracking-widest text-base"
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSendLoginOtp}
+                          disabled={sendingOtp || otpCooldown > 0}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 rounded-xl text-xs font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          {sendingOtp
+                            ? "Sending..."
+                            : otpCooldown > 0
+                            ? `${otpCooldown}s`
+                            : otpSent
+                            ? "Resend OTP"
+                            : "Send OTP"}
+                        </button>
+                      </div>
+                      <div className="mt-2 h-5 flex items-center justify-start">
+                        {otpSent ? (
+                          <p className="text-[11px] text-cyan-400/90 font-medium flex items-center gap-1">
+                            <span>✓</span> OTP sent to {countryCode} {formData.phoneNumber}
+                          </p>
+                        ) : (
+                          <span className="text-[11px] text-slate-500/80 font-medium">
+                            Click "Send OTP" to receive a 6-digit code
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Submit */}
@@ -1451,6 +1711,10 @@ const Login = () => {
                   )}
                 </button>
               </form>
+
+              {/* Invisible reCAPTCHA Containers for Firebase Phone Auth */}
+              <div id="recaptcha-container" />
+              <div id="recaptcha-container-reset" />
 
               <p className="text-center text-slate-500 text-sm mt-6">
                 {t("auth.newHere")}{" "}

@@ -2,6 +2,8 @@ import express from "express";
 import {
   RegisterUser,
   LoginUser,
+  SendLoginOtp,
+  LoginUserWithOtp,
   LogoutUser,
   getCurrentUser,
   getUsers,
@@ -27,6 +29,8 @@ const router = express.Router();
 // ── Public ────────────────────────────────────────────────────────────────────
 router.post("/register", RegisterUser);
 router.post("/login", LoginUser);
+router.post("/send-login-otp", SendLoginOtp);
+router.post("/login-otp", LoginUserWithOtp);
 router.post("/logout", LogoutUser);
 router.get("/instructors/:id/public", getInstructorPublicProfile);
 
