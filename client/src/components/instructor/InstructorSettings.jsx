@@ -568,13 +568,16 @@ const InstructorSettings = ({ showToast }) => {
           console.error("Firebase Phone Auth error:", fbErr);
           clearRecaptcha("recaptcha-container-instructor");
           const fbMsg =
-            fbErr?.code === "auth/unauthorized-domain"
+            fbErr?.code === "auth/invalid-app-credential"
+              ? "Firebase App Credential Error (auth/invalid-app-credential). Please check in Firebase Console: 1) Phone provider is Enabled under Authentication -> Sign-in method 2) Domain is added to Authorized Domains."
+              : fbErr?.code === "auth/unauthorized-domain"
               ? "This domain is not authorized in your Firebase Console (Authentication -> Settings -> Authorized domains)."
               : fbErr?.message || t("instructorSettings.failedSendOtp");
           setPhoneMsg({ text: fbMsg, ok: false });
           setPhoneStep("idle");
           return;
         }
+
 
       }
       await api.post("/auth/send-phone-otp", { phoneNumber: e164 });

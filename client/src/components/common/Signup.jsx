@@ -360,7 +360,11 @@ const Signup = () => {
       if (isFirebaseConfigured()) {
         clearRecaptcha("recaptcha-container");
         const fbMsg =
-          err?.code === "auth/unauthorized-domain"
+          err?.code === "auth/invalid-app-credential"
+            ? "Firebase App Credential Error (auth/invalid-app-credential). Please check in Firebase Console: 1) Phone provider is Enabled under Authentication -> Sign-in method 2) Domain is added to Authorized Domains."
+            : err?.code === "auth/captcha-check-failed"
+            ? "reCAPTCHA verification failed. Please refresh and try again."
+            : err?.code === "auth/unauthorized-domain"
             ? "This domain is not authorized in your Firebase Console (Authentication -> Settings -> Authorized domains)."
             : err?.code === "auth/too-many-requests"
             ? "Too many requests. Please wait a moment and try again."
@@ -369,6 +373,7 @@ const Signup = () => {
       } else {
         toast.error(err?.response?.data?.message || err?.message || t("auth.failedOtp"));
       }
+
     } finally {
       setSendingPhoneOtp(false);
     }
