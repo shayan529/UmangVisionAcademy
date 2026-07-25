@@ -2,7 +2,29 @@ import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { auth, isFirebaseConfigured } from "../config/firebase.js";
 
 /**
- * Setup Firebase RecaptchaVerifier on a DOM element.
+ * Clear existing RecaptchaVerifier instance and empty the container DOM element.
+ * @param {string} containerId ID of the DOM element
+ */
+export const clearRecaptcha = (containerId = "recaptcha-container") => {
+  if (window.recaptchaVerifier) {
+    try {
+      window.recaptchaVerifier.clear();
+    } catch (e) {
+      // ignore clear errors
+    }
+    window.recaptchaVerifier = null;
+  }
+  const el =
+    typeof containerId === "string"
+      ? document.getElementById(containerId)
+      : containerId;
+  if (el) {
+    el.innerHTML = "";
+  }
+};
+
+/**
+ * Setup Firebase RecaptchaVerifier on a DOM element safely.
  * @param {string} containerId ID of the DOM element (default 'recaptcha-container')
  * @param {object} options Additional options for RecaptchaVerifier
  * @returns {RecaptchaVerifier}
@@ -17,14 +39,8 @@ export const setupRecaptchaVerifier = (
     );
   }
 
-  // Clear previous instance if attached to window to avoid duplicate rendering errors
-  if (window.recaptchaVerifier) {
-    try {
-      window.recaptchaVerifier.clear();
-    } catch (e) {
-      // ignore clear errors
-    }
-  }
+  // Clear previous instance & DOM element innerHTML to prevent 'already rendered' error
+  clearRecaptcha(containerId);
 
   const verifier = new RecaptchaVerifier(auth, containerId, {
     size: options.size || "invisible", // 'invisible' or 'normal'
@@ -40,6 +56,7 @@ export const setupRecaptchaVerifier = (
   window.recaptchaVerifier = verifier;
   return verifier;
 };
+
 
 /**
  * Send Phone Verification OTP using Firebase Auth.

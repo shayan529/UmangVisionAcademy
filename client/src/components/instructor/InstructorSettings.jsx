@@ -11,7 +11,9 @@ import {
   setupRecaptchaVerifier,
   sendFirebasePhoneOtp,
   verifyFirebasePhoneOtp,
+  clearRecaptcha,
 } from "../../services/firebasePhoneAuth";
+
 
 
 // ── Indian states & cities ────────────────────────────────────────────────────
@@ -564,6 +566,7 @@ const InstructorSettings = ({ showToast }) => {
           return;
         } catch (fbErr) {
           console.error("Firebase Phone Auth error:", fbErr);
+          clearRecaptcha("recaptcha-container-instructor");
           const fbMsg =
             fbErr?.code === "auth/unauthorized-domain"
               ? "This domain is not authorized in your Firebase Console (Authentication -> Settings -> Authorized domains)."
@@ -572,6 +575,7 @@ const InstructorSettings = ({ showToast }) => {
           setPhoneStep("idle");
           return;
         }
+
       }
       await api.post("/auth/send-phone-otp", { phoneNumber: e164 });
       setPhoneStep("otp");

@@ -13,7 +13,9 @@ import {
   setupRecaptchaVerifier,
   sendFirebasePhoneOtp,
   verifyFirebasePhoneOtp,
+  clearRecaptcha,
 } from "../../services/firebasePhoneAuth";
+
 
 
 /* ── Animated particle canvas ── */
@@ -133,6 +135,14 @@ const Signup = () => {
       else navigate("/student-dashboard", { replace: true });
     }
   }, [isAuthenticated, user, navigate, location.state]);
+
+  useEffect(() => {
+    return () => {
+      clearRecaptcha("recaptcha-container");
+    };
+  }, []);
+
+
 
   const [phoneOtpSent, setPhoneOtpSent] = useState(() =>
     getSessionValue("signup_phoneOtpSent", false),
@@ -328,6 +338,7 @@ const Signup = () => {
           return;
         } catch (fbErr) {
           console.error("Firebase Phone Auth error:", fbErr);
+          clearRecaptcha("recaptcha-container");
           const fbMsg =
             fbErr?.code === "auth/unauthorized-domain"
               ? "This domain is not authorized in your Firebase Console (Authentication -> Settings -> Authorized domains)."
@@ -335,6 +346,7 @@ const Signup = () => {
           toast.error(fbMsg);
           return;
         }
+
       }
 
       await axios.post("/auth/send-phone-otp", {
