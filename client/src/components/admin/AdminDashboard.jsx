@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchUsers,
@@ -58,10 +58,11 @@ export default function AdminDashboard() {
   const [sideCollapsed, setSideCollapsed] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
 
-  const showToast = (msg) => {
+  const showToast = useCallback((msg) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 2500);
-  };
+  }, []);
+
 
   // ── Fetch on mount ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -101,10 +102,10 @@ export default function AdminDashboard() {
     };
   }, []);
 
-  const refreshUsersAndCourses = () => {
+  const refreshUsersAndCourses = useCallback(() => {
     dispatch(fetchUsers());
     dispatch(fetchAllCoursesAdmin());
-  };
+  }, [dispatch]);
 
   const deleteUser = (id, role) => {
     dispatch(deleteUserThunk({ id, role })).then(() => {
@@ -116,7 +117,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     setQ("");
     refreshUsersAndCourses();
-  }, [tab]);
+  }, [tab, refreshUsersAndCourses]);
+
 
   // ── Derived stats ──────────────────────────────────────────────────────────
   const totalRevenue = courses.reduce(

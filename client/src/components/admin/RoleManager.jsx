@@ -939,6 +939,11 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
 // ── Main ───────────────────────────────────────────────────────────────────────
 const RoleManager = ({ showToast, currentUser }) => {
   const dispatch = useDispatch();
+  const showToastRef = useRef(showToast);
+  useEffect(() => {
+    showToastRef.current = showToast;
+  }, [showToast]);
+
   const [tab, setTab] = useState("roles");
   const [modules, setModules] = useState({});
   const [roles, setRoles] = useState([]);
@@ -964,7 +969,6 @@ const RoleManager = ({ showToast, currentUser }) => {
       setModules(modulesRes.modules || {});
       setRoles(rolesRes || []);
       setUsers(usersRes || []);
-      dispatch(loadCurrentUser());
     } catch (err) {
       const message =
         err.response?.data?.message ||
@@ -972,15 +976,16 @@ const RoleManager = ({ showToast, currentUser }) => {
         err.message ||
         "Failed to load role data.";
       setLoadError(message);
-      showToast?.(message);
+      showToastRef.current?.(message);
     } finally {
       setLoading(false);
     }
-  }, [showToast, dispatch]);
+  }, []);
 
   useEffect(() => {
     loadAll();
   }, [loadAll]);
+
 
   const handleDeleteRole = async () => {
     try {
