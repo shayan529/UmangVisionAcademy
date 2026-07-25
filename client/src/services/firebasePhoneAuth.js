@@ -50,7 +50,6 @@ export const setupRecaptchaVerifier = (
     "expired-callback": () => {
       if (options.onExpired) options.onExpired();
     },
-    ...options,
   });
 
   window.recaptchaVerifier = verifier;
@@ -70,7 +69,7 @@ export const sendFirebasePhoneOtp = async (phoneNumber, recaptchaVerifier) => {
   }
 
   if (!recaptchaVerifier) {
-    recaptchaVerifier = setupRecaptchaVerifier("recaptcha-container");
+    throw new Error("A RecaptchaVerifier instance is required.");
   }
 
   try {
@@ -83,16 +82,8 @@ export const sendFirebasePhoneOtp = async (phoneNumber, recaptchaVerifier) => {
     return confirmationResult;
   } catch (error) {
     console.error("Firebase sendPhoneOtp error:", error);
-    // Reset recaptcha if failed so user can try again
-    if (window.recaptchaVerifier?.render) {
-      try {
-        window.recaptchaVerifier.render().then((widgetId) => {
-          if (window.grecaptcha) window.grecaptcha.reset(widgetId);
-        });
-      } catch (e) {
-        // ignore reset error
-      }
-    }
+    // Clear reCAPTCHA so the caller can set it up fresh on the next attempt
+    clearRecaptcha("recaptcha-container");
     throw error;
   }
 };

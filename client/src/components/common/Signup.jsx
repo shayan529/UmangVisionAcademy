@@ -334,29 +334,19 @@ const Signup = () => {
     setSendingPhoneOtp(true);
     try {
       if (isFirebaseConfigured()) {
-        try {
-          const verifier = setupRecaptchaVerifier("recaptcha-container");
-          const confirmation = await sendFirebasePhoneOtp(
-            normalizedPhoneNumber,
-            verifier,
-          );
-          setFirebaseConfirmationResult(confirmation);
-          toast.success(t("auth.otpSentPhone"));
-          setPhoneOtpSent(true);
-          setPhoneResendCooldown(30);
-          setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
-          return;
-        } catch (fbErr) {
-          console.error("Firebase Phone Auth error:", fbErr);
-          clearRecaptcha("recaptcha-container");
-          const fbMsg =
-            fbErr?.code === "auth/unauthorized-domain"
-              ? "This domain is not authorized in your Firebase Console (Authentication -> Settings -> Authorized domains)."
-              : fbErr?.message || "Failed to send Firebase OTP.";
-          toast.error(fbMsg);
-          return;
-        }
-
+        // Always clear any existing reCAPTCHA before creating a new verifier
+        clearRecaptcha("recaptcha-container");
+        const verifier = setupRecaptchaVerifier("recaptcha-container");
+        const confirmation = await sendFirebasePhoneOtp(
+          normalizedPhoneNumber,
+          verifier,
+        );
+        setFirebaseConfirmationResult(confirmation);
+        toast.success(t("auth.otpSentPhone"));
+        setPhoneOtpSent(true);
+        setPhoneResendCooldown(30);
+        setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
+        return;
       }
 
       await api.post("/auth/send-phone-otp", {
@@ -367,7 +357,18 @@ const Signup = () => {
       setPhoneResendCooldown(30);
       setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
     } catch (err) {
-      toast.error(err?.response?.data?.message || err?.message || t("auth.failedOtp"));
+      if (isFirebaseConfigured()) {
+        clearRecaptcha("recaptcha-container");
+        const fbMsg =
+          err?.code === "auth/unauthorized-domain"
+            ? "This domain is not authorized in your Firebase Console (Authentication -> Settings -> Authorized domains)."
+            : err?.code === "auth/too-many-requests"
+            ? "Too many requests. Please wait a moment and try again."
+            : err?.message || "Failed to send OTP.";
+        toast.error(fbMsg);
+      } else {
+        toast.error(err?.response?.data?.message || err?.message || t("auth.failedOtp"));
+      }
     } finally {
       setSendingPhoneOtp(false);
     }
