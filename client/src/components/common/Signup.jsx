@@ -91,7 +91,12 @@ const ParticleCanvas = () => {
 const getSessionValue = (key, defaultValue) => {
   try {
     const saved = sessionStorage.getItem(key);
-    if (saved !== null) return JSON.parse(saved);
+    if (saved !== null) {
+      const parsed = JSON.parse(saved);
+      // Type-guard: only return parsed value if it matches the expected type
+      if (Array.isArray(defaultValue) && !Array.isArray(parsed)) return defaultValue;
+      return parsed;
+    }
   } catch (e) {
     console.error("Error reading sessionStorage", e);
   }
@@ -525,7 +530,7 @@ const Signup = () => {
     }`;
 
   return (
-    <div className="min-h-screen bg-[#0B1120] flex flex-col overflow-hidden relative signup-page-wrapper">
+    <div className="min-h-screen bg-[#0B1120] flex flex-col overflow-x-hidden relative signup-page-wrapper">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=DM+Sans:wght@400;500&display=swap');
         .df { font-family:'Outfit',sans-serif; }
@@ -691,7 +696,7 @@ const Signup = () => {
       </div>
 
       {/* ── Content ── */}
-      <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-10">
+      <div className="relative z-10 flex flex-1 items-center justify-center px-3 sm:px-6 py-4 sm:py-10 pb-28 sm:pb-12">
         <div className="w-full max-w-5xl flex items-center gap-14">
           {/* Left hero */}
           <div
@@ -843,7 +848,7 @@ const Signup = () => {
             />
 
             <div
-              className="card-glow rounded-3xl p-9 w-full"
+              className="card-glow rounded-3xl p-4 xs:p-6 sm:p-9 w-full"
               style={{
                 background:
                   "linear-gradient(160deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%)",
@@ -1061,7 +1066,7 @@ const Signup = () => {
                           {formData.countryCode} {formData.phoneNumber}
                         </span>
                       </p>
-                      <div className="flex gap-2 justify-center mb-3">
+                      <div className="flex gap-1.5 sm:gap-2 justify-center mb-3">
                         {phoneOtpInputs.map((digit, i) => (
                           <input
                             key={i}
@@ -1075,7 +1080,7 @@ const Signup = () => {
                             }
                             onKeyDown={(e) => handlePhoneOtpKeyDown(i, e)}
                             onPaste={i === 0 ? handlePhoneOtpPaste : undefined}
-                            className="w-10 text-center text-lg font-bold text-white rounded-xl outline-none transition-all duration-200"
+                            className="w-8 xs:w-9 sm:w-10 text-center text-base sm:text-lg font-bold text-white rounded-xl outline-none transition-all duration-200"
                             style={{
                               height: "44px",
                               background: digit

@@ -23,15 +23,21 @@ export const initFirebaseAdmin = () => {
   }
 
   try {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY
-      ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
-      : undefined;
+    // Handle both Vercel-style escaped newlines (\n as literal string)
+    // and real newlines already in the key.
+    let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    if (privateKey) {
+      // Replace literal \n sequences (from env var quoting) with real newlines
+      privateKey = privateKey.replace(/\\n/g, "\n");
+      // Strip surrounding quotes added by some env managers
+      privateKey = privateKey.replace(/^["']|["']$/g, "");
+    }
 
     firebaseAdminApp = admin.initializeApp({
       credential: admin.credential.cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: privateKey,
+        privateKey,
       }),
     });
 
@@ -64,10 +70,24 @@ export const verifyFirebaseIdToken = async (idToken) => {
   }
 
   try {
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    // checkRevoked: false avoids an extra network call; revocation is
+    // an edge case that doesn't apply to freshly-issued phone auth tokens.
+    const decodedToken = await admin.auth().verifyIdToken(idToken, false);
     return decodedToken;
   } catch (error) {
-    console.error("[Firebase Admin] verifyIdToken error:", error.message);
+    // Log the real Firebase error code to help diagnose env/config issues
+    console.error(
+      "[Firebase Admin] verifyIdToken failed:",
+      error.code || error.errorInfo?.code,
+      error.message,
+    );
+    // Surface a meaningful message to the client
+    if (error.code === "auth/id-token-expired") {
+      throw new Error("Verification code session expired. Please send a new OTP.");
+    }
+    if (error.code === "auth/argument-error" || error.code === "auth/invalid-credential") {
+      throw new Error("Server Firebase configuration error. Please contact support.");
+    }
     throw new Error("Invalid or expired Firebase token.");
   }
 };

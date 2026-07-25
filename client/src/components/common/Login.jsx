@@ -971,7 +971,7 @@ const Login = () => {
 
   return (
     <div
-      className="min-h-screen bg-[#0B1120] flex flex-col overflow-hidden relative login-page-wrapper"
+      className="min-h-screen bg-[#0B1120] flex flex-col overflow-x-hidden relative login-page-wrapper"
       style={{ pointerEvents: "none" }}
     >
       <style>{`
@@ -1133,7 +1133,7 @@ const Login = () => {
       </div>
 
       {/* ── Content ── */}
-      <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-10">
+      <div className="relative z-10 flex flex-1 items-center justify-center px-3 sm:px-6 py-4 sm:py-10 pb-28 sm:pb-12">
         <div
           className="w-full max-w-5xl flex items-center gap-14"
           style={{ pointerEvents: "auto" }}
@@ -1288,7 +1288,7 @@ const Login = () => {
             />
 
             <div
-              className="card-glow rounded-3xl p-9 w-full"
+              className="card-glow rounded-3xl p-4 xs:p-6 sm:p-9 w-full"
               style={{
                 pointerEvents: "auto",
                 background:
