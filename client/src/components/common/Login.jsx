@@ -1518,7 +1518,7 @@ const Login = () => {
                 <div>
                   <div className="flex items-center gap-2.5 mb-2">
                     <label className="text-xs font-semibold text-slate-300 tracking-widest uppercase shrink-0">
-                      LOGIN WITH
+                      {t("auth.loginWith") || "LOGIN WITH"}
                     </label>
                     <div className="flex items-center bg-[#1e293b] border border-white/10 rounded-xl p-0.5 text-xs">
                       <button
@@ -1533,7 +1533,7 @@ const Login = () => {
                             : "text-slate-400 hover:text-white"
                         }`}
                       >
-                        OTP
+                        {t("auth.otp") || "OTP"}
                       </button>
                       <button
                         type="button"
@@ -1547,7 +1547,7 @@ const Login = () => {
                             : "text-slate-400 hover:text-white"
                         }`}
                       >
-                        Password
+                        {t("auth.password") || "Password"}
                       </button>
                     </div>
                   </div>

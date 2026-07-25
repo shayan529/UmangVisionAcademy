@@ -105,6 +105,8 @@
     "pyqBenefit": "Buy this course to unlock all 5 previous year question papers for this subject."
   },
   "auth": {
+    "loginWith": "LOGIN WITH",
+    "otp": "OTP",
     "loginFailed": "Login failed. Please check your credentials.",
     "signup": "Create Account",
     "mobilePlaceholder": "10-digit mobile number",
