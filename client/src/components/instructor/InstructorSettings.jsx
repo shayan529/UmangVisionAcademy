@@ -8,10 +8,8 @@ import api from "../../config/api";
 import { uploadFile } from "../../utils/uploadFile";
 import { isFirebaseConfigured } from "../../config/firebase";
 import {
-  setupRecaptchaVerifier,
   sendFirebasePhoneOtp,
   verifyFirebasePhoneOtp,
-  clearRecaptcha,
 } from "../../services/firebasePhoneAuth";
 
 
@@ -557,8 +555,7 @@ const InstructorSettings = ({ showToast }) => {
     try {
       if (isFirebaseConfigured()) {
         try {
-          const verifier = setupRecaptchaVerifier("recaptcha-container-instructor");
-          const confirmation = await sendFirebasePhoneOtp(e164, verifier);
+          const confirmation = await sendFirebasePhoneOtp(e164, "recaptcha-container-instructor");
           setFbConfirmationResult(confirmation);
           setPhoneStep("otp");
           setShowPhoneOtp(true);
@@ -566,12 +563,13 @@ const InstructorSettings = ({ showToast }) => {
           return;
         } catch (fbErr) {
           console.error("Firebase Phone Auth error:", fbErr);
-          clearRecaptcha("recaptcha-container-instructor");
           const fbMsg =
             fbErr?.code === "auth/invalid-app-credential"
               ? "Firebase App Credential Error (auth/invalid-app-credential). Please check in Firebase Console: 1) Phone provider is Enabled under Authentication -> Sign-in method 2) Domain is added to Authorized Domains."
               : fbErr?.code === "auth/unauthorized-domain"
               ? "This domain is not authorized in your Firebase Console (Authentication -> Settings -> Authorized domains)."
+              : fbErr?.code === "auth/too-many-requests"
+              ? "Too many requests. Please wait a moment and try again."
               : fbErr?.message || t("instructorSettings.failedSendOtp");
           setPhoneMsg({ text: fbMsg, ok: false });
           setPhoneStep("idle");

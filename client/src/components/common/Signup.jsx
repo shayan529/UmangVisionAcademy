@@ -11,7 +11,6 @@ import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from 
 import { getCitiesForState, INDIA_STATES } from "../../data/indiaLocations";
 import { isFirebaseConfigured } from "../../config/firebase";
 import {
-  setupRecaptchaVerifier,
   sendFirebasePhoneOtp,
   verifyFirebasePhoneOtp,
   clearRecaptcha,
@@ -334,13 +333,8 @@ const Signup = () => {
     setSendingPhoneOtp(true);
     try {
       if (isFirebaseConfigured()) {
-        // Always clear any existing reCAPTCHA before creating a new verifier
-        clearRecaptcha("recaptcha-container");
-        const verifier = setupRecaptchaVerifier("recaptcha-container");
-        const confirmation = await sendFirebasePhoneOtp(
-          normalizedPhoneNumber,
-          verifier,
-        );
+        // sendFirebasePhoneOtp now handles verifier setup internally
+        const confirmation = await sendFirebasePhoneOtp(normalizedPhoneNumber);
         setFirebaseConfirmationResult(confirmation);
         toast.success(t("auth.otpSentPhone"));
         setPhoneOtpSent(true);
@@ -358,7 +352,6 @@ const Signup = () => {
       setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
     } catch (err) {
       if (isFirebaseConfigured()) {
-        clearRecaptcha("recaptcha-container");
         const fbMsg =
           err?.code === "auth/invalid-app-credential"
             ? "Firebase App Credential Error (auth/invalid-app-credential). Please check in Firebase Console: 1) Phone provider is Enabled under Authentication -> Sign-in method 2) Domain is added to Authorized Domains."
@@ -373,7 +366,6 @@ const Signup = () => {
       } else {
         toast.error(err?.response?.data?.message || err?.message || t("auth.failedOtp"));
       }
-
     } finally {
       setSendingPhoneOtp(false);
     }
