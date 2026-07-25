@@ -1463,9 +1463,16 @@ export default function AITutor() {
                         margin: "0 auto",
                       }}
                     >
-                      {translate("aiTutor.quickPrompts", {
-                        returnObjects: true,
-                      }).map((p) => (
+                      {(Array.isArray(
+                        translate("aiTutor.quickPrompts", {
+                          returnObjects: true,
+                        }),
+                      )
+                        ? translate("aiTutor.quickPrompts", {
+                            returnObjects: true,
+                          })
+                        : []
+                      ).map((p) => (
                         <button
                           key={p}
                           className="prompt-card"

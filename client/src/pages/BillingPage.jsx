@@ -488,7 +488,15 @@ export default function BillingPage() {
                     price: t("plans.base.price"),
                     period: t("plans.base.period"),
                     amount: 10000,
-                    features: t("plans.base.features", { returnObjects: true }) || [],
+                    features: Array.isArray(t("plans.base.features", { returnObjects: true }))
+                      ? t("plans.base.features", { returnObjects: true })
+                      : [
+                          "Select one Class (Class 9 to 12)",
+                          "Access all subjects of that class",
+                          "Live Lessons and Resources",
+                          "AI Tutor & Quizzes",
+                          "Progress Tracking",
+                        ],
                     color: "#6366f1",
                     popular: false,
                   },
@@ -498,16 +506,32 @@ export default function BillingPage() {
                     price: t("plans.premium.price", { defaultValue: "₹500" }),
                     period: t("plans.premium.period", { defaultValue: "year" }),
                     amount: 50000,
-                    features: t("plans.premium.features", {
-                      returnObjects: true,
-                      defaultValue: [
-                        "Everything in Base plan",
-                        "Live doubt-clearing sessions with instructors",
-                        "Personalized AI-powered study plan",
-                        "Priority instructor support",
-
-                      ],
-                    }) || [],
+                    features: Array.isArray(
+                      t("plans.premium.features", {
+                        returnObjects: true,
+                        defaultValue: [
+                          "Everything in Base plan",
+                          "Live doubt-clearing sessions with instructors",
+                          "Personalized AI-powered study plan",
+                          "Priority instructor support",
+                        ],
+                      }),
+                    )
+                      ? t("plans.premium.features", {
+                          returnObjects: true,
+                          defaultValue: [
+                            "Everything in Base plan",
+                            "Live doubt-clearing sessions with instructors",
+                            "Personalized AI-powered study plan",
+                            "Priority instructor support",
+                          ],
+                        })
+                      : [
+                          "Everything in Base plan",
+                          "Live doubt-clearing sessions with instructors",
+                          "Personalized AI-powered study plan",
+                          "Priority instructor support",
+                        ],
                     color: "#a78bfa",
                     popular: true,
                   },
@@ -597,7 +621,7 @@ export default function BillingPage() {
                           marginBottom: 20,
                         }}
                       >
-                        {plan.features.map((f) => (
+                        {(Array.isArray(plan.features) ? plan.features : []).map((f) => (
                           <div
                             key={f}
                             style={{

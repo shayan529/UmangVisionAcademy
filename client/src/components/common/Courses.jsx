@@ -28,8 +28,8 @@ const RatingModal = ({ course, onClose, onSubmit }) => {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const { t } = useTranslation();
-  const labels = t("courses.ratingLabels", { returnObjects: true }) || ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
+  const rawLabels = t("courses.ratingLabels", { returnObjects: true });
+  const labels = Array.isArray(rawLabels) ? rawLabels : ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
 
   const handleSubmit = async () => {
     if (!selected) return toast.error("Please select a rating");

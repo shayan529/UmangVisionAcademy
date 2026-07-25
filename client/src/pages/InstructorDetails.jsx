@@ -46,9 +46,10 @@ const InstructorDetails = () => {
     },
   ];
 
-  const features = t("instructorDetails.featuresSection.items", {
+  const rawFeatures = t("instructorDetails.featuresSection.items", {
     returnObjects: true,
   });
+  const features = Array.isArray(rawFeatures) ? rawFeatures : [];
 
   return (
     <div className="min-h-screen bg-[#020817] text-white">

@@ -17,7 +17,15 @@ const Plans = () => {
       period: t('plans.base.period'),
       amount: 10000, // ₹100.00
       desc: t('plans.base.desc'),
-      features: t('plans.base.features', { returnObjects: true }) || [],
+      features: Array.isArray(t('plans.base.features', { returnObjects: true }))
+        ? t('plans.base.features', { returnObjects: true })
+        : [
+            "Select one Class (Class 9 to 12)",
+            "Access all subjects of that class",
+            "Live Lessons and Resources",
+            "AI Tutor & Quizzes",
+            "Progress Tracking",
+          ],
       button: t('plans.base.button'),
       highlight: false,
       color: '#6366f1',
@@ -32,16 +40,35 @@ const Plans = () => {
         defaultValue:
           'Everything in Base, plus live support and deeper personalization for serious exam prep.',
       }),
-      features: t('plans.premium.features', {
-        returnObjects: true,
-        defaultValue: [
-          'Everything in Base plan',
-          'Live doubt-clearing sessions with instructors',
-          'Personalized AI-powered study plan',
-          'Priority instructor support',
-          'Advanced mock test analytics & performance insights',
-        ],
-      }) || [],
+      features: Array.isArray(
+        t('plans.premium.features', {
+          returnObjects: true,
+          defaultValue: [
+            'Everything in Base plan',
+            'Live doubt-clearing sessions with instructors',
+            'Personalized AI-powered study plan',
+            'Priority instructor support',
+            'Advanced mock test analytics & performance insights',
+          ],
+        }),
+      )
+        ? t('plans.premium.features', {
+            returnObjects: true,
+            defaultValue: [
+              'Everything in Base plan',
+              'Live doubt-clearing sessions with instructors',
+              'Personalized AI-powered study plan',
+              'Priority instructor support',
+              'Advanced mock test analytics & performance insights',
+            ],
+          })
+        : [
+            'Everything in Base plan',
+            'Live doubt-clearing sessions with instructors',
+            'Personalized AI-powered study plan',
+            'Priority instructor support',
+            'Advanced mock test analytics & performance insights',
+          ],
       button: t('plans.premium.button', { defaultValue: 'Go Premium' }),
       highlight: true,
       color: '#a78bfa',
@@ -136,7 +163,7 @@ const Plans = () => {
               </p>
 
               <div className="mt-8 space-y-4">
-                {plan.features.map((feature, i) => (
+                {(Array.isArray(plan.features) ? plan.features : []).map((feature, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <div
                       className={`w-6 h-6 rounded-full flex items-center justify-center text-sm shrink-0 ${plan.highlight
