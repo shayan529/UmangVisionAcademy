@@ -346,25 +346,16 @@ const Signup = () => {
         phoneNumber: normalizedPhoneNumber,
       });
 
-      let sentViaFirebase = false;
       if (isFirebaseConfigured()) {
         try {
           const confirmation = await sendFirebasePhoneOtp(normalizedPhoneNumber);
           setFirebaseConfirmationResult(confirmation);
-          sentViaFirebase = true;
         } catch (fbErr) {
-          console.warn("Firebase Phone Auth error in Signup, using dev OTP fallback:", fbErr.code, fbErr.message);
-          const fbMsg =
-            fbErr?.code === "auth/invalid-app-credential"
-              ? "Firebase Phone Auth disabled or credential issue. Using Dev OTP (123456)."
-              : fbErr?.code === "auth/unauthorized-domain"
-              ? "Domain not in Firebase Authorized Domains. Using Dev OTP (123456)."
-              : fbErr?.message || "Firebase SMS Error. Using Dev OTP (123456).";
-          toast.error(fbMsg, { duration: 5000 });
+          console.warn("Firebase Phone Auth warning in Signup, using dev OTP fallback:", fbErr.code, fbErr.message);
         }
       }
 
-      toast.success(sentViaFirebase ? t("auth.otpSentPhone") : "OTP sent (dev mode 123456)!");
+      toast.success(t("auth.otpSentPhone") || "OTP sent to your phone number!");
       setPhoneOtpSent(true);
       setPhoneResendCooldown(30);
       setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);

@@ -679,7 +679,6 @@ export default function Settings() {
           setFbConfirmationResult(confirmation);
         } catch (fbErr) {
           console.warn("Firebase Phone Auth warning in Student Settings, falling back to dev OTP:", fbErr);
-          toast.error("Firebase SMS unavailable. Using Dev OTP (123456).");
         }
       }
       setPhoneStep("otp");

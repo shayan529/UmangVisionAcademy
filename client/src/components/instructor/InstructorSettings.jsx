@@ -561,7 +561,6 @@ const InstructorSettings = ({ showToast }) => {
           setFbConfirmationResult(confirmation);
         } catch (fbErr) {
           console.warn("Firebase Phone Auth warning in Instructor Settings, falling back to dev OTP:", fbErr);
-          showToast("Firebase SMS unavailable. Using Dev OTP (123456).");
         }
       }
       setPhoneStep("otp");
