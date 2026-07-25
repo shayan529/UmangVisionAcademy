@@ -3,8 +3,6 @@ import { auth, isFirebaseConfigured } from "../config/firebase.js";
 
 /**
  * Poll for a DOM element by ID, up to a timeout.
- * Needed because render() crashes with a null-style error if called before
- * the element is painted (e.g. reCAPTCHA script loads before React mounts).
  *
  * @param {string} id        Element ID to wait for
  * @param {number} [timeout] Max wait in ms (default 3000)
@@ -30,14 +28,20 @@ const waitForElement = (id, timeout = 3000) => {
 };
 
 /**
- * Destroy the RecaptchaVerifier stored on window and wipe the container's
- * innerHTML so Firebase can render a fresh widget into it next time.
+ * Fully destroy any existing RecaptchaVerifier and reset the container element.
  *
- * Safe to call multiple times — ignores errors from already-cleared instances.
+ * Google's grecaptcha SDK internally marks DOM elements as "rendered" and
+ * refuses to render into the same element twice. Clearing innerHTML or
+ * removing attributes is NOT enough — the SDK keeps an internal map.
+ *
+ * The only reliable fix is to replace the container with a brand-new DOM
+ * element that has the same ID. Since #recaptcha-container is a simple
+ * empty <div> with no React children, this is safe.
  *
  * @param {string} containerId  ID of the DOM element (default 'recaptcha-container')
  */
 export const clearRecaptcha = (containerId = "recaptcha-container") => {
+  // 1. Clear the Firebase RecaptchaVerifier instance
   if (window.recaptchaVerifier) {
     try {
       window.recaptchaVerifier.clear();
@@ -47,7 +51,7 @@ export const clearRecaptcha = (containerId = "recaptcha-container") => {
     window.recaptchaVerifier = null;
   }
 
-  // Also remove any grecaptcha widget iframes appended to <body> by the SDK
+  // 2. Reset any grecaptcha widgets the SDK may have created
   if (window.grecaptcha) {
     try {
       for (let id = 0; id < 10; id++) {
@@ -56,36 +60,28 @@ export const clearRecaptcha = (containerId = "recaptcha-container") => {
     } catch (_) { /* ignore */ }
   }
 
-  // Remove any reCAPTCHA iframes injected into document.body by the SDK
-  document.querySelectorAll('body > div > div > iframe[src*="recaptcha"]').forEach((iframe) => {
-    try { iframe.closest('body > div')?.remove(); } catch (_) { /* ignore */ }
+  // 3. Remove orphaned reCAPTCHA iframes injected into document.body
+  document.querySelectorAll("body > div").forEach((div) => {
+    if (div.querySelector('iframe[src*="recaptcha"]')) {
+      try { div.remove(); } catch (_) { /* ignore */ }
+    }
   });
 
+  // 4. Replace the container element with a fresh clone so the grecaptcha
+  //    SDK's internal "already rendered" tracking is fully reset.
   const el =
     typeof containerId === "string"
       ? document.getElementById(containerId)
       : containerId;
-  if (el) {
-    el.innerHTML = "";
-    // Remove data-* attributes left by the reCAPTCHA SDK so the
-    // container looks "fresh" for the next RecaptchaVerifier instance.
-    if (el.dataset) {
-      Object.keys(el.dataset).forEach((key) => {
-        delete el.dataset[key];
-      });
-    }
-    // Remove all attributes added by grecaptcha (e.g. data-sitekey, etc.)
-    Array.from(el.attributes).forEach((attr) => {
-      if (attr.name !== "id") {
-        el.removeAttribute(attr.name);
-      }
-    });
+  if (el && el.parentNode) {
+    const freshEl = document.createElement("div");
+    freshEl.id = containerId;
+    el.parentNode.replaceChild(freshEl, el);
   }
 };
 
 /**
  * Create a fresh RecaptchaVerifier, render it, and store it on window.
- * Reuses existing verifier if active or resets cleanly on failure.
  *
  * @param {string} containerId  ID of the DOM element (default 'recaptcha-container')
  * @returns {Promise<RecaptchaVerifier>}  Resolves once the widget is rendered and ready.
@@ -99,7 +95,10 @@ export const setupRecaptchaVerifier = async (
     );
   }
 
-  // Wait for the container element to be present in the DOM.
+  // Always start clean — destroy any previous verifier and reset the container
+  clearRecaptcha(containerId);
+
+  // Wait for the fresh container element to be present in the DOM
   const el = await waitForElement(containerId);
   if (!el) {
     throw new Error(
@@ -107,52 +106,24 @@ export const setupRecaptchaVerifier = async (
     );
   }
 
-  // Reuse existing window.recaptchaVerifier if already created and valid
-  if (window.recaptchaVerifier) {
-    try {
-      return window.recaptchaVerifier;
-    } catch (_) {
+  const verifier = new RecaptchaVerifier(auth, containerId, {
+    size: "invisible",
+    callback: () => {},
+    "expired-callback": () => {
       clearRecaptcha(containerId);
-    }
-  }
+    },
+  });
 
-  // Clean DOM container and remove any previous widget bindings
-  clearRecaptcha(containerId);
-
-  const initVerifier = async () => {
-    const verifier = new RecaptchaVerifier(auth, containerId, {
-      size: "invisible",
-      callback: () => {},
-      "expired-callback": () => {
-        clearRecaptcha(containerId);
-      },
-    });
-
-    await verifier.render();
-    window.recaptchaVerifier = verifier;
-    return verifier;
-  };
-
-  try {
-    return await initVerifier();
-  } catch (err) {
-    // If element was already rendered by grecaptcha script, reset node thoroughly and retry
-    if (
-      err?.message?.includes("already been rendered") ||
-      err?.code?.includes("already-rendered")
-    ) {
-      clearRecaptcha(containerId);
-      return await initVerifier();
-    }
-    throw err;
-  }
+  await verifier.render();
+  window.recaptchaVerifier = verifier;
+  return verifier;
 };
 
 /**
  * Send a phone verification OTP via Firebase Auth.
  *
  * Creates a fresh RecaptchaVerifier automatically, then calls
- * signInWithPhoneNumber.  On failure the verifier is destroyed so the next
+ * signInWithPhoneNumber. On failure the verifier is destroyed so the next
  * attempt starts clean.
  *
  * @param {string} phoneNumber   E.164 format, e.g. +919876543210
@@ -167,7 +138,6 @@ export const sendFirebasePhoneOtp = async (
     throw new Error("Firebase Authentication is not configured.");
   }
 
-  // Always build a fresh verifier to avoid "already rendered" errors
   const verifier = await setupRecaptchaVerifier(containerId);
 
   try {
