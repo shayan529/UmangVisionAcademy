@@ -5,7 +5,8 @@ import { register, clearError } from "../../redux/slices/authSlice";
 import { toast } from "react-hot-toast";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
-import axios from "axios";
+import api from "../../config/api";
+
 import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from "../../utils/permissions";
 import { getCitiesForState, INDIA_STATES } from "../../data/indiaLocations";
 import { isFirebaseConfigured } from "../../config/firebase";
@@ -215,24 +216,33 @@ const Signup = () => {
 
   // ── Password validation ──
   const passwordRules = [
-    { id: "len", label: t("auth.passwordRuleLen"), test: (p) => p.length >= 6 },
+    {
+      id: "len",
+      label: t("auth.passwordRuleLen"),
+      test: (p) => (p || "").length >= 6,
+    },
     {
       id: "upper",
       label: t("auth.passwordRuleUpper"),
-      test: (p) => /[A-Z]/.test(p),
+      test: (p) => /[A-Z]/.test(p || ""),
     },
     {
       id: "lower",
       label: t("auth.passwordRuleLower"),
-      test: (p) => /[a-z]/.test(p),
+      test: (p) => /[a-z]/.test(p || ""),
     },
-    { id: "num", label: t("auth.passwordRuleNum"), test: (p) => /\d/.test(p) },
+    {
+      id: "num",
+      label: t("auth.passwordRuleNum"),
+      test: (p) => /\d/.test(p || ""),
+    },
     {
       id: "spec",
       label: t("auth.passwordRuleSpec"),
-      test: (p) => /[^A-Za-z0-9]/.test(p),
+      test: (p) => /[^A-Za-z0-9]/.test(p || ""),
     },
   ];
+
 
   const getStrength = (p) => {
     const n = passwordRules.filter((r) => r.test(p)).length;
@@ -349,7 +359,7 @@ const Signup = () => {
 
       }
 
-      await axios.post("/auth/send-phone-otp", {
+      await api.post("/auth/send-phone-otp", {
         phoneNumber: normalizedPhoneNumber,
       });
       toast.success(t("auth.otpSentPhone"));
@@ -362,7 +372,6 @@ const Signup = () => {
       setSendingPhoneOtp(false);
     }
   };
-
 
   const handlePhoneOtpChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;
@@ -415,7 +424,7 @@ const Signup = () => {
           firebaseConfirmationResult,
           code,
         );
-        await axios.post("/auth/verify-firebase-token", {
+        await api.post("/auth/verify-firebase-token", {
           firebaseToken: idToken,
           phoneNumber: normalizedPhoneNumber,
         });
@@ -425,7 +434,7 @@ const Signup = () => {
         return;
       }
 
-      await axios.post("/auth/verify-phone-otp", {
+      await api.post("/auth/verify-phone-otp", {
         phoneNumber: normalizedPhoneNumber,
         otp: code,
       });
@@ -433,15 +442,21 @@ const Signup = () => {
       setPhoneOtpSent(false);
       toast.success(t("auth.phoneVerified") + " ✓");
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message || err?.message || t("auth.invalidOtp"),
-      );
+      console.error("Verification error:", err);
+      const msg =
+        err?.code === "auth/code-expired"
+          ? "The verification code has expired. Please click Resend to get a new code."
+          : err?.code === "auth/invalid-verification-code"
+          ? "Invalid verification code. Please check your SMS and try again."
+          : err?.response?.data?.message || err?.message || t("auth.invalidOtp");
+      toast.error(msg);
       setPhoneOtpInputs(["", "", "", "", "", ""]);
       phoneOtpRefs.current[0]?.focus();
     } finally {
       setVerifyingPhone(false);
     }
   };
+
 
 
   const handleSubmit = async (e) => {

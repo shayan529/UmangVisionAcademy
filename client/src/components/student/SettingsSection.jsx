@@ -745,11 +745,16 @@ export default function Settings() {
       setPhoneMsg({ text: t("studentSettings.phoneUpdated"), ok: true });
       setTimeout(() => setPhoneMsg({ text: "", ok: false }), 5000);
     } catch (err) {
-      throw new Error(
-        err.response?.data?.message || err?.message || t("studentSettings.invalidOtp"),
-      );
+      const msg =
+        err?.code === "auth/code-expired"
+          ? "The verification code has expired. Please click Resend to get a new code."
+          : err?.code === "auth/invalid-verification-code"
+          ? "Invalid verification code. Please check your SMS and try again."
+          : err.response?.data?.message || err?.message || t("studentSettings.invalidOtp");
+      throw new Error(msg);
     }
   };
+
 
   // ── Password change ──
   const sendPasswordOtp = async () => {
