@@ -322,7 +322,11 @@ const Signup = () => {
     return null;
   };
 
-  const handleSendPhoneOtp = async () => {
+  const handleSendPhoneOtp = async (e) => {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     const normalizedPhoneNumber = normalizeIndianPhoneNumber(
       formData.phoneNumber,
     );
@@ -401,7 +405,11 @@ const Signup = () => {
     phoneOtpRefs.current[Math.min(pasted.length, 5)]?.focus();
   };
 
-  const handleVerifyPhoneOtp = async () => {
+  const handleVerifyPhoneOtp = async (e) => {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     const code = phoneOtpInputs.join("");
     const normalizedPhoneNumber = normalizeIndianPhoneNumber(
       formData.phoneNumber,
@@ -881,8 +889,8 @@ const Signup = () => {
                 </p>
               </div>
 
+              <div id="recaptcha-container"></div>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div id="recaptcha-container"></div>
                 {/* Name */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
