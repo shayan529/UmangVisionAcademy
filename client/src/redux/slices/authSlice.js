@@ -213,6 +213,7 @@ const authSlice = createSlice({
     replaceCurrentUser: (state, action) => {
       if (action.payload?._id === state.user?._id) {
         state.user = action.payload;
+        persistUserCache(action.payload);
       }
     },
   },

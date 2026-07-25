@@ -8,6 +8,13 @@ import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from "../../utils/permissions";
 import { getCitiesForState, INDIA_STATES } from "../../data/indiaLocations";
+import { isFirebaseConfigured } from "../../config/firebase";
+import {
+  setupRecaptchaVerifier,
+  sendFirebasePhoneOtp,
+  verifyFirebasePhoneOtp,
+} from "../../services/firebasePhoneAuth";
+
 
 /* ── Animated particle canvas ── */
 const ParticleCanvas = () => {
@@ -139,7 +146,9 @@ const Signup = () => {
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false);
   const [verifyingPhone, setVerifyingPhone] = useState(false);
   const [phoneResendCooldown, setPhoneResendCooldown] = useState(0);
+  const [firebaseConfirmationResult, setFirebaseConfirmationResult] = useState(null);
   const phoneOtpRefs = useRef([]);
+
 
   const [formData, setFormData] = useState(() =>
     getSessionValue("signup_formData", {
@@ -304,6 +313,27 @@ const Signup = () => {
 
     setSendingPhoneOtp(true);
     try {
+      if (isFirebaseConfigured()) {
+        try {
+          const verifier = setupRecaptchaVerifier("recaptcha-container");
+          const confirmation = await sendFirebasePhoneOtp(
+            normalizedPhoneNumber,
+            verifier,
+          );
+          setFirebaseConfirmationResult(confirmation);
+          toast.success(t("auth.otpSentPhone"));
+          setPhoneOtpSent(true);
+          setPhoneResendCooldown(30);
+          setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
+          return;
+        } catch (fbErr) {
+          console.warn(
+            "Firebase Phone Auth failed or unconfigured, falling back to server OTP:",
+            fbErr,
+          );
+        }
+      }
+
       await axios.post("/auth/send-phone-otp", {
         phoneNumber: normalizedPhoneNumber,
       });
@@ -364,6 +394,21 @@ const Signup = () => {
 
     setVerifyingPhone(true);
     try {
+      if (isFirebaseConfigured() && firebaseConfirmationResult) {
+        const { idToken } = await verifyFirebasePhoneOtp(
+          firebaseConfirmationResult,
+          code,
+        );
+        await axios.post("/auth/verify-firebase-token", {
+          firebaseToken: idToken,
+          phoneNumber: normalizedPhoneNumber,
+        });
+        setPhoneVerified(true);
+        setPhoneOtpSent(false);
+        toast.success(t("auth.phoneVerified") + " ✓");
+        return;
+      }
+
       await axios.post("/auth/verify-phone-otp", {
         phoneNumber: normalizedPhoneNumber,
         otp: code,
@@ -381,6 +426,7 @@ const Signup = () => {
       setVerifyingPhone(false);
     }
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -802,6 +848,7 @@ const Signup = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
+                <div id="recaptcha-container"></div>
                 {/* Name */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">

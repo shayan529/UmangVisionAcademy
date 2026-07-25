@@ -129,8 +129,106 @@ export const hydrateUserRoles = async (user) => {
   return plain;
 };
 
-export const hydrateUsersRoles = async (users = []) =>
-  Promise.all(users.map(hydrateUserRoles));
+export const hydrateUsersRoles = async (users = []) => {
+  if (!Array.isArray(users) || users.length === 0) return [];
+
+  // Extract all unique candidate role ObjectId strings that need resolution
+  const candidateIdStrs = new Set();
+
+  for (const u of users) {
+    const roleValue = u?.role ?? (Array.isArray(u?.roles) ? u.roles.find(isBaseRole) : null);
+    if (
+      roleValue &&
+      typeof roleValue !== "object" &&
+      !isBaseRole(roleValue)
+    ) {
+      const idStr = roleValue instanceof Types.ObjectId
+        ? roleValue.toString()
+        : typeof roleValue === "string"
+          ? roleValue
+          : null;
+      if (idStr && Types.ObjectId.isValid(idStr)) {
+        candidateIdStrs.add(idStr);
+      }
+    }
+  }
+
+  if (candidateIdStrs.size === 0) {
+    return Promise.all(users.map(hydrateUserRoles));
+  }
+
+  // Pre-fetch candidate role documents (Redis cache or single batch DB query)
+  const roleMap = new Map();
+  const missingIds = [];
+
+  for (const idStr of candidateIdStrs) {
+    const cacheKey = `role:${idStr}`;
+    const cached = await getJson(cacheKey);
+    if (cached) {
+      roleMap.set(idStr, cached);
+    } else {
+      missingIds.push(idStr);
+    }
+  }
+
+  if (missingIds.length > 0) {
+    try {
+      const fetched = await Role.find({ _id: { $in: missingIds } }).lean();
+      for (const roleDoc of fetched) {
+        const idStr = roleDoc._id.toString();
+        roleMap.set(idStr, roleDoc);
+        setJson(`role:${idStr}`, roleDoc, 3600 * 24).catch(() => undefined);
+      }
+    } catch (err) {
+      console.error("[Roles] hydrateUsersRoles batch fetch failed:", err);
+    }
+  }
+
+  return Promise.all(
+    users.map(async (u) => {
+      const plain = toPlainUser(u);
+      if (!plain) return null;
+
+      if (!plain.role && Array.isArray(plain.roles)) {
+        const firstBase = plain.roles.find(isBaseRole);
+        plain.role = firstBase || "student";
+      }
+
+      const roleValue = plain.role;
+      if (isBaseRole(roleValue) || roleValue == null) {
+        if (roleValue == null) plain.role = "student";
+        delete plain.roles;
+        delete plain.assignedRoles;
+        delete plain.password;
+        return plain;
+      }
+
+      if (roleValue && typeof roleValue === "object" && roleValue._id) {
+        delete plain.roles;
+        delete plain.assignedRoles;
+        delete plain.password;
+        return plain;
+      }
+
+      const idStr = roleValue instanceof Types.ObjectId
+        ? roleValue.toString()
+        : typeof roleValue === "string"
+          ? roleValue
+          : null;
+
+      if (idStr && roleMap.has(idStr)) {
+        plain.role = roleMap.get(idStr);
+      } else {
+        return hydrateUserRoles(u);
+      }
+
+      delete plain.roles;
+      delete plain.assignedRoles;
+      delete plain.password;
+      return plain;
+    })
+  );
+};
 
 // ── hasPermissionGrant ────────────────────────────────────────────────────────
 // Admins have all permissions.

@@ -14,6 +14,7 @@ import { useSwipeable } from "react-swipeable";
 import Home from "./pages/Home";
 import Courses from "./components/common/Courses";
 import Instructors from "./components/common/Instructors";
+import Plans from "./components/common/Plans";
 import Login from "./components/common/Login";
 import Signup from "./components/common/Signup";
 import ProtectedRoute from "./components/common/ProtectedRoute";
@@ -35,7 +36,6 @@ const BillingPage = lazy(() => import("./pages/BillingPage"));
 const Community = lazy(() => import("./components/common/Community"));
 const BecomeInstructor = lazy(() => import("./components/common/BecomeInstructor"));
 const BecomeInstructorApplication = lazy(() => import("./components/common/BecomeInstructorApplication"));
-const Plans = lazy(() => import("./components/common/Plans"));
 
 /* Student Dashboard */
 const StudentDashboard = lazy(() => import("./components/student/StudentDashboard"));

@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useDispatch } from "react-redux";
+import { loadCurrentUser } from "../../redux/slices/authSlice";
 import {
   Shield,
   Plus,
@@ -936,6 +938,7 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
 
 // ── Main ───────────────────────────────────────────────────────────────────────
 const RoleManager = ({ showToast, currentUser }) => {
+  const dispatch = useDispatch();
   const [tab, setTab] = useState("roles");
   const [modules, setModules] = useState({});
   const [roles, setRoles] = useState([]);
@@ -961,6 +964,7 @@ const RoleManager = ({ showToast, currentUser }) => {
       setModules(modulesRes.modules || {});
       setRoles(rolesRes || []);
       setUsers(usersRes || []);
+      dispatch(loadCurrentUser());
     } catch (err) {
       const message =
         err.response?.data?.message ||
@@ -972,7 +976,7 @@ const RoleManager = ({ showToast, currentUser }) => {
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, dispatch]);
 
   useEffect(() => {
     loadAll();

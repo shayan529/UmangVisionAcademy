@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronDown, LogOut } from "lucide-react";
+import { ChevronLeft, ChevronDown, LogOut, Shield } from "lucide-react";
 import AdminReels from "./AdminReels";
 import {
   fetchUsers,
@@ -163,10 +163,16 @@ const StaffSidebar = ({
     navigate("/login");
   };
 
+  const authLoading = useSelector((s) => s.auth.loading);
   const username = user?.name || user?.email?.split("@")[0] || "Staff Member";
   const rawCustomRoleName = getCustomRole(user)?.name;
   const isObjectId = rawCustomRoleName && /^[a-f0-9]{24}$/i.test(rawCustomRoleName);
   const customRoleNames = isObjectId ? "Staff" : (rawCustomRoleName || "Staff");
+
+  const isHydrating =
+    authLoading ||
+    !user ||
+    (typeof user?.role === "string" && /^[a-f0-9]{24}$/i.test(user.role));
 
   const sidebarClass = `
     bg-slate-950 border-r border-slate-800 flex flex-col overflow-hidden
@@ -204,7 +210,7 @@ const StaffSidebar = ({
         {/* User Card */}
         <div className="px-3 mt-3 mb-4 shrink-0">
           <div
-            className={`flex items-center gap-3 p-3 bg-indigo-950/20 border border-indigo-900/30 rounded-xl ${
+            className={`flex items-start gap-2.5 p-3 bg-indigo-950/30 border border-indigo-900/40 rounded-xl ${
               collapsed ? "justify-center p-2" : ""
             }`}
           >
@@ -212,24 +218,28 @@ const StaffSidebar = ({
               <img
                 src={user.avatarUrl}
                 alt={username}
-                className="h-10 w-10 rounded-full object-cover shrink-0"
+                className="h-10 w-10 rounded-full object-cover shrink-0 border border-indigo-500/30 mt-0.5"
               />
             ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-indigo-400 to-violet-600 text-lg font-bold text-white shadow-sm shadow-indigo-500/10 shrink-0">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-700 text-lg font-bold text-white shadow-sm shadow-indigo-500/20 shrink-0 mt-0.5">
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </div>
             )}
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-white text-xs font-bold truncate">
+                <p className="text-white text-xs font-extrabold truncate">
                   {username}
                 </p>
                 {dashboardOptions.length > 1 ? (
-                  <div className="relative">
+                  <div className="relative mt-1">
                     {activeRoleName && (
-                      <p className="text-indigo-400 text-[10px] font-bold uppercase tracking-wider truncate mt-0.5">
-                        {activeRoleName}
-                      </p>
+                      <span
+                        className="inline-flex items-start gap-1.5 max-w-full px-2 py-1 rounded-md bg-indigo-500/20 border border-indigo-500/35 text-indigo-200 text-[10px] font-bold tracking-wide leading-tight break-words whitespace-normal"
+                        title={activeRoleName}
+                      >
+                        <Shield size={10} className="shrink-0 text-indigo-400 mt-0.5" />
+                        <span className="break-words leading-tight">{activeRoleName}</span>
+                      </span>
                     )}
                     <button
                       type="button"
@@ -237,7 +247,7 @@ const StaffSidebar = ({
                         e.stopPropagation();
                         setRolesDropdownOpen(!rolesDropdownOpen);
                       }}
-                      className="flex items-center gap-1 text-indigo-400 text-[10px] font-bold uppercase tracking-wider hover:text-indigo-300 transition-colors bg-indigo-950/40 border border-indigo-900/30 rounded-full px-2.5 py-0.5 mt-1 cursor-pointer"
+                      className="flex items-center gap-1 text-indigo-300 text-[10px] font-bold uppercase tracking-wider hover:text-white transition-colors bg-indigo-950/60 border border-indigo-800/40 rounded-full px-2.5 py-0.5 mt-1 cursor-pointer"
                     >
                       {dashboardOptions.length} Roles{" "}
                       <ChevronDown
@@ -264,12 +274,15 @@ const StaffSidebar = ({
                     )}
                   </div>
                 ) : (
-                  <p
-                    className="text-indigo-400 text-[10px] font-bold uppercase tracking-wider truncate mt-0.5"
-                    title={customRoleNames}
-                  >
-                    {customRoleNames}
-                  </p>
+                  <div className="mt-1 flex items-center">
+                    <span
+                      className="inline-flex items-start gap-1.5 max-w-full px-2 py-1 rounded-md bg-indigo-500/20 border border-indigo-500/35 text-indigo-200 text-[10px] font-bold tracking-wide break-words whitespace-normal leading-tight shadow-xs"
+                      title={customRoleNames}
+                    >
+                      <Shield size={10} className="shrink-0 text-indigo-400 mt-0.5" />
+                      <span className="break-words leading-tight">{customRoleNames}</span>
+                    </span>
+                  </div>
                 )}
               </div>
             )}
@@ -316,7 +329,7 @@ const StaffSidebar = ({
                   collapsed ? "justify-center" : "justify-start"
                 } ${
                   isActive
-                    ? "bg-indigo-950/40 text-indigo-300 border-l-2 border-indigo-500 pl-2.5"
+                    ? "bg-indigo-950/50 text-indigo-200 font-bold border-l-2 border-indigo-500 pl-2.5 shadow-xs"
                     : "text-slate-400 hover:bg-slate-900 hover:text-white border-l-2 border-transparent"
                 }`}
               >
@@ -336,6 +349,13 @@ const StaffSidebar = ({
               </button>
             );
           })}
+
+          {isHydrating && navItems.length <= 1 && (
+            <div className="flex flex-col gap-2 mt-2 px-1 animate-pulse">
+              <div className="h-9 w-full bg-slate-900/60 rounded-xl" />
+              <div className="h-9 w-full bg-slate-900/40 rounded-xl" />
+            </div>
+          )}
 
           <div className="mt-auto pt-3 border-t border-slate-800 shrink-0 md:hidden">
             <button
@@ -401,7 +421,7 @@ export default function StaffDashboard() {
     }
   }, [user?.role, dispatch]);
 
-  useEffect(() => {
+  const refreshUsersAndCourses = useCallback(() => {
     if (hasPermission(user, "users", "view")) {
       dispatch(fetchUsers());
     }
@@ -425,11 +445,6 @@ export default function StaffDashboard() {
     };
   }, []);
 
-  const refreshUsersAndCourses = () => {
-    dispatch(fetchUsers());
-    dispatch(fetchAllCoursesAdmin());
-  };
-
   const deleteUser = (id, role) => {
     dispatch(deleteUserThunk({ id, role })).then(() => {
       dispatch(fetchAllCoursesAdmin());
@@ -438,7 +453,7 @@ export default function StaffDashboard() {
 
   useEffect(() => {
     refreshUsersAndCourses();
-  }, [tab]);
+  }, [tab, refreshUsersAndCourses]);
 
   const totalRevenue = courses.reduce(
     (s, c) => s + (c.price || 0) * (c.students?.length || 0),

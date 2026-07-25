@@ -14,8 +14,9 @@
     "@reduxjs/toolkit": "^2.12.0",
     "@tailwindcss/vite": "^4.3.0",
     "@vercel/speed-insights": "^2.0.0",
-    "axios": "^1.16.1",
+    "axios": "^1.18.1",
     "emailjs": "^5.0.1",
+    "firebase": "^12.16.0",
     "framer-motion": "^12.42.2",
     "html2canvas": "^1.4.1",
     "i18next": "^26.3.1",
@@ -31,7 +32,7 @@
     "react-i18next": "^17.0.8",
     "react-icons": "^5.6.0",
     "react-redux": "^9.3.0",
-    "react-router-dom": "^7.15.1",
+    "react-router-dom": "^7.18.1",
     "react-swipeable": "^7.0.2",
     "socket.io-client": "^4.8.3",
     "tailwindcss": "^4.3.0",
@@ -47,8 +48,11 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
-    "vite": "^8.0.12",
+    "vite": "^8.1.5",
     "vite-plugin-pwa": "^1.3.0",
     "workbox-build": "^7.4.1"
+  },
+  "overrides": {
+    "brace-expansion": "^5.0.8"
   }
 }

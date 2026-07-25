@@ -10,11 +10,16 @@ import { logoutUser } from "../../redux/slices/authSlice";
 import api from "../../config/api";
 import { uploadFile } from "../../utils/uploadFile";
 import { useTranslation } from "react-i18next";
+import { isFirebaseConfigured } from "../../config/firebase";
+import {
+  setupRecaptchaVerifier,
+  sendFirebasePhoneOtp,
+  verifyFirebasePhoneOtp,
+} from "../../services/firebasePhoneAuth";
+
 
 // ── Indian states & cities ────────────────────────────────────────────────────
 import { getCitiesForState, INDIA_STATES as ALL_STATES } from "../../data/indiaLocations";
-
-// ── Shared OTP Modal ──────────────────────────────────────────────────────────
 function OtpModal({ title, subtitle, onVerify, onResend, onClose }) {
   const { t } = useTranslation();
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
@@ -608,7 +613,6 @@ export default function Settings() {
           err.response?.data?.message || t("studentSettings.failedToSendOtp"),
         ok: false,
       });
-
       setEmailStep("idle");
     }
   };
@@ -640,6 +644,8 @@ export default function Settings() {
   };
 
   // ── Phone change ──
+  const [fbConfirmationResult, setFbConfirmationResult] = useState(null);
+
   const normalizeIndianPhoneNumber = (value) => {
     const digits = value.replace(/\D/g, "");
     if (/^\d{10}$/.test(digits)) return `+91${digits}`;
@@ -665,6 +671,19 @@ export default function Settings() {
     }
     setPhoneStep("sending");
     try {
+      if (isFirebaseConfigured()) {
+        try {
+          const verifier = setupRecaptchaVerifier("recaptcha-container-student");
+          const confirmation = await sendFirebasePhoneOtp(e164, verifier);
+          setFbConfirmationResult(confirmation);
+          setPhoneStep("otp");
+          setShowPhoneOtp(true);
+          setPhoneMsg({ text: "", ok: false });
+          return;
+        } catch (fbErr) {
+          console.warn("Firebase Phone Auth error, falling back to server OTP:", fbErr);
+        }
+      }
       await api.post("/auth/send-phone-otp", { phoneNumber: e164 });
       setPhoneStep("otp");
       setShowPhoneOtp(true);
@@ -685,10 +704,21 @@ export default function Settings() {
       throw new Error(t("studentSettings.indianMobileOnly"));
     }
     try {
-      await api.post("/auth/verify-phone-otp", {
-        phoneNumber: e164,
-        otp: code,
-      });
+      if (isFirebaseConfigured() && fbConfirmationResult) {
+        const { idToken } = await verifyFirebasePhoneOtp(
+          fbConfirmationResult,
+          code,
+        );
+        await api.post("/auth/verify-firebase-token", {
+          firebaseToken: idToken,
+          phoneNumber: e164,
+        });
+      } else {
+        await api.post("/auth/verify-phone-otp", {
+          phoneNumber: e164,
+          otp: code,
+        });
+      }
       await dispatch(
         updateProfile({
           ...profile,
@@ -704,7 +734,7 @@ export default function Settings() {
       setTimeout(() => setPhoneMsg({ text: "", ok: false }), 5000);
     } catch (err) {
       throw new Error(
-        err.response?.data?.message || t("studentSettings.invalidOtp"),
+        err.response?.data?.message || err?.message || t("studentSettings.invalidOtp"),
       );
     }
   };
@@ -829,8 +859,9 @@ export default function Settings() {
   return (
     <>
       <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
-
+      <div id="recaptcha-container-student"></div>
       <div>
+
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <h2 style={{ fontSize: 26, fontWeight: 800, color: "#f1f5f9" }}>
