@@ -56,24 +56,30 @@ export const clearRecaptcha = (containerId = "recaptcha-container") => {
     } catch (_) { /* ignore */ }
   }
 
+  // Remove any reCAPTCHA iframes injected into document.body by the SDK
+  document.querySelectorAll('body > div > div > iframe[src*="recaptcha"]').forEach((iframe) => {
+    try { iframe.closest('body > div')?.remove(); } catch (_) { /* ignore */ }
+  });
+
   const el =
     typeof containerId === "string"
       ? document.getElementById(containerId)
       : containerId;
   if (el) {
     el.innerHTML = "";
-    // Remove dataset attributes left by reCAPTCHA
+    // Remove data-* attributes left by the reCAPTCHA SDK so the
+    // container looks "fresh" for the next RecaptchaVerifier instance.
     if (el.dataset) {
       Object.keys(el.dataset).forEach((key) => {
         delete el.dataset[key];
       });
     }
-    // Clone element to strip internal reCAPTCHA event handlers & properties attached to DOM node
-    if (el.parentNode) {
-      const cleanEl = el.cloneNode(false);
-      cleanEl.innerHTML = "";
-      el.parentNode.replaceChild(cleanEl, el);
-    }
+    // Remove all attributes added by grecaptcha (e.g. data-sitekey, etc.)
+    Array.from(el.attributes).forEach((attr) => {
+      if (attr.name !== "id") {
+        el.removeAttribute(attr.name);
+      }
+    });
   }
 };
 

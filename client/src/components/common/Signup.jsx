@@ -890,7 +890,7 @@ const Signup = () => {
               </div>
 
               <div id="recaptcha-container"></div>
-              <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Name */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-widest uppercase">
