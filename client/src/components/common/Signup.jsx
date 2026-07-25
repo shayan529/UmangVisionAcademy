@@ -327,10 +327,13 @@ const Signup = () => {
           setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
           return;
         } catch (fbErr) {
-          console.warn(
-            "Firebase Phone Auth failed or unconfigured, falling back to server OTP:",
-            fbErr,
-          );
+          console.error("Firebase Phone Auth error:", fbErr);
+          const fbMsg =
+            fbErr?.code === "auth/unauthorized-domain"
+              ? "This domain is not authorized in your Firebase Console (Authentication -> Settings -> Authorized domains)."
+              : fbErr?.message || "Failed to send Firebase OTP.";
+          toast.error(fbMsg);
+          return;
         }
       }
 
@@ -342,11 +345,12 @@ const Signup = () => {
       setPhoneResendCooldown(30);
       setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
     } catch (err) {
-      toast.error(err?.response?.data?.message || t("auth.failedOtp"));
+      toast.error(err?.response?.data?.message || err?.message || t("auth.failedOtp"));
     } finally {
       setSendingPhoneOtp(false);
     }
   };
+
 
   const handlePhoneOtpChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;

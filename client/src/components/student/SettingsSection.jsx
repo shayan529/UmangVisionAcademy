@@ -681,7 +681,14 @@ export default function Settings() {
           setPhoneMsg({ text: "", ok: false });
           return;
         } catch (fbErr) {
-          console.warn("Firebase Phone Auth error, falling back to server OTP:", fbErr);
+          console.error("Firebase Phone Auth error:", fbErr);
+          const fbMsg =
+            fbErr?.code === "auth/unauthorized-domain"
+              ? "This domain is not authorized in your Firebase Console (Authentication -> Settings -> Authorized domains)."
+              : fbErr?.message || t("studentSettings.failedToSendOtp");
+          setPhoneMsg({ text: fbMsg, ok: false });
+          setPhoneStep("idle");
+          return;
         }
       }
       await api.post("/auth/send-phone-otp", { phoneNumber: e164 });
@@ -691,12 +698,13 @@ export default function Settings() {
     } catch (err) {
       setPhoneMsg({
         text:
-          err.response?.data?.message || t("studentSettings.failedToSendOtp"),
+          err.response?.data?.message || err?.message || t("studentSettings.failedToSendOtp"),
         ok: false,
       });
       setPhoneStep("idle");
     }
   };
+
 
   const verifyPhoneOtp = async (code) => {
     const e164 = normalizeIndianPhoneNumber(phoneForm.newPhone);
