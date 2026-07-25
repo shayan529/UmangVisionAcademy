@@ -341,40 +341,35 @@ const Signup = () => {
 
     setSendingPhoneOtp(true);
     try {
-      if (isFirebaseConfigured()) {
-        // sendFirebasePhoneOtp now handles verifier setup internally
-        const confirmation = await sendFirebasePhoneOtp(normalizedPhoneNumber);
-        setFirebaseConfirmationResult(confirmation);
-        toast.success(t("auth.otpSentPhone"));
-        setPhoneOtpSent(true);
-        setPhoneResendCooldown(30);
-        setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
-        return;
-      }
-
+      // 1. Pre-check backend: verifies format and ensures number is not already registered (HTTP 409 if taken)
       await api.post("/auth/send-phone-otp", {
         phoneNumber: normalizedPhoneNumber,
       });
-      toast.success(t("auth.otpSentPhone"));
+
+      let sentViaFirebase = false;
+      if (isFirebaseConfigured()) {
+        try {
+          const confirmation = await sendFirebasePhoneOtp(normalizedPhoneNumber);
+          setFirebaseConfirmationResult(confirmation);
+          sentViaFirebase = true;
+        } catch (fbErr) {
+          console.warn("Firebase Phone Auth error in Signup, using dev OTP fallback:", fbErr.code, fbErr.message);
+          const fbMsg =
+            fbErr?.code === "auth/invalid-app-credential"
+              ? "Firebase Phone Auth disabled or credential issue. Using Dev OTP (123456)."
+              : fbErr?.code === "auth/unauthorized-domain"
+              ? "Domain not in Firebase Authorized Domains. Using Dev OTP (123456)."
+              : fbErr?.message || "Firebase SMS Error. Using Dev OTP (123456).";
+          toast.error(fbMsg, { duration: 5000 });
+        }
+      }
+
+      toast.success(sentViaFirebase ? t("auth.otpSentPhone") : "OTP sent (dev mode 123456)!");
       setPhoneOtpSent(true);
       setPhoneResendCooldown(30);
       setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
     } catch (err) {
-      if (isFirebaseConfigured()) {
-        const fbMsg =
-          err?.code === "auth/invalid-app-credential"
-            ? "Firebase App Credential Error (auth/invalid-app-credential). Please check in Firebase Console: 1) Phone provider is Enabled under Authentication -> Sign-in method 2) Domain is added to Authorized Domains."
-            : err?.code === "auth/captcha-check-failed"
-            ? "reCAPTCHA verification failed. Please refresh and try again."
-            : err?.code === "auth/unauthorized-domain"
-            ? "This domain is not authorized in your Firebase Console (Authentication -> Settings -> Authorized domains)."
-            : err?.code === "auth/too-many-requests"
-            ? "Too many requests. Please wait a moment and try again."
-            : err?.message || "Failed to send OTP.";
-        toast.error(fbMsg);
-      } else {
-        toast.error(err?.response?.data?.message || err?.message || t("auth.failedOtp"));
-      }
+      toast.error(err?.response?.data?.message || err?.message || t("auth.failedOtp"));
     } finally {
       setSendingPhoneOtp(false);
     }

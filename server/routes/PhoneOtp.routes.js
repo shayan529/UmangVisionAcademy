@@ -8,6 +8,7 @@ import {
   isFirebaseAdminConfigured,
   verifyFirebaseIdToken,
 } from "../config/firebaseAdmin.js";
+import { getPhoneLookupValues } from "../controllers/user.controller.js";
 
 const router = express.Router();
 
@@ -26,7 +27,10 @@ router.post("/send-phone-otp", async (req, res) => {
       });
     }
 
-    const existing = await User.findOne({ phoneNumber });
+    const phoneLookupValues = getPhoneLookupValues(phoneNumber);
+    const existing = await User.findOne({
+      phoneNumber: { $in: phoneLookupValues.length ? phoneLookupValues : [phoneNumber] },
+    });
     if (existing) {
       return res
         .status(409)
@@ -108,9 +112,8 @@ router.post("/verify-phone-otp", async (req, res) => {
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Phone number verified successfully.",
+    return res.status(400).json({
+      message: "Invalid or expired verification code.",
     });
   } catch (err) {
     console.error("verify-phone-otp error:", err.message);

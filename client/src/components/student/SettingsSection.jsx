@@ -671,32 +671,17 @@ export default function Settings() {
     }
     setPhoneStep("sending");
     try {
+      await api.post("/auth/send-phone-otp", { phoneNumber: e164 });
+
       if (isFirebaseConfigured()) {
         try {
           const confirmation = await sendFirebasePhoneOtp(e164, "recaptcha-container-student");
           setFbConfirmationResult(confirmation);
-          setPhoneStep("otp");
-          setShowPhoneOtp(true);
-          setPhoneMsg({ text: "", ok: false });
-          return;
         } catch (fbErr) {
-          console.error("Firebase Phone Auth error:", fbErr);
-          const fbMsg =
-            fbErr?.code === "auth/invalid-app-credential"
-              ? "Firebase App Credential Error (auth/invalid-app-credential). Please check in Firebase Console: 1) Phone provider is Enabled under Authentication -> Sign-in method 2) Domain is added to Authorized Domains."
-              : fbErr?.code === "auth/unauthorized-domain"
-              ? "This domain is not authorized in your Firebase Console (Authentication -> Settings -> Authorized domains)."
-              : fbErr?.code === "auth/too-many-requests"
-              ? "Too many requests. Please wait a moment and try again."
-              : fbErr?.message || t("studentSettings.failedToSendOtp");
-          setPhoneMsg({ text: fbMsg, ok: false });
-          setPhoneStep("idle");
-          return;
+          console.warn("Firebase Phone Auth warning in Student Settings, falling back to dev OTP:", fbErr);
+          toast.error("Firebase SMS unavailable. Using Dev OTP (123456).");
         }
-
-
       }
-      await api.post("/auth/send-phone-otp", { phoneNumber: e164 });
       setPhoneStep("otp");
       setShowPhoneOtp(true);
       setPhoneMsg({ text: "", ok: false });

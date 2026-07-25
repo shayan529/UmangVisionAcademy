@@ -9,6 +9,7 @@ import {
 } from "../utils/otpStore.js";
 import { transporter } from "../utils/Mailer.js";
 import { verifyFirebaseIdToken } from "../config/firebaseAdmin.js";
+import { getPhoneLookupValues } from "./user.controller.js";
 
 const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const RESEND_COOLDOWN = 60 * 1000; // 1 minute
@@ -181,7 +182,10 @@ export const sendResetOtpPhone = async (req, res) => {
       return res.status(400).json({ message: "Phone number is required" });
     }
 
-    const user = await User.findOne({ phoneNumber });
+    const phoneLookupValues = getPhoneLookupValues(phoneNumber);
+    const user = await User.findOne({
+      phoneNumber: { $in: phoneLookupValues.length ? phoneLookupValues : [phoneNumber] },
+    });
     if (!user) {
       return res.status(404).json({
         message: "No account found with this phone number. Please sign up first.",
