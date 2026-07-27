@@ -24,6 +24,7 @@ import {
   updateOtpRecord,
 } from "../utils/otpStore.js";
 import { verifyFirebaseIdToken } from "../config/firebaseAdmin.js";
+import { sendSmsOtp } from "../utils/twilioService.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -483,9 +484,12 @@ export const SendLoginOtp = async (req, res) => {
       );
     }
 
+    // Send the generated OTP to user's phone via Twilio SMS
+    await sendSmsOtp(canonicalPhone, otp);
+
     return res.status(200).json({
       success: true,
-      message: "Phone number verified for OTP login.",
+      message: "OTP sent to your phone number via SMS.",
     });
   } catch (err) {
     console.error("SendLoginOtp error:", err);

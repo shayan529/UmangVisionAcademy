@@ -9,7 +9,8 @@ import {
 } from "../utils/otpStore.js";
 import { transporter } from "../utils/Mailer.js";
 import { verifyFirebaseIdToken } from "../config/firebaseAdmin.js";
-import { getPhoneLookupValues } from "./user.controller.js";
+import { getPhoneLookupValues, normalizeIndianPhoneNumber } from "./user.controller.js";
+import { sendSmsOtp } from "../utils/twilioService.js";
 
 const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const RESEND_COOLDOWN = 60 * 1000; // 1 minute
@@ -218,7 +219,9 @@ export const sendResetOtpPhone = async (req, res) => {
       );
     }
 
-    res.json({ message: "Phone number verified for reset." });
+    await sendSmsOtp(canonicalPhone, otp);
+
+    res.json({ message: "OTP sent to your phone number via SMS." });
   } catch (err) {
     console.error("sendResetOtpPhone error:", err);
     res.status(500).json({ message: "Failed to process request." });
