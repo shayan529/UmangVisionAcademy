@@ -427,13 +427,14 @@ export const SendLoginOtp = async (req, res) => {
       });
     }
 
-    const formattedPhone = phoneLookupValues[0];
+    const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
     const otp = process.env.NODE_ENV === "production"
       ? Math.floor(100000 + Math.random() * 900000).toString()
       : "123456";
 
+    // Store OTP under canonical phone (+91...) and raw phone input for multi-key matching
     await setOtpRecord(
-      formattedPhone,
+      canonicalPhone,
       {
         otp,
         createdAt: Date.now(),
@@ -442,6 +443,18 @@ export const SendLoginOtp = async (req, res) => {
       },
       5 * 60 * 1000,
     );
+    if (canonicalPhone !== phoneNumber) {
+      await setOtpRecord(
+        phoneNumber,
+        {
+          otp,
+          createdAt: Date.now(),
+          lastSentAt: Date.now(),
+          attempts: 0,
+        },
+        5 * 60 * 1000,
+      );
+    }
 
     return res.status(200).json({
       success: true,
@@ -485,11 +498,19 @@ export const LoginUserWithOtp = async (req, res) => {
       }
     }
 
-    // Fallback: check stored OTP or dev fallback '123456'
+    // Fallback: check stored OTP across all lookup keys or dev fallback '123456'
     if (!isValid && otp) {
-      const formattedPhone = phoneLookupValues[0];
-      const record = await getOtpRecord(formattedPhone);
-      if (record && record.otp && record.otp === otp.trim()) {
+      const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
+      const keysToTry = new Set([canonicalPhone, phoneNumber, ...phoneLookupValues]);
+
+      let record = null;
+      for (const k of keysToTry) {
+        if (!k) continue;
+        record = await getOtpRecord(k);
+        if (record && record.otp) break;
+      }
+
+      if (record && record.otp && record.otp.trim() === otp.trim()) {
         isValid = true;
       } else if (otp.trim() === "123456") {
         isValid = true;
@@ -500,8 +521,11 @@ export const LoginUserWithOtp = async (req, res) => {
       return res.status(400).json({ message: "Invalid OTP code or expired token." });
     }
 
-    const formattedPhone = phoneLookupValues[0];
-    await deleteOtpRecord(formattedPhone);
+    const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
+    const keysToDelete = new Set([canonicalPhone, phoneNumber, ...phoneLookupValues]);
+    for (const k of keysToDelete) {
+      if (k) await deleteOtpRecord(k);
+    }
 
     // Daily login coin reward
     let loginCoinAwarded = false;

@@ -192,12 +192,13 @@ export const sendResetOtpPhone = async (req, res) => {
       });
     }
 
+    const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
     const otp = process.env.NODE_ENV === "production"
       ? Math.floor(100000 + Math.random() * 900000).toString()
       : "123456";
 
     await setOtpRecord(
-      phoneNumber,
+      canonicalPhone,
       {
         otp,
         attempts: 0,
@@ -205,6 +206,17 @@ export const sendResetOtpPhone = async (req, res) => {
       },
       OTP_TTL_MS,
     );
+    if (canonicalPhone !== phoneNumber) {
+      await setOtpRecord(
+        phoneNumber,
+        {
+          otp,
+          attempts: 0,
+          lastSentAt: Date.now(),
+        },
+        OTP_TTL_MS,
+      );
+    }
 
     res.json({ message: "Phone number verified for reset." });
   } catch (err) {
@@ -235,10 +247,20 @@ export const verifyResetOtpPhone = async (req, res) => {
       }
     }
 
-    // Fallback: verify stored OTP or dev '123456'
+    // Fallback: verify stored OTP across lookup keys or dev '123456'
     if (!isValid && otp) {
-      const record = await getOtpRecord(phoneNumber);
-      if (record && record.otp && record.otp === otp.trim()) {
+      const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
+      const phoneLookupValues = getPhoneLookupValues(phoneNumber);
+      const keysToTry = new Set([canonicalPhone, phoneNumber, ...phoneLookupValues]);
+
+      let record = null;
+      for (const k of keysToTry) {
+        if (!k) continue;
+        record = await getOtpRecord(k);
+        if (record && record.otp) break;
+      }
+
+      if (record && record.otp && record.otp.trim() === otp.trim()) {
         isValid = true;
       } else if (otp.trim() === "123456") {
         isValid = true;
@@ -249,7 +271,12 @@ export const verifyResetOtpPhone = async (req, res) => {
       return res.status(400).json({ message: "Invalid or expired OTP token." });
     }
 
-    await deleteOtpRecord(phoneNumber);
+    const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
+    const phoneLookupValues = getPhoneLookupValues(phoneNumber);
+    const keysToDelete = new Set([canonicalPhone, phoneNumber, ...phoneLookupValues]);
+    for (const k of keysToDelete) {
+      if (k) await deleteOtpRecord(k);
+    }
 
     // OTP correct — issue a one-time reset token (valid 15 min)
     const resetToken = crypto.randomBytes(32).toString("hex");
