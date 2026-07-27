@@ -54,14 +54,7 @@
     "submitting": "Submitting…",
     "rated": "Rated",
     "rateCourse": "Rate Course",
-    "ratingLabels": [
-      "",
-      "Poor",
-      "Fair",
-      "Good",
-      "Very Good",
-      "Excellent"
-    ],
+    "ratingLabels": ["", "Poor", "Fair", "Good", "Very Good", "Excellent"],
     "select_course_type": "Course Type",
     "courseTypeAll": "All",
     "courseTypeClasses": "Classes",
@@ -368,46 +361,6 @@
     "feature3": {
       "title": "Private Communities",
       "desc": "Exclusive premium instructor communities available for subscribers only."
-    }
-  },
-  "aiSection": {
-    "tag": "Future Of Education",
-    "heading": "AI Powered Learning",
-    "description": "Experience modern education with AI tutors, personalized learning, voice assistants, smart quizzes and advanced learning analytics designed to improve student performance.",
-    "panelTitle": "AI Learning Assistant",
-    "panelSubtitle": "Smart AI Powered Education",
-    "statusOnline": "Online",
-    "tutorCardTitle": "AI Tutor Session",
-    "tutorCardDesc": "Personalized coding assistance",
-    "tutorProgress": "92%",
-    "supportStatTitle": "AI Support",
-    "sessionsStatTitle": "AI Sessions",
-    "recommendationsTitle": "Smart AI Recommendations",
-    "recommendationsDesc": "AI suggests courses, quizzes and personalized learning paths.",
-    "featureHeading": "AI Features",
-    "feature1": {
-      "title": "AI Tutor",
-      "desc": "Ask questions instantly and receive step-by-step explanations powered by AI."
-    },
-    "feature2": {
-      "title": "AI Quiz Generator",
-      "desc": "Generate smart quizzes, mock tests and practice questions automatically."
-    },
-    "feature3": {
-      "title": "Voice AI Assistant",
-      "desc": "Learn using voice conversations and AI-powered speaking assistance."
-    },
-    "feature4": {
-      "title": "Personalized Learning",
-      "desc": "Get AI-powered course recommendations based on your learning progress."
-    },
-    "feature5": {
-      "title": "AI Notes & Summaries",
-      "desc": "Automatically generate notes, summaries and key learning points."
-    },
-    "feature6": {
-      "title": "Progress Analytics",
-      "desc": "Track learning performance, achievements and skill growth with AI insights."
     }
   },
   "instructor": {

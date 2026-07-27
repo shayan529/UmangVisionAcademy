@@ -1,6 +1,66 @@
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { auth, isFirebaseConfigured } from "../config/firebase.js";
 
+const loadRecaptchaScript = () => {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined") {
+      reject(new Error("The browser window is unavailable."));
+      return;
+    }
+
+    if (window.grecaptcha) {
+      resolve(window.grecaptcha);
+      return;
+    }
+
+    const existingScript = document.querySelector(
+      'script[src*="recaptcha/api.js"]',
+    );
+    if (existingScript) {
+      if (existingScript.dataset.loaded === "true") {
+        resolve(window.grecaptcha);
+        return;
+      }
+
+      existingScript.addEventListener(
+        "load",
+        () => {
+          existingScript.dataset.loaded = "true";
+          resolve(window.grecaptcha);
+        },
+        { once: true },
+      );
+      existingScript.addEventListener(
+        "error",
+        () => {
+          reject(new Error("Failed to load the Google reCAPTCHA script."));
+        },
+        { once: true },
+      );
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://www.google.com/recaptcha/api.js?render=explicit";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (window.grecaptcha) {
+        script.dataset.loaded = "true";
+        resolve(window.grecaptcha);
+      } else {
+        reject(
+          new Error("Google reCAPTCHA script loaded but is not ready yet."),
+        );
+      }
+    };
+    script.onerror = () => {
+      reject(new Error("Failed to load the Google reCAPTCHA script."));
+    };
+    document.head.appendChild(script);
+  });
+};
+
 /**
  * Poll for a DOM element by ID, up to a timeout.
  *
@@ -55,17 +115,30 @@ export const clearRecaptcha = (containerId = "recaptcha-container") => {
   if (window.grecaptcha) {
     try {
       for (let id = 0; id < 10; id++) {
-        try { window.grecaptcha.reset(id); } catch (_) { /* ignore */ }
+        try {
+          window.grecaptcha.reset(id);
+        } catch (_) {
+          /* ignore */
+        }
       }
-    } catch (_) { /* ignore */ }
+    } catch (_) {
+      /* ignore */
+    }
   }
 
   // 3. Remove orphaned reCAPTCHA iframes/badges injected directly into document.body by Google SDK.
   //    CRITICAL: Never remove the main app root (#root) element!
   document.querySelectorAll("body > div").forEach((div) => {
     if (div.id !== "root" && !div.contains(document.getElementById("root"))) {
-      if (div.querySelector('iframe[src*="recaptcha"]') || div.querySelector('iframe[src*="google.com/recaptcha"]')) {
-        try { div.remove(); } catch (_) { /* ignore */ }
+      if (
+        div.querySelector('iframe[src*="recaptcha"]') ||
+        div.querySelector('iframe[src*="google.com/recaptcha"]')
+      ) {
+        try {
+          div.remove();
+        } catch (_) {
+          /* ignore */
+        }
       }
     }
   });
@@ -83,6 +156,10 @@ export const clearRecaptcha = (containerId = "recaptcha-container") => {
         el.removeAttribute(attr.name);
       }
     });
+  }
+
+  if (window.confirmationResult) {
+    window.confirmationResult = null;
   }
 };
 
@@ -103,6 +180,8 @@ export const setupRecaptchaVerifier = async (
 
   // Always start clean — destroy any previous verifier and reset the container
   clearRecaptcha(containerId);
+
+  await loadRecaptchaScript();
 
   // Wait for the fresh container element to be present in the DOM
   const el = await waitForElement(containerId);
