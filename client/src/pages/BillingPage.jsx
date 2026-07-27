@@ -50,19 +50,6 @@ const Sk = ({ w = "100%", h = 16, r = 8, style = {} }) => (
   />
 );
 
-const loadRazorpay = () =>
-  new Promise((resolve) => {
-    if (window.Razorpay) {
-      resolve(true);
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-
 export default function BillingPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -87,7 +74,10 @@ export default function BillingPage() {
 
   useEffect(() => {
     if (!user)
-      navigate("/login", { state: { from: "/student-dashboard/billing" }, replace: true });
+      navigate("/login", {
+        state: { from: "/student-dashboard/billing" },
+        replace: true,
+      });
   }, [user, navigate]);
 
   useEffect(() => {
@@ -110,12 +100,6 @@ export default function BillingPage() {
       return;
     }
 
-    const ok = await loadRazorpay();
-    if (!ok) {
-      alert("Failed to load Razorpay. Check your internet connection.");
-      return;
-    }
-
     const result = await dispatch(
       createOrder({
         planId: plan.id,
@@ -124,51 +108,19 @@ export default function BillingPage() {
     );
     if (createOrder.rejected.match(result)) return;
 
-    const { orderId, amount, currency, keyId, mockMode } = result.payload;
+    const { orderId } = result.payload;
 
-    if (mockMode) {
-      await dispatch(
-        verifyPayment({
-          razorpay_order_id: orderId,
-          razorpay_payment_id: `mock_pay_${Date.now()}`,
-          razorpay_signature: "mock_signature",
-          planId: plan.id,
-          selectedClass,
-        }),
-      );
-      dispatch(fetchSubscription());
-      dispatch(loadCurrentUser());
-      return;
-    }
-
-    const options = {
-      key: keyId,
-      amount,
-      currency,
-      name: "Umang Vision Academy",
-      description: `${plan.title} — Monthly Subscription`,
-      order_id: orderId,
-      prefill: {
-        name: user?.name || "",
-        email: user?.email || "",
-      },
-      theme: { color: planColors[plan.id] ?? "#7c3aed" },
-      handler: async (response) => {
-        await dispatch(
-          verifyPayment({
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-            planId: plan.id,
-            selectedClass,
-          }),
-        );
-        dispatch(fetchSubscription());
-        dispatch(loadCurrentUser());
-      },
-    };
-
-    new window.Razorpay(options).open();
+    await dispatch(
+      verifyPayment({
+        razorpay_order_id: orderId,
+        razorpay_payment_id: `mock_pay_${Date.now()}`,
+        razorpay_signature: "mock_signature",
+        planId: plan.id,
+        selectedClass,
+      }),
+    );
+    dispatch(fetchSubscription());
+    dispatch(loadCurrentUser());
   };
 
   const handleCancel = async () => {
@@ -209,7 +161,10 @@ export default function BillingPage() {
 
   return (
     <>
-      <SEO title="Billing" description="Manage your billing and subscriptions at Umang Vision Academy." />
+      <SEO
+        title="Billing"
+        description="Manage your billing and subscriptions at Umang Vision Academy."
+      />
       <style>{`
         @keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
         @keyframes fadeUp  { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
@@ -229,7 +184,6 @@ export default function BillingPage() {
           fontFamily: "'Inter','Segoe UI',sans-serif",
         }}
       >
-
         <div
           style={{
             maxWidth: 900,
@@ -381,7 +335,7 @@ export default function BillingPage() {
                       </span>
                       <span style={{ fontSize: 12, color: "#64748b" }}>
                         {subscription.status === "active" ||
-                          subscription.status === "cancelled"
+                        subscription.status === "cancelled"
                           ? `${days} day${days !== 1 ? "s" : ""} remaining`
                           : ""}
                       </span>
@@ -488,7 +442,9 @@ export default function BillingPage() {
                     price: t("plans.base.price"),
                     period: t("plans.base.period"),
                     amount: 10000,
-                    features: Array.isArray(t("plans.base.features", { returnObjects: true }))
+                    features: Array.isArray(
+                      t("plans.base.features", { returnObjects: true }),
+                    )
                       ? t("plans.base.features", { returnObjects: true })
                       : [
                           "Select one Class (Class 9 to 12)",
@@ -502,7 +458,9 @@ export default function BillingPage() {
                   },
                   {
                     id: "premium",
-                    title: t("plans.premium.title", { defaultValue: "Premium" }),
+                    title: t("plans.premium.title", {
+                      defaultValue: "Premium",
+                    }),
                     price: t("plans.premium.price", { defaultValue: "₹500" }),
                     period: t("plans.premium.period", { defaultValue: "year" }),
                     amount: 50000,
@@ -536,188 +494,201 @@ export default function BillingPage() {
                     popular: true,
                   },
                 ]
-                .filter((p) => !activeSub || (activeSub && subscription?.plan === "base" && p.id === "premium"))
-                .map((plan) => {
-                  const isSelected = selectedPlan?.id === plan.id;
-                  return (
-                    <div
-                      key={plan.id}
-                      className={`plan-card${plan.popular ? " plan-card-premium" : ""}`}
-                      style={
-                        plan.popular
-                          ? {
-                            background: isSelected
-                              ? "linear-gradient(135deg,#4f22a8,#2e1065)"
-                              : "linear-gradient(135deg,#4c1d95,#1e1b4b)",
-                            border: `1px solid ${isSelected ? plan.color : "#7c3aed50"}`,
-                            borderRadius: 20,
-                            padding: "24px",
-                            transition: "all 0.2s",
-                            position: "relative",
-                            cursor: "default",
-                            boxShadow: "0 10px 30px rgba(124,58,237,0.25)",
-                          }
-                          : {
-                            background: isSelected ? `${plan.color}12` : "#111827",
-                            border: `1px solid ${isSelected ? plan.color : "#1e293b"}`,
-                            borderRadius: 18,
-                            padding: "22px",
-                            transition: "all 0.2s",
-                            position: "relative",
-                            cursor: "default",
-                          }
-                      }
-                    >
-                      {plan.popular && (
-                        <span
-                          style={{
-                            position: "absolute",
-                            top: 14,
-                            right: 14,
-                            fontSize: 10,
-                            fontWeight: 700,
-                            padding: "2px 8px",
-                            borderRadius: 20,
-                            background: "#fff",
-                            color: "#6d28d9",
-                          }}
-                        >
-                          MOST POPULAR
-                        </span>
-                      )}
-                      <h3
-                        style={{
-                          fontSize: plan.popular ? 20 : 18,
-                          fontWeight: 700,
-                          color: "#f1f5f9",
-                        }}
-                      >
-                        {plan.title}
-                      </h3>
-                      <div style={{ marginTop: 8, marginBottom: 16 }}>
-                        <span
-                          style={{
-                            fontSize: plan.popular ? 34 : 30,
-                            fontWeight: 800,
-                            color: plan.popular ? "#fff" : plan.color,
-                          }}
-                        >
-                          {plan.price}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 13,
-                            color: plan.popular ? "#c4b5fd" : "#64748b",
-                          }}
-                        >
-                          /{plan.period}
-                        </span>
-                      </div>
+                  .filter(
+                    (p) =>
+                      !activeSub ||
+                      (activeSub &&
+                        subscription?.plan === "base" &&
+                        p.id === "premium"),
+                  )
+                  .map((plan) => {
+                    const isSelected = selectedPlan?.id === plan.id;
+                    return (
                       <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 8,
-                          marginBottom: 20,
-                        }}
+                        key={plan.id}
+                        className={`plan-card${plan.popular ? " plan-card-premium" : ""}`}
+                        style={
+                          plan.popular
+                            ? {
+                                background: isSelected
+                                  ? "linear-gradient(135deg,#4f22a8,#2e1065)"
+                                  : "linear-gradient(135deg,#4c1d95,#1e1b4b)",
+                                border: `1px solid ${isSelected ? plan.color : "#7c3aed50"}`,
+                                borderRadius: 20,
+                                padding: "24px",
+                                transition: "all 0.2s",
+                                position: "relative",
+                                cursor: "default",
+                                boxShadow: "0 10px 30px rgba(124,58,237,0.25)",
+                              }
+                            : {
+                                background: isSelected
+                                  ? `${plan.color}12`
+                                  : "#111827",
+                                border: `1px solid ${isSelected ? plan.color : "#1e293b"}`,
+                                borderRadius: 18,
+                                padding: "22px",
+                                transition: "all 0.2s",
+                                position: "relative",
+                                cursor: "default",
+                              }
+                        }
                       >
-                        {(Array.isArray(plan.features) ? plan.features : []).map((f) => (
-                          <div
-                            key={f}
+                        {plan.popular && (
+                          <span
                             style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 8,
-                              fontSize: 13,
-                              color: plan.popular ? "#e9d5ff" : "#94a3b8",
+                              position: "absolute",
+                              top: 14,
+                              right: 14,
+                              fontSize: 10,
+                              fontWeight: 700,
+                              padding: "2px 8px",
+                              borderRadius: 20,
+                              background: "#fff",
+                              color: "#6d28d9",
                             }}
                           >
-                            <span
-                              style={{
-                                color: plan.popular ? "#4ade80" : "#34d399",
-                                flexShrink: 0,
-                              }}
-                            >
-                              ✓
-                            </span>
-                            {f}
-                          </div>
-                        ))}
-                      </div>
-
-                      <div style={{ marginBottom: 16 }}>
-                        <select
-                          value={selectedClass}
-                          onChange={(e) => setSelectedClass(e.target.value)}
+                            MOST POPULAR
+                          </span>
+                        )}
+                        <h3
                           style={{
-                            width: "100%",
-                            padding: "10px",
-                            borderRadius: 10,
-                            background: plan.popular ? "#fff" : "#1e293b",
-                            border: `1px solid ${plan.popular ? "#e2e8f0" : "#334155"}`,
-                            color: plan.popular ? "#1e293b" : "#f1f5f9",
-                            fontSize: 14,
-                            outline: "none",
-                            cursor: "pointer",
+                            fontSize: plan.popular ? 20 : 18,
+                            fontWeight: 700,
+                            color: "#f1f5f9",
                           }}
                         >
-                          <option value="" disabled>Select your Class</option>
-                          <option value="Class 9">Class 9</option>
-                          <option value="Class 10">Class 10</option>
-                          <option value="Class 11">Class 11</option>
-                          <option value="Class 12">Class 12</option>
-                        </select>
-                      </div>
+                          {plan.title}
+                        </h3>
+                        <div style={{ marginTop: 8, marginBottom: 16 }}>
+                          <span
+                            style={{
+                              fontSize: plan.popular ? 34 : 30,
+                              fontWeight: 800,
+                              color: plan.popular ? "#fff" : plan.color,
+                            }}
+                          >
+                            {plan.price}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 13,
+                              color: plan.popular ? "#c4b5fd" : "#64748b",
+                            }}
+                          >
+                            /{plan.period}
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 8,
+                            marginBottom: 20,
+                          }}
+                        >
+                          {(Array.isArray(plan.features)
+                            ? plan.features
+                            : []
+                          ).map((f) => (
+                            <div
+                              key={f}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 8,
+                                fontSize: 13,
+                                color: plan.popular ? "#e9d5ff" : "#94a3b8",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  color: plan.popular ? "#4ade80" : "#34d399",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                ✓
+                              </span>
+                              {f}
+                            </div>
+                          ))}
+                        </div>
 
-                      <button
-                        onClick={() => handlePay(plan)}
-                        disabled={orderLoading || paymentLoading}
-                        style={{
-                          width: "100%",
-                          padding: "12px",
-                          borderRadius: 12,
-                          border: "none",
-                          background: plan.popular
-                            ? "#fff"
-                            : `linear-gradient(135deg,${plan.color},${plan.color}99)`,
-                          color: plan.popular ? "#6d28d9" : "#fff",
-                          fontSize: 14,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          opacity: orderLoading || paymentLoading ? 0.6 : 1,
-                          transition: "opacity 0.2s",
-                          boxShadow: plan.popular
-                            ? "0 6px 20px rgba(255,255,255,0.15)"
-                            : `0 6px 20px ${plan.color}30`,
-                        }}
-                      >
-                        {orderLoading || paymentLoading
-                          ? "Processing…"
-                          : `Pay ${plan.price}`}
-                      </button>
-                      {process.env.NODE_ENV !== "production" && (
+                        <div style={{ marginBottom: 16 }}>
+                          <select
+                            value={selectedClass}
+                            onChange={(e) => setSelectedClass(e.target.value)}
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              borderRadius: 10,
+                              background: plan.popular ? "#fff" : "#1e293b",
+                              border: `1px solid ${plan.popular ? "#e2e8f0" : "#334155"}`,
+                              color: plan.popular ? "#1e293b" : "#f1f5f9",
+                              fontSize: 14,
+                              outline: "none",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <option value="" disabled>
+                              Select your Class
+                            </option>
+                            <option value="Class 9">Class 9</option>
+                            <option value="Class 10">Class 10</option>
+                            <option value="Class 11">Class 11</option>
+                            <option value="Class 12">Class 12</option>
+                          </select>
+                        </div>
+
                         <button
-                          onClick={() => handleMockPay(plan)}
+                          onClick={() => handlePay(plan)}
                           disabled={orderLoading || paymentLoading}
                           style={{
                             width: "100%",
-                            marginTop: 8,
-                            padding: "10px",
+                            padding: "12px",
                             borderRadius: 12,
-                            border: `1px dashed ${plan.popular ? "#a78bfa60" : "#334155"}`,
-                            background: "transparent",
-                            color: plan.popular ? "#c4b5fd" : "#64748b",
-                            fontSize: 12,
-                            fontWeight: 600,
+                            border: "none",
+                            background: plan.popular
+                              ? "#fff"
+                              : `linear-gradient(135deg,${plan.color},${plan.color}99)`,
+                            color: plan.popular ? "#6d28d9" : "#fff",
+                            fontSize: 14,
+                            fontWeight: 700,
                             cursor: "pointer",
+                            opacity: orderLoading || paymentLoading ? 0.6 : 1,
+                            transition: "opacity 0.2s",
+                            boxShadow: plan.popular
+                              ? "0 6px 20px rgba(255,255,255,0.15)"
+                              : `0 6px 20px ${plan.color}30`,
                           }}
                         >
-                          🧪 Mock Pay (Test Only)
+                          {orderLoading || paymentLoading
+                            ? "Processing…"
+                            : `Pay ${plan.price}`}
                         </button>
-                      )}
-                    </div>
-                  );
-                })}
+                        {process.env.NODE_ENV !== "production" && (
+                          <button
+                            onClick={() => handleMockPay(plan)}
+                            disabled={orderLoading || paymentLoading}
+                            style={{
+                              width: "100%",
+                              marginTop: 8,
+                              padding: "10px",
+                              borderRadius: 12,
+                              border: `1px dashed ${plan.popular ? "#a78bfa60" : "#334155"}`,
+                              background: "transparent",
+                              color: plan.popular ? "#c4b5fd" : "#64748b",
+                              fontSize: 12,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                            }}
+                          >
+                            🧪 Mock Pay (Test Only)
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           )}

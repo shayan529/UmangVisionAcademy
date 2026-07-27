@@ -6,7 +6,10 @@ import Wallet from "../models/wallet.model.js";
 import crypto from "crypto";
 import Razorpay from "razorpay";
 import { getPYQAccessResult, PYQ_PRICE } from "../utils/pyqAccess.js";
-import { uploadFileToStorage, deleteFileFromStorage } from "../utils/vercelBlob.js";
+import {
+  uploadFileToStorage,
+  deleteFileFromStorage,
+} from "../utils/vercelBlob.js";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -114,7 +117,10 @@ export const getQuestionPapers = async (req, res) => {
     });
 
     if (process.env.NODE_ENV === "production") {
-      res.setHeader("Cache-Control", "public, max-age=300, s-maxage=3600, stale-while-revalidate=7200");
+      res.setHeader(
+        "Cache-Control",
+        "public, max-age=300, s-maxage=3600, stale-while-revalidate=7200",
+      );
     }
 
     res.json(papers);
@@ -207,18 +213,13 @@ export const createPYQOrder = async (req, res) => {
     const { board, className, subject, year } = req.body;
     const amount = PYQ_PRICE * 100;
 
-    if (isPlaceholderRazorpayConfig()) {
-      if (process.env.NODE_ENV !== "production") {
-        return res.json({
-          orderId: `mock_order_${Date.now()}`,
-          amount,
-          currency: "INR",
-          keyId: "mock",
-          mockMode: true,
-        });
-      }
-      return res.status(400).json({ message: "Razorpay is not configured." });
-    }
+    return res.json({
+      orderId: `mock_order_${Date.now()}`,
+      amount,
+      currency: "INR",
+      keyId: "dummy",
+      mockMode: true,
+    });
 
     const order = await razorpay.orders.create({
       amount,

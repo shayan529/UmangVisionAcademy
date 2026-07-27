@@ -429,56 +429,17 @@ const QuestionBank = () => {
         year: modalData.year,
       });
 
-      if (data.mockMode) {
-        await axios.post("/question-papers/purchase/verify", {
-          razorpay_order_id: data.orderId,
-          razorpay_payment_id: `mock_${Date.now()}`,
-          razorpay_signature: "mock_signature",
-          board: modalData.board,
-          className: modalData.className,
-          subject: modalData.subject,
-          year: modalData.year,
-        });
-        setShowModal(false);
-        window.open(modalData.url, "_blank", "noopener,noreferrer");
-        return;
-      }
-
-      const ok = await loadRazorpay();
-      if (!ok) {
-        throw new Error("Razorpay failed to load.");
-      }
-
-      new window.Razorpay({
-        key: data.keyId,
-        amount: data.amount,
-        currency: data.currency || "INR",
-        name: "Umang Vision Academy",
-        description: `${modalData.subject} ${modalData.year} Question Paper`,
-        order_id: data.orderId,
-        prefill: { name: user?.name || "", email: user?.email || "" },
-        theme: { color: "#06b6d4" },
-        handler: async (response) => {
-          try {
-            await axios.post("/question-papers/purchase/verify", {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              board: modalData.board,
-              className: modalData.className,
-              subject: modalData.subject,
-              year: modalData.year,
-            });
-            setShowModal(false);
-            window.open(modalData.url, "_blank", "noopener,noreferrer");
-          } catch (error) {
-            console.error("Razorpay verify error", error);
-            setPaymentError(
-              error.response?.data?.message || "Razorpay payment failed",
-            );
-          }
-        },
-      }).open();
+      await axios.post("/question-papers/purchase/verify", {
+        razorpay_order_id: data.orderId,
+        razorpay_payment_id: `mock_${Date.now()}`,
+        razorpay_signature: "mock_signature",
+        board: modalData.board,
+        className: modalData.className,
+        subject: modalData.subject,
+        year: modalData.year,
+      });
+      setShowModal(false);
+      window.open(modalData.url, "_blank", "noopener,noreferrer");
     } catch (error) {
       console.error("Razorpay purchase error", error);
       setPaymentError(
@@ -560,7 +521,11 @@ const QuestionBank = () => {
               className="bg-[#111827]/80 text-slate-100 border border-slate-800 rounded-2xl px-4 py-3 text-xs md:text-sm focus:outline-none focus:border-cyan-500/60 transition shadow-inner"
             >
               {boardOptions.map((o) => (
-                <option key={o.value} value={o.value} className="bg-slate-900 text-slate-100">
+                <option
+                  key={o.value}
+                  value={o.value}
+                  className="bg-slate-900 text-slate-100"
+                >
                   {o.label}
                 </option>
               ))}
@@ -577,7 +542,11 @@ const QuestionBank = () => {
               className="bg-[#111827]/80 text-slate-100 border border-slate-800 rounded-2xl px-4 py-3 text-xs md:text-sm focus:outline-none focus:border-cyan-500/60 transition shadow-inner"
             >
               {classOptions.map((o) => (
-                <option key={o.value} value={o.value} className="bg-slate-900 text-slate-100">
+                <option
+                  key={o.value}
+                  value={o.value}
+                  className="bg-slate-900 text-slate-100"
+                >
                   {o.label}
                 </option>
               ))}
@@ -588,128 +557,121 @@ const QuestionBank = () => {
 
       {/* Content */}
       <div className="space-y-8">
-          {/* ── Global empty state ── */}
-          {filteredData.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-24 text-center">
-              <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-5">
-                <Search size={28} className="text-slate-500" />
-              </div>
-              <h3 className="text-xl font-semibold text-slate-200 mb-2">
-                No subjects found
-              </h3>
-              <p className="text-slate-400 max-w-sm">
-                No results for{" "}
-                <span className="text-cyan-400 font-medium">
-                  "{searchTerm}"
-                </span>
-                . Try a different subject name or clear the search.
-              </p>
-              <button
-                onClick={() => setSearchTerm("")}
-                className="mt-6 px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-medium transition-colors"
-              >
-                Clear search
-              </button>
+        {/* ── Global empty state ── */}
+        {filteredData.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-5">
+              <Search size={28} className="text-slate-500" />
             </div>
-          )}
+            <h3 className="text-xl font-semibold text-slate-200 mb-2">
+              No subjects found
+            </h3>
+            <p className="text-slate-400 max-w-sm">
+              No results for{" "}
+              <span className="text-cyan-400 font-medium">"{searchTerm}"</span>.
+              Try a different subject name or clear the search.
+            </p>
+            <button
+              onClick={() => setSearchTerm("")}
+              className="mt-6 px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-medium transition-colors"
+            >
+              Clear search
+            </button>
+          </div>
+        )}
 
-          {filteredData.map((classData) => {
-            const visibleSubjects = classData.subjects.filter((s) =>
-              s.name.toLowerCase().includes(searchTerm.toLowerCase()),
-            );
+        {filteredData.map((classData) => {
+          const visibleSubjects = classData.subjects.filter((s) =>
+            s.name.toLowerCase().includes(searchTerm.toLowerCase()),
+          );
 
-            return (
-              <div key={`${classData.board}-${classData.class}`}>
-                <div className="mb-4 flex flex-wrap items-center gap-3">
-                  <h2 className="text-2xl font-semibold">{classData.class}</h2>
-                  <span
-                    className={`rounded-full px-3 py-1 text-sm font-medium ${
-                      boardBadgeStyle[classData.board] ??
-                      "bg-slate-700 text-slate-200"
-                    }`}
-                  >
-                    {classData.board}
-                  </span>
+          return (
+            <div key={`${classData.board}-${classData.class}`}>
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <h2 className="text-2xl font-semibold">{classData.class}</h2>
+                <span
+                  className={`rounded-full px-3 py-1 text-sm font-medium ${
+                    boardBadgeStyle[classData.board] ??
+                    "bg-slate-700 text-slate-200"
+                  }`}
+                >
+                  {classData.board}
+                </span>
+              </div>
+
+              {/* ── Per-group empty state ── */}
+              {visibleSubjects.length === 0 && (
+                <div className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 px-6 py-5 text-slate-400">
+                  <FileText size={20} className="text-slate-600 shrink-0" />
+                  <p className="text-sm">
+                    No subject matching{" "}
+                    <span className="text-cyan-400 font-medium">
+                      "{searchTerm}"
+                    </span>{" "}
+                    found in {classData.board} {classData.class}.
+                  </p>
                 </div>
+              )}
 
-                {/* ── Per-group empty state ── */}
-                {visibleSubjects.length === 0 && (
-                  <div className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 px-6 py-5 text-slate-400">
-                    <FileText size={20} className="text-slate-600 shrink-0" />
-                    <p className="text-sm">
-                      No subject matching{" "}
-                      <span className="text-cyan-400 font-medium">
-                        "{searchTerm}"
-                      </span>{" "}
-                      found in {classData.board} {classData.class}.
+              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {visibleSubjects.map((subject) => (
+                  <div
+                    key={subject.name}
+                    className="bg-slate-900 border border-slate-800 rounded-2xl p-6"
+                  >
+                    <div className="flex items-center gap-3 mb-5">
+                      <FileText className="text-cyan-400 shrink-0" size={22} />
+                      <h3 className="font-semibold text-lg">{subject.name}</h3>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {subject.papers.map((year) => (
+                        <div
+                          key={year}
+                          className="flex items-center justify-between bg-slate-800/50 hover:bg-slate-800 rounded-xl px-4 py-3 transition-colors"
+                        >
+                          <span className="text-sm text-slate-300">
+                            {year} {t("questionBank.questionPaper")}
+                          </span>
+                          <button
+                            onClick={() =>
+                              handlePaperAccess(
+                                year,
+                                subject.name,
+                                classData.board,
+                                classData.class,
+                              )
+                            }
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all active:scale-95 ${
+                              uploadedPapers.some(
+                                (p) =>
+                                  p.board === classData.board &&
+                                  p.class === classData.class &&
+                                  p.subject === subject.name &&
+                                  p.year === year,
+                              )
+                                ? "bg-green-600 hover:bg-green-500" // green = real PDF uploaded
+                                : "bg-cyan-600 hover:bg-cyan-500" // cyan = external link fallback
+                            }`}
+                          >
+                            {t("questionBank.view")}
+                            <ExternalLink size={12} className="opacity-80" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <p className="mt-4 text-xs text-slate-600 flex items-center gap-1">
+                      <ExternalLink size={10} />
+                      {SOURCE_LABEL[classData.board] ?? "External source"}
                     </p>
                   </div>
-                )}
-
-                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {visibleSubjects.map((subject) => (
-                    <div
-                      key={subject.name}
-                      className="bg-slate-900 border border-slate-800 rounded-2xl p-6"
-                    >
-                      <div className="flex items-center gap-3 mb-5">
-                        <FileText
-                          className="text-cyan-400 shrink-0"
-                          size={22}
-                        />
-                        <h3 className="font-semibold text-lg">
-                          {subject.name}
-                        </h3>
-                      </div>
-
-                      <div className="space-y-2.5">
-                        {subject.papers.map((year) => (
-                          <div
-                            key={year}
-                            className="flex items-center justify-between bg-slate-800/50 hover:bg-slate-800 rounded-xl px-4 py-3 transition-colors"
-                          >
-                            <span className="text-sm text-slate-300">
-                              {year} {t("questionBank.questionPaper")}
-                            </span>
-                            <button
-                              onClick={() =>
-                                handlePaperAccess(
-                                  year,
-                                  subject.name,
-                                  classData.board,
-                                  classData.class,
-                                )
-                              }
-                              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all active:scale-95 ${
-                                uploadedPapers.some(
-                                  (p) =>
-                                    p.board === classData.board &&
-                                    p.class === classData.class &&
-                                    p.subject === subject.name &&
-                                    p.year === year,
-                                )
-                                  ? "bg-green-600 hover:bg-green-500" // green = real PDF uploaded
-                                  : "bg-cyan-600 hover:bg-cyan-500" // cyan = external link fallback
-                              }`}
-                            >
-                              {t("questionBank.view")}
-                              <ExternalLink size={12} className="opacity-80" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-
-                      <p className="mt-4 text-xs text-slate-600 flex items-center gap-1">
-                        <ExternalLink size={10} />
-                        {SOURCE_LABEL[classData.board] ?? "External source"}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                ))}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
+      </div>
 
       {/* Payment Modal */}
       {showModal && modalData && (

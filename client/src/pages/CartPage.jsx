@@ -36,20 +36,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-// ── Load Razorpay script ──────────────────────────────────────────────────────
-const loadRazorpay = () =>
-  new Promise((resolve) => {
-    if (window.Razorpay) {
-      resolve(true);
-      return;
-    }
-    const s = document.createElement("script");
-    s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.onload = () => resolve(true);
-    s.onerror = () => resolve(false);
-    document.body.appendChild(s);
-  });
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const instructorName = (i) =>
   i?.name ??
@@ -275,47 +261,34 @@ export default function CartPage() {
     if (filtered.length === 1) setShowBrowser(false);
   };
 
-  // Real Razorpay checkout
+  // Dummy Razorpay checkout
   const handleRazorpayCheckout = async () => {
     setRazorError("");
-    const ok = await loadRazorpay();
-    if (!ok) {
-      setRazorError("Failed to load Razorpay. Check your connection.");
-      return;
+
+    try {
+      const result = await dispatch(
+        createOrder({
+          planId: "cart",
+          amount: total * 100,
+          courseIds: cartItems.map((c) => c._id ?? c.id),
+        }),
+      );
+      if (createOrder.rejected.match(result)) return;
+
+      const { orderId } = result.payload;
+      await dispatch(
+        verifyPayment({
+          razorpay_order_id: orderId,
+          razorpay_payment_id: `mock_pay_${Date.now()}`,
+          razorpay_signature: "mock_signature",
+          courseIds: cartItems.map((c) => c._id ?? c.id),
+        }),
+      );
+      dispatch(fetchSubscription());
+      dispatch(checkoutAndEnroll(cartItems.map((c) => c._id ?? c.id)));
+    } catch (err) {
+      setRazorError(err?.message || "Dummy Razorpay payment failed.");
     }
-
-    const result = await dispatch(
-      createOrder({
-        planId: "cart",
-        amount: total * 100,
-        courseIds: cartItems.map((c) => c._id ?? c.id),
-      }),
-    );
-    if (createOrder.rejected.match(result)) return;
-
-    const { orderId, keyId, amount, currency } = result.payload;
-    new window.Razorpay({
-      key: keyId,
-      amount,
-      currency: currency ?? "INR",
-      name: "Umang Vision Academy",
-      description: `Enrolling in ${cartItems.length} course${cartItems.length !== 1 ? "s" : ""}`,
-      order_id: orderId,
-      prefill: { name: user?.name || "", email: user?.email || "" },
-      theme: { color: "#7c3aed" },
-      handler: async (response) => {
-        await dispatch(
-          verifyPayment({
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-            courseIds: cartItems.map((c) => c._id ?? c.id),
-          }),
-        );
-        dispatch(fetchSubscription());
-        dispatch(checkoutAndEnroll(cartItems.map((c) => c._id ?? c.id)));
-      },
-    }).open();
   };
 
   // Wallet checkout — pays for each course one by one
@@ -343,27 +316,6 @@ export default function CartPage() {
   };
 
   // Mock enroll (dev only)
-  const handleMockEnroll = async () => {
-    setMockLoading(true);
-    const courseIds = cartItems.map((c) => c._id ?? c.id);
-
-    try {
-      await dispatch(
-        verifyPayment({
-          razorpay_order_id: `mock_order_${Date.now()}`,
-          razorpay_payment_id: `mock_pay_${Date.now()}`,
-          razorpay_signature: "mock_signature",
-          courseIds,
-        }),
-      ).unwrap();
-      await dispatch(checkoutAndEnroll(courseIds)).unwrap();
-    } catch (err) {
-      setRazorError(err || "Mock enrollment failed.");
-    } finally {
-      setMockLoading(false);
-    }
-  };
-
   const handleSuccessClose = () => {
     dispatch(resetCheckout());
     navigate("/student-dashboard/my-courses");
@@ -730,36 +682,23 @@ export default function CartPage() {
                 )}
               </button>
 
-              {/* ── Free courses / mock enroll ── */}
-              {(total === 0 || process.env.NODE_ENV !== "production") && (
-                <button
-                  onClick={handleMockEnroll}
-                  disabled={anyLoading}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold border border-dashed transition disabled:opacity-60"
-                  style={{
-                    borderColor: "#334155",
-                    color: "#94a3b8",
-                    background: "transparent",
-                  }}
-                >
-                  {mockLoading || checkoutLoading ? (
-                    <>
-                      <Loader2 size={15} className="animate-spin" /> Enrolling…
-                    </>
-                  ) : (
-                    <>🧪 {total === 0 ? "Enrol Free" : "Mock Enrol (Test)"}</>
-                  )}
-                </button>
-              )}
-
               {/* ── Refund Policy Notice & Guarantee ── */}
               <div className="flex items-start gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3.5 text-xs text-slate-300">
-                <ShieldCheck size={18} className="text-emerald-400 shrink-0 mt-0.5" />
+                <ShieldCheck
+                  size={18}
+                  className="text-emerald-400 shrink-0 mt-0.5"
+                />
                 <div>
-                  <span className="font-semibold text-emerald-300">7-Day Money Back Guarantee</span>
+                  <span className="font-semibold text-emerald-300">
+                    7-Day Money Back Guarantee
+                  </span>
                   <p className="text-slate-400 mt-0.5 leading-relaxed">
-                    Not satisfied? Request a refund within 7 days (credited directly to your platform Wallet). Read our{" "}
-                    <Link to="/refund-policy" className="text-emerald-400 underline hover:text-emerald-300 font-medium">
+                    Not satisfied? Request a refund within 7 days (credited
+                    directly to your platform Wallet). Read our{" "}
+                    <Link
+                      to="/refund-policy"
+                      className="text-emerald-400 underline hover:text-emerald-300 font-medium"
+                    >
                       Refund Policy
                     </Link>
                     .

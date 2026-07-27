@@ -67,17 +67,6 @@ const rupeesToCoins = (r) => Math.ceil(r * COINS_PER_RUPEE);
 
 const isDev = import.meta.env.DEV;
 
-// ── Load Razorpay script once ─────────────────────────────────────────────────
-const loadRazorpay = () =>
-  new Promise((resolve) => {
-    if (window.Razorpay) return resolve(true);
-    const s = document.createElement("script");
-    s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.onload = () => resolve(true);
-    s.onerror = () => resolve(false);
-    document.body.appendChild(s);
-  });
-
 // ── Coin Redeem Modal ─────────────────────────────────────────────────────────
 const CoinRedeemModal = ({ onClose, currentUser, onRedeem }) => {
   const availableCoins = currentUser?.coins ?? 0;
@@ -285,53 +274,15 @@ const DepositModal = ({ onClose, currentUser }) => {
     const amt = Number(amount);
     if (!amt || amt < 10) return;
 
-    const loaded = await loadRazorpay();
-    if (!loaded) {
-      alert("Razorpay failed to load. Check your internet.");
-      return;
-    }
-
-    let orderData;
     try {
-      orderData = await dispatch(createDepositOrder(amt)).unwrap();
-    } catch {
-      return;
+      await dispatch(mockDeposit(amt)).unwrap();
+      setSuccessMsg(`${fmt(amt)} added to your wallet!`);
+      dispatch(fetchWallet());
+      setAmount("");
+    } catch (e) {
+      console.error(e);
     }
-
-    const options = {
-      key: orderData.keyId,
-      amount: orderData.amount,
-      currency: orderData.currency,
-      name: "Umang Vision Academy",
-      description: "Wallet Top-up",
-      order_id: orderData.orderId,
-      prefill: {
-        name: currentUser?.name || "",
-        email: currentUser?.email || "",
-      },
-      theme: { color: "#7c3aed" },
-      handler: async (response) => {
-        try {
-          await dispatch(
-            verifyDeposit({
-              razorpayOrderId: response.razorpay_order_id,
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpaySignature: response.razorpay_signature,
-              amount: orderData.amount,
-            }),
-          ).unwrap();
-          setSuccessMsg(`${fmt(amt)} added to your wallet!`);
-          dispatch(fetchWallet());
-          setAmount("");
-        } catch (e) {
-          console.error(e);
-        }
-      },
-      modal: { ondismiss: () => {} },
-    };
-
-    new window.Razorpay(options).open();
-  }, [amount, currentUser, dispatch]);
+  }, [amount, dispatch]);
 
   const { t } = useTranslation();
 

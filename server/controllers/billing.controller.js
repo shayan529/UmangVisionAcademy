@@ -5,7 +5,11 @@ import Course from "../models/courses.model.js";
 import Cart from "../models/cart.model.js";
 import Wallet from "../models/wallet.model.js";
 import { invalidateCourseCache } from "./course.controller.js";
-import { sendPlanPurchaseEmail, sendCourseEnrollmentEmail, sendSubscriptionCancellationEmail } from "../utils/Mailer.js";
+import {
+  sendPlanPurchaseEmail,
+  sendCourseEnrollmentEmail,
+  sendSubscriptionCancellationEmail,
+} from "../utils/Mailer.js";
 
 const isPlaceholderRazorpayConfig = () => {
   const keyId = process.env.RAZORPAY_KEY_ID || "";
@@ -28,8 +32,18 @@ const getRazorpayInstance = () => {
 };
 
 const PLANS = {
-  base: { id: "base", label: "Academy Access Plan", amount: 10000, durationDays: 365 },
-  premium: { id: "premium", label: "Premium Plan", amount: 50000, durationDays: 365 },
+  base: {
+    id: "base",
+    label: "Academy Access Plan",
+    amount: 10000,
+    durationDays: 365,
+  },
+  premium: {
+    id: "premium",
+    label: "Premium Plan",
+    amount: 50000,
+    durationDays: 365,
+  },
 };
 
 // ── Helper: get or create wallet for a user ──────────────────────────────────
@@ -97,28 +111,22 @@ export const createOrder = async (req, res) => {
         .status(400)
         .json({ message: "Nothing to pay — use free enrol instead." });
 
-    if (isPlaceholderRazorpayConfig()) {
-      if (process.env.NODE_ENV !== "production") {
-        const mockOrderId = `mock_order_${Date.now()}`;
-        return res.json({
-          orderId: mockOrderId,
-          amount: orderAmount,
-          currency: "INR",
-          keyId: "mock",
-          planId: planId ?? "cart",
-          mockMode: true,
-          selectedClass: selectedClass || null,
-        });
-      } else {
-        return res.status(400).json({
-          message: "Something went wrong.",
-        });
-      }
-    }
+    const mockOrderId = `mock_order_${Date.now()}`;
+    return res.json({
+      orderId: mockOrderId,
+      amount: orderAmount,
+      currency: "INR",
+      keyId: "dummy",
+      planId: planId ?? "cart",
+      mockMode: true,
+      selectedClass: selectedClass || null,
+    });
 
     const razorpay = getRazorpayInstance();
     if (!razorpay) {
-      return res.status(500).json({ message: "Razorpay client is not initialized properly." });
+      return res
+        .status(500)
+        .json({ message: "Razorpay client is not initialized properly." });
     }
 
     const order = await razorpay.orders.create({
@@ -205,8 +213,17 @@ export const verifyPayment = async (req, res) => {
       await wallet.save();
 
       const user = await User.findById(req.user._id);
-      if (user && user.email && user.notificationSettings?.emailNotifications !== false) {
-        sendPlanPurchaseEmail(user.email, user.name, plan.label, user._id).catch(console.error);
+      if (
+        user &&
+        user.email &&
+        user.notificationSettings?.emailNotifications !== false
+      ) {
+        sendPlanPurchaseEmail(
+          user.email,
+          user.name,
+          plan.label,
+          user._id,
+        ).catch(console.error);
       }
 
       return res.json({ message: "Plan activated.", subscription });
@@ -228,9 +245,12 @@ export const verifyPayment = async (req, res) => {
       await Promise.all(
         courseIds.map((id) =>
           invalidateCourseCache(id).catch((err) =>
-            console.error("[Cache] Failed to invalidate course cache:", err.message)
-          )
-        )
+            console.error(
+              "[Cache] Failed to invalidate course cache:",
+              err.message,
+            ),
+          ),
+        ),
       );
       await User.findByIdAndUpdate(req.user._id, {
         $addToSet: { enrolledCourses: { $each: courseIds } },
@@ -262,9 +282,18 @@ export const verifyPayment = async (req, res) => {
       await wallet.save();
 
       const user = await User.findById(req.user._id);
-      if (user && user.email && user.notificationSettings?.emailNotifications !== false) {
+      if (
+        user &&
+        user.email &&
+        user.notificationSettings?.emailNotifications !== false
+      ) {
         const courseTitles = courses.map((c) => c.title);
-        sendCourseEnrollmentEmail(user.email, user.name, courseTitles, user._id).catch(console.error);
+        sendCourseEnrollmentEmail(
+          user.email,
+          user.name,
+          courseTitles,
+          user._id,
+        ).catch(console.error);
       }
 
       return res.json({
@@ -283,7 +312,9 @@ export const verifyPayment = async (req, res) => {
 // ── POST /billing/cancel ──────────────────────────────────────────────────────
 export const cancelSubscription = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("subscription email name notificationSettings");
+    const user = await User.findById(req.user._id).select(
+      "subscription email name notificationSettings",
+    );
     if (!user?.subscription?.plan) {
       return res.status(400).json({ message: "No active subscription found." });
     }
@@ -295,7 +326,12 @@ export const cancelSubscription = async (req, res) => {
     });
 
     if (user.email && user.notificationSettings?.emailNotifications !== false) {
-      sendSubscriptionCancellationEmail(user.email, user.name, planLabel, user._id).catch(console.error);
+      sendSubscriptionCancellationEmail(
+        user.email,
+        user.name,
+        planLabel,
+        user._id,
+      ).catch(console.error);
     }
 
     res.json({
