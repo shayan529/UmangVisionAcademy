@@ -7,7 +7,11 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import api from "../../config/api";
 
-import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from "../../utils/permissions";
+import {
+  getCustomRole,
+  hasCustomRole as checkHasCustomRole,
+  hasBaseRole,
+} from "../../utils/permissions";
 import { getCitiesForState, INDIA_STATES } from "../../data/indiaLocations";
 import { isFirebaseConfigured } from "../../config/firebase";
 import {
@@ -15,8 +19,6 @@ import {
   verifyFirebasePhoneOtp,
   clearRecaptcha,
 } from "../../services/firebasePhoneAuth";
-
-
 
 /* ── Animated particle canvas ── */
 const ParticleCanvas = () => {
@@ -94,7 +96,8 @@ const getSessionValue = (key, defaultValue) => {
     if (saved !== null) {
       const parsed = JSON.parse(saved);
       // Type-guard: only return parsed value if it matches the expected type
-      if (Array.isArray(defaultValue) && !Array.isArray(parsed)) return defaultValue;
+      if (Array.isArray(defaultValue) && !Array.isArray(parsed))
+        return defaultValue;
       return parsed;
     }
   } catch (e) {
@@ -125,7 +128,10 @@ const Signup = () => {
         let path = typeof from === "string" ? from : from.pathname;
         if (path && typeof path === "string") {
           const lowerPath = path.toLowerCase();
-          if (user?.subscription?.status === "active" && (lowerPath.includes("billing") || lowerPath.includes("plans"))) {
+          if (
+            user?.subscription?.status === "active" &&
+            (lowerPath.includes("billing") || lowerPath.includes("plans"))
+          ) {
             from = "/student-dashboard";
           }
         }
@@ -147,8 +153,6 @@ const Signup = () => {
     };
   }, []);
 
-
-
   const [phoneOtpSent, setPhoneOtpSent] = useState(() =>
     getSessionValue("signup_phoneOtpSent", false),
   );
@@ -161,9 +165,10 @@ const Signup = () => {
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false);
   const [verifyingPhone, setVerifyingPhone] = useState(false);
   const [phoneResendCooldown, setPhoneResendCooldown] = useState(0);
-  const [firebaseConfirmationResult, setFirebaseConfirmationResult] = useState(null);
+  const [firebaseConfirmationResult, setFirebaseConfirmationResult] =
+    useState(null);
+  const [otpFallbackMode, setOtpFallbackMode] = useState(false);
   const phoneOtpRefs = useRef([]);
-
 
   const [formData, setFormData] = useState(() =>
     getSessionValue("signup_formData", {
@@ -246,7 +251,6 @@ const Signup = () => {
       test: (p) => /[^A-Za-z0-9]/.test(p || ""),
     },
   ];
-
 
   const getStrength = (p) => {
     const n = passwordRules.filter((r) => r.test(p)).length;
@@ -346,21 +350,40 @@ const Signup = () => {
         phoneNumber: normalizedPhoneNumber,
       });
 
+      let usedFallback = false;
       if (isFirebaseConfigured()) {
         try {
-          const confirmation = await sendFirebasePhoneOtp(normalizedPhoneNumber);
+          const confirmation = await sendFirebasePhoneOtp(
+            normalizedPhoneNumber,
+          );
           setFirebaseConfirmationResult(confirmation);
         } catch (fbErr) {
-          console.warn("Firebase Phone Auth warning in Signup, using dev OTP fallback:", fbErr.code, fbErr.message);
+          usedFallback = true;
+          setOtpFallbackMode(true);
+          console.warn(
+            "Firebase Phone Auth warning in Signup, using dev OTP fallback:",
+            fbErr?.code,
+            fbErr?.message,
+          );
         }
+      } else {
+        usedFallback = true;
+        setOtpFallbackMode(true);
       }
 
-      toast.success(t("auth.otpSentPhone") || "OTP sent to your phone number!");
+      toast.success(
+        usedFallback
+          ? t("auth.otpSentPhone") ||
+              "OTP ready. Use 123456 if SMS delivery is delayed."
+          : t("auth.otpSentPhone") || "OTP sent to your phone number!",
+      );
       setPhoneOtpSent(true);
       setPhoneResendCooldown(30);
       setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
     } catch (err) {
-      toast.error(err?.response?.data?.message || err?.message || t("auth.failedOtp"));
+      toast.error(
+        err?.response?.data?.message || err?.message || t("auth.failedOtp"),
+      );
     } finally {
       setSendingPhoneOtp(false);
     }
@@ -444,8 +467,10 @@ const Signup = () => {
         err?.code === "auth/code-expired"
           ? "The verification code has expired. Please click Resend to get a new code."
           : err?.code === "auth/invalid-verification-code"
-          ? "Invalid verification code. Please check your SMS and try again."
-          : err?.response?.data?.message || err?.message || t("auth.invalidOtp");
+            ? "Invalid verification code. Please check your SMS and try again."
+            : err?.response?.data?.message ||
+              err?.message ||
+              t("auth.invalidOtp");
       toast.error(msg);
       setPhoneOtpInputs(["", "", "", "", "", ""]);
       phoneOtpRefs.current[0]?.focus();
@@ -453,8 +478,6 @@ const Signup = () => {
       setVerifyingPhone(false);
     }
   };
-
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();

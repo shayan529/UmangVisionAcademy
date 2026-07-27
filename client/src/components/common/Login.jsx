@@ -4,7 +4,12 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
-import { clearError, login, loginWithOtp, loadCurrentUser } from "../../redux/slices/authSlice";
+import {
+  clearError,
+  login,
+  loginWithOtp,
+  loadCurrentUser,
+} from "../../redux/slices/authSlice";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 import api from "../../config/api";
@@ -12,7 +17,11 @@ import {
   checkAndAwardAchievements,
   fetchAchievements,
 } from "../../redux/slices/achievementSlice";
-import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from "../../utils/permissions";
+import {
+  getCustomRole,
+  hasCustomRole as checkHasCustomRole,
+  hasBaseRole,
+} from "../../utils/permissions";
 import { isFirebaseConfigured } from "../../config/firebase";
 import {
   sendFirebasePhoneOtp,
@@ -92,8 +101,7 @@ const ParticleCanvas = () => {
 const getPostLoginPath = (user, from) => {
   const isAdmin = hasBaseRole(user, "admin");
   const isStaff = !isAdmin && checkHasCustomRole(user);
-  const isInstructor =
-    !isAdmin && !isStaff && hasBaseRole(user, "instructor");
+  const isInstructor = !isAdmin && !isStaff && hasBaseRole(user, "instructor");
 
   if (from) {
     let path = typeof from === "string" ? from : from.pathname;
@@ -130,7 +138,8 @@ const PasswordResetModal = ({ onClose }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
-  const [firebaseConfirmationResult, setFirebaseConfirmationResult] = useState(null);
+  const [firebaseConfirmationResult, setFirebaseConfirmationResult] =
+    useState(null);
   const otpRefs = useRef([]);
 
   useEffect(() => {
@@ -162,7 +171,9 @@ const PasswordResetModal = ({ onClose }) => {
   const handleSendOtp = async () => {
     if (loading) return;
     if (!/^[0-9]{10}$/.test(phoneNumber))
-      return toast.error(t("passwordReset.toast.invalidPhone"), { id: "invalid-phone" });
+      return toast.error(t("passwordReset.toast.invalidPhone"), {
+        id: "invalid-phone",
+      });
     setLoading(true);
     const fullPhone = "+91" + phoneNumber;
     try {
@@ -172,14 +183,25 @@ const PasswordResetModal = ({ onClose }) => {
 
       if (isFirebaseConfigured()) {
         try {
-          const confirmation = await sendFirebasePhoneOtp(fullPhone, "recaptcha-container-reset");
+          const confirmation = await sendFirebasePhoneOtp(
+            fullPhone,
+            "recaptcha-container-reset",
+          );
           setFirebaseConfirmationResult(confirmation);
         } catch (fbErr) {
-          console.warn("Firebase Reset Phone OTP warning, using dev OTP fallback:", fbErr.code, fbErr.message);
+          console.warn(
+            "Firebase Reset Phone OTP warning, using dev OTP fallback:",
+            fbErr.code,
+            fbErr.message,
+          );
         }
       }
 
-      toast.success(t("passwordReset.toast.otpSentPhone") || "OTP sent to your phone number!", { id: "otp-sent" });
+      toast.success(
+        t("passwordReset.toast.otpSentPhone") ||
+          "OTP sent to your phone number!",
+        { id: "otp-sent" },
+      );
       setStep("otp");
       setCooldown(60);
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
@@ -188,7 +210,7 @@ const PasswordResetModal = ({ onClose }) => {
         err.response?.data?.message ||
           err.message ||
           t("passwordReset.toast.failedSendOtp"),
-        { id: "otp-error" }
+        { id: "otp-error" },
       );
     } finally {
       setLoading(false);
@@ -205,7 +227,10 @@ const PasswordResetModal = ({ onClose }) => {
 
       if (isFirebaseConfigured()) {
         try {
-          const confirmation = await sendFirebasePhoneOtp(fullPhone, "recaptcha-container-reset");
+          const confirmation = await sendFirebasePhoneOtp(
+            fullPhone,
+            "recaptcha-container-reset",
+          );
           setFirebaseConfirmationResult(confirmation);
         } catch (fbErr) {
           console.warn("Firebase Resend error:", fbErr.message);
@@ -217,7 +242,7 @@ const PasswordResetModal = ({ onClose }) => {
     } catch (err) {
       toast.error(
         err.response?.data?.message || t("passwordReset.toast.failedResend"),
-        { id: "otp-resend-error" }
+        { id: "otp-resend-error" },
       );
     } finally {
       setLoading(false);
@@ -252,13 +277,18 @@ const PasswordResetModal = ({ onClose }) => {
     if (loading) return;
     const otpStr = otp.join("");
     if (otpStr.length < 6)
-      return toast.error(t("passwordReset.toast.enterFullOtp"), { id: "enter-full-otp" });
+      return toast.error(t("passwordReset.toast.enterFullOtp"), {
+        id: "enter-full-otp",
+      });
     setLoading(true);
     try {
       let firebaseToken = null;
       if (isFirebaseConfigured() && firebaseConfirmationResult) {
         try {
-          const res = await verifyFirebasePhoneOtp(firebaseConfirmationResult, otpStr);
+          const res = await verifyFirebasePhoneOtp(
+            firebaseConfirmationResult,
+            otpStr,
+          );
           firebaseToken = res.idToken;
         } catch (fbVerifyErr) {
           console.warn("Firebase verify token failed:", fbVerifyErr.message);
@@ -271,12 +301,14 @@ const PasswordResetModal = ({ onClose }) => {
         firebaseToken,
       });
       setResetToken(data.resetToken);
-      toast.success(t("passwordReset.toast.otpVerified"), { id: "otp-verified" });
+      toast.success(t("passwordReset.toast.otpVerified"), {
+        id: "otp-verified",
+      });
       setStep("password");
     } catch (err) {
       toast.error(
         err.response?.data?.message || t("passwordReset.toast.invalidOtp"),
-        { id: "otp-verify-error" }
+        { id: "otp-verify-error" },
       );
     } finally {
       setLoading(false);
@@ -286,9 +318,13 @@ const PasswordResetModal = ({ onClose }) => {
   const handleResetPassword = async () => {
     if (loading) return;
     if (newPassword.length < 6)
-      return toast.error(t("passwordReset.toast.passwordMin6"), { id: "pass-min-6" });
+      return toast.error(t("passwordReset.toast.passwordMin6"), {
+        id: "pass-min-6",
+      });
     if (newPassword !== confirmPassword)
-      return toast.error(t("passwordReset.toast.passwordsDoNotMatch"), { id: "pass-mismatch" });
+      return toast.error(t("passwordReset.toast.passwordsDoNotMatch"), {
+        id: "pass-mismatch",
+      });
     setLoading(true);
     try {
       await axios.post("/auth/reset-password", {
@@ -301,7 +337,7 @@ const PasswordResetModal = ({ onClose }) => {
       toast.error(
         err.response?.data?.message ||
           t("passwordReset.toast.failedResetPassword"),
-        { id: "reset-error" }
+        { id: "reset-error" },
       );
     } finally {
       setLoading(false);
@@ -490,7 +526,13 @@ const PasswordResetModal = ({ onClose }) => {
                     onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
                     placeholder={t("passwordReset.mobilePlaceholder")}
                     maxLength={10}
-                    style={{ ...inputStyle, flex: 1, minWidth: 0, paddingLeft: 14, paddingRight: 14 }}
+                    style={{
+                      ...inputStyle,
+                      flex: 1,
+                      minWidth: 0,
+                      paddingLeft: 14,
+                      paddingRight: 14,
+                    }}
                     onFocus={(e) =>
                       (e.target.style.borderColor = "rgba(56,189,248,0.6)")
                     }
@@ -957,7 +999,9 @@ const Login = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
-  const [firebaseConfirmationResult, setFirebaseConfirmationResult] = useState(null);
+  const [firebaseConfirmationResult, setFirebaseConfirmationResult] =
+    useState(null);
+  const [otpFallbackMode, setOtpFallbackMode] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [focused, setFocused] = useState("");
   const [loading, setLoading] = useState(false);
@@ -980,7 +1024,9 @@ const Login = () => {
 
   const handleSendLoginOtp = async () => {
     if (!/^[0-9]{10}$/.test(formData.phoneNumber)) {
-      toast.error(t("auth.invalidPhone") || "Please enter a valid 10-digit phone number.");
+      toast.error(
+        t("auth.invalidPhone") || "Please enter a valid 10-digit phone number.",
+      );
       return;
     }
     setSendingOtp(true);
@@ -990,20 +1036,39 @@ const Login = () => {
         phoneNumber: fullPhone,
       });
 
+      let usedFallback = false;
       if (isFirebaseConfigured()) {
         try {
-          const confirmation = await sendFirebasePhoneOtp(fullPhone, "recaptcha-container");
+          const confirmation = await sendFirebasePhoneOtp(
+            fullPhone,
+            "recaptcha-container",
+          );
           setFirebaseConfirmationResult(confirmation);
         } catch (fbErr) {
-          console.warn("Firebase sendPhoneOtp warning, using dev OTP fallback:", fbErr.code, fbErr.message);
+          usedFallback = true;
+          setOtpFallbackMode(true);
+          console.warn(
+            "Firebase sendPhoneOtp warning, using dev OTP fallback:",
+            fbErr?.code,
+            fbErr?.message,
+          );
         }
+      } else {
+        usedFallback = true;
+        setOtpFallbackMode(true);
       }
 
-      toast.success(t("auth.otpSentPhone") || "OTP sent to your phone number!");
+      toast.success(
+        usedFallback
+          ? t("auth.otpSentPhone") ||
+              "OTP ready. Use 123456 if SMS delivery is delayed."
+          : t("auth.otpSentPhone") || "OTP sent to your phone number!",
+      );
       setOtpSent(true);
       setOtpCooldown(30);
     } catch (err) {
-      const message = err.response?.data?.message || err.message || "Failed to send OTP.";
+      const message =
+        err.response?.data?.message || err.message || "Failed to send OTP.";
       toast.error(message);
     } finally {
       setSendingOtp(false);
@@ -1027,10 +1092,16 @@ const Login = () => {
         let firebaseToken = null;
         if (isFirebaseConfigured() && firebaseConfirmationResult) {
           try {
-            const res = await verifyFirebasePhoneOtp(firebaseConfirmationResult, otpCode.trim());
+            const res = await verifyFirebasePhoneOtp(
+              firebaseConfirmationResult,
+              otpCode.trim(),
+            );
             firebaseToken = res.idToken;
           } catch (fbVerifyErr) {
-            console.warn("Firebase token verification failed:", fbVerifyErr.message);
+            console.warn(
+              "Firebase token verification failed:",
+              fbVerifyErr.message,
+            );
           }
         }
 
@@ -1047,7 +1118,9 @@ const Login = () => {
           .catch(() => loggedUser);
         const user = refreshed || loggedUser;
 
-        navigate(getPostLoginPath(user, location.state?.from), { replace: true });
+        navigate(getPostLoginPath(user, location.state?.from), {
+          replace: true,
+        });
         toast(t("auth.welcomeToast"), { icon: "👋", duration: 3000 });
 
         const now = new Date();
@@ -1509,7 +1582,10 @@ const Login = () => {
                       placeholder={t("auth.mobilePlaceholder")}
                       required
                       maxLength={10}
-                      className={inputCls("phoneNumber") + " flex-1 min-w-0 px-3.5 sm:px-5"}
+                      className={
+                        inputCls("phoneNumber") +
+                        " flex-1 min-w-0 px-3.5 sm:px-5"
+                      }
                     />
                   </div>
                 </div>
@@ -1599,7 +1675,9 @@ const Login = () => {
                           name="otpCode"
                           value={otpCode}
                           onChange={(e) =>
-                            setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                            setOtpCode(
+                              e.target.value.replace(/\D/g, "").slice(0, 6),
+                            )
                           }
                           onFocus={() => setFocused("otp")}
                           onBlur={() => setFocused("")}
@@ -1620,16 +1698,17 @@ const Login = () => {
                           {sendingOtp
                             ? "Sending..."
                             : otpCooldown > 0
-                            ? `${otpCooldown}s`
-                            : otpSent
-                            ? "Resend OTP"
-                            : "Send OTP"}
+                              ? `${otpCooldown}s`
+                              : otpSent
+                                ? "Resend OTP"
+                                : "Send OTP"}
                         </button>
                       </div>
                       <div className="mt-2 h-5 flex items-center justify-start">
                         {otpSent ? (
                           <p className="text-[11px] text-cyan-400/90 font-medium flex items-center gap-1">
-                            <span>✓</span> OTP sent to {countryCode} {formData.phoneNumber}
+                            <span>✓</span> OTP sent to {countryCode}{" "}
+                            {formData.phoneNumber}
                           </p>
                         ) : (
                           <span className="text-[11px] text-slate-500/80 font-medium">

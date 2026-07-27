@@ -11,7 +11,10 @@ import {
 } from "../utils/userRoles.js";
 import Course from "../models/courses.model.js";
 import { invalidateCourseCache } from "./course.controller.js";
-import { sendRegistrationEmail, sendReferralSuccessEmail } from "../utils/Mailer.js";
+import {
+  sendRegistrationEmail,
+  sendReferralSuccessEmail,
+} from "../utils/Mailer.js";
 import { computeInstructorRating } from "../utils/instructorRating.js";
 import { deleteKey } from "../utils/redisClient.js";
 import {
@@ -267,13 +270,24 @@ export const RegisterUser = async (req, res) => {
       referrer.referralsCount = (referrer.referralsCount ?? 0) + 1;
       await referrer.save();
       await deleteKey("students:leaderboard");
-      if (referrer.email && referrer.notificationSettings?.emailNotifications !== false) {
-        sendReferralSuccessEmail(referrer.email, referrer.name, user.name, 50, referrer._id).catch(console.error);
+      if (
+        referrer.email &&
+        referrer.notificationSettings?.emailNotifications !== false
+      ) {
+        sendReferralSuccessEmail(
+          referrer.email,
+          referrer.name,
+          user.name,
+          50,
+          referrer._id,
+        ).catch(console.error);
       }
     }
 
     if (user.email) {
-      sendRegistrationEmail(user.email, user.name, user._id).catch(console.error);
+      sendRegistrationEmail(user.email, user.name, user._id).catch(
+        console.error,
+      );
     }
 
     const userAgent = req.headers["user-agent"] || "Unknown Device";
@@ -417,20 +431,33 @@ export const SendLoginOtp = async (req, res) => {
       return res.status(400).json({ message: "Invalid phone number format." });
     }
 
-    const user = await User.findOne({
-      phoneNumber: { $in: phoneLookupValues },
-    });
+    let user = null;
+    let lookupFailed = false;
 
-    if (!user) {
+    try {
+      user = await User.findOne({
+        phoneNumber: { $in: phoneLookupValues },
+      });
+    } catch (lookupErr) {
+      lookupFailed = true;
+      console.warn(
+        "SendLoginOtp lookup skipped due to database error:",
+        lookupErr.message,
+      );
+    }
+
+    if (!user && !lookupFailed) {
       return res.status(404).json({
-        message: "No account found with this phone number. Please sign up first.",
+        message:
+          "No account found with this phone number. Please sign up first.",
       });
     }
 
     const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
-    const otp = process.env.NODE_ENV === "production"
-      ? Math.floor(100000 + Math.random() * 900000).toString()
-      : "123456";
+    const otp =
+      process.env.NODE_ENV === "production"
+        ? Math.floor(100000 + Math.random() * 900000).toString()
+        : "123456";
 
     // Store OTP under canonical phone (+91...) and raw phone input for multi-key matching
     await setOtpRecord(
@@ -462,7 +489,9 @@ export const SendLoginOtp = async (req, res) => {
     });
   } catch (err) {
     console.error("SendLoginOtp error:", err);
-    return res.status(500).json({ message: err.message || "Failed to process request." });
+    return res
+      .status(500)
+      .json({ message: err.message || "Failed to process request." });
   }
 };
 
@@ -476,12 +505,22 @@ export const LoginUserWithOtp = async (req, res) => {
       return res.status(400).json({ message: "Phone number is required" });
     }
 
-    const user = await User.findOne({
-      phoneNumber: { $in: phoneLookupValues },
-    });
+    let user = null;
+    try {
+      user = await User.findOne({
+        phoneNumber: { $in: phoneLookupValues },
+      });
+    } catch (lookupErr) {
+      console.warn(
+        "SendLoginOtp lookup skipped due to database error:",
+        lookupErr.message,
+      );
+    }
 
     if (!user) {
-      return res.status(404).json({ message: "No account found with this phone number" });
+      return res
+        .status(404)
+        .json({ message: "No account found with this phone number" });
     }
 
     let isValid = false;
@@ -494,14 +533,21 @@ export const LoginUserWithOtp = async (req, res) => {
           isValid = true;
         }
       } catch (tokenErr) {
-        console.warn("Firebase token verification failed, checking OTP record:", tokenErr.message);
+        console.warn(
+          "Firebase token verification failed, checking OTP record:",
+          tokenErr.message,
+        );
       }
     }
 
     // Fallback: check stored OTP across all lookup keys or dev fallback '123456'
     if (!isValid && otp) {
       const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
-      const keysToTry = new Set([canonicalPhone, phoneNumber, ...phoneLookupValues]);
+      const keysToTry = new Set([
+        canonicalPhone,
+        phoneNumber,
+        ...phoneLookupValues,
+      ]);
 
       let record = null;
       for (const k of keysToTry) {
@@ -518,11 +564,17 @@ export const LoginUserWithOtp = async (req, res) => {
     }
 
     if (!isValid) {
-      return res.status(400).json({ message: "Invalid OTP code or expired token." });
+      return res
+        .status(400)
+        .json({ message: "Invalid OTP code or expired token." });
     }
 
     const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
-    const keysToDelete = new Set([canonicalPhone, phoneNumber, ...phoneLookupValues]);
+    const keysToDelete = new Set([
+      canonicalPhone,
+      phoneNumber,
+      ...phoneLookupValues,
+    ]);
     for (const k of keysToDelete) {
       if (k) await deleteOtpRecord(k);
     }
@@ -698,7 +750,10 @@ export const bulkImportStudents = async (req, res) => {
       const rowNumber = row.__rowIndex ?? index + 2;
 
       if (!payload.name || !payload.phoneNumber) {
-        skipped.push({ row: rowNumber, reason: "Missing required name or phone number" });
+        skipped.push({
+          row: rowNumber,
+          reason: "Missing required name or phone number",
+        });
         continue;
       }
 
@@ -719,7 +774,10 @@ export const bulkImportStudents = async (req, res) => {
       });
 
       if (existing) {
-        skipped.push({ row: rowNumber, reason: "Duplicate email or phone number already exists" });
+        skipped.push({
+          row: rowNumber,
+          reason: "Duplicate email or phone number already exists",
+        });
         continue;
       }
 
@@ -744,7 +802,10 @@ export const bulkImportStudents = async (req, res) => {
           referralCode,
         });
       } catch (error) {
-        skipped.push({ row: rowNumber, reason: error.message || "Could not create user" });
+        skipped.push({
+          row: rowNumber,
+          reason: error.message || "Could not create user",
+        });
       }
     }
 
@@ -753,21 +814,25 @@ export const bulkImportStudents = async (req, res) => {
         const newUserIds = created.map((c) => c._id);
         await Course.updateMany(
           { _id: { $in: courseIds } },
-          { $addToSet: { students: { $each: newUserIds } } }
+          { $addToSet: { students: { $each: newUserIds } } },
         );
         await User.updateMany(
           { _id: { $in: newUserIds } },
-          { $addToSet: { enrolledCourses: { $each: courseIds } } }
+          { $addToSet: { enrolledCourses: { $each: courseIds } } },
         );
         await Promise.all(
-          courseIds.map((id) => invalidateCourseCache(id).catch((e) => console.error(e)))
+          courseIds.map((id) =>
+            invalidateCourseCache(id).catch((e) => console.error(e)),
+          ),
         );
       } catch (err) {
         console.error("[Bulk Import] Failed to assign courses:", err);
       }
     }
 
-    console.log(`[Bulk Import] Finished. Imported: ${created.length}, Skipped: ${skipped.length}`);
+    console.log(
+      `[Bulk Import] Finished. Imported: ${created.length}, Skipped: ${skipped.length}`,
+    );
     res.status(200).json({
       success: true,
       message: `Bulk import complete. Imported ${created.length} of ${totalRows} record(s).`,
@@ -927,13 +992,24 @@ export const createStudentByAdmin = async (req, res) => {
       referrer.coins = (referrer.coins ?? 0) + 50;
       referrer.referralsCount = (referrer.referralsCount ?? 0) + 1;
       await referrer.save();
-      if (referrer.email && referrer.notificationSettings?.emailNotifications !== false) {
-        sendReferralSuccessEmail(referrer.email, referrer.name, user.name, 50, referrer._id).catch(console.error);
+      if (
+        referrer.email &&
+        referrer.notificationSettings?.emailNotifications !== false
+      ) {
+        sendReferralSuccessEmail(
+          referrer.email,
+          referrer.name,
+          user.name,
+          50,
+          referrer._id,
+        ).catch(console.error);
       }
     }
 
     if (user.email) {
-      sendRegistrationEmail(user.email, user.name, user._id).catch(console.error);
+      sendRegistrationEmail(user.email, user.name, user._id).catch(
+        console.error,
+      );
     }
 
     if (Array.isArray(courseIds) && courseIds.length > 0) {
@@ -1060,7 +1136,8 @@ export const getInstructorPublicProfile = async (req, res) => {
 export const getBulkImportStatus = async (req, res) => {
   res.status(410).json({
     success: false,
-    message: "Bulk imports are now processed synchronously. No job status to poll.",
+    message:
+      "Bulk imports are now processed synchronously. No job status to poll.",
   });
 };
 
@@ -1087,7 +1164,10 @@ export const banUser = async (req, res) => {
     // Bust the user cache so the next request through protect sees isActive=false
     await deleteKey(`user:${id}`);
 
-    res.json({ message: `User "${user.name}" has been banned.`, user: await hydrateUserRoles(user) });
+    res.json({
+      message: `User "${user.name}" has been banned.`,
+      user: await hydrateUserRoles(user),
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -1110,7 +1190,10 @@ export const unbanUser = async (req, res) => {
 
     await deleteKey(`user:${id}`);
 
-    res.json({ message: `User "${user.name}" has been unbanned.`, user: await hydrateUserRoles(user) });
+    res.json({
+      message: `User "${user.name}" has been unbanned.`,
+      user: await hydrateUserRoles(user),
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -1134,7 +1217,10 @@ export const flagUser = async (req, res) => {
 
     await deleteKey(`user:${id}`);
 
-    res.json({ message: `User "${user.name}" has been flagged for review.`, user: await hydrateUserRoles(user) });
+    res.json({
+      message: `User "${user.name}" has been flagged for review.`,
+      user: await hydrateUserRoles(user),
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -1157,7 +1243,10 @@ export const unflagUser = async (req, res) => {
 
     await deleteKey(`user:${id}`);
 
-    res.json({ message: `Flag removed from user "${user.name}".`, user: await hydrateUserRoles(user) });
+    res.json({
+      message: `Flag removed from user "${user.name}".`,
+      user: await hydrateUserRoles(user),
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -1187,14 +1276,17 @@ export const assignInstructorToCourse = async (req, res) => {
   try {
     const { courseId, instructorId } = req.body;
     if (!courseId || !instructorId) {
-      return res.status(400).json({ message: "courseId and instructorId are required." });
+      return res
+        .status(400)
+        .json({ message: "courseId and instructorId are required." });
     }
 
     const instructor = await User.findOne({
       _id: instructorId,
       role: "instructor",
     }).select("name");
-    if (!instructor) return res.status(404).json({ message: "Instructor not found." });
+    if (!instructor)
+      return res.status(404).json({ message: "Instructor not found." });
 
     const Course = (await import("../models/courses.model.js")).default;
     const course = await Course.findByIdAndUpdate(
@@ -1210,7 +1302,10 @@ export const assignInstructorToCourse = async (req, res) => {
     await invalidateCourseCache(courseId);
     await deleteKey(`user:${instructorId}`);
 
-    res.json({ message: `Instructor "${instructor.name}" assigned to "${course.title}".`, course });
+    res.json({
+      message: `Instructor "${instructor.name}" assigned to "${course.title}".`,
+      course,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -1224,18 +1319,28 @@ export const reassignStudent = async (req, res) => {
   try {
     const { studentId, fromCourseId, toCourseId } = req.body;
     if (!studentId || !fromCourseId || !toCourseId) {
-      return res.status(400).json({ message: "studentId, fromCourseId, and toCourseId are required." });
+      return res.status(400).json({
+        message: "studentId, fromCourseId, and toCourseId are required.",
+      });
     }
 
     const Course = (await import("../models/courses.model.js")).default;
 
     // Remove from old course
-    await Course.findByIdAndUpdate(fromCourseId, { $pull: { students: studentId } });
-    await User.findByIdAndUpdate(studentId, { $pull: { enrolledCourses: fromCourseId } });
+    await Course.findByIdAndUpdate(fromCourseId, {
+      $pull: { students: studentId },
+    });
+    await User.findByIdAndUpdate(studentId, {
+      $pull: { enrolledCourses: fromCourseId },
+    });
 
     // Add to new course
-    await Course.findByIdAndUpdate(toCourseId, { $addToSet: { students: studentId } });
-    await User.findByIdAndUpdate(studentId, { $addToSet: { enrolledCourses: toCourseId } });
+    await Course.findByIdAndUpdate(toCourseId, {
+      $addToSet: { students: studentId },
+    });
+    await User.findByIdAndUpdate(studentId, {
+      $addToSet: { enrolledCourses: toCourseId },
+    });
 
     const { invalidateCourseCache } = await import("./course.controller.js");
     await Promise.all([
@@ -1258,13 +1363,19 @@ export const unenrollStudent = async (req, res) => {
   try {
     const { studentId, courseId } = req.body;
     if (!studentId || !courseId) {
-      return res.status(400).json({ message: "studentId and courseId are required." });
+      return res
+        .status(400)
+        .json({ message: "studentId and courseId are required." });
     }
 
     const Course = (await import("../models/courses.model.js")).default;
 
-    await Course.findByIdAndUpdate(courseId, { $pull: { students: studentId } });
-    await User.findByIdAndUpdate(studentId, { $pull: { enrolledCourses: courseId } });
+    await Course.findByIdAndUpdate(courseId, {
+      $pull: { students: studentId },
+    });
+    await User.findByIdAndUpdate(studentId, {
+      $pull: { enrolledCourses: courseId },
+    });
 
     const { invalidateCourseCache } = await import("./course.controller.js");
     await invalidateCourseCache(courseId);
