@@ -1,6 +1,12 @@
 import admin from "firebase-admin";
 import jwt from "jsonwebtoken";
 
+const getAdmin = () => {
+  if (admin && Array.isArray(admin.apps)) return admin;
+  if (admin && admin.default && Array.isArray(admin.default.apps)) return admin.default;
+  return admin || {};
+};
+
 let firebaseAdminApp = null;
 
 export const isFirebaseAdminConfigured = () => {
@@ -12,8 +18,10 @@ export const isFirebaseAdminConfigured = () => {
 };
 
 export const initFirebaseAdmin = () => {
-  if (admin.apps.length > 0) {
-    return admin.apps[0];
+  const fbAdmin = getAdmin();
+  const apps = fbAdmin.apps || [];
+  if (apps.length > 0) {
+    return apps[0];
   }
 
   if (!isFirebaseAdminConfigured()) {
@@ -24,18 +32,14 @@ export const initFirebaseAdmin = () => {
   }
 
   try {
-    // Handle both Vercel-style escaped newlines (\n as literal string)
-    // and real newlines already in the key.
     let privateKey = process.env.FIREBASE_PRIVATE_KEY;
     if (privateKey) {
-      // Replace literal \n sequences (from env var quoting) with real newlines
       privateKey = privateKey.replace(/\\n/g, "\n");
-      // Strip surrounding quotes added by some env managers
       privateKey = privateKey.replace(/^["']|["']$/g, "");
     }
 
-    firebaseAdminApp = admin.initializeApp({
-      credential: admin.credential.cert({
+    firebaseAdminApp = (fbAdmin.initializeApp || admin.initializeApp)({
+      credential: (fbAdmin.credential || admin.credential).cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         privateKey,
@@ -52,8 +56,8 @@ export const initFirebaseAdmin = () => {
 
 /**
  * Verifies a Firebase ID token generated from client-side phone verification.
- * @param {string} idToken Firebase Auth ID token
- * @returns {Promise<admin.auth.DecodedIdToken>} Decoded ID Token payload
+ * @param {string} rawIdToken Firebase Auth ID token
+ * @returns {Promise<object>} Decoded ID Token payload
  */
 export const verifyFirebaseIdToken = async (rawIdToken) => {
   let idToken = rawIdToken;
@@ -68,13 +72,16 @@ export const verifyFirebaseIdToken = async (rawIdToken) => {
     throw new Error("Firebase ID token is required.");
   }
 
-  if (admin.apps.length === 0) {
+  const fbAdmin = getAdmin();
+  const apps = fbAdmin.apps || [];
+  if (apps.length === 0) {
     initFirebaseAdmin();
   }
 
-  if (admin.apps.length > 0) {
+  const activeApps = (getAdmin().apps || []);
+  if (activeApps.length > 0 && typeof fbAdmin.auth === "function") {
     try {
-      const decodedToken = await admin.auth().verifyIdToken(idToken, false);
+      const decodedToken = await fbAdmin.auth().verifyIdToken(idToken, false);
       return decodedToken;
     } catch (error) {
       console.warn(
