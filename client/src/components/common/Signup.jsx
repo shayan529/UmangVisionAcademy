@@ -343,6 +343,9 @@ const Signup = () => {
       return;
     }
 
+    clearRecaptcha("recaptcha-container");
+    setFirebaseConfirmationResult(null);
+    setOtpFallbackMode(false);
     setSendingPhoneOtp(true);
     try {
       // 1. Pre-check backend: verifies format and ensures number is not already registered (HTTP 409 if taken)
@@ -360,6 +363,7 @@ const Signup = () => {
         } catch (fbErr) {
           usedFallback = true;
           setOtpFallbackMode(true);
+          setFirebaseConfirmationResult(null);
           console.warn(
             "Firebase Phone Auth warning in Signup, using dev OTP fallback:",
             fbErr?.code,

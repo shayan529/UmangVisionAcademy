@@ -1029,7 +1029,11 @@ const Login = () => {
       );
       return;
     }
+    clearRecaptcha("recaptcha-container");
+    setFirebaseConfirmationResult(null);
+    setOtpFallbackMode(false);
     setSendingOtp(true);
+
     const fullPhone = `${countryCode}${formData.phoneNumber}`;
     try {
       await api.post("/users/send-login-otp", {
@@ -1047,6 +1051,7 @@ const Login = () => {
         } catch (fbErr) {
           usedFallback = true;
           setOtpFallbackMode(true);
+          setFirebaseConfirmationResult(null);
           console.warn(
             "Firebase sendPhoneOtp warning, using dev OTP fallback:",
             fbErr?.code,

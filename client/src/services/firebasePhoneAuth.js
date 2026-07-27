@@ -143,19 +143,14 @@ export const clearRecaptcha = (containerId = "recaptcha-container") => {
     }
   });
 
-  // 4. Reset the container element's contents and attributes instead of replacing the DOM node,
-  //    so React's virtual DOM node reference remains valid during re-renders.
+  // 4. Replace the container node to fully reset the underlying widget state.
   const el =
     typeof containerId === "string"
       ? document.getElementById(containerId)
       : containerId;
-  if (el) {
-    el.innerHTML = "";
-    Array.from(el.attributes).forEach((attr) => {
-      if (attr.name !== "id") {
-        el.removeAttribute(attr.name);
-      }
-    });
+  if (el && el.parentNode) {
+    const replacement = el.cloneNode(false);
+    el.parentNode.replaceChild(replacement, el);
   }
 
   if (window.confirmationResult) {
@@ -236,6 +231,7 @@ export const sendFirebasePhoneOtp = async (
   } catch (error) {
     // Destroy the verifier so the next attempt can create a clean one
     clearRecaptcha(containerId);
+    window.confirmationResult = null;
     throw error;
   }
 };
