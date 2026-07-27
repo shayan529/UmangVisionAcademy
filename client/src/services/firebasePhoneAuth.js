@@ -60,23 +60,29 @@ export const clearRecaptcha = (containerId = "recaptcha-container") => {
     } catch (_) { /* ignore */ }
   }
 
-  // 3. Remove orphaned reCAPTCHA iframes injected into document.body
+  // 3. Remove orphaned reCAPTCHA iframes/badges injected directly into document.body by Google SDK.
+  //    CRITICAL: Never remove the main app root (#root) element!
   document.querySelectorAll("body > div").forEach((div) => {
-    if (div.querySelector('iframe[src*="recaptcha"]')) {
-      try { div.remove(); } catch (_) { /* ignore */ }
+    if (div.id !== "root" && !div.contains(document.getElementById("root"))) {
+      if (div.querySelector('iframe[src*="recaptcha"]') || div.querySelector('iframe[src*="google.com/recaptcha"]')) {
+        try { div.remove(); } catch (_) { /* ignore */ }
+      }
     }
   });
 
-  // 4. Replace the container element with a fresh clone so the grecaptcha
-  //    SDK's internal "already rendered" tracking is fully reset.
+  // 4. Reset the container element's contents and attributes instead of replacing the DOM node,
+  //    so React's virtual DOM node reference remains valid during re-renders.
   const el =
     typeof containerId === "string"
       ? document.getElementById(containerId)
       : containerId;
-  if (el && el.parentNode) {
-    const freshEl = document.createElement("div");
-    freshEl.id = containerId;
-    el.parentNode.replaceChild(freshEl, el);
+  if (el) {
+    el.innerHTML = "";
+    Array.from(el.attributes).forEach((attr) => {
+      if (attr.name !== "id") {
+        el.removeAttribute(attr.name);
+      }
+    });
   }
 };
 
