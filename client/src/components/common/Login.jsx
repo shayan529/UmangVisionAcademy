@@ -283,15 +283,37 @@ const PasswordResetModal = ({ onClose }) => {
     setLoading(true);
     try {
       let firebaseToken = null;
-      if (isFirebaseConfigured() && firebaseConfirmationResult) {
+      const confirmationSession =
+        firebaseConfirmationResult || window.confirmationResult;
+
+      if (isFirebaseConfigured()) {
+        if (!confirmationSession) {
+          toast.error(
+            t("passwordReset.toast.sessionExpired") ||
+              "OTP session expired or missing. Please click 'Resend OTP' to receive a new code.",
+            { id: "reset-session-expired" },
+          );
+          setLoading(false);
+          return;
+        }
+
         try {
           const res = await verifyFirebasePhoneOtp(
-            firebaseConfirmationResult,
+            confirmationSession,
             otpStr,
           );
           firebaseToken = res.idToken;
         } catch (fbVerifyErr) {
-          console.warn("Firebase verify token failed:", fbVerifyErr.message);
+          console.error("Firebase verify token failed:", fbVerifyErr);
+          const userMsg =
+            fbVerifyErr.code === "auth/invalid-verification-code"
+              ? t("passwordReset.toast.invalidOtp") || "Invalid OTP code entered."
+              : fbVerifyErr.code === "auth/code-expired"
+              ? "The OTP code has expired. Please resend a new OTP."
+              : fbVerifyErr.message || t("passwordReset.toast.invalidOtp");
+          toast.error(userMsg, { id: "otp-verify-error" });
+          setLoading(false);
+          return;
         }
       }
 
@@ -1095,18 +1117,35 @@ const Login = () => {
       setLoading(true);
       try {
         let firebaseToken = null;
-        if (isFirebaseConfigured() && firebaseConfirmationResult) {
+        const confirmationSession =
+          firebaseConfirmationResult || window.confirmationResult;
+
+        if (isFirebaseConfigured()) {
+          if (!confirmationSession) {
+            toast.error(
+              "OTP session expired or missing. Please click 'Resend OTP' to receive a new code.",
+            );
+            setLoading(false);
+            return;
+          }
+
           try {
             const res = await verifyFirebasePhoneOtp(
-              firebaseConfirmationResult,
+              confirmationSession,
               otpCode.trim(),
             );
             firebaseToken = res.idToken;
           } catch (fbVerifyErr) {
-            console.warn(
-              "Firebase token verification failed:",
-              fbVerifyErr.message,
-            );
+            console.error("Firebase token verification failed:", fbVerifyErr);
+            const userMsg =
+              fbVerifyErr.code === "auth/invalid-verification-code"
+                ? "Invalid OTP code entered. Please double-check the code sent to your phone."
+                : fbVerifyErr.code === "auth/code-expired"
+                ? "The OTP code has expired. Please click 'Resend OTP' for a new code."
+                : fbVerifyErr.message || "Failed to verify OTP code with Firebase.";
+            toast.error(userMsg);
+            setLoading(false);
+            return;
           }
         }
 

@@ -193,29 +193,20 @@ export const sendResetOtpPhone = async (req, res) => {
     }
 
     const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
-    const otp = process.env.NODE_ENV === "production"
-      ? Math.floor(100000 + Math.random() * 900000).toString()
-      : "123456";
-
-    await setOtpRecord(
-      canonicalPhone,
-      {
-        otp,
-        attempts: 0,
-        lastSentAt: Date.now(),
-      },
-      OTP_TTL_MS,
-    );
-    if (canonicalPhone !== phoneNumber) {
+    if (process.env.NODE_ENV !== "production") {
+      const devOtp = "123456";
       await setOtpRecord(
-        phoneNumber,
-        {
-          otp,
-          attempts: 0,
-          lastSentAt: Date.now(),
-        },
+        canonicalPhone,
+        { otp: devOtp, attempts: 0, lastSentAt: Date.now() },
         OTP_TTL_MS,
       );
+      if (canonicalPhone !== phoneNumber) {
+        await setOtpRecord(
+          phoneNumber,
+          { otp: devOtp, attempts: 0, lastSentAt: Date.now() },
+          OTP_TTL_MS,
+        );
+      }
     }
 
     res.json({ message: "Phone number verified for reset." });
@@ -247,28 +238,34 @@ export const verifyResetOtpPhone = async (req, res) => {
       }
     }
 
-    // Fallback: verify stored OTP across lookup keys or dev '123456'
+    // Fallback: verify stored OTP (dev mode) or dev '123456'
     if (!isValid && otp) {
-      const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
-      const phoneLookupValues = getPhoneLookupValues(phoneNumber);
-      const keysToTry = new Set([canonicalPhone, phoneNumber, ...phoneLookupValues]);
+      if (process.env.NODE_ENV !== "production") {
+        const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
+        const phoneLookupValues = getPhoneLookupValues(phoneNumber);
+        const keysToTry = new Set([canonicalPhone, phoneNumber, ...phoneLookupValues]);
 
-      let record = null;
-      for (const k of keysToTry) {
-        if (!k) continue;
-        record = await getOtpRecord(k);
-        if (record && record.otp) break;
-      }
+        let record = null;
+        for (const k of keysToTry) {
+          if (!k) continue;
+          record = await getOtpRecord(k);
+          if (record && record.otp) break;
+        }
 
-      if (record && record.otp && record.otp.trim() === otp.trim()) {
-        isValid = true;
-      } else if (otp.trim() === "123456") {
-        isValid = true;
+        if (record && record.otp && record.otp.trim() === otp.trim()) {
+          isValid = true;
+        } else if (otp.trim() === "123456") {
+          isValid = true;
+        }
       }
     }
 
     if (!isValid) {
-      return res.status(400).json({ message: "Invalid or expired OTP token." });
+      const msg =
+        process.env.NODE_ENV === "production" && !firebaseToken
+          ? "Phone verification failed. Please complete the OTP verification on your phone."
+          : "Invalid or expired OTP token.";
+      return res.status(400).json({ message: msg });
     }
 
     const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);

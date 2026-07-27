@@ -454,38 +454,30 @@ export const SendLoginOtp = async (req, res) => {
     }
 
     const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
-    const otp =
-      process.env.NODE_ENV === "production"
-        ? Math.floor(100000 + Math.random() * 900000).toString()
-        : "123456";
 
-    // Store OTP under canonical phone (+91...) and raw phone input for multi-key matching
-    await setOtpRecord(
-      canonicalPhone,
-      {
-        otp,
-        createdAt: Date.now(),
-        lastSentAt: Date.now(),
-        attempts: 0,
-      },
-      5 * 60 * 1000,
-    );
-    if (canonicalPhone !== phoneNumber) {
+    // In dev mode, store a fixed OTP for easy testing.
+    // In production, Firebase handles the entire OTP lifecycle (generation,
+    // SMS delivery, and verification) — the server only needs to verify the
+    // resulting Firebase ID token, so no server-side OTP is generated.
+    if (process.env.NODE_ENV !== "production") {
+      const devOtp = "123456";
       await setOtpRecord(
-        phoneNumber,
-        {
-          otp,
-          createdAt: Date.now(),
-          lastSentAt: Date.now(),
-          attempts: 0,
-        },
+        canonicalPhone,
+        { otp: devOtp, createdAt: Date.now(), lastSentAt: Date.now(), attempts: 0 },
         5 * 60 * 1000,
       );
+      if (canonicalPhone !== phoneNumber) {
+        await setOtpRecord(
+          phoneNumber,
+          { otp: devOtp, createdAt: Date.now(), lastSentAt: Date.now(), attempts: 0 },
+          5 * 60 * 1000,
+        );
+      }
     }
 
     return res.status(200).json({
       success: true,
-      message: "Phone number verified for Firebase OTP login.",
+      message: "OTP will be sent via Firebase. Please verify on your phone.",
     });
   } catch (err) {
     console.error("SendLoginOtp error:", err);
@@ -540,33 +532,39 @@ export const LoginUserWithOtp = async (req, res) => {
       }
     }
 
-    // Fallback: check stored OTP across all lookup keys or dev fallback '123456'
+    // Fallback: check stored OTP (dev mode) or dev-only bypass '123456'
     if (!isValid && otp) {
-      const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
-      const keysToTry = new Set([
-        canonicalPhone,
-        phoneNumber,
-        ...phoneLookupValues,
-      ]);
+      // In production, only Firebase token verification is accepted.
+      // In development, check the stored dev OTP or accept the hardcoded '123456'.
+      if (process.env.NODE_ENV !== "production") {
+        const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
+        const keysToTry = new Set([
+          canonicalPhone,
+          phoneNumber,
+          ...phoneLookupValues,
+        ]);
 
-      let record = null;
-      for (const k of keysToTry) {
-        if (!k) continue;
-        record = await getOtpRecord(k);
-        if (record && record.otp) break;
-      }
+        let record = null;
+        for (const k of keysToTry) {
+          if (!k) continue;
+          record = await getOtpRecord(k);
+          if (record && record.otp) break;
+        }
 
-      if (record && record.otp && record.otp.trim() === otp.trim()) {
-        isValid = true;
-      } else if (otp.trim() === "123456") {
-        isValid = true;
+        if (record && record.otp && record.otp.trim() === otp.trim()) {
+          isValid = true;
+        } else if (otp.trim() === "123456") {
+          isValid = true;
+        }
       }
     }
 
     if (!isValid) {
-      return res
-        .status(400)
-        .json({ message: "Invalid OTP code or expired token." });
+      const msg =
+        process.env.NODE_ENV === "production" && !firebaseToken
+          ? "Phone verification failed. Please ensure you complete the OTP verification on your device and try again."
+          : "Invalid OTP code or expired token.";
+      return res.status(400).json({ message: msg });
     }
 
     const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
