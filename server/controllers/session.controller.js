@@ -59,7 +59,6 @@ export const getInstructorSessions = async (req, res) => {
 export const getStudentSessions = async (req, res) => {
   try {
     const studentId = req.user._id.toString();
-    const studentClass = req.user.selectedClass;
     const cacheKey = `student:sessions:${studentId}`;
 
     const sessions = await cacheResponse(cacheKey, 300, async () => {
@@ -76,48 +75,44 @@ export const getStudentSessions = async (req, res) => {
       }
 
       const enrolledCourses = await Course.find(query)
-        .select("_id instructor")
+        .select("_id instructor category")
         .lean();
 
-      const enrolledCourseIds = enrolledCourses.map((c) => c._id);
-      const instructorIds = enrolledCourses
-        .map((c) => c.instructor)
-        .filter(Boolean);
-
-      const conditions = [];
-
-      // 1. Session is associated with a course the student is enrolled in
-      if (enrolledCourseIds.length > 0) {
-        conditions.push({ course: { $in: enrolledCourseIds } });
-      }
-
-      // 2. Session is a course-less instructor session, but only for instructors
-      //    whose courses the student is enrolled in.
-      if (instructorIds.length > 0) {
-        const instructorSessionCondition = {
-          instructor: { $in: instructorIds },
-          $or: [{ course: null }, { course: { $exists: false } }],
-        };
-
-        if (studentClass) {
-          const escapedSessionClass = studentClass.replace(
-            /[-/\\^$*+?.()|[\]{}]/g,
-            "\\$&",
-          );
-          instructorSessionCondition.class = {
-            $in: [null, "", new RegExp(`^${escapedSessionClass}$`, "i")],
-          };
-        }
-
-        conditions.push(instructorSessionCondition);
-      }
-
-      if (conditions.length === 0) {
+      if (enrolledCourses.length === 0) {
         return [];
       }
 
-      return await Session.find({ $or: conditions })
-        .populate("course", "title")
+      const enrolledCourseIds = enrolledCourses.map((c) => c._id);
+      const instructorIds = enrolledCourses
+        .map((c) => c.instructor?.toString())
+        .filter(Boolean);
+
+      const enrolledClasses = new Set();
+      if (req.user.selectedClass) {
+        enrolledClasses.add(req.user.selectedClass.toLowerCase().trim());
+      }
+      enrolledCourses.forEach((c) => {
+        if (c.category) {
+          enrolledClasses.add(c.category.toLowerCase().trim());
+        }
+      });
+
+      const classRegexPatterns = Array.from(enrolledClasses).map(
+        (cls) => new RegExp(`^${cls.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}$`, "i")
+      );
+
+      const condition1 = { course: { $in: enrolledCourseIds } };
+      const condition2 = {
+        instructor: { $in: instructorIds },
+        $or: [
+          { class: null },
+          { class: "" },
+          ...(classRegexPatterns.length > 0 ? [{ class: { $in: classRegexPatterns } }] : []),
+        ],
+      };
+
+      return await Session.find({ $or: [condition1, condition2] })
+        .populate("course", "title category")
         .populate("instructor", "name")
         .sort({ date: 1 })
         .lean();
@@ -167,17 +162,31 @@ export const getSessionById = async (req, res) => {
     }
 
     const enrolledCourses = await Course.find(query)
-      .select("_id instructor")
+      .select("_id instructor category")
       .lean();
+
+    if (enrolledCourses.length === 0) {
+      return res.status(404).json({ message: "Session not found" });
+    }
 
     const enrolledCourseIds = enrolledCourses.map((c) => c._id);
     const instructorIds = enrolledCourses
-      .map((c) => c.instructor)
+      .map((c) => c.instructor?.toString())
       .filter(Boolean);
 
-    if (enrolledCourseIds.length === 0 && instructorIds.length === 0) {
-      return res.status(404).json({ message: "Session not found" });
+    const enrolledClasses = new Set();
+    if (req.user.selectedClass) {
+      enrolledClasses.add(req.user.selectedClass.toLowerCase().trim());
     }
+    enrolledCourses.forEach((c) => {
+      if (c.category) {
+        enrolledClasses.add(c.category.toLowerCase().trim());
+      }
+    });
+
+    const classRegexPatterns = Array.from(enrolledClasses).map(
+      (cls) => new RegExp(`^${cls.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}$`, "i")
+    );
 
     const session = await Session.findOne({
       _id: req.params.id,
@@ -185,8 +194,11 @@ export const getSessionById = async (req, res) => {
         { course: { $in: enrolledCourseIds } },
         {
           instructor: { $in: instructorIds },
-          $or: [{ course: null }, { course: { $exists: false } }],
-          class: { $in: [null, "", req.user.selectedClass] },
+          $or: [
+            { class: null },
+            { class: "" },
+            ...(classRegexPatterns.length > 0 ? [{ class: { $in: classRegexPatterns } }] : []),
+          ],
         },
       ],
     })

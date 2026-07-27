@@ -35,14 +35,31 @@ const formatDateReadable = (dateStr) => {
   });
 };
 
+const CLASSES = [
+  "Class 9",
+  "Class 10",
+  "Class 11",
+  "Class 12",
+  "Competitive Exams",
+];
+
 const InstructorSessions = ({ showToast }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const { sessions, loading, success, error } = useSelector((s) => s.sessions);
-  const [form, setForm] = useState({ title: "", date: "", time: "", url: "" });
+  const [form, setForm] = useState({
+    title: "",
+    classVal: "Class 9",
+    subject: "",
+    date: "",
+    time: "",
+    url: "",
+  });
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({
     title: "",
+    classVal: "Class 9",
+    subject: "",
     date: "",
     time: "",
     url: "",
@@ -52,8 +69,6 @@ const InstructorSessions = ({ showToast }) => {
   useEffect(() => {
     dispatch(fetchSessions());
   }, [dispatch]);
-
-  const sessionsState = useSelector((s) => s.sessions);
 
   const inputStyle = {
     width: "100%",
@@ -102,7 +117,8 @@ const InstructorSessions = ({ showToast }) => {
       !form.title.trim() ||
       !form.url.trim() ||
       !form.date.trim() ||
-      !form.time.trim()
+      !form.time.trim() ||
+      !form.classVal
     ) {
       showToast(t("instructorSessions.enterAllDetails"));
       return;
@@ -116,6 +132,8 @@ const InstructorSessions = ({ showToast }) => {
     dispatch(
       createSession({
         title: form.title,
+        class: form.classVal,
+        subject: form.subject.trim(),
         date: form.date,
         time: form.time,
         status: "upcoming",
@@ -125,6 +143,8 @@ const InstructorSessions = ({ showToast }) => {
 
     setForm({
       title: "",
+      classVal: "Class 9",
+      subject: "",
       date: "",
       time: "",
       url: "",
@@ -137,6 +157,8 @@ const InstructorSessions = ({ showToast }) => {
     setEditingId(session._id);
     setEditForm({
       title: session.title || "",
+      classVal: session.class || "Class 9",
+      subject: session.subject || "",
       date: session.date || "",
       time: session.time || "",
       url: session.url || "",
@@ -145,7 +167,7 @@ const InstructorSessions = ({ showToast }) => {
 
   const cancelEditing = () => {
     setEditingId(null);
-    setEditForm({ title: "", date: "", time: "", url: "" });
+    setEditForm({ title: "", classVal: "Class 9", subject: "", date: "", time: "", url: "" });
   };
 
   const saveEdit = (id) => {
@@ -153,7 +175,8 @@ const InstructorSessions = ({ showToast }) => {
       !editForm.title.trim() ||
       !editForm.url.trim() ||
       !editForm.date.trim() ||
-      !editForm.time.trim()
+      !editForm.time.trim() ||
+      !editForm.classVal
     ) {
       showToast(t("instructorSessions.enterAllDetails"));
       return;
@@ -169,6 +192,8 @@ const InstructorSessions = ({ showToast }) => {
         id,
         sessionData: {
           title: editForm.title.trim(),
+          class: editForm.classVal,
+          subject: editForm.subject.trim(),
           date: editForm.date,
           time: editForm.time,
           url: editForm.url.trim(),
@@ -247,6 +272,38 @@ const InstructorSessions = ({ showToast }) => {
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               style={inputStyle}
               required
+            />
+          </div>
+
+          {/* Class */}
+          <div>
+            <label style={{ display: "block", marginBottom: 6, fontSize: 12, color: "#94a3b8" }}>
+              Class
+            </label>
+            <select
+              value={form.classVal}
+              onChange={(e) => setForm({ ...form, classVal: e.target.value })}
+              style={inputStyle}
+            >
+              {CLASSES.map((cls) => (
+                <option key={cls} value={cls}>
+                  {cls}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Subject */}
+          <div>
+            <label style={{ display: "block", marginBottom: 6, fontSize: 12, color: "#94a3b8" }}>
+              Subject
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Science, Mathematics, Physics"
+              value={form.subject}
+              onChange={(e) => setForm({ ...form, subject: e.target.value })}
+              style={inputStyle}
             />
           </div>
 
@@ -366,6 +423,31 @@ const InstructorSessions = ({ showToast }) => {
                           gap: 8,
                         }}
                       >
+                        <select
+                          value={editForm.classVal}
+                          onChange={(e) => setEditForm({ ...editForm, classVal: e.target.value })}
+                          style={inputStyle}
+                        >
+                          {CLASSES.map((cls) => (
+                            <option key={cls} value={cls}>
+                              {cls}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          placeholder="Subject"
+                          value={editForm.subject}
+                          onChange={(e) => setEditForm({ ...editForm, subject: e.target.value })}
+                          style={inputStyle}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+                          gap: 8,
+                        }}
+                      >
                         <input
                           type="date"
                           value={editForm.date}
@@ -393,6 +475,40 @@ const InstructorSessions = ({ showToast }) => {
                         {s.title}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                        {s.class && (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                              fontSize: 12,
+                              color: "#38bdf8",
+                              background: "rgba(56, 189, 248, 0.12)",
+                              padding: "3px 8px",
+                              borderRadius: 6,
+                              fontWeight: 600,
+                            }}
+                          >
+                            🏷️ {s.class}
+                          </span>
+                        )}
+                        {s.subject && (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                              fontSize: 12,
+                              color: "#f43f5e",
+                              background: "rgba(244, 63, 94, 0.12)",
+                              padding: "3px 8px",
+                              borderRadius: 6,
+                              fontWeight: 600,
+                            }}
+                          >
+                            📚 {s.subject}
+                          </span>
+                        )}
                         <span
                           style={{
                             display: "inline-flex",

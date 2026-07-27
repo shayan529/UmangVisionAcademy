@@ -123,7 +123,6 @@ const AdminSessions = ({
     { value: "Class 10", label: "Class 10" },
     { value: "Class 11", label: "Class 11" },
     { value: "Class 12", label: "Class 12" },
-    { value: "Graduation", label: "Graduation" },
     { value: "Competitive Exams", label: "Competitive Exams" },
   ];
 

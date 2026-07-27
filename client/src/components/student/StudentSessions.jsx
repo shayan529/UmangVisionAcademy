@@ -886,15 +886,29 @@ const SessionCard = ({ session, onJoin, showToast }) => {
           </span>
         </div>
 
-        {/* Instructor chip */}
-        <div className="flex items-center gap-2 mb-2.5">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#F4C9A0] to-[#E8A876] flex items-center justify-center flex-none shadow-sm">
-            <span className="text-[10px] font-bold text-[#5A3A1F]">{instructorInitial}</span>
+        {/* Instructor & Class/Subject chips */}
+        <div className="flex items-center gap-3 mb-2.5 flex-wrap">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#F4C9A0] to-[#E8A876] flex items-center justify-center flex-none shadow-sm">
+              <span className="text-[10px] font-bold text-[#5A3A1F]">{instructorInitial}</span>
+            </div>
+            <p className="text-sm text-[#8B6F47]">
+              <span className="text-[#000000]">Instructor:</span>{" "}
+              <span className="font-medium text-[#5A4530]">{instructorName}</span>
+            </p>
           </div>
-          <p className="text-sm text-[#8B6F47]">
-            <span className="text-[#000000]">Instructor:</span>{" "}
-            <span className="font-medium text-[#5A4530]">{instructorName}</span>
-          </p>
+
+          {session.class && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-md bg-[#EADFC7] text-[#5A3A1F] border border-[#D5C6A7]">
+              🏷️ {session.class}
+            </span>
+          )}
+
+          {session.subject && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-md bg-[#F6DDC0] text-[#8B5A2B] border border-[#E5C39E]">
+              📚 {session.subject}
+            </span>
+          )}
         </div>
 
         <p className="text-[#000000] text-sm">📅 {session.date}</p>
