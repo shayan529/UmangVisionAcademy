@@ -55,8 +55,16 @@ export const initFirebaseAdmin = () => {
  * @param {string} idToken Firebase Auth ID token
  * @returns {Promise<admin.auth.DecodedIdToken>} Decoded ID Token payload
  */
-export const verifyFirebaseIdToken = async (idToken) => {
-  if (!idToken) {
+export const verifyFirebaseIdToken = async (rawIdToken) => {
+  let idToken = rawIdToken;
+  if (typeof idToken === "object" && idToken !== null) {
+    idToken = idToken.idToken || idToken.token || idToken.rawToken;
+  }
+  if (typeof idToken !== "string") {
+    idToken = String(idToken || "").trim();
+  }
+
+  if (!idToken || idToken === "undefined" || idToken === "null") {
     throw new Error("Firebase ID token is required.");
   }
 
@@ -77,10 +85,13 @@ export const verifyFirebaseIdToken = async (idToken) => {
   }
 
   // Fallback: decode JWT payload if Firebase Admin fails or is unconfigured
-  const decoded = jwt.decode(idToken);
+  const decodeFn = jwt.decode || jwt.default?.decode;
+  const decoded = typeof decodeFn === "function" ? decodeFn(idToken) : null;
+
   if (decoded && typeof decoded === "object") {
     const now = Math.floor(Date.now() / 1000);
-    if (decoded.exp && decoded.exp < now) {
+    // 5 minutes (300s) clock skew buffer for server time drift
+    if (decoded.exp && decoded.exp < now - 300) {
       throw new Error("Verification code session expired. Please send a new OTP.");
     }
     return {
@@ -91,7 +102,7 @@ export const verifyFirebaseIdToken = async (idToken) => {
     };
   }
 
-  throw new Error("Invalid or expired Firebase token.");
+  throw new Error("Invalid or expired Firebase token format.");
 };
 
 export default admin;

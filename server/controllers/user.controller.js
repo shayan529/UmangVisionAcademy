@@ -516,6 +516,7 @@ export const LoginUserWithOtp = async (req, res) => {
     }
 
     let isValid = false;
+    let tokenErrReason = null;
 
     // Primary: verify Firebase ID Token if supplied by Firebase Auth on client
     if (firebaseToken) {
@@ -525,8 +526,9 @@ export const LoginUserWithOtp = async (req, res) => {
           isValid = true;
         }
       } catch (tokenErr) {
+        tokenErrReason = tokenErr.message;
         console.warn(
-          "Firebase token verification failed, checking OTP record:",
+          "[LoginUserWithOtp] Firebase token verification failed:",
           tokenErr.message,
         );
       }
@@ -534,7 +536,6 @@ export const LoginUserWithOtp = async (req, res) => {
 
     // Fallback: check stored OTP (dev mode) or dev-only bypass '123456'
     if (!isValid && otp) {
-      // In production, only Firebase token verification is accepted.
       // In development, check the stored dev OTP or accept the hardcoded '123456'.
       if (process.env.NODE_ENV !== "production") {
         const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
@@ -560,10 +561,11 @@ export const LoginUserWithOtp = async (req, res) => {
     }
 
     if (!isValid) {
-      const msg =
-        process.env.NODE_ENV === "production" && !firebaseToken
-          ? "Phone verification failed. Please ensure you complete the OTP verification on your device and try again."
-          : "Invalid OTP code or expired token.";
+      const msg = tokenErrReason
+        ? `Firebase verification failed: ${tokenErrReason}`
+        : process.env.NODE_ENV === "production" && !firebaseToken
+        ? "Phone verification session token missing. Please try resending the OTP."
+        : "Invalid OTP code or expired token.";
       return res.status(400).json({ message: msg });
     }
 
