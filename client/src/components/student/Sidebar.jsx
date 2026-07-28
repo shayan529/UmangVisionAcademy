@@ -5,7 +5,12 @@ import { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight, LogOut } from "lucide-react";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { useNavigate, Link, NavLink } from "react-router-dom";
-import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from "../../utils/permissions";
+import {
+  getCustomRole,
+  hasCustomRole as checkHasCustomRole,
+  hasBaseRole,
+  hasDashboardModule,
+} from "../../utils/permissions";
 
 const Sidebar = ({
   user,
@@ -55,7 +60,6 @@ const Sidebar = ({
   );
   const activeRoleName = activeOption ? activeOption.name : "";
 
-  // Close roles dropdown on outside click
   useEffect(() => {
     if (!rolesDropdownOpen) return;
     const handleClose = () => setRolesDropdownOpen(false);
@@ -63,7 +67,6 @@ const Sidebar = ({
     return () => { clearTimeout(id); document.removeEventListener("click", handleClose); };
   }, [rolesDropdownOpen]);
 
-  // Lock body scroll while mobile drawer is open
   useEffect(() => {
     if (!mobileOpen) return;
     document.body.style.overflow = "hidden";
@@ -79,51 +82,62 @@ const Sidebar = ({
   const toggleGroup = (key) =>
     setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
 
+  // Each item now carries a `moduleKey` matching DASHBOARD_MODULES.student
+  // on the backend. `overview` has no key check — always visible.
   const sidebarGroups = [
     {
       key: "core",
       title: t("studentSidebar.coreLearning", "Core Learning"),
       items: [
-        { label: t("studentSidebar.overview", "Overview"),       to: "/student-dashboard",                   icon: "📊", end: true },
-        { label: t("studentSidebar.myCourses", "My Courses"),    to: "/student-dashboard/my-courses",        icon: "📚" },
-        { label: t("studentSidebar.notes", "Study Notes"),       to: "/student-dashboard/notes",             icon: "📝" },
-        { label: t("nav.questionBank", "Question Bank"),         to: "/student-dashboard/question-bank",     icon: "❓" },
-        { label: t("nav.blogs", "Blogs"),                        to: "/student-dashboard/blogs",             icon: "📰" },
-        { label: t("studentSidebar.aiTutor", "AI Tutor"),        to: "/student-dashboard/ai-tutor",          icon: "🤖" },
-        { label: t("studentSidebar.sessions", "Sessions"),       to: "/student-dashboard/sessions",          icon: "🎥" },
+        { label: t("studentSidebar.overview", "Overview"), to: "/student-dashboard", icon: "📊", end: true, moduleKey: "overview" },
+        { label: t("studentSidebar.myCourses", "My Courses"), to: "/student-dashboard/my-courses", icon: "📚", moduleKey: "my_courses" },
+        { label: t("studentSidebar.notes", "Study Notes"), to: "/student-dashboard/notes", icon: "📝", moduleKey: "study_notes" },
+        { label: t("nav.questionBank", "Question Bank"), to: "/student-dashboard/question-bank", icon: "❓", moduleKey: "question_bank" },
+        { label: t("nav.blogs", "Blogs"), to: "/student-dashboard/blogs", icon: "📰", moduleKey: "blogs" },
+        { label: t("studentSidebar.aiTutor", "AI Tutor"), to: "/student-dashboard/ai-tutor", icon: "🤖", moduleKey: "ai_tutor" },
+        { label: t("studentSidebar.sessions", "Sessions"), to: "/student-dashboard/sessions", icon: "🎥", moduleKey: "sessions" },
       ],
     },
     {
       key: "performance",
       title: t("studentSidebar.performanceTools", "Performance & Tools"),
       items: [
-        { label: t("studentSidebar.progress", "Progress"),          to: "/student-dashboard/progress",       icon: "📈" },
-        { label: t("studentSidebar.mockTests", "Mock Tests"),        to: "/student-dashboard/mock-tests",     icon: "🧪" },
-        { label: t("studentSidebar.leaderboard", "Leaderboard"),     to: "/student-dashboard/leaderboard",   icon: "🏆" },
-        { label: t("studentSidebar.achievements", "Achievements"),   to: "/student-dashboard/achievements",  icon: "🎖️" },
-        { label: t("studentSidebar.certificates", "Certificates"),   to: "/student-dashboard/certificates",  icon: "📜" },
+        { label: t("studentSidebar.progress", "Progress"), to: "/student-dashboard/progress", icon: "📈", moduleKey: "progress" },
+        { label: t("studentSidebar.mockTests", "Mock Tests"), to: "/student-dashboard/mock-tests", icon: "🧪", moduleKey: "mock_tests" },
+        { label: t("studentSidebar.leaderboard", "Leaderboard"), to: "/student-dashboard/leaderboard", icon: "🏆", moduleKey: "leaderboard" },
+        { label: t("studentSidebar.achievements", "Achievements"), to: "/student-dashboard/achievements", icon: "🎖️", moduleKey: "achievements" },
+        { label: t("studentSidebar.certificates", "Certificates"), to: "/student-dashboard/certificates", icon: "📜", moduleKey: "certificates" },
       ],
     },
     {
       key: "extras",
       title: t("studentSidebar.subscriptionsExtras", "Subscriptions & Extras"),
       items: [
-        { label: t("nav.plans", "Plans"),                            to: "/student-dashboard/plans",                  icon: "💳" },
-        { label: t("nav.becomeInstructor", "Become Instructor"),     to: "/student-dashboard/become-instructor",      icon: "🎓" },
-        { label: t("studentSidebar.referral", "Referral"),           to: "/student-dashboard/referral",               icon: "🎁" },
-        { label: t("studentSidebar.wallet", "Wallet"),               to: "/student-dashboard/wallet",                 icon: "👛" },
-        { label: t("studentSidebar.purchaseHistory", "Purchases"),   to: "/student-dashboard/purchase-history",       icon: "📦" },
-        { label: t("studentSidebar.references", "References"),       to: "/student-dashboard/references",             icon: "🗂️" },
+        { label: t("nav.plans", "Plans"), to: "/student-dashboard/plans", icon: "💳", moduleKey: "plans" },
+        { label: t("nav.becomeInstructor", "Become Instructor"), to: "/student-dashboard/become-instructor", icon: "🎓", moduleKey: "become_instructor" },
+        { label: t("studentSidebar.referral", "Referral"), to: "/student-dashboard/referral", icon: "🎁", moduleKey: "referral" },
+        { label: t("studentSidebar.wallet", "Wallet"), to: "/student-dashboard/wallet", icon: "👛", moduleKey: "wallet" },
+        { label: t("studentSidebar.purchaseHistory", "Purchases"), to: "/student-dashboard/purchase-history", icon: "📦", moduleKey: "purchase_history" },
+        { label: t("studentSidebar.references", "References"), to: "/student-dashboard/references", icon: "🗂️", moduleKey: "references" },
       ],
     },
     {
       key: "account",
       title: t("studentSidebar.account", "Account"),
       items: [
-        { label: t("studentSidebar.settings", "Settings"),           to: "/student-dashboard/settings",               icon: "⚙️" },
+        { label: t("studentSidebar.settings", "Settings"), to: "/student-dashboard/settings", icon: "⚙️", moduleKey: "settings" },
       ],
     },
   ];
+
+  // Filter each group down to modules the admin has enabled for Student,
+  // then drop any group left with zero items.
+  const visibleGroups = sidebarGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => hasDashboardModule(user, item.moduleKey)),
+    }))
+    .filter((group) => group.items.length > 0);
 
   const NavItem = ({ item }) => (
     <NavLink
@@ -135,11 +149,10 @@ const Sidebar = ({
           item.to === "/student-dashboard/plans" &&
           window.location.pathname === "/student-dashboard/billing";
         const active = isActive || isPlansBilling;
-        return `flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 w-full text-left ${
-          active
+        return `flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 w-full text-left ${active
             ? "bg-indigo-950/40 text-indigo-300 border-l-2 border-indigo-500 pl-2.5"
             : "text-slate-400 hover:bg-slate-900 hover:text-white border-l-2 border-transparent"
-        }`;
+          }`;
       }}
     >
       <span className="shrink-0 text-lg leading-none">{item.icon}</span>
@@ -147,10 +160,8 @@ const Sidebar = ({
     </NavLink>
   );
 
-  // ── Shared sidebar body (used by both desktop and mobile) ─────────────────
   const SidebarBody = () => (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* User Card */}
       <div className="px-3 pt-3 pb-3 shrink-0">
         <div className="flex items-center gap-3 p-3 bg-indigo-950/20 border border-indigo-900/30 rounded-xl">
           {user?.avatarUrl ? (
@@ -209,11 +220,9 @@ const Sidebar = ({
         </div>
       </div>
 
-      {/* Grouped nav */}
       <nav className="flex-1 overflow-y-auto px-3 pb-2 flex flex-col gap-1 custom-scrollbar">
-        {sidebarGroups.map((group) => (
+        {visibleGroups.map((group) => (
           <div key={group.key}>
-            {/* Group header — clickable to collapse */}
             <button
               onClick={() => toggleGroup(group.key)}
               className="flex items-center justify-between w-full px-2 py-1.5 mb-0.5 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest hover:text-slate-300 transition-colors"
@@ -224,7 +233,6 @@ const Sidebar = ({
                 : <ChevronRight size={11} />}
             </button>
 
-            {/* Group items */}
             {openGroups[group.key] && (
               <div className="flex flex-col gap-0.5 mb-1">
                 {group.items.map((item) => (
@@ -235,12 +243,11 @@ const Sidebar = ({
           </div>
         ))}
 
-        {/* Logout — mobile only */}
         {mobileOpen && (
           <button
             onClick={async () => {
               setMobileOpen(false);
-              await dispatch(logoutUser()).unwrap().catch(() => {});
+              await dispatch(logoutUser()).unwrap().catch(() => { });
               navigate("/", { replace: true });
             }}
             className="flex items-center gap-3 rounded-xl py-2.5 px-3 mt-2 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 border-l-2 border-transparent cursor-pointer"
@@ -251,7 +258,6 @@ const Sidebar = ({
         )}
       </nav>
 
-      {/* Switch dashboard — pinned at bottom, mobile only */}
       {isMultiRole && mobileOpen && (
         <div className="px-3 py-3 shrink-0 border-t border-slate-800/60">
           <Link
@@ -268,12 +274,10 @@ const Sidebar = ({
 
   return (
     <>
-      {/* ── Desktop sidebar ─────────────────────────────────────────────── */}
       <aside className="hidden md:flex flex-col bg-slate-950 border-r border-slate-800 w-[260px] min-w-[260px] shrink-0 sticky top-0 h-screen z-40">
         <SidebarBody />
       </aside>
 
-      {/* ── Mobile backdrop ──────────────────────────────────────────────── */}
       {mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
@@ -281,13 +285,10 @@ const Sidebar = ({
         />
       )}
 
-      {/* ── Mobile drawer ────────────────────────────────────────────────── */}
       <aside
-        className={`fixed top-0 left-0 h-dvh w-[260px] bg-slate-950 border-r border-slate-800 flex-col shadow-[4px_0_24px_rgba(0,0,0,0.6)] z-[10000] md:hidden ${
-          mobileOpen ? "flex" : "hidden"
-        }`}
+        className={`fixed top-0 left-0 h-dvh w-[260px] bg-slate-950 border-r border-slate-800 flex-col shadow-[4px_0_24px_rgba(0,0,0,0.6)] z-[10000] md:hidden ${mobileOpen ? "flex" : "hidden"
+          }`}
       >
-        {/* X close button */}
         <button
           onClick={() => setMobileOpen(false)}
           className="self-end bg-transparent border-none text-slate-500 hover:text-white text-2xl cursor-pointer mr-4 mt-3 mb-1 leading-none p-0 transition-colors"

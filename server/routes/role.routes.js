@@ -1,6 +1,7 @@
 import express from "express";
 import {
   getPermissionModules,
+  getDashboardModules,
   getRoles,
   createRole,
   updateRole,
@@ -17,6 +18,7 @@ import { createStudentByAdmin } from "../controllers/user.controller.js";
 const router = express.Router();
 
 router.get("/modules", protect, adminOnly, getPermissionModules);
+router.get("/dashboard-modules", protect, adminOnly, getDashboardModules);
 router.get("/", protect, adminOnly, getRoles);
 router.post("/", protect, adminOnly, createRole);
 router.post(

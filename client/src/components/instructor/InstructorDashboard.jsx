@@ -21,7 +21,12 @@ import InstructorNotes from "./InstructorNotes";
 import MyReels from "../reels/MyReels";
 import { createCourse } from "../../redux/slices/courseSlice";
 import { useTranslation } from "react-i18next";
-
+import {
+  getCustomRole,
+  hasCustomRole as checkHasCustomRole,
+  hasBaseRole,
+  hasDashboardModule, // ← add
+} from "../../utils/permissions";
 import {
   initialSessions,
   initialNotifs,
@@ -62,6 +67,7 @@ export default function InstructorDashboard() {
     setScrollTop(window.scrollY);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [sidebarOpen]);
+
 
   useEffect(() => {
     if (sidebarOpen && window.innerWidth < 768) {
@@ -291,15 +297,18 @@ export default function InstructorDashboard() {
     const { t } = useTranslation();
 
     // Merge mock-tests into navItems if not already present in InstructorData
-    const allNavItems = navItems.some((n) => n.id === "mock-tests")
+    const allNavItemsRaw = navItems.some((n) => n.id === "mock-tests")
       ? navItems
       : (() => {
-          // Insert mock-tests after "sessions"
-          const idx = navItems.findIndex((n) => n.id === "sessions");
-          const copy = [...navItems];
-          copy.splice(idx + 1, 0, { id: "mock-tests", icon: "📝" });
-          return copy;
-        })();
+        const idx = navItems.findIndex((n) => n.id === "sessions");
+        const copy = [...navItems];
+        copy.splice(idx + 1, 0, { id: "mock-tests", icon: "📝" });
+        return copy;
+      })();
+
+    const allNavItems = allNavItemsRaw.filter((item) =>
+      hasDashboardModule(user, item.id),
+    );
 
     return (
       <>
@@ -382,11 +391,10 @@ export default function InstructorDashboard() {
               <button
                 key={id}
                 onClick={() => handleNavClick(id)}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 w-full text-left justify-start ${
-                  isActive
-                    ? "bg-indigo-950/40 text-indigo-300 border-l-2 border-indigo-500 pl-2.5"
-                    : "text-slate-400 hover:bg-slate-900 hover:text-white border-l-2 border-transparent"
-                }`}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 w-full text-left justify-start ${isActive
+                  ? "bg-indigo-950/40 text-indigo-300 border-l-2 border-indigo-500 pl-2.5"
+                  : "text-slate-400 hover:bg-slate-900 hover:text-white border-l-2 border-transparent"
+                  }`}
               >
                 <span className="shrink-0 text-lg leading-none">{icon}</span>
                 <span className="text-xs font-semibold flex-1">
@@ -419,7 +427,7 @@ export default function InstructorDashboard() {
                 setSidebarOpen(false);
                 await dispatch(logoutUser())
                   .unwrap()
-                  .catch(() => {});
+                  .catch(() => { });
                 navigate("/", { replace: true });
               }}
               className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
@@ -489,10 +497,9 @@ export default function InstructorDashboard() {
         {/* Mobile drawer */}
         <aside
           className={`bg-slate-950 border-r border-slate-800 flex-col transition-all duration-300 z-[10000] md:hidden
-            ${
-              sidebarOpen
-                ? "fixed top-0 bottom-0 left-0 h-full w-[220px] shadow-[4px_0_24px_rgba(0,0,0,0.6)] flex"
-                : "hidden"
+            ${sidebarOpen
+              ? "fixed top-0 bottom-0 left-0 h-full w-[220px] shadow-[4px_0_24px_rgba(0,0,0,0.6)] flex"
+              : "hidden"
             }
           `}
         >

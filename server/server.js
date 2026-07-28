@@ -53,6 +53,7 @@ import noteRoutes from "./routes/note.routes.js";
 import unsubscribeRoutes from "./routes/unsubscribe.routes.js";
 import contactRoutes from "./routes/contact.routes.js";
 import { startSessionReminderScheduler } from "./utils/sessionScheduler.js";
+import { ensureBaseRoleDocs } from "./utils/seedBaseRoles.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -78,6 +79,7 @@ const ALLOWED_ORIGINS = [
 
 if (process.env.CLIENT_URL) ALLOWED_ORIGINS.push(process.env.CLIENT_URL);
 if (process.env.FRONTEND_URL) ALLOWED_ORIGINS.push(process.env.FRONTEND_URL);
+
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -220,6 +222,7 @@ app.use((req, res, next) => {
 let dbReady = false;
 let dbConnectPromise = null;
 
+// inside ensureDbConnected — add the ensureBaseRoleDocs() call:
 const ensureDbConnected = async (req, res, next) => {
   if (dbReady) return next();
 
@@ -228,6 +231,7 @@ const ensureDbConnected = async (req, res, next) => {
       dbConnectPromise = (async () => {
         await ConnectDb();
         await connectRedis().catch(() => undefined);
+        await ensureBaseRoleDocs();
         dbReady = true;
       })();
     }
@@ -413,11 +417,13 @@ httpServer.on("error", (err) => {
 // Express app) as the serverless handler. DB connection is handled lazily by
 // the ensureDbConnected middleware above, so we only need to start an HTTP
 // server in non-Vercel environments (local dev, Render, etc.).
+// in the !isVercel branch at the bottom:
 if (!isVercel) {
   ConnectDb()
     .then(async () => {
       dbReady = true;
       await connectRedis().catch(() => undefined);
+      await ensureBaseRoleDocs();
       await setupRedisAdapter();
       startSessionReminderScheduler();
 

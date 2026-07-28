@@ -18,6 +18,7 @@ import {
   EyeOff,
   Mail,
   Phone,
+  LayoutGrid,
 } from "lucide-react";
 import apiClient from "../../config/api";
 import {
@@ -165,11 +166,10 @@ const PermissionMatrix = ({ modules, value, onChange }) => {
                     key={action}
                     type="button"
                     onClick={() => toggleAction(mod, action)}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold border transition-colors ${
-                      checked
-                        ? "bg-indigo-600 border-indigo-500 text-white"
-                        : "bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500"
-                    }`}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold border transition-colors ${checked
+                      ? "bg-indigo-600 border-indigo-500 text-white"
+                      : "bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500"
+                      }`}
                   >
                     {checked && <Check size={11} />}
                     {ACTION_LABELS[action] || action}
@@ -195,6 +195,87 @@ const formatPermissionSummary = (role) => {
   if (moduleNames.length === 0) return "No permissions assigned";
   if (moduleNames.length <= 2) return moduleNames.join(", ");
   return `${moduleNames.slice(0, 2).join(", ")} +${moduleNames.length - 2} more`;
+};
+
+const DASHBOARD_MODULE_LABELS = {
+  overview: "Overview",
+  my_courses: "My Courses",
+  study_notes: "Study Notes",
+  question_bank: "Question Bank",
+  blogs: "Blogs",
+  ai_tutor: "AI Tutor",
+  sessions: "Sessions",
+  progress: "Progress",
+  mock_tests: "Mock Tests",
+  leaderboard: "Leaderboard",
+  achievements: "Achievements",
+  certificates: "Certificates",
+  plans: "Plans",
+  become_instructor: "Become Instructor",
+  referral: "Referral",
+  wallet: "Wallet",
+  purchase_history: "Purchase History",
+  references: "References",
+  settings: "Settings",
+  dashboard: "Dashboard",
+  courses: "My Courses",
+  students: "Students",
+  notes: "Notes",
+  reels: "Reels",
+  analytics: "Analytics",
+  ai: "AI Assistant",
+  "mock-tests": "Mock Tests",
+};
+
+// New checklist component, sibling to PermissionMatrix — flat toggles,
+// no actions, just an array of enabled module keys.
+const DashboardModuleChecklist = ({ moduleKeys, value = [], onChange }) => {
+  const toggle = (key) => {
+    onChange(value.includes(key) ? value.filter((k) => k !== key) : [...value, key]);
+  };
+  const allOn = moduleKeys.length > 0 && moduleKeys.every((k) => value.includes(k));
+  const toggleAll = () => onChange(allOn ? [] : [...moduleKeys]);
+
+  return (
+    <div className="rounded-xl border border-slate-800 bg-[#0b1120] p-4">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-bold text-white uppercase tracking-wide">
+          Sidebar Modules
+        </span>
+        <button
+          type="button"
+          onClick={toggleAll}
+          className="text-[10px] font-semibold text-indigo-400 hover:text-indigo-300"
+        >
+          {allOn ? "Clear all" : "Select all"}
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {moduleKeys.length === 0 && (
+          <span className="text-[11px] text-slate-600">
+            No modules registered for this role yet.
+          </span>
+        )}
+        {moduleKeys.map((key) => {
+          const checked = value.includes(key);
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => toggle(key)}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold border transition-colors ${checked
+                ? "bg-indigo-600 border-indigo-500 text-white"
+                : "bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500"
+                }`}
+            >
+              {checked && <Check size={11} />}
+              {DASHBOARD_MODULE_LABELS[key] || key}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 };
 
 // ── Reusable role checklist ───────────────────────────────────────────────────
@@ -251,11 +332,10 @@ const RoleChecklist = ({ roles = [], selected = [], onToggle, emptyHint }) => {
                 key={role._id}
                 type="button"
                 onClick={() => onToggle(role._id)}
-                className={`group flex items-start justify-between gap-3 rounded-xl border p-3.5 text-left transition-all duration-150 ${
-                  checked
-                    ? "border-indigo-500/80 bg-indigo-950/40 text-white shadow-md shadow-indigo-950/50"
-                    : "border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700 hover:bg-slate-800/80"
-                }`}
+                className={`group flex items-start justify-between gap-3 rounded-xl border p-3.5 text-left transition-all duration-150 ${checked
+                  ? "border-indigo-500/80 bg-indigo-950/40 text-white shadow-md shadow-indigo-950/50"
+                  : "border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700 hover:bg-slate-800/80"
+                  }`}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -263,11 +343,10 @@ const RoleChecklist = ({ roles = [], selected = [], onToggle, emptyHint }) => {
                       {role.name}
                     </span>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                        role.isSystem
-                          ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
-                          : "border-indigo-500/30 bg-indigo-500/10 text-indigo-300"
-                      }`}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${role.isSystem
+                        ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                        : "border-indigo-500/30 bg-indigo-500/10 text-indigo-300"
+                        }`}
                     >
                       {role.isSystem ? "System" : "Custom"}
                     </span>
@@ -285,11 +364,10 @@ const RoleChecklist = ({ roles = [], selected = [], onToggle, emptyHint }) => {
                   )}
                 </div>
                 <div
-                  className={`h-5 w-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
-                    checked
-                      ? "bg-indigo-600 border-indigo-500 shadow-sm"
-                      : "border-slate-600 bg-slate-950 group-hover:border-slate-500"
-                  }`}
+                  className={`h-5 w-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-all ${checked
+                    ? "bg-indigo-600 border-indigo-500 shadow-sm"
+                    : "border-slate-600 bg-slate-950 group-hover:border-slate-500"
+                    }`}
                 >
                   {checked && <Check size={13} className="text-white stroke-[3]" />}
                 </div>
@@ -431,6 +509,72 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
   );
 };
 
+// ── Dashboard modules edit modal ──────────────────────────────────────────────
+const DashboardModulesModal = ({ role, moduleKeys, onClose, onSaved, showToast }) => {
+  const [draft, setDraft] = useState(role.dashboardModules ?? [...moduleKeys]);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api(`${API_BASE}/${role._id}`, {
+        method: "PUT",
+        body: JSON.stringify({ dashboardModules: draft }),
+      });
+      showToast?.("Dashboard modules updated.");
+      onSaved();
+    } catch (err) {
+      showToast?.(err.message || "Failed to save dashboard modules.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-700 bg-[#111827] p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-lg font-bold text-white capitalize">
+            {role.name} Dashboard Modules
+          </h3>
+          <button onClick={onClose} className="text-slate-500 hover:text-white">
+            <X size={18} />
+          </button>
+        </div>
+
+        <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+          Choose which sidebar sections are visible to everyone holding the{" "}
+          <span className="text-slate-300 font-semibold capitalize">{role.name}</span> role.
+          Unchecked modules are hidden from their dashboard.
+        </p>
+
+        <DashboardModuleChecklist
+          moduleKeys={moduleKeys}
+          value={draft}
+          onChange={setDraft}
+        />
+
+        <div className="flex justify-end gap-2 pt-4 mt-6 border-t border-slate-800">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-slate-700 text-slate-300 text-sm font-semibold hover:bg-slate-900"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold disabled:opacity-60 flex items-center gap-2"
+          >
+            {saving && <Loader2 size={14} className="animate-spin" />}
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Assign roles modal ────────────────────────────────────────────────────────
 const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => {
   const BASE_ROLE_VALUES = ["student", "instructor", "admin", "staff"];
@@ -563,25 +707,22 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
                 key={role._id}
                 type="button"
                 onClick={() => setSelectedRoleId(role._id)}
-                className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 text-left transition-all ${
-                  active
-                    ? "border-indigo-500/80 bg-indigo-950/40 shadow-md shadow-indigo-950/50"
-                    : "border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-800/80"
-                }`}
+                className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 text-left transition-all ${active
+                  ? "border-indigo-500/80 bg-indigo-950/40 shadow-md shadow-indigo-950/50"
+                  : "border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-800/80"
+                  }`}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`text-sm font-bold tracking-wide ${
-                      active ? "text-white" : "text-slate-300"
-                    }`}>
+                    <span className={`text-sm font-bold tracking-wide ${active ? "text-white" : "text-slate-300"
+                      }`}>
                       {role.name}
                     </span>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                        role.isSystem
-                          ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
-                          : "border-indigo-500/30 bg-indigo-500/10 text-indigo-300"
-                      }`}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${role.isSystem
+                        ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                        : "border-indigo-500/30 bg-indigo-500/10 text-indigo-300"
+                        }`}
                     >
                       {role.isSystem ? "System" : "Custom"}
                     </span>
@@ -600,11 +741,10 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
                 </div>
                 {/* Radio circle */}
                 <div
-                  className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                    active
-                      ? "border-indigo-400 bg-indigo-500"
-                      : "border-slate-600 bg-slate-950"
-                  }`}
+                  className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${active
+                    ? "border-indigo-400 bg-indigo-500"
+                    : "border-slate-600 bg-slate-950"
+                    }`}
                 >
                   {active && <div className="h-2 w-2 rounded-full bg-white" />}
                 </div>
@@ -888,19 +1028,17 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
                     key={roleValue}
                     type="button"
                     onClick={() => setForm((f) => ({ ...f, baseRole: roleValue }))}
-                    className={`flex items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left transition-all ${
-                      active
-                        ? "border-indigo-500/80 bg-indigo-950/40 text-white shadow-md shadow-indigo-950/50"
-                        : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-600 hover:text-white"
-                    }`}
+                    className={`flex items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left transition-all ${active
+                      ? "border-indigo-500/80 bg-indigo-950/40 text-white shadow-md shadow-indigo-950/50"
+                      : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-600 hover:text-white"
+                      }`}
                   >
                     <span className="text-sm font-bold capitalize">{roleValue}</span>
                     <div
-                      className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                        active
-                          ? "border-indigo-400 bg-indigo-500"
-                          : "border-slate-600 bg-slate-950"
-                      }`}
+                      className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${active
+                        ? "border-indigo-400 bg-indigo-500"
+                        : "border-slate-600 bg-slate-950"
+                        }`}
                     >
                       {active && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
                     </div>
@@ -947,6 +1085,7 @@ const RoleManager = ({ showToast, currentUser }) => {
 
   const [tab, setTab] = useState("roles");
   const [modules, setModules] = useState({});
+  const [dashboardModuleRegistry, setDashboardModuleRegistry] = useState({});
   const [roles, setRoles] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -957,17 +1096,20 @@ const RoleManager = ({ showToast, currentUser }) => {
   const [assignTarget, setAssignTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [addUserOpen, setAddUserOpen] = useState(false);
+  const [dashboardTarget, setDashboardTarget] = useState(null); // role doc being edited
 
   const loadAll = useCallback(async () => {
     setLoading(true);
     setLoadError("");
     try {
-      const [modulesRes, rolesRes, usersRes] = await Promise.all([
+      const [modulesRes, dashModulesRes, rolesRes, usersRes] = await Promise.all([
         api(`${API_BASE}/modules`),
+        api(`${API_BASE}/dashboard-modules`),
         api(API_BASE),
         api("/users"),
       ]);
       setModules(modulesRes.modules || {});
+      setDashboardModuleRegistry(dashModulesRes.modules || {});
       setRoles(rolesRes || []);
       setUsers(usersRes || []);
     } catch (err) {
@@ -1046,6 +1188,11 @@ const RoleManager = ({ showToast, currentUser }) => {
     role.permissions?.reduce((sum, p) => sum + (p.actions?.length || 0), 0) ??
     0;
 
+  // Roles that have a dashboard-module registry entry (student, instructor)
+  const dashboardGovernedRoles = roles.filter(
+    (r) => r.isSystem && dashboardModuleRegistry[r.name?.toLowerCase()],
+  );
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -1082,6 +1229,7 @@ const RoleManager = ({ showToast, currentUser }) => {
       <div className="inline-flex w-fit rounded-xl border border-slate-800 bg-[#0b1120] p-1">
         {[
           { key: "roles", label: "Roles", icon: Lock },
+          { key: "dashboards", label: "Dashboard Modules", icon: LayoutGrid },
           { key: "users", label: "Assign to Users", icon: UsersIcon },
         ].map((t) => {
           const Icon = t.icon;
@@ -1089,11 +1237,10 @@ const RoleManager = ({ showToast, currentUser }) => {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-colors ${
-                tab === t.key
-                  ? "bg-indigo-600 text-white"
-                  : "text-slate-400 hover:text-white"
-              }`}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-colors ${tab === t.key
+                ? "bg-indigo-600 text-white"
+                : "text-slate-400 hover:text-white"
+                }`}
             >
               <Icon size={14} />
               {t.label}
@@ -1224,6 +1371,68 @@ const RoleManager = ({ showToast, currentUser }) => {
             ))}
           </div>
         )
+      ) : tab === "dashboards" ? (
+        dashboardGovernedRoles.length === 0 ? (
+          <div className="text-center py-16">
+            <LayoutGrid size={36} className="mx-auto mb-3 text-slate-700" />
+            <p className="text-slate-500 font-semibold">
+              No dashboard-governed roles found.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {dashboardGovernedRoles.map((role) => {
+              const roleKey = role.name.toLowerCase();
+              const allKeys = dashboardModuleRegistry[roleKey] || [];
+              const enabledCount = (role.dashboardModules ?? allKeys).length;
+              return (
+                <div
+                  key={role._id}
+                  className="rounded-2xl border border-slate-800 bg-[#111827] p-5 flex flex-col gap-3"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-white capitalize">
+                        {role.name} Dashboard
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {enabledCount} of {allKeys.length} modules visible
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setDashboardTarget(role)}
+                      className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-700 text-slate-300 hover:border-indigo-500 hover:text-indigo-300"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {allKeys.length === 0 && (
+                      <span className="text-[11px] text-slate-600">
+                        No modules registered.
+                      </span>
+                    )}
+                    {allKeys.map((key) => {
+                      const on = (role.dashboardModules ?? allKeys).includes(key);
+                      return (
+                        <span
+                          key={key}
+                          className={`text-[10px] font-semibold px-2 py-1 rounded-md border ${on
+                            ? "bg-indigo-950/40 text-indigo-300 border-indigo-900/40"
+                            : "bg-slate-900/60 text-slate-600 border-slate-800 line-through"
+                            }`}
+                        >
+                          {DASHBOARD_MODULE_LABELS[key] || key}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
       ) : (
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-3">
@@ -1325,6 +1534,19 @@ const RoleManager = ({ showToast, currentUser }) => {
           onClose={() => setRoleModal(null)}
           onSaved={() => {
             setRoleModal(null);
+            loadAll();
+          }}
+          showToast={showToast}
+        />
+      )}
+
+      {dashboardTarget && (
+        <DashboardModulesModal
+          role={dashboardTarget}
+          moduleKeys={dashboardModuleRegistry[dashboardTarget.name.toLowerCase()] || []}
+          onClose={() => setDashboardTarget(null)}
+          onSaved={() => {
+            setDashboardTarget(null);
             loadAll();
           }}
           showToast={showToast}

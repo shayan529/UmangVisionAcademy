@@ -12,6 +12,22 @@ export const isBaseRole = (value) =>
  *
  * Returns true if the user's effective role name matches roleName.
  */
+
+// add anywhere near the other exports:
+
+/**
+ * True if the module should be visible in the current dashboard's sidebar.
+ * Admins always see everything. `user.dashboardModules` comes from the
+ * server-hydrated user (see hydrateUserRoles); null/undefined means
+ * "unrestricted" so nothing breaks for users hydrated before this shipped.
+ */
+export const hasDashboardModule = (user, moduleKey) => {
+  if (!user) return false;
+  if (hasBaseRole(user, "admin")) return true;
+  const mods = user.dashboardModules;
+  if (!Array.isArray(mods)) return true;
+  return mods.includes(moduleKey);
+};
 export const hasBaseRole = (user, roleName) => {
   if (!user || !roleName) return false;
   const name = roleName.toLowerCase();

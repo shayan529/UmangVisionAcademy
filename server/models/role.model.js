@@ -2,8 +2,6 @@ import mongoose from "mongoose";
 
 const { Schema, model } = mongoose;
 
-// Single source of truth for what can be granted. Keep this in sync with
-// PERMISSION_MODULES on the frontend (RoleManager.jsx).
 export const PERMISSION_MODULES = {
   courses: ["view", "create", "edit", "delete", "approve"],
   users: ["view", "create", "edit", "delete"],
@@ -16,6 +14,21 @@ export const PERMISSION_MODULES = {
   ai_tutor: ["access"],
   references: ["view", "create", "edit", "delete", "approve"],
   applications: ["view", "approve", "reject"],
+};
+
+// Sidebar-visibility modules per base-role dashboard. Keys match each
+// dashboard's nav item `id`/`moduleKey` so filtering is a plain `.includes()`.
+export const DASHBOARD_MODULES = {
+  student: [
+    "overview", "my_courses", "study_notes", "question_bank", "blogs",
+    "ai_tutor", "sessions", "progress", "mock_tests", "leaderboard",
+    "achievements", "certificates", "plans", "become_instructor",
+    "referral", "wallet", "purchase_history", "references", "settings",
+  ],
+  instructor: [
+    "dashboard", "courses", "students", "sessions", "notes", "reels",
+    "analytics", "ai", "settings", "mock-tests",
+  ],
 };
 
 const permissionSchema = new Schema(
@@ -57,8 +70,20 @@ const roleSchema = new Schema(
       type: [permissionSchema],
       default: [],
     },
-    // System roles (Admin / Instructor / Student baseline) can't be deleted,
-    // and their name can't be changed, to avoid breaking authorizeRoles() checks.
+    // undefined = unrestricted (every module visible). Only meaningful for
+    // roles whose lowercase name is a key in DASHBOARD_MODULES.
+    dashboardModules: {
+      type: [String],
+      default: undefined,
+      validate: {
+        validator: function (mods) {
+          const allowed = DASHBOARD_MODULES[this.name?.toLowerCase()];
+          if (!allowed) return true;
+          return mods.every((m) => allowed.includes(m));
+        },
+        message: "Invalid dashboard module for this role",
+      },
+    },
     isSystem: {
       type: Boolean,
       default: false,
