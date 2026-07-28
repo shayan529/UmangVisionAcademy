@@ -298,19 +298,17 @@ const PasswordResetModal = ({ onClose }) => {
         }
 
         try {
-          const res = await verifyFirebasePhoneOtp(
-            confirmationSession,
-            otpStr,
-          );
+          const res = await verifyFirebasePhoneOtp(confirmationSession, otpStr);
           firebaseToken = res.idToken;
         } catch (fbVerifyErr) {
           console.error("Firebase verify token failed:", fbVerifyErr);
           const userMsg =
             fbVerifyErr.code === "auth/invalid-verification-code"
-              ? t("passwordReset.toast.invalidOtp") || "Invalid OTP code entered."
+              ? t("passwordReset.toast.invalidOtp") ||
+                "Invalid OTP code entered."
               : fbVerifyErr.code === "auth/code-expired"
-              ? "The OTP code has expired. Please resend a new OTP."
-              : fbVerifyErr.message || t("passwordReset.toast.invalidOtp");
+                ? "The OTP code has expired. Please resend a new OTP."
+                : fbVerifyErr.message || t("passwordReset.toast.invalidOtp");
           toast.error(userMsg, { id: "otp-verify-error" });
           setLoading(false);
           return;
@@ -545,7 +543,12 @@ const PasswordResetModal = ({ onClose }) => {
                         e.target.value.replace(/\D/g, "").slice(0, 10),
                       )
                     }
-                    onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSendOtp();
+                      }
+                    }}
                     placeholder={t("passwordReset.mobilePlaceholder")}
                     maxLength={10}
                     style={{
@@ -1044,7 +1047,10 @@ const Login = () => {
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleSendLoginOtp = async () => {
+  const handleSendLoginOtp = async (event) => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+
     if (!/^[0-9]{10}$/.test(formData.phoneNumber)) {
       toast.error(
         t("auth.invalidPhone") || "Please enter a valid 10-digit phone number.",
@@ -1071,6 +1077,10 @@ const Login = () => {
           );
           setFirebaseConfirmationResult(confirmation);
         } catch (fbErr) {
+          if (import.meta.env.PROD) {
+            console.error("Firebase Phone Auth failed:", fbErr);
+            throw fbErr;
+          }
           usedFallback = true;
           setOtpFallbackMode(true);
           setFirebaseConfirmationResult(null);
@@ -1120,7 +1130,7 @@ const Login = () => {
         const confirmationSession =
           firebaseConfirmationResult || window.confirmationResult;
 
-        if (isFirebaseConfigured()) {
+        if (isFirebaseConfigured() && !otpFallbackMode) {
           if (!confirmationSession) {
             toast.error(
               "OTP session expired or missing. Please click 'Resend OTP' to receive a new code.",
@@ -1141,8 +1151,9 @@ const Login = () => {
               fbVerifyErr.code === "auth/invalid-verification-code"
                 ? "Invalid OTP code entered. Please double-check the code sent to your phone."
                 : fbVerifyErr.code === "auth/code-expired"
-                ? "The OTP code has expired. Please click 'Resend OTP' for a new code."
-                : fbVerifyErr.message || "Failed to verify OTP code with Firebase.";
+                  ? "The OTP code has expired. Please click 'Resend OTP' for a new code."
+                  : fbVerifyErr.message ||
+                    "Failed to verify OTP code with Firebase.";
             toast.error(userMsg);
             setLoading(false);
             return;
