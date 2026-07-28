@@ -55,8 +55,7 @@ createRoot(document.getElementById("root")).render(
             <App />
           </ErrorBoundary>
         </Suspense>
-      </BrowserRouter>
-      <Toaster
+        <Toaster
           containerStyle={{
             top: 70,
             zIndex: 999999,
