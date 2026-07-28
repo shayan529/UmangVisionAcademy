@@ -76,8 +76,7 @@ const initI18n = async () => {
         order: ["localStorage", "navigator"],
         caches: ["localStorage"],
       },
-      // Don't suspend the app while loading — we handle loading state ourselves
-      react: { useSuspense: false },
+      react: { useSuspense: true },
     });
 
   // After init, silently pre-fetch Hindi if it wasn't loaded yet so that

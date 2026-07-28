@@ -1,5 +1,5 @@
 import "./config/api.js";
-import { StrictMode } from "react";
+import { StrictMode, Suspense } from "react";
 
 // Automatically reload the page when a lazy chunk load fails due to a new deployment
 if (typeof window !== "undefined") {
@@ -44,10 +44,19 @@ createRoot(document.getElementById("root")).render(
   <Provider store={store}>
     <HelmetProvider>
       <BrowserRouter>
-        <ErrorBoundary>
-          <App />
-        </ErrorBoundary>
-        <Toaster
+        <Suspense
+          fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#0b1120] text-slate-400">
+              <div className="w-12 h-12 border-4 border-slate-800 border-t-cyan-400 rounded-full animate-spin" />
+            </div>
+          }
+        >
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
+        </Suspense>
+      </BrowserRouter>
+      <Toaster
           containerStyle={{
             top: 70,
             zIndex: 999999,
