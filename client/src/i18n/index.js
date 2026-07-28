@@ -19,7 +19,7 @@ i18n
       order: ["localStorage", "navigator"],
       caches: ["localStorage"],
     },
-    react: { useSuspense: false },
+    react: { useSuspense: true },
   });
 
 export default i18n;
