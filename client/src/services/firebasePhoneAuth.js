@@ -158,6 +158,16 @@ export const clearRecaptcha = (containerId = "recaptcha-container") => {
   }
 };
 
+const withTimeout = (promise, ms = 12000, errorMessage = "Operation timed out") => {
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(errorMessage));
+    }, ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
+};
+
 /**
  * Create a fresh RecaptchaVerifier, render it, and store it on window.
  *
@@ -194,7 +204,11 @@ export const setupRecaptchaVerifier = async (
     },
   });
 
-  await verifier.render();
+  await withTimeout(
+    verifier.render(),
+    10000,
+    "reCAPTCHA initialization timed out. Please check network or domain configuration.",
+  );
   window.recaptchaVerifier = verifier;
   return verifier;
 };
@@ -221,10 +235,10 @@ export const sendFirebasePhoneOtp = async (
   const verifier = await setupRecaptchaVerifier(containerId);
 
   try {
-    const confirmationResult = await signInWithPhoneNumber(
-      auth,
-      phoneNumber,
-      verifier,
+    const confirmationResult = await withTimeout(
+      signInWithPhoneNumber(auth, phoneNumber, verifier),
+      15000,
+      "reCAPTCHA verification timed out. Please try again or check Firebase domain settings.",
     );
     window.confirmationResult = confirmationResult;
     return confirmationResult;

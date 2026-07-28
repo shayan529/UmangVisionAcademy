@@ -96,8 +96,13 @@ export const loadCurrentUser = createAsyncThunk(
     // Skip the network call only if the user is already loaded AND their
     // role is a proper base-role string or a populated object (not a raw ObjectId).
     condition: (_, { getState }) => {
+      const token = typeof localStorage !== "undefined" ? localStorage.getItem("authToken") : null;
       const { user, isAuthenticated } = getState().auth;
-      if (!isAuthenticated || !user) return true; // must fetch
+
+      // Skip the network call if guest user has no token and no cached user state
+      if (!token && !isAuthenticated && !user) {
+        return false;
+      }
 
       const role = user?.role;
       // Raw ObjectId string — must re-fetch to get hydrated role
@@ -108,7 +113,7 @@ export const loadCurrentUser = createAsyncThunk(
         IS_OBJECT_ID.test(role)
       ) return true;
 
-      return true; // always refresh (background update)
+      return true; // refresh background user state if token/user exists
     },
   },
 );

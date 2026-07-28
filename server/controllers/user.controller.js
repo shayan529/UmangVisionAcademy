@@ -1075,6 +1075,9 @@ export const selectClass = async (req, res) => {
     user.selectedClass = selectedClass;
     await user.save();
 
+    await deleteKey(`student:sessions:${user._id}`);
+    await deleteKey(`user:${user._id}`);
+
     res.json(await hydrateUserRoles(user));
   } catch (error) {
     res.status(500).json({ message: error.message });

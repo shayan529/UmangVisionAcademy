@@ -17,6 +17,7 @@ import {
   approveCourse,
   rejectCourse,
   unrejectCourse,
+  assignCoursesToInstructor,
 } from "../controllers/course.controller.js";
 import {
   protect,
@@ -36,6 +37,12 @@ router.get(
   protect,
   requirePermission("courses", "view"),
   getAllCoursesAdmin,
+);
+router.put(
+  "/assign-instructor",
+  protect,
+  requirePermission("courses", "edit"),
+  assignCoursesToInstructor,
 );
 router.get("/enrolled", protect, enrolledCourses);
 router.post("/:id/progress", protect, saveCourseProgress);

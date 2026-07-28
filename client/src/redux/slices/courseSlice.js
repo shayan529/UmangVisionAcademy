@@ -46,6 +46,16 @@ export const fetchEnrolledCourses = createAsyncThunk(
       return rejectWithValue(err.response?.data?.message || err.message);
     }
   },
+  {
+    condition: (_, { getState }) => {
+      const token = typeof localStorage !== "undefined" ? localStorage.getItem("authToken") : null;
+      const { user, isAuthenticated } = getState().auth || {};
+      if (!token && !user && !isAuthenticated) {
+        return false;
+      }
+      return true;
+    },
+  },
 );
 
 export const fetchCourseById = createAsyncThunk(

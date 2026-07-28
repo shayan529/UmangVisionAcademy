@@ -61,7 +61,7 @@ export const getStudentSessions = async (req, res) => {
     const studentId = req.user._id.toString();
     const cacheKey = `student:sessions:${studentId}`;
 
-    const sessions = await cacheResponse(cacheKey, 300, async () => {
+    const sessions = await cacheResponse(cacheKey, 15, async () => {
       const query = { $or: [{ students: req.user._id }] };
       if (
         req.user.subscription?.status === "active" &&

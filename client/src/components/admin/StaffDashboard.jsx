@@ -571,6 +571,7 @@ export default function StaffDashboard() {
         return hasPermission(user, "users", "view") ? (
           <AdminInstructors
             enrichedInstructors={sortedInstructors}
+            courses={courses}
             q={q}
             setQ={setQ}
             deleteUser={deleteUser}

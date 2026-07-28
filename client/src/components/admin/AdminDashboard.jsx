@@ -227,6 +227,7 @@ export default function AdminDashboard() {
         return (
           <AdminInstructors
             enrichedInstructors={sortedInstructors}
+            courses={courses}
             q={q}
             setQ={setQ}
             deleteUser={deleteUser}

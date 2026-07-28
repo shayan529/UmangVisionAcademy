@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import {
   Search,
   Trash2,
   BookOpen,
+  BookPlus,
   Star,
   GraduationCap,
   Upload,
@@ -635,8 +636,366 @@ const EditInstructorModal = ({ instructor, onClose, onSaved }) => {
   );
 };
 
+/* ─── Assign Courses Modal ────────────────────────────── */
+/* ─── Assign Courses Modal ────────────────────────────── */
+const AssignCoursesModal = ({
+  instructor,
+  courses = [],
+  instructors = [],
+  onClose,
+  onAssigned,
+}) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedCourseIds, setSelectedCourseIds] = useState(() => {
+    return (courses || [])
+      .filter((c) => {
+        const instId =
+          typeof c.instructor === "object" ? c.instructor?._id : c.instructor;
+        return String(instId) === String(instructor._id);
+      })
+      .map((c) => c._id);
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const initialAssignedIds = useMemo(() => {
+    return (courses || [])
+      .filter((c) => {
+        const instId =
+          typeof c.instructor === "object" ? c.instructor?._id : c.instructor;
+        return String(instId) === String(instructor._id);
+      })
+      .map((c) => c._id);
+  }, [courses, instructor._id]);
+
+  const filteredCourses = (courses || []).filter((c) => {
+    const q = searchQuery.toLowerCase();
+    const titleMatch = c.title?.toLowerCase().includes(q);
+    const categoryMatch = c.category?.toLowerCase().includes(q);
+    if (!titleMatch && !categoryMatch) return false;
+
+    const rawInstId =
+      typeof c.instructor === "object" ? c.instructor?._id : c.instructor;
+    const isTargetInst = String(rawInstId || "") === String(instructor._id);
+    const hasInstructor = Boolean(rawInstId);
+
+    if (statusFilter === "unassigned") return !hasInstructor;
+    if (statusFilter === "assigned") return hasInstructor && !isTargetInst;
+    if (statusFilter === "this_instructor") return isTargetInst;
+    return true;
+  });
+
+  const toggleCourse = (courseId) => {
+    setSelectedCourseIds((prev) =>
+      prev.includes(courseId)
+        ? prev.filter((id) => id !== courseId)
+        : [...prev, courseId],
+    );
+  };
+
+  const handleSelectAll = () => {
+    setSelectedCourseIds(filteredCourses.map((c) => c._id));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedCourseIds([]);
+  };
+
+  const handleSubmit = async () => {
+    setSaving(true);
+    setError("");
+
+    const unassignedCourseIds = initialAssignedIds.filter(
+      (id) => !selectedCourseIds.includes(id),
+    );
+
+    try {
+      await api.put("/courses/assign-instructor", {
+        instructorId: instructor._id,
+        courseIds: selectedCourseIds,
+        unassignedCourseIds,
+      });
+
+      if (onAssigned) await onAssigned();
+      onClose();
+    } catch (err) {
+      setError(
+        err.response?.data?.message || err.message || "Failed to assign courses.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between gap-4 p-5 border-b border-slate-800 bg-slate-950/95 backdrop-blur flex-none">
+          <div className="flex items-center gap-3 min-w-0">
+            <Av name={instructor.name} src={instructor.avatarUrl} size={42} />
+            <div className="min-w-0">
+              <h3 className="text-base font-extrabold text-white truncate">
+                Assign Available Courses
+              </h3>
+              <p className="text-xs text-indigo-400 font-semibold truncate">
+                Instructor: {instructor.name} ({selectedCourseIds.length} course{selectedCourseIds.length !== 1 ? "s" : ""} selected)
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex-none p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Toolbar, Filter & Search */}
+        <div className="p-4 border-b border-slate-800/80 bg-slate-900/40 flex flex-col gap-3 flex-none">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative w-full sm:w-72">
+              <Search
+                size={14}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+              />
+              <input
+                type="text"
+                className="w-full bg-slate-900/80 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 transition duration-150"
+                placeholder="Search available courses..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end text-xs">
+              <button
+                type="button"
+                onClick={handleSelectAll}
+                className="flex-1 sm:flex-initial px-2.5 py-1.5 rounded-lg font-semibold text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 transition text-center"
+              >
+                Select All Filtered
+              </button>
+              <button
+                type="button"
+                onClick={handleDeselectAll}
+                className="flex-1 sm:flex-initial px-2.5 py-1.5 rounded-lg font-semibold text-slate-400 bg-slate-800/60 hover:bg-slate-800 transition text-center"
+              >
+                Deselect All
+              </button>
+            </div>
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("all")}
+              className={`px-2.5 py-1 rounded-lg font-semibold transition ${
+                statusFilter === "all"
+                  ? "bg-indigo-600 text-white"
+                  : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
+              }`}
+            >
+              All ({courses.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("unassigned")}
+              className={`px-2.5 py-1 rounded-lg font-semibold transition ${
+                statusFilter === "unassigned"
+                  ? "bg-slate-700 text-white"
+                  : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
+              }`}
+            >
+              Unassigned
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("this_instructor")}
+              className={`px-2.5 py-1 rounded-lg font-semibold transition ${
+                statusFilter === "this_instructor"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
+              }`}
+            >
+              {instructor.name}'s
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("assigned")}
+              className={`px-2.5 py-1 rounded-lg font-semibold transition ${
+                statusFilter === "assigned"
+                  ? "bg-amber-600 text-white"
+                  : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
+              }`}
+            >
+              Other Instructors'
+            </button>
+          </div>
+        </div>
+
+        {/* Error banner */}
+        {error && (
+          <div className="mx-5 mt-4 p-3 rounded-xl border border-red-500/20 bg-red-500/10 text-red-300 flex items-center gap-2 text-xs flex-none">
+            <AlertCircle size={15} className="flex-none" />
+            <p>{error}</p>
+          </div>
+        )}
+
+        {/* Course List */}
+        <div className="p-5 overflow-y-auto flex-1 flex flex-col gap-2.5">
+          {filteredCourses.length > 0 ? (
+            filteredCourses.map((c) => {
+              const isChecked = selectedCourseIds.includes(c._id);
+              const rawInstId =
+                typeof c.instructor === "object"
+                  ? c.instructor?._id
+                  : c.instructor;
+              const isOriginallyCurrentInst =
+                String(rawInstId || "") === String(instructor._id);
+
+              let assignedName = "";
+              if (typeof c.instructor === "object" && c.instructor?.name) {
+                assignedName = c.instructor.name;
+              } else if (rawInstId) {
+                const found = (instructors || []).find(
+                  (i) => String(i._id) === String(rawInstId),
+                );
+                if (found) assignedName = found.name;
+              }
+
+              let statusBadge = null;
+              if (isChecked) {
+                if (isOriginallyCurrentInst) {
+                  statusBadge = (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                      ✓ Assigned to this instructor
+                    </span>
+                  );
+                } else {
+                  statusBadge = (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-indigo-500/10 border border-indigo-500/30 text-indigo-300">
+                      + Will assign to {instructor.name}
+                    </span>
+                  );
+                }
+              } else {
+                if (isOriginallyCurrentInst) {
+                  statusBadge = (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-500/10 border border-red-500/20 text-red-400">
+                      ✕ Will unassign
+                    </span>
+                  );
+                } else if (assignedName) {
+                  statusBadge = (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 border border-amber-500/20 text-amber-300 truncate max-w-[150px]">
+                      Assigned: {assignedName}
+                    </span>
+                  );
+                } else {
+                  statusBadge = (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-800 border border-slate-700 text-slate-400">
+                      Unassigned
+                    </span>
+                  );
+                }
+              }
+
+              return (
+                <div
+                  key={c._id}
+                  onClick={() => toggleCourse(c._id)}
+                  className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition cursor-pointer select-none ${
+                    isChecked
+                      ? "bg-indigo-500/10 border-indigo-500/40 text-white"
+                      : "bg-slate-900/30 border-slate-800/80 hover:border-slate-700/80 text-slate-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => {}}
+                      className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 flex-none"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">{c.title}</p>
+                      <div className="flex flex-wrap items-center gap-2 mt-1 text-[10px] text-slate-400">
+                        {c.category && (
+                          <span className="bg-slate-800 px-2 py-0.5 rounded text-slate-300 font-medium">
+                            {c.category}
+                          </span>
+                        )}
+                        <span>{c.level || "Beginner"}</span>
+                        <span>•</span>
+                        <span className="font-semibold text-emerald-400">
+                          {c.price ? `₹${c.price}` : "Free"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-none text-[10px]">
+                    {statusBadge}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="py-12 text-center text-slate-500 text-xs">
+              No available courses found matching your search or status filter.
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-800 bg-slate-950/95 flex flex-col sm:flex-row items-center justify-between gap-3 flex-none">
+          <p className="text-xs text-slate-400 text-center sm:text-left">
+            <span className="font-bold text-white">{selectedCourseIds.length}</span> course{selectedCourseIds.length !== 1 ? "s" : ""} assigned to {instructor.name}
+          </p>
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition disabled:opacity-60"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={saving}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition disabled:opacity-60"
+            >
+              {saving ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save size={14} />
+                  Save Assignments
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ─── Instructor Details Modal ───────────────────────── */
-const InstructorDetailsModal = ({ instructor, onClose, onEdit }) => {
+const InstructorDetailsModal = ({ instructor, onClose, onEdit, onAssignCourses }) => {
   if (!instructor) return null;
 
   const courses = instructor.mc || [];
@@ -668,13 +1027,24 @@ const InstructorDetailsModal = ({ instructor, onClose, onEdit }) => {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-none">
-            {onEdit && <button
-              onClick={onEdit}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition"
-            >
-              <Pencil size={14} />
-              Edit
-            </button>}
+            {onAssignCourses && (
+              <button
+                onClick={onAssignCourses}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition"
+              >
+                <BookPlus size={14} />
+                Assign Courses
+              </button>
+            )}
+            {onEdit && (
+              <button
+                onClick={onEdit}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition"
+              >
+                <Pencil size={14} />
+                Edit
+              </button>
+            )}
             <button
               onClick={onClose}
               className="flex-none p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
@@ -815,6 +1185,7 @@ const InstructorDetailsModal = ({ instructor, onClose, onEdit }) => {
 /* ─── Main Component ──────────────────────────────────── */
 const AdminInstructors = ({
   enrichedInstructors = [],
+  courses = [],
   q,
   setQ,
   deleteUser,
@@ -831,6 +1202,7 @@ const AdminInstructors = ({
   const [selectedInstructor, setSelectedInstructor] = useState(null);
   const [editingInstructor, setEditingInstructor] = useState(null);
   const [addingInstructor, setAddingInstructor] = useState(false);
+  const [assigningCoursesInstructor, setAssigningCoursesInstructor] = useState(null);
 
   // ── Bulk import state ──────────────────────────────────────────────────
   const fileInputRef = useRef(null);
@@ -909,9 +1281,9 @@ const AdminInstructors = ({
           </h2>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
           {/* Search Box */}
-          <div className="relative w-full sm:flex-1 md:flex-none md:w-72 shrink-0">
+          <div className="relative w-full sm:w-64 md:w-72 shrink-0">
             <Search
               size={14}
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
@@ -925,24 +1297,26 @@ const AdminInstructors = ({
             />
           </div>
 
-          {canCreate && <button
-            type="button"
-            onClick={() => setAddingInstructor(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 transition"
-          >
-            <UserPlus size={14} />
-            Add Instructor
-          </button>}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {canCreate && <button
+              type="button"
+              onClick={() => setAddingInstructor(true)}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 transition"
+            >
+              <UserPlus size={14} />
+              Add Instructor
+            </button>}
 
-          {canCreate && <button
-            type="button"
-            onClick={handleImportClick}
-            disabled={importing}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60"
-          >
-            <Upload size={14} />
-            {importing ? "Importing..." : "Bulk Import"}
-          </button>}
+            {canCreate && <button
+              type="button"
+              onClick={handleImportClick}
+              disabled={importing}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60"
+            >
+              <Upload size={14} />
+              {importing ? "Importing..." : "Bulk Import"}
+            </button>}
+          </div>
           <input
             ref={fileInputRef}
             type="file"
@@ -1071,20 +1445,31 @@ const AdminInstructors = ({
             </div>
 
             {/* Right section: actions */}
-            <div className="flex  items-center md:items-end justify-between md:justify-start gap-2 shrink-0 w-full md:w-auto border-t md:border-t-0 border-slate-800/60 pt-4 md:pt-0">
+            <div className="grid grid-cols-2 sm:flex sm:items-center md:items-end justify-between md:justify-start gap-2 shrink-0 w-full md:w-auto border-t md:border-t-0 border-slate-800/60 pt-3 md:pt-0">
               {/* Details button */}
               <button
                 onClick={() => setSelectedInstructor(inst)}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 hover:border-indigo-500/30 transition duration-150"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 hover:border-indigo-500/30 transition duration-150"
               >
                 <Eye size={12} />
                 Details
               </button>
 
+              {/* Assign Courses button */}
+              {canEdit && (
+                <button
+                  onClick={() => setAssigningCoursesInstructor(inst)}
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/30 transition duration-150"
+                >
+                  <BookPlus size={12} />
+                  Assign Courses
+                </button>
+              )}
+
               {/* Edit button */}
               {canEdit && <button
                 onClick={() => setEditingInstructor(inst)}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/20 hover:bg-sky-500/20 hover:border-sky-500/30 transition duration-150"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/20 hover:bg-sky-500/20 hover:border-sky-500/30 transition duration-150"
               >
                 <Pencil size={12} />
                 Edit
@@ -1101,7 +1486,7 @@ const AdminInstructors = ({
                     deleteUser(inst._id, "instructor");
                   }
                 }}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/30 transition duration-150"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/30 transition duration-150"
               >
                 <Trash2 size={12} />
                 Remove
@@ -1127,6 +1512,14 @@ const AdminInstructors = ({
         <InstructorDetailsModal
           instructor={selectedInstructor}
           onClose={() => setSelectedInstructor(null)}
+          onAssignCourses={
+            canEdit
+              ? () => {
+                  setAssigningCoursesInstructor(selectedInstructor);
+                  setSelectedInstructor(null);
+                }
+              : null
+          }
           onEdit={
             canEdit
               ? () => {
@@ -1135,6 +1528,16 @@ const AdminInstructors = ({
               }
               : null
           }
+        />
+      )}
+
+      {assigningCoursesInstructor && (
+        <AssignCoursesModal
+          instructor={assigningCoursesInstructor}
+          courses={courses}
+          instructors={enrichedInstructors}
+          onClose={() => setAssigningCoursesInstructor(null)}
+          onAssigned={handleMutationSuccess}
         />
       )}
 

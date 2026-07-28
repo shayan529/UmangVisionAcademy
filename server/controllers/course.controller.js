@@ -1054,3 +1054,54 @@ export const submitQuiz = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// ── assignCoursesToInstructor ────────────────────────────────────────────────
+export const assignCoursesToInstructor = async (req, res) => {
+  try {
+    const { instructorId, courseIds = [], unassignedCourseIds = [] } = req.body;
+    if (!instructorId || !mongoose.Types.ObjectId.isValid(instructorId)) {
+      return res.status(400).json({ message: "Valid instructorId is required." });
+    }
+
+    const instructorUser = await User.findById(instructorId);
+    if (!instructorUser) {
+      return res.status(404).json({ message: "Instructor not found." });
+    }
+
+    const validCourseIds = (Array.isArray(courseIds) ? courseIds : []).filter(
+      (id) => mongoose.Types.ObjectId.isValid(id),
+    );
+
+    let updatedCount = 0;
+    if (validCourseIds.length > 0) {
+      const result = await Course.updateMany(
+        { _id: { $in: validCourseIds } },
+        { $set: { instructor: instructorId } },
+      );
+      updatedCount += result.modifiedCount || 0;
+    }
+
+    if (Array.isArray(unassignedCourseIds) && unassignedCourseIds.length > 0) {
+      const validUnassigned = unassignedCourseIds.filter((id) =>
+        mongoose.Types.ObjectId.isValid(id),
+      );
+      if (validUnassigned.length > 0) {
+        await Course.updateMany(
+          { _id: { $in: validUnassigned }, instructor: instructorId },
+          { $set: { instructor: req.user._id } },
+        );
+      }
+    }
+
+    await deleteKeys("courses:*");
+
+    res.json({
+      success: true,
+      message: `Courses assigned to ${instructorUser.name} successfully.`,
+      updatedCount,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+

@@ -971,7 +971,7 @@ const StudentSessions = ({ showToast, currentUser: propCurrentUser }) => {
   // ✅ Always fetch on mount — no conditional guard
   useEffect(() => {
     dispatch(fetchSessions());
-  }, [dispatch]);
+  }, [dispatch, currentUser?._id, currentUser?.selectedClass]);
 
   if (activeSession) {
     return (
