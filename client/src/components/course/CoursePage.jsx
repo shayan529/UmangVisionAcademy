@@ -7,6 +7,7 @@ import { updateUserScoreAndSubmissions } from "../../redux/slices/authSlice.js";
 import { checkAndAwardAchievements } from "../../redux/slices/achievementSlice.js";
 import TextLessonViewer from "./TextLessonViewer.jsx";
 import WatermarkOverlay from "./WaterMarkOverlay.jsx";
+import NoteViewerModal from "../common/NoteViewerModal.jsx";
 
 import { normalizeVideoUrl, isImageFile, isEmbedVideo, getEmbedUrl } from "../../utils/media.js";
 
@@ -952,6 +953,7 @@ export default function CoursePage() {
   const { user, loading: authLoading } = useSelector((s) => s.auth);
 
   const [isFocused, setIsFocused] = useState(true);
+  const [activeModalNote, setActiveModalNote] = useState(null);
   const mainContentRef = useRef(null);
 
   // Direct DOM blur — bypasses React re-render latency for instant effect
@@ -2215,14 +2217,13 @@ export default function CoursePage() {
                         )}
                       </div>
                       <div className="flex gap-1.5">
-                        <a
-                          href={getDocViewUrl(note.fileUrl)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="whitespace-nowrap rounded-lg bg-[#334155] px-3 py-1.5 text-[10px] font-bold text-slate-200 no-underline hover:bg-[#475569]"
+                        <button
+                          type="button"
+                          onClick={() => setActiveModalNote(note)}
+                          className="whitespace-nowrap rounded-lg bg-[#334155] px-3 py-1.5 text-[10px] font-bold text-slate-200 hover:bg-[#475569]"
                         >
                           View
-                        </a>
+                        </button>
                       <button
                         onClick={() => {
                           const ext = note.fileUrl.split(".").pop() || "pdf";
@@ -2306,6 +2307,11 @@ export default function CoursePage() {
       />
     )
   }
+      <NoteViewerModal
+        note={activeModalNote}
+        isOpen={Boolean(activeModalNote)}
+        onClose={() => setActiveModalNote(null)}
+      />
     </div >
   );
 }

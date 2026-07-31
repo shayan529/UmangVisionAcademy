@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import api from "../../config/api";
 import { useTranslation } from "react-i18next";
+import NoteViewerModal from "../common/NoteViewerModal";
 
 const downloadFile = async (url, filename) => {
   try {
@@ -132,6 +133,7 @@ export default function MobileNotes() {
   const [classNotes, setClassNotes] = useState([]);
   const [loadingClassNotes, setLoadingClassNotes] = useState(false);
   const [filterTerm, setFilterTerm] = useState("");
+  const [activeModalNote, setActiveModalNote] = useState(null);
 
   useEffect(() => {
     if (requireLogin) return;
@@ -370,15 +372,14 @@ export default function MobileNotes() {
 
                     {/* Action Buttons */}
                     <div className="grid grid-cols-2 gap-2">
-                      <a
-                        href={getDocViewUrl(note.fileUrl)}
-                        target="_blank"
-                        rel="noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => setActiveModalNote(note)}
                         className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white transition text-xs font-bold border border-slate-700/60 shadow-sm"
                       >
                         <Eye size={14} />
                         {t("studyNotes.view", "View")}
-                      </a>
+                      </button>
 
                       <button
                         type="button"
@@ -399,6 +400,12 @@ export default function MobileNotes() {
           </div>
         )}
       </div>
+
+      <NoteViewerModal
+        note={activeModalNote}
+        isOpen={Boolean(activeModalNote)}
+        onClose={() => setActiveModalNote(null)}
+      />
     </div>
   );
 }

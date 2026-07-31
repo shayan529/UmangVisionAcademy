@@ -8,6 +8,7 @@ import { fetchEnrolledCourses } from "../../redux/slices/courseSlice";
 import { hasBaseRole } from "../../utils/permissions.js";
 import { useTranslation } from "react-i18next";
 import { normalizeVideoUrl, isImageFile, isEmbedVideo, getEmbedUrl } from "../../utils/media.js";
+import NoteViewerModal from "../common/NoteViewerModal.jsx";
 
 // ── Local state ───────────────────────────────────────────────────────────────
 const useCourseDemo = (id) => {
@@ -590,6 +591,7 @@ export default function CourseDemo() {
 
   const { course, loading, error } = useCourseDemo(id);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [activeModalNote, setActiveModalNote] = useState(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const videoSectionRef = useRef(null);
 
@@ -1137,10 +1139,9 @@ export default function CourseDemo() {
                           </div>
                           {canAccess ? (
                             <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                              <a
-                                href={getDocViewUrl(note.fileUrl)}
-                                target="_blank"
-                                rel="noreferrer"
+                              <button
+                                type="button"
+                                onClick={() => setActiveModalNote(note)}
                                 style={{
                                   padding: "7px 12px",
                                   background: "#334155",
@@ -1148,12 +1149,13 @@ export default function CourseDemo() {
                                   borderRadius: 8,
                                   fontSize: 11,
                                   fontWeight: 700,
-                                  textDecoration: "none",
+                                  border: "none",
+                                  cursor: "pointer",
                                   whiteSpace: "nowrap",
                                 }}
                               >
                                 View
-                              </a>
+                              </button>
                               <button
                                 onClick={() => {
                                   const ext = note.fileUrl.split(".").pop() || "pdf";
@@ -1379,6 +1381,11 @@ export default function CourseDemo() {
           </div>
         )}
       </div>
+      <NoteViewerModal
+        note={activeModalNote}
+        isOpen={Boolean(activeModalNote)}
+        onClose={() => setActiveModalNote(null)}
+      />
     </>
   );
 }
