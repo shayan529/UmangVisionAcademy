@@ -492,7 +492,8 @@ const ChatPanelContent = React.memo(function ChatPanelContent({
       {/* Chat header */}
       <div
         onPointerDown={onHeaderPointerDown}
-        className={`p-3.5 bg-gradient-to-r from-[#131f38]/90 via-[#18294a]/90 to-[#1f1e42]/90 border-b border-teal-500/25 flex items-center justify-between shrink-0 shadow-sm ${
+        onTouchStart={onHeaderPointerDown}
+        className={`p-3.5 bg-gradient-to-r from-[#131f38]/90 via-[#18294a]/90 to-[#1f1e42]/90 border-b border-teal-500/25 flex items-center justify-between shrink-0 shadow-sm touch-none ${
           onHeaderPointerDown ? "cursor-grab active:cursor-grabbing select-none" : ""
         }`}
         title={onHeaderPointerDown ? (isHindi ? "ड्रैग करने के लिए पकड़ें" : "Drag to move across note") : undefined}
@@ -770,9 +771,19 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
     return () => window.removeEventListener("resize", clampPositions);
   }, [chatPos, avatarPos, isFullscreen]);
 
+  const getClientCoords = (evt) => {
+    if (evt.touches && evt.touches.length > 0) {
+      return { x: evt.touches[0].clientX, y: evt.touches[0].clientY };
+    }
+    if (evt.changedTouches && evt.changedTouches.length > 0) {
+      return { x: evt.changedTouches[0].clientX, y: evt.changedTouches[0].clientY };
+    }
+    return { x: evt.clientX, y: evt.clientY };
+  };
+
   const handleChatHeaderPointerDown = useCallback(
     (e) => {
-      if (e.button !== 0) return;
+      if (e.button !== undefined && e.button > 0) return;
       const container = containerRef.current;
       const card = chatCardRef.current;
       if (!container || !card) return;
@@ -783,19 +794,23 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
       const currentX = chatPos ? chatPos.x : cardRect.left - containerRect.left;
       const currentY = chatPos ? chatPos.y : cardRect.top - containerRect.top;
 
-      const startX = e.clientX;
-      const startY = e.clientY;
+      const startCoords = getClientCoords(e);
+      const startX = startCoords.x;
+      const startY = startCoords.y;
       const target = e.currentTarget;
 
       try {
-        target.setPointerCapture(e.pointerId);
+        if (e.pointerId !== undefined && target.setPointerCapture) {
+          target.setPointerCapture(e.pointerId);
+        }
       } catch (err) {}
 
       setIsDraggingChat(true);
 
-      const handlePointerMove = (moveEvent) => {
-        const dx = moveEvent.clientX - startX;
-        const dy = moveEvent.clientY - startY;
+      const handleMove = (moveEvent) => {
+        const moveCoords = getClientCoords(moveEvent);
+        const dx = moveCoords.x - startX;
+        const dy = moveCoords.y - startY;
 
         const maxX = containerRect.width - cardRect.width;
         const maxY = containerRect.height - cardRect.height;
@@ -806,26 +821,42 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
         setChatPos({ x: newX, y: newY });
       };
 
-      const handlePointerUp = (upEvent) => {
+      const handleUp = (upEvent) => {
         try {
-          target.releasePointerCapture(upEvent.pointerId);
+          if (upEvent.pointerId !== undefined && target.releasePointerCapture) {
+            target.releasePointerCapture(upEvent.pointerId);
+          }
         } catch (err) {}
-        target.removeEventListener("pointermove", handlePointerMove);
-        target.removeEventListener("pointerup", handlePointerUp);
-        target.removeEventListener("pointercancel", handlePointerUp);
+        target.removeEventListener("pointermove", handleMove);
+        target.removeEventListener("pointerup", handleUp);
+        target.removeEventListener("pointercancel", handleUp);
+        target.removeEventListener("touchmove", handleMove);
+        target.removeEventListener("touchend", handleUp);
+        target.removeEventListener("touchcancel", handleUp);
+        window.removeEventListener("pointermove", handleMove);
+        window.removeEventListener("pointerup", handleUp);
+        window.removeEventListener("touchmove", handleMove);
+        window.removeEventListener("touchend", handleUp);
         setIsDraggingChat(false);
       };
 
-      target.addEventListener("pointermove", handlePointerMove);
-      target.addEventListener("pointerup", handlePointerUp);
-      target.addEventListener("pointercancel", handlePointerUp);
+      target.addEventListener("pointermove", handleMove);
+      target.addEventListener("pointerup", handleUp);
+      target.addEventListener("pointercancel", handleUp);
+      target.addEventListener("touchmove", handleMove, { passive: false });
+      target.addEventListener("touchend", handleUp);
+      target.addEventListener("touchcancel", handleUp);
+      window.addEventListener("pointermove", handleMove);
+      window.addEventListener("pointerup", handleUp);
+      window.addEventListener("touchmove", handleMove, { passive: false });
+      window.addEventListener("touchend", handleUp);
     },
     [chatPos]
   );
 
   const handleAvatarPointerDown = useCallback(
     (e) => {
-      if (e.button !== 0) return;
+      if (e.button !== undefined && e.button > 0) return;
       const container = containerRef.current;
       const avatar = avatarBtnRef.current;
       if (!container || !avatar) return;
@@ -836,20 +867,24 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
       const currentX = avatarPos ? avatarPos.x : avatarRect.left - containerRect.left;
       const currentY = avatarPos ? avatarPos.y : avatarRect.top - containerRect.top;
 
-      const startX = e.clientX;
-      const startY = e.clientY;
+      const startCoords = getClientCoords(e);
+      const startX = startCoords.x;
+      const startY = startCoords.y;
       let hasDragged = false;
       const target = e.currentTarget;
 
       try {
-        target.setPointerCapture(e.pointerId);
+        if (e.pointerId !== undefined && target.setPointerCapture) {
+          target.setPointerCapture(e.pointerId);
+        }
       } catch (err) {}
 
       setIsDraggingAvatar(true);
 
-      const handlePointerMove = (moveEvent) => {
-        const dx = moveEvent.clientX - startX;
-        const dy = moveEvent.clientY - startY;
+      const handleMove = (moveEvent) => {
+        const moveCoords = getClientCoords(moveEvent);
+        const dx = moveCoords.x - startX;
+        const dy = moveCoords.y - startY;
 
         if (Math.hypot(dx, dy) > 4) {
           hasDragged = true;
@@ -864,13 +899,22 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
         setAvatarPos({ x: newX, y: newY });
       };
 
-      const handlePointerUp = (upEvent) => {
+      const handleUp = (upEvent) => {
         try {
-          target.releasePointerCapture(upEvent.pointerId);
+          if (upEvent.pointerId !== undefined && target.releasePointerCapture) {
+            target.releasePointerCapture(upEvent.pointerId);
+          }
         } catch (err) {}
-        target.removeEventListener("pointermove", handlePointerMove);
-        target.removeEventListener("pointerup", handlePointerUp);
-        target.removeEventListener("pointercancel", handlePointerUp);
+        target.removeEventListener("pointermove", handleMove);
+        target.removeEventListener("pointerup", handleUp);
+        target.removeEventListener("pointercancel", handleUp);
+        target.removeEventListener("touchmove", handleMove);
+        target.removeEventListener("touchend", handleUp);
+        target.removeEventListener("touchcancel", handleUp);
+        window.removeEventListener("pointermove", handleMove);
+        window.removeEventListener("pointerup", handleUp);
+        window.removeEventListener("touchmove", handleMove);
+        window.removeEventListener("touchend", handleUp);
         setIsDraggingAvatar(false);
 
         if (!hasDragged) {
@@ -878,9 +922,16 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
         }
       };
 
-      target.addEventListener("pointermove", handlePointerMove);
-      target.addEventListener("pointerup", handlePointerUp);
-      target.addEventListener("pointercancel", handlePointerUp);
+      target.addEventListener("pointermove", handleMove);
+      target.addEventListener("pointerup", handleUp);
+      target.addEventListener("pointercancel", handleUp);
+      target.addEventListener("touchmove", handleMove, { passive: false });
+      target.addEventListener("touchend", handleUp);
+      target.addEventListener("touchcancel", handleUp);
+      window.addEventListener("pointermove", handleMove);
+      window.addEventListener("pointerup", handleUp);
+      window.addEventListener("touchmove", handleMove, { passive: false });
+      window.addEventListener("touchend", handleUp);
     },
     [avatarPos]
   );
@@ -1248,16 +1299,17 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
               ref={avatarBtnRef}
               type="button"
               onPointerDown={handleAvatarPointerDown}
+              onTouchStart={handleAvatarPointerDown}
               style={avatarPos ? { left: `${avatarPos.x}px`, top: `${avatarPos.y}px`, right: "auto", bottom: "auto" } : {}}
-              className={`absolute z-30 w-14 h-14 rounded-full bg-gradient-to-tr from-teal-500 to-indigo-600 text-white flex items-center justify-center shadow-2xl shadow-black/50 border border-white/20 hover:scale-105 active:scale-95 transition-transform cursor-grab active:cursor-grabbing select-none ${
+              className={`absolute z-30 w-14 h-14 rounded-full bg-gradient-to-tr from-teal-500 to-indigo-600 text-white flex items-center justify-center shadow-2xl shadow-black/50 border border-white/20 hover:scale-105 active:scale-95 transition-transform cursor-grab active:cursor-grabbing select-none touch-none ${
                 !avatarPos ? "bottom-5 right-5" : ""
               } ${isDraggingAvatar ? "ring-4 ring-teal-400/50 scale-110" : ""}`}
               aria-label="Open AI chat"
               title="Click to open AI chat, or drag to reposition"
             >
-              <GripHorizontal size={14} className="absolute top-1 text-teal-200/60" />
-              <Bot size={22} className="mt-1" />
-              <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-teal-400 ring-2 ring-[#0d1322] motion-safe:animate-pulse" />
+              <GripHorizontal size={14} className="absolute top-1 text-teal-200/60 pointer-events-none" />
+              <Bot size={22} className="mt-1 pointer-events-none" />
+              <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-teal-400 ring-2 ring-[#0d1322] motion-safe:animate-pulse pointer-events-none" />
             </button>
           )}
         </div>
