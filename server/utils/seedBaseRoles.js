@@ -5,11 +5,14 @@ import Role, { DASHBOARD_MODULES } from "../models/role.model.js";
 // creating the same doc are swallowed.
 export const ensureBaseRoleDocs = async () => {
     const names = Object.keys(DASHBOARD_MODULES);
-    const existing = await Role.find({ name: { $in: names } })
+    // Case-insensitive check so "Student" and "student" are treated the same
+    const existing = await Role.find({
+        name: { $in: names.map((n) => new RegExp(`^${n}$`, "i")) },
+    })
         .select("name")
         .lean();
-    const existingNames = new Set(existing.map((r) => r.name));
-    const missing = names.filter((n) => !existingNames.has(n));
+    const existingNames = new Set(existing.map((r) => r.name.toLowerCase()));
+    const missing = names.filter((n) => !existingNames.has(n.toLowerCase()));
     if (missing.length === 0) return;
 
     await Promise.all(

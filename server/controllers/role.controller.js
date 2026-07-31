@@ -26,7 +26,7 @@ export const getRoles = async (req, res) => {
 
 export const createRole = async (req, res) => {
   try {
-    const { name, description, permissions } = req.body;
+    const { name, description, permissions, dashboardModules } = req.body;
     if (!name?.trim()) {
       return res.status(400).json({ message: "Role name is required" });
     }
@@ -40,6 +40,7 @@ export const createRole = async (req, res) => {
       name: name.trim(),
       description: description?.trim() || "",
       permissions: permissions || [],
+      ...(dashboardModules !== undefined && { dashboardModules }),
     });
 
     res.status(201).json(role);
@@ -62,21 +63,24 @@ export const updateRole = async (req, res) => {
     if (name?.trim()) role.name = name.trim();
     if (description !== undefined) role.description = description.trim();
     if (permissions) role.permissions = permissions;
-    if (dashboardModules) role.dashboardModules = dashboardModules;
+    if (dashboardModules !== undefined) role.dashboardModules = dashboardModules;
 
     await role.save();
 
     // Bust this role's own cache — both the generic key and, for a base
     // system role, the key hydrateUserRoles uses for base-role lookups.
+    // getBaseRoleDoc caches with the lowercase name, so we must bust that.
     await deleteKeys([
       `role:${role._id.toString()}`,
-      ...(role.isSystem ? [`role:base:${role.name}`] : []),
+      ...(role.isSystem ? [`role:base:${role.name.toLowerCase()}`] : []),
     ]);
 
     // Bust cache for every user affected. Custom roles are referenced by
     // ObjectId; base system roles (student/instructor) are referenced by
-    // the plain role-name string on the user document.
-    const userQuery = role.isSystem ? { role: role.name } : { role: role._id };
+    // the plain role-name string on the user document (case-insensitive).
+    const userQuery = role.isSystem
+      ? { role: { $regex: new RegExp(`^${role.name}$`, "i") } }
+      : { role: role._id };
     const affectedUsers = await User.find(userQuery).select("_id").lean();
 
     if (affectedUsers.length > 0) {

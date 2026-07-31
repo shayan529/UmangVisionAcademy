@@ -7,6 +7,7 @@ import {
   getConversations,
   getNewsAI,
   generateMockTestQuestionsAI,
+  translateTextAI,
 } from "../controllers/ai.controller.js";
 import { protect, authorizeRoles, requirePermission } from "../middleware/auth.middleware.js";
 
@@ -25,5 +26,6 @@ router.post("/generate-quiz", protect, generateQuizAI);
 // Mock-test question generation is instructor/admin only (content creation tool)
 router.post("/generate-mock-test", protect, authorizeRoles("instructor", "admin"), generateMockTestQuestionsAI);
 router.get("/news", getNewsAI);
+router.post("/translate", translateTextAI);
 
 export default router;

@@ -1,10 +1,7 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 
-import { useDispatch } from "react-redux";
-import { loadCurrentUser } from "../../redux/slices/authSlice";
 import {
   Shield,
-  Plus,
   Pencil,
   Trash2,
   X,
@@ -23,7 +20,6 @@ import {
 import apiClient from "../../config/api";
 import {
   getCustomRole,
-  hasCustomRole,
   hasBaseRole,
   isBaseRole,
 } from "../../utils/permissions";
@@ -34,15 +30,27 @@ const USERS_API = "/users/admin-create";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+const isSystemRoleName = (roleName) =>
+  typeof roleName === "string" &&
+  ["student", "instructor", "admin", "staff"].includes(roleName.toLowerCase());
+
 // Returns the effective role ID string for a user regardless of whether
-// their role is a base-role string or a populated custom Role object.
+// their role is a custom Role object or a raw ObjectId string.
 const getUserRoleId = (user) => {
   const role = user?.role;
   if (!role) return null;
   if (typeof role === "object" && role._id) return role._id.toString();
-  // Raw ObjectId string stored without population
-  if (typeof role === "string" && role.length === 24) return role;
-  return null; // base-role string — no ObjectId
+  if (typeof role === "string" && role.length === 24 && !isSystemRoleName(role))
+    return role;
+  return null;
+};
+
+const getUserRoleName = (user) => {
+  const role = user?.role;
+  if (!role) return null;
+  if (typeof role === "string") return role.toLowerCase();
+  if (typeof role === "object" && role.name) return role.name.toLowerCase();
+  return null;
 };
 
 const MODULE_LABELS = {
@@ -79,12 +87,6 @@ const ACTION_LABELS = {
 };
 
 const EMPTY_ROLE = { name: "", description: "", permissions: [] };
-
-const BASE_ROLE_OPTIONS = [
-  { value: "student", label: "Student" },
-  { value: "instructor", label: "Instructor" },
-];
-
 
 const INDIAN_CITIES_BY_STATE = INDIA_CITIES_BY_STATE;
 const INDIAN_STATES = INDIA_STATES;
@@ -166,10 +168,11 @@ const PermissionMatrix = ({ modules, value, onChange }) => {
                     key={action}
                     type="button"
                     onClick={() => toggleAction(mod, action)}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold border transition-colors ${checked
-                      ? "bg-indigo-600 border-indigo-500 text-white"
-                      : "bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500"
-                      }`}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold border transition-colors ${
+                      checked
+                        ? "bg-indigo-600 border-indigo-500 text-white"
+                        : "bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500"
+                    }`}
                   >
                     {checked && <Check size={11} />}
                     {ACTION_LABELS[action] || action}
@@ -231,9 +234,12 @@ const DASHBOARD_MODULE_LABELS = {
 // no actions, just an array of enabled module keys.
 const DashboardModuleChecklist = ({ moduleKeys, value = [], onChange }) => {
   const toggle = (key) => {
-    onChange(value.includes(key) ? value.filter((k) => k !== key) : [...value, key]);
+    onChange(
+      value.includes(key) ? value.filter((k) => k !== key) : [...value, key],
+    );
   };
-  const allOn = moduleKeys.length > 0 && moduleKeys.every((k) => value.includes(k));
+  const allOn =
+    moduleKeys.length > 0 && moduleKeys.every((k) => value.includes(k));
   const toggleAll = () => onChange(allOn ? [] : [...moduleKeys]);
 
   return (
@@ -263,10 +269,11 @@ const DashboardModuleChecklist = ({ moduleKeys, value = [], onChange }) => {
               key={key}
               type="button"
               onClick={() => toggle(key)}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold border transition-colors ${checked
-                ? "bg-indigo-600 border-indigo-500 text-white"
-                : "bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500"
-                }`}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold border transition-colors ${
+                checked
+                  ? "bg-indigo-600 border-indigo-500 text-white"
+                  : "bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500"
+              }`}
             >
               {checked && <Check size={11} />}
               {DASHBOARD_MODULE_LABELS[key] || key}
@@ -279,110 +286,27 @@ const DashboardModuleChecklist = ({ moduleKeys, value = [], onChange }) => {
 };
 
 // ── Reusable role checklist ───────────────────────────────────────────────────
-const RoleChecklist = ({ roles = [], selected = [], onToggle, emptyHint }) => {
-  const [query, setQuery] = useState("");
-
-  const filteredRoles = React.useMemo(() => {
-    if (!query.trim()) return roles;
-    const q = query.toLowerCase().trim();
-    return roles.filter(
-      (r) =>
-        r.name?.toLowerCase().includes(q) ||
-        r.description?.toLowerCase().includes(q),
-    );
-  }, [roles, query]);
-
-  if (roles.length === 0) {
-    return (
-      <div className="rounded-xl border border-dashed border-slate-800 p-6 text-center text-xs text-slate-500">
-        {emptyHint}
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-3">
-      {roles.length > 4 && (
-        <div className="relative">
-          <Search
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Filter roles..."
-            className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2 pl-9 pr-3 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500 transition-colors"
-          />
-        </div>
-      )}
-
-      <div className="flex flex-col gap-2.5 max-h-72 overflow-y-auto pr-1">
-        {filteredRoles.length === 0 ? (
-          <p className="text-xs text-slate-500 text-center py-6">
-            No roles match your search.
-          </p>
-        ) : (
-          filteredRoles.map((role) => {
-            const checked = selected.includes(role._id);
-            const permSummary = formatPermissionSummary(role);
-            return (
-              <button
-                key={role._id}
-                type="button"
-                onClick={() => onToggle(role._id)}
-                className={`group flex items-start justify-between gap-3 rounded-xl border p-3.5 text-left transition-all duration-150 ${checked
-                  ? "border-indigo-500/80 bg-indigo-950/40 text-white shadow-md shadow-indigo-950/50"
-                  : "border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700 hover:bg-slate-800/80"
-                  }`}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-bold text-white tracking-wide group-hover:text-indigo-300 transition-colors">
-                      {role.name}
-                    </span>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${role.isSystem
-                        ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
-                        : "border-indigo-500/30 bg-indigo-500/10 text-indigo-300"
-                        }`}
-                    >
-                      {role.isSystem ? "System" : "Custom"}
-                    </span>
-                  </div>
-                  {role.description && (
-                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                      {role.description}
-                    </p>
-                  )}
-                  {permSummary && (
-                    <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
-                      <Shield size={12} className="text-indigo-400 flex-none" />
-                      <span className="truncate">{permSummary}</span>
-                    </div>
-                  )}
-                </div>
-                <div
-                  className={`h-5 w-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-all ${checked
-                    ? "bg-indigo-600 border-indigo-500 shadow-sm"
-                    : "border-slate-600 bg-slate-950 group-hover:border-slate-500"
-                    }`}
-                >
-                  {checked && <Check size={13} className="text-white stroke-[3]" />}
-                </div>
-              </button>
-            );
-          })
-        )}
-      </div>
-    </div>
-  );
-};
-
-// ── Role create/edit modal ────────────────────────────────────────────────────
-const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
-  const [form, setForm] = useState(initial || EMPTY_ROLE);
+// dashboardModuleKeys: string[] of all module keys for this role (e.g. student/instructor)
+// When present, a Dashboard Modules section is shown inside this same modal.
+const RoleModal = ({
+  modules,
+  dashboardModuleKeys = [],
+  initial,
+  onClose,
+  onSaved,
+  showToast,
+}) => {
+  const hasDashboardModules =
+    Array.isArray(dashboardModuleKeys) && dashboardModuleKeys.length > 0;
+  const [form, setForm] = useState({
+    ...(initial || EMPTY_ROLE),
+    // Seed dashboardModules from the role doc; for system roles, default to
+    // their registry list when the field is missing.
+    dashboardModules: initial?._id
+      ? (initial.dashboardModules ??
+        (hasDashboardModules ? [...dashboardModuleKeys] : []))
+      : [],
+  });
   const [saving, setSaving] = useState(false);
   const isEdit = Boolean(initial?._id);
   const isSystem = Boolean(initial?.isSystem);
@@ -406,6 +330,9 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
         name: form.name,
         description: form.description,
         permissions: form.permissions,
+        ...(hasDashboardModules
+          ? { dashboardModules: form.dashboardModules }
+          : {}),
       };
       if (isEdit) {
         await api(`${API_BASE}/${initial._id}`, {
@@ -442,7 +369,6 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
 
         <div className="flex flex-col gap-4 mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* ── Plain text input instead of dropdown ── */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
                 Role Name {isSystem && "(locked)"}
@@ -474,18 +400,37 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
             </div>
           </div>
 
-          <div>
-            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2 block">
-              Permissions
-            </label>
-            <PermissionMatrix
-              modules={modules}
-              value={form.permissions}
-              onChange={(permissions) =>
-                setForm((f) => ({ ...f, permissions }))
-              }
-            />
-          </div>
+          {/* ── Dashboard Modules (student / instructor roles) ── */}
+          {hasDashboardModules && (
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2 block">
+                Dashboard Modules
+              </label>
+              <DashboardModuleChecklist
+                moduleKeys={dashboardModuleKeys}
+                value={form.dashboardModules}
+                onChange={(dashboardModules) =>
+                  setForm((f) => ({ ...f, dashboardModules }))
+                }
+              />
+            </div>
+          )}
+
+          {/* ── Permissions (admin / custom roles) ── */}
+          {Object.keys(modules).length > 0 && (
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2 block">
+                Permissions
+              </label>
+              <PermissionMatrix
+                modules={modules}
+                value={form.permissions}
+                onChange={(permissions) =>
+                  setForm((f) => ({ ...f, permissions }))
+                }
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
@@ -509,75 +454,15 @@ const RoleModal = ({ modules, initial, onClose, onSaved, showToast }) => {
   );
 };
 
-// ── Dashboard modules edit modal ──────────────────────────────────────────────
-const DashboardModulesModal = ({ role, moduleKeys, onClose, onSaved, showToast }) => {
-  const [draft, setDraft] = useState(role.dashboardModules ?? [...moduleKeys]);
-  const [saving, setSaving] = useState(false);
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await api(`${API_BASE}/${role._id}`, {
-        method: "PUT",
-        body: JSON.stringify({ dashboardModules: draft }),
-      });
-      showToast?.("Dashboard modules updated.");
-      onSaved();
-    } catch (err) {
-      showToast?.(err.message || "Failed to save dashboard modules.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-700 bg-[#111827] p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold text-white capitalize">
-            {role.name} Dashboard Modules
-          </h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-white">
-            <X size={18} />
-          </button>
-        </div>
-
-        <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-          Choose which sidebar sections are visible to everyone holding the{" "}
-          <span className="text-slate-300 font-semibold capitalize">{role.name}</span> role.
-          Unchecked modules are hidden from their dashboard.
-        </p>
-
-        <DashboardModuleChecklist
-          moduleKeys={moduleKeys}
-          value={draft}
-          onChange={setDraft}
-        />
-
-        <div className="flex justify-end gap-2 pt-4 mt-6 border-t border-slate-800">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-slate-700 text-slate-300 text-sm font-semibold hover:bg-slate-900"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold disabled:opacity-60 flex items-center gap-2"
-          >
-            {saving && <Loader2 size={14} className="animate-spin" />}
-            Save Changes
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // ── Assign roles modal ────────────────────────────────────────────────────────
-const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => {
-  const BASE_ROLE_VALUES = ["student", "instructor", "admin", "staff"];
+const AssignRolesModal = ({
+  user,
+  roles = [],
+  onClose,
+  onSaved,
+  showToast,
+}) => {
+  const BASE_ROLE_VALUES = ["student", "instructor", "staff"];
 
   const systemRoles = roles.filter(
     (r) => r.isSystem && BASE_ROLE_VALUES.includes(r.name?.toLowerCase()),
@@ -599,17 +484,19 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
     }
 
     // Base-role string — find the system role document
-    const userRoleName = (
-      typeof user?.role === "string" ? user.role : "student"
-    ).toLowerCase();
+    const userRoleName = getUserRoleName(user) || "student";
     const sysMatch = allRoles.find(
-      (r) => r.isSystem && r.name?.toLowerCase() === userRoleName,
+      (r) =>
+        r.isSystem &&
+        BASE_ROLE_VALUES.includes(r.name?.toLowerCase()) &&
+        r.name?.toLowerCase() === userRoleName,
     );
     if (sysMatch) return sysMatch._id?.toString();
 
     // Final fallback — Student system role
     return (
-      allRoles.find((r) => r.isSystem && r.name?.toLowerCase() === "student")
+      allRoles
+        .find((r) => r.isSystem && r.name?.toLowerCase() === "student")
         ?._id?.toString() ?? null
     );
   };
@@ -633,7 +520,9 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
       showToast?.(`Role updated for ${user.name}.`);
       onSaved();
     } catch (err) {
-      showToast?.(err.response?.data?.message || err.message || "Failed to assign role.");
+      showToast?.(
+        err.response?.data?.message || err.message || "Failed to assign role.",
+      );
     } finally {
       setSaving(false);
     }
@@ -656,8 +545,12 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
               <Shield size={18} />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-white">Assign Role</h3>
-              <p className="text-xs text-slate-400">Set the user's role — select exactly one</p>
+              <h3 className="text-base font-extrabold text-white">
+                Assign Role
+              </h3>
+              <p className="text-xs text-slate-400">
+                Set the user's role — select exactly one
+              </p>
             </div>
           </div>
           <button
@@ -697,7 +590,9 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
         {/* ── Unified role list (radio) ── */}
         <div className="flex flex-col gap-2.5 max-h-[55vh] overflow-y-auto pr-1">
           {allRoles.length === 0 && (
-            <p className="text-xs text-slate-500 text-center py-6">No roles available.</p>
+            <p className="text-xs text-slate-500 text-center py-6">
+              No roles available.
+            </p>
           )}
           {allRoles.map((role) => {
             const active = selectedRoleId?.toString() === role._id?.toString();
@@ -707,22 +602,27 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
                 key={role._id}
                 type="button"
                 onClick={() => setSelectedRoleId(role._id)}
-                className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 text-left transition-all ${active
-                  ? "border-indigo-500/80 bg-indigo-950/40 shadow-md shadow-indigo-950/50"
-                  : "border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-800/80"
-                  }`}
+                className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 text-left transition-all ${
+                  active
+                    ? "border-indigo-500/80 bg-indigo-950/40 shadow-md shadow-indigo-950/50"
+                    : "border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-800/80"
+                }`}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`text-sm font-bold tracking-wide ${active ? "text-white" : "text-slate-300"
-                      }`}>
+                    <span
+                      className={`text-sm font-bold tracking-wide ${
+                        active ? "text-white" : "text-slate-300"
+                      }`}
+                    >
                       {role.name}
                     </span>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${role.isSystem
-                        ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
-                        : "border-indigo-500/30 bg-indigo-500/10 text-indigo-300"
-                        }`}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        role.isSystem
+                          ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                          : "border-indigo-500/30 bg-indigo-500/10 text-indigo-300"
+                      }`}
                     >
                       {role.isSystem ? "System" : "Custom"}
                     </span>
@@ -741,10 +641,11 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
                 </div>
                 {/* Radio circle */}
                 <div
-                  className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${active
-                    ? "border-indigo-400 bg-indigo-500"
-                    : "border-slate-600 bg-slate-950"
-                    }`}
+                  className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                    active
+                      ? "border-indigo-400 bg-indigo-500"
+                      : "border-slate-600 bg-slate-950"
+                  }`}
                 >
                   {active && <div className="h-2 w-2 rounded-full bg-white" />}
                 </div>
@@ -780,7 +681,7 @@ const AssignRolesModal = ({ user, roles = [], onClose, onSaved, showToast }) => 
 };
 
 // ── Add user modal ────────────────────────────────────────────────────────────
-const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
+const AddUserModal = ({ onClose, onSaved, showToast }) => {
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -867,8 +768,12 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
               <UserPlus size={18} />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-white">Add New User</h3>
-              <p className="text-xs text-slate-400">Create a user profile & assign roles</p>
+              <h3 className="text-base font-extrabold text-white">
+                Add New User
+              </h3>
+              <p className="text-xs text-slate-400">
+                Create a user profile & assign roles
+              </p>
             </div>
           </div>
           <button
@@ -906,7 +811,9 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-300">Email Address</label>
+                <label className="text-xs font-bold text-slate-300">
+                  Email Address
+                </label>
                 <input
                   type="email"
                   value={form.email}
@@ -1027,20 +934,28 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
                   <button
                     key={roleValue}
                     type="button"
-                    onClick={() => setForm((f) => ({ ...f, baseRole: roleValue }))}
-                    className={`flex items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left transition-all ${active
-                      ? "border-indigo-500/80 bg-indigo-950/40 text-white shadow-md shadow-indigo-950/50"
-                      : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-600 hover:text-white"
-                      }`}
+                    onClick={() =>
+                      setForm((f) => ({ ...f, baseRole: roleValue }))
+                    }
+                    className={`flex items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left transition-all ${
+                      active
+                        ? "border-indigo-500/80 bg-indigo-950/40 text-white shadow-md shadow-indigo-950/50"
+                        : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-600 hover:text-white"
+                    }`}
                   >
-                    <span className="text-sm font-bold capitalize">{roleValue}</span>
+                    <span className="text-sm font-bold capitalize">
+                      {roleValue}
+                    </span>
                     <div
-                      className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${active
-                        ? "border-indigo-400 bg-indigo-500"
-                        : "border-slate-600 bg-slate-950"
-                        }`}
+                      className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                        active
+                          ? "border-indigo-400 bg-indigo-500"
+                          : "border-slate-600 bg-slate-950"
+                      }`}
                     >
-                      {active && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                      {active && (
+                        <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                      )}
                     </div>
                   </button>
                 );
@@ -1077,7 +992,6 @@ const AddUserModal = ({ roles, onClose, onSaved, showToast }) => {
 
 // ── Main ───────────────────────────────────────────────────────────────────────
 const RoleManager = ({ showToast, currentUser }) => {
-  const dispatch = useDispatch();
   const showToastRef = useRef(showToast);
   useEffect(() => {
     showToastRef.current = showToast;
@@ -1096,18 +1010,42 @@ const RoleManager = ({ showToast, currentUser }) => {
   const [assignTarget, setAssignTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [addUserOpen, setAddUserOpen] = useState(false);
-  const [dashboardTarget, setDashboardTarget] = useState(null); // role doc being edited
+  const [showNewRoleSection, setShowNewRoleSection] = useState(true);
+  const [newRoleForm, setNewRoleForm] = useState({
+    name: "",
+    description: "",
+    permissions: [],
+    dashboardModules: [],
+  });
+
+  const allDashboardModuleKeys = useMemo(() => {
+    const keys = new Set();
+    Object.values(dashboardModuleRegistry).forEach((arr) => {
+      if (Array.isArray(arr)) arr.forEach((k) => keys.add(k));
+    });
+    return Array.from(keys);
+  }, [dashboardModuleRegistry]);
+
+  const getModuleKeysForRole = useCallback(
+    (roleName) => {
+      if (!roleName) return [];
+      const lower = roleName.toLowerCase();
+      return dashboardModuleRegistry[lower] || [];
+    },
+    [dashboardModuleRegistry],
+  );
 
   const loadAll = useCallback(async () => {
     setLoading(true);
     setLoadError("");
     try {
-      const [modulesRes, dashModulesRes, rolesRes, usersRes] = await Promise.all([
-        api(`${API_BASE}/modules`),
-        api(`${API_BASE}/dashboard-modules`),
-        api(API_BASE),
-        api("/users"),
-      ]);
+      const [modulesRes, dashModulesRes, rolesRes, usersRes] =
+        await Promise.all([
+          api(`${API_BASE}/modules`),
+          api(`${API_BASE}/dashboard-modules`),
+          api(API_BASE),
+          api("/users"),
+        ]);
       setModules(modulesRes.modules || {});
       setDashboardModuleRegistry(dashModulesRes.modules || {});
       setRoles(rolesRes || []);
@@ -1126,9 +1064,11 @@ const RoleManager = ({ showToast, currentUser }) => {
   }, []);
 
   useEffect(() => {
-    loadAll();
+    const load = async () => {
+      await loadAll();
+    };
+    load();
   }, [loadAll]);
-
 
   const handleDeleteRole = async () => {
     try {
@@ -1174,14 +1114,20 @@ const RoleManager = ({ showToast, currentUser }) => {
     return false;
   });
 
-  // Users who have a specific custom Role ObjectId stored as their role
-  const usersForRole = (roleId) =>
+  const usersForRole = (role) =>
     users.filter((u) => {
-      const userRoleId = getUserRoleId(u);
-      if (userRoleId !== roleId?.toString()) return false;
       const currentIsAdmin = hasBaseRole(currentUser, "admin");
       if (!currentIsAdmin && hasBaseRole(u, "admin")) return false;
-      return true;
+
+      if (role?.isSystem) {
+        const roleName = role.name?.toLowerCase();
+        const userRoleName = getUserRoleName(u);
+        const userRoleId = getUserRoleId(u);
+        return userRoleName === roleName || userRoleId === role._id?.toString();
+      }
+
+      const userRoleId = getUserRoleId(u);
+      return userRoleId === role._id?.toString();
     });
 
   const permissionCount = (role) =>
@@ -1189,9 +1135,6 @@ const RoleManager = ({ showToast, currentUser }) => {
     0;
 
   // Roles that have a dashboard-module registry entry (student, instructor)
-  const dashboardGovernedRoles = roles.filter(
-    (r) => r.isSystem && dashboardModuleRegistry[r.name?.toLowerCase()],
-  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -1207,11 +1150,11 @@ const RoleManager = ({ showToast, currentUser }) => {
         </div>
         {tab === "roles" && (
           <button
-            onClick={() => setRoleModal(EMPTY_ROLE)}
-            className="flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/20"
+            type="button"
+            onClick={() => setShowNewRoleSection((prev) => !prev)}
+            className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-bold text-white hover:border-indigo-500 hover:bg-slate-900 transition"
           >
-            <Plus size={16} />
-            New Role
+            {showNewRoleSection ? "Hide Create Role" : "Show Create Role"}
           </button>
         )}
         {tab === "users" && (
@@ -1229,7 +1172,6 @@ const RoleManager = ({ showToast, currentUser }) => {
       <div className="inline-flex w-fit rounded-xl border border-slate-800 bg-[#0b1120] p-1">
         {[
           { key: "roles", label: "Roles", icon: Lock },
-          { key: "dashboards", label: "Dashboard Modules", icon: LayoutGrid },
           { key: "users", label: "Assign to Users", icon: UsersIcon },
         ].map((t) => {
           const Icon = t.icon;
@@ -1237,10 +1179,11 @@ const RoleManager = ({ showToast, currentUser }) => {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-colors ${tab === t.key
-                ? "bg-indigo-600 text-white"
-                : "text-slate-400 hover:text-white"
-                }`}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-colors ${
+                tab === t.key
+                  ? "bg-indigo-600 text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}
             >
               <Icon size={14} />
               {t.label}
@@ -1248,6 +1191,143 @@ const RoleManager = ({ showToast, currentUser }) => {
           );
         })}
       </div>
+
+      {tab === "roles" && showNewRoleSection && (
+        <div className="rounded-2xl border border-slate-800 bg-[#111827] p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-bold tracking-[0.14em] text-indigo-400 uppercase mb-1">
+                Create Role
+              </p>
+              <h3 className="text-lg font-extrabold text-white">
+                New custom role
+              </h3>
+              <p className="text-sm text-slate-500 mt-1 max-w-2xl">
+                Add a role and assign both permissions and sidebar modules in
+                one place.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setNewRoleForm({
+                  name: "",
+                  description: "",
+                  permissions: [],
+                  dashboardModules: [],
+                })
+              }
+              className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-indigo-500 hover:text-white transition"
+            >
+              Reset form
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr] gap-5 mt-5">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                    Role Name
+                  </label>
+                  <input
+                    value={newRoleForm.name}
+                    onChange={(e) =>
+                      setNewRoleForm((f) => ({ ...f, name: e.target.value }))
+                    }
+                    placeholder="e.g. Content Reviewer"
+                    className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                    Description
+                  </label>
+                  <input
+                    value={newRoleForm.description}
+                    onChange={(e) =>
+                      setNewRoleForm((f) => ({
+                        ...f,
+                        description: e.target.value,
+                      }))
+                    }
+                    placeholder="What this role is for"
+                    className="rounded-lg bg-[#0b1120] border border-slate-700 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2">
+                  Permissions
+                </p>
+                <PermissionMatrix
+                  modules={modules}
+                  value={newRoleForm.permissions}
+                  onChange={(permissions) =>
+                    setNewRoleForm((f) => ({ ...f, permissions }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2">
+                Sidebar Modules
+              </p>
+              <DashboardModuleChecklist
+                moduleKeys={allDashboardModuleKeys}
+                value={newRoleForm.dashboardModules}
+                onChange={(dashboardModules) =>
+                  setNewRoleForm((f) => ({ ...f, dashboardModules }))
+                }
+              />
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!newRoleForm.name.trim()) {
+                  return showToast?.("Role name is required.");
+                }
+                if (!newRoleForm.description.trim()) {
+                  return showToast?.("Role description is required.");
+                }
+                try {
+                  await api(API_BASE, {
+                    method: "POST",
+                    body: JSON.stringify({
+                      name: newRoleForm.name,
+                      description: newRoleForm.description,
+                      permissions: newRoleForm.permissions,
+                      dashboardModules: newRoleForm.dashboardModules,
+                    }),
+                  });
+                  showToast?.("Role created.");
+                  setNewRoleForm({
+                    name: "",
+                    description: "",
+                    permissions: [],
+                    dashboardModules: [],
+                  });
+                  loadAll();
+                } catch (err) {
+                  showToast?.(
+                    err.response?.data?.message ||
+                      err.message ||
+                      "Failed to create role.",
+                  );
+                }
+              }}
+              className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-500 transition"
+            >
+              Create Role
+            </button>
+          </div>
+        </div>
+      )}
 
       {loadError ? (
         <div className="rounded-2xl border border-red-900/50 bg-red-950/20 p-5">
@@ -1272,167 +1352,147 @@ const RoleManager = ({ showToast, currentUser }) => {
           ))}
         </div>
       ) : tab === "roles" ? (
-        roles.length === 0 ? (
-          <div className="text-center py-16">
-            <Shield size={36} className="mx-auto mb-3 text-slate-700" />
-            <p className="text-slate-500 font-semibold">
-              No roles yet. Create your first custom role.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {roles.map((role) => (
-              <div
-                key={role._id}
-                className="rounded-2xl border border-slate-800 bg-[#111827] p-5 flex flex-col gap-3"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-white">
-                        {role.name}
-                      </h3>
-                      {role.isSystem && (
-                        <span className="text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
-                          System
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {role.description || "No description"}
-                    </p>
-                  </div>
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => setRoleModal(role)}
-                      className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-700 text-slate-300 hover:border-indigo-500 hover:text-indigo-300"
-                    >
-                      <Pencil size={13} />
-                    </button>
-                    {!role.isSystem && (
-                      <button
-                        onClick={() => setDeleteTarget(role)}
-                        className="h-8 w-8 flex items-center justify-center rounded-lg border border-red-900/40 text-red-400 hover:bg-red-950/30"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5">
-                  {role.permissions?.length === 0 && (
-                    <span className="text-[11px] text-slate-600">
-                      No permissions granted
-                    </span>
-                  )}
-                  {role.permissions?.map((p) => (
-                    <span
-                      key={p.module}
-                      className="text-[10px] font-semibold px-2 py-1 rounded-md bg-indigo-950/40 text-indigo-300 border border-indigo-900/40"
-                    >
-                      {MODULE_LABELS[p.module] || p.module} · {p.actions.length}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="text-[11px] text-slate-600 pt-2 border-t border-slate-800">
-                  {permissionCount(role)} permission
-                  {permissionCount(role) !== 1 ? "s" : ""} granted
-                </div>
-
-                <div className="pt-2 border-t border-slate-800">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-2">
-                    Assigned Users · {usersForRole(role._id).length}
-                  </p>
-                  {usersForRole(role._id).length === 0 ? (
-                    <p className="text-[11px] text-slate-600">
-                      No one holds this role yet.
-                    </p>
-                  ) : (
-                    <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto">
-                      {usersForRole(role._id).map((u) => (
-                        <div
-                          key={u._id}
-                          className="flex items-center justify-between gap-2 rounded-lg bg-[#0b1120] border border-slate-800 px-3 py-1.5"
-                        >
-                          <span className="text-xs font-semibold text-white truncate">
-                            {u.name}
-                          </span>
-                          <span className="text-[11px] text-slate-500 shrink-0">
-                            {u.phoneNumber}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )
-      ) : tab === "dashboards" ? (
-        dashboardGovernedRoles.length === 0 ? (
-          <div className="text-center py-16">
-            <LayoutGrid size={36} className="mx-auto mb-3 text-slate-700" />
-            <p className="text-slate-500 font-semibold">
-              No dashboard-governed roles found.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {dashboardGovernedRoles.map((role) => {
-              const roleKey = role.name.toLowerCase();
-              const allKeys = dashboardModuleRegistry[roleKey] || [];
-              const enabledCount = (role.dashboardModules ?? allKeys).length;
-              return (
+        <div className="space-y-6">
+          {roles.length === 0 ? (
+            <div className="text-center py-16">
+              <Shield size={36} className="mx-auto mb-3 text-slate-700" />
+              <p className="text-slate-500 font-semibold">
+                No roles yet. Create your first custom role.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {roles.map((role) => (
                 <div
                   key={role._id}
                   className="rounded-2xl border border-slate-800 bg-[#111827] p-5 flex flex-col gap-3"
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="text-sm font-bold text-white capitalize">
-                        {role.name} Dashboard
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-white">
+                          {role.name}
+                        </h3>
+                        {role.isSystem && (
+                          <span className="text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                            System
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        {enabledCount} of {allKeys.length} modules visible
+                        {role.description || "No description"}
                       </p>
                     </div>
-                    <button
-                      onClick={() => setDashboardTarget(role)}
-                      className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-700 text-slate-300 hover:border-indigo-500 hover:text-indigo-300"
-                    >
-                      <Pencil size={13} />
-                    </button>
+                    <div className="flex gap-1.5">
+                      <button
+                        onClick={() => setRoleModal(role)}
+                        title="Edit Role"
+                        className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-700 text-slate-300 hover:border-indigo-500 hover:text-indigo-300"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      {!role.isSystem && (
+                        <button
+                          onClick={() => setDeleteTarget(role)}
+                          title="Delete Role"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg border border-red-900/40 text-red-400 hover:bg-red-950/30 transition"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap gap-1.5">
-                    {allKeys.length === 0 && (
+                    {role.permissions?.length === 0 && (
                       <span className="text-[11px] text-slate-600">
-                        No modules registered.
+                        No permissions granted
                       </span>
                     )}
-                    {allKeys.map((key) => {
-                      const on = (role.dashboardModules ?? allKeys).includes(key);
-                      return (
-                        <span
-                          key={key}
-                          className={`text-[10px] font-semibold px-2 py-1 rounded-md border ${on
-                            ? "bg-indigo-950/40 text-indigo-300 border-indigo-900/40"
-                            : "bg-slate-900/60 text-slate-600 border-slate-800 line-through"
-                            }`}
-                        >
-                          {DASHBOARD_MODULE_LABELS[key] || key}
-                        </span>
-                      );
-                    })}
+                    {role.permissions?.map((p) => (
+                      <span
+                        key={p.module}
+                        className="text-[10px] font-semibold px-2 py-1 rounded-md bg-indigo-950/40 text-indigo-300 border border-indigo-900/40"
+                      >
+                        {MODULE_LABELS[p.module] || p.module} ·{" "}
+                        {p.actions.length}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="text-[11px] text-slate-600 pt-2 border-t border-slate-800">
+                    {permissionCount(role)} permission
+                    {permissionCount(role) !== 1 ? "s" : ""} granted
+                  </div>
+
+                  {/* Dashboard modules summary */}
+                  {(() => {
+                    const allKeys = getModuleKeysForRole(role.name);
+                    if (!allKeys || allKeys.length === 0) return null;
+                    const enabledKeys = Array.isArray(role.dashboardModules)
+                      ? role.dashboardModules
+                      : allKeys;
+                    return (
+                      <div className="pt-2 border-t border-slate-800">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-purple-400 flex items-center gap-1">
+                            <LayoutGrid size={11} />
+                            Dashboard Modules · {enabledKeys.length}/
+                            {allKeys.length} visible
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {allKeys.map((key) => {
+                            const on = enabledKeys.includes(key);
+                            return (
+                              <span
+                                key={key}
+                                className={`text-[10px] font-semibold px-2 py-1 rounded-md border ${
+                                  on
+                                    ? "bg-purple-950/40 text-purple-300 border-purple-900/40"
+                                    : "bg-slate-900/60 text-slate-600 border-slate-800 line-through"
+                                }`}
+                              >
+                                {DASHBOARD_MODULE_LABELS[key] || key}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="pt-2 border-t border-slate-800">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-2">
+                      Assigned Users · {usersForRole(role).length}
+                    </p>
+                    {usersForRole(role).length === 0 ? (
+                      <p className="text-[11px] text-slate-600">
+                        No one holds this role yet.
+                      </p>
+                    ) : (
+                      <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto">
+                        {usersForRole(role).map((u) => (
+                          <div
+                            key={u._id}
+                            className="flex items-center justify-between gap-2 rounded-lg bg-[#0b1120] border border-slate-800 px-3 py-1.5"
+                          >
+                            <span className="text-xs font-semibold text-white truncate">
+                              {u.name}
+                            </span>
+                            <span className="text-[11px] text-slate-500 shrink-0">
+                              {u.phoneNumber}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )
+              ))}
+            </div>
+          )}
+        </div>
       ) : (
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-3">
@@ -1479,7 +1539,9 @@ const RoleManager = ({ showToast, currentUser }) => {
                       const userRoleId = getUserRoleId(u);
                       const customRole =
                         getCustomRole(u, roles) ||
-                        (userRoleId ? roles.find((r) => r._id?.toString() === userRoleId) : null);
+                        (userRoleId
+                          ? roles.find((r) => r._id?.toString() === userRoleId)
+                          : null);
                       if (customRole) {
                         return (
                           <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-indigo-950/60 text-indigo-300 border border-indigo-500/30">
@@ -1530,23 +1592,11 @@ const RoleManager = ({ showToast, currentUser }) => {
       {roleModal && (
         <RoleModal
           modules={modules}
+          dashboardModuleKeys={getModuleKeysForRole(roleModal?.name)}
           initial={roleModal._id ? roleModal : null}
           onClose={() => setRoleModal(null)}
           onSaved={() => {
             setRoleModal(null);
-            loadAll();
-          }}
-          showToast={showToast}
-        />
-      )}
-
-      {dashboardTarget && (
-        <DashboardModulesModal
-          role={dashboardTarget}
-          moduleKeys={dashboardModuleRegistry[dashboardTarget.name.toLowerCase()] || []}
-          onClose={() => setDashboardTarget(null)}
-          onSaved={() => {
-            setDashboardTarget(null);
             loadAll();
           }}
           showToast={showToast}

@@ -44,13 +44,15 @@ export const uploadFileToStorage = async ({
   filePath,
   contentType,
 }) => {
+  const isVercel = isVercelEnvironment();
   const token =
     process.env.BLOB_READ_WRITE_TOKEN ||
     process.env.VERCEL_BLOB_READ_WRITE_TOKEN;
 
   const pathname = `${folder}/${fileName}`;
 
-  if (token) {
+  // ONLY use Vercel Blob when deployed in a live Vercel environment
+  if (isVercel && token) {
     try {
       let dataToUpload = buffer;
       if (!dataToUpload && filePath) {
@@ -77,19 +79,17 @@ export const uploadFileToStorage = async ({
       };
     } catch (err) {
       console.error("[Vercel Blob Upload Error]:", err.message || err);
-      if (isVercelEnvironment()) {
-        throw new Error(`Vercel Blob Upload Failed: ${err.message || err}`);
-      }
+      throw new Error(`Vercel Blob Upload Failed: ${err.message || err}`);
     }
   }
 
-  if (isVercelEnvironment()) {
+  if (isVercel) {
     throw new Error(
       "Vercel Blob Storage token (BLOB_READ_WRITE_TOKEN) is not configured in your Vercel project environment variables. Please attach a Vercel Blob store to this project in the Vercel Dashboard."
     );
   }
 
-  // Fallback: Save to Local Storage (only allowed in local development)
+  // Local PC Folder System (only used when running on localhost / PC server)
   const targetDir = path.join(UPLOADS_DIR, folder);
   await fsPromises.mkdir(targetDir, { recursive: true });
   const localFilePath = path.join(targetDir, fileName);
@@ -120,37 +120,37 @@ export const uploadFileToStorage = async ({
 export const deleteFileFromStorage = async (fileUrlOrId) => {
   if (!fileUrlOrId) return;
 
+  const isVercel = isVercelEnvironment();
   const token =
     process.env.BLOB_READ_WRITE_TOKEN ||
     process.env.VERCEL_BLOB_READ_WRITE_TOKEN;
 
   if (
+    isVercel &&
+    token &&
     typeof fileUrlOrId === "string" &&
-    (fileUrlOrId.includes("vercel-storage.com") || fileUrlOrId.startsWith("http"))
+    fileUrlOrId.includes("vercel-storage.com")
   ) {
-    if (fileUrlOrId.includes("vercel-storage.com") && token) {
-      try {
-        await del(fileUrlOrId, { token });
-        return;
-      } catch (err) {
-        console.error("[Vercel Blob Delete Error]:", err.message || err);
-      }
+    try {
+      await del(fileUrlOrId, { token });
+      return;
+    } catch (err) {
+      console.error("[Vercel Blob Delete Error]:", err.message || err);
     }
   }
 
-  // Local Storage Deletion Fallback
-  if (!isVercelEnvironment()) {
-    try {
-      const relativePath = fileUrlOrId.startsWith("http")
+  // Local Storage Deletion (PC Folder System)
+  try {
+    const relativePath =
+      typeof fileUrlOrId === "string" && fileUrlOrId.includes("/uploads/")
         ? fileUrlOrId.split("/uploads/")[1]
         : fileUrlOrId;
 
-      if (relativePath) {
-        const localPath = path.join(UPLOADS_DIR, relativePath);
-        await fsPromises.unlink(localPath).catch(() => {});
-      }
-    } catch (err) {
-      console.error("[Local Storage Delete Error]:", err.message || err);
+    if (relativePath) {
+      const localPath = path.join(UPLOADS_DIR, relativePath);
+      await fsPromises.unlink(localPath).catch(() => {});
     }
+  } catch (err) {
+    console.error("[Local Storage Delete Error]:", err.message || err);
   }
 };

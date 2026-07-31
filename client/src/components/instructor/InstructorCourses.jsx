@@ -1157,6 +1157,12 @@ function NotesManager({ notes = [], onChange, showToast }) {
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const isPdf = file.name?.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
+    if (!isPdf) {
+      setUploadError("Only PDF files are allowed for notes.");
+      showToast?.("Only PDF files are allowed for notes.");
+      return;
+    }
     // Reset the input so the same file can be re-selected after a remove
     if (fileInputRef.current) fileInputRef.current.value = "";
     setUploading(true);
@@ -1260,7 +1266,7 @@ function NotesManager({ notes = [], onChange, showToast }) {
             />
           </div>
           <div>
-            <label style={{ fontSize: 11, fontWeight: 600, color: "#ffffff", display: "block", marginBottom: 4 }}>File Upload * (PDF, DOCX, etc.)</label>
+            <label style={{ fontSize: 11, fontWeight: 600, color: "#ffffff", display: "block", marginBottom: 4 }}>File Upload * (PDF Only)</label>
             {newNote.fileUrl ? (
               <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#111827", padding: "8px 12px", borderRadius: 8, border: "1px solid #16a34a" }}>
                 <FileText size={15} color="#4ade80" />
@@ -1281,7 +1287,7 @@ function NotesManager({ notes = [], onChange, showToast }) {
                   ref={fileInputRef}
                   type="file"
                   id={fileInputId}
-                  accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                  accept=".pdf,application/pdf"
                   onChange={handleFileUpload}
                   disabled={uploading}
                   style={{ display: "none" }}

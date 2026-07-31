@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import Note from "../models/note.model.js";
 import Course from "../models/courses.model.js";
 import { hasBaseRole, hasPermissionGrant } from "../utils/userRoles.js";
-import { deleteKeys } from "../utils/redisClient.js";
+import { cacheResponse, deleteKeys } from "../utils/redisClient.js";
 
 // ── Notes exist in two places today ─────────────────────────────────────────
 // 1. The standalone `Note` collection — created via POST /notes (the
@@ -20,6 +20,7 @@ const invalidateNoteCaches = async (courseId) => {
   const keys = ["courses:published"];
   if (courseId) keys.push(`course:public:${courseId}`);
   await deleteKeys(keys);
+  await invalidateCache("notes:user:*");
 };
 
 const shapeStandaloneNote = (note) => ({
@@ -191,47 +192,52 @@ export const listNotes = async (req, res) => {
 
     // ── Student / public listing — ONLY ever return approved notes ─────────
     if (req.user) {
-      const query = { $or: [{ students: req.user._id }] };
-      if (req.user.subscription?.status === "active" && req.user.selectedClass) {
-        const escapedClass = req.user.selectedClass.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
-        query.$or.push({ category: new RegExp(`^${escapedClass}$`, "i") });
-      }
+      const cacheKey = `notes:user:${req.user._id}`;
+      const studentNotes = await cacheResponse(cacheKey, 1800, async () => {
+        const query = { $or: [{ students: req.user._id }] };
+        if (req.user.subscription?.status === "active" && req.user.selectedClass) {
+          const escapedClass = req.user.selectedClass.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+          query.$or.push({ category: new RegExp(`^${escapedClass}$`, "i") });
+        }
 
-      const [enrolledCoursesList, approvedStandaloneNotes] = await Promise.all([
-        Course.find(query).populate("instructor", "name email").lean(),
-        Note.find({ status: "approved" }).lean(),
-      ]);
+        const [enrolledCoursesList, approvedStandaloneNotes] = await Promise.all([
+          Course.find(query).populate("instructor", "name email").lean(),
+          Note.find({ status: "approved" }).lean(),
+        ]);
 
-      let studentNotes = [];
-      enrolledCoursesList.forEach((course) => {
-        (course.notes || [])
-          .filter((note) => note.status === "approved")
-          .forEach((note) => {
-            studentNotes.push({
-              _id: note._id,
-              title: note.title,
-              description: note.description,
-              fileUrl: note.fileUrl,
-              createdAt: note.createdAt,
-              instructorName: course.instructor?.name || "Instructor",
-              courseTitle: course.title,
+        let notes = [];
+        enrolledCoursesList.forEach((course) => {
+          (course.notes || [])
+            .filter((note) => note.status === "approved")
+            .forEach((note) => {
+              notes.push({
+                _id: note._id,
+                title: note.title,
+                description: note.description,
+                fileUrl: note.fileUrl,
+                createdAt: note.createdAt,
+                instructorName: course.instructor?.name || "Instructor",
+                courseTitle: course.title,
+              });
             });
-          });
-      });
-
-      approvedStandaloneNotes.forEach((note) => {
-        studentNotes.push({
-          _id: note._id,
-          title: note.title,
-          description: note.description,
-          fileUrl: note.fileUrl,
-          createdAt: note.createdAt,
-          instructorName: note.instructorName,
-          courseTitle: null,
         });
+
+        approvedStandaloneNotes.forEach((note) => {
+          notes.push({
+            _id: note._id,
+            title: note.title,
+            description: note.description,
+            fileUrl: note.fileUrl,
+            createdAt: note.createdAt,
+            instructorName: note.instructorName,
+            courseTitle: null,
+          });
+        });
+
+        notes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        return notes;
       });
 
-      studentNotes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       return res.json(studentNotes);
     }
 

@@ -10,6 +10,7 @@ import WatermarkOverlay from "./WaterMarkOverlay.jsx";
 import NoteViewerModal from "../common/NoteViewerModal.jsx";
 
 import { normalizeVideoUrl, isImageFile, isEmbedVideo, getEmbedUrl } from "../../utils/media.js";
+import { useAiTranslation } from "../../utils/aiTranslate.js";
 
 const downloadFile = async (url, filename) => {
   try {
@@ -1084,6 +1085,24 @@ export default function CoursePage() {
 
 
   const [course, setCourse] = useState(null);
+
+  const translatableTexts = useMemo(() => {
+    if (!course) return [];
+    const set = new Set();
+    // Collect subject names and chapter titles from the flat lessons array
+    (course.lessons || []).forEach((l) => {
+      if (l.subject) set.add(l.subject);
+      if (l.chapterTitle) set.add(l.chapterTitle);
+      if (l.title) set.add(l.title);
+    });
+    // Also collect note titles
+    (course.notes || []).forEach((n) => {
+      if (n.title) set.add(n.title);
+    });
+    return Array.from(set);
+  }, [course]);
+
+  const { tText } = useAiTranslation(translatableTexts);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeIdx, setActiveIdx] = useState(0);
@@ -1546,7 +1565,7 @@ export default function CoursePage() {
                 <div className="flex min-w-0 items-center gap-2.5">
                   <span className="flex-shrink-0 text-base">📚</span>
                   <span className="truncate text-[14px] font-extrabold text-white tracking-wide">
-                    {subj.subject}
+                    {tText(subj.subject)}
                   </span>
                 </div>
                 <div className="flex flex-shrink-0 items-center gap-2">
@@ -1583,7 +1602,7 @@ export default function CoursePage() {
                           <div className="flex min-w-0 items-center gap-2">
                             <span className="flex-shrink-0 text-[13px]">📖</span>
                             <span className="truncate text-[13px] font-bold text-slate-200">
-                              {chapter.title}
+                              {tText(chapter.title)}
                             </span>
                           </div>
                           <div className="flex flex-shrink-0 items-center gap-2">
@@ -1669,7 +1688,7 @@ export default function CoursePage() {
                                         color: isActive ? "#c084fc" : isLocked ? "#64748b" : "#cbd5e1",
                                       }}
                                     >
-                                      {lesson.title}
+                                      {tText(lesson.title)}
                                     </p>
                                     <div className="mt-1 flex items-center gap-2">
                                       <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -1891,7 +1910,7 @@ export default function CoursePage() {
         >
           ← Courses
         </button>
-        <p className="cp-topbar-title">{course?.title}</p>
+        <p className="cp-topbar-title">{tText(course?.title)}</p>
         {!isDesktop && (
           <button
             onClick={() => setMobileSidebarOpen((o) => !o)}
@@ -2220,20 +2239,11 @@ export default function CoursePage() {
                         <button
                           type="button"
                           onClick={() => setActiveModalNote(note)}
-                          className="whitespace-nowrap rounded-lg bg-[#334155] px-3 py-1.5 text-[10px] font-bold text-slate-200 hover:bg-[#475569]"
+                          className="whitespace-nowrap rounded-lg bg-gradient-to-r from-teal-600 to-emerald-600 px-3.5 py-1.5 text-[10px] font-bold text-white hover:from-teal-500 hover:to-emerald-500 shadow-sm"
                         >
                           View
                         </button>
-                      <button
-                        onClick={() => {
-                          const ext = note.fileUrl.split(".").pop() || "pdf";
-                          downloadFile(note.fileUrl, `${note.title}.${ext}`);
-                        }}
-                        className="whitespace-nowrap rounded-lg border-none bg-gradient-to-br from-violet-600 to-cyan-500 px-3 py-1.5 text-[10px] font-bold text-white hover:opacity-90"
-                      >
-                        Download
-                      </button>
-                    </div>
+                      </div>
                     </div>
                   ))}
               </div>

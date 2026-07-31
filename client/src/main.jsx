@@ -36,7 +36,19 @@ import "./i18n/index.js";
 import { HelmetProvider } from "react-helmet-async";
 import { registerSW } from "virtual:pwa-register";
 
-if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+if (import.meta.env.DEV && "serviceWorker" in navigator) {
+  // Clear any active Service Worker and Cache Storage in dev mode so localhost uses fresh server data
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (const registration of registrations) {
+      registration.unregister();
+    }
+  });
+  if ("caches" in window) {
+    caches.keys().then((keys) => {
+      keys.forEach((key) => caches.delete(key));
+    });
+  }
+} else if (typeof window !== "undefined" && "serviceWorker" in navigator) {
   registerSW({ immediate: true });
 }
 

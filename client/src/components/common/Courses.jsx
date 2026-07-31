@@ -23,6 +23,7 @@ const SkeletonCard = () => (
 
 // ── Star Rating Modal ─────────────────────────────────────────────────────────
 const RatingModal = ({ course, onClose, onSubmit }) => {
+  const { t } = useTranslation();
   const [hovered, setHovered] = useState(0);
   const [selected, setSelected] = useState(0);
   const [comment, setComment] = useState("");

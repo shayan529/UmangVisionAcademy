@@ -9,6 +9,7 @@ import { hasBaseRole } from "../../utils/permissions.js";
 import { useTranslation } from "react-i18next";
 import { normalizeVideoUrl, isImageFile, isEmbedVideo, getEmbedUrl } from "../../utils/media.js";
 import NoteViewerModal from "../common/NoteViewerModal.jsx";
+import { useAiTranslation } from "../../utils/aiTranslate.js";
 
 // ── Local state ───────────────────────────────────────────────────────────────
 const useCourseDemo = (id) => {
@@ -131,6 +132,14 @@ const VideoPlayer = ({ url, poster }) => {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
 
+  const normalizedUrl = normalizeVideoUrl(url);
+  const [videoSrc, setVideoSrc] = useState(normalizedUrl);
+
+  useEffect(() => {
+    setVideoSrc(normalizedUrl);
+    setError("");
+  }, [normalizedUrl]);
+
   const toggle = () => {
     if (!ref.current) return;
     if (playing) {
@@ -163,9 +172,7 @@ const VideoPlayer = ({ url, poster }) => {
       ((e.clientX - rect.left) / rect.width) * ref.current.duration;
   };
 
-  const normalizedUrl = normalizeVideoUrl(url);
-
-  if (isImageFile(normalizedUrl)) {
+  if (isImageFile(videoSrc)) {
     return (
       <div
         style={{
@@ -182,7 +189,7 @@ const VideoPlayer = ({ url, poster }) => {
         }}
       >
         <img
-          src={normalizedUrl}
+          src={videoSrc}
           alt="Course Demo Asset"
           style={{ maxHeight: "80%", maxWidth: "90%", objectFit: "contain", borderRadius: 12 }}
         />
@@ -193,7 +200,7 @@ const VideoPlayer = ({ url, poster }) => {
     );
   }
 
-  if (isEmbedVideo(normalizedUrl)) {
+  if (isEmbedVideo(videoSrc)) {
     return (
       <div
         style={{
@@ -205,7 +212,7 @@ const VideoPlayer = ({ url, poster }) => {
         }}
       >
         <iframe
-          src={getEmbedUrl(normalizedUrl)}
+          src={getEmbedUrl(videoSrc)}
           style={{ width: "100%", height: "100%", border: "none" }}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
@@ -229,7 +236,7 @@ const VideoPlayer = ({ url, poster }) => {
     >
       <video
         ref={ref}
-        src={normalizedUrl}
+        src={videoSrc}
         poster={poster}
         playsInline
         preload="metadata"
@@ -240,8 +247,20 @@ const VideoPlayer = ({ url, poster }) => {
           const v = e.currentTarget;
           const code = v.error?.code;
           const msg = v.error?.message || "Unknown error";
+
+          // If Vercel Blob URL failed on localhost, fallback to local Express server URL
+          if (videoSrc.includes("vercel-storage.com")) {
+            const match = videoSrc.match(/\/uploads\/(.+)$/);
+            if (match && match[1]) {
+              const localFallback = `http://localhost:5000/uploads/${match[1]}`;
+              console.log("🔄 Vercel Blob video failed, falling back to local server:", localFallback);
+              setVideoSrc(localFallback);
+              return;
+            }
+          }
+
           setError(`Video failed to load (code ${code}): ${msg}`);
-          console.error("Demo video error:", code, msg, normalizedUrl);
+          console.error("Demo video error:", code, msg, videoSrc);
         }}
         style={{
           width: "100%",
@@ -590,6 +609,27 @@ export default function CourseDemo() {
   const { t } = useTranslation();
 
   const { course, loading, error } = useCourseDemo(id);
+
+  const translatableTexts = React.useMemo(() => {
+    if (!course) return [];
+    const set = new Set();
+    if (course.title) set.add(course.title);
+    if (course.category) set.add(course.category);
+    if (course.subject) set.add(course.subject);
+    (course.chapters || []).forEach((ch) => {
+      if (ch.title) set.add(ch.title);
+      (ch.lessons || []).forEach((l) => {
+        if (l.title) set.add(l.title);
+      });
+    });
+    (course.notes || []).forEach((n) => {
+      if (n.title) set.add(n.title);
+    });
+    return Array.from(set);
+  }, [course]);
+
+  const { tText } = useAiTranslation(translatableTexts);
+
   const [addedToCart, setAddedToCart] = useState(false);
   const [activeModalNote, setActiveModalNote] = useState(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -810,7 +850,7 @@ export default function CourseDemo() {
                           color: "#94a3b8",
                         }}
                       >
-                        {course.category}
+                        {tText(course.category)}
                       </span>
                     </div>
 
@@ -823,7 +863,7 @@ export default function CourseDemo() {
                         marginBottom: 12,
                       }}
                     >
-                      {course.title}
+                      {tText(course.title)}
                     </h1>
                     <p
                       style={{
@@ -1123,7 +1163,7 @@ export default function CourseDemo() {
                                 color: "#e2e8f0",
                               }}
                             >
-                              {note.title}
+                              {tText(note.title)}
                             </p>
                             {note.description && (
                               <p
@@ -1143,27 +1183,8 @@ export default function CourseDemo() {
                                 type="button"
                                 onClick={() => setActiveModalNote(note)}
                                 style={{
-                                  padding: "7px 12px",
-                                  background: "#334155",
-                                  color: "#e2e8f0",
-                                  borderRadius: 8,
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  border: "none",
-                                  cursor: "pointer",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                View
-                              </button>
-                              <button
-                                onClick={() => {
-                                  const ext = note.fileUrl.split(".").pop() || "pdf";
-                                  downloadFile(note.fileUrl, `${note.title}.${ext}`);
-                                }}
-                                style={{
-                                  padding: "7px 12px",
-                                  background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                                  padding: "7px 14px",
+                                  background: "linear-gradient(135deg,#0d9488,#059669)",
                                   color: "#fff",
                                   borderRadius: 8,
                                   fontSize: 11,
@@ -1173,7 +1194,7 @@ export default function CourseDemo() {
                                   whiteSpace: "nowrap",
                                 }}
                               >
-                                Download
+                                View
                               </button>
                             </div>
                           ) : (
@@ -1256,7 +1277,7 @@ export default function CourseDemo() {
                           <div key={sIdx} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                             {subj.name && (
                               <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", padding: "8px 12px", background: "#1e293b", borderRadius: "8px", border: "1px solid #334155" }}>
-                                {subj.name}
+                                {tText(subj.name)}
                               </div>
                             )}
                             <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: subj.name ? "4px 0 0 0" : "0" }}>
@@ -1301,7 +1322,7 @@ export default function CourseDemo() {
                                         textOverflow: "ellipsis",
                                       }}
                                     >
-                                      {lesson.title}
+                                      {tText(lesson.title)}
                                     </p>
                                     {lesson.description && (
                                       <p

@@ -10,6 +10,20 @@ const referenceSchema = new Schema(
       trim: true,
       maxlength: 120,
     },
+    description: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    category: {
+      type: String,
+      trim: true,
+      default: "General",
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
     createdBy: {
       type: Types.ObjectId,
       ref: "User",

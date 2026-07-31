@@ -2,6 +2,14 @@
  * Normalizes video URLs to ensure Vercel Blob, ImageKit, Cloudinary, and local storage URLs play properly.
  */
 const VERCEL_BLOB_BASE = "https://rfo7jqxbmriqdgqo.public.blob.vercel-storage.com";
+const LOCAL_API_BASE = "http://localhost:5000";
+
+const isLocalEnv = () => {
+  if (typeof window !== "undefined") {
+    return window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  }
+  return process.env.NODE_ENV !== "production";
+};
 
 export const normalizeVideoUrl = (rawUrl) => {
   if (!rawUrl) return "";
@@ -12,18 +20,19 @@ export const normalizeVideoUrl = (rawUrl) => {
     url = url.replace("rfo7jqbmriqdgqo.public.blob.vercel-storage.com", "rfo7jqxbmriqdgqo.public.blob.vercel-storage.com");
   }
 
+  const isLocal = isLocalEnv();
+
   // Handle local /uploads/ or relative paths
   if (url.startsWith("/uploads/")) {
-    url = `${VERCEL_BLOB_BASE}${url}`;
+    url = isLocal ? `${LOCAL_API_BASE}${url}` : `${VERCEL_BLOB_BASE}${url}`;
   } else if (url.startsWith("uploads/")) {
-    url = `${VERCEL_BLOB_BASE}/${url}`;
-  }
-
-  // Handle localhost:5000/uploads/... URLs if saved during local dev
-  if (url.includes("/uploads/") && !url.includes("vercel-storage.com")) {
-    const match = url.match(/\/uploads\/(.+)$/);
-    if (match && match[1]) {
-      url = `${VERCEL_BLOB_BASE}/${match[1]}`;
+    url = isLocal ? `${LOCAL_API_BASE}/${url}` : `${VERCEL_BLOB_BASE}/${url}`;
+  } else if (url.includes("/uploads/") && !url.includes("vercel-storage.com")) {
+    if (!isLocal) {
+      const match = url.match(/\/uploads\/(.+)$/);
+      if (match && match[1]) {
+        url = `${VERCEL_BLOB_BASE}/${match[1]}`;
+      }
     }
   }
 

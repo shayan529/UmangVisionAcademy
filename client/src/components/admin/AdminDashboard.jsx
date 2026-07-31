@@ -23,6 +23,7 @@ import AdminQuestionPapers from "./AdminQuestionPapers";
 import AdminReels from "./AdminReels";
 import AdminPayments from "./AdminPayments";
 import AdminMockTests from "./AdminMockTests";
+import AdminReferences from "./AdminReferences";
 import InstructorNotes from "../instructor/InstructorNotes";
 import { Toast } from "../instructor/InstructorUi";
 
@@ -264,6 +265,8 @@ export default function AdminDashboard() {
         return <AdminPayments />;
       case "applications":
         return <AdminApplications />;
+      case "references":
+        return <AdminReferences showToast={showToast} />;
       case "roles":
         return (
           <RoleManager

@@ -15,6 +15,7 @@ import {
   Film,
   Calendar,
   ClipboardList,
+  Bookmark,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -122,6 +123,11 @@ const AdminSidebar = ({
       label: t("adminSidebar.applications"),
       icon: CheckCircle,
       badge: applicationsCount,
+    },
+    {
+      id: "references",
+      label: t("adminSidebar.references", "References"),
+      icon: Bookmark,
     },
     { id: "roles", label: t("adminSidebar.roles"), icon: Lock },
     { id: "devices", label: t("adminSidebar.devices"), icon: Shield },

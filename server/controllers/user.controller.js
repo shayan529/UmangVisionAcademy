@@ -44,6 +44,26 @@ const setTokenCookie = (res, token) => {
   });
 };
 
+const getClientIp = (req) => {
+  let ip =
+    req.headers["x-forwarded-for"] ||
+    req.ip ||
+    req.socket?.remoteAddress ||
+    "Unknown IP";
+
+  if (typeof ip === "string") {
+    ip = ip.split(",")[0].trim();
+    if (ip === "::1" || ip === "::ffff:127.0.0.1") {
+      return "127.0.0.1";
+    }
+    if (ip.startsWith("::ffff:")) {
+      return ip.replace("::ffff:", "");
+    }
+  }
+  return ip;
+};
+
+
 const createReferralCode = () =>
   crypto.randomBytes(3).toString("hex").toUpperCase();
 
@@ -291,11 +311,7 @@ export const RegisterUser = async (req, res) => {
     }
 
     const userAgent = req.headers["user-agent"] || "Unknown Device";
-    const ip =
-      req.headers["x-forwarded-for"] ||
-      req.ip ||
-      req.socket.remoteAddress ||
-      "Unknown IP";
+    const ip = getClientIp(req);
     user.devices = [{ userAgent, ip, lastLogin: new Date() }];
     await user.save();
 
@@ -373,11 +389,7 @@ export const LoginUser = async (req, res) => {
 
     // Update logged-in devices
     const userAgent = req.headers["user-agent"] || "Unknown Device";
-    const ip =
-      req.headers["x-forwarded-for"] ||
-      req.ip ||
-      req.socket.remoteAddress ||
-      "Unknown IP";
+    const ip = getClientIp(req);
 
     let devicesList = user.devices || [];
     devicesList = devicesList.filter(
@@ -601,11 +613,7 @@ export const LoginUserWithOtp = async (req, res) => {
 
     // Update logged-in devices
     const userAgent = req.headers["user-agent"] || "Unknown Device";
-    const ip =
-      req.headers["x-forwarded-for"] ||
-      req.ip ||
-      req.socket.remoteAddress ||
-      "Unknown IP";
+    const ip = getClientIp(req);
 
     let devicesList = user.devices || [];
     devicesList = devicesList.filter(

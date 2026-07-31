@@ -107,6 +107,11 @@ export default function InstructorNotes({ showToast }) {
 
   const doUpload = useCallback(async (file) => {
     if (!file) return;
+    const isPdf = file.name?.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
+    if (!isPdf) {
+      showToast?.("Only PDF files are allowed for study notes.");
+      return;
+    }
     try {
       setUploadingFile(true);
       setUploadProgress(0);
@@ -488,13 +493,13 @@ export default function InstructorNotes({ showToast }) {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-400">File (PDF/Document) *</label>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-400">File (PDF Only) *</label>
                 <input
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileChange}
                   className="hidden"
-                  accept=".pdf,.doc,.docx,.ppt,.pptx"
+                  accept=".pdf,application/pdf"
                 />
 
                 {form.fileUrl ? (

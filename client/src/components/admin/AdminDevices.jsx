@@ -90,6 +90,7 @@ const parseUA = (userAgent) => {
 const AdminDevices = ({ users = [], loading = false, currentUser }) => {
   const [q, setQ] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [onlyActiveDevices, setOnlyActiveDevices] = useState(true);
   const [expandedUserAgents, setExpandedUserAgents] = useState({});
   const [showFullHistory, setShowFullHistory] = useState({});
 
@@ -113,6 +114,11 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
     : users.filter((u) => u.role !== "admin");
 
   const filteredUsers = visibleUsers.filter((u) => {
+    // 0. Filter users with no devices if onlyActiveDevices is enabled
+    if (onlyActiveDevices && (!u.devices || u.devices.length === 0)) {
+      return false;
+    }
+
     // 1. Filter by search query
     const ql = q.toLowerCase();
     const matchesQuery =
@@ -137,11 +143,14 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
     return matchesQuery;
   });
 
+  const activeDevicesUserCount = visibleUsers.filter(
+    (u) => u.devices && u.devices.length > 0,
+  ).length;
   const studentsCount = visibleUsers.filter((u) =>
-    u.role === "student",
+    u.role === "student" && (!onlyActiveDevices || (u.devices && u.devices.length > 0)),
   ).length;
   const instructorsCount = visibleUsers.filter((u) =>
-    u.role === "instructor",
+    u.role === "instructor" && (!onlyActiveDevices || (u.devices && u.devices.length > 0)),
   ).length;
 
   return (
@@ -177,37 +186,50 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
       </div>
 
       {/* Tabs / Filters */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-800/80 pb-3">
-        <button
-          onClick={() => setRoleFilter("all")}
-          className={`px-4 py-1.5 rounded-lg text-xs font-semibold border transition duration-150 ${
-            roleFilter === "all"
-              ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400 font-bold"
-              : "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-white"
-          }`}
-        >
-          All Users ({visibleUsers.length})
-        </button>
-        <button
-          onClick={() => setRoleFilter("students")}
-          className={`px-4 py-1.5 rounded-lg text-xs font-semibold border transition duration-150 ${
-            roleFilter === "students"
-              ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400 font-bold"
-              : "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-white"
-          }`}
-        >
-          Students ({studentsCount})
-        </button>
-        <button
-          onClick={() => setRoleFilter("instructors")}
-          className={`px-4 py-1.5 rounded-lg text-xs font-semibold border transition duration-150 ${
-            roleFilter === "instructors"
-              ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400 font-bold"
-              : "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-white"
-          }`}
-        >
-          Instructors ({instructorsCount})
-        </button>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setRoleFilter("all")}
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold border transition duration-150 ${
+              roleFilter === "all"
+                ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400 font-bold"
+                : "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-white"
+            }`}
+          >
+            All Roles ({onlyActiveDevices ? activeDevicesUserCount : visibleUsers.length})
+          </button>
+          <button
+            onClick={() => setRoleFilter("students")}
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold border transition duration-150 ${
+              roleFilter === "students"
+                ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400 font-bold"
+                : "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-white"
+            }`}
+          >
+            Students ({studentsCount})
+          </button>
+          <button
+            onClick={() => setRoleFilter("instructors")}
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold border transition duration-150 ${
+              roleFilter === "instructors"
+                ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400 font-bold"
+                : "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-white"
+            }`}
+          >
+            Instructors ({instructorsCount})
+          </button>
+        </div>
+
+        {/* Toggle active device logins filter */}
+        <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-400 hover:text-slate-200 transition duration-150">
+          <input
+            type="checkbox"
+            checked={onlyActiveDevices}
+            onChange={(e) => setOnlyActiveDevices(e.target.checked)}
+            className="w-3.5 h-3.5 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500/20 bg-slate-900"
+          />
+          <span>Only show users with active device records</span>
+        </label>
       </div>
 
       {/* Main List */}
@@ -310,7 +332,9 @@ const AdminDevices = ({ users = [], loading = false, currentUser }) => {
                             <div className="flex items-center gap-1.5 bg-slate-900/80 border border-slate-800/60 px-2 py-1 rounded-md shrink-0">
                               <Globe size={11} className="text-slate-500" />
                               <span className="font-mono text-[10px] text-slate-300">
-                                {device.ip || "Unknown IP"}
+                                {device.ip === "::1" || device.ip === "127.0.0.1" || device.ip === "::ffff:127.0.0.1"
+                                  ? "127.0.0.1 (Localhost)"
+                                  : device.ip || "Unknown IP"}
                               </span>
                             </div>
 

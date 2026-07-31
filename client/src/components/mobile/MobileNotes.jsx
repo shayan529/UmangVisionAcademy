@@ -53,44 +53,11 @@ const getDocViewUrl = (url) => {
 };
 
 const getFileMeta = (url = "") => {
-  const ext = url.split(".").pop()?.toLowerCase().split("?")[0] ?? "";
-  if (["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) {
-    return {
-      icon: FileImage,
-      label: ext.toUpperCase(),
-      color: "#2dd4bf",
-      badgeClass: "bg-teal-500/10 text-teal-400 border-teal-500/20",
-    };
-  }
-  if (ext === "pdf") {
-    return {
-      icon: FileText,
-      label: "PDF",
-      color: "#fb7185",
-      badgeClass: "bg-rose-500/10 text-rose-400 border-rose-500/20",
-    };
-  }
-  if (["doc", "docx"].includes(ext)) {
-    return {
-      icon: FileText,
-      label: "DOC",
-      color: "#818cf8",
-      badgeClass: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
-    };
-  }
-  if (["ppt", "pptx"].includes(ext)) {
-    return {
-      icon: FileText,
-      label: "PPT",
-      color: "#facc15",
-      badgeClass: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-    };
-  }
   return {
-    icon: File,
-    label: "FILE",
-    color: "#38bdf8",
-    badgeClass: "bg-sky-500/10 text-sky-400 border-sky-500/20",
+    icon: FileText,
+    label: "PDF",
+    color: "#fb7185",
+    badgeClass: "bg-rose-500/10 text-rose-400 border-rose-500/20",
   };
 };
 
@@ -310,7 +277,7 @@ export default function MobileNotes() {
               return (
                 <div
                   key={note._id}
-                  className="note-card group relative p-5 bg-[#111827]/90 border border-slate-800/90 hover:border-teal-500/40 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col justify-between gap-4 overflow-hidden"
+                  className="note-card group relative p-5 bg-[#111827]/90 border border-slate-800/90 hover:border-teal-500/40 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col justify-between gap-4 overflow-hidden min-h-[250px] h-full"
                   style={{ animationDelay: `${Math.min(i, 10) * 0.04}s` }}
                 >
                   {/* Top Accent Strip */}
@@ -319,18 +286,12 @@ export default function MobileNotes() {
                     style={{ background: meta.color }}
                   />
 
-                  <div className="space-y-3 pt-1">
-                    {/* Header Row: Icon + Title + File Type Badge */}
+                  <div className="flex-1 flex flex-col space-y-3 pt-1">
+                    {/* Header Row: Icon */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
                         <FileIcon size={20} style={{ color: meta.color }} />
                       </div>
-
-                      <span
-                        className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-md border shrink-0 ${meta.badgeClass}`}
-                      >
-                        {meta.label}
-                      </span>
                     </div>
 
                     {/* Note Title */}
@@ -342,11 +303,9 @@ export default function MobileNotes() {
                     </h3>
 
                     {/* Description */}
-                    {note.description && (
-                      <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
-                        {note.description}
-                      </p>
-                    )}
+                    <p className="text-xs text-slate-400 leading-relaxed line-clamp-2 min-h-[2rem]">
+                      {note.description || ""}
+                    </p>
                   </div>
 
                   {/* Footer Info & Actions */}
@@ -371,26 +330,14 @@ export default function MobileNotes() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="grid grid-cols-2 gap-2">
+                    <div>
                       <button
                         type="button"
                         onClick={() => setActiveModalNote(note)}
-                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white transition text-xs font-bold border border-slate-700/60 shadow-sm"
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white transition text-xs font-bold shadow-md shadow-teal-600/20"
                       >
                         <Eye size={14} />
                         {t("studyNotes.view", "View")}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const ext = note.fileUrl.split(".").pop() || "pdf";
-                          downloadFile(note.fileUrl, `${note.title}.${ext}`);
-                        }}
-                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white transition text-xs font-bold shadow-md shadow-teal-600/20"
-                      >
-                        <Download size={14} />
-                        {t("studyNotes.download", "Download")}
                       </button>
                     </div>
                   </div>

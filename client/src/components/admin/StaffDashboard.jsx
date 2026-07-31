@@ -28,6 +28,7 @@ import AdminStudents from "./AdminStudents";
 import AdminInstructors from "./AdminInstructors";
 import AdminCourses from "./AdminCourses";
 import AdminApplications from "./AdminApplications";
+import AdminReferences from "./AdminReferences";
 import StaffPayments from "./StaffPayments";
 import RoleManager from "./RoleManager";
 import AdminSessions from "./AdminSessions";
@@ -635,12 +636,7 @@ export default function StaffDashboard() {
         ) : null;
       case "references":
         return hasPermission(user, "references", "view") ? (
-          <div className="p-4 text-slate-300 text-sm">
-            <p className="text-base font-bold text-white mb-2">References</p>
-            <p className="text-slate-500">
-              Reference management is available to staff with the References permission.
-            </p>
-          </div>
+          <AdminReferences showToast={showToast} />
         ) : null;
       case "roles":
         return hasBaseRole(user, "admin") ? (

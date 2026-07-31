@@ -189,7 +189,7 @@ export const getCourses = async (req, res) => {
 export const getPublishedCourses = async (req, res) => {
   try {
     const cacheKey = "courses:published";
-    const cacheTtl = process.env.NODE_ENV === "development" ? 1 : 7200;
+    const cacheTtl = 7200; // Cache for 2 hours in Redis (invalidated on course updates)
     const courses = await cacheResponse(cacheKey, cacheTtl, async () => {
       return await Course.find({
         approvalStatus: "approved",
@@ -296,7 +296,7 @@ export const getCourseByIdPublic = async (req, res) => {
       })),
     };
 
-    const cacheTtl = process.env.NODE_ENV === "development" ? 1 : 7200;
+    const cacheTtl = 7200; // Cache for 2 hours in Redis (invalidated on course updates)
     await setJson(cacheKey, shaped, cacheTtl);
     
     if (process.env.NODE_ENV === "production") {

@@ -45,7 +45,8 @@ const getBaseRoleDoc = async (name) => {
   try {
     let doc = await getJson(cacheKey);
     if (!doc) {
-      doc = await Role.findOne({ name, isSystem: true }).lean();
+      // Case-insensitive lookup so "student" matches "Student" etc.
+      doc = await Role.findOne({ name: new RegExp(`^${name}$`, "i"), isSystem: true }).lean();
       if (doc) await setJson(cacheKey, doc, 3600 * 24);
     }
     return doc;

@@ -19,7 +19,11 @@ Your role:
 - Support subjects: Mathematics, Science, Physics, Chemistry, Biology, English, Hindi, Social Studies, History, Geography, Computer Science
 - Keep answers focused and educational
 - If asked something unrelated to education, gently redirect to academic topics
-- Respond in the same language the student uses (Hindi or English)
+- Language Rules:
+  - Match the exact language and script style used by the student!
+  - If the student asks in Hinglish (Hindi in Roman script, e.g. "iska mtlab kya hai"), reply naturally in clear Hinglish! Never say "I'll explain in English" or switch to plain English when asked in Hinglish.
+  - If the student asks in Devanagari Hindi, reply in Hindi.
+  - If the student asks in English, reply in English.
 
 Always be encouraging, patient, and supportive.`;
 
@@ -33,7 +37,7 @@ Your role:
 - Offer advice on student engagement, class management, and addressing learning gaps
 - Support subjects: Mathematics, Science, Physics, Chemistry, Biology, English, Hindi, Social Studies, History, Geography, Computer Science
 - Maintain a professional, collaborative, and resource-rich tone suitable for educators
-- Respond in the same language the instructor uses (Hindi or English)`;
+- Language Rules: Match the exact language style (Hinglish, Hindi, or English) used by the instructor!`;
 
 const dateLabel = (date) => {
   const d = new Date(date);
@@ -105,60 +109,57 @@ export const chatWithAI = async (req, res) => {
       })),
     ];
 
+    // Set up SSE headers for immediate streaming response with zero delay
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+
+    // Perform database persistence asynchronously so streaming starts instantly
     const lastUserText =
       messages[messages.length - 1]?.content ??
       messages[messages.length - 1]?.text ??
       "";
     const userMessageText = String(lastUserText || "").trim();
+
     if (userMessageText) {
-      try {
-        const saved = await AiChatMessage.create({
-          userId: userId || null,
-          conversationId: resolvedConversationId,
-          role: "user",
-          content: userMessageText,
-        });
-        console.log("[AI Chat] User message saved:", saved._id);
+      (async () => {
+        try {
+          await AiChatMessage.create({
+            userId: userId || null,
+            conversationId: resolvedConversationId,
+            role: "user",
+            content: userMessageText,
+          });
 
-        if (userId) {
-          const existingConv = await AiConversation.findOne({ conversationId: resolvedConversationId });
-          const defaultTitle = userMessageText.length > 42 ? userMessageText.slice(0, 42) + "…" : userMessageText;
+          if (userId) {
+            const existingConv = await AiConversation.findOne({ conversationId: resolvedConversationId });
+            const defaultTitle = userMessageText.length > 42 ? userMessageText.slice(0, 42) + "…" : userMessageText;
 
-          const updateData = {
-            userId,
-            userRole,
-            lastMessageAt: new Date(),
-          };
+            const updateData = {
+              userId,
+              userRole,
+              lastMessageAt: new Date(),
+            };
 
-          if (!existingConv || existingConv.title === "New conversation") {
-            updateData.title = defaultTitle;
+            if (!existingConv || existingConv.title === "New conversation") {
+              updateData.title = defaultTitle;
+            }
+
+            await AiConversation.findOneAndUpdate(
+              { conversationId: resolvedConversationId },
+              updateData,
+              { upsert: true }
+            );
+
+            deleteKey(`ai:conversations:${userId}:${userRole}`).catch(() => {});
           }
-
-          await AiConversation.findOneAndUpdate(
-            { conversationId: resolvedConversationId },
-            updateData,
-            { upsert: true }
-          );
-
-          // Invalidate Redis list cache
-          await deleteKey(`ai:conversations:${userId}:${userRole}`);
+          deleteKey(`ai:history:${resolvedConversationId}`).catch(() => {});
+        } catch (err) {
+          console.error("[AI Chat] Async user message save error:", err.message);
         }
-        // Invalidate Redis history cache
-        await deleteKey(`ai:history:${resolvedConversationId}`);
-      } catch (err) {
-        console.error("[AI Chat] Error saving user message and metadata:", err.message);
-      }
-    } else {
-      console.log(
-        "[AI Chat] Skipping user message save - userMessageText empty",
-      );
+      })();
     }
-
-    // Set up SSE headers for streaming
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-    res.flushHeaders();
 
     const stream = await groq.chat.completions.create({
       model: GROQ_MODEL,
@@ -183,23 +184,19 @@ export const chatWithAI = async (req, res) => {
     }
 
     if (assistantText.trim()) {
-      try {
-        const saved = await AiChatMessage.create({
-          userId: userId || null,
-          conversationId: resolvedConversationId,
-          role: "assistant",
-          content: assistantText.trim(),
-        });
-        console.log("[AI Chat] Assistant message saved:", saved._id);
-        // Invalidate history cache
-        await deleteKey(`ai:history:${resolvedConversationId}`);
-      } catch (err) {
-        console.error("[AI Chat] Error saving assistant message:", err.message);
-      }
-    } else {
-      console.log(
-        "[AI Chat] Skipping assistant message save - assistantText empty",
-      );
+      (async () => {
+        try {
+          await AiChatMessage.create({
+            userId: userId || null,
+            conversationId: resolvedConversationId,
+            role: "assistant",
+            content: assistantText.trim(),
+          });
+          deleteKey(`ai:history:${resolvedConversationId}`).catch(() => {});
+        } catch (err) {
+          console.error("[AI Chat] Async assistant message save error:", err.message);
+        }
+      })();
     }
 
     res.end();
@@ -669,5 +666,54 @@ export const getConversations = async (req, res) => {
   } catch (err) {
     console.error("Get conversations error:", err);
     res.status(500).json({ message: err.message || "Failed to fetch conversations." });
+  }
+};
+
+export const translateTextAI = async (req, res) => {
+  try {
+    const { texts = [], targetLang = "Hindi" } = req.body;
+    if (!Array.isArray(texts) || !texts.length) {
+      return res.json({ translations: {} });
+    }
+
+    const uniqueTexts = [...new Set(texts.map((t) => String(t ?? "").trim()).filter(Boolean))];
+    if (!uniqueTexts.length) {
+      return res.json({ translations: {} });
+    }
+
+    const prompt = `You are a translation assistant for an EdTech learning platform in India.
+Translate the following course titles, subject names, chapter names, and lesson titles into ${targetLang}.
+Maintain accurate Indian curriculum terminology (e.g. Physics -> भौतिक विज्ञान, Mathematics -> गणित, Chemistry -> रसायन विज्ञान, Biology -> जीव विज्ञान, History -> इतिहास, Chapter -> अध्याय).
+Return ONLY a valid JSON object mapping each original English input text to its translated ${targetLang} string.
+Do NOT include markdown formatting, code block markers, or commentary.
+
+Input strings:
+${JSON.stringify(uniqueTexts)}`;
+
+    const completion = await groq.chat.completions.create({
+      model: GROQ_MODEL,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.1,
+      response_format: { type: "json_object" },
+    });
+
+    const raw = completion.choices[0]?.message?.content ?? "{}";
+    let parsed = {};
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      // Try stripping markdown fences
+      try {
+        const cleaned = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
+        parsed = JSON.parse(cleaned);
+      } catch {
+        console.warn("Failed to parse AI translation JSON:", raw.slice(0, 200));
+      }
+    }
+
+    res.json({ translations: parsed });
+  } catch (err) {
+    console.error("AI Translation Error:", err);
+    res.status(500).json({ message: "Translation failed", translations: {} });
   }
 };
