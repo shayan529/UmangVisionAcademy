@@ -516,10 +516,15 @@ const ChatPanelContent = React.memo(function ChatPanelContent({
           </div>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0" onPointerDown={(e) => e.stopPropagation()}>
+        <div
+          className="flex items-center gap-1 shrink-0 relative z-20"
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
           <button
             type="button"
-            onClick={() =>
+            onClick={(e) => {
+              e.stopPropagation();
               setChatMessages([
                 {
                   id: "welcome",
@@ -528,9 +533,21 @@ const ChatPanelContent = React.memo(function ChatPanelContent({
                     ? `**${note.title}** के बारे में मुझसे कुछ भी पूछें!`
                     : `Ask me anything about **${note.title}**!`,
                 },
-              ])
-            }
-            className="p-1.5 text-slate-300 hover:text-white rounded-lg hover:bg-teal-500/20 border border-transparent hover:border-teal-400/30 transition-colors"
+              ]);
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              setChatMessages([
+                {
+                  id: "welcome",
+                  role: "assistant",
+                  content: isHindi
+                    ? `**${note.title}** के बारे में मुझसे कुछ भी पूछें!`
+                    : `Ask me anything about **${note.title}**!`,
+                },
+              ]);
+            }}
+            className="p-1.5 text-slate-300 hover:text-white active:bg-teal-500/30 rounded-lg hover:bg-teal-500/20 border border-transparent hover:border-teal-400/30 transition-colors cursor-pointer"
             title={isHindi ? "चैट साफ़ करें" : "Clear chat"}
             aria-label={isHindi ? "चैट साफ़ करें" : "Clear chat"}
           >
@@ -539,12 +556,19 @@ const ChatPanelContent = React.memo(function ChatPanelContent({
           {onRequestClose && (
             <button
               type="button"
-              onClick={onRequestClose}
-              className="p-1.5 text-slate-300 hover:text-white rounded-lg hover:bg-white/10 border border-transparent hover:border-white/10 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRequestClose();
+              }}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                onRequestClose();
+              }}
+              className="p-1.5 text-slate-300 hover:text-white active:bg-rose-500/30 rounded-lg hover:bg-white/10 border border-transparent hover:border-white/10 transition-colors cursor-pointer"
               title={isHindi ? "चैट बंद करें" : "Close chat"}
               aria-label={isHindi ? "चैट बंद करें" : "Close chat"}
             >
-              <X size={14} />
+              <X size={16} />
             </button>
           )}
         </div>
@@ -1206,6 +1230,10 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
             <button
               type="button"
               onClick={() => setIsChatVisible((v) => !v)}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                setIsChatVisible((v) => !v);
+              }}
               className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold border transition-colors ${isChatVisible
                 ? "text-teal-300 bg-teal-500/10 border-teal-400/20 hover:bg-teal-500/15"
                 : "text-slate-400 border-white/10 hover:text-white hover:bg-white/5"
@@ -1231,6 +1259,10 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
             <button
               type="button"
               onClick={onClose}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                onClose?.();
+              }}
               className="p-2 text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent hover:border-rose-400/20 rounded-xl transition-colors"
               title="Close"
               aria-label="Close"
