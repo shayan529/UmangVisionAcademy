@@ -133,140 +133,212 @@ function CopyButton({ value }) {
   );
 }
 
+// A page whose canvas/text-layer hasn't rendered yet — sized so the scroll
+// area doesn't jump around once the real content lands in the same spot.
+function renderPlaceholder(pageWrap) {
+  pageWrap.innerHTML = "";
+  const spinner = document.createElement("div");
+  spinner.className = "absolute inset-0 flex items-center justify-center text-slate-400";
+  spinner.innerHTML =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="motion-safe:animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
+  pageWrap.appendChild(spinner);
+}
+
 // ── PDF renderer ──
-// Renders every page to its own <canvas> and overlays a real, selectable
+// Renders each page to its own <canvas> and overlays a real, selectable
 // text layer built from pdf.js's text content — no native browser PDF
 // plugin involved, so there's no "pop-out" chrome, and highlighting works
 // because the selected text is genuine DOM content in this page.
+//
+// Pages render lazily: only page 1 renders up front (that's what flips
+// status to "ready"), everything past it is a lightweight placeholder that
+// renders for real once it scrolls near the viewport. Eagerly rendering a
+// whole multi-page document before showing anything is what made this feel
+// "stuck on loading" — now the wait is capped to a single page.
 function PdfViewer({ url }) {
   const scrollRef = useRef(null);
-  const pagesRef = useRef([]);
+  const pagesRef = useRef([]); // wrapper <div> elements, indexed by page - 1
+  const renderedRef = useRef(new Set());
+  const pageObjCacheRef = useRef(new Map());
+  const pdfDocRef = useRef(null);
+  const pdfjsLibRef = useRef(null);
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [retryToken, setRetryToken] = useState(0);
+
+  const renderPage = useCallback(async (pageNum) => {
+    if (renderedRef.current.has(pageNum)) return;
+    const pdfjsLib = pdfjsLibRef.current;
+    const pdfDoc = pdfDocRef.current;
+    const pageWrap = pagesRef.current[pageNum - 1];
+    if (!pdfjsLib || !pdfDoc || !pageWrap) return;
+    renderedRef.current.add(pageNum); // claim it before awaiting, so it isn't double-queued
+
+    try {
+      let page = pageObjCacheRef.current.get(pageNum);
+      if (!page) {
+        page = await pdfDoc.getPage(pageNum);
+        pageObjCacheRef.current.set(pageNum, page);
+      }
+      const containerWidth = scrollRef.current?.clientWidth || 800;
+      const unscaled = page.getViewport({ scale: 1 });
+      const scale = Math.min((containerWidth - 32) / unscaled.width, 2.2);
+      const viewport = page.getViewport({ scale });
+
+      pageWrap.style.width = `${viewport.width}px`;
+      pageWrap.style.height = `${viewport.height}px`;
+      pageWrap.innerHTML = "";
+
+      const canvas = document.createElement("canvas");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      canvas.className = "block";
+      pageWrap.appendChild(canvas);
+
+      const textLayer = document.createElement("div");
+      textLayer.className = "pdf-text-layer";
+      textLayer.style.width = `${viewport.width}px`;
+      textLayer.style.height = `${viewport.height}px`;
+      pageWrap.appendChild(textLayer);
+
+      const ctx = canvas.getContext("2d");
+      await page.render({ canvasContext: ctx, viewport }).promise;
+
+      const textContent = await page.getTextContent();
+      const fragment = document.createDocumentFragment();
+      const spans = [];
+      textContent.items.forEach((item) => {
+        if (!item.str) return;
+        const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+        const angle = Math.atan2(tx[1], tx[0]);
+        const fontHeight = Math.hypot(tx[2], tx[3]);
+        const span = document.createElement("span");
+        span.textContent = item.str;
+        span.style.left = `${tx[4]}px`;
+        span.style.top = `${tx[5] - fontHeight}px`;
+        span.style.fontSize = `${fontHeight}px`;
+        fragment.appendChild(span);
+        // expected on-page width (in CSS px) vs. the width our fallback
+        // font renders at — corrected below once the span is in the DOM.
+        spans.push({ span, angle, expectedWidth: Math.abs(item.width * viewport.scale) });
+      });
+      textLayer.appendChild(fragment);
+
+      // Width-correction pass: our text layer uses a generic font, which
+      // rarely has the exact same glyph widths as the PDF's real, embedded
+      // font. Without this, selection boxes drift out of step with the
+      // visible text within a line or two. Scale each span horizontally so
+      // its measured width matches its true width on the page, keeping the
+      // invisible text layer pixel-aligned with what's painted on the canvas.
+      spans.forEach(({ span, angle, expectedWidth }) => {
+        const actualWidth = span.offsetWidth;
+        const rotate = angle ? `rotate(${angle}rad) ` : "";
+        if (actualWidth > 0 && expectedWidth > 0) {
+          const scaleX = expectedWidth / actualWidth;
+          if (isFinite(scaleX) && scaleX > 0.05 && scaleX < 20) {
+            span.style.transform = `${rotate}scaleX(${scaleX})`;
+          }
+        } else if (rotate) {
+          span.style.transform = rotate;
+        }
+      });
+    } catch (err) {
+      renderedRef.current.delete(pageNum); // allow a retry (e.g. scroll away and back)
+      console.error(`PDF page ${pageNum} render error:`, err);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    let pdfDoc = null;
+    let timedOut = false;
+    const scrollEl = scrollRef.current;
 
-    async function render() {
-      setStatus("loading");
-      setNumPages(0);
-      pagesRef.current = [];
-      const scrollEl = scrollRef.current;
-      if (scrollEl) scrollEl.innerHTML = "";
+    setStatus("loading");
+    setNumPages(0);
+    setCurrentPage(1);
+    pagesRef.current = [];
+    renderedRef.current = new Set();
+    pageObjCacheRef.current = new Map();
+    if (scrollEl) scrollEl.innerHTML = "";
 
+    // A stalled worker fetch (blocked CDN, dead network) previously left the
+    // spinner running forever with no feedback. Cap the wait so it always
+    // resolves to either the first page or a visible error.
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      if (!cancelled) setStatus("error");
+    }, 20000);
+
+    async function load() {
       try {
         const pdfjsLib = await import("pdfjs-dist");
         pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+        pdfjsLibRef.current = pdfjsLib;
 
-        pdfDoc = await pdfjsLib.getDocument(url).promise;
-        if (cancelled) return;
+        const pdfDoc = await pdfjsLib.getDocument(url).promise;
+        if (cancelled || timedOut) return;
+        pdfDocRef.current = pdfDoc;
         setNumPages(pdfDoc.numPages);
 
-        const containerWidth = scrollEl?.clientWidth || 800;
-
+        // Build lightweight placeholders for every page up front so the
+        // scrollbar/height and page counter are correct immediately —
+        // only page 1 actually renders right now.
         for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-          const page = await pdfDoc.getPage(pageNum);
-          const unscaled = page.getViewport({ scale: 1 });
-          const scale = Math.min((containerWidth - 32) / unscaled.width, 2.2);
-          const viewport = page.getViewport({ scale });
-
           const pageWrap = document.createElement("div");
           pageWrap.className =
             "relative mx-auto mb-4 rounded-lg overflow-hidden border border-white/10 shadow-xl shadow-black/40 bg-white";
-          pageWrap.style.width = `${viewport.width}px`;
-          pageWrap.style.height = `${viewport.height}px`;
+          pageWrap.style.minHeight = "300px";
           pageWrap.dataset.pageNumber = String(pageNum);
-
-          const canvas = document.createElement("canvas");
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          canvas.className = "block";
-          pageWrap.appendChild(canvas);
-
-          const textLayer = document.createElement("div");
-          textLayer.className = "pdf-text-layer";
-          textLayer.style.width = `${viewport.width}px`;
-          textLayer.style.height = `${viewport.height}px`;
-          pageWrap.appendChild(textLayer);
-
+          renderPlaceholder(pageWrap);
           scrollEl.appendChild(pageWrap);
           pagesRef.current.push(pageWrap);
-
-          const ctx = canvas.getContext("2d");
-          await page.render({ canvasContext: ctx, viewport }).promise;
-          if (cancelled) return;
-
-          const textContent = await page.getTextContent();
-          const fragment = document.createDocumentFragment();
-          const spans = [];
-          textContent.items.forEach((item) => {
-            if (!item.str) return;
-            const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-            const angle = Math.atan2(tx[1], tx[0]);
-            const fontHeight = Math.hypot(tx[2], tx[3]);
-            const span = document.createElement("span");
-            span.textContent = item.str;
-            span.style.left = `${tx[4]}px`;
-            span.style.top = `${tx[5] - fontHeight}px`;
-            span.style.fontSize = `${fontHeight}px`;
-            fragment.appendChild(span);
-            // expected on-page width (in CSS px) vs. the width our fallback
-            // font renders at — corrected below once the span is in the DOM.
-            spans.push({ span, angle, expectedWidth: Math.abs(item.width * viewport.scale) });
-          });
-          textLayer.appendChild(fragment);
-
-          // Width-correction pass: our text layer uses a generic font, which
-          // rarely has the exact same glyph widths as the PDF's real,
-          // embedded font. Without this, selection boxes drift out of step
-          // with the visible text within a line or two. Scale each span
-          // horizontally so its measured width matches its true width on
-          // the page, keeping the invisible text layer pixel-aligned with
-          // what's actually painted on the canvas.
-          spans.forEach(({ span, angle, expectedWidth }) => {
-            const actualWidth = span.offsetWidth;
-            const rotate = angle ? `rotate(${angle}rad) ` : "";
-            if (actualWidth > 0 && expectedWidth > 0) {
-              const scaleX = expectedWidth / actualWidth;
-              if (isFinite(scaleX) && scaleX > 0.05 && scaleX < 20) {
-                span.style.transform = `${rotate}scaleX(${scaleX})`;
-              }
-            } else if (rotate) {
-              span.style.transform = rotate;
-            }
-          });
         }
 
-        if (!cancelled) setStatus("ready");
+        await renderPage(1);
+        if (cancelled || timedOut) return;
+        clearTimeout(timeoutId);
+        setStatus("ready");
+
+        // Warm the next page in the background so scrolling forward feels
+        // instant without blocking the "ready" state on it.
+        if (pdfDoc.numPages > 1) renderPage(2);
       } catch (err) {
-        console.error("PDF render error:", err);
-        if (!cancelled) setStatus("error");
+        console.error("PDF load error:", err);
+        clearTimeout(timeoutId);
+        if (!cancelled && !timedOut) setStatus("error");
       }
     }
 
-    if (url) render();
+    if (url) load();
     return () => {
       cancelled = true;
-      pdfDoc?.destroy?.();
+      clearTimeout(timeoutId);
+      pdfDocRef.current?.destroy?.();
+      pdfDocRef.current = null;
     };
-  }, [url]);
+  }, [url, retryToken, renderPage]);
 
+  // Lazily render pages as they scroll near the viewport, and track which
+  // page is currently in view for the page counter.
   useEffect(() => {
     const scrollEl = scrollRef.current;
     if (!scrollEl || numPages === 0) return;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) setCurrentPage(Number(entry.target.dataset.pageNumber));
+          const pageNum = Number(entry.target.dataset.pageNumber);
+          if (entry.isIntersecting) {
+            renderPage(pageNum);
+            if (entry.intersectionRatio >= 0.5) setCurrentPage(pageNum);
+          }
         });
       },
-      { root: scrollEl, threshold: 0.5 }
+      { root: scrollEl, rootMargin: "800px 0px", threshold: [0, 0.5] }
     );
     pagesRef.current.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [numPages]);
+  }, [numPages, renderPage]);
 
   return (
     <div className="relative w-full h-full">
@@ -285,10 +357,19 @@ function PdfViewer({ url }) {
         <div className="absolute inset-0 flex items-center justify-center bg-[#0b0f19]/60 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-2 text-slate-400 px-6 text-center">
             <FileText size={20} />
-            <span className="text-xs font-medium">Couldn't preview this file.</span>
-            <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-teal-400 hover:underline">
-              Open the original file
-            </a>
+            <span className="text-xs font-medium">Couldn't preview this file. It may be taking too long to load.</span>
+            <div className="flex items-center gap-3 mt-1">
+              <button
+                type="button"
+                onClick={() => setRetryToken((t) => t + 1)}
+                className="text-xs text-teal-400 hover:underline"
+              >
+                Try again
+              </button>
+              <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-teal-400 hover:underline">
+                Open the original file
+              </a>
+            </div>
           </div>
         </div>
       )}
@@ -527,12 +608,11 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
           <button
             type="button"
             onClick={() => handleAskAiAboutText()}
-            className="relative flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white text-xs font-bold shadow-xl shadow-black/40 hover:bg-white/15 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+            className="relative flex items-center gap-2 px-4 py-2 rounded-full bg-[#0f172a] border-2 border-teal-400 text-white text-xs font-black shadow-[0_10px_30px_rgba(0,0,0,0.9)] hover:bg-[#1e293b] hover:border-teal-300 hover:scale-105 active:scale-95 transition-all cursor-pointer"
           >
-            <span className="absolute inset-0 rounded-full bg-gradient-to-r from-teal-500/40 to-indigo-600/40 -z-10" />
-            <Sparkles size={13} className="text-teal-300" />
-            <span>Ask AI about this</span>
-            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-white/10 backdrop-blur-xl border-r border-b border-white/20" />
+            <Sparkles size={14} className="text-amber-400 fill-amber-400 shrink-0" />
+            <span className="text-white font-extrabold tracking-wide drop-shadow">Ask AI about this</span>
+            <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 bg-[#0f172a] border-r-2 border-b-2 border-teal-400" />
           </button>
         </div>
       )}
