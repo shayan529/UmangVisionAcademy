@@ -896,8 +896,7 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
   }, [isOpen, onClose]);
 
   // Highlight-to-ask: works because the PDF text layer (and any plain DOM
-  // text) is real, selectable content in this document — not content
-  // trapped inside a native plugin or a cross-origin iframe.
+  // text) is real, selectable content in this document.
   useEffect(() => {
     const handleSelectionChange = () => {
       const selection = window.getSelection();
@@ -906,19 +905,26 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
         return;
       }
       const text = selection.toString().trim();
-      if (text.length > 2) {
+      if (text.length > 1) {
         try {
           const range = selection.getRangeAt(0);
           const rect = range.getBoundingClientRect();
           if (rect.width > 0 && rect.height > 0) {
             setSelectedText(text);
-            const popoverWidth = 200; // approx rendered width of the pill button
+            const popoverWidth = 190;
+            // On mobile screen or near top, if space above is tight, place popover below selected text
+            const showBelow = rect.top < 65;
+            const topPos = showBelow
+              ? Math.min(window.innerHeight - 60, rect.bottom + 10)
+              : Math.max(10, rect.top - 52);
+
             setPopoverPos({
-              top: Math.max(10, rect.top - 48),
+              top: topPos,
               left: Math.min(
-                Math.max(10, rect.left + rect.width / 2 - 68),
+                Math.max(10, rect.left + rect.width / 2 - 80),
                 window.innerWidth - popoverWidth - 10
               ),
+              showBelow,
             });
           }
         } catch {
@@ -928,10 +934,15 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
         setPopoverPos(null);
       }
     };
+
+    document.addEventListener("selectionchange", handleSelectionChange);
     document.addEventListener("mouseup", handleSelectionChange);
+    document.addEventListener("touchend", handleSelectionChange);
     document.addEventListener("keyup", handleSelectionChange);
     return () => {
+      document.removeEventListener("selectionchange", handleSelectionChange);
       document.removeEventListener("mouseup", handleSelectionChange);
+      document.removeEventListener("touchend", handleSelectionChange);
       document.removeEventListener("keyup", handleSelectionChange);
     };
   }, []);
@@ -1075,18 +1086,27 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
       {popoverPos && selectedText && (
         <div
           style={{ position: "fixed", top: popoverPos.top, left: popoverPos.left, zIndex: 10000 }}
-          className="motion-safe:animate-popIn"
+          className="motion-safe:animate-popIn select-none"
         >
           <button
             type="button"
+            onPointerDown={(e) => e.preventDefault()}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              handleAskAiAboutText();
+            }}
             onClick={() => handleAskAiAboutText()}
-            className="relative flex items-center gap-2 px-4 py-2 rounded-full bg-[#0f172a] border-2 border-teal-400 text-white text-xs font-black shadow-[0_10px_30px_rgba(0,0,0,0.9)] hover:bg-[#1e293b] hover:border-teal-300 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+            className="relative flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#0f172a] border-2 border-teal-400 text-white text-xs font-black shadow-[0_10px_35px_rgba(0,0,0,0.9)] hover:bg-[#1e293b] hover:border-teal-300 active:scale-95 transition-all cursor-pointer"
           >
             <Sparkles size={14} className="text-amber-400 fill-amber-400 shrink-0" />
             <span className="text-white font-extrabold tracking-wide drop-shadow">
               {isHindi ? "इसके बारे में AI से पूछें" : "Ask AI about this"}
             </span>
-            <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 bg-[#0f172a] border-r-2 border-b-2 border-teal-400" />
+            {popoverPos.showBelow ? (
+              <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 bg-[#0f172a] border-l-2 border-t-2 border-teal-400" />
+            ) : (
+              <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 bg-[#0f172a] border-r-2 border-b-2 border-teal-400" />
+            )}
           </button>
         </div>
       )}
@@ -1269,6 +1289,8 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
           pointer-events: auto;
           -webkit-user-select: text;
           user-select: text;
+          -webkit-touch-callout: default;
+          touch-action: manipulation;
         }
         .pdf-text-layer span {
           position: absolute;
@@ -1279,6 +1301,7 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
           font-family: sans-serif;
           -webkit-user-select: text;
           user-select: text;
+          -webkit-touch-callout: default;
         }
         /* !important guards against a page-wide ::selection rule elsewhere
            in the app winning the cascade tie — this highlight needs to hold
