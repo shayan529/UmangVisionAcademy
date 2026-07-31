@@ -1150,7 +1150,7 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
             <button
               type="button"
               onClick={() => setIsFullscreen((v) => !v)}
-              className="p-2 text-slate-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 rounded-xl transition-colors"
+              className="hidden sm:flex p-2 text-slate-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 rounded-xl transition-colors"
               title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
               aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
             >
