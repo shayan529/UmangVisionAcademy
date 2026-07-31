@@ -16,6 +16,7 @@ import {
   MessageCircleQuestion,
   PanelRightClose,
   PanelRightOpen,
+  GripHorizontal,
 } from "lucide-react";
 import { API_BASE_URL } from "../../config/api";
 import { useTranslation } from "react-i18next";
@@ -196,10 +197,10 @@ const PdfViewer = React.memo(function PdfViewer({ url }) {
       }
       const containerWidth = scrollRef.current?.clientWidth || 800;
       const unscaled = page.getViewport({ scale: 1 });
-      // Capped lower than before (was 2.2) — canvas render + text-layer
-      // layout time scales roughly with pixel count, and this cap was the
-      // single biggest cost per page on large/high-DPI screens.
-      const scale = Math.min((containerWidth - 32) / unscaled.width, MAX_RENDER_SCALE);
+      const dpr = Math.min(Math.max(window.devicePixelRatio || 1, 2), 3);
+      const isMobileScreen = typeof window !== "undefined" && window.innerWidth < 640;
+      const padding = isMobileScreen ? 12 : 32;
+      const scale = Math.min((containerWidth - padding) / unscaled.width, MAX_RENDER_SCALE);
       const viewport = page.getViewport({ scale });
 
       pageWrap.style.width = `${viewport.width}px`;
@@ -207,8 +208,10 @@ const PdfViewer = React.memo(function PdfViewer({ url }) {
       pageWrap.innerHTML = "";
 
       const canvas = document.createElement("canvas");
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
+      canvas.width = Math.floor(viewport.width * dpr);
+      canvas.height = Math.floor(viewport.height * dpr);
+      canvas.style.width = `${viewport.width}px`;
+      canvas.style.height = `${viewport.height}px`;
       canvas.className = "block";
       pageWrap.appendChild(canvas);
 
@@ -219,7 +222,8 @@ const PdfViewer = React.memo(function PdfViewer({ url }) {
       pageWrap.appendChild(textLayer);
 
       const ctx = canvas.getContext("2d");
-      await page.render({ canvasContext: ctx, viewport }).promise;
+      const transform = dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null;
+      await page.render({ canvasContext: ctx, viewport, transform }).promise;
 
       // Defer text-layer DOM creation and width-correction pass to animation frames
       // so canvas rendering finishes immediately and scrolling remains 60fps smooth.
@@ -451,6 +455,8 @@ const ChatPanelContent = React.memo(function ChatPanelContent({
   onComposerSubmit,
   onComposerKeyDown,
   onRequestClose,
+  onHeaderPointerDown,
+  isDragging,
 }) {
   const { i18n } = useTranslation();
   const isHindi = i18n.language === "hi";
@@ -484,23 +490,32 @@ const ChatPanelContent = React.memo(function ChatPanelContent({
   return (
     <>
       {/* Chat header */}
-      <div className="p-3.5 bg-gradient-to-r from-[#131f38]/90 via-[#18294a]/90 to-[#1f1e42]/90 border-b border-teal-500/25 flex items-center justify-between shrink-0 shadow-sm">
-        <div className="flex items-center gap-2.5 min-w-0">
+      <div
+        onPointerDown={onHeaderPointerDown}
+        className={`p-3.5 bg-gradient-to-r from-[#131f38]/90 via-[#18294a]/90 to-[#1f1e42]/90 border-b border-teal-500/25 flex items-center justify-between shrink-0 shadow-sm ${
+          onHeaderPointerDown ? "cursor-grab active:cursor-grabbing select-none" : ""
+        }`}
+        title={onHeaderPointerDown ? (isHindi ? "ड्रैग करने के लिए पकड़ें" : "Drag to move across note") : undefined}
+      >
+        <div className="flex items-center gap-2.5 min-w-0 pointer-events-none">
           <div className="relative w-8 h-8 rounded-xl bg-gradient-to-tr from-teal-400 via-emerald-400 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-teal-500/30 shrink-0">
             <Bot size={17} />
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-teal-400 ring-2 ring-[#141d30] motion-safe:animate-pulse" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-xs sm:text-sm font-extrabold text-white">
-              {isHindi ? "AI नोट्स असिस्टेंट" : "AI Note Assistant"}
-            </h3>
+            <div className="flex items-center gap-1.5">
+              {onHeaderPointerDown && <GripHorizontal size={14} className="text-teal-400/60 shrink-0" />}
+              <h3 className="text-xs sm:text-sm font-extrabold text-white">
+                {isHindi ? "AI नोट्स असिस्टेंट" : "AI Note Assistant"}
+              </h3>
+            </div>
             <p className="text-[10px] sm:text-[11px] text-teal-300/80 truncate">
               {isHindi ? "सवाल पूछें या टेक्स्ट हाइलाइट करें" : "Ask questions or highlight text to analyze"}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1 shrink-0" onPointerDown={(e) => e.stopPropagation()}>
           <button
             type="button"
             onClick={() =>
@@ -680,9 +695,19 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
   const [inputQuery, setInputQuery] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isChatVisible, setIsChatVisible] = useState(true);
+  const [isChatVisible, setIsChatVisible] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 640
+  );
 
   const viewerRef = useRef(null);
+  const containerRef = useRef(null);
+  const chatCardRef = useRef(null);
+  const avatarBtnRef = useRef(null);
+
+  const [chatPos, setChatPos] = useState(null);
+  const [avatarPos, setAvatarPos] = useState(null);
+  const [isDraggingChat, setIsDraggingChat] = useState(false);
+  const [isDraggingAvatar, setIsDraggingAvatar] = useState(false);
 
   useEffect(() => {
     if (isOpen && note) {
@@ -698,9 +723,167 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
       setSelectedText("");
       setPopoverPos(null);
       setInputQuery("");
-      setIsChatVisible(true);
+      const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+      setIsChatVisible(!isMobile);
+      setChatPos(null);
+      setAvatarPos(null);
     }
   }, [isOpen, note, isHindi]);
+
+  // Keep chat/avatar within bounds on window resize or fullscreen toggle
+  useEffect(() => {
+    const clampPositions = () => {
+      const container = containerRef.current;
+      if (!container) return;
+      const containerRect = container.getBoundingClientRect();
+
+      if (chatPos && chatCardRef.current) {
+        const cardRect = chatCardRef.current.getBoundingClientRect();
+        const maxX = Math.max(0, containerRect.width - cardRect.width);
+        const maxY = Math.max(0, containerRect.height - cardRect.height);
+        setChatPos((prev) =>
+          prev
+            ? {
+                x: Math.max(0, Math.min(maxX, prev.x)),
+                y: Math.max(0, Math.min(maxY, prev.y)),
+              }
+            : null
+        );
+      }
+
+      if (avatarPos && avatarBtnRef.current) {
+        const avatarRect = avatarBtnRef.current.getBoundingClientRect();
+        const maxX = Math.max(0, containerRect.width - avatarRect.width);
+        const maxY = Math.max(0, containerRect.height - avatarRect.height);
+        setAvatarPos((prev) =>
+          prev
+            ? {
+                x: Math.max(0, Math.min(maxX, prev.x)),
+                y: Math.max(0, Math.min(maxY, prev.y)),
+              }
+            : null
+        );
+      }
+    };
+
+    window.addEventListener("resize", clampPositions);
+    return () => window.removeEventListener("resize", clampPositions);
+  }, [chatPos, avatarPos, isFullscreen]);
+
+  const handleChatHeaderPointerDown = useCallback(
+    (e) => {
+      if (e.button !== 0) return;
+      const container = containerRef.current;
+      const card = chatCardRef.current;
+      if (!container || !card) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+
+      const currentX = chatPos ? chatPos.x : cardRect.left - containerRect.left;
+      const currentY = chatPos ? chatPos.y : cardRect.top - containerRect.top;
+
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const target = e.currentTarget;
+
+      try {
+        target.setPointerCapture(e.pointerId);
+      } catch (err) {}
+
+      setIsDraggingChat(true);
+
+      const handlePointerMove = (moveEvent) => {
+        const dx = moveEvent.clientX - startX;
+        const dy = moveEvent.clientY - startY;
+
+        const maxX = containerRect.width - cardRect.width;
+        const maxY = containerRect.height - cardRect.height;
+
+        const newX = Math.max(0, Math.min(maxX, currentX + dx));
+        const newY = Math.max(0, Math.min(maxY, currentY + dy));
+
+        setChatPos({ x: newX, y: newY });
+      };
+
+      const handlePointerUp = (upEvent) => {
+        try {
+          target.releasePointerCapture(upEvent.pointerId);
+        } catch (err) {}
+        target.removeEventListener("pointermove", handlePointerMove);
+        target.removeEventListener("pointerup", handlePointerUp);
+        target.removeEventListener("pointercancel", handlePointerUp);
+        setIsDraggingChat(false);
+      };
+
+      target.addEventListener("pointermove", handlePointerMove);
+      target.addEventListener("pointerup", handlePointerUp);
+      target.addEventListener("pointercancel", handlePointerUp);
+    },
+    [chatPos]
+  );
+
+  const handleAvatarPointerDown = useCallback(
+    (e) => {
+      if (e.button !== 0) return;
+      const container = containerRef.current;
+      const avatar = avatarBtnRef.current;
+      if (!container || !avatar) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const avatarRect = avatar.getBoundingClientRect();
+
+      const currentX = avatarPos ? avatarPos.x : avatarRect.left - containerRect.left;
+      const currentY = avatarPos ? avatarPos.y : avatarRect.top - containerRect.top;
+
+      const startX = e.clientX;
+      const startY = e.clientY;
+      let hasDragged = false;
+      const target = e.currentTarget;
+
+      try {
+        target.setPointerCapture(e.pointerId);
+      } catch (err) {}
+
+      setIsDraggingAvatar(true);
+
+      const handlePointerMove = (moveEvent) => {
+        const dx = moveEvent.clientX - startX;
+        const dy = moveEvent.clientY - startY;
+
+        if (Math.hypot(dx, dy) > 4) {
+          hasDragged = true;
+        }
+
+        const maxX = containerRect.width - avatarRect.width;
+        const maxY = containerRect.height - avatarRect.height;
+
+        const newX = Math.max(0, Math.min(maxX, currentX + dx));
+        const newY = Math.max(0, Math.min(maxY, currentY + dy));
+
+        setAvatarPos({ x: newX, y: newY });
+      };
+
+      const handlePointerUp = (upEvent) => {
+        try {
+          target.releasePointerCapture(upEvent.pointerId);
+        } catch (err) {}
+        target.removeEventListener("pointermove", handlePointerMove);
+        target.removeEventListener("pointerup", handlePointerUp);
+        target.removeEventListener("pointercancel", handlePointerUp);
+        setIsDraggingAvatar(false);
+
+        if (!hasDragged) {
+          setIsChatVisible(true);
+        }
+      };
+
+      target.addEventListener("pointermove", handlePointerMove);
+      target.addEventListener("pointerup", handlePointerUp);
+      target.addEventListener("pointercancel", handlePointerUp);
+    },
+    [avatarPos]
+  );
 
   // Close on Escape
   useEffect(() => {
@@ -987,7 +1170,7 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
         </div>
 
         {/* Body */}
-        <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
+        <div ref={containerRef} className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
           {/* Document panel — full screen preview */}
           <div
             ref={viewerRef}
@@ -1011,9 +1194,15 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
             )}
           </div>
 
-          {/* AI Chat Popup Card — sleek, compact floating widget in bottom-right corner */}
+          {/* AI Chat Popup Card — sleek, draggable floating widget */}
           {isChatVisible && (
-            <div className="absolute bottom-3 right-3 sm:bottom-5 sm:right-5 z-50 w-[calc(100%-1.5rem)] sm:w-[380px] lg:w-[410px] h-[500px] max-h-[72vh] flex flex-col bg-[#101726] border border-teal-500/35 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden motion-safe:animate-popIn">
+            <div
+              ref={chatCardRef}
+              style={chatPos ? { left: `${chatPos.x}px`, top: `${chatPos.y}px`, right: "auto", bottom: "auto" } : {}}
+              className={`absolute z-50 w-[calc(100%-1.5rem)] sm:w-[380px] lg:w-[410px] h-[500px] max-h-[72vh] flex flex-col bg-[#101726] border border-teal-500/35 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden transition-shadow ${
+                !chatPos ? "bottom-3 right-3 sm:bottom-5 sm:right-5" : ""
+              } ${isDraggingChat ? "ring-2 ring-teal-400 shadow-[0_30px_90px_rgba(45,212,191,0.3)]" : "motion-safe:animate-popIn"}`}
+            >
               <ChatPanelContent
                 note={note}
                 chatMessages={chatMessages}
@@ -1027,26 +1216,31 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
                 onComposerSubmit={handleComposerSubmit}
                 onComposerKeyDown={handleComposerKeyDown}
                 onRequestClose={() => setIsChatVisible(false)}
+                onHeaderPointerDown={handleChatHeaderPointerDown}
+                isDragging={isDraggingChat}
               />
             </div>
           )}
-        </div>
 
-        {/* Floating avatar launcher — only shown while the chat panel above
-            is closed. Opens the chat box; closing that box (via
-            its header X) flips isChatVisible back to false, which brings
-            this avatar back. */}
-        {!isChatVisible && (
-          <button
-            type="button"
-            onClick={() => setIsChatVisible(true)}
-            className="absolute bottom-5 right-5 z-30 w-14 h-14 rounded-full bg-gradient-to-tr from-teal-500 to-indigo-600 text-white flex items-center justify-center shadow-2xl shadow-black/50 border border-white/20 hover:scale-105 active:scale-95 transition-transform"
-            aria-label="Open AI chat"
-          >
-            <Bot size={22} />
-            <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-teal-400 ring-2 ring-[#0d1322] motion-safe:animate-pulse" />
-          </button>
-        )}
+          {/* Floating avatar launcher — draggable button */}
+          {!isChatVisible && (
+            <button
+              ref={avatarBtnRef}
+              type="button"
+              onPointerDown={handleAvatarPointerDown}
+              style={avatarPos ? { left: `${avatarPos.x}px`, top: `${avatarPos.y}px`, right: "auto", bottom: "auto" } : {}}
+              className={`absolute z-30 w-14 h-14 rounded-full bg-gradient-to-tr from-teal-500 to-indigo-600 text-white flex items-center justify-center shadow-2xl shadow-black/50 border border-white/20 hover:scale-105 active:scale-95 transition-transform cursor-grab active:cursor-grabbing select-none ${
+                !avatarPos ? "bottom-5 right-5" : ""
+              } ${isDraggingAvatar ? "ring-4 ring-teal-400/50 scale-110" : ""}`}
+              aria-label="Open AI chat"
+              title="Click to open AI chat, or drag to reposition"
+            >
+              <GripHorizontal size={14} className="absolute top-1 text-teal-200/60" />
+              <Bot size={22} className="mt-1" />
+              <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-teal-400 ring-2 ring-[#0d1322] motion-safe:animate-pulse" />
+            </button>
+          )}
+        </div>
       </div>
 
       <style>{`
