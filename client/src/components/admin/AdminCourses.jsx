@@ -648,7 +648,7 @@ function LessonPreviewModal({ lesson, lessonIndex, onClose }) {
 }
 
 // ── Course detail drawer ──────────────────────────────────────────────────────
-function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, actioning }) {
+function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, onEdit, actioning }) {
   const st = STATUS_CONFIG[course.approvalStatus ?? "draft"];
   const [previewLesson, setPreviewLesson] = useState(null);
   const [previewIndex, setPreviewIndex] = useState(null);
@@ -744,6 +744,23 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, action
               >
                 {st.icon} {st.label}
               </span>
+              {onEdit && (
+                <button
+                  onClick={() => onEdit(course)}
+                  style={{
+                    padding: "3px 10px",
+                    borderRadius: 20,
+                    border: "1px solid #6366f1",
+                    background: "rgba(99,102,241,0.15)",
+                    color: "#a5b4fc",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  ✏️ Edit Course
+                </button>
+              )}
             </div>
             <h2
               style={{
@@ -1289,13 +1306,14 @@ export default function AdminCourses({
   error,
   onRetry,
   canApprove = true,
-  canCreate = false,
-  canEdit = false,
-  canDelete = false,
+  canCreate = true,
+  canEdit = true,
+  canDelete = true,
 }) {
   const dispatch = useDispatch();
   const canManage = canCreate || canEdit || canDelete;
   const [mode, setMode] = useState("review"); // "review" | "manage"
+  const [editingCourse, setEditingCourse] = useState(null);
   const [toastMsg, setToastMsg] = useState("");
   const [filterStatus, setFilterStatus] = useState("pending");
   const [selected, setSelected] = useState(null);
@@ -1305,6 +1323,13 @@ export default function AdminCourses({
   const showToast = (msg) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 2500);
+  };
+
+  const handleStartEdit = (course, e) => {
+    if (e) e.stopPropagation();
+    setSelected(null);
+    setEditingCourse(course);
+    setMode("manage");
   };
 
   const filtered = courses.filter((c) => {
@@ -1397,7 +1422,10 @@ export default function AdminCourses({
           }}
         >
           <button
-            onClick={() => setMode("review")}
+            onClick={() => {
+              setMode("review");
+              setEditingCourse(null);
+            }}
             style={{
               padding: "8px 18px",
               borderRadius: 10,
@@ -1432,13 +1460,39 @@ export default function AdminCourses({
       )}
 
       {canManage && mode === "manage" ? (
-        <InstructorCourses
-          showToast={showToast}
-          isAdmin={true}
-          canCreate={canCreate}
-          canEdit={canEdit}
-          canDelete={canDelete}
-        />
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyBetween: "space-between", marginBottom: 16 }}>
+            <button
+              onClick={() => {
+                setMode("review");
+                setEditingCourse(null);
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 16px",
+                borderRadius: 10,
+                background: "#1e293b",
+                color: "#e2e8f0",
+                border: "1px solid #334155",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              ← Back to Review Submissions
+            </button>
+          </div>
+          <InstructorCourses
+            showToast={showToast}
+            isAdmin={true}
+            canCreate={canCreate}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            initialEditCourse={editingCourse}
+          />
+        </div>
       ) : (
         <>
 
@@ -1747,64 +1801,86 @@ export default function AdminCourses({
                   </span>
                 </div>
 
-                {canApprove && course.approvalStatus === "pending" && (
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 8,
-                      width: "100%",
-                      paddingTop: 8,
-                      borderTop: "1px solid #1e293b",
-                      justifyContent: "flex-end",
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    width: "100%",
+                    paddingTop: 8,
+                    borderTop: "1px solid #1e293b",
+                    justifyContent: "flex-end",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {canEdit && (
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setRejectTarget(course);
-                      }}
-                      disabled={actioning}
+                      onClick={(e) => handleStartEdit(course, e)}
                       style={{
-                        flex: 1,
-                        maxWidth: 120,
                         padding: "7px 14px",
                         borderRadius: 8,
-                        border: "1px solid #7f1d1d",
-                        background: "#2d0a0a",
-                        color: "#f87171",
+                        border: "1px solid #475569",
+                        background: "#1e293b",
+                        color: "#e2e8f0",
                         fontSize: 11,
                         fontWeight: 700,
                         cursor: "pointer",
-                        textAlign: "center",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
                       }}
                     >
-                      Reject
+                      ✏️ Edit
                     </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleApprove(course._id);
-                      }}
-                      disabled={actioning}
-                      style={{
-                        flex: 1,
-                        maxWidth: 140,
-                        padding: "7px 16px",
-                        borderRadius: 8,
-                        border: "none",
-                        background: "linear-gradient(135deg,#16a34a,#15803d)",
-                        color: "#fff",
-                        fontSize: 11,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        textAlign: "center",
-                      }}
-                    >
-                      Approve
-                    </button>
-                  </div>
-                )}
+                  )}
+                  {canApprove && course.approvalStatus === "pending" && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRejectTarget(course);
+                        }}
+                        disabled={actioning}
+                        style={{
+                          flex: 1,
+                          maxWidth: 120,
+                          padding: "7px 14px",
+                          borderRadius: 8,
+                          border: "1px solid #7f1d1d",
+                          background: "#2d0a0a",
+                          color: "#f87171",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          textAlign: "center",
+                        }}
+                      >
+                        Reject
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApprove(course._id);
+                        }}
+                        disabled={actioning}
+                        style={{
+                          flex: 1,
+                          maxWidth: 140,
+                          padding: "7px 16px",
+                          borderRadius: 8,
+                          border: "none",
+                          background: "linear-gradient(135deg,#16a34a,#15803d)",
+                          color: "#fff",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          textAlign: "center",
+                        }}
+                      >
+                        Approve
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -1818,6 +1894,7 @@ export default function AdminCourses({
           onApprove={canApprove ? handleApprove : undefined}
           onReject={canApprove ? (c) => setRejectTarget(c) : undefined}
           onUnreject={canApprove ? handleUnreject : undefined}
+          onEdit={canEdit ? handleStartEdit : undefined}
           actioning={actioning}
         />
       )}

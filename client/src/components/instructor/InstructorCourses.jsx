@@ -3100,6 +3100,7 @@ export default function InstructorCourses({
   canCreate = true,
   canEdit = true,
   canDelete = true,
+  initialEditCourse = null,
 }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -3166,6 +3167,13 @@ export default function InstructorCourses({
       dispatch(fetchCourses());
     }
   }, [dispatch, isAdmin]);
+
+  useEffect(() => {
+    if (initialEditCourse && courses.length > 0) {
+      const match = courses.find((c) => c._id === initialEditCourse._id) ?? initialEditCourse;
+      openEdit(match);
+    }
+  }, [initialEditCourse, courses]);
 
   const loadSavedDraft = () => {
     const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
