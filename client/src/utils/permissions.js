@@ -57,19 +57,27 @@ export const hasBaseRole = (user, roleName) => {
 /**
  * Returns the custom Role object if the user's role is a populated Role doc,
  * otherwise null.
+ *
+ * FIX: "staff" is a BASE role, not a custom role — it must be excluded here
+ * the same way student/instructor/admin are. Previously a plain string
+ * role === "staff" fell through to the string branch below and got wrapped
+ * into a fake custom-role object `{ name: "Staff", permissions: [] }`. That
+ * fake object (with an empty-but-defined permissions array) then made
+ * hasPermission() short-circuit to `false` for every staff user, before it
+ * ever reached the intended staff fallback.
  */
 export const getCustomRole = (user, availableRoles = []) => {
   const role = user?.role;
   if (role && typeof role === "object") {
     const name = role.name?.toLowerCase();
-    if (name && ["student", "instructor", "admin"].includes(name)) {
+    if (name && ["student", "instructor", "admin", "staff"].includes(name)) {
       return null;
     }
     return role;
   }
   if (typeof role === "string") {
     const lower = role.toLowerCase();
-    if (["student", "instructor", "admin"].includes(lower)) {
+    if (["student", "instructor", "admin", "staff"].includes(lower)) {
       return null;
     }
     if (Array.isArray(availableRoles) && availableRoles.length > 0) {
@@ -78,13 +86,19 @@ export const getCustomRole = (user, availableRoles = []) => {
       );
       if (found) return found;
     }
-    return { name: lower === "staff" ? "Staff" : role, permissions: [] };
+    return { name: role, permissions: [] };
   }
   return null;
 };
 
 /**
- * True if the user holds any custom (non-base) role or staff role.
+ * True if the user holds any custom (non-base) role.
+ *
+ * NOTE: this intentionally still reports `true` for the base "staff" role —
+ * it's used purely for UI branching (e.g. "does this user have some
+ * non-default role assignment", see StaffSidebar's isMultiRole calc), not
+ * for permission checks. Permission checks go through hasPermission(),
+ * which now handles "staff" via its own explicit branch below.
  */
 export const hasCustomRole = (user) => {
   if (!user) return false;
@@ -122,6 +136,9 @@ export const hasCustomRole = (user) => {
  * Check if the user has a specific permission on a module.
  * Admins implicitly have every permission.
  * Custom-role users are checked against their role's permissions array.
+ * Base-role "staff" users are checked against the permissions configured
+ * on the system "Staff" Role document (hydrated onto the user server-side
+ * as `basePermissions` — see hydrateUserRoles in userRoles.js).
  */
 export const hasPermission = (user, moduleName, actionName = "view") => {
   if (!user) return false;
@@ -153,7 +170,14 @@ export const hasPermission = (user, moduleName, actionName = "view") => {
     );
   }
 
-  if (user.role === "staff" || hasBaseRole(user, "staff")) {
+  if (hasBaseRole(user, "staff")) {
+    if (Array.isArray(user.basePermissions) && user.basePermissions.length > 0) {
+      return Boolean(
+        user.basePermissions.some(
+          (p) => p.module === moduleName && p.actions?.includes(actionName),
+        ),
+      );
+    }
     return true;
   }
 
@@ -170,4 +194,5 @@ export const hasAssignedPermissions = (user) =>
   hasBaseRole(user, "admin") ||
   Boolean(
     getCustomRole(user)?.permissions?.some((p) => p.actions?.length > 0),
-  );
+  ) ||
+  Boolean(user.basePermissions?.some((p) => p.actions?.length > 0));

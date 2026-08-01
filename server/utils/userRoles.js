@@ -39,7 +39,8 @@ export const hasBaseRole = (user, roleName) => {
   return false;
 };
 
-// NEW — cached lookup of a base role's system Role doc (for dashboardModules)
+// Cached lookup of a base role's system Role doc (for dashboardModules AND
+// permissions — see FIX note in hydrateUserRoles below).
 const getBaseRoleDoc = async (name) => {
   const cacheKey = `role:base:${name}`;
   try {
@@ -79,6 +80,13 @@ export const hydrateUserRoles = async (user) => {
     plain.role = name;
     const baseDoc = await getBaseRoleDoc(name);
     plain.dashboardModules = baseDoc?.dashboardModules ?? null; // null = unrestricted
+    // FIX: previously only dashboardModules was pulled from the base Role
+    // doc, so any Permissions configured for the system "Staff" role in the
+    // Roles & Permissions UI had zero effect on actual access checks — only
+    // on sidebar visibility. basePermissions is now hydrated too, and
+    // hasPermissionGrant() (below) and the client's hasPermission() both
+    // check it for plain base-role "staff" users.
+    plain.basePermissions = baseDoc?.permissions ?? [];
     delete plain.roles;
     delete plain.assignedRoles;
     delete plain.password;
@@ -196,7 +204,7 @@ export const hydrateUsersRoles = async (users = []) => {
 
       const roleValue = plain.role;
       if (isBaseRole(roleValue) || roleValue == null) {
-        return hydrateUserRoles(u); // reuse the single-user path so dashboardModules gets attached
+        return hydrateUserRoles(u); // reuse the single-user path so dashboardModules/basePermissions get attached
       }
 
       if (roleValue && typeof roleValue === "object" && roleValue._id) {
@@ -229,6 +237,17 @@ export const hydrateUsersRoles = async (users = []) => {
   );
 };
 
+/**
+ * Check if the user has a specific permission on a module.
+ * Admins implicitly have every permission.
+ * Instructors get a hardcoded default module set.
+ * Base-role "staff" users are checked against `basePermissions`, hydrated
+ * from the system "Staff" Role doc by hydrateUserRoles (FIX — previously
+ * this function returned `false` unconditionally for any string role,
+ * meaning plain "staff" users could never pass a permission check on the
+ * backend regardless of what was configured for them in the admin UI).
+ * Populated custom Role objects are checked against their own permissions.
+ */
 export const hasPermissionGrant = (user, moduleName, actionName = "view") => {
   if (hasBaseRole(user, "admin")) return true;
 
@@ -241,6 +260,17 @@ export const hasPermissionGrant = (user, moduleName, actionName = "view") => {
     if (instructorModules.has(moduleName) && allowedActions.has(actionName)) {
       return true;
     }
+  }
+
+  if (hasBaseRole(user, "staff")) {
+    if (Array.isArray(user?.basePermissions) && user.basePermissions.length > 0) {
+      return Boolean(
+        user.basePermissions.some(
+          (p) => p.module === moduleName && p.actions?.includes(actionName),
+        ),
+      );
+    }
+    return true;
   }
 
   const role = user?.role;
