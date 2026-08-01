@@ -91,50 +91,77 @@ function PdfViewer({ pdfUrl }) {
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
           if (!active) break;
           const page = await pdf.getPage(pageNum);
-          const viewport = page.getViewport({ scale: 1.5 });
+          const containerWidth = container.clientWidth || 800;
+          const unscaled = page.getViewport({ scale: 1 });
+          const dpr = Math.min(Math.max(window.devicePixelRatio || 1, 1.5), 3);
+          const padding = 16;
+          const scale = Math.min((containerWidth - padding) / unscaled.width, 2.0);
+          const viewport = page.getViewport({ scale });
 
           const pageWrap = document.createElement("div");
           pageWrap.style.position = "relative";
-          pageWrap.style.marginBottom = "12px";
+          pageWrap.style.marginBottom = "16px";
           pageWrap.style.display = "block";
-          pageWrap.style.width = "100%";
-          pageWrap.style.maxWidth = `${viewport.width}px`;
-          pageWrap.style.margin = "0 auto 12px auto";
+          pageWrap.style.width = `${viewport.width}px`;
+          pageWrap.style.height = `${viewport.height}px`;
+          pageWrap.style.margin = "0 auto 16px auto";
           
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-          canvas.style.width = "100%";
+          canvas.width = Math.floor(viewport.width * dpr);
+          canvas.height = Math.floor(viewport.height * dpr);
+          canvas.style.width = `${viewport.width}px`;
+          canvas.style.height = `${viewport.height}px`;
           canvas.style.display = "block";
 
           const textLayer = document.createElement("div");
           textLayer.className = "pdf-text-layer";
-          textLayer.style.width = "100%";
-          textLayer.style.height = "100%";
+          textLayer.style.width = `${viewport.width}px`;
+          textLayer.style.height = `${viewport.height}px`;
           
           pageWrap.appendChild(canvas);
           pageWrap.appendChild(textLayer);
           if (container) container.appendChild(pageWrap);
           
-          // Render the actual PDF page content
-          await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+          const transform = dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null;
+          await page.render({ canvasContext: ctx, viewport, transform }).promise;
 
-          page.getTextContent().then((textContent) => {
-            const fragment = document.createDocumentFragment();
-            textContent.items.forEach((item) => {
-              if (!item.str) return;
-              const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-              const fontHeight = Math.hypot(tx[2], tx[3]);
-              const span = document.createElement("span");
-              span.textContent = item.str;
-              span.style.left = `${(tx[4] / viewport.width) * 100}%`;
-              span.style.top = `${((tx[5] - fontHeight) / viewport.height) * 100}%`;
-              span.style.fontSize = `${fontHeight}px`;
-              fragment.appendChild(span);
-            });
-            textLayer.appendChild(fragment);
-          }).catch(() => {});
+          requestAnimationFrame(() => {
+            page.getTextContent().then((textContent) => {
+              const fragment = document.createDocumentFragment();
+              const spans = [];
+              textContent.items.forEach((item) => {
+                if (!item.str) return;
+                const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+                const angle = Math.atan2(tx[1], tx[0]);
+                const fontHeight = Math.hypot(tx[2], tx[3]);
+                const span = document.createElement("span");
+                span.textContent = item.str;
+                span.style.left = `${tx[4]}px`;
+                span.style.top = `${tx[5] - fontHeight}px`;
+                span.style.fontSize = `${fontHeight}px`;
+                fragment.appendChild(span);
+                spans.push({ span, angle, expectedWidth: Math.abs(item.width * viewport.scale) });
+              });
+              textLayer.appendChild(fragment);
+
+              requestAnimationFrame(() => {
+                const measuredWidths = spans.map(({ span }) => span.offsetWidth);
+                spans.forEach(({ span, angle, expectedWidth }, i) => {
+                  const actualWidth = measuredWidths[i];
+                  const rotate = angle ? `rotate(${angle}rad) ` : "";
+                  if (actualWidth > 0 && expectedWidth > 0) {
+                    const scaleX = expectedWidth / actualWidth;
+                    if (isFinite(scaleX) && scaleX > 0.05 && scaleX < 20) {
+                      span.style.transform = `${rotate}scaleX(${scaleX})`;
+                    }
+                  } else if (rotate) {
+                    span.style.transform = rotate;
+                  }
+                });
+              });
+            }).catch(() => {});
+          });
         }
       } catch (err) {
         console.warn("Failed to render PDF:", err);
