@@ -49,31 +49,93 @@ const Skeleton = ({ className = "" }) => (
   <div className={`animate-pulse rounded-xl bg-white/[0.06] ${className}`} />
 );
 
-const SuccessOverlay = ({ count, onClose }) => (
-  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-    <div
-      style={{ animation: "fadeUp 0.35s ease" }}
-      className="flex flex-col items-center gap-6 rounded-3xl border border-emerald-400/20 bg-[#0b1326] p-10 shadow-2xl text-center max-w-sm w-full"
-    >
-      <div className="p-5 rounded-full bg-emerald-400/10 border border-emerald-400/20">
-        <CheckCircle size={44} className="text-emerald-300" />
-      </div>
-      <div>
-        <h2 className="text-2xl font-black text-white">You're enrolled! 🎉</h2>
-        <p className="text-slate-400 mt-2 text-sm leading-relaxed">
-          Successfully enrolled in {count} course{count !== 1 ? "s" : ""}.<br />
-          Head to My Courses to start learning.
-        </p>
-      </div>
-      <button
-        onClick={onClose}
-        className="w-full rounded-2xl bg-emerald-300 px-6 py-3 font-bold text-slate-950 hover:scale-[1.02] transition"
+const SuccessOverlay = ({ count, purchasedCourses = [], onClose, onGoToDashboard }) => {
+  const displayCount = Math.max(count, purchasedCourses.length, 1);
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-md px-4 modal-bg">
+      <div
+        style={{ animation: "fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1)" }}
+        className="relative flex flex-col items-center gap-6 rounded-3xl border border-emerald-500/30 bg-gradient-to-b from-[#0b1628] via-[#08101f] to-[#030712] p-8 md:p-10 shadow-[0_0_50px_rgba(16,185,129,0.15)] text-center max-w-md w-full overflow-hidden"
       >
-        Go to My Courses →
-      </button>
+        {/* Ambient Top Glow */}
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-64 h-64 bg-emerald-500/20 blur-3xl rounded-full pointer-events-none" />
+
+        {/* Animated Check Icon */}
+        <div className="relative flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping opacity-30" />
+          <div className="relative p-5 rounded-3xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-400/30 shadow-[0_0_30px_rgba(52,211,153,0.2)]">
+            <CheckCircle size={52} className="text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.6)]" />
+          </div>
+        </div>
+
+        {/* Header Text */}
+        <div className="space-y-2 relative z-10">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-widest bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+            ✨ Purchase Successful
+          </span>
+          <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+            You're Enrolled! 🎉
+          </h2>
+          <p className="text-slate-300 text-sm leading-relaxed max-w-xs mx-auto">
+            Successfully enrolled in{" "}
+            <span className="font-extrabold text-emerald-300 underline decoration-emerald-500/40">
+              {displayCount} course{displayCount !== 1 ? "s" : ""}
+            </span>.
+          </p>
+        </div>
+
+        {/* Course Cards Summary List if available */}
+        {purchasedCourses.length > 0 && (
+          <div className="w-full max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar text-left relative z-10">
+            {purchasedCourses.map((c, idx) => (
+              <div
+                key={c._id ?? c.id ?? idx}
+                className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] hover:border-emerald-500/30 transition"
+              >
+                <div className="w-11 h-11 rounded-xl bg-slate-800 border border-white/10 overflow-hidden shrink-0 flex items-center justify-center text-lg">
+                  {c.thumbnailUrl ? (
+                    <img src={c.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    "📚"
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-xs font-bold text-white truncate">
+                    {c.title || c.subject || "Course"}
+                  </h4>
+                  <p className="text-[11px] text-slate-400 truncate">
+                    {c.instructor?.name || "Umang Vision Academy"}
+                  </p>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-400 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 shrink-0">
+                  Enrolled
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="w-full space-y-2.5 pt-2 relative z-10">
+          <button
+            onClick={onClose}
+            className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-sm tracking-wide shadow-[0_0_25px_rgba(16,185,129,0.35)] hover:shadow-[0_0_35px_rgba(16,185,129,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          >
+            <span>Go to My Courses</span>
+            <ArrowRight size={18} />
+          </button>
+
+          <button
+            onClick={onGoToDashboard}
+            className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/[0.05] transition"
+          >
+            Go to Student Dashboard
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ── Wallet Payment Confirmation Modal ─────────────────────────────────────────
 const WalletConfirmModal = ({
@@ -212,6 +274,7 @@ export default function CartPage() {
   const [mockLoading, setMockLoading] = useState(false);
   const [showWalletConfirm, setShowWalletConfirm] = useState(false);
   const [walletSuccessMsg, setWalletSuccessMsg] = useState("");
+  const [lastPurchasedCourses, setLastPurchasedCourses] = useState([]);
 
   // Auth guard
   useEffect(() => {
@@ -264,6 +327,7 @@ export default function CartPage() {
   // Dummy Razorpay checkout
   const handleRazorpayCheckout = async () => {
     setRazorError("");
+    setLastPurchasedCourses(cartItems);
 
     try {
       const result = await dispatch(
@@ -295,6 +359,7 @@ export default function CartPage() {
   const handleWalletCheckout = async () => {
     setShowWalletConfirm(false);
     setWalletSuccessMsg("");
+    setLastPurchasedCourses(cartItems);
 
     // Cart may have multiple courses — pay for each sequentially
     const courseIds = cartItems.map((c) => c._id ?? c.id);
@@ -345,8 +410,13 @@ export default function CartPage() {
 
       {checkoutSuccess && (
         <SuccessOverlay
-          count={enrolledIds.length}
+          count={enrolledIds.length > 0 ? enrolledIds.length : (lastPurchasedCourses.length || 1)}
+          purchasedCourses={lastPurchasedCourses}
           onClose={handleSuccessClose}
+          onGoToDashboard={() => {
+            dispatch(resetCheckout());
+            navigate("/student-dashboard");
+          }}
         />
       )}
 

@@ -196,7 +196,10 @@ const cartSlice = createSlice({
       .addCase(checkoutAndEnroll.fulfilled, (state, action) => {
         state.checkoutLoading = false;
         state.checkoutSuccess = true;
-        state.enrolledIds = action.payload.enrolled ?? [];
+        const enrolled = action.payload?.enrolled ?? [];
+        const alreadyEnrolled = action.payload?.alreadyEnrolled ?? [];
+        const combined = Array.from(new Set([...enrolled, ...alreadyEnrolled]));
+        state.enrolledIds = combined.length > 0 ? combined : (action.meta?.arg ?? []);
         state.cartIds = [];
       })
       .addCase(checkoutAndEnroll.rejected, (state, action) => {
