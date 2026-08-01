@@ -9,7 +9,7 @@ import { hasBaseRole } from "../../utils/permissions.js";
 import { useTranslation } from "react-i18next";
 import { normalizeVideoUrl, isImageFile, isEmbedVideo, getEmbedUrl } from "../../utils/media.js";
 import NoteViewerModal from "../common/NoteViewerModal.jsx";
-import CourseFloatingAI from "./CourseFloatingAI.jsx";
+
 import { useAiTranslation } from "../../utils/aiTranslate.js";
 
 // ── Local state ───────────────────────────────────────────────────────────────
@@ -1403,11 +1403,7 @@ export default function CourseDemo() {
           </div>
         )}
       </div>
-      <CourseFloatingAI
-        course={course}
-        activeLesson={course?.lessons?.[0] || null}
-        allLessons={course?.lessons ?? []}
-      />
+
       <NoteViewerModal
         note={activeModalNote}
         isOpen={Boolean(activeModalNote)}
