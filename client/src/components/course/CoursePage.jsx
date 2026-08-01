@@ -1062,7 +1062,13 @@ export default function CoursePage() {
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("keyup", handleKeyUp);
 
+    const handleUserInteraction = () => {
+      removeBlurNow();
+    };
+
     window.addEventListener("focus", handleFocus);
+    window.addEventListener("click", handleUserInteraction);
+    window.addEventListener("pointerdown", handleUserInteraction);
     window.addEventListener("blur", handleBlur);
     document.addEventListener("visibilitychange", handleVisibility);
 
@@ -1071,6 +1077,8 @@ export default function CoursePage() {
       document.removeEventListener("keyup", handleKeyUp);
 
       window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("click", handleUserInteraction);
+      window.removeEventListener("pointerdown", handleUserInteraction);
       window.removeEventListener("blur", handleBlur);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
@@ -2254,12 +2262,24 @@ export default function CoursePage() {
         </div>
 
         {!isFocused && (
-          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-sm text-center p-4">
-            <span className="text-4xl mb-2">🔒</span>
+          <div
+            onClick={removeBlurNow}
+            className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/85 backdrop-blur-md text-center p-4 cursor-pointer select-none"
+          >
+            <span className="text-4xl mb-2 animate-bounce">🔒</span>
             <h3 className="text-lg font-bold text-white">Security Mode Active</h3>
             <p className="text-xs text-slate-400 mt-1 max-w-[280px]">
-              Content is blurred because the page lost focus. Click back inside the window to resume.
+              Content was blurred because the window lost focus.
             </p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                removeBlurNow();
+              }}
+              className="mt-4 px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-extrabold shadow-lg shadow-cyan-500/30 transition-all hover:scale-105 active:scale-95"
+            >
+              Resume Learning
+            </button>
           </div>
         )}
       </div>
