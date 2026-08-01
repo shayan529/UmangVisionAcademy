@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchEnrolledCourses } from "../../redux/slices/courseSlice";
+import { loadCurrentUser } from "../../redux/slices/authSlice";
 import { Link } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
@@ -707,8 +708,8 @@ export default function Certificates() {
   const user = useSelector((s) => s.auth?.user);
 
   useEffect(() => {
-    // earnedCertificates is already in Redux state from the initial auth load.
-    // Just fetch enrolled courses — no need to re-fetch the full user here.
+    // Fetch fresh user data (including newly earned certificates) and enrolled courses
+    dispatch(loadCurrentUser({ force: true }));
     dispatch(fetchEnrolledCourses());
   }, [dispatch]);
 

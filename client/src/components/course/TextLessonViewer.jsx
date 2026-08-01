@@ -92,6 +92,14 @@ function PdfViewer({ pdfUrl }) {
           if (!active) break;
           const page = await pdf.getPage(pageNum);
           const viewport = page.getViewport({ scale: 1.5 });
+
+          const pageWrap = document.createElement("div");
+          pageWrap.style.position = "relative";
+          pageWrap.style.marginBottom = "12px";
+          pageWrap.style.display = "block";
+          pageWrap.style.width = "100%";
+          pageWrap.style.maxWidth = `${viewport.width}px`;
+          pageWrap.style.margin = "0 auto 12px auto";
           
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
@@ -99,14 +107,34 @@ function PdfViewer({ pdfUrl }) {
           canvas.width = viewport.width;
           canvas.style.width = "100%";
           canvas.style.display = "block";
-          canvas.style.marginBottom = "8px";
-          canvas.oncontextmenu = (e) => e.preventDefault();
-          canvas.ondragstart = (e) => e.preventDefault();
+
+          const textLayer = document.createElement("div");
+          textLayer.className = "pdf-text-layer";
+          textLayer.style.width = "100%";
+          textLayer.style.height = "100%";
           
-          if (container) container.appendChild(canvas);
+          pageWrap.appendChild(canvas);
+          pageWrap.appendChild(textLayer);
+          if (container) container.appendChild(pageWrap);
           
           // Render the actual PDF page content
           await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+          page.getTextContent().then((textContent) => {
+            const fragment = document.createDocumentFragment();
+            textContent.items.forEach((item) => {
+              if (!item.str) return;
+              const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+              const fontHeight = Math.hypot(tx[2], tx[3]);
+              const span = document.createElement("span");
+              span.textContent = item.str;
+              span.style.left = `${(tx[4] / viewport.width) * 100}%`;
+              span.style.top = `${((tx[5] - fontHeight) / viewport.height) * 100}%`;
+              span.style.fontSize = `${fontHeight}px`;
+              fragment.appendChild(span);
+            });
+            textLayer.appendChild(fragment);
+          }).catch(() => {});
         }
       } catch (err) {
         console.warn("Failed to render PDF:", err);
@@ -121,7 +149,6 @@ function PdfViewer({ pdfUrl }) {
   return (
     <div
       className="pdf-viewer-container"
-      onContextMenu={(e) => e.preventDefault()}
       style={
         isFullscreen
           ? {
@@ -235,7 +262,7 @@ export default function TextLessonViewer({ lesson }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* Scoped CSS for responsive PDF sizing */}
+      {/* Scoped CSS for responsive PDF sizing & text selection */}
       <style>{`
         .pdf-viewer-container {
           position: relative;
@@ -250,6 +277,36 @@ export default function TextLessonViewer({ lesson }) {
             aspect-ratio: auto;
             height: 82vh;
           }
+        }
+        .pdf-text-layer {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          overflow: hidden;
+          line-height: 1;
+          pointer-events: auto;
+          -webkit-user-select: text;
+          user-select: text;
+        }
+        .pdf-text-layer span {
+          position: absolute;
+          white-space: pre;
+          color: transparent;
+          transform-origin: 0% 0%;
+          cursor: text;
+          font-family: sans-serif;
+          -webkit-user-select: text;
+          user-select: text;
+        }
+        .pdf-text-layer span::selection {
+          background-color: rgba(56, 189, 248, 0.45) !important;
+          color: transparent !important;
+        }
+        .pdf-text-layer span::-moz-selection {
+          background-color: rgba(56, 189, 248, 0.45) !important;
+          color: transparent !important;
         }
       `}</style>
 

@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import api from "../../config/api.js";
-import { updateUserScoreAndSubmissions } from "../../redux/slices/authSlice.js";
+import { updateUserScoreAndSubmissions, loadCurrentUser } from "../../redux/slices/authSlice.js";
 import { checkAndAwardAchievements } from "../../redux/slices/achievementSlice.js";
 import TextLessonViewer from "./TextLessonViewer.jsx";
 import WatermarkOverlay from "./WaterMarkOverlay.jsx";
 import NoteViewerModal from "../common/NoteViewerModal.jsx";
+import CourseFloatingAI from "./CourseFloatingAI.jsx";
 
 import { normalizeVideoUrl, isImageFile, isEmbedVideo, getEmbedUrl } from "../../utils/media.js";
 import { useAiTranslation } from "../../utils/aiTranslate.js";
@@ -976,8 +978,6 @@ export default function CoursePage() {
 
   // Security and focus monitoring listeners
   useEffect(() => {
-    const handleCopy = (e) => e.preventDefault();
-    const handleSelectStart = (e) => e.preventDefault();
 
     const handleKeyDown = (e) => {
       // PrintScreen / Meta / OS: blur IMMEDIATELY via direct DOM (bypasses React async re-render)
@@ -1059,9 +1059,6 @@ export default function CoursePage() {
       else removeBlurNow();
     };
 
-    document.addEventListener("copy", handleCopy);
-    document.addEventListener("cut", handleCopy);
-    document.addEventListener("selectstart", handleSelectStart);
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("keyup", handleKeyUp);
 
@@ -1070,9 +1067,6 @@ export default function CoursePage() {
     document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
-      document.removeEventListener("copy", handleCopy);
-      document.removeEventListener("cut", handleCopy);
-      document.removeEventListener("selectstart", handleSelectStart);
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("keyup", handleKeyUp);
 
@@ -1103,6 +1097,8 @@ export default function CoursePage() {
   }, [course]);
 
   const { tText } = useAiTranslation(translatableTexts);
+  const { i18n } = useTranslation();
+  const isHindi = i18n.language === "hi";
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeIdx, setActiveIdx] = useState(0);
@@ -1975,7 +1971,7 @@ export default function CoursePage() {
               />
             </div>
           ) : (
-            <div onContextMenu={(e) => e.preventDefault()}>
+            <div>
               {isTextLesson ? (
                 <TextLessonViewer lesson={activeLesson} user={user} />
               ) : (
@@ -2060,7 +2056,7 @@ export default function CoursePage() {
                       color: completed.has(activeIdx) ? "#4ade80" : "#94a3b8",
                     }}
                   >
-                    {completed.has(activeIdx) ? "✓ Done" : "Mark Complete"}
+                    {completed.has(activeIdx) ? (isHindi ? "✓ पूर्ण" : "✓ Done") : (isHindi ? "पूर्ण चिह्नित करें" : "Mark Complete")}
                   </button>
                 </div>
               </div>
@@ -2083,7 +2079,7 @@ export default function CoursePage() {
                   cursor: activeIdx === 0 ? "not-allowed" : "pointer",
                 }}
               >
-                ← Previous
+                {isHindi ? "← पिछला" : "← Previous"}
               </button>
               {(() => {
                 const currentSubj = subjects.find((s) =>
@@ -2120,10 +2116,10 @@ export default function CoursePage() {
                 const isCourseFinished = isLastLesson && !goToSubjectQuiz && !goToFinalQuiz && !hasFinalQuiz;
                 const disabledNext = !isCurrentCompleted || isCourseFinished;
 
-                let btnLabel = "Next →";
-                if (goToSubjectQuiz) btnLabel = "Finish → Take Subject Quiz";
-                else if (goToFinalQuiz) btnLabel = "Finish → Take Final Quiz";
-                else if (isCourseFinished) btnLabel = "Course Completed";
+                let btnLabel = isHindi ? "अगला →" : "Next →";
+                if (goToSubjectQuiz) btnLabel = isHindi ? "समाप्त → विषय क्विज़" : "Finish → Take Subject Quiz";
+                else if (goToFinalQuiz) btnLabel = isHindi ? "समाप्त → अंतिम क्विज़" : "Finish → Take Final Quiz";
+                else if (isCourseFinished) btnLabel = isHindi ? "कोर्स पूरा हुआ" : "Course Completed";
 
                 return (
                   <button
@@ -2291,7 +2287,10 @@ export default function CoursePage() {
       <CertificateEarnedModal
         course={course}
         onClose={() => setShowCertModal(false)}
-        onViewCertificates={() => navigate("/student-dashboard/certificates")}
+        onViewCertificates={() => {
+          dispatch(loadCurrentUser({ force: true }));
+          navigate("/student-dashboard/certificates");
+        }}
       />
     )
   }
@@ -2317,11 +2316,18 @@ export default function CoursePage() {
       />
     )
   }
+      <CourseFloatingAI
+        course={course}
+        activeLesson={activeLesson}
+        allLessons={allLessons}
+        currentVideoPct={currentVideoPct}
+        initialTime={initialTime}
+      />
       <NoteViewerModal
         note={activeModalNote}
         isOpen={Boolean(activeModalNote)}
         onClose={() => setActiveModalNote(null)}
       />
-    </div >
+    </div>
   );
 }

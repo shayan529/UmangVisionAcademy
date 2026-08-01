@@ -14,6 +14,7 @@ const SLIM_FIELDS = [
   "role", "assignedRoles", "coins", "subscription",
   "selectedClass", "referralCode", "isActive",
   "enrolledCourses", "teachingCourses", "notificationSettings",
+  "earnedCertificates", "quizSubmissions", "courseProgress", "score",
 ];
 
 const slimUser = (user) => {
@@ -101,7 +102,8 @@ export const loadCurrentUser = createAsyncThunk(
     // "Fresh" = fetched less than 5 minutes ago AND the role is already
     // hydrated (not a raw ObjectId). This avoids a blocking or background
     // /users/me call on every page load — saving ~300–800ms.
-    condition: (_, { getState }) => {
+    condition: (arg, { getState }) => {
+      if (arg?.force) return true;
       const token = typeof localStorage !== "undefined" ? localStorage.getItem("authToken") : null;
       const { user, isAuthenticated } = getState().auth;
 

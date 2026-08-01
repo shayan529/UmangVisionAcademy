@@ -1391,11 +1391,11 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
            in the app winning the cascade tie — this highlight needs to hold
            regardless of load order. */
         .pdf-text-layer span::selection {
-          background-color: rgba(52, 211, 153, 0.45) !important;
+          background-color: rgba(56, 189, 248, 0.45) !important;
           color: transparent !important;
         }
         .pdf-text-layer span::-moz-selection {
-          background-color: rgba(52, 211, 153, 0.45) !important;
+          background-color: rgba(56, 189, 248, 0.45) !important;
           color: transparent !important;
         }
       `}</style>
