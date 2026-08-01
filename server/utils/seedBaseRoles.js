@@ -4,7 +4,10 @@ import Role, { DASHBOARD_MODULES } from "../models/role.model.js";
 // (local/Render) — duplicate-key errors from a concurrent invocation
 // creating the same doc are swallowed.
 export const ensureBaseRoleDocs = async () => {
-    const names = Object.keys(DASHBOARD_MODULES);
+    // Delete any existing system staff role doc if present
+    await Role.deleteMany({ name: /^staff$/i, isSystem: true }).catch(() => {});
+
+    const names = ["student", "instructor"];
     // Case-insensitive check so "Student" and "student" are treated the same
     const existing = await Role.find({
         name: { $in: names.map((n) => new RegExp(`^${n}$`, "i")) },
