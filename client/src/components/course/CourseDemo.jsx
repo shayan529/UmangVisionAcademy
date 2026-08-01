@@ -1405,7 +1405,7 @@ export default function CourseDemo() {
       </div>
       <CourseFloatingAI
         course={course}
-        activeLesson={activeLesson}
+        activeLesson={course?.lessons?.[0] || null}
         allLessons={course?.lessons ?? []}
       />
       <NoteViewerModal
