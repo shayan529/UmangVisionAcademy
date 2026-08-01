@@ -610,31 +610,6 @@ export default function CourseFloatingAI({
               }`}
           >
             <div className="relative h-36 sm:h-44 w-auto flex items-center justify-center">
-              {/* Rotating Holographic Tech HUD Ring over Left Hand */}
-              <svg
-                viewBox="0 0 100 100"
-                className="absolute top-[14%] left-[18%] w-[28%] h-[28%] pointer-events-none z-20 animate-spinCw select-none"
-                style={{ filter: "drop-shadow(0 0 8px rgba(56,189,248,0.95))" }}
-              >
-                <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(56, 189, 248, 0.85)" strokeWidth="1.8" strokeDasharray="8 4" />
-                <circle cx="50" cy="50" r="35" fill="none" stroke="rgba(192, 132, 252, 0.9)" strokeWidth="1.2" strokeDasharray="14 6 3 6" />
-                <circle cx="50" cy="50" r="24" fill="none" stroke="rgba(56, 189, 248, 0.95)" strokeWidth="2.2" strokeDasharray="28 12" />
-                <circle cx="50" cy="50" r="5" fill="#38bdf8" className="animate-pulse" />
-              </svg>
-
-              {/* Rotating Energy Orb & Orbiting Rings over Right Hand */}
-              <div className="absolute top-[22%] right-[11%] w-[26%] h-[26%] pointer-events-none z-20 flex items-center justify-center select-none">
-                <svg
-                  viewBox="0 0 100 100"
-                  className="absolute inset-0 w-full h-full animate-spinCcw"
-                  style={{ filter: "drop-shadow(0 0 10px rgba(168,85,247,0.9))" }}
-                >
-                  <ellipse cx="50" cy="50" rx="45" ry="18" fill="none" stroke="rgba(168, 85, 247, 0.95)" strokeWidth="2" strokeDasharray="16 6 4 6" transform="rotate(-25 50 50)" />
-                  <ellipse cx="50" cy="50" rx="38" ry="14" fill="none" stroke="rgba(56, 189, 248, 0.95)" strokeWidth="1.6" strokeDasharray="10 5" transform="rotate(35 50 50)" />
-                </svg>
-                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-tr from-cyan-300 via-sky-400 to-purple-400 shadow-[0_0_14px_rgba(56,189,248,0.9)] animate-pulse" />
-              </div>
-
               {/* Main Avatar Cutout Image */}
               <img
                 src="/course_ai_avatar.png"
@@ -643,8 +618,8 @@ export default function CourseFloatingAI({
               />
 
               {/* Online status badge */}
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-cyan-300 ring-2 ring-[#0a1222] motion-safe:animate-ping pointer-events-none z-30" />
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-[#0a1222] pointer-events-none z-30" />
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-cyan-300 ring-2 ring-[#0a1222] motion-safe:animate-ping pointer-events-none z-20" />
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-[#0a1222] pointer-events-none z-20" />
             </div>
           </button>
         </div>
@@ -867,22 +842,6 @@ export default function CourseFloatingAI({
           to { opacity: 1; transform: scale(1) translateY(0); }
         }
         .motion-safe\\:animate-popIn { animation: popIn 0.15s ease-out; }
-
-        @keyframes spinCw {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        .animate-spinCw {
-          animation: spinCw 8s linear infinite;
-        }
-
-        @keyframes spinCcw {
-          0% { transform: rotate(360deg); }
-          100% { transform: rotate(0deg); }
-        }
-        .animate-spinCcw {
-          animation: spinCcw 6s linear infinite;
-        }
 
         /* Light blue text selection styling across notes & course lessons */
         ::selection {
