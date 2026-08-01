@@ -57,7 +57,7 @@ const LeaderRow = memo(({ student, rank, isCurrentUser, coinsToRupees, t }) => {
       </div>
       <div style={{ textAlign: "right" }}>
         <div style={{ color: "#fde68a", fontWeight: 700, fontSize: 15 }}>
-          🪙 {studentCoins} coins
+          ⭐ {studentCoins} stars
         </div>
         <div style={{ color: "#94a3b8", fontSize: 11, marginTop: 2 }}>
           ≈ ₹{coinsToRupees(studentCoins)}
@@ -243,7 +243,7 @@ const LeaderBoard = () => {
               fontSize: 14,
             }}
           >
-            🪙 {myCoins} coins
+            ⭐ {myCoins} stars
             <span style={{ color: "#fef9c3", fontWeight: 500, fontSize: 12 }}>
               (₹{coinsToRupees(myCoins)})
             </span>
@@ -350,7 +350,7 @@ const LeaderBoard = () => {
                     >
                       <div>
                         <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#f8fafc" }}>
-                          🪙 {t("studentLeaderboard.howCoinsEarned")}
+                          ⭐ {t("studentLeaderboard.howCoinsEarned")}
                         </h3>
                         <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>
                           {t("studentLeaderboard.completeActivities")}
@@ -412,7 +412,7 @@ const LeaderBoard = () => {
                               whiteSpace: "nowrap",
                             }}
                           >
-                            🪙 +{coins}
+                            ⭐ +{coins}
                           </div>
                         </div>
                       ))}
@@ -429,7 +429,7 @@ const LeaderBoard = () => {
                       }}
                     >
                       <p style={{ margin: 0, fontSize: 13, color: "#c4b5fd", fontWeight: 700 }}>
-                        💡 {t("studentLeaderboard.coinsConversion")}
+                        ⭐ {t("studentLeaderboard.coinsConversion")}
                       </p>
                       <p style={{ margin: "4px 0 0", fontSize: 12, color: "#7c3aed" }}>
                         {t("studentLeaderboard.coinsRedeemHint")}
