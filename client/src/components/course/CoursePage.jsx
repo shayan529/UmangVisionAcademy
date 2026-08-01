@@ -1329,24 +1329,24 @@ export default function CoursePage() {
       navigate("/login", { state: { from: `/courses/${id}` } });
       return;
     }
-    api
-      .get(`/courses/${id}`)
-      .then(async ({ data }) => {
-        setCourse(data);
-        try {
-          const { data: progressResp } = await api.get(`/courses/${id}/progress`);
-          const prog = progressResp?.progress;
-          if (prog) {
-            lessonProgressRef.current = prog.lessonProgress || {};
-            setLessonProgressState(prog.lessonProgress || {});
-            setCompleted(new Set(prog.completed || []));
-            setActiveIdx(prog.lastLesson ?? 0);
-            const savedVal = (prog.lessonProgress || {})[prog.lastLesson ?? 0];
-            const initTime = typeof savedVal === 'object' ? savedVal?.currentTime : savedVal;
-            setInitialTime(initTime || 0);
-          }
-        } catch (e) {
-          console.warn("Failed to fetch course progress:", e?.message || e);
+    Promise.all([
+      api.get(`/courses/${id}`),
+      api.get(`/courses/${id}/progress`).catch((e) => {
+        console.warn("Failed to fetch course progress:", e?.message || e);
+        return { data: null };
+      }),
+    ])
+      .then(([{ data: courseData }, progressRes]) => {
+        setCourse(courseData);
+        const prog = progressRes?.data?.progress;
+        if (prog) {
+          lessonProgressRef.current = prog.lessonProgress || {};
+          setLessonProgressState(prog.lessonProgress || {});
+          setCompleted(new Set(prog.completed || []));
+          setActiveIdx(prog.lastLesson ?? 0);
+          const savedVal = (prog.lessonProgress || {})[prog.lastLesson ?? 0];
+          const initTime = typeof savedVal === 'object' ? savedVal?.currentTime : savedVal;
+          setInitialTime(initTime || 0);
         }
         setLoading(false);
       })

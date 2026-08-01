@@ -429,6 +429,7 @@ export const enrolledCourses = async (req, res) => {
     }
 
     const courses = await Course.find(query)
+      .select("title summary category level price thumbnailUrl board language instructor tags lessons.title lessons.type ratings reviewCount ratingAverage")
       .populate("instructor", "name email")
       .lean();
 
@@ -718,35 +719,50 @@ export const enrollCourses = async (req, res) => {
   }
 };
 
-// ── getCourseById (protected — enrolled students / instructor) ────────────────
 export const getCourseById = async (req, res) => {
   try {
+    const cacheKey = `course:detail:${req.params.id}`;
+    const cached = await getJson(cacheKey);
+    if (cached) {
+      // Apply note status filtering dynamically for non-owners/non-admins
+      const isOwner = cached.instructor?._id?.toString() === req.user?._id?.toString();
+      const isAdmin = hasBaseRole(req.user, "admin");
+      if (!isOwner && !isAdmin && Array.isArray(cached.notes)) {
+        return res.json({
+          ...cached,
+          notes: cached.notes.filter((n) => n.status === "approved"),
+        });
+      }
+      return res.json(cached);
+    }
+
     const course = await Course.findById(req.params.id)
       .populate("instructor", "name email")
-      .populate("students", "name email")
-      .populate("ratings.user", "name");
+      .populate("ratings.user", "name")
+      .lean();
     if (!course) return res.status(404).json({ message: "Course not found" });
 
     const ratingData = await computeInstructorRating(course.instructor?._id);
-    const courseObj = course.toObject();
-    if (courseObj.instructor) {
-      courseObj.instructor.avgRating = ratingData.avgRating;
-      courseObj.instructor.ratingCount = ratingData.ratingCount;
+    if (course.instructor) {
+      course.instructor.avgRating = ratingData.avgRating;
+      course.instructor.ratingCount = ratingData.ratingCount;
     }
 
-    // Students (and anyone who isn't the owning instructor/an admin) should
-    // only ever see notes an admin has approved — pending/rejected notes are
-    // only visible to the instructor who owns the course or to admins.
-    const isOwner =
-      course.instructor?._id?.toString() === req.user._id.toString();
+    // Include student count without loading all user documents into memory
+    course.studentCount = Array.isArray(course.students) ? course.students.length : 0;
+
+    // Cache the base course details for 60 seconds
+    await setJson(cacheKey, course, 60);
+
+    const isOwner = course.instructor?._id?.toString() === req.user._id.toString();
     const isAdmin = hasBaseRole(req.user, "admin");
     if (!isOwner && !isAdmin) {
-      courseObj.notes = (courseObj.notes ?? []).filter(
+      course.notes = (course.notes ?? []).filter(
         (n) => n.status === "approved",
       );
     }
 
-    res.json(courseObj);
+    res.json(course);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

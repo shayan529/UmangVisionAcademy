@@ -151,6 +151,7 @@ const clearCourseCache = async (doc) => {
     const id = doc?._id || doc?.id;
     if (id) {
       keys.push(`course:public:${id.toString()}`);
+      keys.push(`course:detail:${id.toString()}`);
     }
     await deleteKeys(keys);
   } catch (err) {
