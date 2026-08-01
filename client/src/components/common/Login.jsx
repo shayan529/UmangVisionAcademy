@@ -177,7 +177,8 @@ const PasswordResetModal = ({ onClose }) => {
     setLoading(true);
     const fullPhone = "+91" + phoneNumber;
     try {
-      await axios.post("/auth/forgot-password-phone", {
+      // Trigger backend OTP and Firebase Phone Auth concurrently for ultra-fast response
+      const backendPromise = axios.post("/auth/forgot-password-phone", {
         phoneNumber: fullPhone,
       });
 
@@ -190,12 +191,13 @@ const PasswordResetModal = ({ onClose }) => {
           setFirebaseConfirmationResult(confirmation);
         } catch (fbErr) {
           console.warn(
-            "Firebase Reset Phone OTP warning, using dev OTP fallback:",
-            fbErr.code,
+            "Firebase Reset Phone OTP warning, using fast server OTP:",
             fbErr.message,
           );
         }
       }
+
+      await backendPromise;
 
       toast.success(
         t("passwordReset.toast.otpSentPhone") ||
@@ -221,7 +223,7 @@ const PasswordResetModal = ({ onClose }) => {
     if (loading || cooldown > 0) return;
     setLoading(true);
     try {
-      await axios.post("/auth/forgot-password-phone", {
+      const backendPromise = axios.post("/auth/forgot-password-phone", {
         phoneNumber: fullPhone,
       });
 
@@ -233,9 +235,11 @@ const PasswordResetModal = ({ onClose }) => {
           );
           setFirebaseConfirmationResult(confirmation);
         } catch (fbErr) {
-          console.warn("Firebase Resend error:", fbErr.message);
+          console.warn("Firebase Resend warning, using fast server OTP:", fbErr.message);
         }
       }
+
+      await backendPromise;
 
       toast.success(t("passwordReset.toast.otpResent"), { id: "otp-resent" });
       setCooldown(60);

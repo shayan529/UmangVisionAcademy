@@ -61,6 +61,16 @@ const loadRecaptchaScript = () => {
   });
 };
 
+// Eagerly pre-load Google reCAPTCHA script during browser idle time
+if (typeof window !== "undefined") {
+  const preload = () => loadRecaptchaScript().catch(() => {});
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(preload);
+  } else {
+    setTimeout(preload, 500);
+  }
+}
+
 /**
  * Poll for a DOM element by ID, up to a timeout.
  *
@@ -68,7 +78,7 @@ const loadRecaptchaScript = () => {
  * @param {number} [timeout] Max wait in ms (default 3000)
  * @returns {Promise<HTMLElement|null>}
  */
-const waitForElement = (id, timeout = 3000) => {
+const waitForElement = (id, timeout = 1500) => {
   return new Promise((resolve) => {
     const el = document.getElementById(id);
     if (el) return resolve(el);
@@ -83,7 +93,7 @@ const waitForElement = (id, timeout = 3000) => {
         clearInterval(interval);
         resolve(null);
       }
-    }, 50);
+    }, 15);
   });
 };
 
@@ -206,11 +216,20 @@ export const setupRecaptchaVerifier = async (
 
   await withTimeout(
     verifier.render(),
-    10000,
-    "reCAPTCHA initialization timed out. Please check network or domain configuration.",
+    2500,
+    "reCAPTCHA initialization timed out. Fast-tracking server OTP...",
   );
   window.recaptchaVerifier = verifier;
   return verifier;
+};
+
+/**
+ * Pre-warm reCAPTCHA verifier on input focus so sending OTP is instant.
+ */
+export const prewarmRecaptcha = (containerId = "recaptcha-container") => {
+  if (isFirebaseConfigured() && auth && !window.recaptchaVerifier) {
+    setupRecaptchaVerifier(containerId).catch(() => {});
+  }
 };
 
 /**
@@ -237,8 +256,8 @@ export const sendFirebasePhoneOtp = async (
   try {
     const confirmationResult = await withTimeout(
       signInWithPhoneNumber(auth, phoneNumber, verifier),
-      15000,
-      "reCAPTCHA verification timed out. Please try again or check Firebase domain settings.",
+      3500,
+      "reCAPTCHA verification timed out. Fast-tracking server OTP...",
     );
     window.confirmationResult = confirmationResult;
     return confirmationResult;
