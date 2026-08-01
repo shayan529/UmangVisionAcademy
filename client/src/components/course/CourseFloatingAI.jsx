@@ -586,7 +586,7 @@ export default function CourseFloatingAI({
             <div className="flex items-center gap-1.5 mb-0.5">
               <Sparkles size={13} className="text-yellow-300 animate-pulse" />
               <span className="text-xs font-black text-cyan-200 uppercase tracking-wider">
-                {isHindi ? "☁️ Luna से पूछें" : "☁️ Ask Luna"}
+                {isHindi ? "Luna से पूछें" : "Ask Luna"}
               </span>
             </div>
             <span className="text-[10px] text-slate-300 font-semibold max-w-[145px] truncate leading-tight">
@@ -649,7 +649,7 @@ export default function CourseFloatingAI({
                 <div className="flex items-center gap-1.5">
                   <GripHorizontal size={14} className="text-cyan-400/70 shrink-0" />
                   <h3 className="text-xs sm:text-sm font-black text-white truncate tracking-wide">
-                    {isHindi ? "☁️ Luna · AI कोर्स गाइड" : "☁️ Luna · Course AI Guide"}
+                    {isHindi ? "Luna · AI कोर्स गाइड" : "Luna · Course AI Guide"}
                   </h3>
                 </div>
                 <p className="text-[10px] sm:text-[11px] text-cyan-300/90 truncate font-medium">
@@ -786,7 +786,7 @@ export default function CourseFloatingAI({
                   onClick={() => handleSendMessage(qp)}
                   className="text-[11px] bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 hover:border-cyan-400/60 text-cyan-300 px-2.5 py-1 rounded-full text-left transition-colors truncate max-w-full font-medium"
                 >
-                  ☁️ {qp}
+                  ✨ {qp}
                 </button>
               ))}
             </div>
