@@ -1279,11 +1279,7 @@ export default function CoursePage() {
     lastStateUpdateRef.current = { time: 0, pct: -1 };
   }, [activeIdx]);
 
-  useEffect(() => {
-    if (!courseComplete) return;
-    checkAndShowCert();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseComplete, user?.quizSubmissions]);
+
 
   const saveTimer = useRef(null);
   const pendingSave = useRef({});
@@ -1394,6 +1390,9 @@ export default function CoursePage() {
   const handleLessonEnd = useCallback(() => {
     setCompleted((prev) => {
       const next = new Set([...prev, activeIdx]);
+      if (prev.size < allLessons.length && next.size === allLessons.length) {
+        setTimeout(() => checkAndShowCert(), 600);
+      }
       scheduleSave(
         {
           lastLesson: activeIdx,
@@ -1449,6 +1448,9 @@ export default function CoursePage() {
       setCompleted((prev) => {
         if (roundedPct >= 90 && !prev.has(activeIdx)) {
           const next = new Set([...prev, activeIdx]);
+          if (prev.size < allLessons.length && next.size === allLessons.length) {
+            setTimeout(() => checkAndShowCert(), 600);
+          }
           scheduleSave(
             {
               lastLesson: activeIdx,
@@ -2038,6 +2040,9 @@ export default function CoursePage() {
                       setCompleted((prev) => {
                         const n = new Set(prev);
                         n.has(activeIdx) ? n.delete(activeIdx) : n.add(activeIdx);
+                        if (prev.size < allLessons.length && n.size === allLessons.length) {
+                          setTimeout(() => checkAndShowCert(), 600);
+                        }
                         scheduleSave(
                           {
                             lastLesson: activeIdx,
