@@ -8,11 +8,14 @@ import crypto from 'crypto';
    CLIENT_URL          your frontend URL
 ────────────────────────────────────────────── */
 
+const GMAIL_USER = process.env.GMAIL_USER || 'umangvisionacademy@gmail.com';
+const DEFAULT_FROM = `"Umang Vision Academy" <${GMAIL_USER}>`;
+
 export const transporter = nodemailer.createTransport({
   pool: true,
   service: 'gmail',
   auth: {
-    user: process.env.GMAIL_USER,
+    user: GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD,
   },
 });
@@ -86,7 +89,7 @@ const buildUnsubscribeFooter = (unsubscribeUrl) => {
 
 // ── OTP email (no unsubscribe — transactional) ────────────────────────────────
 const buildOtpEmail = (otp, recipientEmail) => ({
-  from: `"Umang Vision Academy" <${process.env.GMAIL_USER}>`,
+  from: DEFAULT_FROM,
   to: recipientEmail,
   subject: 'Your Verification Code — Umang Vision Academy',
   text: `Your OTP is ${otp}. It expires in 10 minutes. Do not share it with anyone.`,
@@ -253,7 +256,7 @@ export const sendThemedEmail = async (to, subject, title, bodyHtml, unsubscribeU
 
   try {
     const info = await transporter.sendMail({
-      from: `"Umang Vision Academy" <${process.env.GMAIL_USER}>`,
+      from: DEFAULT_FROM,
       to,
       subject,
       html,
@@ -395,7 +398,7 @@ export const sendContactEmail = async (name, email, subject, message) => {
     throw new Error("Email service is not configured");
   }
   const info = await transporter.sendMail({
-    from: `"Umang Vision Academy Contact" <${process.env.GMAIL_USER}>`,
+    from: `"Umang Vision Academy Contact" <${GMAIL_USER}>`,
     to: process.env.CONTACT_INBOX || "umangvisionacademy@gmail.com",
     replyTo: email,
     subject: `Contact Form: ${subject}`,

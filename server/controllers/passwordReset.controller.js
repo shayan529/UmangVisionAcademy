@@ -63,8 +63,9 @@ const sendOtpEmail = async (email, otp, name = "") => {
       </html>
     `;
 
+  const fromAddress = `"Umang Vision Academy" <${process.env.GMAIL_USER || "umangvisionacademy@gmail.com"}>`;
   await transporter.sendMail({
-    from: `"Umang Vision Academy" <${process.env.GMAIL_USER}>`,
+    from: fromAddress,
     to: email,
     subject: "Password Reset OTP",
     html,
