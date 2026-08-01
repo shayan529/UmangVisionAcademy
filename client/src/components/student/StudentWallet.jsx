@@ -52,11 +52,11 @@ const TYPE_META = {
     icon: "↩",
   },
   coin_redeem: {
-    label: "Coin Redeem",
+    label: "Star Redeem",
     color: "text-yellow-400",
     bg: "bg-yellow-500/10",
     border: "border-yellow-500/20",
-    icon: "🪙",
+    icon: "⭐",
   },
 };
 
@@ -110,9 +110,9 @@ const CoinRedeemModal = ({ onClose, currentUser, onRedeem }) => {
           style={{ background: "rgba(234,179,8,0.08)" }}
         >
           <div>
-            <h2 className="text-white font-bold text-lg">🪙 Redeem Coins</h2>
+            <h2 className="text-white font-bold text-lg">⭐ Redeem Stars</h2>
             <p className="text-yellow-600 text-xs mt-0.5">
-              25 coins = ₹1 wallet balance
+              25 stars = ₹1 wallet balance
             </p>
           </div>
           <button
@@ -133,10 +133,10 @@ const CoinRedeemModal = ({ onClose, currentUser, onRedeem }) => {
             }}
           >
             <span className="text-yellow-300 text-sm font-semibold">
-              Your coin balance
+              Your star balance
             </span>
             <span className="text-yellow-400 font-bold text-lg">
-              🪙 {availableCoins.toLocaleString("en-IN")}
+              ⭐ {availableCoins.toLocaleString("en-IN")}
             </span>
           </div>
 
@@ -179,7 +179,7 @@ const CoinRedeemModal = ({ onClose, currentUser, onRedeem }) => {
                         : {}
                     }
                   >
-                    🪙{c}
+                    ⭐{c}
                   </button>
                 ))}
               </div>
@@ -189,18 +189,18 @@ const CoinRedeemModal = ({ onClose, currentUser, onRedeem }) => {
           {/* Custom input */}
           <div>
             <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
-              Enter coins to redeem
+              Enter stars to redeem
             </p>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-500">
-                🪙
+                ⭐
               </span>
               <input
                 type="number"
                 inputMode="numeric"
                 value={coinsToRedeem}
                 onChange={(e) => setCoinsToRedeem(e.target.value)}
-                placeholder={`Min ${COINS_PER_RUPEE} coins`}
+                placeholder={`Min ${COINS_PER_RUPEE} stars`}
                 min={COINS_PER_RUPEE}
                 max={availableCoins}
                 className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-yellow-500 transition"
@@ -218,8 +218,8 @@ const CoinRedeemModal = ({ onClose, currentUser, onRedeem }) => {
               }}
             >
               <div className="text-slate-300 text-sm">
-                🪙 <span className="font-bold text-white">{numCoins}</span>{" "}
-                coins
+                ⭐ <span className="font-bold text-white">{numCoins}</span>{" "}
+                stars
                 <span className="text-slate-500 mx-2">→</span>
                 💰{" "}
                 <span className="font-bold text-purple-300">
@@ -248,12 +248,12 @@ const CoinRedeemModal = ({ onClose, currentUser, onRedeem }) => {
               : successMsg
                 ? "Redeemed ✓"
                 : numCoins > 0 && isValid
-                  ? `Redeem ${numCoins} coins → ${fmt(rupeesEarned)}`
-                  : "Redeem Coins"}
+                  ? `Redeem ${numCoins} stars → ${fmt(rupeesEarned)}`
+                  : "Redeem Stars"}
           </button>
 
           <p className="text-slate-600 text-xs text-center">
-            Minimum redemption: {COINS_PER_RUPEE} coins (₹1) · Coins are
+            Minimum redemption: {COINS_PER_RUPEE} stars (₹1) · Stars are
             non-transferable
           </p>
         </div>
@@ -574,18 +574,18 @@ const StudentWallet = ({ showToast }) => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0">
           <div className="min-w-0">
             <p className="text-yellow-700 text-xs font-semibold uppercase tracking-wider mb-1">
-              Your Coins
+              Your Stars
             </p>
             <div className="flex items-baseline gap-2 sm:gap-3 flex-wrap">
               <span className="text-3xl sm:text-4xl font-extrabold text-yellow-400">
-                🪙 {availableCoins.toLocaleString("en-IN")}
+                ⭐ {availableCoins.toLocaleString("en-IN")}
               </span>
               <span className="text-yellow-700 text-xs sm:text-sm shrink-0">
                 ≈ {fmt(coinsToRupees(availableCoins))}
               </span>
             </div>
             <p className="text-yellow-800 text-[10px] sm:text-xs mt-1">
-              25 coins = ₹1 wallet balance
+              25 stars = ₹1 wallet balance
             </p>
           </div>
           <button
@@ -597,16 +597,16 @@ const StudentWallet = ({ showToast }) => {
               color: "#1c1917",
             }}
           >
-            Redeem Coins →
+            Redeem Stars →
           </button>
         </div>
 
         {/* How to earn */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-4 pt-4 border-t border-yellow-900/40">
           {[
-            { icon: "📅", label: "Daily login", val: "+1 coin" },
-            { icon: "📚", label: "Course done", val: "+25 coins" },
-            { icon: "🏆", label: "Certificate", val: "+25 coins" },
+            { icon: "📅", label: "Daily login", val: "+1 star" },
+            { icon: "📚", label: "Course done", val: "+25 stars" },
+            { icon: "🏆", label: "Certificate", val: "+25 stars" },
           ].map(({ icon, label, val }) => (
             <div key={label} className="flex items-center gap-3">
               <span className="text-xl sm:text-base shrink-0">{icon}</span>
@@ -710,7 +710,7 @@ const StudentWallet = ({ showToast }) => {
                         : "text-slate-400 hover:text-white"
                     }`}
                   >
-                    {f === "coin_redeem" ? "Coins" : f}
+                    {f === "coin_redeem" ? "Stars" : f}
                   </button>
                 ),
               )}
@@ -736,11 +736,11 @@ const StudentWallet = ({ showToast }) => {
             ))
           ) : filtered.length === 0 ? (
             <div className="py-16 text-center">
-              <p className="text-4xl mb-3">🪙</p>
+              <p className="text-4xl mb-3">⭐</p>
               <p className="text-slate-400 text-sm">
                 {filter === "all"
                   ? t("wallet.noTransactions")
-                  : `No ${filter === "coin_redeem" ? "coin redemption" : filter} transactions.`}
+                  : `No ${filter === "coin_redeem" ? "star redemption" : filter} transactions.`}
               </p>
             </div>
           ) : (
