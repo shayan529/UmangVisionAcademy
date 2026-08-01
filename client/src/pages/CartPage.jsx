@@ -22,6 +22,7 @@ import {
   Trash2,
   ShoppingCart,
   ArrowRight,
+  ArrowLeft,
   Plus,
   Search,
   X,
@@ -34,6 +35,7 @@ import {
   Wallet,
   AlertCircle,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -52,45 +54,47 @@ const Skeleton = ({ className = "" }) => (
 const SuccessOverlay = ({ count, purchasedCourses = [], onClose, onGoToDashboard }) => {
   const displayCount = Math.max(count, purchasedCourses.length, 1);
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-md px-4 modal-bg">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/85 backdrop-blur-md px-4 modal-bg">
       <div
         style={{ animation: "fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1)" }}
-        className="relative flex flex-col items-center gap-6 rounded-3xl border border-emerald-500/30 bg-gradient-to-b from-[#0b1628] via-[#08101f] to-[#030712] p-8 md:p-10 shadow-[0_0_50px_rgba(16,185,129,0.15)] text-center max-w-md w-full overflow-hidden"
+        className="relative flex flex-col items-center gap-6 rounded-[28px] border border-emerald-500/25 bg-gradient-to-b from-[#0c1830] via-[#08101f] to-[#030712] p-8 md:p-10 shadow-[0_0_60px_rgba(16,185,129,0.18)] text-center max-w-md w-full overflow-hidden"
       >
-        {/* Ambient Top Glow */}
+        {/* Ambient top glow */}
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-64 h-64 bg-emerald-500/20 blur-3xl rounded-full pointer-events-none" />
+        <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-emerald-400 via-teal-400 to-violet-400" />
 
-        {/* Animated Check Icon */}
-        <div className="relative flex items-center justify-center">
-          <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping opacity-30" />
-          <div className="relative p-5 rounded-3xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-400/30 shadow-[0_0_30px_rgba(52,211,153,0.2)]">
-            <CheckCircle size={52} className="text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.6)]" />
+        {/* Animated check icon */}
+        <div className="relative flex items-center justify-center mt-1">
+          <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping opacity-30 motion-reduce:animate-none" />
+          <div className="relative p-5 rounded-3xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-400/30 shadow-[0_0_30px_rgba(52,211,153,0.25)]">
+            <CheckCircle size={48} className="text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.6)]" />
           </div>
         </div>
 
-        {/* Header Text */}
-        <div className="space-y-2 relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-widest bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-            ✨ Purchase Successful
+        {/* Header text */}
+        <div className="space-y-2.5 relative z-10">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-[0.14em] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+            Purchase Successful
           </span>
-          <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-            You're Enrolled! 🎉
+          <h2 className="text-2xl md:text-[28px] font-black text-white tracking-tight">
+            You're enrolled
           </h2>
-          <p className="text-slate-300 text-sm leading-relaxed max-w-xs mx-auto">
-            Successfully enrolled in{" "}
-            <span className="font-extrabold text-emerald-300 underline decoration-emerald-500/40">
+          <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
+            You now have access to{" "}
+            <span className="font-bold text-emerald-300">
               {displayCount} course{displayCount !== 1 ? "s" : ""}
-            </span>.
+            </span>
+            . Jump in whenever you're ready.
           </p>
         </div>
 
-        {/* Course Cards Summary List if available */}
+        {/* Purchased course list */}
         {purchasedCourses.length > 0 && (
           <div className="w-full max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar text-left relative z-10">
             {purchasedCourses.map((c, idx) => (
               <div
                 key={c._id ?? c.id ?? idx}
-                className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] hover:border-emerald-500/30 transition"
+                className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] hover:border-emerald-500/30 transition-colors"
               >
                 <div className="w-11 h-11 rounded-xl bg-slate-800 border border-white/10 overflow-hidden shrink-0 flex items-center justify-center text-lg">
                   {c.thumbnailUrl ? (
@@ -103,7 +107,7 @@ const SuccessOverlay = ({ count, purchasedCourses = [], onClose, onGoToDashboard
                   <h4 className="text-xs font-bold text-white truncate">
                     {c.title || c.subject || "Course"}
                   </h4>
-                  <p className="text-[11px] text-slate-400 truncate">
+                  <p className="text-[11px] text-slate-500 truncate">
                     {c.instructor?.name || "Umang Vision Academy"}
                   </p>
                 </div>
@@ -115,8 +119,8 @@ const SuccessOverlay = ({ count, purchasedCourses = [], onClose, onGoToDashboard
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="w-full space-y-2.5 pt-2 relative z-10">
+        {/* Actions */}
+        <div className="w-full space-y-2.5 pt-1 relative z-10">
           <button
             onClick={onClose}
             className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-sm tracking-wide shadow-[0_0_25px_rgba(16,185,129,0.35)] hover:shadow-[0_0_35px_rgba(16,185,129,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
@@ -127,7 +131,7 @@ const SuccessOverlay = ({ count, purchasedCourses = [], onClose, onGoToDashboard
 
           <button
             onClick={onGoToDashboard}
-            className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/[0.05] transition"
+            className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-500 hover:text-white hover:bg-white/[0.05] transition-colors"
           >
             Go to Student Dashboard
           </button>
@@ -137,7 +141,7 @@ const SuccessOverlay = ({ count, purchasedCourses = [], onClose, onGoToDashboard
   );
 };
 
-// ── Wallet Payment Confirmation Modal ─────────────────────────────────────────
+// ── Wallet payment confirmation modal ─────────────────────────────────────────
 const WalletConfirmModal = ({
   total,
   balance,
@@ -149,7 +153,7 @@ const WalletConfirmModal = ({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
       <div
-        className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#0b1120] p-6 shadow-2xl space-y-5"
+        className="w-full max-w-sm rounded-[28px] border border-white/10 bg-[#0b1120] p-6 shadow-2xl space-y-5"
         style={{ animation: "fadeUp 0.25s ease" }}
       >
         {/* Header */}
@@ -157,17 +161,20 @@ const WalletConfirmModal = ({
           <div className="p-2.5 rounded-xl bg-violet-500/10 border border-violet-500/20">
             <Wallet size={20} className="text-violet-400" />
           </div>
-          <h3 className="text-white font-bold text-lg">Pay with Wallet</h3>
+          <div>
+            <h3 className="text-white font-bold text-base leading-tight">Pay with Wallet</h3>
+            <p className="text-slate-500 text-xs mt-0.5">Instant, no redirect</p>
+          </div>
         </div>
 
-        {/* Balance vs Total */}
+        {/* Balance vs total */}
         <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4 space-y-3">
           <div className="flex justify-between text-sm">
-            <span className="text-slate-400">Order Total</span>
+            <span className="text-slate-400">Order total</span>
             <span className="text-white font-bold">{fmt(total)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-slate-400">Wallet Balance</span>
+            <span className="text-slate-400">Wallet balance</span>
             <span
               className={`font-bold ${insufficient ? "text-red-400" : "text-emerald-400"}`}
             >
@@ -176,7 +183,7 @@ const WalletConfirmModal = ({
           </div>
           {!insufficient && (
             <div className="flex justify-between text-sm border-t border-white/[0.07] pt-3">
-              <span className="text-slate-400">Balance After</span>
+              <span className="text-slate-400">Balance after</span>
               <span className="text-slate-300 font-bold">
                 {fmt(balance - total)}
               </span>
@@ -189,8 +196,8 @@ const WalletConfirmModal = ({
           <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
             <AlertCircle size={16} className="shrink-0 mt-0.5" />
             <span>
-              You need {fmt(total - balance)} more. Please add money to your
-              wallet first.
+              You need {fmt(total - balance)} more. Add money to your wallet
+              first.
             </span>
           </div>
         )}
@@ -199,14 +206,14 @@ const WalletConfirmModal = ({
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-white/20 text-sm font-semibold transition"
+            className="flex-1 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-white/20 text-sm font-semibold transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={insufficient || loading}
-            className="flex-1 py-3 rounded-xl text-sm font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex-1 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               background: insufficient
                 ? "#1e293b"
@@ -395,18 +402,25 @@ export default function CartPage() {
   const anyError = cartError || billingError || razorError || walletError;
 
   return (
-    <div className="min-h-screen bg-[#020817] text-white">
+    <div className="min-h-screen bg-[#020817] text-white relative">
       <SEO title="Cart" description="Review items in your cart." />
       <style>{`
         @keyframes slideOut { to { opacity:0; transform:translateX(28px) scale(0.97); } }
         @keyframes slideIn  { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
         @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
         @keyframes fadeUp   { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes floatSlow { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
         .removing   { animation: slideOut 0.28s ease forwards; }
         .cart-item  { animation: slideIn 0.32s ease both; }
         .modal-bg   { animation: fadeIn 0.2s ease; }
         .modal-card { animation: slideIn 0.22s ease; }
+        @media (prefers-reduced-motion: no-preference) {
+          .float-slow { animation: floatSlow 4.5s ease-in-out infinite; }
+        }
       `}</style>
+
+      {/* Ambient top-of-page wash */}
+      <div className="pointer-events-none fixed top-0 inset-x-0 h-[420px] bg-gradient-to-b from-emerald-500/[0.06] via-transparent to-transparent" />
 
       {checkoutSuccess && (
         <SuccessOverlay
@@ -431,57 +445,40 @@ export default function CartPage() {
       )}
 
       {/* ── Top nav strip ── */}
-      <div className="sticky top-0 z-20 border-b border-white/[0.06] bg-[#020817]/90 backdrop-blur-md px-6 py-4 flex items-center gap-4">
+      <div className="sticky top-0 z-20 border-b border-white/[0.06] bg-[#020817]/85 backdrop-blur-md px-5 md:px-6 py-3 flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="text-slate-400 hover:text-white text-sm font-semibold transition"
+          className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-sm font-semibold transition-colors shrink-0"
         >
-          ← Back
+          <ArrowLeft size={15} />
+          <span>Back</span>
         </button>
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-emerald-400/10 border border-emerald-400/20">
-            <ShoppingCart size={18} className="text-emerald-300" />
-          </div>
-          <span className="font-bold text-white text-lg">Your Cart</span>
+        <div className="w-px h-4 bg-white/10" />
+        <div className="flex items-center gap-2 min-w-0">
+          <ShoppingCart size={15} className="text-emerald-300 shrink-0" />
+          <span className="font-bold text-white text-sm truncate">Your Cart</span>
           {cartItems.length > 0 && (
-            <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-400/10 text-emerald-300 border border-emerald-400/20">
+            <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-400/10 text-emerald-300 border border-emerald-400/20 shrink-0">
               {cartItems.length}
             </span>
           )}
         </div>
-
-        {/* Wallet balance pill in topbar */}
-        {user && (
-          <button
-            onClick={() => navigate("/student-dashboard/wallet")}
-            className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-xl border border-violet-500/20 bg-violet-500/10 text-violet-300 text-xs font-semibold hover:bg-violet-500/20 transition"
-          >
-            <Wallet size={13} />
-            {walletLoading ? "…" : fmt(walletBalance)}
-          </button>
-        )}
-
-        {!availableLoading && notInCart.length > 0 && (
-          <button
-            onClick={() => setShowBrowser(true)}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-300 hover:border-emerald-400/30 hover:text-emerald-300 transition"
-          >
-            <Plus size={15} /> Add Course
-          </button>
-        )}
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-10">
+      <div className="max-w-6xl mx-auto px-5 md:px-6 py-6 md:py-8 relative">
         {/* Error banner */}
         {anyError && (
           <div className="mb-6 flex items-start justify-between gap-4 rounded-2xl border border-red-500/20 bg-red-500/[0.08] px-5 py-4 text-sm text-red-300">
-            <span>⚠️ {anyError}</span>
+            <span className="flex items-start gap-2.5">
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              {anyError}
+            </span>
             <button
               onClick={() => {
                 dispatch(resetCheckout());
                 setRazorError("");
               }}
-              className="shrink-0 text-red-300 hover:text-white"
+              className="shrink-0 text-red-300 hover:text-white transition-colors"
             >
               <X size={15} />
             </button>
@@ -514,75 +511,186 @@ export default function CartPage() {
             </div>
           </div>
         ) : cartItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-28 gap-6 text-center">
-            <div className="p-7 rounded-3xl bg-white/[0.03] border border-white/[0.08]">
-              <ShoppingCart size={52} className="text-slate-600" />
+          <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center max-w-4xl mx-auto space-y-12">
+            {/* Main Empty Hero Card */}
+            <div className="relative w-full max-w-md p-8 md:p-10 rounded-[32px] border border-white/10 bg-gradient-to-b from-[#0b1628]/95 via-[#08101f]/85 to-[#020817]/95 backdrop-blur-xl shadow-[0_0_50px_rgba(16,185,129,0.08)] flex flex-col items-center gap-6 overflow-hidden">
+              {/* Background ambient glow */}
+              <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-56 h-56 bg-emerald-500/15 blur-3xl rounded-full pointer-events-none" />
+              <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent" />
+
+              {/* Glowing Icon Holder */}
+              <div className="relative mt-2">
+                <div className="absolute inset-0 rounded-3xl bg-emerald-500/15 blur-xl animate-pulse" />
+                <div className="relative p-6 rounded-3xl bg-gradient-to-br from-emerald-500/20 to-teal-500/5 border border-emerald-400/30 shadow-[0_0_25px_rgba(52,211,153,0.15)] text-emerald-400">
+                  <ShoppingCart size={48} className="drop-shadow-[0_0_12px_rgba(52,211,153,0.5)]" />
+                  <span className="absolute -top-1 -right-1 p-1.5 rounded-full bg-emerald-400 text-slate-950 shadow-md">
+                    <Sparkles size={12} />
+                  </span>
+                </div>
+              </div>
+
+              {/* Hero Copy */}
+              <div className="space-y-2 relative z-10">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-[0.14em] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                  Ready for your next step?
+                </span>
+                <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+                  Your cart is empty
+                </h2>
+                <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
+                  Explore top courses and competitive exam prep to start building your skills today.
+                </p>
+              </div>
+
+              {/* Feature Pills */}
+              <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold text-slate-300 pt-1">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
+                  ⚡ Instant Access
+                </span>
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
+                  📜 Certified
+                </span>
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
+                  💬 AI Tutor
+                </span>
+              </div>
+
+              {/* Primary CTA */}
+              <button
+                onClick={() => navigate("/courses")}
+                className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-sm tracking-wide shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:shadow-[0_0_35px_rgba(16,185,129,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
+              >
+                <Plus size={18} />
+                <span>Explore All Courses</span>
+              </button>
             </div>
-            <div>
-              <h2 className="text-2xl font-black text-white">
-                Your cart is empty
-              </h2>
-              <p className="text-slate-500 mt-2 text-sm">
-                Browse courses and add them here to enrol.
-              </p>
-            </div>
-            <button
-              onClick={() => navigate("/courses")}
-              className="inline-flex items-center gap-2 rounded-2xl bg-emerald-300 px-6 py-3 text-slate-950 font-bold hover:scale-[1.02] transition"
-            >
-              <Plus size={18} /> Browse Courses
-            </button>
+
+            {/* Recommended Courses Grid */}
+            {availableCourses.length > 0 && (
+              <div className="w-full text-left space-y-5 pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <BookOpen size={18} className="text-emerald-400" />
+                      <span>Popular Courses You Might Like</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Handpicked recommendations to get you started quickly
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => navigate("/courses")}
+                    className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
+                  >
+                    View all <ArrowRight size={13} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {availableCourses.slice(0, 3).map((course) => (
+                    <div
+                      key={course._id ?? course.id}
+                      className="group rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:border-emerald-500/30 p-4 flex flex-col justify-between gap-4 transition-all hover:bg-white/[0.05]"
+                    >
+                      <div className="space-y-3">
+                        <div className="h-32 rounded-xl bg-slate-800 border border-white/10 overflow-hidden relative">
+                          {course.thumbnailUrl ? (
+                            <img
+                              src={course.thumbnailUrl}
+                              alt=""
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-3xl">
+                              📚
+                            </div>
+                          )}
+                          {course.category && (
+                            <span className="absolute top-2 left-2 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-950/80 backdrop-blur text-indigo-300 border border-indigo-500/30">
+                              {course.category}
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm text-white line-clamp-1 group-hover:text-emerald-300 transition-colors">
+                            {course.title}
+                          </h4>
+                          <p className="text-xs text-slate-400 mt-0.5 truncate">
+                            by {instructorName(course.instructor)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+                        <span className="text-base font-black text-emerald-300">
+                          {fmt(course.price)}
+                        </span>
+                        <button
+                          onClick={() => handleAdd(course._id ?? course.id)}
+                          className="inline-flex items-center gap-1 rounded-xl bg-emerald-400/10 border border-emerald-400/20 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-400/20 transition-colors"
+                        >
+                          <Plus size={13} /> Add to Cart
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="grid lg:grid-cols-[1fr_340px] gap-8 items-start">
-            {/* ── LEFT ── */}
+          <div className="grid lg:grid-cols-[1fr_360px] gap-8 items-start">
+            {/* ── LEFT: cart items ── */}
             <div className="space-y-4">
-              <p className="text-slate-400 text-sm font-medium">
+              <p className="text-slate-500 text-sm font-medium">
                 {cartItems.length} course{cartItems.length !== 1 ? "s" : ""} in
-                cart
+                your cart
               </p>
 
               {cartItems.map((item, idx) => (
                 <div
                   key={item._id ?? item.id}
-                  className={`cart-item group rounded-2xl border border-white/[0.07] bg-white/[0.03] overflow-hidden transition hover:border-white/[0.14] ${removingId === (item._id ?? item.id) ? "removing" : ""}`}
+                  className={`cart-item group rounded-2xl border border-white/[0.07] bg-white/[0.03] overflow-hidden transition-colors hover:border-white/[0.14] ${removingId === (item._id ?? item.id) ? "removing" : ""}`}
                   style={{ animationDelay: `${idx * 55}ms` }}
                 >
                   <div className="flex flex-col sm:flex-row">
-                    <div className="sm:w-48 h-40 sm:h-auto shrink-0 overflow-hidden bg-slate-800">
+                    <div className="relative sm:w-48 h-40 sm:h-auto shrink-0 overflow-hidden bg-slate-800">
                       {item.thumbnailUrl ? (
                         <img
                           src={item.thumbnailUrl}
                           alt={item.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-4xl">
                           📚
                         </div>
                       )}
-                    </div>
-                    <div className="flex-1 p-5 flex flex-col justify-between gap-3">
-                      <div>
-                        <div className="flex gap-2 flex-wrap mb-2">
+                      {/* Category / board badges float on the thumbnail */}
+                      {(item.category || item.board) && (
+                        <div className="absolute left-2.5 bottom-2.5 flex gap-1.5 flex-wrap">
                           {item.category && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                            <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-950/70 backdrop-blur text-indigo-300 border border-indigo-500/30">
                               {item.category}
                             </span>
                           )}
                           {item.board && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                            <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-950/70 backdrop-blur text-purple-300 border border-purple-500/30">
                               {item.board}
                             </span>
                           )}
                         </div>
+                      )}
+                    </div>
+                    <div className="flex-1 p-5 flex flex-col justify-between gap-3 min-w-0">
+                      <div>
                         <h3 className="font-bold text-lg text-white leading-snug">
                           {item.title}
                         </h3>
-                        <p className="text-slate-400 text-sm mt-1">
+                        <p className="text-slate-500 text-sm mt-1">
                           by {instructorName(item.instructor)}
                         </p>
-                        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                        <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-500">
                           <span className="flex items-center gap-1">
                             <Star
                               size={11}
@@ -590,10 +698,12 @@ export default function CartPage() {
                             />
                             {item.ratingAverage?.toFixed(1) ?? "New"}
                           </span>
+                          <span className="w-1 h-1 rounded-full bg-slate-700" />
                           <span className="flex items-center gap-1">
                             <Users size={11} /> {item.students?.length ?? 0}{" "}
                             students
                           </span>
+                          <span className="w-1 h-1 rounded-full bg-slate-700" />
                           <span className="flex items-center gap-1">
                             <Clock size={11} />
                             {item.durationHours
@@ -603,14 +713,12 @@ export default function CartPage() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between flex-wrap gap-3 pt-3 border-t border-white/[0.06]">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-2xl font-black text-emerald-300">
-                            {fmt(item.price)}
-                          </span>
-                        </div>
+                        <span className="text-2xl font-black text-emerald-300">
+                          {fmt(item.price)}
+                        </span>
                         <button
                           onClick={() => handleRemove(item._id ?? item.id)}
-                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-300 transition px-3 py-1.5 rounded-lg border border-red-500/20 bg-red-500/[0.06] hover:bg-red-500/[0.12]"
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-300 transition-colors px-3 py-1.5 rounded-lg border border-red-500/20 bg-red-500/[0.06] hover:bg-red-500/[0.12]"
                         >
                           <Trash2 size={13} /> Remove
                         </button>
@@ -623,7 +731,7 @@ export default function CartPage() {
               {notInCart.length > 0 && (
                 <button
                   onClick={() => setShowBrowser(true)}
-                  className="w-full rounded-2xl border border-dashed border-white/[0.08] py-5 text-slate-500 hover:border-emerald-400/30 hover:text-emerald-400 transition flex items-center justify-center gap-2 text-sm font-medium"
+                  className="w-full rounded-2xl border border-dashed border-white/[0.1] py-5 text-slate-500 hover:border-emerald-400/30 hover:text-emerald-400 hover:bg-emerald-400/[0.02] transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                 >
                   <Plus size={16} /> Add another course
                 </button>
@@ -631,156 +739,164 @@ export default function CartPage() {
             </div>
 
             {/* ── RIGHT: Order summary ── */}
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 flex flex-col gap-5 sticky top-24">
-              <h2 className="text-xl font-black text-white">Order Summary</h2>
+            <div className="relative rounded-2xl border border-white/[0.08] bg-white/[0.03] overflow-hidden sticky top-16">
+              {/* Signature stripe — echoes the two payment paths below */}
+              <div className="h-[3px] bg-gradient-to-r from-emerald-400 via-teal-400 to-violet-400" />
 
-              <div className="space-y-2">
-                {cartItems.map((item) => (
-                  <div
-                    key={item._id ?? item.id}
-                    className="flex items-center justify-between text-sm gap-2"
-                  >
-                    <span className="text-slate-400 truncate max-w-[160px]">
-                      {item.title}
-                    </span>
-                    <span className="text-slate-300 font-semibold shrink-0">
-                      {fmt(item.price)}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <div className="p-6 flex flex-col gap-5">
+                <h2 className="text-xl font-black text-white">Order Summary</h2>
 
-              <div className="space-y-3 border-t border-white/[0.07] pt-4">
-                <div className="flex justify-between items-center">
+                <div className="space-y-2">
+                  {cartItems.map((item) => (
+                    <div
+                      key={item._id ?? item.id}
+                      className="flex items-center justify-between text-sm gap-2"
+                    >
+                      <span className="text-slate-400 truncate max-w-[180px]">
+                        {item.title}
+                      </span>
+                      <span className="text-slate-300 font-semibold shrink-0">
+                        {fmt(item.price)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-between items-center border-t border-white/[0.07] pt-4">
                   <span className="font-bold text-white text-base">Total</span>
                   <span className="text-2xl font-black text-emerald-300">
                     {fmt(total)}
                   </span>
                 </div>
-              </div>
 
-              {/* ── Wallet balance display ── */}
-              <div
-                className={`flex items-center justify-between px-4 py-3 rounded-xl border text-sm ${
-                  hasEnoughBalance
-                    ? "bg-violet-500/10 border-violet-500/20"
-                    : "bg-red-500/10 border-red-500/20"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Wallet
-                    size={15}
-                    className={
-                      hasEnoughBalance ? "text-violet-400" : "text-red-400"
-                    }
-                  />
-                  <span
-                    className={
-                      hasEnoughBalance ? "text-violet-300" : "text-red-300"
-                    }
-                  >
-                    Wallet Balance
-                  </span>
-                </div>
-                <span
-                  className={`font-bold ${hasEnoughBalance ? "text-violet-300" : "text-red-400"}`}
+                {/* ── Wallet balance display ── */}
+                <div
+                  className={`flex items-center justify-between px-4 py-3 rounded-xl border text-sm ${hasEnoughBalance
+                      ? "bg-violet-500/10 border-violet-500/20"
+                      : "bg-red-500/10 border-red-500/20"
+                    }`}
                 >
-                  {walletLoading ? "…" : fmt(walletBalance)}
-                </span>
-              </div>
-
-              {/* ── Pay with Wallet CTA ── */}
-              <button
-                onClick={() => setShowWalletConfirm(true)}
-                disabled={anyLoading || total === 0}
-                className="w-full flex items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-bold transition disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01] relative overflow-hidden"
-                style={{
-                  background: hasEnoughBalance
-                    ? "linear-gradient(135deg,#7c3aed,#a855f7)"
-                    : "#1e1b4b",
-                  color: "#fff",
-                  border: hasEnoughBalance
-                    ? "none"
-                    : "1px dashed rgba(124,58,237,0.4)",
-                  boxShadow: hasEnoughBalance
-                    ? "0 8px 24px rgba(124,58,237,0.3)"
-                    : "none",
-                }}
-              >
-                <Wallet size={16} />
-                {hasEnoughBalance
-                  ? `Pay ${fmt(total)} from Wallet`
-                  : `Add ${fmt(total - walletBalance)} more to Wallet`}
-              </button>
-
-              {/* Low balance nudge */}
-              {!hasEnoughBalance && total > 0 && (
-                <button
-                  onClick={() => navigate("/student-dashboard/wallet")}
-                  className="w-full text-xs text-violet-400 hover:text-violet-300 transition text-center underline underline-offset-2"
-                >
-                  + Top up wallet →
-                </button>
-              )}
-
-              {/* Divider */}
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-white/[0.06]" />
-                <span className="text-slate-600 text-xs">or</span>
-                <div className="flex-1 h-px bg-white/[0.06]" />
-              </div>
-
-              {/* ── Razorpay CTA ── */}
-              <button
-                onClick={handleRazorpayCheckout}
-                disabled={anyLoading || total === 0}
-                className="w-full flex items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-bold transition disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01]"
-                style={{
-                  background: "linear-gradient(135deg,#0f766e,#06b6d4)",
-                  color: "#fff",
-                  boxShadow: "0 8px 24px rgba(6,182,212,.25)",
-                }}
-              >
-                {orderLoading || paymentLoading ? (
-                  <>
-                    <Loader2 size={17} className="animate-spin" /> Processing…
-                  </>
-                ) : (
-                  <>
-                    <ArrowRight size={17} /> Pay {fmt(total)} with Razorpay
-                  </>
-                )}
-              </button>
-
-              {/* ── Refund Policy Notice & Guarantee ── */}
-              <div className="flex items-start gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3.5 text-xs text-slate-300">
-                <ShieldCheck
-                  size={18}
-                  className="text-emerald-400 shrink-0 mt-0.5"
-                />
-                <div>
-                  <span className="font-semibold text-emerald-300">
-                    7-Day Money Back Guarantee
-                  </span>
-                  <p className="text-slate-400 mt-0.5 leading-relaxed">
-                    Not satisfied? Request a refund within 7 days (credited
-                    directly to your platform Wallet). Read our{" "}
-                    <Link
-                      to="/refund-policy"
-                      className="text-emerald-400 underline hover:text-emerald-300 font-medium"
+                  <div className="flex items-center gap-2">
+                    <Wallet
+                      size={15}
+                      className={
+                        hasEnoughBalance ? "text-violet-400" : "text-red-400"
+                      }
+                    />
+                    <span
+                      className={
+                        hasEnoughBalance ? "text-violet-300" : "text-red-300"
+                      }
                     >
-                      Refund Policy
-                    </Link>
-                    .
-                  </p>
+                      Wallet Balance
+                    </span>
+                  </div>
+                  <span
+                    className={`font-bold ${hasEnoughBalance ? "text-violet-300" : "text-red-400"}`}
+                  >
+                    {walletLoading ? "…" : fmt(walletBalance)}
+                  </span>
                 </div>
-              </div>
 
-              <p className="text-center text-xs text-slate-600">
-                {total > 0
-                  ? "Secure 256-Bit SSL Encrypted Checkout"
-                  : "No payment required for free courses"}
-              </p>
+                <div className="space-y-2.5">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Choose a payment method
+                  </p>
+
+                  {/* ── Pay with Wallet CTA ── */}
+                  <button
+                    onClick={() => setShowWalletConfirm(true)}
+                    disabled={anyLoading || total === 0}
+                    className="w-full flex items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] relative overflow-hidden"
+                    style={{
+                      background: hasEnoughBalance
+                        ? "linear-gradient(135deg,#7c3aed,#a855f7)"
+                        : "#1e1b4b",
+                      color: "#fff",
+                      border: hasEnoughBalance
+                        ? "none"
+                        : "1px dashed rgba(124,58,237,0.4)",
+                      boxShadow: hasEnoughBalance
+                        ? "0 8px 24px rgba(124,58,237,0.3)"
+                        : "none",
+                    }}
+                  >
+                    <Wallet size={16} />
+                    {hasEnoughBalance
+                      ? `Pay ${fmt(total)} from Wallet`
+                      : `Add ${fmt(total - walletBalance)} more to Wallet`}
+                  </button>
+
+                  {/* Low balance nudge */}
+                  {!hasEnoughBalance && total > 0 && (
+                    <button
+                      onClick={() => navigate("/student-dashboard/wallet")}
+                      className="w-full text-xs text-violet-400 hover:text-violet-300 transition-colors text-center underline underline-offset-2"
+                    >
+                      + Top up wallet →
+                    </button>
+                  )}
+
+                  {/* Divider */}
+                  <div className="flex items-center gap-3 py-1">
+                    <div className="flex-1 h-px bg-white/[0.06]" />
+                    <span className="text-slate-600 text-xs">or</span>
+                    <div className="flex-1 h-px bg-white/[0.06]" />
+                  </div>
+
+                  {/* ── Razorpay CTA ── */}
+                  <button
+                    onClick={handleRazorpayCheckout}
+                    disabled={anyLoading || total === 0}
+                    className="w-full flex items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
+                    style={{
+                      background: "linear-gradient(135deg,#0f766e,#06b6d4)",
+                      color: "#fff",
+                      boxShadow: "0 8px 24px rgba(6,182,212,.25)",
+                    }}
+                  >
+                    {orderLoading || paymentLoading ? (
+                      <>
+                        <Loader2 size={17} className="animate-spin" /> Processing…
+                      </>
+                    ) : (
+                      <>
+                        <ArrowRight size={17} /> Pay {fmt(total)} with Razorpay
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* ── Refund policy notice ── */}
+                <div className="flex items-start gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3.5 text-xs text-slate-300">
+                  <ShieldCheck
+                    size={18}
+                    className="text-emerald-400 shrink-0 mt-0.5"
+                  />
+                  <div>
+                    <span className="font-semibold text-emerald-300">
+                      7-Day Money Back Guarantee
+                    </span>
+                    <p className="text-slate-400 mt-0.5 leading-relaxed">
+                      Not satisfied? Request a refund within 7 days (credited
+                      directly to your platform Wallet). Read our{" "}
+                      <Link
+                        to="/refund-policy"
+                        className="text-emerald-400 underline hover:text-emerald-300 font-medium"
+                      >
+                        Refund Policy
+                      </Link>
+                      .
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-center text-xs text-slate-600">
+                  {total > 0
+                    ? "Secure 256-Bit SSL Encrypted Checkout"
+                    : "No payment required for free courses"}
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -792,18 +908,18 @@ export default function CartPage() {
           className="modal-bg fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center px-4"
           onClick={(e) => e.target === e.currentTarget && setShowBrowser(false)}
         >
-          <div className="modal-card w-full max-w-xl max-h-[85vh] flex flex-col rounded-3xl border border-white/[0.09] bg-[#0b1120] shadow-2xl overflow-hidden">
+          <div className="modal-card w-full max-w-xl max-h-[85vh] flex flex-col rounded-[28px] border border-white/[0.09] bg-[#0b1120] shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-6 pt-6 pb-4 shrink-0 border-b border-white/[0.06]">
               <h3 className="text-lg font-bold">Browse Courses</h3>
               <button
                 onClick={() => setShowBrowser(false)}
-                className="p-1.5 rounded-lg hover:bg-white/[0.06] text-slate-400 hover:text-white transition"
+                className="p-1.5 rounded-lg hover:bg-white/[0.06] text-slate-400 hover:text-white transition-colors"
               >
                 <X size={18} />
               </button>
             </div>
             <div className="px-6 py-4 shrink-0">
-              <div className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5">
+              <div className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 focus-within:border-emerald-400/40 transition-colors">
                 <Search size={15} className="text-slate-500 shrink-0" />
                 <input
                   autoFocus
@@ -815,14 +931,14 @@ export default function CartPage() {
                 {search && (
                   <button
                     onClick={() => setSearch("")}
-                    className="text-slate-500 hover:text-white"
+                    className="text-slate-500 hover:text-white transition-colors"
                   >
                     <X size={14} />
                   </button>
                 )}
               </div>
             </div>
-            <div className="overflow-y-auto px-6 pb-6 space-y-3 flex-1">
+            <div className="overflow-y-auto px-6 pb-6 space-y-2.5 flex-1">
               {availableLoading ? (
                 [...Array(3)].map((_, i) => (
                   <div
@@ -849,7 +965,7 @@ export default function CartPage() {
                 filtered.map((course) => (
                   <div
                     key={course._id ?? course.id}
-                    className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 hover:bg-white/[0.05] transition"
+                    className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 hover:bg-white/[0.05] hover:border-white/[0.1] transition-colors"
                   >
                     {course.thumbnailUrl ? (
                       <img
@@ -890,7 +1006,7 @@ export default function CartPage() {
                       </p>
                       <button
                         onClick={() => handleAdd(course._id ?? course.id)}
-                        className="mt-1.5 inline-flex items-center gap-1 rounded-lg bg-emerald-400/10 border border-emerald-400/20 px-2.5 py-1 text-[11px] font-bold text-emerald-300 hover:bg-emerald-400/20 transition"
+                        className="mt-1.5 inline-flex items-center gap-1 rounded-lg bg-emerald-400/10 border border-emerald-400/20 px-2.5 py-1 text-[11px] font-bold text-emerald-300 hover:bg-emerald-400/20 transition-colors"
                       >
                         <Plus size={11} /> Add
                       </button>
