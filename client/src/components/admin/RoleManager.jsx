@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 
 import {
   Shield,
+  Plus,
   Pencil,
   Trash2,
   X,
@@ -168,11 +169,10 @@ const PermissionMatrix = ({ modules, value, onChange }) => {
                     key={action}
                     type="button"
                     onClick={() => toggleAction(mod, action)}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold border transition-colors ${
-                      checked
-                        ? "bg-indigo-600 border-indigo-500 text-white"
-                        : "bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500"
-                    }`}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold border transition-colors ${checked
+                      ? "bg-indigo-600 border-indigo-500 text-white"
+                      : "bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500"
+                      }`}
                   >
                     {checked && <Check size={11} />}
                     {ACTION_LABELS[action] || action}
@@ -201,111 +201,206 @@ const formatPermissionSummary = (role) => {
 };
 
 const DASHBOARD_MODULE_LABELS = {
+  // Student Dashboard
   overview: "Overview",
-  my_courses: "My Courses",
-  study_notes: "Study Notes",
-  question_bank: "Question Bank",
-  blogs: "Blogs",
-  ai_tutor: "AI Tutor",
-  sessions: "Sessions",
-  progress: "Progress",
-  mock_tests: "Mock Tests",
-  leaderboard: "Leaderboard",
-  achievements: "Achievements",
-  certificates: "Certificates",
-  plans: "Plans",
-  become_instructor: "Become Instructor",
-  referral: "Referral",
-  wallet: "Wallet",
-  purchase_history: "Purchase History",
-  references: "References",
-  settings: "Settings",
-  dashboard: "Dashboard",
-  courses: "My Courses",
-  students: "Students",
-  notes: "Notes",
-  reels: "Reels",
-  analytics: "Analytics",
-  ai: "AI Assistant",
-  "mock-tests": "Mock Tests",
+  my_courses: "My Courses (Student)",
+  study_notes: "Study Notes (Student)",
+  question_bank: "Question Bank (Student)",
+  blogs: "Blogs (Student)",
+  ai_tutor: "AI Tutor (Student)",
+  sessions: "Sessions (Student)",
+  progress: "Progress (Student)",
+  mock_tests: "Mock Tests (Student)",
+  leaderboard: "Leaderboard (Student)",
+  achievements: "Achievements (Student)",
+  certificates: "Certificates (Student)",
+  plans: "Plans (Student)",
+  become_instructor: "Become Instructor (Student)",
+  referral: "Referral (Student)",
+  wallet: "Wallet (Student)",
+  purchase_history: "Purchase History (Student)",
+  references: "References (Student)",
+  settings: "Settings (Student)",
+
+  // Instructor Dashboard
+  dashboard: "Dashboard (Instructor)",
+  courses: "My Courses (Instructor)",
+  students: "Students (Instructor)",
+  notes: "Notes (Instructor)",
+  reels: "Reels (Instructor)",
+  analytics: "Analytics (Instructor)",
+  ai: "AI Assistant (Instructor)",
+  "mock-tests": "Mock Tests (Instructor)",
+
+  // Staff / Admin Dashboard
+  instructors: "Instructors (Staff/Admin)",
+  payments: "Payments (Staff/Admin)",
+  applications: "Applications (Staff/Admin)",
+  "bulk-import": "Bulk Import (Staff/Admin)",
+  devices: "Logged In Devices (Staff/Admin)",
 };
 
-// New checklist component, sibling to PermissionMatrix — flat toggles,
-// no actions, just an array of enabled module keys.
-const DashboardModuleChecklist = ({ moduleKeys, value = [], onChange }) => {
+// Categorized checklist component for sidebar modules across Student, Instructor, and Staff/Admin dashboards.
+const DashboardModuleChecklist = ({
+  dashboardModuleRegistry = {},
+  roleName = "",
+  moduleKeys = null,
+  value = [],
+  onChange,
+}) => {
   const toggle = (key) => {
     onChange(
       value.includes(key) ? value.filter((k) => k !== key) : [...value, key],
     );
   };
-  const allOn =
-    moduleKeys.length > 0 && moduleKeys.every((k) => value.includes(k));
-  const toggleAll = () => onChange(allOn ? [] : [...moduleKeys]);
+
+  const toggleGroup = (keys) => {
+    const allOn = keys.every((k) => value.includes(k));
+    if (allOn) {
+      onChange(value.filter((k) => !keys.includes(k)));
+    } else {
+      const next = new Set([...value, ...keys]);
+      onChange(Array.from(next));
+    }
+  };
+
+  const lowerName = (roleName || "").toLowerCase();
+  const isSystemStudent = lowerName === "student";
+  const isSystemInstructor = lowerName === "instructor";
+
+  // Build categories to display
+  const categories = [];
+
+  if (isSystemStudent && dashboardModuleRegistry.student) {
+    categories.push({
+      id: "student",
+      title: "Student Dashboard Sidebar",
+      keys: dashboardModuleRegistry.student,
+    });
+  } else if (isSystemInstructor && dashboardModuleRegistry.instructor) {
+    categories.push({
+      id: "instructor",
+      title: "Instructor Dashboard Sidebar",
+      keys: dashboardModuleRegistry.instructor,
+    });
+  } else {
+    // Custom role or multi-dashboard view
+    if (dashboardModuleRegistry.student) {
+      categories.push({
+        id: "student",
+        title: "Student Dashboard Sidebar",
+        keys: dashboardModuleRegistry.student,
+      });
+    }
+    if (dashboardModuleRegistry.instructor) {
+      categories.push({
+        id: "instructor",
+        title: "Instructor Dashboard Sidebar",
+        keys: dashboardModuleRegistry.instructor,
+      });
+    }
+    if (dashboardModuleRegistry.staff) {
+      categories.push({
+        id: "staff",
+        title: "Staff & Admin Dashboard Sidebar",
+        keys: dashboardModuleRegistry.staff,
+      });
+    }
+  }
+
+  // Fallback if registry isn't loaded yet or for simple array fallback
+  if (categories.length === 0 && Array.isArray(moduleKeys) && moduleKeys.length > 0) {
+    categories.push({
+      id: "custom",
+      title: "Sidebar Modules",
+      keys: moduleKeys,
+    });
+  }
+
+  const allKeys = Array.from(new Set(categories.flatMap((c) => c.keys)));
+  const allOn = allKeys.length > 0 && allKeys.every((k) => value.includes(k));
+  const toggleAll = () => onChange(allOn ? [] : allKeys);
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-[#0b1120] p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="rounded-xl border border-slate-800 bg-[#0b1120] p-4 space-y-5">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
         <span className="text-xs font-bold text-white uppercase tracking-wide">
-          Sidebar Modules
+          Sidebar Modules Access
         </span>
         <button
           type="button"
           onClick={toggleAll}
-          className="text-[10px] font-semibold text-indigo-400 hover:text-indigo-300"
+          className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-wider"
         >
-          {allOn ? "Clear all" : "Select all"}
+          {allOn ? "Clear All Modules" : "Select All Modules"}
         </button>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {moduleKeys.length === 0 && (
-          <span className="text-[11px] text-slate-600">
-            No modules registered for this role yet.
-          </span>
-        )}
-        {moduleKeys.map((key) => {
-          const checked = value.includes(key);
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => toggle(key)}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold border transition-colors ${
-                checked
-                  ? "bg-indigo-600 border-indigo-500 text-white"
-                  : "bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500"
-              }`}
-            >
-              {checked && <Check size={11} />}
-              {DASHBOARD_MODULE_LABELS[key] || key}
-            </button>
-          );
-        })}
-      </div>
+
+      {categories.length === 0 && (
+        <span className="text-[11px] text-slate-500">
+          No sidebar modules available.
+        </span>
+      )}
+
+      {categories.map((cat) => {
+        const groupAllOn =
+          cat.keys.length > 0 && cat.keys.every((k) => value.includes(k));
+        return (
+          <div key={cat.id} className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-extrabold text-indigo-400 uppercase tracking-wider">
+                {cat.title}
+              </span>
+              <button
+                type="button"
+                onClick={() => toggleGroup(cat.keys)}
+                className="text-[10px] font-semibold text-slate-400 hover:text-white"
+              >
+                {groupAllOn ? "Clear section" : "Select section"}
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {cat.keys.map((key) => {
+                const checked = value.includes(key);
+                return (
+                  <button
+                    key={`${cat.id}-${key}`}
+                    type="button"
+                    onClick={() => toggle(key)}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold border transition-colors ${checked
+                      ? "bg-indigo-600 border-indigo-500 text-white shadow-xs"
+                      : "bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500"
+                      }`}
+                  >
+                    {checked && <Check size={11} />}
+                    {DASHBOARD_MODULE_LABELS[key] ||
+                      key.replace(/_/g, " ").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };
 
-// ── Reusable role checklist ───────────────────────────────────────────────────
+// ── Role create/edit modal (used for EDITING existing roles) ─────────────────
 // dashboardModuleKeys: string[] of all module keys for this role (e.g. student/instructor)
 // When present, a Dashboard Modules section is shown inside this same modal.
 const RoleModal = ({
   modules,
+  dashboardModuleRegistry = {},
   dashboardModuleKeys = [],
   initial,
   onClose,
   onSaved,
   showToast,
 }) => {
-  const hasDashboardModules =
-    Array.isArray(dashboardModuleKeys) && dashboardModuleKeys.length > 0;
   const [form, setForm] = useState({
     ...(initial || EMPTY_ROLE),
-    // Seed dashboardModules from the role doc; for system roles, default to
-    // their registry list when the field is missing.
-    dashboardModules: initial?._id
-      ? (initial.dashboardModules ??
-        (hasDashboardModules ? [...dashboardModuleKeys] : []))
-      : [],
+    dashboardModules: initial?.dashboardModules ?? [],
   });
   const [saving, setSaving] = useState(false);
   const isEdit = Boolean(initial?._id);
@@ -330,9 +425,7 @@ const RoleModal = ({
         name: form.name,
         description: form.description,
         permissions: form.permissions,
-        ...(hasDashboardModules
-          ? { dashboardModules: form.dashboardModules }
-          : {}),
+        dashboardModules: form.dashboardModules,
       };
       if (isEdit) {
         await api(`${API_BASE}/${initial._id}`, {
@@ -400,21 +493,21 @@ const RoleModal = ({
             </div>
           </div>
 
-          {/* ── Dashboard Modules (student / instructor roles) ── */}
-          {hasDashboardModules && (
-            <div>
-              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2 block">
-                Dashboard Modules
-              </label>
-              <DashboardModuleChecklist
-                moduleKeys={dashboardModuleKeys}
-                value={form.dashboardModules}
-                onChange={(dashboardModules) =>
-                  setForm((f) => ({ ...f, dashboardModules }))
-                }
-              />
-            </div>
-          )}
+          {/* ── Dashboard Modules ── */}
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2 block">
+              Dashboard Modules
+            </label>
+            <DashboardModuleChecklist
+              dashboardModuleRegistry={dashboardModuleRegistry}
+              roleName={form.name}
+              moduleKeys={dashboardModuleKeys}
+              value={form.dashboardModules}
+              onChange={(dashboardModules) =>
+                setForm((f) => ({ ...f, dashboardModules }))
+              }
+            />
+          </div>
 
           {/* ── Permissions (admin / custom roles) ── */}
           {Object.keys(modules).length > 0 && (
@@ -602,27 +695,24 @@ const AssignRolesModal = ({
                 key={role._id}
                 type="button"
                 onClick={() => setSelectedRoleId(role._id)}
-                className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 text-left transition-all ${
-                  active
-                    ? "border-indigo-500/80 bg-indigo-950/40 shadow-md shadow-indigo-950/50"
-                    : "border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-800/80"
-                }`}
+                className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 text-left transition-all ${active
+                  ? "border-indigo-500/80 bg-indigo-950/40 shadow-md shadow-indigo-950/50"
+                  : "border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-800/80"
+                  }`}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
-                      className={`text-sm font-bold tracking-wide ${
-                        active ? "text-white" : "text-slate-300"
-                      }`}
+                      className={`text-sm font-bold tracking-wide ${active ? "text-white" : "text-slate-300"
+                        }`}
                     >
                       {role.name}
                     </span>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                        role.isSystem
-                          ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
-                          : "border-indigo-500/30 bg-indigo-500/10 text-indigo-300"
-                      }`}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${role.isSystem
+                        ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                        : "border-indigo-500/30 bg-indigo-500/10 text-indigo-300"
+                        }`}
                     >
                       {role.isSystem ? "System" : "Custom"}
                     </span>
@@ -641,11 +731,10 @@ const AssignRolesModal = ({
                 </div>
                 {/* Radio circle */}
                 <div
-                  className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                    active
-                      ? "border-indigo-400 bg-indigo-500"
-                      : "border-slate-600 bg-slate-950"
-                  }`}
+                  className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${active
+                    ? "border-indigo-400 bg-indigo-500"
+                    : "border-slate-600 bg-slate-950"
+                    }`}
                 >
                   {active && <div className="h-2 w-2 rounded-full bg-white" />}
                 </div>
@@ -937,21 +1026,19 @@ const AddUserModal = ({ onClose, onSaved, showToast }) => {
                     onClick={() =>
                       setForm((f) => ({ ...f, baseRole: roleValue }))
                     }
-                    className={`flex items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left transition-all ${
-                      active
-                        ? "border-indigo-500/80 bg-indigo-950/40 text-white shadow-md shadow-indigo-950/50"
-                        : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-600 hover:text-white"
-                    }`}
+                    className={`flex items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left transition-all ${active
+                      ? "border-indigo-500/80 bg-indigo-950/40 text-white shadow-md shadow-indigo-950/50"
+                      : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-600 hover:text-white"
+                      }`}
                   >
                     <span className="text-sm font-bold capitalize">
                       {roleValue}
                     </span>
                     <div
-                      className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                        active
-                          ? "border-indigo-400 bg-indigo-500"
-                          : "border-slate-600 bg-slate-950"
-                      }`}
+                      className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${active
+                        ? "border-indigo-400 bg-indigo-500"
+                        : "border-slate-600 bg-slate-950"
+                        }`}
                     >
                       {active && (
                         <div className="h-1.5 w-1.5 rounded-full bg-white" />
@@ -1010,7 +1097,6 @@ const RoleManager = ({ showToast, currentUser }) => {
   const [assignTarget, setAssignTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [addUserOpen, setAddUserOpen] = useState(false);
-  const [showNewRoleSection, setShowNewRoleSection] = useState(true);
   const [newRoleForm, setNewRoleForm] = useState({
     name: "",
     description: "",
@@ -1028,9 +1114,13 @@ const RoleManager = ({ showToast, currentUser }) => {
 
   const getModuleKeysForRole = useCallback(
     (roleName) => {
-      if (!roleName) return [];
+      if (!roleName) return dashboardModuleRegistry.staff || [];
       const lower = roleName.toLowerCase();
-      return dashboardModuleRegistry[lower] || [];
+      return (
+        dashboardModuleRegistry[lower] ||
+        dashboardModuleRegistry.staff ||
+        []
+      );
     },
     [dashboardModuleRegistry],
   );
@@ -1078,6 +1168,41 @@ const RoleManager = ({ showToast, currentUser }) => {
       loadAll();
     } catch (err) {
       showToast?.(err.message || "Failed to delete role.");
+    }
+  };
+
+  const handleCreateRole = async () => {
+    if (!newRoleForm.name.trim()) {
+      showToast?.("Role name is required.");
+      return;
+    }
+    if (!newRoleForm.description.trim()) {
+      showToast?.("Role description is required.");
+      return;
+    }
+    try {
+      await api(API_BASE, {
+        method: "POST",
+        body: JSON.stringify({
+          name: newRoleForm.name,
+          description: newRoleForm.description,
+          permissions: newRoleForm.permissions,
+          dashboardModules: newRoleForm.dashboardModules,
+        }),
+      });
+      showToast?.("Role created.");
+      setNewRoleForm({
+        name: "",
+        description: "",
+        permissions: [],
+        dashboardModules: [],
+      });
+      setTab("roles");
+      loadAll();
+    } catch (err) {
+      showToast?.(
+        err.response?.data?.message || err.message || "Failed to create role.",
+      );
     }
   };
 
@@ -1134,7 +1259,11 @@ const RoleManager = ({ showToast, currentUser }) => {
     role.permissions?.reduce((sum, p) => sum + (p.actions?.length || 0), 0) ??
     0;
 
-  // Roles that have a dashboard-module registry entry (student, instructor)
+  const TABS = [
+    { key: "roles", label: "Roles", icon: Lock },
+    { key: "create", label: "Create Role", icon: Plus },
+    { key: "users", label: "Assign to Users", icon: UsersIcon },
+  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -1148,42 +1277,40 @@ const RoleManager = ({ showToast, currentUser }) => {
             Roles & Permissions
           </h2>
         </div>
-        {tab === "roles" && (
-          <button
-            type="button"
-            onClick={() => setShowNewRoleSection((prev) => !prev)}
-            className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-bold text-white hover:border-indigo-500 hover:bg-slate-900 transition"
-          >
-            {showNewRoleSection ? "Hide Create Role" : "Show Create Role"}
-          </button>
-        )}
-        {tab === "users" && (
-          <button
-            onClick={() => setAddUserOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/20"
-          >
-            <UserPlus size={16} />
-            Add User
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {tab !== "create" && (
+            <button
+              onClick={() => setTab("create")}
+              className="flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition-all cursor-pointer"
+            >
+              <Plus size={16} />
+              Create Role
+            </button>
+          )}
+          {tab === "users" && (
+            <button
+              onClick={() => setAddUserOpen(true)}
+              className="flex items-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2.5 text-sm font-bold text-white border border-slate-700 transition-all cursor-pointer"
+            >
+              <UserPlus size={16} />
+              Add User
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
       <div className="inline-flex w-fit rounded-xl border border-slate-800 bg-[#0b1120] p-1">
-        {[
-          { key: "roles", label: "Roles", icon: Lock },
-          { key: "users", label: "Assign to Users", icon: UsersIcon },
-        ].map((t) => {
+        {TABS.map((t) => {
           const Icon = t.icon;
           return (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-colors ${
-                tab === t.key
-                  ? "bg-indigo-600 text-white"
-                  : "text-slate-400 hover:text-white"
-              }`}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-colors ${tab === t.key
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "text-slate-400 hover:text-white"
+                }`}
             >
               <Icon size={14} />
               {t.label}
@@ -1192,7 +1319,29 @@ const RoleManager = ({ showToast, currentUser }) => {
         })}
       </div>
 
-      {tab === "roles" && showNewRoleSection && (
+      {loadError ? (
+        <div className="rounded-2xl border border-red-900/50 bg-red-950/20 p-5">
+          <p className="text-sm font-semibold text-red-200">
+            Could not load roles and users.
+          </p>
+          <p className="mt-1 text-xs text-red-300/80">{loadError}</p>
+          <button
+            onClick={loadAll}
+            className="mt-4 rounded-lg border border-red-500/30 px-4 py-2 text-xs font-bold text-red-100 hover:bg-red-500/10"
+          >
+            Retry
+          </button>
+        </div>
+      ) : loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="h-28 rounded-2xl bg-[#111827] border border-slate-800 animate-pulse"
+            />
+          ))}
+        </div>
+      ) : tab === "create" ? (
         <div className="rounded-2xl border border-slate-800 bg-[#111827] p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -1276,7 +1425,8 @@ const RoleManager = ({ showToast, currentUser }) => {
                 Sidebar Modules
               </p>
               <DashboardModuleChecklist
-                moduleKeys={allDashboardModuleKeys}
+                dashboardModuleRegistry={dashboardModuleRegistry}
+                roleName={newRoleForm.name}
                 value={newRoleForm.dashboardModules}
                 onChange={(dashboardModules) =>
                   setNewRoleForm((f) => ({ ...f, dashboardModules }))
@@ -1288,68 +1438,12 @@ const RoleManager = ({ showToast, currentUser }) => {
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
             <button
               type="button"
-              onClick={async () => {
-                if (!newRoleForm.name.trim()) {
-                  return showToast?.("Role name is required.");
-                }
-                if (!newRoleForm.description.trim()) {
-                  return showToast?.("Role description is required.");
-                }
-                try {
-                  await api(API_BASE, {
-                    method: "POST",
-                    body: JSON.stringify({
-                      name: newRoleForm.name,
-                      description: newRoleForm.description,
-                      permissions: newRoleForm.permissions,
-                      dashboardModules: newRoleForm.dashboardModules,
-                    }),
-                  });
-                  showToast?.("Role created.");
-                  setNewRoleForm({
-                    name: "",
-                    description: "",
-                    permissions: [],
-                    dashboardModules: [],
-                  });
-                  loadAll();
-                } catch (err) {
-                  showToast?.(
-                    err.response?.data?.message ||
-                      err.message ||
-                      "Failed to create role.",
-                  );
-                }
-              }}
+              onClick={handleCreateRole}
               className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-500 transition"
             >
               Create Role
             </button>
           </div>
-        </div>
-      )}
-
-      {loadError ? (
-        <div className="rounded-2xl border border-red-900/50 bg-red-950/20 p-5">
-          <p className="text-sm font-semibold text-red-200">
-            Could not load roles and users.
-          </p>
-          <p className="mt-1 text-xs text-red-300/80">{loadError}</p>
-          <button
-            onClick={loadAll}
-            className="mt-4 rounded-lg border border-red-500/30 px-4 py-2 text-xs font-bold text-red-100 hover:bg-red-500/10"
-          >
-            Retry
-          </button>
-        </div>
-      ) : loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              className="h-28 rounded-2xl bg-[#111827] border border-slate-800 animate-pulse"
-            />
-          ))}
         </div>
       ) : tab === "roles" ? (
         <div className="space-y-6">
@@ -1359,6 +1453,14 @@ const RoleManager = ({ showToast, currentUser }) => {
               <p className="text-slate-500 font-semibold">
                 No roles yet. Create your first custom role.
               </p>
+              <button
+                type="button"
+                onClick={() => setTab("create")}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-sm font-bold text-white"
+              >
+                <Plus size={16} />
+                Create Role
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1447,11 +1549,10 @@ const RoleManager = ({ showToast, currentUser }) => {
                             return (
                               <span
                                 key={key}
-                                className={`text-[10px] font-semibold px-2 py-1 rounded-md border ${
-                                  on
-                                    ? "bg-purple-950/40 text-purple-300 border-purple-900/40"
-                                    : "bg-slate-900/60 text-slate-600 border-slate-800 line-through"
-                                }`}
+                                className={`text-[10px] font-semibold px-2 py-1 rounded-md border ${on
+                                  ? "bg-purple-950/40 text-purple-300 border-purple-900/40"
+                                  : "bg-slate-900/60 text-slate-600 border-slate-800 line-through"
+                                  }`}
                               >
                                 {DASHBOARD_MODULE_LABELS[key] || key}
                               </span>
@@ -1592,6 +1693,7 @@ const RoleManager = ({ showToast, currentUser }) => {
       {roleModal && (
         <RoleModal
           modules={modules}
+          dashboardModuleRegistry={dashboardModuleRegistry}
           dashboardModuleKeys={getModuleKeysForRole(roleModal?.name)}
           initial={roleModal._id ? roleModal : null}
           onClose={() => setRoleModal(null)}
@@ -1661,4 +1763,4 @@ const RoleManager = ({ showToast, currentUser }) => {
   );
 };
 
-export default RoleManager;
+export default RoleManager

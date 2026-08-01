@@ -6,6 +6,8 @@ import api, { API_ENDPOINTS } from "../../config/api";
 // immediately available on the next page load without waiting for /users/me.
 // We only store the fields the UI actually needs for routing and display.
 const USER_CACHE_KEY = "auth_user_v2";
+const USER_CACHE_TS_KEY = "auth_user_v2_ts"; // timestamp of last successful /me fetch
+const ME_DEBOUNCE_MS = 5 * 60 * 1000; // 5 minutes — skip /me if cache is younger
 
 const SLIM_FIELDS = [
   "_id", "name", "email", "phoneNumber", "avatarUrl",
@@ -27,8 +29,10 @@ export const persistUserCache = (user) => {
   try {
     if (user) {
       localStorage.setItem(USER_CACHE_KEY, JSON.stringify(slimUser(user)));
+      localStorage.setItem(USER_CACHE_TS_KEY, String(Date.now()));
     } else {
       localStorage.removeItem(USER_CACHE_KEY);
+      localStorage.removeItem(USER_CACHE_TS_KEY);
     }
   } catch {
     // ignore storage errors
@@ -93,8 +97,10 @@ export const loadCurrentUser = createAsyncThunk(
     }
   },
   {
-    // Skip the network call only if the user is already loaded AND their
-    // role is a proper base-role string or a populated object (not a raw ObjectId).
+    // Skip the network call if the locally-cached user is still fresh.
+    // "Fresh" = fetched less than 5 minutes ago AND the role is already
+    // hydrated (not a raw ObjectId). This avoids a blocking or background
+    // /users/me call on every page load — saving ~300–800ms.
     condition: (_, { getState }) => {
       const token = typeof localStorage !== "undefined" ? localStorage.getItem("authToken") : null;
       const { user, isAuthenticated } = getState().auth;
@@ -112,6 +118,16 @@ export const loadCurrentUser = createAsyncThunk(
         !BASE_ROLE_STRINGS.has(role.toLowerCase()) &&
         IS_OBJECT_ID.test(role)
       ) return true;
+
+      // If cache was fetched recently, skip the background refresh
+      try {
+        const ts = Number(localStorage.getItem(USER_CACHE_TS_KEY));
+        if (ts && Date.now() - ts < ME_DEBOUNCE_MS) {
+          return false;
+        }
+      } catch {
+        // storage error — proceed with refresh
+      }
 
       return true; // refresh background user state if token/user exists
     },

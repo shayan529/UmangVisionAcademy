@@ -1,5 +1,6 @@
 import { createClient } from "redis";
 import { Redis as UpstashRedis } from "@upstash/redis";
+import { userLRU } from "./lruCache.js";
 
 // Support two modes:
 // 1) Upstash REST (set UPSTASH_REDIS_REST_URL & UPSTASH_REDIS_REST_TOKEN)
@@ -182,7 +183,10 @@ export const setJson = async (key, value, ttlSeconds) => {
 };
 
 export const deleteKeys = async (keys) => {
-  if (!isRedisReady() || !Array.isArray(keys) || keys.length === 0) return 0;
+  if (!Array.isArray(keys) || keys.length === 0) return 0;
+  // Always invalidate in-process LRU, even if Redis is down
+  for (const k of keys) userLRU.delete(k);
+  if (!isRedisReady()) return 0;
   try {
     if (useUpstash) {
       const promise = Promise.all(keys.map((k) => cached.upstash.del(k)));
@@ -197,7 +201,10 @@ export const deleteKeys = async (keys) => {
 };
 
 export const deleteKey = async (key) => {
-  if (!isRedisReady() || !key) return 0;
+  if (!key) return 0;
+  // Always invalidate in-process LRU, even if Redis is down
+  userLRU.delete(key);
+  if (!isRedisReady()) return 0;
   try {
     if (useUpstash) {
       return await runWithTimeout(cached.upstash.del(key), 0);

@@ -40,7 +40,9 @@ export const createRole = async (req, res) => {
       name: name.trim(),
       description: description?.trim() || "",
       permissions: permissions || [],
-      ...(dashboardModules !== undefined && { dashboardModules }),
+      ...(Array.isArray(dashboardModules) && dashboardModules.length > 0
+        ? { dashboardModules }
+        : {}),
     });
 
     res.status(201).json(role);
@@ -63,7 +65,12 @@ export const updateRole = async (req, res) => {
     if (name?.trim()) role.name = name.trim();
     if (description !== undefined) role.description = description.trim();
     if (permissions) role.permissions = permissions;
-    if (dashboardModules !== undefined) role.dashboardModules = dashboardModules;
+    if (dashboardModules !== undefined) {
+      role.dashboardModules =
+        Array.isArray(dashboardModules) && dashboardModules.length > 0
+          ? dashboardModules
+          : undefined;
+    }
 
     await role.save();
 

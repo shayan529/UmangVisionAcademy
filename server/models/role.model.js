@@ -16,8 +16,6 @@ export const PERMISSION_MODULES = {
   applications: ["view", "approve", "reject"],
 };
 
-// Sidebar-visibility modules per base-role dashboard. Keys match each
-// dashboard's nav item `id`/`moduleKey` so filtering is a plain `.includes()`.
 export const DASHBOARD_MODULES = {
   student: [
     "overview", "my_courses", "study_notes", "question_bank", "blogs",
@@ -28,6 +26,11 @@ export const DASHBOARD_MODULES = {
   instructor: [
     "dashboard", "courses", "students", "sessions", "notes", "reels",
     "analytics", "ai", "settings", "mock-tests",
+  ],
+  staff: [
+    "overview", "courses", "students", "instructors", "payments",
+    "applications", "notes", "reels", "mock_tests", "question_bank",
+    "sessions", "ai_tutor", "references", "bulk-import", "devices",
   ],
 };
 
@@ -70,16 +73,19 @@ const roleSchema = new Schema(
       type: [permissionSchema],
       default: [],
     },
-    // undefined = unrestricted (every module visible). Only meaningful for
-    // roles whose lowercase name is a key in DASHBOARD_MODULES.
+    // undefined = unrestricted (every module visible).
     dashboardModules: {
       type: [String],
       default: undefined,
       validate: {
         validator: function (mods) {
-          const allowed = DASHBOARD_MODULES[this.name?.toLowerCase()];
-          if (!allowed) return true;
-          return mods.every((m) => allowed.includes(m));
+          if (!mods) return true;
+          const allAllowed = new Set([
+            ...DASHBOARD_MODULES.student,
+            ...DASHBOARD_MODULES.instructor,
+            ...DASHBOARD_MODULES.staff,
+          ]);
+          return mods.every((m) => allAllowed.has(m));
         },
         message: "Invalid dashboard module for this role",
       },

@@ -20,6 +20,7 @@ import {
   hasAnyPermission,
   hasBaseRole,
   hasPermission,
+  hasDashboardModule,
 } from "../../utils/permissions";
 import { useTranslation } from "react-i18next";
 
@@ -101,7 +102,7 @@ const StaffSidebar = ({
     };
   }, [rolesDropdownOpen]);
 
-  const navItems = [
+  const rawNavItems = [
     { id: "overview", label: "Overview", icon: "📊" },
     ...(hasPermission(user, "courses", "view")
       ? [{ id: "courses", label: "Courses", icon: "📚" }]
@@ -152,10 +153,17 @@ const StaffSidebar = ({
     ...(hasPermission(user, "references", "view")
       ? [{ id: "references", label: "References", icon: "🔗" }]
       : []),
-    ...(hasBaseRole(user, "admin")
+    ...(hasBaseRole(user, "admin") ||
+    hasPermission(user, "users", "view") ||
+    hasPermission(user, "users", "create") ||
+    hasPermission(user, "users", "edit")
       ? [{ id: "roles", label: "Roles & Permissions", icon: "🔒" }]
       : []),
   ];
+
+  const navItems = rawNavItems.filter((item) =>
+    hasDashboardModule(user, item.id === "ai" ? "ai_tutor" : item.id),
+  );
 
   const handleLogout = async () => {
     await dispatch(logoutUser())
@@ -639,7 +647,10 @@ export default function StaffDashboard() {
           <AdminReferences showToast={showToast} />
         ) : null;
       case "roles":
-        return hasBaseRole(user, "admin") ? (
+        return hasBaseRole(user, "admin") ||
+          hasPermission(user, "users", "view") ||
+          hasPermission(user, "users", "create") ||
+          hasPermission(user, "users", "edit") ? (
           <RoleManager
             currentUser={user}
             showToast={showToast}

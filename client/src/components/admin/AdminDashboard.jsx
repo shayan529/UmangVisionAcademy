@@ -256,8 +256,10 @@ export default function AdminDashboard() {
           />
         );
       case "question-papers":
+      case "question_bank":
         return <AdminQuestionPapers />;
       case "mock-tests":
+      case "mock_tests":
         return <AdminMockTests showToast={showToast} />;
       case "bulk-import":
         return <AdminBulkImport refreshUsers={refreshUsersAndCourses} />;

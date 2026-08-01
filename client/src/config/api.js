@@ -131,6 +131,17 @@ export const api = axios.create({
   },
 });
 
+// Only needed in local development where the server returns localhost URLs.
+// In production / deployed environments, URLs are already correct — running
+// this recursive deep-clone on every response wastes CPU (especially for
+// large payloads like course listings or user lists).
+const IS_LOCAL_DEV = typeof window !== "undefined" && (
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+);
+
 const replaceLocalhostUrls = (obj) => {
   if (typeof obj === "string") {
     return obj.replace(
@@ -168,7 +179,7 @@ api.interceptors.request.use((config) => {
 // Global interceptor to sanitize 5xx (Internal Server Errors) and handle network errors cleanly on the frontend
 api.interceptors.response.use(
   (response) => {
-    if (response.data) {
+    if (IS_LOCAL_DEV && response.data) {
       response.data = replaceLocalhostUrls(response.data);
     }
     return response;
@@ -209,7 +220,7 @@ axios.interceptors.request.use((config) => {
 
 axios.interceptors.response.use(
   (response) => {
-    if (response.data) {
+    if (IS_LOCAL_DEV && response.data) {
       response.data = replaceLocalhostUrls(response.data);
     }
     return response;

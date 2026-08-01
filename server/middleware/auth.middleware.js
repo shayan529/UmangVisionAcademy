@@ -6,6 +6,7 @@ import {
   hydrateUserRoles,
 } from "../utils/userRoles.js";
 import { getJson, setJson } from "../utils/redisClient.js";
+import { userLRU } from "../utils/lruCache.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 const IS_DEV = process.env.NODE_ENV !== "production";
@@ -53,35 +54,46 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
 
     const cacheKey = `user:${decoded.id}`;
-    let user = await getJson(cacheKey);
+
+    // 1. Check in-process LRU first (0ms — no network call)
+    let user = userLRU.get(cacheKey);
 
     if (!user) {
-      if (IS_DEV) {
-        console.log(`[protect] User cache MISS for ID: ${decoded.id}. Querying DB.`);
-      }
-      const dbUser = await User.findById(decoded.id).select(
-        "-password -courseProgress -coinRewardKeys -devices -quizSubmissions -purchasedPYQs -resetPasswordToken -resetPasswordExpires"
-      );
-      if (dbUser) {
-        user = await hydrateUserRoles(dbUser);
-        await setJson(cacheKey, user, 3600 * 4);
-      }
-    } else {
-      // Cache hit — but role may be a raw ObjectId string if it was cached
-      // before the custom-role was hydrated. Re-hydrate in that case.
-      const cachedRole = user.role;
-      const isUnpopulatedObjectId =
-        cachedRole &&
-        typeof cachedRole === "string" &&
-        !["student", "instructor", "admin", "staff"].includes(cachedRole.toLowerCase()) &&
-        cachedRole.length === 24;
+      // 2. Check Redis (Upstash REST: ~50–150ms)
+      user = await getJson(cacheKey);
 
-      if (isUnpopulatedObjectId) {
+      if (!user) {
+        // 3. Full cache miss — query MongoDB
         if (IS_DEV) {
-          console.log(`[protect] Cached role is raw ObjectId — re-hydrating user ${decoded.id}`);
+          console.log(`[protect] User cache MISS for ID: ${decoded.id}. Querying DB.`);
         }
-        user = await hydrateUserRoles(user);
-        await setJson(cacheKey, user, 3600 * 4);
+        const dbUser = await User.findById(decoded.id).select(
+          "-password -courseProgress -coinRewardKeys -devices -quizSubmissions -purchasedPYQs -resetPasswordToken -resetPasswordExpires"
+        );
+        if (dbUser) {
+          user = await hydrateUserRoles(dbUser);
+          // Populate both caches
+          await setJson(cacheKey, user, 3600 * 4);
+          userLRU.set(cacheKey, user);
+        }
+      } else {
+        // Redis hit — check if role needs re-hydration, then populate LRU
+        const cachedRole = user.role;
+        const isUnpopulatedObjectId =
+          cachedRole &&
+          typeof cachedRole === "string" &&
+          !["student", "instructor", "admin", "staff"].includes(cachedRole.toLowerCase()) &&
+          cachedRole.length === 24;
+
+        if (isUnpopulatedObjectId) {
+          if (IS_DEV) {
+            console.log(`[protect] Cached role is raw ObjectId — re-hydrating user ${decoded.id}`);
+          }
+          user = await hydrateUserRoles(user);
+          await setJson(cacheKey, user, 3600 * 4);
+        }
+
+        userLRU.set(cacheKey, user);
       }
     }
 

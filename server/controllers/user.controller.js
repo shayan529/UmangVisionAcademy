@@ -67,14 +67,15 @@ const getClientIp = (req) => {
 const createReferralCode = () =>
   crypto.randomBytes(3).toString("hex").toUpperCase();
 
+const MAX_REFERRAL_RETRIES = 5;
 const getUniqueReferralCode = async () => {
-  let code;
-  let existing;
-  do {
-    code = createReferralCode();
-    existing = await User.findOne({ referralCode: code });
-  } while (existing);
-  return code;
+  for (let i = 0; i < MAX_REFERRAL_RETRIES; i++) {
+    const code = createReferralCode();
+    const existing = await User.findOne({ referralCode: code }).lean();
+    if (!existing) return code;
+  }
+  // Fallback: longer code to virtually guarantee uniqueness
+  return crypto.randomBytes(5).toString("hex").toUpperCase();
 };
 
 export const ensureUserReferralCode = async (user) => {
@@ -312,8 +313,13 @@ export const RegisterUser = async (req, res) => {
 
     const userAgent = req.headers["user-agent"] || "Unknown Device";
     const ip = getClientIp(req);
-    user.devices = [{ userAgent, ip, lastLogin: new Date() }];
-    await user.save();
+    // Use findOneAndUpdate to set devices without triggering the pre-save
+    // bcrypt hook (which would re-hash the already-hashed password, wasting
+    // ~300ms). The post-findOneAndUpdate hook handles cache invalidation.
+    await User.findOneAndUpdate(
+      { _id: user._id },
+      { $set: { devices: [{ userAgent, ip, lastLogin: new Date() }] } },
+    );
 
     const token = createToken(user._id);
     setTokenCookie(res, token);
@@ -376,18 +382,16 @@ export const LoginUser = async (req, res) => {
         user.lastLoginReward && isSameISTDay(user.lastLoginReward, now);
 
       if (!alreadyRewardedToday) {
-        user.coins = (user.coins ?? 0) + 1;
-        user.lastLoginReward = now;
         loginCoinAwarded = true;
       }
     }
 
-    if (!user.referralCode) {
-      user.referralCode = await getUniqueReferralCode();
-    }
     // ─────────────────────────────────────────────────────────────────────────
 
-    // Update logged-in devices
+    // Build the atomic update. Using findOneAndUpdate instead of user.save()
+    // avoids triggering the pre-save bcrypt hook, which would re-hash the
+    // already-hashed password (~300ms wasted). The post-findOneAndUpdate hook
+    // on the User model handles Redis cache invalidation automatically.
     const userAgent = req.headers["user-agent"] || "Unknown Device";
     const ip = getClientIp(req);
 
@@ -397,19 +401,30 @@ export const LoginUser = async (req, res) => {
     );
     devicesList.unshift({ userAgent, ip, lastLogin: now });
     if (devicesList.length > 10) devicesList = devicesList.slice(0, 10);
-    user.devices = devicesList;
 
-    // Single save covers devices + coin update
-    await user.save();
+    const $set = { devices: devicesList };
     if (loginCoinAwarded) {
-      await deleteKey("students:leaderboard");
+      $set.coins = (user.coins ?? 0) + 1;
+      $set.lastLoginReward = now;
+    }
+    if (!user.referralCode) {
+      $set.referralCode = await getUniqueReferralCode();
     }
 
-    await deleteKey(`user:${user._id.toString()}`);
+    await User.findOneAndUpdate({ _id: user._id }, { $set });
+
+    // Invalidate leaderboard cache only when coins changed — fire-and-forget
+    if (loginCoinAwarded) {
+      deleteKey("students:leaderboard").catch(() => {});
+    }
 
     const token = createToken(user._id);
     setTokenCookie(res, token);
 
+    // hydrateUserRoles resolves the role into a full object (for custom roles)
+    // or attaches dashboardModules (for base roles). Use the already-loaded
+    // user object so we don't re-query the DB; the hydration only needs to
+    // look up the Role doc (which is cached in Redis for 24h).
     const userData = await hydrateUserRoles(user);
 
     // `token` is included here alongside the cookie so the Capacitor Android
@@ -581,15 +596,15 @@ export const LoginUserWithOtp = async (req, res) => {
       return res.status(400).json({ message: msg });
     }
 
+    // Delete OTP records in parallel instead of sequentially — each is an
+    // Upstash REST call (~50–150ms), so parallelizing saves 200–500ms.
     const canonicalPhone = normalizeIndianPhoneNumber(phoneNumber);
     const keysToDelete = new Set([
       canonicalPhone,
       phoneNumber,
       ...phoneLookupValues,
     ]);
-    for (const k of keysToDelete) {
-      if (k) await deleteOtpRecord(k);
-    }
+    await Promise.all([...keysToDelete].filter(Boolean).map(deleteOtpRecord));
 
     // Daily login coin reward
     let loginCoinAwarded = false;
@@ -601,17 +616,14 @@ export const LoginUserWithOtp = async (req, res) => {
         user.lastLoginReward && isSameISTDay(user.lastLoginReward, now);
 
       if (!alreadyRewardedToday) {
-        user.coins = (user.coins ?? 0) + 1;
-        user.lastLoginReward = now;
         loginCoinAwarded = true;
       }
     }
 
-    if (!user.referralCode) {
-      user.referralCode = await getUniqueReferralCode();
-    }
-
-    // Update logged-in devices
+    // Build the atomic update. Using findOneAndUpdate instead of user.save()
+    // avoids triggering the pre-save bcrypt hook, which would re-hash the
+    // already-hashed password (~300ms wasted). The post-findOneAndUpdate hook
+    // on the User model handles Redis cache invalidation automatically.
     const userAgent = req.headers["user-agent"] || "Unknown Device";
     const ip = getClientIp(req);
 
@@ -621,14 +633,22 @@ export const LoginUserWithOtp = async (req, res) => {
     );
     devicesList.unshift({ userAgent, ip, lastLogin: now });
     if (devicesList.length > 10) devicesList = devicesList.slice(0, 10);
-    user.devices = devicesList;
 
-    await user.save();
+    const $set = { devices: devicesList };
     if (loginCoinAwarded) {
-      await deleteKey("students:leaderboard");
+      $set.coins = (user.coins ?? 0) + 1;
+      $set.lastLoginReward = now;
+    }
+    if (!user.referralCode) {
+      $set.referralCode = await getUniqueReferralCode();
     }
 
-    await deleteKey(`user:${user._id.toString()}`);
+    await User.findOneAndUpdate({ _id: user._id }, { $set });
+
+    // Invalidate leaderboard cache only when coins changed — fire-and-forget
+    if (loginCoinAwarded) {
+      deleteKey("students:leaderboard").catch(() => {});
+    }
 
     const token = createToken(user._id);
     setTokenCookie(res, token);
