@@ -201,46 +201,47 @@ const formatPermissionSummary = (role) => {
 };
 
 const DASHBOARD_MODULE_LABELS = {
-  // Student Dashboard
+  // Staff & Admin Dashboard
   overview: "Overview",
-  my_courses: "My Courses (Student)",
-  study_notes: "Study Notes (Student)",
-  question_bank: "Question Bank (Student)",
-  blogs: "Blogs (Student)",
-  ai_tutor: "AI Tutor (Student)",
-  sessions: "Sessions (Student)",
-  progress: "Progress (Student)",
-  mock_tests: "Mock Tests (Student)",
-  leaderboard: "Leaderboard (Student)",
-  achievements: "Achievements (Student)",
-  certificates: "Certificates (Student)",
-  plans: "Plans (Student)",
-  become_instructor: "Become Instructor (Student)",
-  referral: "Referral (Student)",
-  wallet: "Wallet (Student)",
-  purchase_history: "Purchase History (Student)",
-  references: "References (Student)",
-  settings: "Settings (Student)",
+  courses: "Courses",
+  students: "Students",
+  instructors: "Instructors",
+  payments: "Payments",
+  applications: "Applications",
+  notes: "Notes Moderation",
+  reels: "Reels Moderation",
+  mock_tests: "Mock Tests",
+  question_bank: "Question Bank",
+  sessions: "Sessions",
+  ai_tutor: "AI Tutor",
+  references: "References",
+  roles: "Roles & Permissions",
+  "bulk-import": "Bulk Import",
+  devices: "Logged In Devices",
+
+  // Student Dashboard
+  my_courses: "My Courses",
+  study_notes: "Study Notes",
+  blogs: "Blogs",
+  progress: "Progress",
+  leaderboard: "Leaderboard",
+  achievements: "Achievements",
+  certificates: "Certificates",
+  plans: "Plans",
+  become_instructor: "Become Instructor",
+  referral: "Referral",
+  wallet: "Wallet",
+  purchase_history: "Purchase History",
+  settings: "Settings",
 
   // Instructor Dashboard
-  dashboard: "Dashboard (Instructor)",
-  courses: "My Courses (Instructor)",
-  students: "Students (Instructor)",
-  notes: "Notes (Instructor)",
-  reels: "Reels (Instructor)",
-  analytics: "Analytics (Instructor)",
-  ai: "AI Assistant (Instructor)",
+  dashboard: "Dashboard",
+  analytics: "Analytics",
+  ai: "AI Assistant",
   "mock-tests": "Mock Tests (Instructor)",
-
-  // Staff / Admin Dashboard
-  instructors: "Instructors (Staff/Admin)",
-  payments: "Payments (Staff/Admin)",
-  applications: "Applications (Staff/Admin)",
-  "bulk-import": "Bulk Import (Staff/Admin)",
-  devices: "Logged In Devices (Staff/Admin)",
 };
 
-// Categorized checklist component for sidebar modules across Student, Instructor, and Staff/Admin dashboards.
+// Clean workspace-tabbed checklist component for sidebar modules
 const DashboardModuleChecklist = ({
   dashboardModuleRegistry = {},
   roleName = "",
@@ -248,6 +249,8 @@ const DashboardModuleChecklist = ({
   value = [],
   onChange,
 }) => {
+  const [activeTab, setActiveTab] = useState("staff");
+
   const toggle = (key) => {
     onChange(
       value.includes(key) ? value.filter((k) => k !== key) : [...value, key],
@@ -269,42 +272,49 @@ const DashboardModuleChecklist = ({
   const isSystemInstructor = lowerName === "instructor";
 
   // Build categories to display
-  const categories = [];
+  let categories = [];
 
   if (isSystemStudent && dashboardModuleRegistry.student) {
     categories.push({
       id: "student",
-      title: "Student Dashboard Sidebar",
+      title: "Student Dashboard Sidebar Modules",
       keys: dashboardModuleRegistry.student,
     });
   } else if (isSystemInstructor && dashboardModuleRegistry.instructor) {
     categories.push({
       id: "instructor",
-      title: "Instructor Dashboard Sidebar",
+      title: "Instructor Dashboard Sidebar Modules",
       keys: dashboardModuleRegistry.instructor,
     });
   } else {
-    // Custom role or multi-dashboard view
+    const allCats = [];
+    if (dashboardModuleRegistry.staff) {
+      allCats.push({
+        id: "staff",
+        title: "Staff & Admin Dashboard Sidebar Modules",
+        keys: dashboardModuleRegistry.staff,
+      });
+    }
     if (dashboardModuleRegistry.student) {
-      categories.push({
+      allCats.push({
         id: "student",
-        title: "Student Dashboard Sidebar",
+        title: "Student Dashboard Sidebar Modules",
         keys: dashboardModuleRegistry.student,
       });
     }
     if (dashboardModuleRegistry.instructor) {
-      categories.push({
+      allCats.push({
         id: "instructor",
-        title: "Instructor Dashboard Sidebar",
+        title: "Instructor Dashboard Sidebar Modules",
         keys: dashboardModuleRegistry.instructor,
       });
     }
-    if (dashboardModuleRegistry.staff) {
-      categories.push({
-        id: "staff",
-        title: "Staff & Admin Dashboard Sidebar",
-        keys: dashboardModuleRegistry.staff,
-      });
+
+    if (activeTab === "all") {
+      categories = allCats;
+    } else {
+      categories = allCats.filter((c) => c.id === activeTab);
+      if (categories.length === 0) categories = allCats;
     }
   }
 
@@ -321,19 +331,72 @@ const DashboardModuleChecklist = ({
   const allOn = allKeys.length > 0 && allKeys.every((k) => value.includes(k));
   const toggleAll = () => onChange(allOn ? [] : allKeys);
 
+  const showTabs = !isSystemStudent && !isSystemInstructor;
+
   return (
-    <div className="rounded-xl border border-slate-800 bg-[#0b1120] p-4 space-y-5">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-        <span className="text-xs font-bold text-white uppercase tracking-wide">
-          Sidebar Modules Access
-        </span>
-        <button
-          type="button"
-          onClick={toggleAll}
-          className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-wider"
-        >
-          {allOn ? "Clear All Modules" : "Select All Modules"}
-        </button>
+    <div className="rounded-xl border border-slate-800 bg-[#0b1120] p-4 space-y-4">
+      <div className="flex flex-col gap-3 pb-3 border-b border-slate-800">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-white uppercase tracking-wide">
+            Sidebar Modules Access
+          </span>
+          <button
+            type="button"
+            onClick={toggleAll}
+            className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-wider"
+          >
+            {allOn ? "Clear Tab Modules" : "Select Tab Modules"}
+          </button>
+        </div>
+
+        {showTabs && (
+          <div className="inline-flex rounded-lg border border-slate-800 bg-slate-950 p-1 gap-1 self-start flex-wrap">
+            <button
+              type="button"
+              onClick={() => setActiveTab("staff")}
+              className={`px-3 py-1 text-[11px] font-bold rounded-md transition-colors ${
+                activeTab === "staff"
+                  ? "bg-indigo-600 text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Staff & Admin Workspace
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("student")}
+              className={`px-3 py-1 text-[11px] font-bold rounded-md transition-colors ${
+                activeTab === "student"
+                  ? "bg-indigo-600 text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Student Workspace
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("instructor")}
+              className={`px-3 py-1 text-[11px] font-bold rounded-md transition-colors ${
+                activeTab === "instructor"
+                  ? "bg-indigo-600 text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Instructor Workspace
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("all")}
+              className={`px-3 py-1 text-[11px] font-bold rounded-md transition-colors ${
+                activeTab === "all"
+                  ? "bg-indigo-600 text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Show All Workspaces
+            </button>
+          </div>
+        )}
       </div>
 
       {categories.length === 0 && (

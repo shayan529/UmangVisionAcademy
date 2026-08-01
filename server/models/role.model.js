@@ -30,7 +30,7 @@ export const DASHBOARD_MODULES = {
   staff: [
     "overview", "courses", "students", "instructors", "payments",
     "applications", "notes", "reels", "mock_tests", "question_bank",
-    "sessions", "ai_tutor", "references", "bulk-import", "devices",
+    "sessions", "ai_tutor", "references", "roles", "bulk-import", "devices",
   ],
 };
 

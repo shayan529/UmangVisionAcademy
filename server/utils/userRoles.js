@@ -119,6 +119,7 @@ export const hydrateUserRoles = async (user) => {
     }
 
     plain.role = roleDoc || "student";
+    plain.dashboardModules = roleDoc?.dashboardModules ?? null;
   } catch (err) {
     console.error("[Roles] hydrateUserRoles failed to fetch role doc:", err);
     plain.role = "student";
@@ -199,6 +200,7 @@ export const hydrateUsersRoles = async (users = []) => {
       }
 
       if (roleValue && typeof roleValue === "object" && roleValue._id) {
+        plain.dashboardModules = roleValue.dashboardModules ?? null;
         delete plain.roles;
         delete plain.assignedRoles;
         delete plain.password;
@@ -212,7 +214,9 @@ export const hydrateUsersRoles = async (users = []) => {
           : null;
 
       if (idStr && roleMap.has(idStr)) {
-        plain.role = roleMap.get(idStr);
+        const roleDoc = roleMap.get(idStr);
+        plain.role = roleDoc;
+        plain.dashboardModules = roleDoc?.dashboardModules ?? null;
       } else {
         return hydrateUserRoles(u);
       }

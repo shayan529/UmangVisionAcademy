@@ -24,7 +24,7 @@ export const isBaseRole = (value) =>
 export const hasDashboardModule = (user, moduleKey) => {
   if (!user) return false;
   if (hasBaseRole(user, "admin")) return true;
-  const mods = user.dashboardModules;
+  const mods = user.dashboardModules ?? user.role?.dashboardModules;
   if (!Array.isArray(mods) || mods.length === 0) return true;
   return mods.includes(moduleKey);
 };
