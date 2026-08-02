@@ -124,10 +124,34 @@ export const deleteCourse = createAsyncThunk(
   },
 );
 
-// ── Initial state ─────────────────────────────────────────────────────────────
+const PUBLISHED_COURSES_KEY = "published_courses_v1";
+
+const loadPublishedCoursesCache = () => {
+  try {
+    const raw = localStorage.getItem(PUBLISHED_COURSES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const persistPublishedCourses = (courses) => {
+  try {
+    if (Array.isArray(courses)) {
+      localStorage.setItem(
+        PUBLISHED_COURSES_KEY,
+        JSON.stringify(courses.slice(0, 30)),
+      );
+    }
+  } catch {
+    // ignore
+  }
+};
+
+const initialPublishedCourses = loadPublishedCoursesCache();
 
 const initialState = {
-  courses: [], // all published courses
+  courses: initialPublishedCourses, // cached published courses for instant 0ms initial render
   enrolled: [], // courses the current student is enrolled in
   selectedCourse: null,
   loading: false,
@@ -196,12 +220,15 @@ const courseSlice = createSlice({
       })
 
       .addCase(fetchPublishedCourses.pending, (state) => {
-        state.loading = true;
+        if (state.courses.length === 0) {
+          state.loading = true;
+        }
         state.error = null;
       })
       .addCase(fetchPublishedCourses.fulfilled, (state, action) => {
         state.loading = false;
         state.courses = action.payload;
+        persistPublishedCourses(action.payload);
       })
       .addCase(fetchPublishedCourses.rejected, (state, action) => {
         state.loading = false;

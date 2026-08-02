@@ -179,15 +179,12 @@ if (_cachedRoleIsObjectId) {
 }
 
 const _cachedUser = _cachedRoleIsObjectId ? null : _rawCached;
-const _hasToken = !!localStorage.getItem("authToken");
 
 const initialState = {
   user: _cachedUser || null,
-  // loading=false when we have a cached user (we background-refresh below).
-  // loading=true only when there is no cached user and we must wait for /me.
-  loading: !_cachedUser && _hasToken,
+  loading: false,
   error: null,
-  isAuthenticated: !!(_cachedUser && _hasToken),
+  isAuthenticated: !!_cachedUser,
 };
 
 // Login/Register responses now come back as { user, token } — the cookie is
@@ -309,9 +306,6 @@ const authSlice = createSlice({
     // loading stays false so the UI doesn't show a spinner.
     builder
       .addCase(loadCurrentUser.pending, (state) => {
-        if (!state.isAuthenticated) {
-          state.loading = true;
-        }
         state.error = null;
       })
       .addCase(loadCurrentUser.fulfilled, (state, action) => {
