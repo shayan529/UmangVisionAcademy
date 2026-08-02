@@ -349,8 +349,9 @@ const Signup = () => {
     setSendingPhoneOtp(true);
     try {
       // 1. Pre-check backend: verifies format and ensures number is not already registered (HTTP 409 if taken)
-      await api.post("/auth/send-phone-otp", {
+      const { data: sendOtpRes } = await api.post("/auth/send-phone-otp", {
         phoneNumber: normalizedPhoneNumber,
+        email: formData.email || undefined,
       });
 
       let usedFallback = false;
@@ -376,10 +377,11 @@ const Signup = () => {
       }
 
       toast.success(
-        usedFallback
-          ? t("auth.otpSentPhone") ||
-              "OTP ready. Use 123456 if SMS delivery is delayed."
-          : t("auth.otpSentPhone") || "OTP sent to your phone number!",
+        sendOtpRes?.message ||
+          (usedFallback
+            ? t("auth.otpSentPhone") ||
+                "OTP code sent. Please check your phone or email."
+            : t("auth.otpSentPhone") || "OTP sent to your phone number!"),
       );
       setPhoneOtpSent(true);
       setPhoneResendCooldown(30);

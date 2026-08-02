@@ -1068,7 +1068,7 @@ const Login = () => {
 
     const fullPhone = `${countryCode}${formData.phoneNumber}`;
     try {
-      await api.post("/users/send-login-otp", {
+      const { data: sendRes } = await api.post("/users/send-login-otp", {
         phoneNumber: fullPhone,
       });
 
@@ -1081,18 +1081,14 @@ const Login = () => {
           );
           setFirebaseConfirmationResult(confirmation);
         } catch (fbErr) {
-          if (import.meta.env.PROD) {
-            console.error("Firebase Phone Auth failed:", fbErr);
-            throw fbErr;
-          }
-          usedFallback = true;
-          setOtpFallbackMode(true);
-          setFirebaseConfirmationResult(null);
           console.warn(
-            "Firebase sendPhoneOtp warning, using dev OTP fallback:",
+            "Firebase sendPhoneOtp failed, using server OTP fallback:",
             fbErr?.code,
             fbErr?.message,
           );
+          usedFallback = true;
+          setOtpFallbackMode(true);
+          setFirebaseConfirmationResult(null);
         }
       } else {
         usedFallback = true;
@@ -1100,10 +1096,11 @@ const Login = () => {
       }
 
       toast.success(
-        usedFallback
-          ? t("auth.otpSentPhone") ||
-              "OTP ready. Use 123456 if SMS delivery is delayed."
-          : t("auth.otpSentPhone") || "OTP sent to your phone number!",
+        sendRes?.message ||
+          (usedFallback
+            ? t("auth.otpSentPhone") ||
+                "OTP code sent. Please check your phone or email."
+            : t("auth.otpSentPhone") || "OTP sent to your phone number!"),
       );
       setOtpSent(true);
       setOtpCooldown(30);
