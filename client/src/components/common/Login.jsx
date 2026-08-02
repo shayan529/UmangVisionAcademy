@@ -29,11 +29,25 @@ import {
   clearRecaptcha,
 } from "../../services/firebasePhoneAuth";
 
-/* ── Animated particle canvas ── */
+/* ── Animated particle canvas (lightweight for high performance) ── */
 const ParticleCanvas = () => {
   const canvasRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 768 : false,
+  );
+
   useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize, { passive: true });
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) return;
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
     let animId;
     const resize = () => {
@@ -41,15 +55,14 @@ const ParticleCanvas = () => {
       canvas.height = canvas.offsetHeight;
     };
     resize();
-    window.addEventListener("resize", resize);
 
-    const NODES = Array.from({ length: 55 }, () => ({
-      x: Math.random() * 1400,
-      y: Math.random() * 900,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: (Math.random() - 0.5) * 0.35,
+    const NODES = Array.from({ length: 18 }, () => ({
+      x: Math.random() * (canvas.width || 1200),
+      y: Math.random() * (canvas.height || 800),
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
       r: Math.random() * 2 + 0.8,
-      alpha: Math.random() * 0.45 + 0.1,
+      alpha: Math.random() * 0.4 + 0.1,
     }));
 
     const draw = () => {
@@ -61,11 +74,11 @@ const ParticleCanvas = () => {
           const dx = NODES[i].x - NODES[j].x;
           const dy = NODES[i].y - NODES[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 145) {
+          if (dist < 100) {
             ctx.beginPath();
             ctx.moveTo(NODES[i].x, NODES[i].y);
             ctx.lineTo(NODES[j].x, NODES[j].y);
-            ctx.strokeStyle = `rgba(99,179,237,${(1 - dist / 145) * 0.16})`;
+            ctx.strokeStyle = `rgba(99,179,237,${(1 - dist / 100) * 0.12})`;
             ctx.lineWidth = 0.7;
             ctx.stroke();
           }
@@ -86,13 +99,15 @@ const ParticleCanvas = () => {
     draw();
     return () => {
       cancelAnimationFrame(animId);
-      window.removeEventListener("resize", resize);
     };
-  }, []);
+  }, [isMobile]);
+
+  if (isMobile) return null;
+
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full"
+      className="absolute inset-0 w-full h-full pointer-events-none"
       style={{ opacity: 0.65 }}
     />
   );
@@ -1209,11 +1224,7 @@ const Login = () => {
         }),
       ).unwrap();
 
-      const refreshed = await dispatch(loadCurrentUser())
-        .unwrap()
-        .catch(() => loggedUser);
-      const user = refreshed || loggedUser;
-
+      const user = loggedUser?.user || loggedUser;
       navigate(getPostLoginPath(user, location.state?.from), { replace: true });
 
       toast(t("auth.welcomeToast"), { icon: "👋", duration: 3000 });
