@@ -12,16 +12,16 @@ import { isNativeApp } from "./utils/appEnvironment";
 import { useSwipeable } from "react-swipeable";
 
 import Home from "./pages/Home";
-import Courses from "./components/common/Courses";
-import Instructors from "./components/common/Instructors";
-import Plans from "./components/common/Plans";
-import Login from "./components/common/Login";
-import Signup from "./components/common/Signup";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
 // --- Lazy Loaded Components ---
+const Courses = lazy(() => import("./components/common/Courses"));
+const Instructors = lazy(() => import("./components/common/Instructors"));
+const Plans = lazy(() => import("./components/common/Plans"));
+const Login = lazy(() => import("./components/common/Login"));
+const Signup = lazy(() => import("./components/common/Signup"));
 const MobileChat = lazy(() => import("./components/mobile/MobileChat"));
 const MobileNotes = lazy(() => import("./components/mobile/MobileNotes"));
 const MobileReels = lazy(() => import("./components/mobile/MobileReels"));

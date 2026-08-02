@@ -119,3 +119,23 @@ input:-webkit-autofill:active {
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+/* Performance & low-end device optimizations */
+@layer utilities {
+  .gpu-layer {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

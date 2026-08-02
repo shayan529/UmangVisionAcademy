@@ -17,7 +17,7 @@ import {
   sendOtpEmail,
 } from "../utils/Mailer.js";
 import { computeInstructorRating } from "../utils/instructorRating.js";
-import { deleteKey } from "../utils/redisClient.js";
+import { deleteKey, cacheResponse } from "../utils/redisClient.js";
 import {
   deleteOtpRecord,
   getOtpRecord,
