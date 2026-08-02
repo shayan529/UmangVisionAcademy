@@ -523,7 +523,7 @@ const AICuratedNotice = ({ isHindi }) => (
 
 export default function Blogs() {
   const { t, i18n } = useTranslation();
-  const currentLanguage = i18n.language?.startsWith("hi") ? "hi" : "en";
+  const currentLanguage = (i18n.language || "en").split("-")[0];
   const isHindi = currentLanguage === "hi";
 
   const [activeTab, setActiveTab] = useState("news");
@@ -553,8 +553,8 @@ export default function Blogs() {
     setActiveArticle(null); // Clear selected article on lang change
 
     // Reset filters for current language
-    setNewsCategory(isHindi ? "सभी" : "All");
-    setRojgarTag(isHindi ? "सभी" : "All");
+    setNewsCategory("All");
+    setRojgarTag("All");
     setNewsSearch("");
     setRojgarSearch("");
 

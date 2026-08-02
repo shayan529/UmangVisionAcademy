@@ -478,40 +478,83 @@ export const getNewsAI = async (req, res) => {
       console.log(`[News Cache EXPIRED] lang=${lang}, regenerating...`);
     }
 
-    const isHindi = lang === "hi";
-    const today = new Date().toLocaleDateString(isHindi ? "hi-IN" : "en-IN", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
+    const langConfig = {
+      hi: {
+        name: "Hindi",
+        script: "Devanagari script",
+        categories:
+          'one of "शिक्षा", "प्रतियोगी परीक्षा", "नीति", "तकनीकी", "छात्रवृत्ति"',
+        dateExample: '"4 जून, 2026"',
+        readTimeExample: '"3 मिनट"',
+      },
+      mr: {
+        name: "Marathi",
+        script: "Devanagari script (Marathi language)",
+        categories:
+          'one of "शिक्षण", "स्पर्धा परीक्षा", "धोरण", "तंत्रज्ञान", "शिष्यवृत्ती"',
+        dateExample: '"4 जून, 2026"',
+        readTimeExample: '"3 मिनिटे"',
+      },
+      gu: {
+        name: "Gujarati",
+        script: "Gujarati script",
+        categories:
+          'one of "શિક્ષણ", "સ્પર્ધાત્મક પરીક્ષા", "નીતિ", "ટેકનોલોજી", "શિષ્યવૃત્તિ"',
+        dateExample: '"4 જૂન, 2026"',
+        readTimeExample: '"3 મિનિટ"',
+      },
+      bn: {
+        name: "Bengali",
+        script: "Bengali script",
+        categories:
+          'one of "শিক্ষা", "প্রতিযোগিতামূলক পরীক্ষা", "নীতিমালা", "প্রযুক্তি", "বৃত্তি"',
+        dateExample: '"৪ জুন, ২০২৬"',
+        readTimeExample: '"৩ মিনিট"',
+      },
+      ta: {
+        name: "Tamil",
+        script: "Tamil script",
+        categories:
+          'one of "கல்வி", "போட்டித் தேர்வுகள்", "கொள்கை", "தொழில்நுட்பம்", "உதவித்தொகை"',
+        dateExample: '"ஜூன் 4, 2026"',
+        readTimeExample: '"3 நிமிடங்கள்"',
+      },
+      te: {
+        name: "Telugu",
+        script: "Telugu script",
+        categories:
+          'one of "విద్య", "పోటీ పరీక్షలు", "విధానం", "సాంకేతికత", "స్కాలర్‌షిప్‌లు"',
+        dateExample: '"జూన్ 4, 2026"',
+        readTimeExample: '"3 నిమిషాలు"',
+      },
+      en: {
+        name: "English",
+        script: "English language",
+        categories:
+          'one of "Education", "Competitive Exams", "Policy", "Technology", "Scholarships"',
+        dateExample: '"June 4, 2026"',
+        readTimeExample: '"3 min"',
+      },
+    };
 
-    const prompt = isHindi
-      ? `You are a news curator for an Indian education platform. Generate 6 realistic, current Indian education news articles as of ${today}.
-Generate the fields "title", "excerpt", "body" and "category" in Hindi language (using Devnagari script).
-Category must be translated: "Education" -> "शिक्षा", "Competitive Exams" -> "प्रतियोगी परीक्षा", "Policy" -> "नीति", "Technology" -> "तकनीकी", "Scholarships" -> "छात्रवृत्ति".
+    const cfg = langConfig[lang] || langConfig.en;
+    const today = new Date().toLocaleDateString(
+      lang === "hi" || lang === "mr" ? "hi-IN" : "en-IN",
+      { day: "numeric", month: "long", year: "numeric" },
+    );
+
+    const prompt = `You are a news curator for an Indian education platform. Generate 6 realistic, current Indian education news articles as of ${today}.
+Generate the fields "title", "excerpt", "body", "tag" and "category" in ${cfg.name} language (using ${cfg.script}).
 
 Return a JSON object with a single key "articles" whose value is an array of 6 objects. Each object must have:
 - id: number (1-6)
-- category: one of "शिक्षा", "प्रतियोगी परीक्षा", "नीति", "तकनीकी", "छात्रवृत्ति"
-- tag: short tag string in Hindi
-- title: string (realistic Hindi headline)
-- excerpt: string (2-3 sentences in Hindi, 60-80 words)
-- body: string (250-400 words in Hindi, 2-3 paragraphs separated by \\n\\n)
-- date: string (e.g. "4 जून, 2026")
-- readTime: string (e.g. "3 मिनट")
-- featured: boolean (true only for id 1)
-- url: null`
-      : `You are a news curator for an Indian education platform. Generate 6 realistic, current Indian education news articles as of ${today}.
-
-Return a JSON object with a single key "articles" whose value is an array of 6 objects. Each object must have:
-- id: number (1-6)
-- category: one of "Education", "Competitive Exams", "Policy", "Technology", "Scholarships"
-- tag: short tag string (e.g. "CBSE", "JEE", "NEP 2020", "EdTech", "NEET")
-- title: string (realistic English headline)
-- excerpt: string (2-3 sentences, 60-80 words)
-- body: string (250-400 words, 2-3 paragraphs separated by \\n\\n)
-- date: string (e.g. "June 4, 2026")
-- readTime: string (e.g. "3 min")
+- category: ${cfg.categories}
+- tag: short tag string in ${cfg.name}
+- title: string (realistic ${cfg.name} headline)
+- excerpt: string (2-3 sentences in ${cfg.name}, 60-80 words)
+- body: string (250-400 words in ${cfg.name}, 2-3 paragraphs separated by \\n\\n)
+- date: string (e.g. ${cfg.dateExample})
+- readTime: string (e.g. ${cfg.readTimeExample})
 - featured: boolean (true only for id 1)
 - url: null`;
 
