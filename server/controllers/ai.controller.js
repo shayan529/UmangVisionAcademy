@@ -1,13 +1,13 @@
-import Groq from "groq-sdk";
-import NewsCache from "../models/newsCache.model.js";
-import AiChatMessage from "../models/aiChatMessage.model.js";
-import AiConversation from "../models/aiConversation.model.js";
-import { getJson, setJson, deleteKey } from "../utils/redisClient.js";
+import Groq from 'groq-sdk';
+import NewsCache from '../models/newsCache.model.js';
+import AiChatMessage from '../models/aiChatMessage.model.js';
+import AiConversation from '../models/aiConversation.model.js';
+import { getJson, setJson, deleteKey } from '../utils/redisClient.js';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // Default model — fast & capable Groq-hosted model
-const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
 // System prompt — scoped to Umang Vision Academy's EdTech context (Students)
 const SYSTEM_PROMPT = `You are an expert AI Tutor for Umang Vision Academy, an EdTech platform for Indian students in Classes 1–12 studying under CBSE, ICSE, and MP Board curricula.
@@ -42,103 +42,97 @@ Your role:
 const dateLabel = (date) => {
   const d = new Date(date);
   const diff = Math.floor((new Date() - d) / 86400000);
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Yesterday";
-  if (diff < 7) return "Previous 7 Days";
-  if (diff < 30) return "Previous 30 Days";
-  return "Older";
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  if (diff < 7) return 'Previous 7 Days';
+  if (diff < 30) return 'Previous 30 Days';
+  return 'Older';
 };
 
 const normalizeLanguage = (lang) => {
   if (!lang) return null;
   const normalized = String(lang).trim().toLowerCase();
-  if (normalized === "hi" || normalized.startsWith("hi")) return "Hindi";
-  if (normalized === "en" || normalized.startsWith("en")) return "English";
+  if (normalized === 'hi' || normalized.startsWith('hi')) return 'Hindi';
+  if (normalized === 'en' || normalized.startsWith('en')) return 'English';
   return null;
 };
 
 const FALLBACK_NEWS_EN = [
   {
     id: 1,
-    category: "Education",
-    tag: "AI News",
+    category: 'Education',
+    tag: 'AI News',
     title: "India's education sector embraces blended learning",
     excerpt:
-      "Schools and coaching centers across India are increasingly adopting a blended model that combines digital tools with classroom teaching to support students preparing for competitive exams.",
-    body:
-      "Education providers are using online modules and live coaching together to help students manage revision and stay connected with teachers. This hybrid model aims to increase access to quality guidance while reducing study stress for students from smaller towns. Stakeholders say the approach is particularly useful for test preparation and subject-specific doubt resolution.",
-    date: "June 4, 2026",
-    readTime: "3 min",
+      'Schools and coaching centers across India are increasingly adopting a blended model that combines digital tools with classroom teaching to support students preparing for competitive exams.',
+    body: 'Education providers are using online modules and live coaching together to help students manage revision and stay connected with teachers. This hybrid model aims to increase access to quality guidance while reducing study stress for students from smaller towns. Stakeholders say the approach is particularly useful for test preparation and subject-specific doubt resolution.',
+    date: 'June 4, 2026',
+    readTime: '3 min',
     featured: true,
     url: null,
   },
   {
     id: 2,
-    category: "Policy",
-    tag: "Govt",
-    title: "New scholarship rules make merit awards more transparent",
+    category: 'Policy',
+    tag: 'Govt',
+    title: 'New scholarship rules make merit awards more transparent',
     excerpt:
-      "A new set of guidelines for scholarship disbursement is being introduced to ensure students from remote areas receive support faster and with fewer delays.",
-    body:
-      "The policy revision focuses on streamlining application checks and improving communication between state education departments and beneficiaries. Authorities expect students to receive approvals more quickly, especially in rural districts. Officials are also promoting the changes through school outreach programs.",
-    date: "June 3, 2026",
-    readTime: "2 min",
+      'A new set of guidelines for scholarship disbursement is being introduced to ensure students from remote areas receive support faster and with fewer delays.',
+    body: 'The policy revision focuses on streamlining application checks and improving communication between state education departments and beneficiaries. Authorities expect students to receive approvals more quickly, especially in rural districts. Officials are also promoting the changes through school outreach programs.',
+    date: 'June 3, 2026',
+    readTime: '2 min',
     featured: false,
     url: null,
   },
   {
     id: 3,
-    category: "Technology",
-    tag: "STEM",
-    title: "Coding clubs gain popularity in city schools",
+    category: 'Technology',
+    tag: 'STEM',
+    title: 'Coding clubs gain popularity in city schools',
     excerpt:
-      "Several urban schools have launched after-school coding clubs to encourage children to learn programming, robotics, and problem solving early.",
-    body:
-      "The clubs offer hands-on activities, project-based learning, and mentorship from tech professionals. Students say the workshops make science and math concepts easier to understand. Educators believe this will help shape future career interests while building confidence in digital literacy.",
-    date: "June 2, 2026",
-    readTime: "3 min",
+      'Several urban schools have launched after-school coding clubs to encourage children to learn programming, robotics, and problem solving early.',
+    body: 'The clubs offer hands-on activities, project-based learning, and mentorship from tech professionals. Students say the workshops make science and math concepts easier to understand. Educators believe this will help shape future career interests while building confidence in digital literacy.',
+    date: 'June 2, 2026',
+    readTime: '3 min',
     featured: false,
     url: null,
   },
   {
     id: 4,
-    category: "Competitive Exams",
-    tag: "Exam Prep",
-    title: "Mock tests help students track progress ahead of board exams",
+    category: 'Competitive Exams',
+    tag: 'Exam Prep',
+    title: 'Mock tests help students track progress ahead of board exams',
     excerpt:
-      "A growing number of coaching institutes are offering weekly mock tests and feedback sessions to help students assess their readiness for board exams.",
-    body:
-      "Experts say regular practice tests reduce exam anxiety and improve time management. Students can identify weak areas and revise strategically. Schools are encouraging a balanced study plan as part of the preparation cycle.",
-    date: "June 1, 2026",
-    readTime: "2 min",
+      'A growing number of coaching institutes are offering weekly mock tests and feedback sessions to help students assess their readiness for board exams.',
+    body: 'Experts say regular practice tests reduce exam anxiety and improve time management. Students can identify weak areas and revise strategically. Schools are encouraging a balanced study plan as part of the preparation cycle.',
+    date: 'June 1, 2026',
+    readTime: '2 min',
     featured: false,
     url: null,
   },
   {
     id: 5,
-    category: "Scholarships",
-    tag: "Support",
-    title: "New state grant program funds rural learners",
+    category: 'Scholarships',
+    tag: 'Support',
+    title: 'New state grant program funds rural learners',
     excerpt:
-      "A state grant scheme has been launched to support rural students pursuing higher education in science, commerce, and arts streams.",
-    body:
-      "The program provides financial support for tuition, books, and exam fees. Administrators say the grant will encourage students from economically weaker backgrounds to continue their studies. Outreach teams are being deployed to raise awareness in village schools.",
-    date: "May 31, 2026",
-    readTime: "3 min",
+      'A state grant scheme has been launched to support rural students pursuing higher education in science, commerce, and arts streams.',
+    body: 'The program provides financial support for tuition, books, and exam fees. Administrators say the grant will encourage students from economically weaker backgrounds to continue their studies. Outreach teams are being deployed to raise awareness in village schools.',
+    date: 'May 31, 2026',
+    readTime: '3 min',
     featured: false,
     url: null,
   },
   {
     id: 6,
-    category: "Education",
-    tag: "Career",
-    title: "Career counseling sessions expand in tier-2 cities",
+    category: 'Education',
+    tag: 'Career',
+    title: 'Career counseling sessions expand in tier-2 cities',
     excerpt:
-      "More career counseling centers are opening in tier-2 cities to guide students on course choices, entrance exams, and vocational training opportunities.",
-    body:
-      "The sessions focus on aligning student interests with available academic and job-market pathways. Counselors are also advising on skill-based courses that match emerging industry demand. Parents and teachers are welcoming the additional guidance.",
-    date: "May 30, 2026",
-    readTime: "2 min",
+      'More career counseling centers are opening in tier-2 cities to guide students on course choices, entrance exams, and vocational training opportunities.',
+    body: 'The sessions focus on aligning student interests with available academic and job-market pathways. Counselors are also advising on skill-based courses that match emerging industry demand. Parents and teachers are welcoming the additional guidance.',
+    date: 'May 30, 2026',
+    readTime: '2 min',
     featured: false,
     url: null,
   },
@@ -147,92 +141,86 @@ const FALLBACK_NEWS_EN = [
 const FALLBACK_NEWS_HI = [
   {
     id: 1,
-    category: "शिक्षा",
-    tag: "ब्लॉग",
-    title: "स्कूलों में मिक्स्ड लर्निंग मॉडल तेजी से अपनाया जा रहा है",
+    category: 'शिक्षा',
+    tag: 'ब्लॉग',
+    title: 'स्कूलों में मिक्स्ड लर्निंग मॉडल तेजी से अपनाया जा रहा है',
     excerpt:
-      "देश भर के स्कूल और कोचिंग सेंटर अब डिजिटल टूल्स को कक्षा शिक्षण के साथ जोड़कर पढ़ाई को सरल बना रहे हैं।",
-    body:
-      "मिश्रित शिक्षण में ऑनलाइन मॉड्यूल और लाइव क्लासेस दोनों शामिल हैं, जिससे छात्र अपनी सुविधा के अनुसार पढ़ाई कर सकते हैं। विशेषज्ञों का मानना है कि यह मॉडल परीक्षा तैयारी और संदेह समाधान दोनों के लिए लाभकारी है।",
-    date: "4 जून, 2026",
-    readTime: "3 मिनट",
+      'देश भर के स्कूल और कोचिंग सेंटर अब डिजिटल टूल्स को कक्षा शिक्षण के साथ जोड़कर पढ़ाई को सरल बना रहे हैं।',
+    body: 'मिश्रित शिक्षण में ऑनलाइन मॉड्यूल और लाइव क्लासेस दोनों शामिल हैं, जिससे छात्र अपनी सुविधा के अनुसार पढ़ाई कर सकते हैं। विशेषज्ञों का मानना है कि यह मॉडल परीक्षा तैयारी और संदेह समाधान दोनों के लिए लाभकारी है।',
+    date: '4 जून, 2026',
+    readTime: '3 मिनट',
     featured: true,
     url: null,
   },
   {
     id: 2,
-    category: "नीति",
-    tag: "स्कॉलरशिप",
-    title: "छात्रवृत्ति नियमों में पारदर्शिता बढ़ी है",
+    category: 'नीति',
+    tag: 'स्कॉलरशिप',
+    title: 'छात्रवृत्ति नियमों में पारदर्शिता बढ़ी है',
     excerpt:
-      "नए दिशानिर्देशों से दूरदराज के छात्रों को मदद अधिक तेज़ी से और कम देरी के साथ मिलेगी।",
-    body:
-      "नीति संशोधन का लक्ष्य आवेदन प्रक्रिया को सरल बनाना और अनुमोदन समय घटाना है। अधिकारियों का कहना है कि इससे ग्रामीण क्षेत्रों के छात्रों को लाभ मिलेगा।",
-    date: "3 जून, 2026",
-    readTime: "2 मिनट",
+      'नए दिशानिर्देशों से दूरदराज के छात्रों को मदद अधिक तेज़ी से और कम देरी के साथ मिलेगी।',
+    body: 'नीति संशोधन का लक्ष्य आवेदन प्रक्रिया को सरल बनाना और अनुमोदन समय घटाना है। अधिकारियों का कहना है कि इससे ग्रामीण क्षेत्रों के छात्रों को लाभ मिलेगा।',
+    date: '3 जून, 2026',
+    readTime: '2 मिनट',
     featured: false,
     url: null,
   },
   {
     id: 3,
-    category: "तकनीकी",
-    tag: "STEM",
-    title: "शहर के स्कूलों में कोडिंग क्लब बढ़ रहे हैं",
+    category: 'तकनीकी',
+    tag: 'STEM',
+    title: 'शहर के स्कूलों में कोडिंग क्लब बढ़ रहे हैं',
     excerpt:
-      "कई स्कूलों ने अब कोडिंग और रोबोटिक्स क्लब शुरू किए हैं ताकि बच्चों में जल्दी ही डिजिटल साक्षरता बढ़े।",
-    body:
-      "कार्यक्रमों में परियोजना-आधारित सीखने और मेंटरशिप शामिल है। छात्रों को कहते हैं कि इससे विज्ञान और गणित अवधारणाएं आसान लगने लगी हैं।",
-    date: "2 जून, 2026",
-    readTime: "3 मिनट",
+      'कई स्कूलों ने अब कोडिंग और रोबोटिक्स क्लब शुरू किए हैं ताकि बच्चों में जल्दी ही डिजिटल साक्षरता बढ़े।',
+    body: 'कार्यक्रमों में परियोजना-आधारित सीखने और मेंटरशिप शामिल है। छात्रों को कहते हैं कि इससे विज्ञान और गणित अवधारणाएं आसान लगने लगी हैं।',
+    date: '2 जून, 2026',
+    readTime: '3 मिनट',
     featured: false,
     url: null,
   },
   {
     id: 4,
-    category: "प्रतियोगी परीक्षा",
-    tag: "मॉक टेस्ट",
-    title: "मॉक टेस्ट से बोर्ड परीक्षा की तैयारी मजबूत होती है",
+    category: 'प्रतियोगी परीक्षा',
+    tag: 'मॉक टेस्ट',
+    title: 'मॉक टेस्ट से बोर्ड परीक्षा की तैयारी मजबूत होती है',
     excerpt:
-      "कोचिंग संस्थान अब साप्ताहिक मॉक टेस्ट और फीडबैक सेशन दे रहे हैं ताकि छात्र अपनी प्रगति जान सकें।",
-    body:
-      "नियमित अभ्यास से परीक्षा तनाव कम होता है और समय प्रबंधन में मदद मिलती है। शिक्षक कहते हैं कि यह पढ़ाई को अधिक रणनीतिक बनाता है।",
-    date: "1 जून, 2026",
-    readTime: "2 मिनट",
+      'कोचिंग संस्थान अब साप्ताहिक मॉक टेस्ट और फीडबैक सेशन दे रहे हैं ताकि छात्र अपनी प्रगति जान सकें।',
+    body: 'नियमित अभ्यास से परीक्षा तनाव कम होता है और समय प्रबंधन में मदद मिलती है। शिक्षक कहते हैं कि यह पढ़ाई को अधिक रणनीतिक बनाता है।',
+    date: '1 जून, 2026',
+    readTime: '2 मिनट',
     featured: false,
     url: null,
   },
   {
     id: 5,
-    category: "छात्रवृत्ति",
-    tag: "सहायता",
-    title: "राज्य छात्रवृत्ति कार्यक्रम ग्रामीण छात्रों के लिए शुरू किया गया",
+    category: 'छात्रवृत्ति',
+    tag: 'सहायता',
+    title: 'राज्य छात्रवृत्ति कार्यक्रम ग्रामीण छात्रों के लिए शुरू किया गया',
     excerpt:
-      "एक नया राज्य कार्यक्रम ग्रामीण युवाओं को उच्च शिक्षा के लिए आर्थिक सहायता देगा।",
-    body:
-      "यह योजना ट्यूशन, पुस्तकें और परीक्षा शुल्क के लिए धन मुहैया कराएगी। कार्यान्वयन टीम गांवों में जागरूकता बढ़ा रही है।",
-    date: "31 मई, 2026",
-    readTime: "3 मिनट",
+      'एक नया राज्य कार्यक्रम ग्रामीण युवाओं को उच्च शिक्षा के लिए आर्थिक सहायता देगा।',
+    body: 'यह योजना ट्यूशन, पुस्तकें और परीक्षा शुल्क के लिए धन मुहैया कराएगी। कार्यान्वयन टीम गांवों में जागरूकता बढ़ा रही है।',
+    date: '31 मई, 2026',
+    readTime: '3 मिनट',
     featured: false,
     url: null,
   },
   {
     id: 6,
-    category: "शिक्षा",
-    tag: "कैरियर",
-    title: "टियर-2 शहरों में करियर मार्गदर्शन बढ़ रहा है",
+    category: 'शिक्षा',
+    tag: 'कैरियर',
+    title: 'टियर-2 शहरों में करियर मार्गदर्शन बढ़ रहा है',
     excerpt:
-      "और अधिक करियर काउंसलिंग सेंटर छात्र और माता-पिता को मार्गदर्शन दे रहे हैं।",
-    body:
-      "सत्रों में छात्र की रुचि के अनुरूप कोर्स विकल्प और परीक्षा तैयारी पर चर्चा की जाती है। अभिभावक इसे सकारात्मक बदलाव मान रहे हैं।",
-    date: "30 मई, 2026",
-    readTime: "2 मिनट",
+      'और अधिक करियर काउंसलिंग सेंटर छात्र और माता-पिता को मार्गदर्शन दे रहे हैं।',
+    body: 'सत्रों में छात्र की रुचि के अनुरूप कोर्स विकल्प और परीक्षा तैयारी पर चर्चा की जाती है। अभिभावक इसे सकारात्मक बदलाव मान रहे हैं।',
+    date: '30 मई, 2026',
+    readTime: '2 मिनट',
     featured: false,
     url: null,
   },
 ];
 
 const getNewsFallback = (lang) => {
-  if (lang === "hi") return FALLBACK_NEWS_HI;
+  if (lang === 'hi') return FALLBACK_NEWS_HI;
   return FALLBACK_NEWS_EN;
 };
 
@@ -247,59 +235,61 @@ export const chatWithAI = async (req, res) => {
       messages = [],
       language: requestedLanguage,
       conversationId,
-      userRole = "student",
+      userRole = 'student',
     } = req.body;
 
     if (!messages.length) {
-      return res.status(400).json({ message: "Messages array is required." });
+      return res.status(400).json({ message: 'Messages array is required.' });
     }
 
     const userId = req.user?._id;
     const resolvedConversationId =
-      conversationId || `user:${userId || "anonymous"}`;
+      conversationId || `user:${userId || 'anonymous'}`;
 
     console.log(
-      "[AI Chat] userId:",
+      '[AI Chat] userId:',
       userId,
-      "conversationId:",
+      'conversationId:',
       conversationId,
-      "resolved:",
+      'resolved:',
       resolvedConversationId,
-      "role:",
-      userRole,
+      'role:',
+      userRole
     );
 
     // The userId is used when creating AiChatMessage, falling back to null for anonymous users.
 
-    const targetLang = normalizeLanguage(requestedLanguage) || requestedLanguage;
+    const targetLang =
+      normalizeLanguage(requestedLanguage) || requestedLanguage;
     const languageHint = targetLang
       ? `CRITICAL: You MUST respond entirely in ${targetLang}. Ignore the language of the student's query and respond in ${targetLang}.`
-      : "";
+      : '';
 
-    const activePrompt = userRole === "instructor" ? SYSTEM_PROMPT_INSTRUCTOR : SYSTEM_PROMPT;
+    const activePrompt =
+      userRole === 'instructor' ? SYSTEM_PROMPT_INSTRUCTOR : SYSTEM_PROMPT;
 
     const groqMessages = [
-      { role: "system", content: activePrompt },
-      { role: "system", content: languageHint },
+      { role: 'system', content: activePrompt },
+      { role: 'system', content: languageHint },
       // Only send last 20 messages to stay within context limits
       ...messages.slice(-20).map((m) => ({
-        role: m.role === "ai" ? "assistant" : m.role,
-        content: m.content ?? m.text ?? "",
+        role: m.role === 'ai' ? 'assistant' : m.role,
+        content: m.content ?? m.text ?? '',
       })),
     ];
 
     // Set up SSE headers for immediate streaming response with zero delay
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
     // Perform database persistence asynchronously so streaming starts instantly
     const lastUserText =
       messages[messages.length - 1]?.content ??
       messages[messages.length - 1]?.text ??
-      "";
-    const userMessageText = String(lastUserText || "").trim();
+      '';
+    const userMessageText = String(lastUserText || '').trim();
 
     if (userMessageText) {
       (async () => {
@@ -307,13 +297,18 @@ export const chatWithAI = async (req, res) => {
           await AiChatMessage.create({
             userId: userId || null,
             conversationId: resolvedConversationId,
-            role: "user",
+            role: 'user',
             content: userMessageText,
           });
 
           if (userId) {
-            const existingConv = await AiConversation.findOne({ conversationId: resolvedConversationId });
-            const defaultTitle = userMessageText.length > 42 ? userMessageText.slice(0, 42) + "…" : userMessageText;
+            const existingConv = await AiConversation.findOne({
+              conversationId: resolvedConversationId,
+            });
+            const defaultTitle =
+              userMessageText.length > 42
+                ? userMessageText.slice(0, 42) + '…'
+                : userMessageText;
 
             const updateData = {
               userId,
@@ -321,7 +316,7 @@ export const chatWithAI = async (req, res) => {
               lastMessageAt: new Date(),
             };
 
-            if (!existingConv || existingConv.title === "New conversation") {
+            if (!existingConv || existingConv.title === 'New conversation') {
               updateData.title = defaultTitle;
             }
 
@@ -335,7 +330,10 @@ export const chatWithAI = async (req, res) => {
           }
           deleteKey(`ai:history:${resolvedConversationId}`).catch(() => {});
         } catch (err) {
-          console.error("[AI Chat] Async user message save error:", err.message);
+          console.error(
+            '[AI Chat] Async user message save error:',
+            err.message
+          );
         }
       })();
     }
@@ -348,7 +346,7 @@ export const chatWithAI = async (req, res) => {
       temperature: 0.7,
     });
 
-    let assistantText = "";
+    let assistantText = '';
 
     for await (const chunk of stream) {
       const delta = chunk.choices[0]?.delta?.content;
@@ -356,7 +354,7 @@ export const chatWithAI = async (req, res) => {
         assistantText += delta;
         res.write(`data: ${JSON.stringify({ text: delta })}\n\n`);
       }
-      if (chunk.choices[0]?.finish_reason === "stop") {
+      if (chunk.choices[0]?.finish_reason === 'stop') {
         res.write(`data: [DONE]\n\n`);
         break;
       }
@@ -368,34 +366,37 @@ export const chatWithAI = async (req, res) => {
           await AiChatMessage.create({
             userId: userId || null,
             conversationId: resolvedConversationId,
-            role: "assistant",
+            role: 'assistant',
             content: assistantText.trim(),
           });
           deleteKey(`ai:history:${resolvedConversationId}`).catch(() => {});
         } catch (err) {
-          console.error("[AI Chat] Async assistant message save error:", err.message);
+          console.error(
+            '[AI Chat] Async assistant message save error:',
+            err.message
+          );
         }
       })();
     }
 
     res.end();
   } catch (err) {
-    console.error("AI chat error:", err);
+    console.error('AI chat error:', err);
 
     if (!res.headersSent) {
       // Rate limit handling
       if (err.status === 429) {
         return res.status(503).json({
           message:
-            "AI Tutor is temporarily unavailable. Please try again later.",
+            'AI Tutor is temporarily unavailable. Please try again later.',
         });
       }
       return res
         .status(500)
-        .json({ message: err.message || "AI service unavailable." });
+        .json({ message: err.message || 'AI service unavailable.' });
     } else {
       res.write(
-        `data: ${JSON.stringify({ error: "Stream interrupted." })}\n\n`,
+        `data: ${JSON.stringify({ error: 'Stream interrupted.' })}\n\n`
       );
       res.end();
     }
@@ -409,7 +410,7 @@ export const getChatHistory = async (req, res) => {
 
     if (!conversationId) {
       return res.status(400).json({
-        message: "Conversation id is required.",
+        message: 'Conversation id is required.',
       });
     }
 
@@ -418,7 +419,7 @@ export const getChatHistory = async (req, res) => {
       const conv = await AiConversation.findOne({ conversationId });
       if (conv && String(conv.userId) !== String(userId)) {
         return res.status(403).json({
-          message: "Forbidden: You do not own this conversation.",
+          message: 'Forbidden: You do not own this conversation.',
         });
       }
     }
@@ -431,16 +432,16 @@ export const getChatHistory = async (req, res) => {
 
     const messages = await AiChatMessage.find({ conversationId })
       .sort({ createdAt: 1 })
-      .select("role content createdAt");
+      .select('role content createdAt');
 
     const responseData = { conversationId, messages };
     await setJson(cacheKey, responseData, 1800); // cache for 30 minutes
 
     res.json(responseData);
   } catch (err) {
-    console.error("Get AI chat history error:", err);
+    console.error('Get AI chat history error:', err);
     res.status(500).json({
-      message: err.message || "Failed to fetch chat history.",
+      message: err.message || 'Failed to fetch chat history.',
     });
   }
 };
@@ -451,14 +452,14 @@ export const generateQuizAI = async (req, res) => {
     if (!title || !summary)
       return res
         .status(400)
-        .json({ message: "Title and summary are required." });
+        .json({ message: 'Title and summary are required.' });
 
     const prompt = `Generate exactly 5 multiple choice questions for a final course quiz based on the following course details.
 
 Course Title (Subject): ${title}
-${className ? `Class / Grade Level: ${className}\n` : ""}Course Summary: ${summary}
+${className ? `Class / Grade Level: ${className}\n` : ''}Course Summary: ${summary}
 
-Calibrate the difficulty, vocabulary, and depth of every question strictly to the stated class/grade level${className ? ` (${className})` : ""} — do not write questions above or below that level, and do not include topics that fall outside a typical ${className || "school"} syllabus for this subject.
+Calibrate the difficulty, vocabulary, and depth of every question strictly to the stated class/grade level${className ? ` (${className})` : ''} — do not write questions above or below that level, and do not include topics that fall outside a typical ${className || 'school'} syllabus for this subject.
 
 Return valid JSON only in the following shape:
 {
@@ -480,27 +481,27 @@ Each question must have exactly 4 options and a correctOptionIndex between 0 and
     const response = await groq.chat.completions.create({
       model: GROQ_MODEL,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: prompt },
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
       ],
       max_tokens: 700,
       temperature: 0.7,
     });
 
-    const text = response.choices?.[0]?.message?.content?.trim() ?? "";
+    const text = response.choices?.[0]?.message?.content?.trim() ?? '';
     let parsed;
 
     try {
       parsed = JSON.parse(text);
     } catch (parseErr) {
       const cleaned = text
-        .replace(/```json/gi, "")
-        .replace(/```/g, "")
+        .replace(/```json/gi, '')
+        .replace(/```/g, '')
         .trim();
-      const start = cleaned.indexOf("{");
-      const end = cleaned.lastIndexOf("}");
+      const start = cleaned.indexOf('{');
+      const end = cleaned.lastIndexOf('}');
       if (start === -1 || end === -1 || end < start) {
-        throw new Error("AI returned invalid quiz JSON.");
+        throw new Error('AI returned invalid quiz JSON.');
       }
       parsed = JSON.parse(cleaned.slice(start, end + 1));
     }
@@ -512,26 +513,26 @@ Each question must have exactly 4 options and a correctOptionIndex between 0 and
       quiz.questions.length !== 5 ||
       !quiz.questions.every(
         (q) =>
-          typeof q.question === "string" &&
+          typeof q.question === 'string' &&
           Array.isArray(q.options) &&
           q.options.length === 4 &&
-          q.options.every((opt) => typeof opt === "string") &&
+          q.options.every((opt) => typeof opt === 'string') &&
           Number.isInteger(q.correctOptionIndex) &&
           q.correctOptionIndex >= 0 &&
-          q.correctOptionIndex < 4,
+          q.correctOptionIndex < 4
       )
     ) {
       return res.status(500).json({
-        message: "AI did not return a valid quiz format. Please try again.",
+        message: 'AI did not return a valid quiz format. Please try again.',
       });
     }
 
     res.json({ quiz });
   } catch (err) {
-    console.error("AI quiz generation error:", err);
+    console.error('AI quiz generation error:', err);
     res.status(500).json({
       message:
-        err.response?.data?.message || err.message || "Quiz generation failed.",
+        err.response?.data?.message || err.message || 'Quiz generation failed.',
     });
   }
 };
@@ -541,21 +542,25 @@ export const generateMockTestQuestionsAI = async (req, res) => {
     const { subject, className, board, difficulty, topic, count } = req.body;
 
     if (!subject || !className) {
-      return res.status(400).json({ message: "Subject and class are required." });
+      return res
+        .status(400)
+        .json({ message: 'Subject and class are required.' });
     }
 
     const questionCount = count || 5;
-    const focusTopic = topic ? `Topic Focus: ${topic}` : "General course syllabus";
+    const focusTopic = topic
+      ? `Topic Focus: ${topic}`
+      : 'General course syllabus';
 
     const prompt = `Generate exactly ${questionCount} multiple choice questions for a mock test based on the following details.
 
 Subject: ${subject}
 Class / Grade Level: ${className}
-Board: ${board || "General"}
-Difficulty: ${difficulty || "Medium"}
+Board: ${board || 'General'}
+Difficulty: ${difficulty || 'Medium'}
 ${focusTopic}
 
-Calibrate the difficulty, vocabulary, and depth strictly to the stated class level and board. Ensure the difficulty matches the requested "${difficulty || "Medium"}" level.
+Calibrate the difficulty, vocabulary, and depth strictly to the stated class level and board. Ensure the difficulty matches the requested "${difficulty || 'Medium'}" level.
 
 Return valid JSON only in the following exact shape:
 {
@@ -579,27 +584,27 @@ Do NOT include markdown formatting outside the JSON block. Return ONLY the raw J
     const response = await groq.chat.completions.create({
       model: GROQ_MODEL,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: prompt },
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
       ],
       max_tokens: Math.min(2500, questionCount * 300),
       temperature: 0.7,
     });
 
-    const text = response.choices?.[0]?.message?.content?.trim() ?? "";
+    const text = response.choices?.[0]?.message?.content?.trim() ?? '';
     let parsed;
 
     try {
       parsed = JSON.parse(text);
     } catch (parseErr) {
       const cleaned = text
-        .replace(/```json/gi, "")
-        .replace(/```/g, "")
+        .replace(/```json/gi, '')
+        .replace(/```/g, '')
         .trim();
-      const start = cleaned.indexOf("{");
-      const end = cleaned.lastIndexOf("}");
+      const start = cleaned.indexOf('{');
+      const end = cleaned.lastIndexOf('}');
       if (start === -1 || end === -1 || end < start) {
-        throw new Error("AI returned invalid JSON.");
+        throw new Error('AI returned invalid JSON.');
       }
       parsed = JSON.parse(cleaned.slice(start, end + 1));
     }
@@ -610,26 +615,29 @@ Do NOT include markdown formatting outside the JSON block. Return ONLY the raw J
       questions.length === 0 ||
       !questions.every(
         (q) =>
-          typeof q.questionText === "string" &&
+          typeof q.questionText === 'string' &&
           Array.isArray(q.options) &&
           q.options.length === 4 &&
-          q.options.every((opt) => typeof opt === "string") &&
+          q.options.every((opt) => typeof opt === 'string') &&
           Number.isInteger(q.correctOption) &&
           q.correctOption >= 0 &&
           q.correctOption < 4 &&
-          typeof q.explanation === "string"
+          typeof q.explanation === 'string'
       )
     ) {
       return res.status(500).json({
-        message: "AI did not return a valid question format. Please try again.",
+        message: 'AI did not return a valid question format. Please try again.',
       });
     }
 
     res.json({ questions });
   } catch (err) {
-    console.error("AI mock test generation error:", err);
+    console.error('AI mock test generation error:', err);
     res.status(500).json({
-      message: err.response?.data?.message || err.message || "Question generation failed.",
+      message:
+        err.response?.data?.message ||
+        err.message ||
+        'Question generation failed.',
     });
   }
 };
@@ -641,7 +649,7 @@ Do NOT include markdown formatting outside the JSON block. Return ONLY the raw J
  */
 export const getNewsAI = async (req, res) => {
   try {
-    const lang = req.query.lang || "en";
+    const lang = req.query.lang || 'en';
 
     // Check cache
     const cacheEntry = await NewsCache.findOne({ lang });
@@ -659,56 +667,56 @@ export const getNewsAI = async (req, res) => {
 
     const langConfig = {
       hi: {
-        name: "Hindi",
-        script: "Devanagari script",
+        name: 'Hindi',
+        script: 'Devanagari script',
         categories:
           'one of "शिक्षा", "प्रतियोगी परीक्षा", "नीति", "तकनीकी", "छात्रवृत्ति"',
         dateExample: '"4 जून, 2026"',
         readTimeExample: '"3 मिनट"',
       },
       mr: {
-        name: "Marathi",
-        script: "Devanagari script (Marathi language)",
+        name: 'Marathi',
+        script: 'Devanagari script (Marathi language)',
         categories:
           'one of "शिक्षण", "स्पर्धा परीक्षा", "धोरण", "तंत्रज्ञान", "शिष्यवृत्ती"',
         dateExample: '"4 जून, 2026"',
         readTimeExample: '"3 मिनिटे"',
       },
       gu: {
-        name: "Gujarati",
-        script: "Gujarati script",
+        name: 'Gujarati',
+        script: 'Gujarati script',
         categories:
           'one of "શિક્ષણ", "સ્પર્ધાત્મક પરીક્ષા", "નીતિ", "ટેકનોલોજી", "શિષ્યવૃત્તિ"',
         dateExample: '"4 જૂન, 2026"',
         readTimeExample: '"3 મિનિટ"',
       },
       bn: {
-        name: "Bengali",
-        script: "Bengali script",
+        name: 'Bengali',
+        script: 'Bengali script',
         categories:
           'one of "শিক্ষা", "প্রতিযোগিতামূলক পরীক্ষা", "নীতিমালা", "প্রযুক্তি", "বৃত্তি"',
         dateExample: '"৪ জুন, ২০২৬"',
         readTimeExample: '"৩ মিনিট"',
       },
       ta: {
-        name: "Tamil",
-        script: "Tamil script",
+        name: 'Tamil',
+        script: 'Tamil script',
         categories:
           'one of "கல்வி", "போட்டித் தேர்வுகள்", "கொள்கை", "தொழில்நுட்பம்", "உதவித்தொகை"',
         dateExample: '"ஜூன் 4, 2026"',
         readTimeExample: '"3 நிமிடங்கள்"',
       },
       te: {
-        name: "Telugu",
-        script: "Telugu script",
+        name: 'Telugu',
+        script: 'Telugu script',
         categories:
           'one of "విద్య", "పోటీ పరీక్షలు", "విధానం", "సాంకేతికత", "స్కాలర్‌షిప్‌లు"',
         dateExample: '"జూన్ 4, 2026"',
         readTimeExample: '"3 నిమిషాలు"',
       },
       en: {
-        name: "English",
-        script: "English language",
+        name: 'English',
+        script: 'English language',
         categories:
           'one of "Education", "Competitive Exams", "Policy", "Technology", "Scholarships"',
         dateExample: '"June 4, 2026"',
@@ -718,8 +726,8 @@ export const getNewsAI = async (req, res) => {
 
     const cfg = langConfig[lang] || langConfig.en;
     const today = new Date().toLocaleDateString(
-      lang === "hi" || lang === "mr" ? "hi-IN" : "en-IN",
-      { day: "numeric", month: "long", year: "numeric" },
+      lang === 'hi' || lang === 'mr' ? 'hi-IN' : 'en-IN',
+      { day: 'numeric', month: 'long', year: 'numeric' }
     );
 
     const prompt = `You are a news curator for an Indian education platform. Generate 6 realistic, current Indian education news articles as of ${today}.
@@ -742,26 +750,26 @@ Return a JSON object with a single key "articles" whose value is an array of 6 o
         model: GROQ_MODEL,
         messages: [
           {
-            role: "system",
+            role: 'system',
             content:
               'You are a JSON generator. Always return a JSON object with a single key "articles" containing an array. No markdown, no explanation.',
           },
-          { role: "user", content: prompt },
+          { role: 'user', content: prompt },
         ],
         max_tokens: 8000,
         temperature: 0.7,
       });
 
-      const text = response.choices?.[0]?.message?.content?.trim() ?? "";
-      console.log("[Groq raw]", text.slice(0, 200));
+      const text = response.choices?.[0]?.message?.content?.trim() ?? '';
+      console.log('[Groq raw]', text.slice(0, 200));
 
       // Parse and unwrap
       let articles;
       try {
         // Strip markdown code fences if present
         const cleaned = text
-          .replace(/```json/gi, "")
-          .replace(/```/g, "")
+          .replace(/```json/gi, '')
+          .replace(/```/g, '')
           .trim();
         const raw = JSON.parse(cleaned);
 
@@ -769,32 +777,32 @@ Return a JSON object with a single key "articles" whose value is an array of 6 o
           articles = raw;
         } else {
           const key = Object.keys(raw).find((k) => Array.isArray(raw[k]));
-          if (!key) throw new Error("No array found in Groq JSON response.");
+          if (!key) throw new Error('No array found in Groq JSON response.');
           articles = raw[key];
         }
       } catch (parseErr) {
-        throw new Error("Failed to parse Groq response: " + parseErr.message);
+        throw new Error('Failed to parse Groq response: ' + parseErr.message);
       }
 
       if (!Array.isArray(articles) || articles.length === 0) {
-        throw new Error("Groq returned empty or invalid articles array.");
+        throw new Error('Groq returned empty or invalid articles array.');
       }
 
       // Save to cache
       if (cacheEntry) {
         cacheEntry.articles = articles;
-        cacheEntry.markModified("articles");
+        cacheEntry.markModified('articles');
         await cacheEntry.save();
       } else {
         await NewsCache.create({ lang, articles });
       }
 
       console.log(
-        `[News] Generated ${articles.length} articles for lang=${lang}`,
+        `[News] Generated ${articles.length} articles for lang=${lang}`
       );
       return res.json(articles);
     } catch (groqErr) {
-      console.error("[Groq Error]", groqErr.message);
+      console.error('[Groq Error]', groqErr.message);
 
       // Graceful degradation — serve expired cache rather than 500
       if (cacheEntry?.articles?.length) {
@@ -808,9 +816,9 @@ Return a JSON object with a single key "articles" whose value is an array of 6 o
       return res.json(fallbackArticles);
     }
   } catch (err) {
-    console.error("[getNewsAI fatal]", err.message);
+    console.error('[getNewsAI fatal]', err.message);
     return res.status(500).json({
-      message: err.message || "Failed to fetch AI news.",
+      message: err.message || 'Failed to fetch AI news.',
     });
   }
 };
@@ -822,7 +830,7 @@ export const deleteChatHistory = async (req, res) => {
 
     if (!conversationId) {
       return res.status(400).json({
-        message: "Conversation id is required.",
+        message: 'Conversation id is required.',
       });
     }
 
@@ -831,7 +839,7 @@ export const deleteChatHistory = async (req, res) => {
       const conv = await AiConversation.findOne({ conversationId });
       if (conv && String(conv.userId) !== String(userId)) {
         return res.status(403).json({
-          message: "Forbidden: You do not own this conversation.",
+          message: 'Forbidden: You do not own this conversation.',
         });
       }
     }
@@ -842,7 +850,7 @@ export const deleteChatHistory = async (req, res) => {
     // Invalidate Redis caches
     await deleteKey(`ai:history:${conversationId}`);
     if (userId) {
-      const userRole = conv?.userRole || "student";
+      const userRole = conv?.userRole || 'student';
       await deleteKey(`ai:conversations:${userId}:${userRole}`);
     }
 
@@ -851,9 +859,9 @@ export const deleteChatHistory = async (req, res) => {
       deletedCount: result.deletedCount,
     });
   } catch (err) {
-    console.error("Delete AI chat history error:", err);
+    console.error('Delete AI chat history error:', err);
     res.status(500).json({
-      message: err.message || "Failed to delete chat history.",
+      message: err.message || 'Failed to delete chat history.',
     });
   }
 };
@@ -862,10 +870,10 @@ export const getConversations = async (req, res) => {
   try {
     const userId = req.user?._id;
     if (!userId) {
-      return res.status(401).json({ message: "Unauthorized." });
+      return res.status(401).json({ message: 'Unauthorized.' });
     }
 
-    const { role = "student" } = req.query;
+    const { role = 'student' } = req.query;
 
     const cacheKey = `ai:conversations:${userId}:${role}`;
     const cachedData = await getJson(cacheKey);
@@ -873,13 +881,18 @@ export const getConversations = async (req, res) => {
       return res.json(cachedData);
     }
 
-    const conversations = await AiConversation.find({ userId, userRole: role })
-      .sort({ lastMessageAt: -1 });
+    const conversations = await AiConversation.find({
+      userId,
+      userRole: role,
+    }).sort({ lastMessageAt: -1 });
 
     const formattedSessions = conversations.map((c) => ({
       id: c.conversationId,
       title: c.title,
-      time: c.lastMessageAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      time: c.lastMessageAt.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
       dateLabel: dateLabel(c.lastMessageAt),
       messages: [],
     }));
@@ -889,19 +902,23 @@ export const getConversations = async (req, res) => {
 
     res.json(responseData);
   } catch (err) {
-    console.error("Get conversations error:", err);
-    res.status(500).json({ message: err.message || "Failed to fetch conversations." });
+    console.error('Get conversations error:', err);
+    res
+      .status(500)
+      .json({ message: err.message || 'Failed to fetch conversations.' });
   }
 };
 
 export const translateTextAI = async (req, res) => {
   try {
-    const { texts = [], targetLang = "Hindi" } = req.body;
+    const { texts = [], targetLang = 'Hindi' } = req.body;
     if (!Array.isArray(texts) || !texts.length) {
       return res.json({ translations: {} });
     }
 
-    const uniqueTexts = [...new Set(texts.map((t) => String(t ?? "").trim()).filter(Boolean))];
+    const uniqueTexts = [
+      ...new Set(texts.map((t) => String(t ?? '').trim()).filter(Boolean)),
+    ];
     if (!uniqueTexts.length) {
       return res.json({ translations: {} });
     }
@@ -917,28 +934,31 @@ ${JSON.stringify(uniqueTexts)}`;
 
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,
-      messages: [{ role: "user", content: prompt }],
+      messages: [{ role: 'user', content: prompt }],
       temperature: 0.1,
-      response_format: { type: "json_object" },
+      response_format: { type: 'json_object' },
     });
 
-    const raw = completion.choices[0]?.message?.content ?? "{}";
+    const raw = completion.choices[0]?.message?.content ?? '{}';
     let parsed = {};
     try {
       parsed = JSON.parse(raw);
     } catch {
       // Try stripping markdown fences
       try {
-        const cleaned = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
+        const cleaned = raw
+          .replace(/```json/gi, '')
+          .replace(/```/g, '')
+          .trim();
         parsed = JSON.parse(cleaned);
       } catch {
-        console.warn("Failed to parse AI translation JSON:", raw.slice(0, 200));
+        console.warn('Failed to parse AI translation JSON:', raw.slice(0, 200));
       }
     }
 
     res.json({ translations: parsed });
   } catch (err) {
-    console.error("AI Translation Error:", err);
-    res.status(500).json({ message: "Translation failed", translations: {} });
+    console.error('AI Translation Error:', err);
+    res.status(500).json({ message: 'Translation failed', translations: {} });
   }
 };
