@@ -576,11 +576,11 @@ export default function CourseFloatingAI({
           className={`fixed z-50 flex items-center gap-2 sm:gap-3 select-none touch-none cursor-grab active:cursor-grabbing group motion-safe:animate-cloudFloat ${!avatarPos ? "bottom-6 right-6" : ""
             }`}
         >
-          {/* Cloud Speech Bubble Comment ("Ask AI") */}
+          {/* Cloud Speech Bubble Comment ("Ask Luna") */}
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="relative flex flex-col items-start px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl rounded-br-none bg-gradient-to-r from-[#0d1e38]/95 via-[#132d54]/95 to-[#1c1440]/95 border-2 border-cyan-400/70 shadow-[0_10px_35px_rgba(6,182,212,0.45)] backdrop-blur-md hover:scale-105 transition-all text-left group-hover:border-cyan-300"
+            className="relative flex flex-col items-start px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl sm:rounded-br-none bg-gradient-to-r from-[#0d1e38]/95 via-[#132d54]/95 to-[#1c1440]/95 border-2 border-cyan-400/70 shadow-[0_10px_35px_rgba(6,182,212,0.45)] backdrop-blur-md hover:scale-105 transition-all text-left group-hover:border-cyan-300 cursor-pointer"
             title="Click to open Course AI chat"
           >
             <div className="flex items-center gap-1.5 mb-0.5">
@@ -597,16 +597,16 @@ export default function CourseFloatingAI({
                   : "Ask about videos & notes"}
             </span>
 
-            {/* Pointer tail pointing right to avatar */}
-            <div className="absolute -right-2 bottom-3 w-0 h-0 border-t-[7px] border-t-transparent border-l-[10px] border-l-cyan-400/80 border-b-[7px] border-b-transparent" />
+            {/* Pointer tail pointing right to avatar (desktop only) */}
+            <div className="hidden sm:block absolute -right-2 bottom-3 w-0 h-0 border-t-[7px] border-t-transparent border-l-[10px] border-l-cyan-400/80 border-b-[7px] border-b-transparent" />
           </button>
 
-          {/* Cosmic Floating AI Woman Figure — clean original cutout avatar */}
+          {/* Cosmic Floating AI Woman Figure — hidden on mobile, shown on desktop (sm+) */}
           <button
             type="button"
             onClick={() => setIsOpen(true)}
             aria-label="Open Course AI Assistant"
-            className={`relative flex items-center justify-center cursor-pointer border-none bg-transparent p-0 transition-transform duration-300 hover:scale-110 active:scale-95 ${isDraggingAvatar ? "scale-110" : ""
+            className={`hidden sm:flex relative items-center justify-center cursor-pointer border-none bg-transparent p-0 transition-transform duration-300 hover:scale-110 active:scale-95 ${isDraggingAvatar ? "scale-110" : ""
               }`}
           >
             <div className="relative h-36 sm:h-44 w-auto flex items-center justify-center">
