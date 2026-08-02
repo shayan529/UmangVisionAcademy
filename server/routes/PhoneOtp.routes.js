@@ -68,21 +68,9 @@ router.post("/send-phone-otp", async (req, res) => {
       10 * 60 * 1000,
     );
 
-    let emailSent = false;
-    if (email) {
-      try {
-        await sendOtpEmail(email, otp);
-        emailSent = true;
-      } catch (mailErr) {
-        console.warn("send-phone-otp email send error:", mailErr.message);
-      }
-    }
-
     return res.status(200).json({
       success: true,
-      message: emailSent
-        ? "OTP sent to your phone and email."
-        : "Phone number verified for OTP sending.",
+      message: "Phone number verified for OTP sending.",
       ...(process.env.NODE_ENV !== "production" ? { otp } : {}),
     });
   } catch (err) {

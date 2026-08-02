@@ -501,21 +501,9 @@ export const SendLoginOtp = async (req, res) => {
       );
     }
 
-    let emailSent = false;
-    if (user?.email) {
-      try {
-        await sendOtpEmail(user.email, generatedOtp);
-        emailSent = true;
-      } catch (mailErr) {
-        console.warn("SendLoginOtp email send error:", mailErr.message);
-      }
-    }
-
     return res.status(200).json({
       success: true,
-      message: emailSent
-        ? `OTP sent to your phone and to your registered email (${user.email}).`
-        : "OTP requested successfully.",
+      message: "OTP requested successfully.",
       ...(process.env.NODE_ENV !== "production" ? { otp: generatedOtp } : {}),
     });
   } catch (err) {

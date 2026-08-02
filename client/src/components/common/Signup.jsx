@@ -351,7 +351,6 @@ const Signup = () => {
       // 1. Pre-check backend: verifies format and ensures number is not already registered (HTTP 409 if taken)
       const { data: sendOtpRes } = await api.post("/auth/send-phone-otp", {
         phoneNumber: normalizedPhoneNumber,
-        email: formData.email || undefined,
       });
 
       let usedFallback = false;
