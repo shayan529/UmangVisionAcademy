@@ -281,12 +281,12 @@ const Sidebar = ({
       {mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-[9999] md:hidden"
+          className="fixed top-[64px] inset-x-0 bottom-0 bg-slate-950/75 backdrop-blur-xs z-30 md:hidden"
         />
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-dvh w-[260px] bg-slate-950 border-r border-slate-800 flex-col shadow-[4px_0_24px_rgba(0,0,0,0.6)] z-[10000] md:hidden ${mobileOpen ? "flex" : "hidden"
+        className={`fixed top-[64px] bottom-0 left-0 h-[calc(100vh-64px)] w-[260px] bg-slate-950 border-r border-slate-800 flex-col shadow-[4px_0_24px_rgba(0,0,0,0.6)] z-40 md:hidden ${mobileOpen ? "flex" : "hidden"
           }`}
       >
         <button
