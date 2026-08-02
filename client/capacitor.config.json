@@ -1,0 +1,17 @@
+{
+  "appId": "com.umangvision.academy",
+  "appName": "Umang Vision Academy",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "plugins": {
+    "CapacitorUpdater": {
+      "statsUrl": "https://capgo.app/api/stats",
+      "autoUpdate": true,
+      "channel": "production",
+      "resetWhenUpdate": true
+    }
+  }
+}

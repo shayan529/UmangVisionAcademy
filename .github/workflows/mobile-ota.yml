@@ -1,0 +1,69 @@
+name: Mobile OTA Deployment & CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  mobile-ota-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'client/package-lock.json'
+
+      - name: Install Client Dependencies
+        run: |
+          cd client
+          npm ci || npm install --legacy-peer-deps
+
+      - name: Build Web Application
+        run: |
+          cd client
+          npm run build
+
+      - name: Check Changed Files for Native vs Web OTA
+        id: diff-check
+        run: |
+          # Compare previous commit to current HEAD
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          # Check if native-level dependencies or configs changed
+          NATIVE_CHANGED=false
+          if echo "$CHANGED_FILES" | grep -E '^(client/capacitor.config.ts|client/android/|client/ios/|client/package.json)'; then
+            NATIVE_CHANGED=true
+          fi
+
+          echo "native_changed=$NATIVE_CHANGED" >> $GITHUB_OUTPUT
+
+      - name: Deploy Capgo OTA Update (Web-Only Changes)
+        if: steps.diff-check.outputs.native_changed == 'false'
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+        run: |
+          cd client
+          if [ -z "$CAPGO_TOKEN" ]; then
+            echo "::warning:: CAPGO_TOKEN secret is not set. Skipping OTA release upload."
+          else
+            npx capgo upload -c production -a com.umangvision.academy
+            echo "::notice:: Over-The-Air (OTA) bundle uploaded successfully to Capgo!"
+          fi
+
+      - name: Alert Manual Store Release Needed (Native Changes)
+        if: steps.diff-check.outputs.native_changed == 'true'
+        run: |
+          echo "::warning title=Native Store Submission Required:: Native files, Capacitor config, or native plugin dependencies were updated in this commit. OTA update skipped. Please build a new Android AAB / iOS Archive and submit to the Play Store and App Store."
+          echo "### ⚠️ Native App Store Resubmission Required" >> $GITHUB_STEP_SUMMARY
+          echo "Native files (\`android/\`, \`ios/\`, \`capacitor.config.ts\`, or \`package.json\`) changed in this commit. Capgo OTA cannot apply native binary changes. A new \`.aab\` / \`.ipa\` build must be generated and submitted to Google Play Store & Apple App Store." >> $GITHUB_STEP_SUMMARY

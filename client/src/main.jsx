@@ -36,6 +36,8 @@ import "./i18n/index.js";
 import { HelmetProvider } from "react-helmet-async";
 import { registerSW } from "virtual:pwa-register";
 
+import MobileAppListener from "./components/common/MobileAppListener.jsx";
+
 if (import.meta.env.DEV && "serviceWorker" in navigator) {
   // Clear any active Service Worker and Cache Storage in dev mode so localhost uses fresh server data
   navigator.serviceWorker.getRegistrations().then((registrations) => {
@@ -56,6 +58,7 @@ createRoot(document.getElementById("root")).render(
   <Provider store={store}>
     <HelmetProvider>
       <BrowserRouter>
+        <MobileAppListener />
         <Suspense
           fallback={
             <div className="fixed top-0 left-0 right-0 z-[99999] pointer-events-none">
