@@ -1096,10 +1096,11 @@ const Login = () => {
           );
           setFirebaseConfirmationResult(confirmation);
         } catch (fbErr) {
-          console.warn(
-            "Firebase sendPhoneOtp failed, using server OTP fallback:",
-            fbErr?.code,
-            fbErr?.message,
+          console.error(
+            "🔥 Firebase sendPhoneOtp Error Details:",
+            fbErr?.code || "NO_CODE",
+            fbErr?.message || fbErr,
+            fbErr,
           );
           usedFallback = true;
           setOtpFallbackMode(true);
@@ -1110,13 +1111,7 @@ const Login = () => {
         setOtpFallbackMode(true);
       }
 
-      toast.success(
-        sendRes?.message ||
-          (usedFallback
-            ? t("auth.otpSentPhone") ||
-                "OTP code sent. Please check your phone or email."
-            : t("auth.otpSentPhone") || "OTP sent to your phone number!"),
-      );
+      toast.success(`OTP sent to ${fullPhone}!`);
       setOtpSent(true);
       setOtpCooldown(30);
     } catch (err) {

@@ -216,7 +216,7 @@ export const setupRecaptchaVerifier = async (
 
   await withTimeout(
     verifier.render(),
-    2500,
+    15000,
     "reCAPTCHA initialization timed out. Fast-tracking server OTP...",
   );
   window.recaptchaVerifier = verifier;
@@ -256,7 +256,7 @@ export const sendFirebasePhoneOtp = async (
   try {
     const confirmationResult = await withTimeout(
       signInWithPhoneNumber(auth, phoneNumber, verifier),
-      3500,
+      30000,
       "reCAPTCHA verification timed out. Fast-tracking server OTP...",
     );
     window.confirmationResult = confirmationResult;

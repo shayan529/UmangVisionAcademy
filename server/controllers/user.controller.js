@@ -503,7 +503,7 @@ export const SendLoginOtp = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "OTP requested successfully.",
+      message: "OTP sent to your phone number successfully.",
       ...(process.env.NODE_ENV !== "production" ? { otp: generatedOtp } : {}),
     });
   } catch (err) {

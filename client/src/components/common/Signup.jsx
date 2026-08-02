@@ -379,10 +379,11 @@ const Signup = () => {
           usedFallback = true;
           setOtpFallbackMode(true);
           setFirebaseConfirmationResult(null);
-          console.warn(
-            "Firebase Phone Auth warning in Signup, using dev OTP fallback:",
-            fbErr?.code,
-            fbErr?.message,
+          console.error(
+            "🔥 Firebase Phone Auth Error Details in Signup:",
+            fbErr?.code || "NO_CODE",
+            fbErr?.message || fbErr,
+            fbErr,
           );
         }
       } else {
@@ -390,13 +391,7 @@ const Signup = () => {
         setOtpFallbackMode(true);
       }
 
-      toast.success(
-        sendOtpRes?.message ||
-          (usedFallback
-            ? t("auth.otpSentPhone") ||
-                "OTP code sent. Please check your phone or email."
-            : t("auth.otpSentPhone") || "OTP sent to your phone number!"),
-      );
+      toast.success(`OTP sent to ${normalizedPhoneNumber}!`);
       setPhoneOtpSent(true);
       setPhoneResendCooldown(30);
       setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
