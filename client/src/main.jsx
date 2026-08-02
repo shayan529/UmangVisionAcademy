@@ -58,8 +58,8 @@ createRoot(document.getElementById("root")).render(
       <BrowserRouter>
         <Suspense
           fallback={
-            <div className="min-h-screen flex items-center justify-center bg-[#0b1120] text-slate-400">
-              <div className="w-12 h-12 border-4 border-slate-800 border-t-cyan-400 rounded-full animate-spin" />
+            <div className="fixed top-0 left-0 right-0 z-[99999] pointer-events-none">
+              <div className="h-1 w-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-500 animate-pulse" />
             </div>
           }
         >

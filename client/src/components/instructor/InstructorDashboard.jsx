@@ -59,8 +59,15 @@ export default function InstructorDashboard() {
 
   useEffect(() => {
     if (!sidebarOpen) return;
+    let ticking = false;
     const handleScroll = () => {
-      setScrollTop(window.scrollY);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrollTop(window.scrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     setScrollTop(window.scrollY);
