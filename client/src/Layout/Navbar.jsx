@@ -150,8 +150,18 @@ const Navbar = () => {
   }, [pathname]);
 
   const closeMobile = () => setMobileMenuOpen(false);
-  const currentLanguage = i18n.language?.startsWith("hi") ? "hi" : "en";
-  const isHindi = currentLanguage === "hi";
+  const languages = [
+    { code: "en", name: "English", label: "EN" },
+    { code: "hi", name: "हिंदी", label: "HI" },
+    { code: "mr", name: "मराठी", label: "MR" },
+    { code: "gu", name: "ગુજરાતી", label: "GU" },
+    { code: "bn", name: "বাংলা", label: "BN" },
+    { code: "ta", name: "தமிழ்", label: "TA" },
+    { code: "te", name: "తెలుగు", label: "TE" },
+  ];
+  const currentLangObj =
+    languages.find((l) => i18n.language?.startsWith(l.code)) || languages[0];
+
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
     setLangDropdownOpen(false);
@@ -388,28 +398,28 @@ button.btn-red:hover,
                 }}
                 className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800 transition"
               >
-                {isHindi ? "हिन्दी" : "EN"}
+                {currentLangObj.label}
                 <ChevronDown
                   size={16}
                   className={`transition-transform ${langDropdownOpen ? "rotate-180" : ""}`}
                 />
               </button>
               {langDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-36 rounded-2xl border border-slate-700 bg-slate-900 shadow-xl z-50 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => changeLanguage("en")}
-                    className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800"
-                  >
-                    English
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => changeLanguage("hi")}
-                    className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800"
-                  >
-                    हिंदी
-                  </button>
+                <div className="absolute right-0 top-full mt-2 w-40 rounded-2xl border border-slate-700 bg-slate-900 shadow-xl z-50 overflow-hidden py-1">
+                  {languages.map((lng) => (
+                    <button
+                      key={lng.code}
+                      type="button"
+                      onClick={() => changeLanguage(lng.code)}
+                      className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
+                        currentLangObj.code === lng.code
+                          ? "bg-indigo-600/30 text-indigo-300 font-bold"
+                          : "text-slate-200 hover:bg-slate-800"
+                      }`}
+                    >
+                      {lng.name}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
@@ -522,28 +532,28 @@ button.btn-red:hover,
                 onClick={() => setMobileLangDropdownOpen((prev) => !prev)}
                 className="inline-flex h-9 items-center gap-0.5 rounded-xl border border-white/10 bg-white/5 px-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition"
               >
-                {isHindi ? "हि" : "EN"}
+                {currentLangObj.label}
                 <ChevronDown
                   size={12}
                   className={`transition-transform ${mobileLangDropdownOpen ? "rotate-180" : ""}`}
                 />
               </button>
               {mobileLangDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-32 rounded-xl border border-slate-700 bg-slate-900 shadow-xl z-[110]">
-                  <button
-                    type="button"
-                    onClick={() => changeLanguage("en")}
-                    className="w-full px-4 py-2.5 text-left text-sm text-slate-200 hover:bg-slate-800 rounded-t-xl"
-                  >
-                    English
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => changeLanguage("hi")}
-                    className="w-full px-4 py-2.5 text-left text-sm text-slate-200 hover:bg-slate-800 rounded-b-xl"
-                  >
-                    हिंदी
-                  </button>
+                <div className="absolute right-0 top-full mt-2 w-36 rounded-xl border border-slate-700 bg-slate-900 shadow-xl z-[110] overflow-hidden py-1 max-h-60 overflow-y-auto">
+                  {languages.map((lng) => (
+                    <button
+                      key={lng.code}
+                      type="button"
+                      onClick={() => changeLanguage(lng.code)}
+                      className={`w-full px-4 py-2 text-left text-xs transition-colors ${
+                        currentLangObj.code === lng.code
+                          ? "bg-indigo-600/30 text-indigo-300 font-bold"
+                          : "text-slate-200 hover:bg-slate-800"
+                      }`}
+                    >
+                      {lng.name}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
