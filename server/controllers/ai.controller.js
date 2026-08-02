@@ -57,6 +57,185 @@ const normalizeLanguage = (lang) => {
   return null;
 };
 
+const FALLBACK_NEWS_EN = [
+  {
+    id: 1,
+    category: "Education",
+    tag: "AI News",
+    title: "India's education sector embraces blended learning",
+    excerpt:
+      "Schools and coaching centers across India are increasingly adopting a blended model that combines digital tools with classroom teaching to support students preparing for competitive exams.",
+    body:
+      "Education providers are using online modules and live coaching together to help students manage revision and stay connected with teachers. This hybrid model aims to increase access to quality guidance while reducing study stress for students from smaller towns. Stakeholders say the approach is particularly useful for test preparation and subject-specific doubt resolution.",
+    date: "June 4, 2026",
+    readTime: "3 min",
+    featured: true,
+    url: null,
+  },
+  {
+    id: 2,
+    category: "Policy",
+    tag: "Govt",
+    title: "New scholarship rules make merit awards more transparent",
+    excerpt:
+      "A new set of guidelines for scholarship disbursement is being introduced to ensure students from remote areas receive support faster and with fewer delays.",
+    body:
+      "The policy revision focuses on streamlining application checks and improving communication between state education departments and beneficiaries. Authorities expect students to receive approvals more quickly, especially in rural districts. Officials are also promoting the changes through school outreach programs.",
+    date: "June 3, 2026",
+    readTime: "2 min",
+    featured: false,
+    url: null,
+  },
+  {
+    id: 3,
+    category: "Technology",
+    tag: "STEM",
+    title: "Coding clubs gain popularity in city schools",
+    excerpt:
+      "Several urban schools have launched after-school coding clubs to encourage children to learn programming, robotics, and problem solving early.",
+    body:
+      "The clubs offer hands-on activities, project-based learning, and mentorship from tech professionals. Students say the workshops make science and math concepts easier to understand. Educators believe this will help shape future career interests while building confidence in digital literacy.",
+    date: "June 2, 2026",
+    readTime: "3 min",
+    featured: false,
+    url: null,
+  },
+  {
+    id: 4,
+    category: "Competitive Exams",
+    tag: "Exam Prep",
+    title: "Mock tests help students track progress ahead of board exams",
+    excerpt:
+      "A growing number of coaching institutes are offering weekly mock tests and feedback sessions to help students assess their readiness for board exams.",
+    body:
+      "Experts say regular practice tests reduce exam anxiety and improve time management. Students can identify weak areas and revise strategically. Schools are encouraging a balanced study plan as part of the preparation cycle.",
+    date: "June 1, 2026",
+    readTime: "2 min",
+    featured: false,
+    url: null,
+  },
+  {
+    id: 5,
+    category: "Scholarships",
+    tag: "Support",
+    title: "New state grant program funds rural learners",
+    excerpt:
+      "A state grant scheme has been launched to support rural students pursuing higher education in science, commerce, and arts streams.",
+    body:
+      "The program provides financial support for tuition, books, and exam fees. Administrators say the grant will encourage students from economically weaker backgrounds to continue their studies. Outreach teams are being deployed to raise awareness in village schools.",
+    date: "May 31, 2026",
+    readTime: "3 min",
+    featured: false,
+    url: null,
+  },
+  {
+    id: 6,
+    category: "Education",
+    tag: "Career",
+    title: "Career counseling sessions expand in tier-2 cities",
+    excerpt:
+      "More career counseling centers are opening in tier-2 cities to guide students on course choices, entrance exams, and vocational training opportunities.",
+    body:
+      "The sessions focus on aligning student interests with available academic and job-market pathways. Counselors are also advising on skill-based courses that match emerging industry demand. Parents and teachers are welcoming the additional guidance.",
+    date: "May 30, 2026",
+    readTime: "2 min",
+    featured: false,
+    url: null,
+  },
+];
+
+const FALLBACK_NEWS_HI = [
+  {
+    id: 1,
+    category: "शिक्षा",
+    tag: "ब्लॉग",
+    title: "स्कूलों में मिक्स्ड लर्निंग मॉडल तेजी से अपनाया जा रहा है",
+    excerpt:
+      "देश भर के स्कूल और कोचिंग सेंटर अब डिजिटल टूल्स को कक्षा शिक्षण के साथ जोड़कर पढ़ाई को सरल बना रहे हैं।",
+    body:
+      "मिश्रित शिक्षण में ऑनलाइन मॉड्यूल और लाइव क्लासेस दोनों शामिल हैं, जिससे छात्र अपनी सुविधा के अनुसार पढ़ाई कर सकते हैं। विशेषज्ञों का मानना है कि यह मॉडल परीक्षा तैयारी और संदेह समाधान दोनों के लिए लाभकारी है।",
+    date: "4 जून, 2026",
+    readTime: "3 मिनट",
+    featured: true,
+    url: null,
+  },
+  {
+    id: 2,
+    category: "नीति",
+    tag: "स्कॉलरशिप",
+    title: "छात्रवृत्ति नियमों में पारदर्शिता बढ़ी है",
+    excerpt:
+      "नए दिशानिर्देशों से दूरदराज के छात्रों को मदद अधिक तेज़ी से और कम देरी के साथ मिलेगी।",
+    body:
+      "नीति संशोधन का लक्ष्य आवेदन प्रक्रिया को सरल बनाना और अनुमोदन समय घटाना है। अधिकारियों का कहना है कि इससे ग्रामीण क्षेत्रों के छात्रों को लाभ मिलेगा।",
+    date: "3 जून, 2026",
+    readTime: "2 मिनट",
+    featured: false,
+    url: null,
+  },
+  {
+    id: 3,
+    category: "तकनीकी",
+    tag: "STEM",
+    title: "शहर के स्कूलों में कोडिंग क्लब बढ़ रहे हैं",
+    excerpt:
+      "कई स्कूलों ने अब कोडिंग और रोबोटिक्स क्लब शुरू किए हैं ताकि बच्चों में जल्दी ही डिजिटल साक्षरता बढ़े।",
+    body:
+      "कार्यक्रमों में परियोजना-आधारित सीखने और मेंटरशिप शामिल है। छात्रों को कहते हैं कि इससे विज्ञान और गणित अवधारणाएं आसान लगने लगी हैं।",
+    date: "2 जून, 2026",
+    readTime: "3 मिनट",
+    featured: false,
+    url: null,
+  },
+  {
+    id: 4,
+    category: "प्रतियोगी परीक्षा",
+    tag: "मॉक टेस्ट",
+    title: "मॉक टेस्ट से बोर्ड परीक्षा की तैयारी मजबूत होती है",
+    excerpt:
+      "कोचिंग संस्थान अब साप्ताहिक मॉक टेस्ट और फीडबैक सेशन दे रहे हैं ताकि छात्र अपनी प्रगति जान सकें।",
+    body:
+      "नियमित अभ्यास से परीक्षा तनाव कम होता है और समय प्रबंधन में मदद मिलती है। शिक्षक कहते हैं कि यह पढ़ाई को अधिक रणनीतिक बनाता है।",
+    date: "1 जून, 2026",
+    readTime: "2 मिनट",
+    featured: false,
+    url: null,
+  },
+  {
+    id: 5,
+    category: "छात्रवृत्ति",
+    tag: "सहायता",
+    title: "राज्य छात्रवृत्ति कार्यक्रम ग्रामीण छात्रों के लिए शुरू किया गया",
+    excerpt:
+      "एक नया राज्य कार्यक्रम ग्रामीण युवाओं को उच्च शिक्षा के लिए आर्थिक सहायता देगा।",
+    body:
+      "यह योजना ट्यूशन, पुस्तकें और परीक्षा शुल्क के लिए धन मुहैया कराएगी। कार्यान्वयन टीम गांवों में जागरूकता बढ़ा रही है।",
+    date: "31 मई, 2026",
+    readTime: "3 मिनट",
+    featured: false,
+    url: null,
+  },
+  {
+    id: 6,
+    category: "शिक्षा",
+    tag: "कैरियर",
+    title: "टियर-2 शहरों में करियर मार्गदर्शन बढ़ रहा है",
+    excerpt:
+      "और अधिक करियर काउंसलिंग सेंटर छात्र और माता-पिता को मार्गदर्शन दे रहे हैं।",
+    body:
+      "सत्रों में छात्र की रुचि के अनुरूप कोर्स विकल्प और परीक्षा तैयारी पर चर्चा की जाती है। अभिभावक इसे सकारात्मक बदलाव मान रहे हैं।",
+    date: "30 मई, 2026",
+    readTime: "2 मिनट",
+    featured: false,
+    url: null,
+  },
+];
+
+const getNewsFallback = (lang) => {
+  if (lang === "hi") return FALLBACK_NEWS_HI;
+  return FALLBACK_NEWS_EN;
+};
+
 /**
  * POST /ai/chat
  * Body: { messages: [{ role: "user"|"assistant", content: string }] }
@@ -623,7 +802,10 @@ Return a JSON object with a single key "articles" whose value is an array of 6 o
         return res.json(cacheEntry.articles);
       }
 
-      throw groqErr;
+      // Fall back to built-in localized news when Groq is unavailable.
+      const fallbackArticles = getNewsFallback(lang);
+      console.warn(`[News] Returning built-in fallback news for lang=${lang}`);
+      return res.json(fallbackArticles);
     }
   } catch (err) {
     console.error("[getNewsAI fatal]", err.message);
