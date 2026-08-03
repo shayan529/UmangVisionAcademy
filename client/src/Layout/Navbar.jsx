@@ -2,6 +2,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../redux/slices/authSlice";
+import toast from "react-hot-toast";
 import { ChevronDown, ShoppingCart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from "../utils/permissions";
@@ -513,6 +514,7 @@ button.btn-red:hover,
                     await dispatch(logoutUser())
                       .unwrap()
                       .catch(() => {});
+                    toast.success(t("nav.logoutSuccess", "Logged out successfully"));
                     navigate("/", { replace: true });
                   }}
                   className="btn-red"
@@ -741,6 +743,7 @@ button.btn-red:hover,
                     await dispatch(logoutUser())
                       .unwrap()
                       .catch(() => {});
+                    toast.success(t("nav.logoutSuccess", "Logged out successfully"));
                     navigate("/", { replace: true });
                   }}
                   className="btn-red flex-1 text-xs text-center"

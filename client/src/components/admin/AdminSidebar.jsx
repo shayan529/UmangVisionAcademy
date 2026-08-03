@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import toast from "react-hot-toast";
 import {
   Users,
   GraduationCap,
@@ -279,6 +280,7 @@ const AdminSidebar = ({
                 await dispatch(logoutUser())
                   .unwrap()
                   .catch(() => {});
+                toast.success("Logged out successfully");
                 navigate("/", { replace: true });
               }}
               className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"

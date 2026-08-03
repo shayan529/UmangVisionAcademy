@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { logoutUser } from "../../redux/slices/authSlice";
+import toast from "react-hot-toast";
 import { ChevronDown, LogOut } from "lucide-react";
 
 // UI primitives & modal
@@ -434,6 +435,7 @@ export default function InstructorDashboard() {
                 await dispatch(logoutUser())
                   .unwrap()
                   .catch(() => { });
+                toast.success("Logged out successfully");
                 navigate("/", { replace: true });
               }}
               className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"

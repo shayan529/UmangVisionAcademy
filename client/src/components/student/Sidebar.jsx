@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight, LogOut } from "lucide-react";
 import { logoutUser } from "../../redux/slices/authSlice";
+import toast from "react-hot-toast";
 import { useNavigate, Link, NavLink } from "react-router-dom";
 import {
   getCustomRole,
@@ -248,6 +249,7 @@ const Sidebar = ({
             onClick={async () => {
               setMobileOpen(false);
               await dispatch(logoutUser()).unwrap().catch(() => { });
+              toast.success("Logged out successfully");
               navigate("/", { replace: true });
             }}
             className="flex items-center gap-3 rounded-xl py-2.5 px-3 mt-2 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 border-l-2 border-transparent cursor-pointer"

@@ -1257,7 +1257,6 @@ const Login = () => {
   return (
     <div
       className="min-h-screen bg-[#0B1120] flex flex-col overflow-x-hidden relative login-page-wrapper"
-      style={{ pointerEvents: "none" }}
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=DM+Sans:wght@400;500&display=swap');

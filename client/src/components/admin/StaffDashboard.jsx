@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { ChevronLeft, ChevronDown, LogOut, Shield } from "lucide-react";
 import AdminReels from "./AdminReels";
 import AdminBulkImport from "./AdminBulkImport";
@@ -178,7 +179,8 @@ const StaffSidebar = ({
     await dispatch(logoutUser())
       .unwrap()
       .catch(() => {});
-    navigate("/login");
+    toast.success("Logged out successfully");
+    navigate("/", { replace: true });
   };
 
   const authLoading = useSelector((s) => s.auth.loading);
