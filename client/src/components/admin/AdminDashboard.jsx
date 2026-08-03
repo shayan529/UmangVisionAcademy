@@ -3,8 +3,13 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchUsers,
   deleteUser as deleteUserThunk,
+  replaceUser,
 } from "../../redux/slices/usersSlice";
 import { fetchAllCoursesAdmin } from "../../redux/slices/courseSlice";
+import {
+  loadCurrentUser,
+  replaceCurrentUser,
+} from "../../redux/slices/authSlice";
 import { hasBaseRole } from "../../utils/permissions";
 
 import AdminSidebar from "./AdminSidebar";
@@ -276,12 +281,16 @@ export default function AdminDashboard() {
             showToast={showToast}
             onUserRolesUpdated={(updatedUser) => {
               dispatch(replaceUser(updatedUser));
-              dispatch(replaceCurrentUser(updatedUser));
+              if (updatedUser?._id === user?._id) {
+                dispatch(loadCurrentUser({ force: true }));
+              } else {
+                dispatch(replaceCurrentUser(updatedUser));
+              }
               refreshUsersAndCourses();
             }}
             onRoleChanged={() => {
               refreshUsersAndCourses();
-              dispatch(loadCurrentUser());
+              dispatch(loadCurrentUser({ force: true }));
             }}
           />
         );

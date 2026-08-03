@@ -15,6 +15,10 @@ const SLIM_FIELDS = [
   "selectedClass", "referralCode", "isActive",
   "enrolledCourses", "teachingCourses", "notificationSettings",
   "earnedCertificates", "quizSubmissions", "courseProgress", "score",
+  // Role-related fields hydrated server-side — must survive the cache round-trip
+  // so the sidebar and permission gates work correctly on page reload without
+  // waiting for the background /me fetch to complete.
+  "dashboardModules", "basePermissions",
 ];
 
 const slimUser = (user) => {

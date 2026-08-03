@@ -219,7 +219,6 @@ const DASHBOARD_MODULE_LABELS = {
   sessions: "Sessions",
   ai_tutor: "AI Tutor",
   references: "References",
-  roles: "Roles & Permissions",
   "bulk_import": "Bulk Import",
   devices: "Logged In Devices",
 
@@ -260,7 +259,7 @@ const SIDEBAR_TO_PERMISSION = {
   sessions: "sessions",
   ai_tutor: "ai_tutor",
   references: "references",
-  roles: "users",       // Roles & Permissions page is gated on users permission
+  // "roles" intentionally omitted — Roles & Permissions is admin-only
   bulk_import: "bulk_import",
   devices: "devices",
   // Student workspace
@@ -693,6 +692,7 @@ const AssignRolesModal = ({
   roles = [],
   onClose,
   onSaved,
+  onUserUpdated,   // (hydratedUser) => void — called after a successful save
   showToast,
 }) => {
   const BASE_ROLE_VALUES = ["student", "instructor", "staff", "admin"];
@@ -744,13 +744,15 @@ const AssignRolesModal = ({
     }
     setSaving(true);
     try {
-      await api(`${API_BASE}/assign/${user._id}`, {
+      const updatedUser = await api(`${API_BASE}/assign/${user._id}`, {
         method: "PUT",
-        // Single field: roleId is either a base-role string (from system role
-        // name) or a custom Role ObjectId string.
         body: JSON.stringify({ roleId: selectedRoleId }),
       });
       showToast?.(`Role updated for ${user.name}.`);
+      // Push the freshly-hydrated user object (returned by setUserRoles) back
+      // into Redux so the dashboard sidebar and permission gates update
+      // immediately without requiring a page reload.
+      onUserUpdated?.(updatedUser);
       onSaved();
     } catch (err) {
       showToast?.(
@@ -1218,7 +1220,7 @@ const AddUserModal = ({ onClose, onSaved, showToast }) => {
 };
 
 // ── Main ───────────────────────────────────────────────────────────────────────
-const RoleManager = ({ showToast, currentUser }) => {
+const RoleManager = ({ showToast, currentUser, onUserRolesUpdated }) => {
   const showToastRef = useRef(showToast);
   useEffect(() => {
     showToastRef.current = showToast;
@@ -1838,13 +1840,16 @@ const RoleManager = ({ showToast, currentUser }) => {
       {assignTarget && (
         <AssignRolesModal
           user={assignTarget}
-          roles={roles.filter(
-            (r) => !(r.isSystem && r.name?.toLowerCase() === "admin"),
-          )}
+          roles={roles}
           onClose={() => setAssignTarget(null)}
           onSaved={() => {
             setAssignTarget(null);
             loadAll();
+          }}
+          onUserUpdated={(updatedUser) => {
+            // Immediately sync the updated user into Redux so any open
+            // staff/admin dashboard reflects the new role without a reload.
+            onUserRolesUpdated?.(updatedUser);
           }}
           showToast={showToast}
         />

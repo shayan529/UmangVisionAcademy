@@ -155,10 +155,7 @@ const StaffSidebar = ({
     ...(hasPermission(user, "references", "view")
       ? [{ id: "references", label: "References", icon: "🔗" }]
       : []),
-    ...(hasBaseRole(user, "admin") ||
-    hasPermission(user, "users", "view") ||
-    hasPermission(user, "users", "create") ||
-    hasPermission(user, "users", "edit")
+    ...(hasBaseRole(user, "admin")
       ? [{ id: "roles", label: "Roles & Permissions", icon: "🔒" }]
       : []),
     ...(hasBaseRole(user, "admin") ||
@@ -659,21 +656,26 @@ export default function StaffDashboard() {
           <AdminReferences showToast={showToast} />
         ) : null;
       case "roles":
-        return hasBaseRole(user, "admin") ||
-          hasPermission(user, "users", "view") ||
-          hasPermission(user, "users", "create") ||
-          hasPermission(user, "users", "edit") ? (
+        return hasBaseRole(user, "admin") ? (
           <RoleManager
             currentUser={user}
             showToast={showToast}
             onUserRolesUpdated={(updatedUser) => {
               dispatch(replaceUser(updatedUser));
-              dispatch(replaceCurrentUser(updatedUser));
+              // If the admin just changed their own role, force a fresh
+              // /users/me fetch so the server re-hydrates the user with the
+              // new dashboardModules + basePermissions and busts any stale
+              // Redis cache. This updates the sidebar instantly.
+              if (updatedUser?._id === user?._id) {
+                dispatch(loadCurrentUser({ force: true }));
+              } else {
+                dispatch(replaceCurrentUser(updatedUser));
+              }
               refreshUsersAndCourses();
             }}
             onRoleChanged={() => {
               refreshUsersAndCourses();
-              dispatch(loadCurrentUser());
+              dispatch(loadCurrentUser({ force: true }));
             }}
           />
         ) : null;

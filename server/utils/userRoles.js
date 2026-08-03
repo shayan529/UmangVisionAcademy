@@ -94,6 +94,12 @@ export const hydrateUserRoles = async (user) => {
   }
 
   if (roleValue && typeof roleValue === "object" && roleValue._id) {
+    // Role is already a populated object — hoist dashboardModules and
+    // permissions to the top level so client-side helpers find them
+    // regardless of whether they check user.dashboardModules or
+    // user.role.dashboardModules.
+    plain.dashboardModules = roleValue.dashboardModules ?? null;
+    plain.basePermissions = roleValue.permissions ?? [];
     delete plain.roles;
     delete plain.assignedRoles;
     delete plain.password;
@@ -209,6 +215,7 @@ export const hydrateUsersRoles = async (users = []) => {
 
       if (roleValue && typeof roleValue === "object" && roleValue._id) {
         plain.dashboardModules = roleValue.dashboardModules ?? null;
+        plain.basePermissions = roleValue.permissions ?? [];
         delete plain.roles;
         delete plain.assignedRoles;
         delete plain.password;
@@ -225,6 +232,7 @@ export const hydrateUsersRoles = async (users = []) => {
         const roleDoc = roleMap.get(idStr);
         plain.role = roleDoc;
         plain.dashboardModules = roleDoc?.dashboardModules ?? null;
+        plain.basePermissions = roleDoc?.permissions ?? [];
       } else {
         return hydrateUserRoles(u);
       }
@@ -270,7 +278,8 @@ export const hasPermissionGrant = (user, moduleName, actionName = "view") => {
         ),
       );
     }
-    return true;
+    // No basePermissions set — staff has no access by default.
+    return false;
   }
 
   const role = user?.role;

@@ -25,7 +25,10 @@ export const hasDashboardModule = (user, moduleKey) => {
   if (!user) return false;
   if (hasBaseRole(user, "admin")) return true;
   const mods = user.dashboardModules ?? user.role?.dashboardModules;
-  if (!Array.isArray(mods) || mods.length === 0) return true;
+  // null / undefined = unrestricted (role has no module list — show everything)
+  // empty array = fully restricted (role exists but no modules were enabled)
+  if (mods == null) return true;
+  if (!Array.isArray(mods) || mods.length === 0) return false;
   return mods.includes(moduleKey);
 };
 export const hasBaseRole = (user, roleName) => {
@@ -178,7 +181,9 @@ export const hasPermission = (user, moduleName, actionName = "view") => {
         ),
       );
     }
-    return true;
+    // No basePermissions set — staff has no access by default.
+    // An admin must explicitly assign permissions via the Roles & Permissions UI.
+    return false;
   }
 
   return false;

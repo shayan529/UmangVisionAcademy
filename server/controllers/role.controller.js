@@ -3,6 +3,7 @@ import Role, { PERMISSION_MODULES, DASHBOARD_MODULES } from "../models/role.mode
 import User from "../models/user.model.js";
 import { hydrateUserRoles, isBaseRole, isRoleObjectId } from "../utils/userRoles.js";
 import { deleteKey, deleteKeys } from "../utils/redisClient.js";
+import { userLRU } from "../utils/lruCache.js";
 
 const { Types } = mongoose;
 
@@ -91,7 +92,11 @@ export const updateRole = async (req, res) => {
     const affectedUsers = await User.find(userQuery).select("_id").lean();
 
     if (affectedUsers.length > 0) {
-      await deleteKeys(affectedUsers.map((u) => `user:${u._id.toString()}`));
+      const userCacheKeys = affectedUsers.map((u) => `user:${u._id.toString()}`);
+      await deleteKeys(userCacheKeys);
+      // Also bust the in-process LRU so the change takes effect on the
+      // very next request without waiting for LRU TTL to expire.
+      userCacheKeys.forEach((k) => userLRU.delete(k));
     }
 
     res.json(role);
@@ -163,7 +168,11 @@ export const setUserRoles = async (req, res) => {
     }
 
     await user.save();
-    await deleteKey(`user:${user._id.toString()}`);
+    // Bust both Redis and the in-process LRU so the very next request from
+    // this user gets a freshly hydrated role/permissions object.
+    const userCacheKey = `user:${user._id.toString()}`;
+    await deleteKey(userCacheKey);
+    userLRU.delete(userCacheKey);
 
     res.json(await hydrateUserRoles(user));
   } catch (error) {
