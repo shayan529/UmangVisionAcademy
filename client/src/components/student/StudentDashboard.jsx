@@ -1197,13 +1197,6 @@ const StudentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#0b1120] text-[#f1f5f9] md:flex">
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm md:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
       <Sidebar
         user={user}
         collapsed={collapsed}
