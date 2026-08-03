@@ -7,14 +7,34 @@ import CourseCard from "./CourseCard";
 import { hasBaseRole } from "../../utils/permissions";
 
 const SkeletonCard = () => (
-  <div className="rounded-2xl overflow-hidden border border-slate-800 bg-[#111827] animate-pulse flex flex-row md:flex-col h-[150px] md:h-auto p-2.5 md:p-0 gap-3 md:gap-0">
-    <div className="w-32 h-full md:w-full md:h-44 bg-slate-700/50 rounded-md md:rounded-none shrink-0" />
-    <div className="flex-1 p-2 md:p-4 space-y-3 flex flex-col justify-between">
-      <div>
-        <div className="h-4 bg-slate-700/50 rounded w-3/4" />
-        <div className="h-3 bg-slate-700/40 rounded w-1/2 mt-2" />
+  <div className="bg-[#1e293b] border border-slate-600/70 rounded-2xl overflow-hidden flex flex-col h-full">
+    {/* Image area — exact same height as real card */}
+    <div className="relative w-full h-44 sm:h-48 shrink-0 bg-slate-700/60 overflow-hidden">
+      <div className="absolute inset-0 -translate-x-full animate-shimmer-sweep bg-gradient-to-r from-transparent via-slate-600/30 to-transparent" />
+    </div>
+    {/* Content area */}
+    <div className="flex-1 flex flex-col justify-between p-4 sm:p-5 animate-pulse">
+      <div className="space-y-2">
+        {/* Title lines */}
+        <div className="h-4 bg-slate-700/70 rounded-md w-full" />
+        <div className="h-4 bg-slate-700/70 rounded-md w-5/6" />
+        {/* Instructor */}
+        <div className="h-3 bg-slate-700/50 rounded-md w-2/5 mt-1" />
+        {/* Tags */}
+        <div className="flex gap-1.5 mt-2">
+          <div className="h-5 w-16 bg-slate-700/50 rounded-md" />
+          <div className="h-5 w-12 bg-slate-700/50 rounded-md" />
+        </div>
       </div>
-      <div className="h-3 bg-slate-700/40 rounded w-1/3 mt-auto" />
+      {/* Bottom row: rating + price */}
+      <div className="mt-4 space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div className="h-3.5 w-14 bg-slate-700/50 rounded-md" />
+          <div className="h-5 w-16 bg-slate-700/60 rounded-md" />
+        </div>
+        {/* Button */}
+        <div className="h-9 bg-slate-700/60 rounded-lg w-full" />
+      </div>
     </div>
   </div>
 );
@@ -534,17 +554,18 @@ const Courses = () => {
         {/* Grid */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
-            {[...Array(8)].map((_, i) => (
+            {[...Array(4)].map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
         ) : featuredList.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
-            {featuredList.map((course) => (
+            {featuredList.map((course, i) => (
               <div
                 key={course._id}
-                onClick={() => handleCourseClick(course)} // pass full course
-                className="cursor-pointer"
+                onClick={() => handleCourseClick(course)}
+                className="cursor-pointer animate-[fadeUp_0.4s_ease_both]"
+                style={{ animationDelay: `${i * 60}ms` }}
               >
                 <CourseCard
                   course={{

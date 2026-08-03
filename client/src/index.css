@@ -61,6 +61,22 @@ select option:disabled {
   }
 }
 
+/* Skeleton shimmer sweep — used by course card loading placeholders */
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Card fade-up entry — used when course cards swap in from skeleton */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@theme inline {
+  --animate-shimmer-sweep: shimmer-sweep 1.5s ease-in-out infinite;
+}
+
 .shimmer-txt {
   background: linear-gradient(90deg,
       #e2e8f0 0%,
