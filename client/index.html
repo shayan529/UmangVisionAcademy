@@ -31,6 +31,47 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        var KEY = "u_script_reload_ts";
+        window.addEventListener(
+          "error",
+          function (e) {
+            var target = e.target;
+            if (
+              target &&
+              target.tagName === "SCRIPT" &&
+              target.src &&
+              target.src.indexOf("/assets/") !== -1
+            ) {
+              var lastReload = sessionStorage.getItem(KEY);
+              var now = Date.now();
+              if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+                sessionStorage.setItem(KEY, now.toString());
+                if ("serviceWorker" in navigator) {
+                  navigator.serviceWorker
+                    .getRegistrations()
+                    .then(function (regs) {
+                      regs.forEach(function (r) {
+                        r.unregister();
+                      });
+                    });
+                }
+                if ("caches" in window) {
+                  caches.keys().then(function (keys) {
+                    keys.forEach(function (k) {
+                      caches.delete(k);
+                    });
+                  });
+                }
+                window.location.reload(true);
+              }
+            }
+          },
+          true
+        );
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
