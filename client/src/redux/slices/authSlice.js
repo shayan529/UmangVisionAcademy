@@ -252,6 +252,16 @@ const authSlice = createSlice({
         persistUserCache(action.payload);
       }
     },
+    // Synchronously wipe auth state — call this before navigating away on
+    // logout so ProtectedRoute doesn't race-redirect to /login first.
+    clearAuth: (state) => {
+      state.user = null;
+      state.isAuthenticated = false;
+      state.loading = false;
+      state.error = null;
+      clearPersistedToken();
+      persistUserCache(null);
+    },
   },
   extraReducers: (builder) => {
     // ── Login ──────────────────────────────────────────────────────────────
@@ -351,5 +361,6 @@ export const {
   updateUserScoreAndSubmissions,
   setSelectedClass,
   replaceCurrentUser,
+  clearAuth,
 } = authSlice.actions;
 export default authSlice.reducer;

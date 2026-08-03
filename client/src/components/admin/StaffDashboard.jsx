@@ -15,6 +15,7 @@ import { fetchAllCoursesAdmin } from "../../redux/slices/courseSlice";
 import {
   loadCurrentUser,
   logoutUser,
+  clearAuth,
   replaceCurrentUser,
 } from "../../redux/slices/authSlice";
 import {
@@ -175,12 +176,11 @@ const StaffSidebar = ({
     hasDashboardModule(user, item.id),
   );
 
-  const handleLogout = async () => {
-    await dispatch(logoutUser())
-      .unwrap()
-      .catch(() => {});
+  const handleLogout = () => {
+    dispatch(clearAuth());
     toast.success("Logged out successfully");
     navigate("/", { replace: true });
+    dispatch(logoutUser()).catch(() => {});
   };
 
   const authLoading = useSelector((s) => s.auth.loading);

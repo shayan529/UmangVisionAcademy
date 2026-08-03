@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { logoutUser } from "../../redux/slices/authSlice";
+import { logoutUser, clearAuth } from "../../redux/slices/authSlice";
 import { Lock, CreditCard, LogOut, FileText } from "lucide-react";
 import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from "../../utils/permissions";
 
@@ -275,13 +275,12 @@ const AdminSidebar = ({
           })}
           <div className="md:hidden p-3 border-t border-slate-800 shrink-0">
             <button
-              onClick={async () => {
+              onClick={() => {
                 if (mobileOpen) setMobileOpen(false);
-                await dispatch(logoutUser())
-                  .unwrap()
-                  .catch(() => {});
+                dispatch(clearAuth());
                 toast.success("Logged out successfully");
                 navigate("/", { replace: true });
+                dispatch(logoutUser()).catch(() => {});
               }}
               className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
               title={t("nav.logout")}
