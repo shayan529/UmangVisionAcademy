@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api, { API_ENDPOINTS } from "../../config/api.js";
+import { clearAuth } from "./authSlice.js";
 
 // ── Thunks ────────────────────────────────────────────────────────────────────
 
@@ -208,6 +209,9 @@ const cartSlice = createSlice({
       })
 
       // ── logout ───────────────────────────────────────────────────────────
+      .addCase(clearAuth, (state) => {
+        state.cartIds = [];
+      })
       .addCase("auth/logout/fulfilled", (state) => {
         state.cartIds = [];
       });

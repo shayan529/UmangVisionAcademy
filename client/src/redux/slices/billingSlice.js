@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../config/api.js";
-import { logoutUser } from "./authSlice.js";
+import { logoutUser, clearAuth } from "./authSlice.js";
 
 // ── Thunks ────────────────────────────────────────────────────────────────────
 
@@ -176,7 +176,8 @@ const billingSlice = createSlice({
         state.error = payload;
       })
 
-      // logout
+      // Reset on both sync clearAuth (immediate) and async logoutUser (background HTTP call)
+      .addCase(clearAuth, () => initialState)
       .addCase(logoutUser.fulfilled, () => initialState);
   },
 });

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api, { API_ENDPOINTS } from "../../config/api.js";
+import { clearAuth } from "./authSlice.js";
 
 // ── Thunks ────────────────────────────────────────────────────────────────────
 
@@ -327,6 +328,10 @@ const courseSlice = createSlice({
       .addCase(deleteCourse.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      // Clear user-specific enrolled data on logout
+      .addCase(clearAuth, (state) => {
+        state.enrolled = [];
       });
   },
 });
