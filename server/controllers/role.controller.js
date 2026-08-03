@@ -130,7 +130,7 @@ export const setUserRoles = async (req, res) => {
     const user = await User.findById(req.params.id).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const BASE_ROLES_ALLOWED = ["student", "instructor", "staff"];
+    const BASE_ROLES_ALLOWED = ["student", "instructor", "staff", "admin"];
 
     if (isBaseRole(roleId)) {
       if (!BASE_ROLES_ALLOWED.includes(roleId.toLowerCase())) {
@@ -149,10 +149,6 @@ export const setUserRoles = async (req, res) => {
 
       if (roleDoc.isSystem && BASE_ROLES_ALLOWED.includes(normalizedName)) {
         user.role = normalizedName;
-      } else if (roleDoc.isSystem && normalizedName === "admin") {
-        return res.status(403).json({
-          message: "Cannot assign the admin role through this endpoint",
-        });
       } else {
         user.role = new Types.ObjectId(roleId);
       }

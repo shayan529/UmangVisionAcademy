@@ -66,6 +66,8 @@ const MODULE_LABELS = {
   ai_tutor: "AI Tutor",
   references: "References",
   applications: "Applications",
+  bulk_import: "Bulk Import",
+  devices: "Logged In Devices",
 };
 
 const ACTION_LABELS = {
@@ -85,6 +87,8 @@ const ACTION_LABELS = {
   import: "Import",
   // ai_tutor
   access: "Access",
+  // devices
+  revoke: "Revoke",
 };
 
 const EMPTY_ROLE = { name: "", description: "", permissions: [] };
@@ -216,7 +220,7 @@ const DASHBOARD_MODULE_LABELS = {
   ai_tutor: "AI Tutor",
   references: "References",
   roles: "Roles & Permissions",
-  "bulk-import": "Bulk Import",
+  "bulk_import": "Bulk Import",
   devices: "Logged In Devices",
 
   // Student Dashboard
@@ -241,210 +245,295 @@ const DASHBOARD_MODULE_LABELS = {
   "mock-tests": "Mock Tests (Instructor)",
 };
 
-// Clean workspace-tabbed checklist component for sidebar modules
-const DashboardModuleChecklist = ({
+// ── SIDEBAR_TO_PERMISSION maps a dashboard module key → permission module key.
+// Keys not listed here have no backend permission model (view-only toggle).
+const SIDEBAR_TO_PERMISSION = {
+  courses: "courses",
+  students: "users",
+  instructors: "users",
+  payments: "payments",
+  applications: "applications",
+  notes: "notes",
+  reels: "reels",
+  mock_tests: "mock_tests",
+  question_bank: "question_bank",
+  sessions: "sessions",
+  ai_tutor: "ai_tutor",
+  references: "references",
+  roles: "users",       // Roles & Permissions page is gated on users permission
+  bulk_import: "bulk_import",
+  devices: "devices",
+  // Student workspace
+  my_courses: "courses",
+  study_notes: "notes",
+  // Instructor workspace
+  "mock-tests": "mock_tests",
+};
+
+/**
+ * ModulePermissionEditor — unified sidebar-module + permissions editor.
+ *
+ * Props:
+ *   dashboardModuleRegistry  – { staff: [...], student: [...], instructor: [...] }
+ *   permissionModules        – { notes: ["view","approve",...], ... }
+ *   roleName                 – string, used to pick the right workspace tab
+ *   dashboardModules         – string[]  (currently enabled module keys)
+ *   permissions              – [{ module, actions }]  (current permissions)
+ *   onDashboardModulesChange – (string[]) => void
+ *   onPermissionsChange      – ([{ module, actions }]) => void
+ */
+const ModulePermissionEditor = ({
   dashboardModuleRegistry = {},
+  permissionModules = {},
   roleName = "",
-  moduleKeys = null,
-  value = [],
-  onChange,
+  dashboardModules = [],
+  permissions = [],
+  onDashboardModulesChange,
+  onPermissionsChange,
 }) => {
   const [activeTab, setActiveTab] = useState("staff");
 
-  const toggle = (key) => {
-    onChange(
-      value.includes(key) ? value.filter((k) => k !== key) : [...value, key],
-    );
-  };
-
-  const toggleGroup = (keys) => {
-    const allOn = keys.every((k) => value.includes(k));
-    if (allOn) {
-      onChange(value.filter((k) => !keys.includes(k)));
-    } else {
-      const next = new Set([...value, ...keys]);
-      onChange(Array.from(next));
-    }
-  };
-
-  const lowerName = (roleName || "").toLowerCase();
+  const lowerName = roleName.toLowerCase();
   const isSystemStudent = lowerName === "student";
   const isSystemInstructor = lowerName === "instructor";
 
-  // Build categories to display
-  let categories = [];
+  // ── helpers ──────────────────────────────────────────────────────────────
 
-  if (isSystemStudent && dashboardModuleRegistry.student) {
-    categories.push({
-      id: "student",
-      title: "Student Dashboard Sidebar Modules",
-      keys: dashboardModuleRegistry.student,
-    });
-  } else if (isSystemInstructor && dashboardModuleRegistry.instructor) {
-    categories.push({
-      id: "instructor",
-      title: "Instructor Dashboard Sidebar Modules",
-      keys: dashboardModuleRegistry.instructor,
-    });
-  } else {
-    const allCats = [];
-    if (dashboardModuleRegistry.staff) {
-      allCats.push({
-        id: "staff",
-        title: "Staff & Admin Dashboard Sidebar Modules",
-        keys: dashboardModuleRegistry.staff,
-      });
-    }
-    if (dashboardModuleRegistry.student) {
-      allCats.push({
-        id: "student",
-        title: "Student Dashboard Sidebar Modules",
-        keys: dashboardModuleRegistry.student,
-      });
-    }
-    if (dashboardModuleRegistry.instructor) {
-      allCats.push({
-        id: "instructor",
-        title: "Instructor Dashboard Sidebar Modules",
-        keys: dashboardModuleRegistry.instructor,
-      });
-    }
+  const isModuleEnabled = (key) => dashboardModules.includes(key);
 
-    if (activeTab === "all") {
-      categories = allCats;
+  const getActions = (permModule) =>
+    permissions.find((p) => p.module === permModule)?.actions ?? [];
+
+  const setActions = (permModule, actions) => {
+    const others = permissions.filter((p) => p.module !== permModule);
+    onPermissionsChange(
+      actions.length > 0 ? [...others, { module: permModule, actions }] : others,
+    );
+  };
+
+  // Toggle a sidebar module on/off.
+  // Enabling also grants "view" (if that perm exists). Disabling clears perms.
+  const toggleModule = (key) => {
+    const enabled = isModuleEnabled(key);
+    const permKey = SIDEBAR_TO_PERMISSION[key];
+
+    if (enabled) {
+      // Disable: remove from dashboardModules AND clear its permissions
+      onDashboardModulesChange(dashboardModules.filter((k) => k !== key));
+      if (permKey) setActions(permKey, []);
     } else {
-      categories = allCats.filter((c) => c.id === activeTab);
-      if (categories.length === 0) categories = allCats;
+      // Enable: add to dashboardModules AND auto-grant "view" if available
+      onDashboardModulesChange([...dashboardModules, key]);
+      if (permKey && permissionModules[permKey]?.includes("view")) {
+        const current = getActions(permKey);
+        if (!current.includes("view")) setActions(permKey, [...current, "view"]);
+      }
     }
-  }
+  };
 
-  // Fallback if registry isn't loaded yet or for simple array fallback
-  if (categories.length === 0 && Array.isArray(moduleKeys) && moduleKeys.length > 0) {
-    categories.push({
-      id: "custom",
-      title: "Sidebar Modules",
-      keys: moduleKeys,
-    });
-  }
+  const toggleAction = (permKey, action) => {
+    const current = getActions(permKey);
+    setActions(
+      permKey,
+      current.includes(action)
+        ? current.filter((a) => a !== action)
+        : [...current, action],
+    );
+  };
 
-  const allKeys = Array.from(new Set(categories.flatMap((c) => c.keys)));
-  const allOn = allKeys.length > 0 && allKeys.every((k) => value.includes(k));
-  const toggleAll = () => onChange(allOn ? [] : allKeys);
+  const toggleAllActions = (permKey, allActions) => {
+    const current = getActions(permKey);
+    const allOn = allActions.every((a) => current.includes(a));
+    setActions(permKey, allOn ? [] : allActions);
+  };
+
+  // ── build workspace categories ────────────────────────────────────────────
+
+  let categories = [];
+  if (isSystemStudent && dashboardModuleRegistry.student) {
+    categories = [{ id: "student", title: "Student Dashboard", keys: dashboardModuleRegistry.student }];
+  } else if (isSystemInstructor && dashboardModuleRegistry.instructor) {
+    categories = [{ id: "instructor", title: "Instructor Dashboard", keys: dashboardModuleRegistry.instructor }];
+  } else {
+    const allCats = [
+      dashboardModuleRegistry.staff && { id: "staff", title: "Staff & Admin Dashboard", keys: dashboardModuleRegistry.staff },
+      dashboardModuleRegistry.student && { id: "student", title: "Student Dashboard", keys: dashboardModuleRegistry.student },
+      dashboardModuleRegistry.instructor && { id: "instructor", title: "Instructor Dashboard", keys: dashboardModuleRegistry.instructor },
+    ].filter(Boolean);
+
+    categories = activeTab === "all" ? allCats : (allCats.filter((c) => c.id === activeTab) || allCats);
+    if (categories.length === 0) categories = allCats;
+  }
 
   const showTabs = !isSystemStudent && !isSystemInstructor;
+  const allKeys = Array.from(new Set(categories.flatMap((c) => c.keys)));
+  const allEnabled = allKeys.length > 0 && allKeys.every((k) => isModuleEnabled(k));
+
+  const toggleAllModules = () => {
+    if (allEnabled) {
+      // Disable all: remove keys + clear their permissions
+      onDashboardModulesChange(dashboardModules.filter((k) => !allKeys.includes(k)));
+      const permKeysToRemove = new Set(allKeys.map((k) => SIDEBAR_TO_PERMISSION[k]).filter(Boolean));
+      onPermissionsChange(permissions.filter((p) => !permKeysToRemove.has(p.module)));
+    } else {
+      // Enable all: add keys + auto-grant view on each
+      const next = Array.from(new Set([...dashboardModules, ...allKeys]));
+      onDashboardModulesChange(next);
+      const updated = [...permissions];
+      for (const key of allKeys) {
+        const permKey = SIDEBAR_TO_PERMISSION[key];
+        if (!permKey || !permissionModules[permKey]?.includes("view")) continue;
+        const existing = updated.find((p) => p.module === permKey);
+        if (existing) {
+          if (!existing.actions.includes("view")) existing.actions = [...existing.actions, "view"];
+        } else {
+          updated.push({ module: permKey, actions: ["view"] });
+        }
+      }
+      onPermissionsChange(updated);
+    }
+  };
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-[#0b1120] p-4 space-y-4">
-      <div className="flex flex-col gap-3 pb-3 border-b border-slate-800">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-white uppercase tracking-wide">
-            Sidebar Modules Access
-          </span>
+    <div className="space-y-4">
+      {/* Workspace tabs */}
+      {showTabs && (
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="inline-flex rounded-lg border border-slate-800 bg-slate-950 p-1 gap-1 flex-wrap">
+            {[
+              { id: "staff", label: "Staff & Admin" },
+              { id: "student", label: "Student" },
+              { id: "instructor", label: "Instructor" },
+              { id: "all", label: "All" },
+            ].map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setActiveTab(t.id)}
+                className={`px-3 py-1 text-[11px] font-bold rounded-md transition-colors ${
+                  activeTab === t.id ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
-            onClick={toggleAll}
+            onClick={toggleAllModules}
             className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-wider"
           >
-            {allOn ? "Clear Tab Modules" : "Select Tab Modules"}
+            {allEnabled ? "Disable All" : "Enable All"}
           </button>
         </div>
-
-        {showTabs && (
-          <div className="inline-flex rounded-lg border border-slate-800 bg-slate-950 p-1 gap-1 self-start flex-wrap">
-            <button
-              type="button"
-              onClick={() => setActiveTab("staff")}
-              className={`px-3 py-1 text-[11px] font-bold rounded-md transition-colors ${
-                activeTab === "staff"
-                  ? "bg-indigo-600 text-white"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Staff & Admin Workspace
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("student")}
-              className={`px-3 py-1 text-[11px] font-bold rounded-md transition-colors ${
-                activeTab === "student"
-                  ? "bg-indigo-600 text-white"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Student Workspace
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("instructor")}
-              className={`px-3 py-1 text-[11px] font-bold rounded-md transition-colors ${
-                activeTab === "instructor"
-                  ? "bg-indigo-600 text-white"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Instructor Workspace
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("all")}
-              className={`px-3 py-1 text-[11px] font-bold rounded-md transition-colors ${
-                activeTab === "all"
-                  ? "bg-indigo-600 text-white"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Show All Workspaces
-            </button>
-          </div>
-        )}
-      </div>
-
-      {categories.length === 0 && (
-        <span className="text-[11px] text-slate-500">
-          No sidebar modules available.
-        </span>
       )}
 
-      {categories.map((cat) => {
-        const groupAllOn =
-          cat.keys.length > 0 && cat.keys.every((k) => value.includes(k));
-        return (
-          <div key={cat.id} className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-extrabold text-indigo-400 uppercase tracking-wider">
-                {cat.title}
-              </span>
-              <button
-                type="button"
-                onClick={() => toggleGroup(cat.keys)}
-                className="text-[10px] font-semibold text-slate-400 hover:text-white"
-              >
-                {groupAllOn ? "Clear section" : "Select section"}
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {cat.keys.map((key) => {
-                const checked = value.includes(key);
-                return (
-                  <button
-                    key={`${cat.id}-${key}`}
-                    type="button"
-                    onClick={() => toggle(key)}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold border transition-colors ${checked
-                      ? "bg-indigo-600 border-indigo-500 text-white shadow-xs"
-                      : "bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500"
-                      }`}
-                  >
-                    {checked && <Check size={11} />}
-                    {DASHBOARD_MODULE_LABELS[key] ||
-                      key.replace(/_/g, " ").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                  </button>
-                );
-              })}
-            </div>
+      {/* Module cards */}
+      {categories.map((cat) => (
+        <div key={cat.id} className="space-y-2">
+          {showTabs && categories.length > 1 && (
+            <p className="text-[10px] font-extrabold text-indigo-400 uppercase tracking-wider pt-1">
+              {cat.title}
+            </p>
+          )}
+          <div className="flex flex-col gap-2">
+            {cat.keys.map((key) => {
+              const enabled = isModuleEnabled(key);
+              const permKey = SIDEBAR_TO_PERMISSION[key];
+              const availableActions = permKey ? (permissionModules[permKey] ?? []) : [];
+              const currentActions = permKey ? getActions(permKey) : [];
+
+              return (
+                <div
+                  key={`${cat.id}-${key}`}
+                  className={`rounded-xl border transition-colors ${
+                    enabled
+                      ? "border-indigo-500/40 bg-indigo-950/20"
+                      : "border-slate-800 bg-[#0b1120]"
+                  }`}
+                >
+                  {/* Module header row */}
+                  <div className="flex items-center justify-between px-4 py-2.5 gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {/* Toggle switch */}
+                      <button
+                        type="button"
+                        onClick={() => toggleModule(key)}
+                        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 transition-colors ${
+                          enabled
+                            ? "border-indigo-500 bg-indigo-600"
+                            : "border-slate-600 bg-slate-800"
+                        }`}
+                        aria-checked={enabled}
+                        role="switch"
+                      >
+                        <span
+                          className={`inline-block h-3 w-3 rounded-full bg-white shadow transition-transform ${
+                            enabled ? "translate-x-4" : "translate-x-0.5"
+                          }`}
+                        />
+                      </button>
+                      <span className={`text-xs font-bold truncate ${enabled ? "text-white" : "text-slate-400"}`}>
+                        {DASHBOARD_MODULE_LABELS[key] ?? key.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                      </span>
+                    </div>
+                    {/* Action count badge */}
+                    {enabled && availableActions.length > 0 && (
+                      <span className="shrink-0 text-[10px] font-semibold text-indigo-300 bg-indigo-950/60 border border-indigo-800/40 px-2 py-0.5 rounded-full">
+                        {currentActions.length}/{availableActions.length} actions
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Permission actions — only shown when module is enabled and has permissions */}
+                  {enabled && availableActions.length > 0 && (
+                    <div className="px-4 pb-3 pt-0 border-t border-slate-800/60">
+                      <div className="flex items-center justify-between mb-2 mt-2">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                          Permissions
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => toggleAllActions(permKey, availableActions)}
+                          className="text-[10px] font-semibold text-indigo-400 hover:text-indigo-300"
+                        >
+                          {availableActions.every((a) => currentActions.includes(a)) ? "Clear all" : "Select all"}
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {availableActions.map((action) => {
+                          const active = currentActions.includes(action);
+                          const isViewAction = action === "view";
+                          return (
+                            <button
+                              key={action}
+                              type="button"
+                              onClick={() => toggleAction(permKey, action)}
+                              title={isViewAction ? "View is required for sidebar access" : undefined}
+                              className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-semibold border transition-colors ${
+                                active
+                                  ? "bg-indigo-600 border-indigo-500 text-white"
+                                  : "bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500"
+                              } ${isViewAction ? "opacity-80" : ""}`}
+                            >
+                              {active && <Check size={10} />}
+                              {ACTION_LABELS[action] ?? action}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        );
-      })}
+        </div>
+      ))}
+
+      {categories.length === 0 && (
+        <p className="text-[11px] text-slate-500">No sidebar modules available.</p>
+      )}
     </div>
   );
 };
@@ -556,37 +645,25 @@ const RoleModal = ({
             </div>
           </div>
 
-          {/* ── Dashboard Modules ── */}
+          {/* ── Unified Module + Permissions editor ── */}
           <div>
             <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2 block">
-              Dashboard Modules
+              Sidebar Modules &amp; Permissions
             </label>
-            <DashboardModuleChecklist
+            <ModulePermissionEditor
               dashboardModuleRegistry={dashboardModuleRegistry}
+              permissionModules={modules}
               roleName={form.name}
-              moduleKeys={dashboardModuleKeys}
-              value={form.dashboardModules}
-              onChange={(dashboardModules) =>
+              dashboardModules={form.dashboardModules}
+              permissions={form.permissions}
+              onDashboardModulesChange={(dashboardModules) =>
                 setForm((f) => ({ ...f, dashboardModules }))
+              }
+              onPermissionsChange={(permissions) =>
+                setForm((f) => ({ ...f, permissions }))
               }
             />
           </div>
-
-          {/* ── Permissions (admin / custom roles) ── */}
-          {Object.keys(modules).length > 0 && (
-            <div>
-              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2 block">
-                Permissions
-              </label>
-              <PermissionMatrix
-                modules={modules}
-                value={form.permissions}
-                onChange={(permissions) =>
-                  setForm((f) => ({ ...f, permissions }))
-                }
-              />
-            </div>
-          )}
         </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
@@ -618,7 +695,7 @@ const AssignRolesModal = ({
   onSaved,
   showToast,
 }) => {
-  const BASE_ROLE_VALUES = ["student", "instructor", "staff"];
+  const BASE_ROLE_VALUES = ["student", "instructor", "staff", "admin"];
 
   const systemRoles = roles.filter(
     (r) => r.isSystem && BASE_ROLE_VALUES.includes(r.name?.toLowerCase()),
@@ -1435,8 +1512,7 @@ const RoleManager = ({ showToast, currentUser }) => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr] gap-5 mt-5">
-            <div className="space-y-4">
+          <div className="space-y-5 mt-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
                   <label className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
@@ -1471,31 +1547,22 @@ const RoleManager = ({ showToast, currentUser }) => {
 
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2">
-                  Permissions
+                  Sidebar Modules &amp; Permissions
                 </p>
-                <PermissionMatrix
-                  modules={modules}
-                  value={newRoleForm.permissions}
-                  onChange={(permissions) =>
+                <ModulePermissionEditor
+                  dashboardModuleRegistry={dashboardModuleRegistry}
+                  permissionModules={modules}
+                  roleName={newRoleForm.name}
+                  dashboardModules={newRoleForm.dashboardModules}
+                  permissions={newRoleForm.permissions}
+                  onDashboardModulesChange={(dashboardModules) =>
+                    setNewRoleForm((f) => ({ ...f, dashboardModules }))
+                  }
+                  onPermissionsChange={(permissions) =>
                     setNewRoleForm((f) => ({ ...f, permissions }))
                   }
                 />
               </div>
-            </div>
-
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2">
-                Sidebar Modules
-              </p>
-              <DashboardModuleChecklist
-                dashboardModuleRegistry={dashboardModuleRegistry}
-                roleName={newRoleForm.name}
-                value={newRoleForm.dashboardModules}
-                onChange={(dashboardModules) =>
-                  setNewRoleForm((f) => ({ ...f, dashboardModules }))
-                }
-              />
-            </div>
           </div>
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">

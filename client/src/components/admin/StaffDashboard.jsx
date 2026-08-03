@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronDown, LogOut, Shield } from "lucide-react";
 import AdminReels from "./AdminReels";
+import AdminBulkImport from "./AdminBulkImport";
+import AdminDevices from "./AdminDevices";
 import {
   fetchUsers,
   deleteUser as deleteUserThunk,
@@ -148,7 +150,7 @@ const StaffSidebar = ({
       ? [{ id: "sessions", label: "Sessions", icon: "📅" }]
       : []),
     ...(hasPermission(user, "ai_tutor", "access")
-      ? [{ id: "ai", label: "AI Tutor", icon: "🤖" }]
+      ? [{ id: "ai_tutor", label: "AI Tutor", icon: "🤖" }]
       : []),
     ...(hasPermission(user, "references", "view")
       ? [{ id: "references", label: "References", icon: "🔗" }]
@@ -159,10 +161,20 @@ const StaffSidebar = ({
     hasPermission(user, "users", "edit")
       ? [{ id: "roles", label: "Roles & Permissions", icon: "🔒" }]
       : []),
+    ...(hasBaseRole(user, "admin") ||
+    hasPermission(user, "bulk_import", "view") ||
+    hasPermission(user, "bulk_import", "import")
+      ? [{ id: "bulk_import", label: "Bulk Import", icon: "📥" }]
+      : []),
+    ...(hasBaseRole(user, "admin") ||
+    hasPermission(user, "devices", "view") ||
+    hasPermission(user, "devices", "revoke")
+      ? [{ id: "devices", label: "Logged In Devices", icon: "🖥️" }]
+      : []),
   ];
 
   const navItems = rawNavItems.filter((item) =>
-    hasDashboardModule(user, item.id === "ai" ? "ai_tutor" : item.id),
+    hasDashboardModule(user, item.id),
   );
 
   const handleLogout = async () => {
@@ -626,7 +638,7 @@ export default function StaffDashboard() {
         return hasPermission(user, "question_bank", "view") ? (
           <AdminQuestionPapers />
         ) : null;
-      case "ai":
+      case "ai_tutor":
         return hasPermission(user, "ai_tutor", "access") ? (
           <InstructorAI showToast={showToast} />
         ) : null;
@@ -664,6 +676,18 @@ export default function StaffDashboard() {
               dispatch(loadCurrentUser());
             }}
           />
+        ) : null;
+      case "bulk_import":
+        return hasBaseRole(user, "admin") ||
+          hasPermission(user, "bulk_import", "view") ||
+          hasPermission(user, "bulk_import", "import") ? (
+          <AdminBulkImport showToast={showToast} />
+        ) : null;
+      case "devices":
+        return hasBaseRole(user, "admin") ||
+          hasPermission(user, "devices", "view") ||
+          hasPermission(user, "devices", "revoke") ? (
+          <AdminDevices showToast={showToast} />
         ) : null;
       default:
         return null;

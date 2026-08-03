@@ -14,6 +14,8 @@ export const PERMISSION_MODULES = {
   ai_tutor: ["access"],
   references: ["view", "create", "edit", "delete", "approve"],
   applications: ["view", "approve", "reject"],
+  bulk_import: ["view", "import"],
+  devices: ["view", "revoke"],
 };
 
 export const DASHBOARD_MODULES = {
@@ -30,7 +32,7 @@ export const DASHBOARD_MODULES = {
   staff: [
     "overview", "courses", "students", "instructors", "payments",
     "applications", "notes", "reels", "mock_tests", "question_bank",
-    "sessions", "ai_tutor", "references", "roles", "bulk-import", "devices",
+    "sessions", "ai_tutor", "references", "roles", "bulk_import", "devices",
   ],
 };
 
