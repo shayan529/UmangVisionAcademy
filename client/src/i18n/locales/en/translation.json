@@ -1918,5 +1918,19 @@
   "studentSessions": {
     "title": "Live Sessions",
     "subtitle": "Join upcoming and live instructor sessions."
+  },
+  "studentReferral": {
+    "title": "REFERRAL PROGRAM",
+    "header": "Invite Friends & Earn Rewards",
+    "description": "Share your unique referral link with your friends. When they join Umang Vision Academy, you earn reward stars!",
+    "summaryTitle": "Earned Rewards",
+    "summaryCoins": "Total stars earned from referrals",
+    "referralCode": "Your Referral Code",
+    "referralsCount": "{{count}} friends joined",
+    "share": "Share Referral Link",
+    "noReferralCode": "No referral code generated yet",
+    "copyLink": "Copy Referral Link",
+    "linkCopied": "Referral link copied to clipboard!",
+    "copyFailed": "Failed to copy link"
   }
 }

@@ -16,9 +16,9 @@ const ReferralPage = () => {
     if (!referralLink) return;
     try {
       await navigator.clipboard.writeText(referralLink);
-      toast.success(t("studentReferral.linkCopied"));
+      toast.success(t("studentReferral.linkCopied", "Referral link copied to clipboard!"));
     } catch (err) {
-      toast.error(t("studentReferral.copyFailed"));
+      toast.error(t("studentReferral.copyFailed", "Failed to copy link"));
     }
   };
 
@@ -27,38 +27,38 @@ const ReferralPage = () => {
       <div className="rounded-2xl sm:rounded-3xl border border-[#1e293b] bg-[#111827] p-5 sm:p-8">
         <div className="mb-4">
           <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] sm:tracking-[0.18em] text-slate-500">
-            {t("studentReferral.title")}
+            {t("studentReferral.title", "REFERRAL PROGRAM")}
           </p>
           <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-white">
-            {t("studentReferral.header")}
+            {t("studentReferral.header", "Invite Friends & Earn Rewards")}
           </h1>
           <p className="mt-3 text-sm leading-6 text-slate-400 max-w-2xl">
-            {t("studentReferral.description")}
+            {t("studentReferral.description", "Share your unique referral link with your friends. When they join Umang Vision Academy, you earn reward stars!")}
           </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-2xl border border-[#243145] bg-[#0f172a] p-5 sm:p-6">
             <p className="text-xs uppercase tracking-[0.14em] sm:tracking-[0.18em] text-slate-500">
-              {t("studentReferral.summaryTitle")}
+              {t("studentReferral.summaryTitle", "Earned Rewards")}
             </p>
             <p className="mt-4 text-3xl sm:text-4xl font-bold text-white">
               {(user?.referralsCount ?? 0) * 50}
             </p>
             <p className="mt-2 text-sm text-slate-400">
-              {t("studentReferral.summaryCoins")}
+              {t("studentReferral.summaryCoins", "Total stars earned from referrals")}
             </p>
           </div>
 
           <div className="rounded-2xl border border-[#243145] bg-[#0f172a] p-5 sm:p-6">
             <p className="text-xs uppercase tracking-[0.14em] sm:tracking-[0.18em] text-slate-500">
-              {t("studentReferral.referralCode")}
+              {t("studentReferral.referralCode", "Your Referral Code")}
             </p>
             <p className="mt-3 text-xl sm:text-2xl font-semibold text-white break-all">
               {referralCode}
             </p>
             <p className="mt-2 text-sm text-slate-400">
-              {t("studentReferral.referralsCount", {
+              {t("studentReferral.referralsCount", "{{count}} friends joined", {
                 count: user?.referralsCount ?? 0,
               })}
             </p>
@@ -66,10 +66,10 @@ const ReferralPage = () => {
 
           <div className="rounded-2xl border border-[#243145] bg-[#0f172a] p-5 sm:p-6 sm:col-span-2 lg:col-span-1">
             <p className="text-xs uppercase tracking-[0.14em] sm:tracking-[0.18em] text-slate-500">
-              {t("studentReferral.share")}
+              {t("studentReferral.share", "Share Referral Link")}
             </p>
             <div className="mt-3 rounded-2xl border border-[#2a3e5c] bg-[#111827] p-4 text-sm text-slate-200 break-words">
-              {referralLink || t("studentReferral.noReferralCode")}
+              {referralLink || t("studentReferral.noReferralCode", "No referral code generated yet")}
             </div>
             <button
               type="button"
@@ -77,7 +77,7 @@ const ReferralPage = () => {
               disabled={!referralLink}
               className="mt-4 w-full sm:w-auto inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-500 to-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {t("studentReferral.copyLink")}
+              {t("studentReferral.copyLink", "Copy Referral Link")}
             </button>
           </div>
         </div>
