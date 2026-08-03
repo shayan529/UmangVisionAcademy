@@ -120,8 +120,8 @@ const StudentDetailsFormModal = ({
     },
     {
       key: "fatherMobileNumber",
-      label: t("studentSettings.fatherMobile", "Father's Mobile"),
-      placeholder: t("studentSettings.fatherMobilePlaceholder", "e.g. 9876543210"),
+      label: t("studentSettings.parentMobile", "Parent's Mobile"),
+      placeholder: t("studentSettings.parentMobilePlaceholder", "e.g. 9876543210"),
     },
     {
       key: "socialMediaAccount",

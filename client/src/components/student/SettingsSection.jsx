@@ -1104,7 +1104,7 @@ export default function Settings() {
             </div>
             <div>
               <label style={labelStyle}>
-                {t("studentSettings.fatherMobile")}
+                {t("studentSettings.parentMobile", "Parent's Mobile")}
               </label>
               <input
                 value={profile.fatherMobileNumber}
@@ -1113,7 +1113,7 @@ export default function Settings() {
                 }
                 style={inputStyle}
                 disabled={!isEditing}
-                placeholder={t("studentSettings.fatherMobilePlaceholder")}
+                placeholder={t("studentSettings.parentMobilePlaceholder", "e.g. 9876543210")}
               />
             </div>
             <div>

@@ -806,7 +806,7 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
             />
             <InfoRow
               icon={Phone}
-              label="Father's Mobile"
+              label="Parent's Mobile"
               value={student.fatherMobileNumber}
             />
             <InfoRow
