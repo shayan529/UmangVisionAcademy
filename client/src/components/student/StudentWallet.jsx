@@ -9,6 +9,7 @@ import {
 } from "../../redux/slices/walletSlice";
 import { loadCurrentUser } from "../../redux/slices/authSlice";
 import { useTranslation } from "react-i18next";
+import api from "../../config/api";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (n) =>
@@ -503,19 +504,11 @@ const StudentWallet = ({ showToast }) => {
     .filter((tx) => tx.type === "purchase")
     .reduce((s, tx) => s + tx.amount, 0);
 
-  // Call your backend to redeem coins — adjust the API call to match your actual route
   const handleCoinRedeem = useCallback(
     async (coins) => {
-      const response = await fetch("/api/wallet/redeem-coins", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ coins }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Redemption failed");
+      const { data } = await api.post("/wallet/redeem-coins", { coins });
       dispatch(fetchWallet());
-      dispatch(loadCurrentUser());
+      dispatch(loadCurrentUser({ force: true }));
       return data;
     },
     [dispatch],

@@ -9,6 +9,7 @@ import {
   sendCourseEnrollmentEmail,
 } from "../utils/Mailer.js";
 import { deleteKey } from "../utils/redisClient.js";
+import { userLRU } from "../utils/lruCache.js";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -494,10 +495,16 @@ export const redeemCoins = async (req, res) => {
     const rupeesEarned = parseFloat((numCoins / COINS_PER_RUPEE).toFixed(2));
 
     // Deduct coins from user atomically
-    await User.findByIdAndUpdate(req.user._id, {
-      $inc: { coins: -numCoins },
-    });
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { $inc: { coins: -numCoins } },
+      { new: true },
+    ).select("coins");
+
     await deleteKey("students:leaderboard");
+    const userCacheKey = `user:${req.user._id.toString()}`;
+    await deleteKey(userCacheKey);
+    userLRU.delete(userCacheKey);
 
     // Credit wallet
     const wallet = await getOrCreateWallet(req.user._id);
@@ -514,7 +521,7 @@ export const redeemCoins = async (req, res) => {
     res.json({
       message: `${numCoins} coins redeemed for ${rupeesEarned.toFixed(2)}.`,
       balance: wallet.balance,
-      coinsRemaining: availableCoins - numCoins,
+      coinsRemaining: updatedUser?.coins ?? Math.max(0, availableCoins - numCoins),
     });
   } catch (err) {
     console.error("[Wallet] redeemCoins:", err.message);
