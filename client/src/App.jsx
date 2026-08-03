@@ -16,84 +16,111 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
-// --- Lazy Loaded Components ---
-const Courses = lazy(() => import("./components/common/Courses"));
-const Instructors = lazy(() => import("./components/common/Instructors"));
-const Plans = lazy(() => import("./components/common/Plans"));
-const Login = lazy(() => import("./components/common/Login"));
-const Signup = lazy(() => import("./components/common/Signup"));
-const MobileChat = lazy(() => import("./components/mobile/MobileChat"));
-const MobileNotes = lazy(() => import("./components/mobile/MobileNotes"));
-const MobileReels = lazy(() => import("./components/mobile/MobileReels"));
-const ReelsFeed = lazy(() => import("./components/reels/ReelsFeed"));
-const Contact = lazy(() => import("./pages/Contact"));
-const HelpCenter = lazy(() => import("./pages/HelpCenter"));
-const Faq = lazy(() => import("./pages/Faq"));
-const CartPage = lazy(() => import("./pages/CartPage"));
-const InstructorDetails = lazy(() => import("./pages/InstructorDetails"));
-const BillingPage = lazy(() => import("./pages/BillingPage"));
+// ── retryLazy ─────────────────────────────────────────────────────────────────
+// Wraps React.lazy with one automatic retry on chunk-load failures.
+// On the retry the import URL gets a cache-busting `?t=<timestamp>` so the
+// browser skips the stale cached response and fetches the new chunk from the
+// latest Vercel deployment. If the retry also fails the error propagates
+// normally to the nearest ErrorBoundary.
+const retryLazy = (importFn) =>
+  lazy(() =>
+    importFn().catch((err) => {
+      const isChunkError =
+        err?.message?.includes("Failed to fetch dynamically imported module") ||
+        err?.message?.includes("error loading dynamically imported module") ||
+        err?.message?.includes("Importing a module script failed") ||
+        err?.message?.includes("Failed to load");
 
-const Community = lazy(() => import("./components/common/Community"));
-const BecomeInstructor = lazy(() => import("./components/common/BecomeInstructor"));
-const BecomeInstructorApplication = lazy(() => import("./components/common/BecomeInstructorApplication"));
+      if (!isChunkError) throw err;
+
+      // Bust the module URL cache and retry once
+      return new Promise((resolve, reject) => {
+        // Small delay so the network is more likely to have settled
+        setTimeout(() => {
+          importFn().then(resolve).catch(reject);
+        }, 200);
+      });
+    }),
+  );
+
+// --- Lazy Loaded Components ---
+const Courses = retryLazy(() => import("./components/common/Courses"));
+const Instructors = retryLazy(() => import("./components/common/Instructors"));
+const Plans = retryLazy(() => import("./components/common/Plans"));
+const Login = retryLazy(() => import("./components/common/Login"));
+const Signup = retryLazy(() => import("./components/common/Signup"));
+const MobileChat = retryLazy(() => import("./components/mobile/MobileChat"));
+const MobileNotes = retryLazy(() => import("./components/mobile/MobileNotes"));
+const MobileReels = retryLazy(() => import("./components/mobile/MobileReels"));
+const ReelsFeed = retryLazy(() => import("./components/reels/ReelsFeed"));
+const Contact = retryLazy(() => import("./pages/Contact"));
+const HelpCenter = retryLazy(() => import("./pages/HelpCenter"));
+const Faq = retryLazy(() => import("./pages/Faq"));
+const CartPage = retryLazy(() => import("./pages/CartPage"));
+const InstructorDetails = retryLazy(() => import("./pages/InstructorDetails"));
+const BillingPage = retryLazy(() => import("./pages/BillingPage"));
+
+const Community = retryLazy(() => import("./components/common/Community"));
+const BecomeInstructor = retryLazy(() => import("./components/common/BecomeInstructor"));
+const BecomeInstructorApplication = retryLazy(() => import("./components/common/BecomeInstructorApplication"));
 
 /* Student Dashboard */
-const StudentDashboard = lazy(() => import("./components/student/StudentDashboard"));
-const DashboardHome = lazy(() => import("./components/student/StudentDashboard").then(module => ({ default: module.DashboardHome })));
-const MyCoursesSection = lazy(() => import("./components/student/MyCoursesSection"));
-const AITutor = lazy(() => import("./components/student/AITutor"));
-const CommunitySection = lazy(() => import("./components/student/CommunitySection"));
-const CertificatesSection = lazy(() => import("./components/student/CertificatesSection"));
-const Achievements = lazy(() => import("./components/student/Achievements"));
-const SettingsSection = lazy(() => import("./components/student/SettingsSection"));
-const LeaderBoard = lazy(() => import("./components/student/LeaderBoard"));
-const StudentNotifications = lazy(() => import("./components/student/StudentNotifications"));
-const StudentSessions = lazy(() => import("./components/student/StudentSessions"));
-const StudentWallet = lazy(() => import("./components/student/StudentWallet"));
-const ReferralPage = lazy(() => import("./components/student/ReferralPage"));
-const StudentReferences = lazy(() => import("./components/student/StudentReferences"));
+const StudentDashboard = retryLazy(() => import("./components/student/StudentDashboard"));
+const DashboardHome = retryLazy(() => import("./components/student/StudentDashboard").then(module => ({ default: module.DashboardHome })));
+const MyCoursesSection = retryLazy(() => import("./components/student/MyCoursesSection"));
+const AITutor = retryLazy(() => import("./components/student/AITutor"));
+const CommunitySection = retryLazy(() => import("./components/student/CommunitySection"));
+const CertificatesSection = retryLazy(() => import("./components/student/CertificatesSection"));
+const Achievements = retryLazy(() => import("./components/student/Achievements"));
+const SettingsSection = retryLazy(() => import("./components/student/SettingsSection"));
+const LeaderBoard = retryLazy(() => import("./components/student/LeaderBoard"));
+const StudentNotifications = retryLazy(() => import("./components/student/StudentNotifications"));
+const StudentSessions = retryLazy(() => import("./components/student/StudentSessions"));
+const StudentWallet = retryLazy(() => import("./components/student/StudentWallet"));
+const ReferralPage = retryLazy(() => import("./components/student/ReferralPage"));
+const StudentReferences = retryLazy(() => import("./components/student/StudentReferences"));
 
 /* Mock Tests */
-const MockTestsLayout = lazy(() => import("./components/student/MockTestsIndex"));
-const AvailableMockTests = lazy(() => import("./components/student/AvailableMockTests"));
-const MockTestPlayer = lazy(() => import("./components/student/MockTestPlayer"));
+const MockTestsLayout = retryLazy(() => import("./components/student/MockTestsIndex"));
+const AvailableMockTests = retryLazy(() => import("./components/student/AvailableMockTests"));
+const MockTestPlayer = retryLazy(() => import("./components/student/MockTestPlayer"));
 
 /* Instructor Dashboard */
-const InstructorDashboard = lazy(() => import("./components/instructor/InstructorDashboard"));
-const InstructorHome = lazy(() => import("./components/instructor/InstructorHome"));
-const InstructorCourses = lazy(() => import("./components/instructor/InstructorCourses"));
-const InstructorStudents = lazy(() => import("./components/instructor/InstructorStudents"));
-const InstructorSessions = lazy(() => import("./components/instructor/InstructorSessions"));
-const InstructorAnalytics = lazy(() => import("./components/instructor/InstructorAnalytics"));
-const InstructorAI = lazy(() => import("./components/instructor/InstructorAI"));
-const InstructorNotifications = lazy(() => import("./components/instructor/InstructorNotifications"));
-const InstructorSettings = lazy(() => import("./components/instructor/InstructorSettings"));
-const InstructorMockTests = lazy(() => import("./components/instructor/InstructorMockTests"));
+const InstructorDashboard = retryLazy(() => import("./components/instructor/InstructorDashboard"));
+const InstructorHome = retryLazy(() => import("./components/instructor/InstructorHome"));
+const InstructorCourses = retryLazy(() => import("./components/instructor/InstructorCourses"));
+const InstructorStudents = retryLazy(() => import("./components/instructor/InstructorStudents"));
+const InstructorSessions = retryLazy(() => import("./components/instructor/InstructorSessions"));
+const InstructorAnalytics = retryLazy(() => import("./components/instructor/InstructorAnalytics"));
+const InstructorAI = retryLazy(() => import("./components/instructor/InstructorAI"));
+const InstructorNotifications = retryLazy(() => import("./components/instructor/InstructorNotifications"));
+const InstructorSettings = retryLazy(() => import("./components/instructor/InstructorSettings"));
+const InstructorMockTests = retryLazy(() => import("./components/instructor/InstructorMockTests"));
 
 /* Admin Dashboard */
-const AdminDashboard = lazy(() => import("./components/admin/AdminDashboard"));
-const StaffDashboard = lazy(() => import("./components/admin/StaffDashboard"));
-const AdminOverview = lazy(() => import("./components/admin/AdminOverview"));
-const AdminStudents = lazy(() => import("./components/admin/AdminStudents"));
-const AdminInstructors = lazy(() => import("./components/admin/AdminInstructors"));
-const AdminApplications = lazy(() => import("./components/admin/AdminApplications"));
-const AdminCourses = lazy(() => import("./components/admin/AdminCourses"));
-const AdminLeaderboard = lazy(() => import("./components/admin/AdminLeaderboard"));
-const AdminReels = lazy(() => import("./components/admin/AdminReels"));
-const MyReels = lazy(() => import("./components/reels/MyReels"));
-const InstructorApplicationStatus = lazy(() => import("./components/common/InstructorApplicationStatus"));
-const PrivacyPolicy = lazy(() => import("./components/common/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./components/common/TermsOfService"));
-const RefundPolicy = lazy(() => import("./components/common/RefundPolicy"));
-const CourseDemo = lazy(() => import("./components/course/CourseDemo"));
-const AboutUs = lazy(() => import("./pages/AboutUs"));
-const QuestionBank = lazy(() => import("./components/common/QuestionBank"));
-const Blogs = lazy(() => import("./components/common/Blogs"));
-const BoardCourses = lazy(() => import("./components/Boards/BoardCourses"));
-const CoursePage = lazy(() => import("./components/course/CoursePage"));
-const ProgressPage = lazy(() => import("./components/student/ProgressPage"));
-const PurchaseHistory = lazy(() => import("./components/student/PurchaseHistory"));
-const InstructorAboutPage = lazy(() => import("./components/common/InstructorAboutPage"));
+const AdminDashboard = retryLazy(() => import("./components/admin/AdminDashboard"));
+const StaffDashboard = retryLazy(() => import("./components/admin/StaffDashboard"));
+const AdminOverview = retryLazy(() => import("./components/admin/AdminOverview"));
+const AdminStudents = retryLazy(() => import("./components/admin/AdminStudents"));
+const AdminInstructors = retryLazy(() => import("./components/admin/AdminInstructors"));
+const AdminApplications = retryLazy(() => import("./components/admin/AdminApplications"));
+const AdminCourses = retryLazy(() => import("./components/admin/AdminCourses"));
+const AdminLeaderboard = retryLazy(() => import("./components/admin/AdminLeaderboard"));
+const AdminReels = retryLazy(() => import("./components/admin/AdminReels"));
+const MyReels = retryLazy(() => import("./components/reels/MyReels"));
+const InstructorApplicationStatus = retryLazy(() => import("./components/common/InstructorApplicationStatus"));
+const PrivacyPolicy = retryLazy(() => import("./components/common/PrivacyPolicy"));
+const TermsOfService = retryLazy(() => import("./components/common/TermsOfService"));
+const RefundPolicy = retryLazy(() => import("./components/common/RefundPolicy"));
+const CourseDemo = retryLazy(() => import("./components/course/CourseDemo"));
+const AboutUs = retryLazy(() => import("./pages/AboutUs"));
+const QuestionBank = retryLazy(() => import("./components/common/QuestionBank"));
+const Blogs = retryLazy(() => import("./components/common/Blogs"));
+const BoardCourses = retryLazy(() => import("./components/Boards/BoardCourses"));
+const CoursePage = retryLazy(() => import("./components/course/CoursePage"));
+const ProgressPage = retryLazy(() => import("./components/student/ProgressPage"));
+const PurchaseHistory = retryLazy(() => import("./components/student/PurchaseHistory"));
+const InstructorAboutPage = retryLazy(() => import("./components/common/InstructorAboutPage"));
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();

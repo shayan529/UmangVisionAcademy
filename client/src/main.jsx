@@ -1,26 +1,35 @@
 import "./config/api.js";
 import { StrictMode, Suspense } from "react";
 
-// Automatically reload the page when a lazy chunk load fails due to a new deployment
+// Automatically reload the page when a lazy chunk load fails due to a new deployment.
+// This is a last-resort handler for errors that escape the React ErrorBoundary.
+// ErrorBoundary.jsx handles the primary case with loop-prevention via sessionStorage.
 if (typeof window !== "undefined") {
+  const CHUNK_RELOAD_KEY = "chunk_reload_attempted";
+
+  const isChunkMsg = (msg = "") =>
+    msg.includes("Failed to fetch dynamically imported module") ||
+    msg.includes("error loading dynamically imported module");
+
+  const safeReload = () => {
+    try {
+      if (sessionStorage.getItem(CHUNK_RELOAD_KEY)) return; // already reloaded once
+      sessionStorage.setItem(CHUNK_RELOAD_KEY, "1");
+    } catch { /* ignore */ }
+    window.location.reload();
+  };
+
   window.addEventListener("error", (e) => {
-    if (e.message && (
-      e.message.includes("Failed to fetch dynamically imported module") ||
-      e.message.includes("error loading dynamically imported module")
-    )) {
-      console.warn("Chunk load error detected, reloading page to fetch latest version...");
-      window.location.reload();
+    if (e.message && isChunkMsg(e.message)) {
+      console.warn("Chunk load error detected (global), reloading…");
+      safeReload();
     }
   }, true);
 
   window.addEventListener("unhandledrejection", (e) => {
-    const message = e.reason?.message || "";
-    if (
-      message.includes("Failed to fetch dynamically imported module") ||
-      message.includes("error loading dynamically imported module")
-    ) {
-      console.warn("Chunk load promise rejection detected, reloading page...");
-      window.location.reload();
+    if (isChunkMsg(e.reason?.message || "")) {
+      console.warn("Chunk load rejection detected (global), reloading…");
+      safeReload();
     }
   });
 }
