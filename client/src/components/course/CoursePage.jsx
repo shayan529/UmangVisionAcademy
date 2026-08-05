@@ -1697,9 +1697,19 @@ export default function CoursePage() {
                                       {tText(lesson.title)}
                                     </p>
                                     <div className="mt-1 flex items-center gap-2">
-                                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                        {lessonIsText ? "📄 Notes" : "🎬 Video Class"}
-                                      </span>
+                                      {lessonIsText ? (
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                          📄 Notes
+                                        </span>
+                                      ) : lesson.videoType === "animated_video" ? (
+                                        <span className="text-[10px] font-extrabold text-pink-400 bg-purple-950/60 border border-pink-500/30 px-1.5 py-0.5 rounded-md tracking-wider flex items-center gap-1">
+                                          ✨ Animated Video
+                                        </span>
+                                      ) : (
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                          🎬 Video
+                                        </span>
+                                      )}
                                       {!lessonIsText && lesson.durationMinutes > 0 && (
                                         <span className="text-[10px] font-semibold text-slate-600 bg-slate-900/30 px-1 rounded">
                                           {fmtMins(lesson.durationMinutes)}

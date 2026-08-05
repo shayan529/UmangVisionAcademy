@@ -118,23 +118,40 @@ const getPostLoginPath = (user, from) => {
   const isStaff = !isAdmin && checkHasCustomRole(user);
   const isInstructor = !isAdmin && !isStaff && hasBaseRole(user, "instructor");
 
-  if (from) {
-    let path = typeof from === "string" ? from : from.pathname;
-    if (path && typeof path === "string") {
-      const lowerPath = path.toLowerCase();
-      if (
-        user?.subscription?.status === "active" &&
-        (lowerPath.includes("billing") || lowerPath.includes("plans"))
-      ) {
-        return "/student-dashboard";
-      }
-      return path;
+  let fromPath = from ? (typeof from === "string" ? from : from.pathname) : null;
+
+  if (isAdmin) {
+    if (fromPath && typeof fromPath === "string" && fromPath.toLowerCase().includes("admin-dashboard")) {
+      return fromPath;
     }
+    return "/admin-dashboard";
   }
 
-  if (isAdmin) return "/admin-dashboard";
-  if (isStaff) return "/staff-dashboard";
-  if (isInstructor) return "/instructor-dashboard";
+  if (isStaff) {
+    if (fromPath && typeof fromPath === "string" && fromPath.toLowerCase().includes("staff-dashboard")) {
+      return fromPath;
+    }
+    return "/staff-dashboard";
+  }
+
+  if (isInstructor) {
+    if (fromPath && typeof fromPath === "string" && fromPath.toLowerCase().includes("instructor-dashboard")) {
+      return fromPath;
+    }
+    return "/instructor-dashboard";
+  }
+
+  if (fromPath && typeof fromPath === "string") {
+    const lowerPath = fromPath.toLowerCase();
+    if (
+      user?.subscription?.status === "active" &&
+      (lowerPath.includes("billing") || lowerPath.includes("plans"))
+    ) {
+      return "/student-dashboard";
+    }
+    return fromPath;
+  }
+
   return "/student-dashboard";
 };
 

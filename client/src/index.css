@@ -16,7 +16,6 @@
   body {
     min-width: 320px;
     overflow-x: hidden;
-    scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     font-family:
       "Inter",

@@ -15,6 +15,7 @@ import InstructorSessions from "./InstructorSessions";
 import InstructorAnalytics from "./InstructorAnalytics";
 import InstructorAI from "./InstructorAI";
 import InstructorNotifications from "./InstructorNotifications";
+import InstructorStudentQueries from "./InstructorStudentQueries";
 import InstructorSettings from "./InstructorSettings";
 import InstructorMockTests from "./InstructorMockTests";
 import InstructorNotes from "./InstructorNotes";
@@ -291,6 +292,8 @@ export default function InstructorDashboard() {
         return (
           <InstructorNotifications notifs={notifs} setNotifs={setNotifs} />
         );
+      case "student_queries":
+        return <InstructorStudentQueries showToast={showToast} />;
       case "settings":
         return <InstructorSettings showToast={showToast} />;
       default:

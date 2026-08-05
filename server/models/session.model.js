@@ -43,6 +43,26 @@ const sessionSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    // Subject *within* the assigned course this session belongs to (optional).
+    // Matches lesson.subject so the recorded lesson is filed under the right subject.
+    courseSubject: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    // Populated automatically when the session ends (if a course is assigned).
+    // Instructors/admins can also set/override this manually.
+    recordedUrl: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    // True once the recorded lesson has been pushed into the course lessons array,
+    // so re-ending or re-saving does not create duplicate lessons.
+    recordedLessonAdded: {
+      type: Boolean,
+      default: false,
+    },
     reminderSent: {
       type: Boolean,
       default: false,

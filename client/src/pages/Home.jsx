@@ -13,7 +13,7 @@ import Testimonials from "../components/common/Testimonials";
 
 const Home = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
-  
+
   return (
     <div>
       <SEO title="Home" description="Explore Umang Vision Academy - the best place to elevate your skills with top-notch coaching." />
@@ -21,7 +21,7 @@ const Home = () => {
 
       <FeaturedCourses />
       <Testimonials />
-      <Instructors />
+      {/* <Instructors /> */}
       {/* <Community /> */}
       <AISection />
       <Plans />

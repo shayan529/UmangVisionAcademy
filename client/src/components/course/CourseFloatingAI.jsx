@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { API_BASE_URL } from "../../config/api";
 import { useTranslation } from "react-i18next";
+import { getAiLanguageName } from "../../utils/aiLanguage";
 
 // ── Minimal markdown → JSX formatter for AI responses ──
 const escapeHtml = (str) =>
@@ -111,6 +112,90 @@ const getClientCoords = (e) => {
   return { x: e.clientX, y: e.clientY };
 };
 
+// ── RobotAvatar Helper ────────────────────────────────────────────────────────
+function RobotAvatar({ size = "md", className = "" }) {
+  if (size === "lg") {
+    return (
+      <div className={`relative flex items-center justify-center select-none ${className}`}>
+        {/* Glow backdrop */}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-500/40 via-indigo-500/40 to-purple-500/40 blur-xl animate-pulse" />
+
+        {/* 3D Holographic Futuristic Robot SVG */}
+        <div className="relative z-10 w-16 h-16 sm:w-36 sm:h-36 flex items-center justify-center">
+          <svg viewBox="0 0 120 120" className="w-full h-full filter drop-shadow-[0_0_20px_rgba(6,182,212,0.7)] drop-shadow-[0_8px_25px_rgba(168,85,247,0.5)]">
+            <defs>
+              <linearGradient id="botGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#38bdf8" />
+                <stop offset="50%" stopColor="#818cf8" />
+                <stop offset="100%" stopColor="#c084fc" />
+              </linearGradient>
+              <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#1e293b" />
+                <stop offset="100%" stopColor="#0b1324" />
+              </linearGradient>
+              <linearGradient id="visorGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#06b6d4" />
+                <stop offset="50%" stopColor="#22d3ee" />
+                <stop offset="100%" stopColor="#38bdf8" />
+              </linearGradient>
+              <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#22d3ee" stopOpacity="1" />
+                <stop offset="100%" stopColor="#0891b2" stopOpacity="0.2" />
+              </radialGradient>
+            </defs>
+
+            {/* Antenna & Signal Beacon */}
+            <line x1="60" y1="20" x2="60" y2="35" stroke="url(#botGrad)" strokeWidth="3" strokeLinecap="round" />
+            <circle cx="60" cy="16" r="5" fill="#22d3ee" className="animate-ping" style={{ transformOrigin: "60px 16px" }} />
+            <circle cx="60" cy="16" r="4" fill="#67e8f9" />
+
+            {/* Robot Head Outer Shell */}
+            <rect x="30" y="32" width="60" height="46" rx="16" fill="url(#bodyGrad)" stroke="url(#botGrad)" strokeWidth="2.5" />
+
+            {/* Ear Caps */}
+            <rect x="22" y="46" width="8" height="18" rx="4" fill="#334155" stroke="#38bdf8" strokeWidth="1.5" />
+            <rect x="90" y="46" width="8" height="18" rx="4" fill="#334155" stroke="#38bdf8" strokeWidth="1.5" />
+
+            {/* Visor Screen */}
+            <rect x="38" y="42" width="44" height="22" rx="10" fill="#090d16" stroke="#1e293b" strokeWidth="1.5" />
+            <rect x="40" y="44" width="40" height="18" rx="8" fill="url(#visorGrad)" opacity="0.18" />
+
+            {/* Glowing Eyes */}
+            <circle cx="50" cy="53" r="4.5" fill="#22d3ee" className="animate-pulse" />
+            <circle cx="50" cy="53" r="2" fill="#ffffff" />
+            <circle cx="70" cy="53" r="4.5" fill="#22d3ee" className="animate-pulse" />
+            <circle cx="70" cy="53" r="2" fill="#ffffff" />
+
+            {/* Mouth / Speaker Grill */}
+            <line x1="52" y1="67" x2="68" y2="67" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+
+            {/* Robot Neck */}
+            <rect x="52" y="78" width="16" height="8" rx="2" fill="#334155" />
+
+            {/* Robot Chest & Core Power Orb */}
+            <path d="M 32 86 Q 60 82 88 86 L 82 108 Q 60 112 38 108 Z" fill="url(#bodyGrad)" stroke="url(#botGrad)" strokeWidth="2" />
+            <circle cx="60" cy="96" r="7" fill="url(#coreGlow)" className="animate-pulse" />
+            <circle cx="60" cy="96" r="3" fill="#ffffff" />
+          </svg>
+        </div>
+
+        {/* Online Status Dot */}
+        <span className="absolute top-1 right-1 sm:top-2 sm:right-2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-cyan-300 ring-2 ring-[#0a1222] motion-safe:animate-ping pointer-events-none z-20" />
+        <span className="absolute top-1 right-1 sm:top-2 sm:right-2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-cyan-400 ring-2 ring-[#0a1222] pointer-events-none z-20" />
+      </div>
+    );
+  }
+
+  // Small/Medium icon for header & message bubbles
+  return (
+    <div className={`relative flex items-center justify-center rounded-full bg-gradient-to-tr from-cyan-400 to-purple-600 p-0.5 shadow-sm border border-cyan-300/80 ${className}`}>
+      <div className="w-full h-full rounded-full bg-[#0d172a] flex items-center justify-center">
+        <Bot className={`${size === "sm" ? "w-4 h-4" : "w-5 h-5"} text-cyan-300`} />
+      </div>
+    </div>
+  );
+}
+
 export default function CourseFloatingAI({
   course,
   activeLesson,
@@ -141,16 +226,28 @@ export default function CourseFloatingAI({
 
   // Initialize welcome message when opened
   useEffect(() => {
-    if (course && chatMessages.length === 0) {
-      setChatMessages([
-        {
-          id: "welcome",
-          role: "assistant",
-          content: isHindi
-            ? `✨ नमस्ते! मैं **Luna** हूँ — आपके **${course.title || "इस कोर्स"}** की AI गाइड।\n\nमैं इस कोर्स के सभी वीडियो, लेसन्स और नोट्स को समझती हूँ। मुझसे कोई भी सवाल पूछें!`
-            : `✨ Hi! I'm **Luna** — your AI Course Guide for **${course.title || "this course"}**.\n\nI have full context of all videos, lessons, and notes in this course. Ask me anything!`,
-        },
-      ]);
+    if (chatMessages.length === 0) {
+      if (course) {
+        setChatMessages([
+          {
+            id: "welcome",
+            role: "assistant",
+            content: isHindi
+              ? `✨ नमस्ते! मैं आपका **AI गाइड** हूँ — आपके **${course.title || "इस कोर्स"}** के लिए।\n\nमैं इस कोर्स के सभी वीडियो, लेसन्स और नोट्स को समझता हूँ। मुझसे कोई भी सवाल पूछें!`
+              : `✨ Hi! I'm your **AI Course Guide** for **${course.title || "this course"}**.\n\nI have full context of all videos, lessons, and notes in this course. Ask me anything!`,
+          },
+        ]);
+      } else {
+        setChatMessages([
+          {
+            id: "welcome",
+            role: "assistant",
+            content: isHindi
+              ? `✨ नमस्ते! मैं आपका **AI एकेडमी गाइड** हूँ!\n\nआप मुझसे स्टूडेंट डैशबोर्ड के किसी भी फीचर (माई कोर्सेस, लाइव सेशंस, नोट्स, मॉक टेस्ट, वॉलेट, सर्टिफिकेट्स आदि) या पढ़ाई से जुड़ा कोई भी सवाल पूछ सकते हैं!`
+              : `✨ Hi! I'm your **AI Academy Guide**!\n\nYou can ask me about any feature on the Student Dashboard (My Courses, Live Sessions, Study Notes, Mock Tests, Wallet, Certificates, etc.) or any study question!`,
+          },
+        ]);
+      }
     }
   }, [course, isHindi, chatMessages.length]);
 
@@ -219,15 +316,37 @@ export default function CourseFloatingAI({
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
   }, [inputQuery]);
 
-  // Build full course context for system prompt
+  // Build full course / dashboard context for system prompt
   const buildSystemContext = useCallback(() => {
-    if (!course) return "";
+    if (!course) {
+      let context = `You are the friendly and expert AI Academy Guide for Umang Vision Academy.
+You are embedded across the Student Dashboard and are here to help the student with ANY feature, page, or study concept.
+
+STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
+1. Dashboard Overview: Quick stats, enrolled courses progress, upcoming live sessions, daily study streak.
+2. My Courses: Access enrolled courses, watch video lessons, view chapter content, and track completion progress.
+3. Live Sessions: Join scheduled live interactive classes with instructors, view meeting links, and watch recorded past classes.
+4. Study Notes: Chapter-wise PDF notes, interactive reader, text selection search, and AI note explanations.
+5. Question Bank: Subject & class practice questions with step-by-step solutions.
+6. AI Tutor: Dedicated 1-on-1 AI chat tutor for deep concept explanations, problem-solving, and homework help.
+7. Mock Tests: Online timed practice tests, instant score breakdown, subject tests, and detailed answer keys.
+8. Progress & Analytics: Charts of total study time, completed lessons, subject strengths, and growth tracking.
+9. Leaderboard & Achievements: Class rankings, top scoring students, badges, and learning milestones.
+10. Certificates: Downloadable verified completion certificates for completed courses.
+11. Wallet & Referral: Wallet balance for buying courses/plans, transaction log, and referral links to earn cash bonuses.
+12. Settings & Class Switch: Profile updates, class selection (Class 9, Class 10, Class 11, Class 12, Competitive Exams), and account settings.
+
+` + (isHindi
+        ? `RULE: Answer the student clearly in Hindi or Hinglish based on their language. Be encouraging, educational, concise, and helpful.`
+        : `RULE: Always match the user's language (English, Hindi, Hinglish, etc.). Be encouraging, educational, clear, and guide them on platform features.`);
+      return context;
+    }
 
     const courseTitle = course.title || "Course";
     const courseDesc = course.description || "";
     const instructor = course.instructorName || course.instructor?.name || "Instructor";
 
-    let context = `You are Luna, the friendly and expert AI Learning Guide for the course "${courseTitle}".\n`;
+    let context = `You are the friendly and expert AI Learning Guide for the course "${courseTitle}".\n`;
     if (courseDesc) context += `Course Overview: "${courseDesc}".\n`;
     if (instructor) context += `Instructor: "${instructor}".\n`;
 
@@ -302,7 +421,7 @@ export default function CourseFloatingAI({
         credentials: "include",
         body: JSON.stringify({
           messages: apiHistory,
-          language: isHindi ? "Hindi" : "English",
+          language: getAiLanguageName(i18n.language),
           userRole: "student",
         }),
       });
@@ -562,65 +681,54 @@ export default function CourseFloatingAI({
           }}
         >
           <Sparkles size={14} className="text-sky-100" />
-          <span>{isHindi ? "Luna से पूछें" : "Ask Luna"}</span>
+          <span>{isHindi ? "AI से पूछें" : "Ask AI"}</span>
         </div>
       )}
 
-      {/* Floating Cosmic AI Woman Figure + Cloud Speech Bubble Comment ("Ask AI") */}
+      {/* Floating Robot AI Figure + Cloud Speech Bubble Comment ("Ask AI") */}
       {!isOpen && (
         <div
           ref={avatarBtnRef}
           onPointerDown={handleAvatarPointerDown}
           onTouchStart={handleAvatarPointerDown}
           style={avatarPos ? { left: `${avatarPos.x}px`, top: `${avatarPos.y}px`, right: "auto", bottom: "auto" } : {}}
-          className={`fixed z-50 flex items-center gap-2 sm:gap-3 select-none touch-none cursor-grab active:cursor-grabbing group motion-safe:animate-cloudFloat ${!avatarPos ? "bottom-6 right-6" : ""
+          className={`fixed z-50 flex items-center gap-2 sm:gap-3 select-none touch-none cursor-grab active:cursor-grabbing group motion-safe:animate-cloudFloat ${!avatarPos ? "bottom-20 right-4 sm:bottom-6 sm:right-6" : ""
             }`}
         >
-          {/* Cloud Speech Bubble Comment ("Ask Luna") */}
+          {/* Cloud Speech Bubble Comment ("Ask AI") */}
           <button
             type="button"
             onClick={() => setIsOpen(true)}
             className="relative flex flex-col items-start px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl sm:rounded-br-none bg-gradient-to-r from-[#0d1e38]/95 via-[#132d54]/95 to-[#1c1440]/95 border-2 border-cyan-400/70 shadow-[0_10px_35px_rgba(6,182,212,0.45)] backdrop-blur-md hover:scale-105 transition-all text-left group-hover:border-cyan-300 cursor-pointer"
-            title="Click to open Course AI chat"
+            title="Click to open AI chat"
           >
             <div className="flex items-center gap-1.5 mb-0.5">
               <Sparkles size={13} className="text-yellow-300 animate-pulse" />
               <span className="text-xs font-black text-cyan-200 uppercase tracking-wider">
-                {isHindi ? "Luna से पूछें" : "Ask Luna"}
+                {isHindi ? "AI से पूछें" : "Ask AI"}
               </span>
             </div>
             <span className="text-[10px] text-slate-300 font-semibold max-w-[145px] truncate leading-tight">
               {activeLesson?.title
                 ? `Ask about "${activeLesson.title}"`
-                : isHindi
-                  ? "वीडियो और नोट्स से सवाल पूछें"
-                  : "Ask about videos & notes"}
+                : course?.title
+                  ? isHindi ? "वीडियो और नोट्स से सवाल पूछें" : "Ask about videos & notes"
+                  : isHindi ? "डैशबोर्ड व स्टडी से सवाल पूछें" : "Ask about dashboard & study"}
             </span>
 
             {/* Pointer tail pointing right to avatar (desktop only) */}
             <div className="hidden sm:block absolute -right-2 bottom-3 w-0 h-0 border-t-[7px] border-t-transparent border-l-[10px] border-l-cyan-400/80 border-b-[7px] border-b-transparent" />
           </button>
 
-          {/* Cosmic Floating AI Woman Figure — hidden on mobile, shown on desktop (sm+) */}
+          {/* Holographic 3D Robot Avatar — visible on both mobile & desktop */}
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            aria-label="Open Course AI Assistant"
-            className={`hidden sm:flex relative items-center justify-center cursor-pointer border-none bg-transparent p-0 transition-transform duration-300 hover:scale-110 active:scale-95 ${isDraggingAvatar ? "scale-110" : ""
+            aria-label="Open AI Assistant"
+            className={`flex relative items-center justify-center cursor-pointer border-none bg-transparent p-0 transition-transform duration-300 hover:scale-110 active:scale-95 ${isDraggingAvatar ? "scale-110" : ""
               }`}
           >
-            <div className="relative h-36 sm:h-44 w-auto flex items-center justify-center">
-              {/* Main Avatar Cutout Image */}
-              <img
-                src="/course_ai_avatar.png"
-                alt="Course AI 3D Holographic Guide Avatar"
-                className="h-full w-auto object-contain pointer-events-none filter drop-shadow-[0_0_22px_rgba(168,85,247,0.55)] drop-shadow-[0_6px_16px_rgba(6,182,212,0.65)] relative z-10"
-              />
-
-              {/* Online status badge */}
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-cyan-300 ring-2 ring-[#0a1222] motion-safe:animate-ping pointer-events-none z-20" />
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-[#0a1222] pointer-events-none z-20" />
-            </div>
+            <RobotAvatar size="lg" />
           </button>
         </div>
       )}
@@ -630,7 +738,7 @@ export default function CourseFloatingAI({
         <div
           ref={chatCardRef}
           style={chatPos ? { left: `${chatPos.x}px`, top: `${chatPos.y}px`, right: "auto", bottom: "auto" } : {}}
-          className={`fixed z-50 w-[calc(100vw-2rem)] sm:w-[390px] lg:w-[420px] h-[540px] max-h-[80vh] flex flex-col bg-[#0b1424] border border-cyan-500/40 rounded-3xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden transition-shadow ${!chatPos ? "bottom-6 right-6" : ""
+          className={`fixed z-50 w-[calc(100vw-2rem)] sm:w-[390px] lg:w-[420px] h-[540px] max-h-[80vh] flex flex-col bg-[#0b1424] border border-cyan-500/40 rounded-3xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden transition-shadow ${!chatPos ? "bottom-20 right-4 sm:bottom-6 sm:right-6" : ""
             } ${isDraggingChat ? "ring-2 ring-cyan-400 shadow-[0_30px_90px_rgba(6,182,212,0.4)]" : "motion-safe:animate-popIn"}`}
         >
           {/* Header */}
@@ -641,23 +749,22 @@ export default function CourseFloatingAI({
             title="Drag to move across page"
           >
             <div className="flex items-center gap-2.5 min-w-0 pointer-events-none">
-              <div className="relative w-9 h-9 rounded-full overflow-hidden border border-cyan-300/80 shadow-md shadow-cyan-500/30 shrink-0 p-0.5 bg-gradient-to-tr from-cyan-400 to-purple-600">
-                <img src="/course_ai_avatar.png" alt="Avatar" className="w-full h-full object-cover rounded-full" />
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-[#0b1424] motion-safe:animate-pulse" />
-              </div>
+              <RobotAvatar size="md" className="w-9 h-9 shrink-0" />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <GripHorizontal size={14} className="text-cyan-400/70 shrink-0" />
                   <h3 className="text-xs sm:text-sm font-black text-white truncate tracking-wide">
-                    {isHindi ? "Luna · AI कोर्स गाइड" : "Luna · Course AI Guide"}
+                    {course
+                      ? (isHindi ? "Ask AI · AI कोर्स गाइड" : "Ask AI · Course AI Guide")
+                      : (isHindi ? "Ask AI · AI एकेडमी गाइड" : "Ask AI · Academy AI Guide")}
                   </h3>
                 </div>
                 <p className="text-[10px] sm:text-[11px] text-cyan-300/90 truncate font-medium">
                   {activeLesson?.title
                     ? `${activeLesson.title}`
-                    : isHindi
-                      ? "वीडियो और नोट्स से मदद पाएं"
-                      : "Context from course videos & notes"}
+                    : course?.title
+                      ? (isHindi ? "वीडियो और नोट्स से मदद पाएं" : "Context from course videos & notes")
+                      : (isHindi ? "डैशबोर्ड फीचर्स व स्टडी से मदद पाएं" : "Dashboard features, courses & study guide")}
                 </p>
               </div>
             </div>
@@ -736,7 +843,7 @@ export default function CourseFloatingAI({
             </div>
           )}
 
-          {/* Messages list — SINGLE BUBBLE WITH TYPING DOTS WHILE THINKING (NO DUPLICATE) */}
+          {/* Messages list */}
           <div className="flex-1 overflow-y-auto p-3.5 space-y-3.5 custom-scrollbar bg-[#09101d]">
             {chatMessages.map((msg) => (
               <div
@@ -744,9 +851,7 @@ export default function CourseFloatingAI({
                 className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"} group`}
               >
                 {msg.role === "assistant" && (
-                  <div className="w-7 h-7 rounded-full overflow-hidden border border-cyan-300/60 shrink-0 mt-0.5 shadow-sm p-0.5 bg-gradient-to-tr from-cyan-400 to-purple-600">
-                    <img src="/course_ai_avatar.png" alt="AI" className="w-full h-full object-cover rounded-full" />
-                  </div>
+                  <RobotAvatar size="sm" className="w-7 h-7 shrink-0 mt-0.5" />
                 )}
                 <div
                   className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm shadow-sm relative ${msg.role === "user"
@@ -806,8 +911,8 @@ export default function CourseFloatingAI({
                 rows={1}
                 placeholder={
                   isHindi
-                    ? "Luna से सवाल पूछें (वीडियो, नोट्स)..."
-                    : "Ask Luna about videos, notes..."
+                    ? "AI से सवाल पूछें (वीडियो, नोट्स)..."
+                    : "Ask AI about videos, notes..."
                 }
                 value={inputQuery}
                 onChange={(e) => setInputQuery(e.target.value)}

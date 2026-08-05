@@ -21,10 +21,53 @@ const checkIsAdminOrStaff = (user) => {
   );
 };
 
-// GET /sessions/all — for ADMIN/STAFF (all sessions)
+// GET /sessions/instructor-courses
+// Returns courses belonging to the requesting instructor (or all courses for admin/staff).
+// Instructors always get ONLY their own courses, regardless of any permission grants.
+// Admin/staff (by base role only) get all courses.
+export const getCoursesForSession = async (req, res) => {
+  try {
+    // Use base role check only — permission grants (sessions:create etc.) do NOT
+    // make an instructor into an admin for the purpose of course visibility.
+    const isAdminOrStaff =
+      hasBaseRole(req.user, "admin") ||
+      req.user?.role === "admin" ||
+      req.user?.role === "staff";
+
+    const filter = isAdminOrStaff
+      ? { approvalStatus: { $in: ["approved", "pending", "draft"] } }
+      : { instructor: req.user._id };
+
+    const courses = await Course.find(filter)
+      .select("_id title instructor lessons subjectDetails subjectQuizzes")
+      .lean();
+
+    // Return courses with their unique subjects so the UI can build a subject dropdown
+    const result = courses.map((c) => {
+      const subjectSet = new Set([
+        ...(c.lessons ?? []).map((l) => l.subject).filter(Boolean),
+        ...(c.subjectDetails ?? []).map((d) => d.subject).filter(Boolean),
+        ...(c.subjectQuizzes ?? []).map((q) => q.subject).filter(Boolean),
+      ]);
+      return {
+        _id: c._id,
+        title: c.title,
+        instructor: c.instructor, // ObjectId — used by admin to filter by instructor
+        subjects: Array.from(subjectSet).sort(),
+      };
+    });
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 export const getAllSessions = async (req, res) => {
   try {
-    const sessions = await Session.find({})
+    const filter = {};
+    if (req.query.courseId) filter.course = req.query.courseId;
+
+    const sessions = await Session.find(filter)
       .populate("course", "title")
       .populate("instructor", "name")
       .sort({ date: 1 })
@@ -40,6 +83,19 @@ export const getAllSessions = async (req, res) => {
 export const getInstructorSessions = async (req, res) => {
   try {
     const instructorId = req.user._id.toString();
+    // If a courseId filter is supplied, skip cache and return filtered results
+    if (req.query.courseId) {
+      const sessions = await Session.find({
+        instructor: req.user._id,
+        course: req.query.courseId,
+      })
+        .populate("course", "title")
+        .populate("instructor", "name")
+        .sort({ date: 1 })
+        .lean();
+      return res.json(sessions);
+    }
+
     const cacheKey = `instructor:sessions:${instructorId}`;
     const sessions = await cacheResponse(cacheKey, 300, async () => {
       return await Session.find({ instructor: req.user._id })
@@ -228,6 +284,8 @@ export const createSession = async (req, res) => {
       instructor,
       class: classVal,
       subject,
+      courseSubject,
+      recordedUrl,
     } = req.body;
     if (!title?.trim()) {
       return res.status(400).json({ message: "Session title is required" });
@@ -246,11 +304,14 @@ export const createSession = async (req, res) => {
       course: course || null,
       class: classVal || null,
       subject: subject || null,
+      courseSubject: courseSubject || null,
+      recordedUrl: recordedUrl || null,
       instructor: targetInstructorId,
       url: url || null,
     });
 
     session = await session.populate("instructor", "name");
+    session = await session.populate("course", "title");
 
     // Invalidate session caches
     await Promise.all([
@@ -284,6 +345,8 @@ export const updateSession = async (req, res) => {
       "course",
       "class",
       "subject",
+      "courseSubject",
+      "recordedUrl",
       "url",
     ];
     const updates = {};
@@ -293,17 +356,64 @@ export const updateSession = async (req, res) => {
       }
     }
 
-    const existingSession = await Session.findOne(query).select("instructor");
+    const existingSession = await Session.findOne(query);
     if (!existingSession)
       return res.status(404).json({ message: "Session not found" });
 
     const oldInstructorId = existingSession.instructor?.toString();
+    const wasEnded = existingSession.status === "ended";
+    const isNowEnded = updates.status === "ended";
 
     const session = await Session.findOneAndUpdate(query, updates, {
       new: true,
       runValidators: true,
-    }).populate("instructor", "name");
+    })
+      .populate("instructor", "name")
+      .populate("course", "title lessons");
+
     if (!session) return res.status(404).json({ message: "Session not found" });
+
+    // ── Auto-add recorded lesson when session transitions to "ended" ──────────
+    // Only runs when:
+    //  1. Status just changed to "ended" (wasn't already ended)
+    //  2. A course is assigned
+    //  3. A recorded URL is present (can be the stream URL itself if no separate recording)
+    //  4. We haven't already added the lesson for this session (guard against duplicates)
+    const recordedLink = session.recordedUrl || session.url;
+    if (
+      isNowEnded &&
+      !wasEnded &&
+      session.course?._id &&
+      recordedLink &&
+      !session.recordedLessonAdded
+    ) {
+      try {
+        const newLesson = {
+          title: session.title,
+          description: `Recorded live session — ${session.date}${session.time ? " at " + session.time : ""}`,
+          videoUrl: recordedLink,
+          type: "video",
+          subject: session.courseSubject || session.subject || "",
+          chapterTitle: "Live Sessions",
+          durationMinutes: 0,
+        };
+
+        await Course.findByIdAndUpdate(session.course._id, {
+          $push: { lessons: { $each: [newLesson], $position: -1 } },
+        });
+
+        // Mark so we never duplicate
+        await Session.findByIdAndUpdate(session._id, {
+          recordedLessonAdded: true,
+        });
+        session.recordedLessonAdded = true;
+
+        // Invalidate course cache so the new lesson is visible immediately
+        await invalidateCache(`course:${session.course._id}*`);
+      } catch (e) {
+        console.error("[Session] Failed to add recorded lesson to course:", e.message);
+      }
+    }
 
     const newInstructorId =
       session.instructor?._id?.toString() || session.instructor?.toString();

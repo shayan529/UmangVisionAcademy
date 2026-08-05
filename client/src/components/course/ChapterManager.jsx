@@ -19,13 +19,59 @@ const blur = (e) => (e.target.style.borderColor = "#1e293b");
 const EMPTY_LESSON = {
   title: "",
   type: "video",
+  videoType: "video",
   videoUrl: "",
   content: "",
   pdfUrl: "",
   description: "",
 };
 
-
+// ── VideoTypeToggle ───────────────────────────────────────────────────────────
+const VideoTypeToggle = ({ value = "video", onChange }) => (
+  <div
+    style={{
+      display: "flex",
+      gap: 0,
+      background: "#1e293b",
+      borderRadius: 8,
+      padding: 3,
+      flexShrink: 0,
+    }}
+  >
+    {[
+      { key: "video", icon: "🎬", label: "Video" },
+      { key: "animated_video", icon: "✨", label: "Animated Video" },
+    ].map((t) => (
+      <button
+        key={t.key}
+        type="button"
+        onClick={() => onChange(t.key)}
+        style={{
+          padding: "4px 10px",
+          borderRadius: 6,
+          border: "none",
+          fontSize: 11,
+          fontWeight: 700,
+          cursor: "pointer",
+          background:
+            value === t.key
+              ? t.key === "animated_video"
+                ? "linear-gradient(135deg, #7c3aed, #ec4899)"
+                : "#2563eb"
+              : "transparent",
+          color: value === t.key ? "#ffffff" : "#64748b",
+          transition: "all 0.15s",
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          boxShadow: value === t.key ? "0 2px 8px rgba(0,0,0,0.3)" : "none",
+        }}
+      >
+        {t.icon} {t.label}
+      </button>
+    ))}
+  </div>
+);
 
 // ── TypeToggle ────────────────────────────────────────────────────────────────
 const TypeToggle = ({ value, onChange }) => (
@@ -79,12 +125,14 @@ const TypeToggle = ({ value, onChange }) => (
 );
 
 // ── VideoUploadCell ───────────────────────────────────────────────────────────
-const VideoUploadCell = ({ value, onUploaded }) => {
+const VideoUploadCell = ({ value, onUploaded, videoType = "video" }) => {
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
   const fileInputRef = useRef(null);
+
+  const isAnimated = videoType === "animated_video";
 
   const handleUpload = async (file) => {
     setUploading(true);
@@ -125,24 +173,43 @@ const VideoUploadCell = ({ value, onUploaded }) => {
           alignItems: "center",
           gap: 10,
           padding: "10px 14px",
-          background: "#0b1120",
-          border: "1px solid #1e293b",
+          background: isAnimated ? "rgba(124, 58, 237, 0.08)" : "#0b1120",
+          border: `1px solid ${isAnimated ? "rgba(236, 72, 153, 0.3)" : "#1e293b"}`,
           borderRadius: 10,
         }}
       >
-        <span style={{ fontSize: 16 }}>🎬</span>
-        <span
-          style={{
-            fontSize: 12,
-            color: "#a78bfa",
-            flex: 1,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {displayName}
-        </span>
+        <span style={{ fontSize: 16 }}>{isAnimated ? "✨" : "🎬"}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span
+              style={{
+                fontSize: 12,
+                color: isAnimated ? "#f472b6" : "#a78bfa",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                fontWeight: 600,
+              }}
+            >
+              {displayName}
+            </span>
+            <span
+              style={{
+                fontSize: 9,
+                fontWeight: 800,
+                padding: "2px 6px",
+                borderRadius: 4,
+                textTransform: "uppercase",
+                background: isAnimated
+                  ? "linear-gradient(135deg, #7c3aed, #ec4899)"
+                  : "#1e293b",
+                color: "#ffffff",
+              }}
+            >
+              {isAnimated ? "Animated Video" : "Video"}
+            </span>
+          </div>
+        </div>
         <button
           type="button"
           onClick={() => onUploaded("")}
@@ -193,10 +260,14 @@ const VideoUploadCell = ({ value, onUploaded }) => {
           if (file) handleUpload(file);
         }}
         style={{
-          border: `1.5px dashed ${dragOver ? "#7c3aed" : "#1e293b"}`,
+          border: `1.5px dashed ${dragOver ? "#7c3aed" : isAnimated ? "rgba(236, 72, 153, 0.4)" : "#1e293b"}`,
           borderRadius: 12,
           padding: "28px 20px",
-          background: dragOver ? "#0f0a1e" : "#0b1120",
+          background: dragOver
+            ? "#0f0a1e"
+            : isAnimated
+              ? "rgba(124, 58, 237, 0.04)"
+              : "#0b1120",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -214,7 +285,7 @@ const VideoUploadCell = ({ value, onUploaded }) => {
                 animation: "spin 1s linear infinite",
                 width: 28,
                 height: 28,
-                color: "#7c3aed",
+                color: isAnimated ? "#ec4899" : "#7c3aed",
               }}
               viewBox="0 0 24 24"
               fill="none"
@@ -235,7 +306,7 @@ const VideoUploadCell = ({ value, onUploaded }) => {
               />
             </svg>
             <span style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
-              Uploading… {progress}%
+              Uploading {isAnimated ? "Animated Video" : "Video"}… {progress}%
             </span>
             <div
               style={{
@@ -250,7 +321,9 @@ const VideoUploadCell = ({ value, onUploaded }) => {
                 style={{
                   height: "100%",
                   width: `${progress}%`,
-                  background: "linear-gradient(90deg, #7c3aed, #06b6d4)",
+                  background: isAnimated
+                    ? "linear-gradient(90deg, #7c3aed, #ec4899)"
+                    : "linear-gradient(90deg, #7c3aed, #06b6d4)",
                   borderRadius: 99,
                   transition: "width 0.2s",
                 }}
@@ -259,12 +332,12 @@ const VideoUploadCell = ({ value, onUploaded }) => {
           </>
         ) : (
           <>
-            <span style={{ fontSize: 28 }}>🎬</span>
+            <span style={{ fontSize: 28 }}>{isAnimated ? "✨" : "🎬"}</span>
             <span style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
-              Click or drag &amp; drop
+              Click or drag &amp; drop {isAnimated ? "Animated Video" : "Video"}
             </span>
-            <span style={{ fontSize: 11, color: "#475569" }}>
-              MP4, WEBM — max 200 MB
+            <span style={{ fontSize: 11, color: isAnimated ? "#f472b6" : "#475569" }}>
+              MP4, WEBM — max 200 MB · Label: {isAnimated ? "Animated Video" : "Video"}
             </span>
           </>
         )}
@@ -971,6 +1044,12 @@ export default function ChapterManager({
                           value={lesson.type || "video"}
                           onChange={(t) => updateLesson(ci, li, "type", t)}
                         />
+                        {!isText && (
+                          <VideoTypeToggle
+                            value={lesson.videoType || "video"}
+                            onChange={(vt) => updateLesson(ci, li, "videoType", vt)}
+                          />
+                        )}
                         <button
                           type="button"
                           onClick={() => deleteLesson(ci, li)}
@@ -1010,6 +1089,7 @@ export default function ChapterManager({
                         ) : (
                           <VideoUploadCell
                             value={lesson.videoUrl}
+                            videoType={lesson.videoType || "video"}
                             onUploaded={(url) =>
                               updateLesson(ci, li, "videoUrl", url)
                             }

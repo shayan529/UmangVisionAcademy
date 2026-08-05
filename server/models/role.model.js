@@ -16,6 +16,8 @@ export const PERMISSION_MODULES = {
   applications: ["view", "approve", "reject"],
   bulk_import: ["view", "import"],
   devices: ["view", "revoke"],
+  // Ask-Instructor direct messaging
+  ask_instructor: ["view", "reply", "archive", "delete"],
 };
 
 export const DASHBOARD_MODULES = {
@@ -24,15 +26,18 @@ export const DASHBOARD_MODULES = {
     "ai_tutor", "sessions", "progress", "mock_tests", "leaderboard",
     "achievements", "certificates", "plans", "become_instructor",
     "referral", "wallet", "purchase_history", "references", "settings",
+    "ask_instructor",   // ← student can open the Ask Instructor chat
   ],
   instructor: [
     "dashboard", "courses", "students", "sessions", "notes", "reels",
     "analytics", "ai", "settings", "mock-tests",
+    "student_queries",  // ← instructor sees incoming student questions
   ],
   staff: [
     "overview", "courses", "students", "instructors", "payments",
     "applications", "notes", "reels", "mock_tests", "question_bank",
     "sessions", "ai_tutor", "references", "bulk_import", "devices",
+    "ask_instructor",   // ← staff can oversee chats if given the permission
   ],
 };
 

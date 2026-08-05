@@ -2,7 +2,10 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import toast from "react-hot-toast";
 import { fetchMyApplication } from "../../redux/slices/applicationsSlice";
+import { clearAuth } from "../../redux/slices/authSlice";
+import { hasBaseRole } from "../../utils/permissions";
 import {
   GraduationCap,
   Sparkles,
@@ -51,26 +54,34 @@ const steps = [
 const instructorPerks = [
   {
     icon: Users,
-    title: "Reach Thousands of Students",
-    desc: "Teach motivated learners across Class 9-12, competitive exams, and specialized skill tracks.",
+    titleKey: "becomeInstructor.perks.reachStudents.title",
+    descKey: "becomeInstructor.perks.reachStudents.desc",
+    defaultTitle: "Reach Thousands of Students",
+    defaultDesc: "Teach motivated learners across Class 9-12, competitive exams, and specialized skill tracks.",
     color: "#818cf8",
   },
   {
     icon: Sparkles,
-    title: "AI-Powered Course Builder",
-    desc: "Auto-generate practice quizzes, lesson notes, and student progress reports effortlessly.",
+    titleKey: "becomeInstructor.perks.aiBuilder.title",
+    descKey: "becomeInstructor.perks.aiBuilder.desc",
+    defaultTitle: "AI-Powered Course Builder",
+    defaultDesc: "Auto-generate practice quizzes, lesson notes, and student progress reports effortlessly.",
     color: "#c084fc",
   },
   {
     icon: Award,
-    title: "Transparent & Timely Earnings",
-    desc: "Earn competitive revenues per enrollment with direct payouts and clear performance analytics.",
+    titleKey: "becomeInstructor.perks.earnings.title",
+    descKey: "becomeInstructor.perks.earnings.desc",
+    defaultTitle: "Transparent & Timely Earnings",
+    defaultDesc: "Earn competitive revenues per enrollment with direct payouts and clear performance analytics.",
     color: "#4ade80",
   },
   {
     icon: Video,
-    title: "High-Quality Streaming Tools",
-    desc: "Host live video classes or publish self-paced HD video courses with automatic PDF material attachments.",
+    titleKey: "becomeInstructor.perks.streamingTools.title",
+    descKey: "becomeInstructor.perks.streamingTools.desc",
+    defaultTitle: "High-Quality Streaming Tools",
+    defaultDesc: "Host live video classes or publish self-paced HD video courses with automatic PDF material attachments.",
     color: "#38bdf8",
   },
 ];
@@ -81,6 +92,8 @@ const BecomeInstructor = () => {
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { myApplication, loading } = useSelector((state) => state.applications);
+
+  const isStudent = hasBaseRole(user, "student");
 
   useEffect(() => {
     if (isAuthenticated) dispatch(fetchMyApplication());
@@ -93,7 +106,15 @@ const BecomeInstructor = () => {
   }, [user, navigate]);
 
   const handleBecomeInstructor = () => {
-    if (!isAuthenticated) return navigate("/login");
+    if (isStudent) {
+      toast.error(
+        t(
+          "becomeInstructor.studentCannotBecomeError",
+          "Students cannot become an instructor. Please create a fresh account."
+        )
+      );
+      return;
+    }
     if (myApplication) return navigate("/instructor-application/status");
     navigate("/become-instructor/apply");
   };
@@ -105,10 +126,12 @@ const BecomeInstructor = () => {
     : t("becomeInstructor.buttonBecome", "Become an Instructor");
 
   return (
-    <div className="min-h-screen bg-[#0B1120] text-slate-100 relative overflow-hidden py-16 lg:py-24 px-6 md:px-10">
-      {/* Background Glow Accents */}
-      <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-indigo-600/10 blur-[140px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-cyan-600/10 blur-[140px] rounded-full pointer-events-none" />
+    <div className="min-h-screen bg-[#0B1120] text-slate-100 relative overflow-x-clip py-16 lg:py-24 px-6 md:px-10">
+      {/* Background Glow Accents (GPU Optimized) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-indigo-600/15 blur-[90px] rounded-full transform-gpu" />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-cyan-600/15 blur-[90px] rounded-full transform-gpu" />
+      </div>
 
       <main className="max-w-7xl mx-auto space-y-20 relative z-10">
 
@@ -154,10 +177,10 @@ const BecomeInstructor = () => {
           </div>
 
           {/* Right Application CTA Card */}
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-[36px] blur-xl opacity-30 group-hover:opacity-50 transition duration-1000" />
+          <div className="relative group transform-gpu">
+            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-[36px] blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-500 pointer-events-none" />
 
-            <div className="relative rounded-[32px] border border-slate-800/90 bg-[#111827]/90 backdrop-blur-2xl p-8 sm:p-10 shadow-2xl flex flex-col justify-between space-y-8 overflow-hidden">
+            <div className="relative rounded-[32px] border border-slate-800/90 bg-[#111827]/95 p-8 sm:p-10 shadow-2xl flex flex-col justify-between space-y-8 overflow-hidden transform-gpu">
               <Rocket size={100} className="absolute -bottom-8 -right-8 text-indigo-500/10 pointer-events-none" />
 
               <div className="space-y-4 relative z-10">
@@ -179,11 +202,32 @@ const BecomeInstructor = () => {
               </div>
 
               <div className="space-y-3 relative z-10 pt-2">
+                {isStudent && (
+                  <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 text-xs text-amber-300 font-medium space-y-2">
+                    <p className="leading-relaxed font-semibold">
+                      ⚠️ {t(
+                        "becomeInstructor.studentCannotBecomeError",
+                        "Students cannot become an instructor. Please create a fresh account."
+                      )}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        dispatch(clearAuth());
+                        navigate("/become-instructor/apply");
+                      }}
+                      className="inline-block px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Log Out & Register Fresh Account
+                    </button>
+                  </div>
+                )}
+
                 <button
                   type="button"
                   onClick={handleBecomeInstructor}
                   disabled={loading}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 px-6 py-4 text-sm font-bold text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-indigo-600/25 disabled:opacity-50"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 px-6 py-4 text-sm font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-indigo-600/25 disabled:opacity-50 cursor-pointer"
                 >
                   <span>{buttonLabel}</span>
                   <ArrowRight size={16} />
@@ -203,10 +247,10 @@ const BecomeInstructor = () => {
         <div className="space-y-8 pt-6 border-t border-slate-800/80">
           <div className="text-center space-y-3 max-w-2xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Why Instructors Choose Umang Vision Academy
+              {t("becomeInstructor.whyChooseTitle", "Why Instructors Choose Umang Vision Academy")}
             </h2>
             <p className="text-slate-400 text-sm sm:text-base">
-              Everything you need to build, market, and monetize high-impact online courses.
+              {t("becomeInstructor.whyChooseSubtitle", "Everything you need to build, market, and monetize high-impact online courses.")}
             </p>
           </div>
 
@@ -216,17 +260,17 @@ const BecomeInstructor = () => {
               return (
                 <div
                   key={i}
-                  className="p-6 rounded-2xl border border-slate-800/80 bg-[#111827]/60 backdrop-blur-md hover:-translate-y-1 hover:border-indigo-500/40 hover:shadow-lg transition-all duration-300 space-y-4 group"
+                  className="p-6 rounded-2xl border border-slate-800/80 bg-[#111827]/90 hover:-translate-y-1 hover:border-indigo-500/40 hover:shadow-lg transition-transform transition-colors duration-200 space-y-4 group transform-gpu"
                 >
                   <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
                     <Icon size={24} style={{ color: perk.color }} />
                   </div>
                   <div>
                     <h3 className="font-bold text-white text-base group-hover:text-indigo-300 transition-colors">
-                      {perk.title}
+                      {t(perk.titleKey, perk.defaultTitle)}
                     </h3>
                     <p className="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">
-                      {perk.desc}
+                      {t(perk.descKey, perk.defaultDesc)}
                     </p>
                   </div>
                 </div>
@@ -239,7 +283,7 @@ const BecomeInstructor = () => {
         <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] items-stretch">
           
           {/* Steps Container */}
-          <div className="rounded-[32px] border border-slate-800/90 bg-[#111827]/80 p-8 sm:p-10 shadow-xl space-y-8">
+          <div className="rounded-[32px] border border-slate-800/90 bg-[#111827]/90 p-8 sm:p-10 shadow-xl space-y-8 transform-gpu">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-2">
                 <Sparkles size={14} />
@@ -265,7 +309,7 @@ const BecomeInstructor = () => {
                 return (
                   <div
                     key={step.stepNum}
-                    className="flex items-start gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 hover:border-slate-700 transition"
+                    className="flex items-start gap-4 rounded-2xl border border-slate-800 bg-slate-900/80 p-5 hover:border-slate-700 transition-colors duration-200"
                   >
                     <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border ${step.badgeColor} font-black text-sm shadow-md`}>
                       {step.stepNum}
@@ -286,8 +330,8 @@ const BecomeInstructor = () => {
           </div>
 
           {/* Right Final Ready Banner */}
-          <div className="rounded-[32px] border border-slate-800/90 bg-gradient-to-br from-slate-900 via-[#111827] to-indigo-950/40 p-8 sm:p-10 shadow-2xl flex flex-col justify-center items-center text-center relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-3xl rounded-full pointer-events-none" />
+          <div className="rounded-[32px] border border-slate-800/90 bg-gradient-to-br from-slate-900 via-[#111827] to-indigo-950/40 p-8 sm:p-10 shadow-2xl flex flex-col justify-center items-center text-center relative overflow-hidden transform-gpu">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-2xl rounded-full pointer-events-none" />
 
             <div className="space-y-6 max-w-md my-auto relative z-10">
               <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mx-auto text-indigo-400 shadow-xl">
@@ -314,7 +358,7 @@ const BecomeInstructor = () => {
                 type="button"
                 onClick={handleBecomeInstructor}
                 disabled={loading}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 px-6 py-4 text-sm font-bold text-white transition transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-indigo-600/25 disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 px-6 py-4 text-sm font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-indigo-600/25 disabled:opacity-50 cursor-pointer"
               >
                 <span>{buttonLabel}</span>
                 <ArrowRight size={16} />

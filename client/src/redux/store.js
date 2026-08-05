@@ -13,6 +13,7 @@ import mockReducer from "./slices/mockTestSlice";
 import walletReducer from "./slices/walletSlice";
 import achievementReducer from "./slices/achievementSlice";
 import reelsReducer from "./slices/reelsSlice";
+import instructorChatReducer from "./slices/instructorChatSlice";
 
 export const store = configureStore({
   reducer: {
@@ -30,6 +31,7 @@ export const store = configureStore({
     wallet: walletReducer,
     achievements: achievementReducer,
     reels: reelsReducer,
+    instructorChat: instructorChatReducer,
   },
 });
 

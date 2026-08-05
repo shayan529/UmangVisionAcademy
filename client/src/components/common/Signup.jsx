@@ -139,26 +139,48 @@ const Signup = () => {
         !isAdmin && !isStaff && hasBaseRole(user, "instructor");
 
       let from = location.state?.from;
-      if (from) {
-        let path = typeof from === "string" ? from : from.pathname;
-        if (path && typeof path === "string") {
-          const lowerPath = path.toLowerCase();
-          if (
-            user?.subscription?.status === "active" &&
-            (lowerPath.includes("billing") || lowerPath.includes("plans"))
-          ) {
-            from = "/student-dashboard";
-          }
+      let fromPath = from ? (typeof from === "string" ? from : from.pathname) : null;
+
+      if (isAdmin) {
+        if (fromPath && typeof fromPath === "string" && fromPath.toLowerCase().includes("admin-dashboard")) {
+          navigate(fromPath, { replace: true });
+        } else {
+          navigate("/admin-dashboard", { replace: true });
         }
-        navigate(from, { replace: true });
         return;
       }
 
-      if (isAdmin) navigate("/admin-dashboard", { replace: true });
-      else if (isStaff) navigate("/staff-dashboard", { replace: true });
-      else if (isInstructor)
-        navigate("/instructor-dashboard", { replace: true });
-      else navigate("/student-dashboard", { replace: true });
+      if (isStaff) {
+        if (fromPath && typeof fromPath === "string" && fromPath.toLowerCase().includes("staff-dashboard")) {
+          navigate(fromPath, { replace: true });
+        } else {
+          navigate("/staff-dashboard", { replace: true });
+        }
+        return;
+      }
+
+      if (isInstructor) {
+        if (fromPath && typeof fromPath === "string" && fromPath.toLowerCase().includes("instructor-dashboard")) {
+          navigate(fromPath, { replace: true });
+        } else {
+          navigate("/instructor-dashboard", { replace: true });
+        }
+        return;
+      }
+
+      if (fromPath && typeof fromPath === "string") {
+        const lowerPath = fromPath.toLowerCase();
+        if (
+          user?.subscription?.status === "active" &&
+          (lowerPath.includes("billing") || lowerPath.includes("plans"))
+        ) {
+          fromPath = "/student-dashboard";
+        }
+        navigate(fromPath, { replace: true });
+        return;
+      }
+
+      navigate("/student-dashboard", { replace: true });
     }
   }, [isAuthenticated, user, navigate, location.state]);
 

@@ -55,7 +55,6 @@ export const API_BASE_URL =
 export const SOCKET_URL =
   import.meta.env.VITE_SOCKET_URL || getDefaultSocketUrl();
 
-
 export const API_ENDPOINTS = {
   // Auth endpoints
   AUTH: {
@@ -101,6 +100,22 @@ export const API_ENDPOINTS = {
     CREATE: "/sessions",
     UPDATE: (id) => `/sessions/${id}`,
     DELETE: (id) => `/sessions/${id}`,
+    INSTRUCTOR_COURSES: "/sessions/instructor-courses",
+  },
+
+  // Ask-Instructor chat endpoints
+  INSTRUCTOR_CHAT: {
+    AVAILABLE_INSTRUCTORS: "/instructor-chat/available-instructors",
+    CONVERSATIONS: "/instructor-chat/conversations",
+    CONVERSATION: (id) => `/instructor-chat/conversations/${id}`,
+    ARCHIVE: (id) => `/instructor-chat/conversations/${id}/archive`,
+    DELETE_MESSAGE: (id, mid) =>
+      `/instructor-chat/conversations/${id}/messages/${mid}`,
+    CALL_REQUESTS: "/instructor-chat/call-requests",
+    CALL_REQUEST: (id) => `/instructor-chat/call-requests/${id}`,
+    CALL_REQUEST_APPROVE: (id) =>
+      `/instructor-chat/call-requests/${id}/approve`,
+    CALL_REQUEST_REJECT: (id) => `/instructor-chat/call-requests/${id}/reject`,
   },
 
   // Student endpoints  ← new
@@ -135,18 +150,18 @@ export const api = axios.create({
 // In production / deployed environments, URLs are already correct — running
 // this recursive deep-clone on every response wastes CPU (especially for
 // large payloads like course listings or user lists).
-const IS_LOCAL_DEV = typeof window !== "undefined" && (
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1" ||
-  window.location.hostname.startsWith("192.168.") ||
-  window.location.hostname.startsWith("10.")
-);
+const IS_LOCAL_DEV =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname.startsWith("192.168.") ||
+    window.location.hostname.startsWith("10."));
 
 const replaceLocalhostUrls = (obj) => {
   if (typeof obj === "string") {
     return obj.replace(
       /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):\d+/,
-      SOCKET_URL
+      SOCKET_URL,
     );
   }
   if (Array.isArray(obj)) {
@@ -191,7 +206,8 @@ api.interceptors.response.use(
 
       if (status >= 500) {
         // More descriptive error for debugging in the APK
-        const message = serverData?.message || serverData?.error || "Internal Server Error";
+        const message =
+          serverData?.message || serverData?.error || "Internal Server Error";
         const code = serverData?.code || status;
         error.response.data = {
           ...serverData,
@@ -200,10 +216,11 @@ api.interceptors.response.use(
       }
     } else if (error.request) {
       // Network error (no response received)
-      error.message = "Unable to connect to the server. Please check your internet connection.";
+      error.message =
+        "Unable to connect to the server. Please check your internet connection.";
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // ── Global overrides for raw axios and native fetch ──────────────────────────
@@ -231,14 +248,16 @@ axios.interceptors.response.use(
       if (status >= 500) {
         error.response.data = {
           ...error.response.data,
-          message: "An unexpected server error occurred. Please try again later.",
+          message:
+            "An unexpected server error occurred. Please try again later.",
         };
       }
     } else if (error.request) {
-      error.message = "Unable to connect to the server. Please check your internet connection.";
+      error.message =
+        "Unable to connect to the server. Please check your internet connection.";
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 if (typeof window !== "undefined") {
@@ -249,7 +268,7 @@ if (typeof window !== "undefined") {
       const baseDomain = API_BASE_URL.endsWith(apiPrefix)
         ? API_BASE_URL.slice(0, -apiPrefix.length)
         : API_BASE_URL;
-      
+
       input = `${baseDomain}${input}`;
 
       // Auto-inject Authorization header for native webview environment
@@ -263,13 +282,16 @@ if (typeof window !== "undefined") {
           }
         } else if (Array.isArray(init.headers)) {
           const hasAuth = init.headers.some(
-            (h) => h[0]?.toLowerCase() === "authorization"
+            (h) => h[0]?.toLowerCase() === "authorization",
           );
           if (!hasAuth) {
             init.headers.push(["Authorization", `Bearer ${token}`]);
           }
         } else {
-          if (!init.headers["Authorization"] && !init.headers["authorization"]) {
+          if (
+            !init.headers["Authorization"] &&
+            !init.headers["authorization"]
+          ) {
             init.headers["Authorization"] = `Bearer ${token}`;
           }
         }

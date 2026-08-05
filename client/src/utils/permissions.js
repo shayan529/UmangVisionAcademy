@@ -20,15 +20,28 @@ export const isBaseRole = (value) =>
  * Admins always see everything. `user.dashboardModules` comes from the
  * server-hydrated user (see hydrateUserRoles); null/undefined means
  * "unrestricted" so nothing breaks for users hydrated before this shipped.
+ *
+ * For base-role users (role is a plain string like "student") we also allow
+ * the module if `user.dashboardModules` is null — it means the role doc
+ * hasn't been re-seeded yet and we should not accidentally hide new modules.
  */
 export const hasDashboardModule = (user, moduleKey) => {
   if (!user) return false;
   if (hasBaseRole(user, "admin")) return true;
+
+  // No moduleKey means "always visible" (e.g. overview)
+  if (!moduleKey) return true;
+
   const mods = user.dashboardModules ?? user.role?.dashboardModules;
-  // null / undefined = unrestricted (role has no module list — show everything)
-  // empty array = fully restricted (role exists but no modules were enabled)
+
+  // null / undefined = unrestricted:
+  //   - base-role users whose role doc hasn't been re-seeded yet
+  //   - any user where hydrateUserRoles didn't run
   if (mods == null) return true;
+
+  // empty array = fully restricted (admin explicitly removed all modules)
   if (!Array.isArray(mods) || mods.length === 0) return false;
+
   return mods.includes(moduleKey);
 };
 export const hasBaseRole = (user, roleName) => {

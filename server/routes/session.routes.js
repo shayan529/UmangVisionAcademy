@@ -7,6 +7,7 @@ import {
   getStudentSessions,
   getInstructorSessions,
   getAllSessions,
+  getCoursesForSession,
 } from "../controllers/session.controller.js";
 import { protect, requirePermission } from "../middleware/auth.middleware.js";
 import { hasBaseRole, hasPermissionGrant } from "../utils/userRoles.js";
@@ -30,6 +31,9 @@ const canModifySessions = (action) => (req, res, next) => {
     message: `Access denied — missing permission "sessions:${action}"`,
   });
 };
+
+// Must be before /:id so Express doesn't treat "instructor-courses" as an id
+router.get("/instructor-courses", canModifySessions("create"), getCoursesForSession);
 
 router.get("/", (req, res, next) => {
   res.set("Cache-Control", "no-store");

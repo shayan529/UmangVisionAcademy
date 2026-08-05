@@ -1118,7 +1118,7 @@ export default function Settings() {
             </div>
             <div>
               <label style={labelStyle}>
-                {t("studentSettings.socialMedia")}
+                {t("studentSettings.socialMediaAccount", "Social Media Account")}
               </label>
               <input
                 value={profile.socialMediaAccount}
@@ -1127,7 +1127,7 @@ export default function Settings() {
                 }
                 style={inputStyle}
                 disabled={!isEditing}
-                placeholder={t("studentSettings.socialMediaPlaceholder")}
+                placeholder={t("studentSettings.socialMediaPlaceholder", "Instagram / Facebook URL")}
               />
             </div>
             <div>

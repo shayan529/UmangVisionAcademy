@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import api, { API_BASE_URL } from "../config/api";
 
-const CACHE_KEY = "ai_hindi_translation_cache_v2";
+import { getAiLanguageName } from "./aiLanguage";
+
+const CACHE_KEY = "ai_multilingual_translation_cache_v3";
 
 // Load cache from localStorage
 const loadCache = () => {
@@ -36,11 +38,13 @@ export async function batchTranslateTexts(texts = [], targetLang = "Hindi") {
 
   const result = {};
   const missing = [];
+  const cacheKeyPrefix = `${targetLang}:`;
 
   // Check cache first
   cleanTexts.forEach((text) => {
-    if (inMemoryCache[text]) {
-      result[text] = inMemoryCache[text];
+    const cachedVal = inMemoryCache[cacheKeyPrefix + text];
+    if (cachedVal) {
+      result[text] = cachedVal;
     } else {
       missing.push(text);
     }
@@ -66,11 +70,13 @@ export async function batchTranslateTexts(texts = [], targetLang = "Hindi") {
     }
 
     const newTranslations = resData?.translations || {};
-    Object.assign(inMemoryCache, newTranslations);
+    Object.entries(newTranslations).forEach(([orig, trans]) => {
+      inMemoryCache[cacheKeyPrefix + orig] = trans;
+    });
     saveCache(inMemoryCache);
 
     cleanTexts.forEach((text) => {
-      result[text] = inMemoryCache[text] || text;
+      result[text] = inMemoryCache[cacheKeyPrefix + text] || text;
     });
   } catch (err) {
     console.error("Batch translate error:", err);
@@ -83,11 +89,13 @@ export async function batchTranslateTexts(texts = [], targetLang = "Hindi") {
 }
 
 /**
- * Custom React Hook to translate text(s) when Hindi language is selected
+ * Custom React Hook to translate text(s) when any non-English language is selected
  */
 export function useAiTranslation(textsOrText) {
   const { i18n } = useTranslation();
-  const isHindi = i18n.language === "hi";
+  const currentLang = i18n.language || "en";
+  const isNonEnglish = currentLang !== "en";
+  const targetLangName = useMemo(() => getAiLanguageName(currentLang), [currentLang]);
 
   const textList = useMemo(() => {
     if (!textsOrText) return [];
@@ -99,32 +107,34 @@ export function useAiTranslation(textsOrText) {
 
   const [translationMap, setTranslationMap] = useState(() => {
     const initialMap = {};
+    const cacheKeyPrefix = `${targetLangName}:`;
     textList.forEach((t) => {
-      if (inMemoryCache[t]) initialMap[t] = inMemoryCache[t];
+      if (inMemoryCache[cacheKeyPrefix + t]) initialMap[t] = inMemoryCache[cacheKeyPrefix + t];
     });
     return initialMap;
   });
 
   useEffect(() => {
-    if (!isHindi || !textList.length) return;
+    if (!isNonEnglish || !textList.length) return;
 
     let mounted = true;
-    const missing = textList.filter((t) => !inMemoryCache[t]);
+    const cacheKeyPrefix = `${targetLangName}:`;
+    const missing = textList.filter((t) => !inMemoryCache[cacheKeyPrefix + t]);
 
     if (!missing.length) {
       const updated = {};
       textList.forEach((t) => {
-        updated[t] = inMemoryCache[t] || t;
+        updated[t] = inMemoryCache[cacheKeyPrefix + t] || t;
       });
       setTranslationMap(updated);
       return;
     }
 
-    batchTranslateTexts(missing, "Hindi").then((res) => {
+    batchTranslateTexts(missing, targetLangName).then((res) => {
       if (!mounted) return;
       const fullMap = {};
       textList.forEach((t) => {
-        fullMap[t] = inMemoryCache[t] || res[t] || t;
+        fullMap[t] = inMemoryCache[cacheKeyPrefix + t] || res[t] || t;
       });
       setTranslationMap(fullMap);
     });
@@ -132,16 +142,17 @@ export function useAiTranslation(textsOrText) {
     return () => {
       mounted = false;
     };
-  }, [isHindi, textList]);
+  }, [isNonEnglish, targetLangName, textList]);
 
   const tText = useCallback(
     (original) => {
-      if (!isHindi || !original) return original;
+      if (!isNonEnglish || !original) return original;
       const trimmed = String(original).trim();
-      return translationMap[trimmed] || inMemoryCache[trimmed] || original;
+      const cacheKeyPrefix = `${targetLangName}:`;
+      return translationMap[trimmed] || inMemoryCache[cacheKeyPrefix + trimmed] || original;
     },
-    [isHindi, translationMap]
+    [isNonEnglish, targetLangName, translationMap]
   );
 
-  return { tText, translationMap, isHindi };
+  return { tText, translationMap, isHindi: currentLang === "hi", isNonEnglish, targetLangName };
 }

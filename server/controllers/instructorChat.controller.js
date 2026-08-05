@@ -1,0 +1,577 @@
+/**
+ * instructorChat.controller.js
+ *
+ * REST endpoints for the Ask-Instructor chat feature.
+ *
+ * Routes (all under /api/instructor-chat):
+ *   POST   /conversations                    — student opens / resumes a thread
+ *   GET    /conversations                    — list threads (student or instructor)
+ *   GET    /conversations/:id                — thread detail + messages (paginated)
+ *   PATCH  /conversations/:id/archive        — instructor / admin soft-archive
+ *   DELETE /conversations/:id/messages/:mid  — soft-delete a single message
+ *   GET    /available-instructors            — enrolled-course instructors for selector
+ */
+
+import Conversation from "../models/instructorChat.model.js";
+import Course from "../models/courses.model.js";
+import User from "../models/user.model.js";
+import CallRequest from "../models/instructorCallRequest.model.js";
+import mongoose from "mongoose";
+import crypto from "crypto";
+import { hasBaseRole, hasPermissionGrant } from "../utils/userRoles.js";
+
+const { Types } = mongoose;
+
+const buildCallSessionId = (conversationId) =>
+  crypto
+    .createHash("sha256")
+    .update(`${conversationId}`)
+    .digest("hex")
+    .slice(0, 24);
+
+const emitIChatEvent = (req, conversationId, event, payload) => {
+  const io = req.app.get("io");
+  if (!io) return;
+  io.of("/ichat").to(`ichat:${conversationId}`).emit(event, payload);
+};
+
+// ── Guards ────────────────────────────────────────────────────────────────────
+
+const isAdminOrStaff = (user) =>
+  hasBaseRole(user, "admin") ||
+  hasPermissionGrant(user, "ask_instructor", "view");
+
+/**
+ * Checks whether a user is (or acts as) an instructor.
+ * Handles all storage variants:
+ *   - role === "instructor"               (base-role string)
+ *   - role is an ObjectId / custom Role   (fetched from courses below)
+ *   - user has at least one published course (fallback ownership check)
+ */
+const isInstructorUser = async (user) => {
+  if (!user) return false;
+
+  // Fast path — base role string
+  if (hasBaseRole(user, "instructor")) return true;
+
+  // If role is stored as an ObjectId the user may be admin/staff who also
+  // teaches. Allow instructors who own courses regardless of exact role string.
+  // We check this by seeing if they have teachingCourses or published courses.
+  const hasCourses = await Course.exists({ instructor: user._id });
+  if (hasCourses) return true;
+
+  return false;
+};
+
+// ── POST /conversations ───────────────────────────────────────────────────────
+export const getOrCreateConversation = async (req, res) => {
+  try {
+    const { instructorId, courseId, subject } = req.body;
+
+    // Safe subject — never undefined
+    const safeSubject =
+      typeof subject === "string" ? subject.trim().slice(0, 120) : "";
+
+    if (!instructorId || !Types.ObjectId.isValid(instructorId))
+      return res
+        .status(400)
+        .json({ message: "A valid instructorId is required" });
+
+    const studentId = req.user._id;
+
+    // Verify the target user exists and acts as an instructor
+    const instructor = await User.findById(instructorId)
+      .select("_id name avatarUrl role")
+      .lean();
+
+    if (!instructor)
+      return res.status(404).json({ message: "Instructor not found" });
+
+    const isInstr = await isInstructorUser(instructor);
+    if (!isInstr)
+      return res.status(404).json({ message: "User is not an instructor" });
+
+    // Note: we intentionally skip a hard enrollment check here.
+    // The student obtained this instructorId from /available-instructors,
+    // which already verifies enrollment. Repeating it here would block
+    // subscription-enrolled students whose IDs aren't in course.students[].
+
+    // Validate courseId format if provided (but don't re-check enrollment)
+    if (courseId && !Types.ObjectId.isValid(courseId))
+      return res.status(400).json({ message: "Invalid courseId" });
+
+    // Find or create the conversation
+    const filter = {
+      student: studentId,
+      instructor: instructorId,
+      archived: false,
+    };
+    if (courseId) filter.course = courseId;
+
+    let conv = await Conversation.findOne(filter)
+      .populate("student", "_id name avatarUrl")
+      .populate("instructor", "_id name avatarUrl")
+      .populate("course", "_id title")
+      .lean();
+
+    if (!conv) {
+      const created = await Conversation.create({
+        student: studentId,
+        instructor: instructorId,
+        course: courseId || null,
+        subject: safeSubject,
+      });
+      conv = await Conversation.findById(created._id)
+        .populate("student", "_id name avatarUrl")
+        .populate("instructor", "_id name avatarUrl")
+        .populate("course", "_id title")
+        .lean();
+    }
+
+    // Strip embedded messages — socket sends them on ic:join
+    const { messages: _m, ...rest } = conv;
+    res.json({ ...rest, messageCount: _m?.length ?? 0 });
+  } catch (err) {
+    console.error("[instructorChat] getOrCreateConversation:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── GET /conversations ────────────────────────────────────────────────────────
+export const listConversations = async (req, res) => {
+  try {
+    const { archived = "false", page = 1, limit = 30 } = req.query;
+    const showArchived = archived === "true";
+
+    let filter = { archived: showArchived };
+
+    if (isAdminOrStaff(req.user)) {
+      // admin/staff see everything
+    } else if (hasBaseRole(req.user, "instructor")) {
+      filter.instructor = req.user._id;
+    } else if (await isInstructorUser(req.user)) {
+      // instructor whose role is stored as ObjectId
+      filter.instructor = req.user._id;
+    } else {
+      filter.student = req.user._id;
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [convs, total] = await Promise.all([
+      Conversation.find(filter)
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(Number(limit))
+        .select("-messages")
+        .populate("student", "_id name avatarUrl email")
+        .populate("instructor", "_id name avatarUrl")
+        .populate("course", "_id title")
+        .lean(),
+      Conversation.countDocuments(filter),
+    ]);
+
+    res.json({ conversations: convs, total, page: Number(page) });
+  } catch (err) {
+    console.error("[instructorChat] listConversations:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── POST /call-requests ───────────────────────────────────────────────────────
+export const submitCallRequest = async (req, res) => {
+  try {
+    const { conversationId, message = "" } = req.body;
+    if (!conversationId || !Types.ObjectId.isValid(conversationId))
+      return res
+        .status(400)
+        .json({ message: "Valid conversationId is required" });
+
+    const conv = await Conversation.findById(conversationId)
+      .populate("student", "_id name avatarUrl")
+      .populate("instructor", "_id name avatarUrl")
+      .populate("course", "_id title")
+      .lean();
+
+    if (!conv)
+      return res.status(404).json({ message: "Conversation not found" });
+    if (conv.student?._id?.toString() !== req.user._id.toString())
+      return res
+        .status(403)
+        .json({ message: "Only the student can request a call" });
+
+    const existing = await CallRequest.findOne({
+      conversation: conversationId,
+      status: "pending",
+    });
+
+    if (existing)
+      return res
+        .status(409)
+        .json({
+          message: "A call request is already pending for this conversation",
+        });
+
+    const created = await CallRequest.create({
+      conversation: conversationId,
+      student: conv.student._id,
+      instructor: conv.instructor._id,
+      course: conv.course?._id || null,
+      subject: conv.subject || "",
+      message: String(message).trim().slice(0, 1000),
+      status: "pending",
+    });
+
+    const request = await CallRequest.findById(created._id)
+      .populate("student", "_id name avatarUrl")
+      .populate("instructor", "_id name avatarUrl")
+      .populate("course", "_id title")
+      .lean();
+
+    emitIChatEvent(req, conversationId, "webrtc:call-request", {
+      request,
+    });
+
+    res.status(201).json(request);
+  } catch (err) {
+    console.error("[instructorChat] submitCallRequest:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const listCallRequests = async (req, res) => {
+  try {
+    const { status, conversationId } = req.query;
+    const filter = {};
+
+    if (hasBaseRole(req.user, "student")) {
+      filter.student = req.user._id;
+    } else if (hasBaseRole(req.user, "instructor")) {
+      filter.instructor = req.user._id;
+    } else if (isAdminOrStaff(req.user)) {
+      // admin/staff can view all
+    } else {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    if (status) filter.status = status;
+    if (conversationId && Types.ObjectId.isValid(conversationId)) {
+      filter.conversation = conversationId;
+    }
+
+    const requests = await CallRequest.find(filter)
+      .sort({ createdAt: -1 })
+      .populate("conversation", "_id subject")
+      .populate("student", "_id name avatarUrl")
+      .populate("course", "_id title")
+      .lean();
+
+    res.json({ requests });
+  } catch (err) {
+    console.error("[instructorChat] listCallRequests:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const approveCallRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!Types.ObjectId.isValid(id))
+      return res.status(400).json({ message: "Invalid request id" });
+
+    const request = await CallRequest.findById(id)
+      .populate("conversation")
+      .populate("student", "_id name avatarUrl")
+      .populate("instructor", "_id name avatarUrl")
+      .populate("course", "_id title");
+
+    if (!request)
+      return res.status(404).json({ message: "Call request not found" });
+    if (request.status !== "pending")
+      return res
+        .status(400)
+        .json({ message: "Call request is already processed" });
+    if (
+      request.instructor._id.toString() !== req.user._id.toString() &&
+      !isAdminOrStaff(req.user)
+    ) {
+      return res
+        .status(403)
+        .json({
+          message: "Only the assigned instructor can approve this request",
+        });
+    }
+
+    request.status = "approved";
+    request.response = String(req.body.response || "")
+      .trim()
+      .slice(0, 1000);
+    request.decidedAt = new Date();
+    await request.save();
+
+    const sessionId = buildCallSessionId(request.conversation._id.toString());
+    emitIChatEvent(
+      req,
+      request.conversation._id.toString(),
+      "webrtc:call-initiated",
+      {
+        sessionId,
+        requestId: request._id.toString(),
+      },
+    );
+
+    res.json({ request, sessionId });
+  } catch (err) {
+    console.error("[instructorChat] approveCallRequest:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const rejectCallRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!Types.ObjectId.isValid(id))
+      return res.status(400).json({ message: "Invalid request id" });
+
+    const request = await CallRequest.findById(id)
+      .populate("conversation")
+      .populate("student", "_id name avatarUrl")
+      .populate("instructor", "_id name avatarUrl");
+
+    if (!request)
+      return res.status(404).json({ message: "Call request not found" });
+    if (request.status !== "pending")
+      return res
+        .status(400)
+        .json({ message: "Call request is already processed" });
+    const isStudentRequester =
+      request.student._id.toString() === req.user._id.toString();
+    if (
+      !isStudentRequester &&
+      request.instructor._id.toString() !== req.user._id.toString() &&
+      !isAdminOrStaff(req.user)
+    ) {
+      return res
+        .status(403)
+        .json({
+          message:
+            "Only the requester student or assigned instructor can reject this request",
+        });
+    }
+
+    request.status = "rejected";
+    request.response = String(req.body.response || "")
+      .trim()
+      .slice(0, 1000);
+    request.decidedAt = new Date();
+    await request.save();
+
+    emitIChatEvent(
+      req,
+      request.conversation._id.toString(),
+      "webrtc:call-decline",
+      {
+        conversationId: request.conversation._id.toString(),
+        requestId: request._id.toString(),
+      },
+    );
+
+    res.json({ request });
+  } catch (err) {
+    console.error("[instructorChat] rejectCallRequest:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── GET /conversations/:id ────────────────────────────────────────────────────
+export const getConversation = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { page = 1, limit = 60 } = req.query;
+
+    if (!Types.ObjectId.isValid(id))
+      return res.status(400).json({ message: "Invalid conversation id" });
+
+    const conv = await Conversation.findById(id)
+      .populate("student", "_id name avatarUrl email")
+      .populate("instructor", "_id name avatarUrl")
+      .populate("course", "_id title")
+      .lean();
+
+    if (!conv)
+      return res.status(404).json({ message: "Conversation not found" });
+
+    const uid = req.user._id.toString();
+    const isStudent = conv.student?._id?.toString() === uid;
+    const isInstr = conv.instructor?._id?.toString() === uid;
+    const isParticipant = isStudent || isInstr;
+
+    if (!isParticipant && !isAdminOrStaff(req.user))
+      return res.status(403).json({ message: "Access denied" });
+
+    // Paginate embedded messages
+    const allMsgs = (conv.messages ?? []).filter((m) => !m.deleted);
+    const total = allMsgs.length;
+    const lim = Number(limit);
+    const pg = Number(page);
+    const start = Math.max(0, total - pg * lim);
+    const end = total - (pg - 1) * lim;
+    const messages = allMsgs.slice(start, end);
+
+    // Mark as read
+    if (isParticipant) {
+      const unreadField = isStudent ? "studentUnread" : "instructorUnread";
+      const senderRole = isStudent ? "instructor" : "student";
+      await Conversation.updateOne(
+        { _id: id },
+        {
+          $set: { [unreadField]: 0 },
+          $addToSet: { "messages.$[msg].readBy": req.user._id },
+        },
+        {
+          arrayFilters: [
+            {
+              "msg.senderRole": senderRole,
+              "msg.readBy": { $ne: req.user._id },
+              "msg.deleted": false,
+            },
+          ],
+        },
+      );
+    }
+
+    const { messages: _discard, ...meta } = conv;
+    res.json({ conversation: meta, messages, total, page: pg });
+  } catch (err) {
+    console.error("[instructorChat] getConversation:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── PATCH /conversations/:id/archive ─────────────────────────────────────────
+export const archiveConversation = async (req, res) => {
+  try {
+    if (!Types.ObjectId.isValid(req.params.id))
+      return res.status(400).json({ message: "Invalid conversation id" });
+
+    const conv = await Conversation.findById(req.params.id).select(
+      "instructor",
+    );
+    if (!conv)
+      return res.status(404).json({ message: "Conversation not found" });
+
+    const uid = req.user._id.toString();
+    const isInstructor = conv.instructor.toString() === uid;
+
+    if (!isInstructor && !isAdminOrStaff(req.user))
+      return res
+        .status(403)
+        .json({ message: "Only the instructor or admin can archive" });
+
+    conv.archived = req.body.archived !== false;
+    await conv.save();
+    res.json({ archived: conv.archived });
+  } catch (err) {
+    console.error("[instructorChat] archiveConversation:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── DELETE /conversations/:id/messages/:mid ───────────────────────────────────
+export const deleteMessage = async (req, res) => {
+  try {
+    const { id, mid } = req.params;
+
+    if (!Types.ObjectId.isValid(id) || !Types.ObjectId.isValid(mid))
+      return res.status(400).json({ message: "Invalid id" });
+
+    const uid = req.user._id.toString();
+    const conv = await Conversation.findById(id).select(
+      "messages student instructor",
+    );
+    if (!conv)
+      return res.status(404).json({ message: "Conversation not found" });
+
+    const msg = conv.messages.id(mid);
+    if (!msg) return res.status(404).json({ message: "Message not found" });
+
+    const isSender = msg.sender.toString() === uid;
+    if (!isSender && !isAdminOrStaff(req.user))
+      return res
+        .status(403)
+        .json({ message: "Cannot delete another user's message" });
+
+    msg.deleted = true;
+    msg.text = "";
+    msg.media = [];
+    await conv.save();
+
+    res.json({ deleted: true, messageId: mid });
+  } catch (err) {
+    console.error("[instructorChat] deleteMessage:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── GET /available-instructors ────────────────────────────────────────────────
+// Returns enrolled courses with instructor details for the selector UI.
+// Intentionally broad — no published/approvalStatus filter so courses
+// the student paid for but are still pending admin approval still appear.
+export const getAvailableInstructors = async (req, res) => {
+  try {
+    const studentId = req.user._id;
+
+    // Build a query that finds courses this student can access:
+    //   1. Direct enrollment — studentId is in course.students[]
+    //   2. Subscription-based — student has an active subscription and
+    //      their selectedClass matches the course category
+    const orClauses = [{ students: studentId }];
+
+    const hasActiveSub = req.user.subscription?.status === "active";
+    if (hasActiveSub && req.user.selectedClass) {
+      orClauses.push({
+        category: new RegExp(
+          `^${req.user.selectedClass.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}$`,
+          "i",
+        ),
+      });
+    }
+
+    const courses = await Course.find({ $or: orClauses })
+      .select(
+        "_id title instructor category board language thumbnailUrl lessons subjectDetails subjectQuizzes",
+      )
+      .populate("instructor", "_id name avatarUrl bio")
+      .lean();
+
+    if (!courses.length) return res.json([]);
+
+    const result = courses
+      .filter((c) => c.instructor?._id)
+      .map((c) => {
+        const subjectSet = new Set([
+          ...(c.lessons ?? []).map((l) => l.subject).filter(Boolean),
+          ...(c.subjectDetails ?? []).map((d) => d.subject).filter(Boolean),
+          ...(c.subjectQuizzes ?? []).map((q) => q.subject).filter(Boolean),
+        ]);
+        return {
+          courseId: c._id,
+          courseTitle: c.title,
+          category: c.category,
+          thumbnail: c.thumbnailUrl,
+          instructor: {
+            _id: c.instructor._id,
+            name: c.instructor.name,
+            avatarUrl: c.instructor.avatarUrl,
+            bio: c.instructor.bio,
+          },
+          subjects: Array.from(subjectSet).sort(),
+        };
+      });
+
+    res.json(result);
+  } catch (err) {
+    console.error("[instructorChat] getAvailableInstructors:", err);
+    res.status(500).json({ message: err.message });
+  }
+};

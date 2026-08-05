@@ -54,7 +54,14 @@
     "submitting": "Submitting…",
     "rated": "Rated",
     "rateCourse": "Rate Course",
-    "ratingLabels": ["", "Poor", "Fair", "Good", "Very Good", "Excellent"],
+    "ratingLabels": [
+      "",
+      "Poor",
+      "Fair",
+      "Good",
+      "Very Good",
+      "Excellent"
+    ],
     "select_course_type": "Course Type",
     "courseTypeAll": "All",
     "courseTypeClasses": "Classes",
@@ -403,6 +410,26 @@
     "buttonBecome": "Become an Instructor",
     "buttonStatus": "View Application Status →",
     "buttonChecking": "Checking...",
+    "whyChooseTitle": "Why Instructors Choose Umang Vision Academy",
+    "whyChooseSubtitle": "Everything you need to build, market, and monetize high-impact online courses.",
+    "perks": {
+      "reachStudents": {
+        "title": "Reach Thousands of Students",
+        "desc": "Teach motivated learners across Class 9-12, competitive exams, and specialized skill tracks."
+      },
+      "aiBuilder": {
+        "title": "AI-Powered Course Builder",
+        "desc": "Auto-generate practice quizzes, lesson notes, and student progress reports effortlessly."
+      },
+      "earnings": {
+        "title": "Transparent & Timely Earnings",
+        "desc": "Earn competitive revenues per enrollment with direct payouts and clear performance analytics."
+      },
+      "streamingTools": {
+        "title": "High-Quality Streaming Tools",
+        "desc": "Host live video classes or publish self-paced HD video courses with automatic PDF material attachments."
+      }
+    },
     "howItWorks": "How it works",
     "howItWorksHeading": "A simple process to launch your first course",
     "howItWorksBody": "Apply with your expertise, get verified quickly, and publish your first course to start earning from day one.",
@@ -422,7 +449,8 @@
     },
     "readyToJoin": "Ready to join?",
     "applyToTeach": "Apply to teach",
-    "readyBody": "Are you ready to share your expertise and shape the future of learning? Submit your application and become part of our world-class coaching community."
+    "readyBody": "Are you ready to share your expertise and shape the future of learning? Submit your application and become part of our world-class coaching community.",
+    "studentCannotBecomeError": "Students cannot become an instructor. Please create a fresh account."
   },
   "becomeInstructorApplication": {
     "backToOverview": "Back to overview",
@@ -430,8 +458,8 @@
     "titleStart": "Become an",
     "titleHighlight": "Instructor",
     "description": "Tell us about your teaching experience, your expertise, and share a sample content link so we can approve your profile quickly.",
-    "fullNameLabel": "Your full name",
-    "namePlaceholder": "John Doe",
+    "fullNameLabel": "Full Name",
+    "namePlaceholder": "Dr. Rajesh Kumar",
     "expertiseLabel": "Area of expertise",
     "expertisePlaceholder": "AI / Web Development / Design",
     "bioLabel": "Brief bio",
@@ -447,7 +475,32 @@
     "submitted": "Application submitted successfully!",
     "failedSubmit": "Failed to submit application.",
     "submitting": "Submitting...",
-    "submitButton": "Submit Application"
+    "submitButton": "Submit Application",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "instructor@example.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Min 6 characters",
+    "phoneLabel": "Phone Number",
+    "phonePlaceholder": "10-digit mobile number",
+    "sendOtp": "Send OTP",
+    "resendOtp": "Resend OTP",
+    "sendingOtp": "Sending...",
+    "verified": "Verified",
+    "enterOtpPrompt": "Enter 6-digit OTP sent to +91 {{phone}}",
+    "resendIn": "Resend in {{sec}}s",
+    "verifyOtpButton": "Verify OTP Code",
+    "verifyingOtp": "Verifying OTP...",
+    "stateLabel": "State",
+    "selectState": "Select State",
+    "cityLabel": "City",
+    "selectCity": "Select City",
+    "pincodeLabel": "Pincode",
+    "pincodePlaceholder": "6-digit PIN",
+    "section1Title": "1. Create Your Account Credentials",
+    "section2Title": "2. Teaching Application & Experience",
+    "createAccountAndSubmit": "Create Account & Submit Application",
+    "studentCannotApplyTitle": "Student Accounts Cannot Apply",
+    "logoutAndRegisterFresh": "Log Out & Register Fresh Account"
   },
   "instructorApplicationStatus": {
     "portal": "Instructor Portal",
@@ -1058,19 +1111,18 @@
     "download": "Download"
   },
   "studentReferral": {
-    "title": "Referral Rewards",
-    "header": "Earn stars by inviting friends",
-    "description": "Share your unique referral link and get bonus stars when someone signs up using your code.",
-    "summaryTotal": "Total Referrals",
+    "title": "REFERRAL PROGRAM",
+    "header": "Invite Friends & Earn Rewards",
+    "description": "Share your unique referral link with your friends. When they join Umang Vision Academy, you earn reward stars!",
+    "summaryTitle": "Earned Rewards",
     "summaryCoins": "Total stars earned from referrals",
-    "referralCode": "Your referral code",
-    "referralsCount_one": "{{count}} referral earned",
-    "referralsCount_other": "{{count}} referrals earned",
-    "share": "Share link",
-    "copyLink": "Copy link",
-    "linkCopied": "Referral link copied!",
-    "copyFailed": "Could not copy link. Try again.",
-    "noReferralCode": "No referral code available yet."
+    "referralCode": "Your Referral Code",
+    "referralsCount": "{{count}} friends joined",
+    "share": "Share Referral Link",
+    "noReferralCode": "No referral code generated yet",
+    "copyLink": "Copy Referral Link",
+    "linkCopied": "Referral link copied to clipboard!",
+    "copyFailed": "Failed to copy link"
   },
   "studentDashboard": {
     "dashboard": "Dashboard",
@@ -1263,7 +1315,7 @@
     "motherNamePlaceholder": "Enter mother's name",
     "fatherMobile": "Father's mobile number",
     "fatherMobilePlaceholder": "e.g. 9876543210",
-    "socialMedia": "Social media account",
+    "socialMedia": "Social Media Account",
     "socialMediaPlaceholder": "Instagram / Facebook URL",
     "reference": "Reference",
     "loadingReferences": "Loading references...",
@@ -1346,7 +1398,8 @@
     "verifyNewPhoneNumber": "Verify New Phone Number",
     "verifyNewPhoneSubtitle": "Enter the 6-digit code sent via SMS to {{phone}}",
     "verifyPasswordChange": "Verify Password Change",
-    "verifyPasswordChangeSubtitle": "Enter the 6-digit code sent to {{email}} to confirm this change"
+    "verifyPasswordChangeSubtitle": "Enter the 6-digit code sent to {{email}} to confirm this change",
+    "socialMediaAccount": "Social Media Account"
   },
   "studentDetailsModal": {
     "title": "Student Details",
@@ -1918,19 +1971,5 @@
   "studentSessions": {
     "title": "Live Sessions",
     "subtitle": "Join upcoming and live instructor sessions."
-  },
-  "studentReferral": {
-    "title": "REFERRAL PROGRAM",
-    "header": "Invite Friends & Earn Rewards",
-    "description": "Share your unique referral link with your friends. When they join Umang Vision Academy, you earn reward stars!",
-    "summaryTitle": "Earned Rewards",
-    "summaryCoins": "Total stars earned from referrals",
-    "referralCode": "Your Referral Code",
-    "referralsCount": "{{count}} friends joined",
-    "share": "Share Referral Link",
-    "noReferralCode": "No referral code generated yet",
-    "copyLink": "Copy Referral Link",
-    "linkCopied": "Referral link copied to clipboard!",
-    "copyFailed": "Failed to copy link"
   }
 }

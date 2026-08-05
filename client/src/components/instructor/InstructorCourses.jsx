@@ -8,6 +8,7 @@ import {
   deleteCourse,
   fetchAllCoursesAdmin,
 } from "../../redux/slices/courseSlice";
+import { updateSession } from "../../redux/slices/sessionSlice";
 import { uploadFile } from "../../utils/uploadFile.js";
 import ChapterManager from "../course/ChapterManager.jsx";
 import api from "../../config/api";
@@ -2322,6 +2323,221 @@ function CertificateManager({ certificate, onChange, courseTitle }) {
 }
 
 // ── CourseForm ────────────────────────────────────────────────────────────────
+// ── RecordedSessionsManager ───────────────────────────────────────────────────
+// Shows all ended sessions assigned to this course and lets the instructor/admin
+// edit the recording URL for each one. The URL is saved both on the Session
+// document AND propagated to the matching lesson inside this course.
+const RecordedSessionsManager = ({ courseId, showToast }) => {
+  const dispatch = useDispatch();
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [editUrl, setEditUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!courseId) { setLoading(false); return; }
+    setLoading(true);
+    api.get(`/sessions?courseId=${courseId}`)
+      .then(({ data }) => {
+        const list = Array.isArray(data) ? data : [];
+        setSessions(list.filter((s) => s.status === "ended"));
+      })
+      .catch(() => setSessions([]))
+      .finally(() => setLoading(false));
+  }, [courseId]);
+
+  if (!courseId) return null;
+
+  const handleSave = async (session) => {
+    if (editUrl && !/^https?:\/\/.+/i.test(editUrl)) {
+      showToast("Recording URL must start with http:// or https://");
+      return;
+    }
+    setSaving(true);
+    try {
+      await dispatch(updateSession({
+        id: session._id,
+        sessionData: { recordedUrl: editUrl.trim() || null },
+      })).unwrap();
+      setSessions((prev) =>
+        prev.map((s) => s._id === session._id ? { ...s, recordedUrl: editUrl.trim() || null } : s)
+      );
+      setEditingId(null);
+      setEditUrl("");
+      showToast("Recording URL updated");
+    } catch (e) {
+      showToast("Failed to update: " + (e?.message || "unknown error"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputStyle = {
+    flex: 1,
+    padding: "8px 12px",
+    background: "#1e293b",
+    border: "1px solid #334155",
+    borderRadius: 8,
+    color: "#f8fafc",
+    fontSize: 13,
+    outline: "none",
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <Video size={16} color="#a78bfa" />
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#e2e8f0" }}>
+          Recorded Live Sessions
+        </span>
+        <span style={{ fontSize: 11, color: "#64748b", marginLeft: 4 }}>
+          (ended sessions assigned to this course)
+        </span>
+      </div>
+
+      {loading && (
+        <p style={{ fontSize: 12, color: "#64748b" }}>Loading sessions…</p>
+      )}
+
+      {!loading && sessions.length === 0 && (
+        <div style={{
+          padding: "14px 16px",
+          borderRadius: 10,
+          background: "#0f172a",
+          border: "1px dashed #1e293b",
+          fontSize: 12,
+          color: "#475569",
+          textAlign: "center",
+        }}>
+          No ended sessions are linked to this course yet. Assign a session to this course
+          and end it to auto-add a recording here.
+        </div>
+      )}
+
+      {!loading && sessions.map((s) => (
+        <div
+          key={s._id}
+          style={{
+            padding: "12px 14px",
+            borderRadius: 10,
+            background: "#111a2e",
+            border: "1px solid #1e293b",
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+          }}
+        >
+          {/* Session title + date row */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{
+                width: 8, height: 8, borderRadius: "50%",
+                background: "#94a3b8", display: "inline-block", flexShrink: 0,
+              }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#f1f5f9" }}>{s.title}</span>
+              {s.courseSubject && (
+                <span style={{
+                  fontSize: 11, color: "#34d399", background: "rgba(52,211,153,0.1)",
+                  padding: "2px 7px", borderRadius: 5, fontWeight: 600,
+                }}>
+                  {s.courseSubject}
+                </span>
+              )}
+            </div>
+            <span style={{ fontSize: 11, color: "#475569" }}>{s.date}</span>
+          </div>
+
+          {/* Recording status / URL */}
+          {editingId === s._id ? (
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <input
+                type="url"
+                placeholder="https://youtube.com/... or drive link"
+                value={editUrl}
+                onChange={(e) => setEditUrl(e.target.value)}
+                style={inputStyle}
+                autoFocus
+              />
+              <button
+                onClick={() => handleSave(s)}
+                disabled={saving}
+                style={{
+                  padding: "8px 14px", borderRadius: 8, border: "none",
+                  background: "#7c3aed", color: "#fff", fontWeight: 700,
+                  fontSize: 12, cursor: "pointer", opacity: saving ? 0.6 : 1,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {saving ? "Saving…" : "Save"}
+              </button>
+              <button
+                onClick={() => { setEditingId(null); setEditUrl(""); }}
+                style={{
+                  padding: "8px 12px", borderRadius: 8,
+                  border: "1px solid #334155", background: "transparent",
+                  color: "#94a3b8", fontWeight: 600, fontSize: 12, cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              {s.recordedUrl ? (
+                <>
+                  <a
+                    href={s.recordedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      fontSize: 12, color: "#38bdf8", display: "flex",
+                      alignItems: "center", gap: 4, textDecoration: "none",
+                      flex: 1, minWidth: 0, overflow: "hidden",
+                    }}
+                  >
+                    <Link2 size={12} style={{ flexShrink: 0 }} />
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {s.recordedUrl}
+                    </span>
+                  </a>
+                  {s.recordedLessonAdded && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, color: "#4ade80",
+                      background: "rgba(74,222,128,0.1)", padding: "2px 7px",
+                      borderRadius: 5, whiteSpace: "nowrap",
+                    }}>
+                      ✓ In course
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span style={{ fontSize: 12, color: "#475569", fontStyle: "italic" }}>
+                  No recording URL yet
+                </span>
+              )}
+              <button
+                onClick={() => { setEditingId(s._id); setEditUrl(s.recordedUrl || ""); }}
+                style={{
+                  padding: "5px 10px", borderRadius: 7,
+                  border: "1px solid #334155", background: "transparent",
+                  color: "#94a3b8", fontWeight: 600, fontSize: 11,
+                  cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <Pencil size={11} />
+                {s.recordedUrl ? "Edit" : "Add URL"}
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ── CourseForm ────────────────────────────────────────────────────────────────
 const CourseForm = ({
   form,
   setForm,
@@ -2493,6 +2709,21 @@ const CourseForm = ({
         onChange={(notes) => setForm((f) => ({ ...f, notes }))}
         showToast={showToast}
       />
+
+      {/* ── Recorded Sessions ── only visible when editing an existing course */}
+      {mode === "edit" && form._id && (
+        <div
+          style={{
+            padding: "16px 18px",
+            borderRadius: 12,
+            background: "#0f172a",
+            border: "1px solid #1e293b",
+          }}
+        >
+          <RecordedSessionsManager courseId={form._id} showToast={showToast} />
+        </div>
+      )}
+
       <Field
         label="Final Quiz"
         hint="(optional — students take after completing all lessons)"
@@ -3276,6 +3507,7 @@ export default function InstructorCourses({
       const category = course.category ?? "";
       const isKnownClass = CLASSES.includes(category);
       setEditForm({
+        _id: course._id ?? "",
         subject: course.title ?? "",
         courseType: isKnownClass || !category ? "classes" : "competitive",
         className: isKnownClass ? category : "",
@@ -3297,6 +3529,7 @@ export default function InstructorCourses({
           theme: "purple",
         },
         instructor: course.instructor?._id ?? course.instructor ?? "",
+        language: course.language ?? "",
       });
     }
 

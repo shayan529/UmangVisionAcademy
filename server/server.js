@@ -41,6 +41,8 @@ import settingsRoutes from "./routes/settings.routes.js";
 import emailRoutes from "./routes/emailAuth.route.js";
 import PhoneRoutes from "./routes/PhoneOtp.routes.js";
 import { registerSessionChat } from "./utils/SessionChatSocket.js";
+import { registerInstructorChat } from "./utils/InstructorChatSocket.js";
+import { registerWebRTCSignaling } from "./utils/webrtcSignaling.js";
 import mockTestRoutes from "./routes/mockTest.routes.js";
 import passwordResetRoutes from "./routes/passwordReset.routes.js";
 import walletRoutes from "./routes/wallet.routes.js";
@@ -52,6 +54,8 @@ import reelRoutes from "./routes/reel.routes.js";
 import noteRoutes from "./routes/note.routes.js";
 import unsubscribeRoutes from "./routes/unsubscribe.routes.js";
 import contactRoutes from "./routes/contact.routes.js";
+import instructorChatRoutes from "./routes/instructorChat.routes.js";
+import webrtcSessionRoutes from "./routes/webrtcSession.routes.js";
 import { startSessionReminderScheduler } from "./utils/sessionScheduler.js";
 import { ensureBaseRoleDocs } from "./utils/seedBaseRoles.js";
 
@@ -79,7 +83,6 @@ const ALLOWED_ORIGINS = [
 
 if (process.env.CLIENT_URL) ALLOWED_ORIGINS.push(process.env.CLIENT_URL);
 if (process.env.FRONTEND_URL) ALLOWED_ORIGINS.push(process.env.FRONTEND_URL);
-
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -134,14 +137,17 @@ const io = new Server(httpServer, {
     maxDisconnectionDuration: 2 * 60 * 1000,
   },
 });
-
+// Make Socket.IO available inside request handlers for server-side events.
+app.set("io", io);
 // ── Middleware ────────────────────────────────────────────────────────────────
-app.use(helmet({
-  contentSecurityPolicy: false, // Disabled to prevent blocking dynamic third-party CDN assets and APIs
-  crossOriginEmbedderPolicy: false,
-  crossOriginResourcePolicy: { policy: "cross-origin" },
-  frameguard: false,
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // Disabled to prevent blocking dynamic third-party CDN assets and APIs
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    frameguard: false,
+  }),
+);
 
 // CORS middleware MUST be registered before rate limiters or routes so that
 // preflight requests and error/rate-limited responses include appropriate CORS headers.
@@ -239,7 +245,9 @@ const ensureDbConnected = async (req, res, next) => {
     next();
   } catch (err) {
     console.error("[ensureDbConnected] Failed:", err);
-    res.status(503).json({ success: false, message: "Service temporarily unavailable" });
+    res
+      .status(503)
+      .json({ success: false, message: "Service temporarily unavailable" });
   }
 };
 
@@ -273,6 +281,8 @@ app.use("/api/references", referenceRoutes);
 app.use("/api/reels", reelRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/unsubscribe", unsubscribeRoutes);
+app.use("/api/instructor-chat", instructorChatRoutes);
+app.use("/api/webrtc", webrtcSessionRoutes);
 
 // ── Global error-handling middleware ──────────────────────────────────────────
 // Must be registered AFTER all routes. Express routes that call next(err) or
@@ -344,6 +354,12 @@ io.engine.on("connection_error", (err) => {
 // 3. Register session chat handlers
 registerSessionChat(io);
 
+// 4. Register instructor ↔ student direct chat handlers
+registerInstructorChat(io);
+
+// 5. Register WebRTC signaling (offer/answer/ICE + call-request relay)
+registerWebRTCSignaling(io);
+
 const setupRedisAdapter = async () => {
   if (process.env.REDIS_URL) {
     try {
@@ -357,17 +373,25 @@ const setupRedisAdapter = async () => {
       const pubClient = createClient(redisOptions);
       const subClient = pubClient.duplicate();
 
-      pubClient.on("error", (err) => console.error("[Socket.IO Redis Pub] error:", err.message));
-      subClient.on("error", (err) => console.error("[Socket.IO Redis Sub] error:", err.message));
+      pubClient.on("error", (err) =>
+        console.error("[Socket.IO Redis Pub] error:", err.message),
+      );
+      subClient.on("error", (err) =>
+        console.error("[Socket.IO Redis Sub] error:", err.message),
+      );
 
       await Promise.all([pubClient.connect(), subClient.connect()]);
       io.adapter(createAdapter(pubClient, subClient));
-      console.log("[Socket.IO] Redis adapter enabled for multiple Vercel instances");
+      console.log(
+        "[Socket.IO] Redis adapter enabled for multiple Vercel instances",
+      );
     } catch (err) {
       console.error("[Socket.IO] Failed to setup Redis adapter:", err.message);
     }
   } else {
-    console.warn("[Socket.IO] REDIS_URL not set, running without Redis adapter");
+    console.warn(
+      "[Socket.IO] REDIS_URL not set, running without Redis adapter",
+    );
   }
 };
 

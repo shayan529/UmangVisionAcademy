@@ -12,6 +12,7 @@ const lessonSchema = new Schema(
     chapterTitle: { type: String, trim: true, default: "" },
     subject: { type: String, trim: true, default: "" },
     type: { type: String, enum: ["video", "text"], default: "video" },
+    videoType: { type: String, enum: ["video", "animated_video"], default: "video" },
     content: { type: String, trim: true, default: "" },
     pdfUrl: { type: String, trim: true, default: "" }, // URL of the original uploaded PDF file
   },

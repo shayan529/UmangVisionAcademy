@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { API_BASE_URL } from "../../config/api";
 import { useTranslation } from "react-i18next";
+import { getAiLanguageName } from "../../utils/aiLanguage";
 
 const getFileMeta = (url = "") => {
   const ext = url.split(".").pop()?.toLowerCase().split("?")[0]?.split("#")[0] ?? "";
@@ -720,9 +721,7 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
   const [inputQuery, setInputQuery] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isChatVisible, setIsChatVisible] = useState(
-    () => typeof window !== "undefined" && window.innerWidth >= 640
-  );
+  const [isChatVisible, setIsChatVisible] = useState(false);
 
   const viewerRef = useRef(null);
   const containerRef = useRef(null);
@@ -748,8 +747,7 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
       setSelectedText("");
       setPopoverPos(null);
       setInputQuery("");
-      const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
-      setIsChatVisible(!isMobile);
+      setIsChatVisible(false);
       setChatPos(null);
       setAvatarPos(null);
     }
@@ -1057,7 +1055,7 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
           credentials: "include",
           body: JSON.stringify({
             messages: apiHistory,
-            language: isHindi ? "Hindi" : "English",
+            language: getAiLanguageName(i18n.language),
             userRole: "student",
           }),
         });

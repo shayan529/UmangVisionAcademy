@@ -79,6 +79,8 @@ const StudentSessions = retryLazy(() => import("./components/student/StudentSess
 const StudentWallet = retryLazy(() => import("./components/student/StudentWallet"));
 const ReferralPage = retryLazy(() => import("./components/student/ReferralPage"));
 const StudentReferences = retryLazy(() => import("./components/student/StudentReferences"));
+const AskInstructor = retryLazy(() => import("./components/student/AskInstructor"));
+const VideoCall     = retryLazy(() => import("./components/common/VideoCall"));
 
 /* Mock Tests */
 const MockTestsLayout = retryLazy(() => import("./components/student/MockTestsIndex"));
@@ -340,6 +342,14 @@ function App() {
           <Route path="community" element={<Community />} />
           <Route path="instructors" element={<Instructors />} />
           <Route path="become-instructor" element={<BecomeInstructor />} />
+          <Route
+            path="become-instructor/apply"
+            element={<BecomeInstructorApplication />}
+          />
+          <Route
+            path="instructor-application/status"
+            element={<InstructorApplicationStatus />}
+          />
           <Route path="privacy" element={<PrivacyPolicy />} />
           <Route path="terms" element={<TermsOfService />} />
           <Route path="refund-policy" element={<RefundPolicy />} />
@@ -347,27 +357,10 @@ function App() {
           <Route path="about-us" element={<AboutUs />} />
           <Route path="courses/:id/demo" element={<CourseDemo />} />
           <Route path="question-bank" element={<QuestionBank />} />
-
           <Route path="blogs" element={<Blogs />} />
           <Route path="courses/:id" element={<CoursePage />} />
           <Route path="boards/:board" element={<BoardCourses />} />
           <Route path="instructors/:id" element={<InstructorAboutPage />} />
-          <Route
-            element={
-              <ProtectedRoute allowedRoles={["student"]}>
-                <StudentDashboard />
-              </ProtectedRoute>
-            }
-          >
-            <Route
-              path="become-instructor/apply"
-              element={<BecomeInstructorApplication />}
-            />
-            <Route
-              path="instructor-application/status"
-              element={<InstructorApplicationStatus />}
-            />
-          </Route>
           <Route path="plans" element={<Plans />} />
           <Route path="contact" element={<Contact />} />
           <Route path="help-center" element={<HelpCenter />} />
@@ -402,6 +395,8 @@ function App() {
             <Route path="referral" element={<ReferralPage />} />
             <Route path="references" element={<StudentReferences />} />
             <Route path="sessions" element={<StudentSessions />} />
+            <Route path="ask-instructor" element={<AskInstructor />} />
+            <Route path="video-call/:sessionId" element={<VideoCall />} />
             <Route path="notifications" element={<StudentNotifications />} />
             <Route path="certificates" element={<CertificatesSection />} />
             <Route path="achievements" element={<Achievements />} />

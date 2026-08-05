@@ -1313,18 +1313,36 @@ export default function CourseDemo() {
                                     {lesson._globalIndex + 1}
                                   </div>
                                   <div style={{ flex: 1, minWidth: 0 }}>
-                                    <p
-                                      style={{
-                                        fontSize: 13,
-                                        fontWeight: 600,
-                                        color: "#e2e8f0",
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                      }}
-                                    >
-                                      {tText(lesson.title)}
-                                    </p>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                      <p
+                                        style={{
+                                          fontSize: 13,
+                                          fontWeight: 600,
+                                          color: "#e2e8f0",
+                                          whiteSpace: "nowrap",
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis",
+                                        }}
+                                      >
+                                        {tText(lesson.title)}
+                                      </p>
+                                      {lesson.videoType === "animated_video" && (
+                                        <span
+                                          style={{
+                                            fontSize: 9,
+                                            fontWeight: 800,
+                                            padding: "2px 6px",
+                                            borderRadius: 4,
+                                            background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+                                            color: "#ffffff",
+                                            whiteSpace: "nowrap",
+                                            flexShrink: 0,
+                                          }}
+                                        >
+                                          ✨ Animated Video
+                                        </span>
+                                      )}
+                                    </div>
                                     {lesson.description && (
                                       <p
                                         style={{

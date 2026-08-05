@@ -5,6 +5,13 @@ import { uploadFileToStorage } from "../utils/vercelBlob.js";
 // POST /instructor-applications
 export const submitApplication = async (req, res) => {
   try {
+    const userRole = typeof req.user?.role === "string" ? req.user.role : req.user?.role?.name;
+    if (userRole?.toLowerCase() === "student") {
+      return res.status(400).json({
+        message: "Students cannot become an instructor. Please create a fresh account.",
+      });
+    }
+
     const existing = await InstructorApplication.findOne({
       user: req.user._id,
     });

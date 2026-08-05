@@ -530,8 +530,14 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
     state: student.state || "",
     pincode: student.pincode || "",
     coins: typeof student.coins === "number" ? student.coins : 0,
-    // Single role field — editable here as a simple select
     role: student.role || "student",
+    fatherName: student.fatherName || "",
+    motherName: student.motherName || "",
+    fatherMobileNumber: student.fatherMobileNumber || "",
+    socialMediaAccount: student.socialMediaAccount || "",
+    vidhansabha: student.vidhansabha || "",
+    reference: student.reference || "",
+    fullAddress: student.fullAddress || "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -554,6 +560,13 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
         pincode: form.pincode.trim(),
         coins: Number(form.coins) || 0,
         role: form.role,
+        fatherName: form.fatherName.trim(),
+        motherName: form.motherName.trim(),
+        fatherMobileNumber: form.fatherMobileNumber.trim(),
+        socialMediaAccount: form.socialMediaAccount.trim(),
+        vidhansabha: form.vidhansabha.trim(),
+        reference: form.reference.trim(),
+        fullAddress: form.fullAddress.trim(),
       };
       if (form.email.trim()) payload.email = form.email.trim();
       if (form.phoneNumber.trim())
@@ -653,6 +666,47 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
             value={form.pincode}
             onChange={set("pincode")}
           />
+          <TextField
+            label="Father's Name"
+            value={form.fatherName}
+            onChange={set("fatherName")}
+          />
+          <TextField
+            label="Mother's Name"
+            value={form.motherName}
+            onChange={set("motherName")}
+          />
+          <TextField
+            label="Parent's Mobile"
+            value={form.fatherMobileNumber}
+            onChange={set("fatherMobileNumber")}
+          />
+          <TextField
+            label="Social Media Account"
+            value={form.socialMediaAccount}
+            onChange={set("socialMediaAccount")}
+            placeholder="Instagram / Facebook URL"
+          />
+          <TextField
+            label="Vidhansabha"
+            value={form.vidhansabha}
+            onChange={set("vidhansabha")}
+          />
+          <TextField
+            label="Reference"
+            value={form.reference}
+            onChange={set("reference")}
+          />
+          <div>
+            <FieldLabel>Full Address</FieldLabel>
+            <textarea
+              value={form.fullAddress}
+              onChange={(e) => set("fullAddress")(e.target.value)}
+              placeholder="House no., street, city, state, pincode"
+              className="w-full bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 px-3.5 text-sm text-white transition duration-150"
+              rows={2}
+            />
+          </div>
           <TextField
             label="Coin Balance"
             value={form.coins}

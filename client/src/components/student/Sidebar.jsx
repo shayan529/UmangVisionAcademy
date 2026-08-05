@@ -97,6 +97,7 @@ const Sidebar = ({
         { label: t("nav.blogs", "Blogs"), to: "/student-dashboard/blogs", icon: "📰", moduleKey: "blogs" },
         { label: t("studentSidebar.aiTutor", "AI Tutor"), to: "/student-dashboard/ai-tutor", icon: "🤖", moduleKey: "ai_tutor" },
         { label: t("studentSidebar.sessions", "Sessions"), to: "/student-dashboard/sessions", icon: "🎥", moduleKey: "sessions" },
+        { label: t("studentSidebar.askInstructor", "Ask Instructor"), to: "/student-dashboard/ask-instructor", icon: "💬", moduleKey: "ask_instructor" },
       ],
     },
     {

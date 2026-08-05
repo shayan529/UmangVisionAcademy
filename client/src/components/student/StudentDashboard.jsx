@@ -16,6 +16,7 @@ import api from "../../config/api";
 import { useState } from "react";
 import { X } from "lucide-react";
 import { setSelectedClass } from "../../redux/slices/authSlice";
+import CourseFloatingAI from "../course/CourseFloatingAI.jsx";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const getOverallProgress = (courses = []) => {
@@ -125,7 +126,7 @@ const StudentDetailsFormModal = ({
     },
     {
       key: "socialMediaAccount",
-      label: t("studentSettings.socialMedia", "Social Media"),
+      label: t("studentSettings.socialMediaAccount", "Social Media Account"),
       placeholder: t("studentSettings.socialMediaPlaceholder", "Instagram / Facebook URL"),
     },
     {
@@ -1244,7 +1245,7 @@ const StudentDashboard = () => {
             )}
           </div>
 
-          <div className="flex-1 overflow-hidden min-w-0 flex flex-col min-h-0">
+          <div className="flex-1 overflow-x-clip min-w-0 flex flex-col min-h-0">
             <Outlet />
           </div>
         </main>
@@ -1281,6 +1282,8 @@ const StudentDashboard = () => {
           </div>
         </div>
       )}
+      {/* Floating AI Robot Assistant visible across Student Dashboard */}
+      <CourseFloatingAI />
     </div>
   );
 };

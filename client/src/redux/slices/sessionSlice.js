@@ -11,6 +11,18 @@ const dedupeSessions = (sessions = []) => {
   });
 };
 
+export const fetchCoursesForSession = createAsyncThunk(
+  "sessions/fetchCoursesForSession",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get(API_ENDPOINTS.SESSIONS.INSTRUCTOR_COURSES);
+      return data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  },
+);
+
 export const fetchSessions = createAsyncThunk(
   "sessions/fetchAll",
   async (_, { rejectWithValue }) => {
@@ -67,6 +79,7 @@ export const updateSession = createAsyncThunk(
 
 const initialState = {
   sessions: [],
+  coursesForSession: [], // [{ _id, title, subjects: [] }] — for the course dropdown
   loading: false,
   error: null,
   success: null,
@@ -85,6 +98,11 @@ const sessionSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // fetchCoursesForSession
+      .addCase(fetchCoursesForSession.fulfilled, (state, action) => {
+        state.coursesForSession = Array.isArray(action.payload) ? action.payload : [];
+      })
+
       // fetchSessions
       .addCase(fetchSessions.pending, (state) => {
         state.loading = true;

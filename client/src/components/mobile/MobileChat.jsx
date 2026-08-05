@@ -14,6 +14,7 @@ import {
 } from "../../redux/slices/aiTutorSlice.js";
 import { useTranslation } from "react-i18next";
 import { API_BASE_URL } from "../../config/api.js";
+import { getAiLanguageName, getTtsLanguageCode } from "../../utils/aiLanguage.js";
 
 // ── Theme tokens ─────────────────────────────────────────────────────────────
 const DARK = {
@@ -917,12 +918,8 @@ export default function MobileChat() {
         const baseUrl = API_BASE_URL;
         const requestedLanguage =
           mode === "voice"
-            ? voiceLang === "hi-IN"
-              ? "Hindi"
-              : "English"
-            : i18n.language === "hi"
-              ? "Hindi"
-              : "English";
+            ? getAiLanguageName(voiceLang)
+            : getAiLanguageName(i18n.language);
         const res = await fetch(`${baseUrl}/ai/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -993,18 +990,18 @@ export default function MobileChat() {
           return;
         }
         window.speechSynthesis.cancel();
-        const isHindi = /[\u0900-\u097F]/.test(text);
-        const targetLang = isHindi ? "hi-IN" : "en-US";
+        const targetLang = getTtsLanguageCode(text, i18n.language);
         const utter = new SpeechSynthesisUtterance(text);
         utter.lang = targetLang;
-        utter.rate = isHindi ? 0.95 : 1;
+        utter.rate = targetLang.startsWith("en") ? 1 : 0.95;
         const pickVoice = () => {
           const voices = window.speechSynthesis.getVoices();
           if (!voices.length) return null;
+          const langPrefix = targetLang.split("-")[0];
           return (
             voices.find((v) => v.lang === targetLang) ||
             voices.find((v) =>
-              v.lang?.toLowerCase().startsWith(isHindi ? "hi" : "en"),
+              v.lang?.toLowerCase().startsWith(langPrefix),
             ) ||
             null
           );

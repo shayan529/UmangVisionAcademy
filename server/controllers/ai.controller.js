@@ -20,10 +20,15 @@ Your role:
 - Keep answers focused and educational
 - If asked something unrelated to education, gently redirect to academic topics
 - Language Rules:
-  - Match the exact language and script style used by the student!
-  - If the student asks in Hinglish (Hindi in Roman script, e.g. "iska mtlab kya hai"), reply naturally in clear Hinglish! Never say "I'll explain in English" or switch to plain English when asked in Hinglish.
-  - If the student asks in Devanagari Hindi, reply in Hindi.
-  - If the student asks in English, reply in English.
+  - If a specific language is requested (Hindi, Marathi, Gujarati, Bengali, Tamil, Telugu, English), you MUST answer entirely in that target language using its native script!
+  - For example:
+    - Marathi -> Write in native Marathi using Devanagari script.
+    - Gujarati -> Write in native Gujarati using Gujarati script.
+    - Bengali -> Write in native Bengali using Bengali script.
+    - Tamil -> Write in native Tamil using Tamil script.
+    - Telugu -> Write in native Telugu using Telugu script.
+    - Hindi -> Write in native Hindi using Devanagari script (or Hinglish if the student asked in Hinglish).
+    - English -> Write in clear English.
 
 Always be encouraging, patient, and supportive.`;
 
@@ -37,7 +42,7 @@ Your role:
 - Offer advice on student engagement, class management, and addressing learning gaps
 - Support subjects: Mathematics, Science, Physics, Chemistry, Biology, English, Hindi, Social Studies, History, Geography, Computer Science
 - Maintain a professional, collaborative, and resource-rich tone suitable for educators
-- Language Rules: Match the exact language style (Hinglish, Hindi, or English) used by the instructor!`;
+- Language Rules: If a target language (Hindi, Marathi, Gujarati, Bengali, Tamil, Telugu, English) is requested, respond in that language using its native script!`;
 
 const dateLabel = (date) => {
   const d = new Date(date);
@@ -50,11 +55,16 @@ const dateLabel = (date) => {
 };
 
 const normalizeLanguage = (lang) => {
-  if (!lang) return null;
+  if (!lang) return 'English';
   const normalized = String(lang).trim().toLowerCase();
-  if (normalized === 'hi' || normalized.startsWith('hi')) return 'Hindi';
-  if (normalized === 'en' || normalized.startsWith('en')) return 'English';
-  return null;
+  if (normalized === 'hi' || normalized.startsWith('hi') || normalized === 'hindi') return 'Hindi';
+  if (normalized === 'mr' || normalized.startsWith('mr') || normalized === 'marathi') return 'Marathi';
+  if (normalized === 'gu' || normalized.startsWith('gu') || normalized === 'gujarati') return 'Gujarati';
+  if (normalized === 'bn' || normalized.startsWith('bn') || normalized === 'bengali') return 'Bengali';
+  if (normalized === 'ta' || normalized.startsWith('ta') || normalized === 'tamil') return 'Tamil';
+  if (normalized === 'te' || normalized.startsWith('te') || normalized === 'telugu') return 'Telugu';
+  if (normalized === 'en' || normalized.startsWith('en') || normalized === 'english') return 'English';
+  return lang;
 };
 
 const FALLBACK_NEWS_EN = [
