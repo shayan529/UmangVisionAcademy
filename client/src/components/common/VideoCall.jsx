@@ -1,4 +1,5 @@
-import React from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { useWebRTC } from "../../hooks/useWebRTC";
 
 /**
@@ -11,12 +12,29 @@ import { useWebRTC } from "../../hooks/useWebRTC";
  * />
  */
 export default function VideoCall({ sessionId, userId, onCallEnded }) {
+  const { sessionId: routeSessionId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
+  const activeSessionId = sessionId || routeSessionId;
+  const activeUserId = userId || user?._id;
+  const handleCallEnded =
+    onCallEnded ||
+    (() =>
+      navigate(
+        user?.role === "instructor"
+          ? "/instructor-dashboard"
+          : "/student-dashboard",
+      ));
   const {
     localVideoRef, remoteVideoRef,
     connectionState, audioEnabled, videoEnabled,
     remotePeer, error,
     toggleAudio, toggleVideo, endCall,
-  } = useWebRTC({ sessionId, userId, onCallEnded });
+  } = useWebRTC({
+    sessionId: activeSessionId,
+    userId: activeUserId,
+    onCallEnded: handleCallEnded,
+  });
 
   return (
     <div className="relative flex flex-col h-screen bg-gray-900 overflow-hidden">

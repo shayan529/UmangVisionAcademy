@@ -367,6 +367,14 @@ function App() {
           <Route path="faq" element={<Faq />} />
           <Route path="cart" element={<CartPage />} />
           <Route path="instructor-details" element={<InstructorDetails />} />
+          <Route
+            path="video-call/:sessionId"
+            element={
+              <ProtectedRoute allowedRoles={["student", "instructor"]}>
+                <VideoCall />
+              </ProtectedRoute>
+            }
+          />
 
           {/* ========================= */}
           {/* STUDENT DASHBOARD         */}

@@ -197,8 +197,10 @@ const AskInstructor = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedSubject, setSelectedSubject] = useState("");
   // Video call request state
-  const [callRequesting, setCallRequesting] = useState(false);
-  const [pendingRequestId, setPendingRequestId] = useState(null);
+  // Key requests by conversation so one instructor's request never affects
+  // the call button for another instructor.
+  const [pendingCallRequests, setPendingCallRequests] = useState({});
+  const [submittingCallFor, setSubmittingCallFor] = useState(null);
   // When instructor starts the call after approving, show ringing screen
   const [ringingCall, setRingingCall] = useState(null); // { sessionId }
 
@@ -215,6 +217,20 @@ const AskInstructor = () => {
       const convs = res?.payload?.conversations ?? [];
       if (convs.length > 0) setView("threads");
     });
+    api
+      .get(API_ENDPOINTS.INSTRUCTOR_CHAT.CALL_REQUESTS, {
+        params: { status: "pending" },
+      })
+      .then(({ data }) => {
+        setPendingCallRequests(
+          (data.requests ?? []).reduce((requests, request) => {
+            const conversationId = request.conversation?._id || request.conversation;
+            if (conversationId) requests[conversationId.toString()] = request;
+            return requests;
+          }, {}),
+        );
+      })
+      .catch((err) => console.warn("Failed to load pending call requests", err));
     return () => {
       dispatch(resetChat());
       socketRef.current?.disconnect();
@@ -254,15 +270,23 @@ const AskInstructor = () => {
 
       // Instructor approved the request and started the call
       s.on("webrtc:call-initiated", ({ sessionId }) => {
-        setCallRequesting(false);
-        setPendingRequestId(null);
+        setPendingCallRequests((requests) => {
+          const next = { ...requests };
+          delete next[conversationId.toString()];
+          return next;
+        });
+        setSubmittingCallFor(null);
         setRingingCall({ sessionId });
       });
 
       // Instructor declined the call request
       s.on("webrtc:call-decline", () => {
-        setCallRequesting(false);
-        setPendingRequestId(null);
+        setPendingCallRequests((requests) => {
+          const next = { ...requests };
+          delete next[conversationId.toString()];
+          return next;
+        });
+        setSubmittingCallFor(null);
         setRingingCall(null);
         toast("Instructor declined the call request", { icon: "📵" });
       });
@@ -276,8 +300,10 @@ const AskInstructor = () => {
   // The instructor then approves and starts the call, which triggers
   // webrtc:call-initiated back to the student.
   const requestVideoCall = async () => {
-    if (!activeConversation || callRequesting) return;
-    setCallRequesting(true);
+    const conversationId = activeConversation?._id?.toString();
+    if (!conversationId || pendingCallRequests[conversationId] || submittingCallFor)
+      return;
+    setSubmittingCallFor(conversationId);
     try {
       const { data } = await api.post(
         API_ENDPOINTS.INSTRUCTOR_CHAT.CALL_REQUESTS,
@@ -286,12 +312,14 @@ const AskInstructor = () => {
           message: "Student requested a video call",
         },
       );
-      setPendingRequestId(data._id);
-      toast.success(
-        "📞 Video call request sent. Waiting for instructor approval.",
-      );
+      setPendingCallRequests((requests) => ({
+        ...requests,
+        [conversationId]: data,
+      }));
+      setSubmittingCallFor(null);
+      toast.success("Video call request sent.");
     } catch (err) {
-      setCallRequesting(false);
+      setSubmittingCallFor(null);
       const msg =
         err.response?.data?.message ||
         err.message ||
@@ -302,13 +330,12 @@ const AskInstructor = () => {
 
   // ── Cancel pending call request ───────────────────────────────────────────────────
   const cancelCallRequest = async () => {
-    if (!pendingRequestId) {
-      setCallRequesting(false);
-      return;
-    }
+    const conversationId = activeConversation?._id?.toString();
+    const request = conversationId ? pendingCallRequests[conversationId] : null;
+    if (!conversationId || !request) return;
     try {
       await api.put(
-        API_ENDPOINTS.INSTRUCTOR_CHAT.CALL_REQUEST_REJECT(pendingRequestId),
+        API_ENDPOINTS.INSTRUCTOR_CHAT.CALL_REQUEST_REJECT(request._id),
         {
           response: "Cancelled by student",
         },
@@ -321,8 +348,11 @@ const AskInstructor = () => {
         "Unable to cancel call request";
       toast.error(msg);
     } finally {
-      setCallRequesting(false);
-      setPendingRequestId(null);
+      setPendingCallRequests((requests) => {
+        const next = { ...requests };
+        delete next[conversationId];
+        return next;
+      });
     }
   };
 
@@ -450,6 +480,11 @@ const AskInstructor = () => {
   const other = activeConversation
     ? (activeConversation.instructor ?? activeConversation.student)
     : null;
+  const activeConversationId = activeConversation?._id?.toString();
+  const activeCallRequest = activeConversationId
+    ? pendingCallRequests[activeConversationId]
+    : null;
+  const isSubmittingCall = submittingCallFor === activeConversationId;
 
   // ── RENDER ────────────────────────────────────────────────────────────────
   return (
@@ -479,7 +514,7 @@ const AskInstructor = () => {
               onClick={() => {
                 const { sessionId } = ringingCall;
                 setRingingCall(null);
-                navigate(`/student-dashboard/video-call/${sessionId}`);
+                navigate(`/video-call/${sessionId}`);
               }}
               className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-3 rounded-2xl text-sm transition shadow-lg shadow-emerald-600/30"
             >
@@ -488,7 +523,6 @@ const AskInstructor = () => {
             <button
               onClick={() => {
                 setRingingCall(null);
-                setCallRequesting(false);
               }}
               className="flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-bold px-6 py-3 rounded-2xl text-sm transition shadow-lg shadow-rose-600/30"
             >
@@ -700,14 +734,18 @@ const AskInstructor = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={requestVideoCall}
-                  disabled={callRequesting}
+                  disabled={Boolean(activeCallRequest) || isSubmittingCall}
                   title="Request video call"
                   className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold px-3 py-1.5 rounded-xl transition"
                 >
                   <Video size={13} />
-                  {callRequesting ? "Waiting…" : "Video Call"}
+                   {isSubmittingCall
+                     ? "Sending…"
+                     : activeCallRequest
+                       ? "Call request sent"
+                       : "Video Call"}
                 </button>
-                {callRequesting && (
+                {activeCallRequest && (
                   <button
                     onClick={cancelCallRequest}
                     className="text-xs text-slate-300 hover:text-white px-2 py-1.5 rounded-xl border border-slate-700 hover:border-slate-500 transition"

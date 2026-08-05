@@ -22,7 +22,6 @@ import {
   Send,
   X,
   ChevronLeft,
-  Video,
   Trash2,
   BookOpen,
   User,
@@ -259,8 +258,6 @@ const InstructorStudentQueries = ({ showToast }) => {
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
   const [filter, setFilter] = useState("all"); // "all" | "unread"
-  // Incoming call request from student
-  const [incomingCall, setIncomingCall] = useState(null); // request object
   const [pendingRequests, setPendingRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [callStarting, setCallStarting] = useState(false);
@@ -334,12 +331,10 @@ const InstructorStudentQueries = ({ showToast }) => {
           request,
           ...prev.filter((r) => r._id !== request._id),
         ]);
-        setIncomingCall(request);
       });
       // If student cancelled before instructor responded
       s.on("webrtc:call-decline", ({ requestId }) => {
         setPendingRequests((prev) => prev.filter((r) => r._id !== requestId));
-        setIncomingCall((prev) => (prev?._id === requestId ? null : prev));
       });
 
       socketRef.current = s;
@@ -353,7 +348,6 @@ const InstructorStudentQueries = ({ showToast }) => {
   // to the student (who sees a ringing screen), then opens the call page.
   const acceptCall = async (request) => {
     if (!request) return;
-    setIncomingCall(null);
     setCallStarting(true);
     try {
       const { data } = await api.put(
@@ -362,7 +356,7 @@ const InstructorStudentQueries = ({ showToast }) => {
       );
       setPendingRequests((prev) => prev.filter((r) => r._id !== request._id));
       const sessionId = data.sessionId;
-      window.open(`/video-call/${sessionId}`, "_blank");
+      window.open(`/video-call/${sessionId}`, "_blank", "noopener,noreferrer");
     } catch (err) {
       const msg =
         err.response?.data?.message ||
@@ -380,7 +374,6 @@ const InstructorStudentQueries = ({ showToast }) => {
 
   const declineCall = async (request) => {
     if (!request) return;
-    setIncomingCall(null);
     try {
       await api.put(
         API_ENDPOINTS.INSTRUCTOR_CHAT.CALL_REQUEST_REJECT(request._id),
@@ -520,56 +513,9 @@ const InstructorStudentQueries = ({ showToast }) => {
   );
   const student = activeConversation?.student;
 
-  const handleOpenRequest = (request) => {
-    if (!request?.conversation) return;
-    openThread(request.conversation);
-    setIncomingCall(request);
-  };
-
   // ── RENDER ────────────────────────────────────────────────────────────────
   return (
     <div className="flex h-[calc(100vh-80px)] max-h-[820px] bg-[#0b1120] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative">
-      {/* ── Global call request banner ── */}
-      {/* Shown when a student requests a call from a conversation not currently open */}
-      {incomingCall &&
-        (!activeConversation ||
-          incomingCall.conversation?._id !== activeConversation._id) && (
-          <div className="absolute top-0 left-0 right-0 z-50 mx-4 mt-3">
-            <div className="bg-emerald-900/90 border border-emerald-500/40 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-2xl backdrop-blur-sm">
-              <div className="w-9 h-9 rounded-full bg-emerald-600/30 flex items-center justify-center shrink-0">
-                <Video size={16} className="text-emerald-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white">
-                  {incomingCall.fromName || "A student"} is requesting a video
-                  call
-                </p>
-                <p className="text-xs text-emerald-300 truncate">
-                  Tap "Start Call" to begin
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  // Open the conversation that has the request
-                  const conv = conversations.find(
-                    (c) => c._id === incomingCall.conversationId,
-                  );
-                  if (conv) openThread(conv);
-                }}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition shrink-0"
-              >
-                View
-              </button>
-              <button
-                onClick={() => declineCall(incomingCall)}
-                className="text-emerald-400 hover:text-rose-400 text-xs px-2 py-1.5 transition shrink-0"
-              >
-                Dismiss
-              </button>
-            </div>
-          </div>
-        )}
-
       {/* ── Left: thread list ── */}
       <div
         className={`flex flex-col w-full md:w-[300px] md:min-w-[260px] border-r border-slate-800 bg-[#080f1e] shrink-0 ${mobileView === "chat" ? "hidden md:flex" : "flex"}`}
@@ -627,10 +573,9 @@ const InstructorStudentQueries = ({ showToast }) => {
                 </span>
               </div>
               <div className="space-y-2">
-                {pendingRequests.slice(0, 3).map((request) => (
-                  <button
+                {pendingRequests.map((request) => (
+                  <div
                     key={request._id}
-                    onClick={() => handleOpenRequest(request)}
                     className="w-full text-left rounded-2xl border border-slate-800 bg-slate-900/80 p-3 hover:border-emerald-500/40 transition"
                   >
                     <p className="text-sm font-semibold text-white">
@@ -647,7 +592,23 @@ const InstructorStudentQueries = ({ showToast }) => {
                         : ""}
                       {new Date(request.createdAt).toLocaleString()}
                     </p>
-                  </button>
+                    <div className="flex items-center gap-2 mt-3">
+                      <button
+                        onClick={() => acceptCall(request)}
+                        disabled={callStarting}
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition"
+                      >
+                        {callStarting ? "Starting…" : "Approve"}
+                      </button>
+                      <button
+                        onClick={() => declineCall(request)}
+                        disabled={callStarting}
+                        className="flex-1 border border-rose-500/40 text-rose-300 hover:bg-rose-500/10 disabled:opacity-60 text-xs font-bold px-3 py-1.5 rounded-xl transition"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -726,45 +687,13 @@ const InstructorStudentQueries = ({ showToast }) => {
                       : ""}
                   </p>
                 </div>
-                {incomingCall &&
-                incomingCall.conversation?._id === activeConversation?._id ? (
-                  <div className="flex flex-col gap-2 shrink-0 px-3 py-3 bg-slate-900 rounded-2xl border border-emerald-700/30">
-                    <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">
-                      Call request
-                    </p>
-                    <p className="text-sm text-white">
-                      {incomingCall.student?.name ||
-                        incomingCall.fromName ||
-                        "A student"}{" "}
-                      has requested a call.
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => acceptCall(incomingCall)}
-                        disabled={callStarting}
-                        className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition"
-                      >
-                        <Video size={13} />
-                        {callStarting ? "Starting…" : "Start Call"}
-                      </button>
-                      <button
-                        onClick={() => declineCall(incomingCall)}
-                        disabled={callStarting}
-                        className="text-xs text-slate-400 hover:text-rose-400 transition px-2 py-1.5"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={handleArchive}
-                    title="Archive conversation"
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-amber-400 hover:bg-slate-800 transition"
-                  >
-                    <Archive size={15} />
-                  </button>
-                )}
+                <button
+                  onClick={handleArchive}
+                  title="Archive conversation"
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-amber-400 hover:bg-slate-800 transition"
+                >
+                  <Archive size={15} />
+                </button>
               </div>
 
               {/* Messages */}
