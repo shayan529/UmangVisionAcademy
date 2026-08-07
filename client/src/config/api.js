@@ -119,6 +119,9 @@ export const API_ENDPOINTS = {
     CALL_REQUEST_APPROVE: (id) =>
       `/instructor-chat/call-requests/${id}/approve`,
     CALL_REQUEST_REJECT: (id) => `/instructor-chat/call-requests/${id}/reject`,
+    ADMIN_REPORTS: "/instructor-chat/admin/reports",
+    ADMIN_REPORT_MESSAGES: (id) => `/instructor-chat/admin/reports/${id}/messages`,
+    ADMIN_REPORT_ACTION: (id) => `/instructor-chat/admin/reports/${id}/action`,
   },
 
   // Student endpoints  ← new

@@ -29,6 +29,7 @@ import AdminReels from "./AdminReels";
 import AdminPayments from "./AdminPayments";
 import AdminMockTests from "./AdminMockTests";
 import AdminReferences from "./AdminReferences";
+import AdminReports from "./AdminReports";
 import InstructorNotes from "../instructor/InstructorNotes";
 import { Toast } from "../instructor/InstructorUi";
 
@@ -274,6 +275,8 @@ export default function AdminDashboard() {
         return <AdminApplications />;
       case "references":
         return <AdminReferences showToast={showToast} />;
+      case "chat-reports":
+        return <AdminReports />;
       case "roles":
         return (
           <RoleManager

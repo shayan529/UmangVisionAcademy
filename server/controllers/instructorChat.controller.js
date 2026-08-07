@@ -818,3 +818,127 @@ export const reportConversation = async (req, res) => {
   }
 };
 
+// ── GET /admin/reports ────────────────────────────────────────────────────────
+export const listAdminReports = async (req, res) => {
+  try {
+    if (!isAdminOrStaff(req.user))
+      return res.status(403).json({ message: "Admin access required" });
+
+    const filter = {
+      $or: [{ isReported: true }, { isBlocked: true }],
+    };
+
+    const conversations = await Conversation.find(filter)
+      .sort({ updatedAt: -1 })
+      .select("-messages")
+      .populate("student", "_id name avatarUrl email isSuspended suspendReason")
+      .populate("instructor", "_id name avatarUrl email isSuspended suspendReason")
+      .populate("course", "_id title")
+      .populate("reportedBy", "_id name role")
+      .populate("blockedBy", "_id name role")
+      .lean();
+
+    res.json({ reports: conversations, total: conversations.length });
+  } catch (err) {
+    console.error("[instructorChat] listAdminReports:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── GET /admin/reports/:id/messages ──────────────────────────────────────────
+export const getAdminReportMessages = async (req, res) => {
+  try {
+    if (!isAdminOrStaff(req.user))
+      return res.status(403).json({ message: "Admin access required" });
+
+    const { id } = req.params;
+    if (!Types.ObjectId.isValid(id))
+      return res.status(400).json({ message: "Invalid conversation id" });
+
+    const conv = await Conversation.findById(id)
+      .populate("student", "_id name avatarUrl email isSuspended")
+      .populate("instructor", "_id name avatarUrl email isSuspended")
+      .populate("course", "_id title")
+      .populate("messages.sender", "_id name avatarUrl role")
+      .lean();
+
+    if (!conv)
+      return res.status(404).json({ message: "Conversation not found" });
+
+    res.json({ conversation: conv, messages: conv.messages ?? [] });
+  } catch (err) {
+    console.error("[instructorChat] getAdminReportMessages:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── POST /admin/reports/:id/action ───────────────────────────────────────────
+export const takeAdminReportAction = async (req, res) => {
+  try {
+    if (!isAdminOrStaff(req.user))
+      return res.status(403).json({ message: "Admin access required" });
+
+    const { id } = req.params;
+    const { action, targetUserId, notes = "" } = req.body;
+
+    if (!Types.ObjectId.isValid(id))
+      return res.status(400).json({ message: "Invalid conversation id" });
+
+    const conv = await Conversation.findById(id);
+    if (!conv)
+      return res.status(404).json({ message: "Conversation not found" });
+
+    let message = "Action performed successfully";
+
+    if (action === "resolve") {
+      conv.isReported = false;
+      await conv.save();
+      message = "Report marked as resolved";
+    } else if (action === "dismiss") {
+      conv.isReported = false;
+      conv.reportReason = "";
+      conv.reportDetails = "";
+      await conv.save();
+      message = "Report dismissed";
+    } else if (action === "block_student") {
+      conv.isBlocked = true;
+      conv.blockedBy = req.user._id;
+      conv.blockedReason = notes || "Blocked by Administrator";
+      await conv.save();
+      message = "Student blocked from sending messages in this chat";
+    } else if (action === "unblock_student") {
+      conv.isBlocked = false;
+      conv.blockedReason = "";
+      await conv.save();
+      message = "Student unblocked in this chat";
+    } else if (action === "suspend_user") {
+      if (!targetUserId || !Types.ObjectId.isValid(targetUserId))
+        return res.status(400).json({ message: "Valid targetUserId required" });
+
+      const targetUser = await User.findById(targetUserId);
+      if (!targetUser)
+        return res.status(404).json({ message: "User not found" });
+
+      targetUser.isSuspended = !targetUser.isSuspended;
+      targetUser.suspendReason = targetUser.isSuspended
+        ? notes || "Account suspended by Administrator due to chat report"
+        : "";
+      await targetUser.save();
+
+      message = targetUser.isSuspended
+        ? `Account for ${targetUser.name} suspended`
+        : `Account for ${targetUser.name} unsuspended`;
+    } else if (action === "delete_chat") {
+      await Conversation.findByIdAndDelete(id);
+      await CallRequest.deleteMany({ conversation: id });
+      return res.json({ success: true, message: "Chat deleted permanently" });
+    }
+
+    res.json({ success: true, message, conversation: conv });
+  } catch (err) {
+    console.error("[instructorChat] takeAdminReportAction:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+

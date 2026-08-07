@@ -43,6 +43,15 @@ const userSchema = new Schema(
       trim: true,
       default: "",
     },
+    isSuspended: {
+      type: Boolean,
+      default: false,
+    },
+    suspendReason: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     phoneNumber: {
       type: String,
       trim: true,

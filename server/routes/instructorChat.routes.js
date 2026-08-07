@@ -15,6 +15,9 @@ import {
   deleteConversation,
   toggleBlockConversation,
   reportConversation,
+  listAdminReports,
+  getAdminReportMessages,
+  takeAdminReportAction,
 } from "../controllers/instructorChat.controller.js";
 
 const router = express.Router();
@@ -43,6 +46,11 @@ const studentOnly = (req, res, next) => {
 // ── Routes ────────────────────────────────────────────────────────────────────
 // Selector data — student fetches enrolled courses + instructors
 router.get("/available-instructors", studentOnly, getAvailableInstructors);
+
+// Admin Moderation & Reports
+router.get("/admin/reports", canAccessChat, listAdminReports);
+router.get("/admin/reports/:id/messages", canAccessChat, getAdminReportMessages);
+router.post("/admin/reports/:id/action", canAccessChat, takeAdminReportAction);
 
 // Conversation CRUD
 router.post("/conversations", studentOnly, getOrCreateConversation);

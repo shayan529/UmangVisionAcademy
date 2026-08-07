@@ -17,6 +17,7 @@ import {
   Calendar,
   ClipboardList,
   Bookmark,
+  Flag,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -129,6 +130,11 @@ const AdminSidebar = ({
       id: "references",
       label: t("adminSidebar.references", "References"),
       icon: Bookmark,
+    },
+    {
+      id: "chat-reports",
+      label: t("adminSidebar.chatReports", "Chat Reports"),
+      icon: Flag,
     },
     { id: "roles", label: t("adminSidebar.roles"), icon: Lock },
     { id: "devices", label: t("adminSidebar.devices"), icon: Shield },
