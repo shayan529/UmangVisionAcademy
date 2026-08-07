@@ -172,9 +172,24 @@ export const getOrCreateConversation = async (req, res) => {
     if (!isInstr)
       return res.status(404).json({ message: "User is not an instructor" });
 
-    // Validate courseId format if provided (but don't re-check enrollment)
-    if (courseId && !Types.ObjectId.isValid(courseId))
-      return res.status(400).json({ message: "Invalid courseId" });
+    // Validate courseId format if provided and verify instructor assistance entitlement
+    if (courseId) {
+      if (!Types.ObjectId.isValid(courseId)) {
+        return res.status(400).json({ message: "Invalid courseId" });
+      }
+      if (!isAdminOrStaff(req.user)) {
+        const studentDoc = await User.findById(studentId).select("instructorAssistanceCourses subscription").lean();
+        const hasAssistance = (studentDoc?.instructorAssistanceCourses || []).some(
+          (id) => id.toString() === courseId.toString(),
+        );
+        const hasActiveSub = studentDoc?.subscription?.status === "active";
+        if (!hasAssistance && !hasActiveSub) {
+          return res.status(403).json({
+            message: "Instructor Assistance is not enabled for this course.",
+          });
+        }
+      }
+    }
 
     // Strict 1 chat per (student, instructor) pair:
     // Deduplicate any legacy threads first
@@ -657,12 +672,8 @@ export const getAvailableInstructors = async (req, res) => {
     );
     const hasActiveSub = req.user.subscription?.status === "active";
 
-    // If student bought with assistance, allow those specific courses.
-    // If instructorAssistanceCourses is empty but enrolledCourses has legacy enrollments, fallback to enrolledCourses.
-    let allowedCourseIds = assistanceCourseIds;
-    if (assistanceCourseIds.length === 0 && enrolledCourseIds.length > 0) {
-      allowedCourseIds = enrolledCourseIds;
-    }
+    // ONLY allow courses where instructor assistance has explicitly been purchased or assigned to the student.
+    const allowedCourseIds = assistanceCourseIds;
 
     const orClauses = [];
     if (allowedCourseIds.length > 0) {
