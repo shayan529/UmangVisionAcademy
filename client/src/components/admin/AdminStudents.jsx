@@ -26,6 +26,8 @@ import {
   BookPlus,
   GraduationCap,
   Tag,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 import api from "../../config/api.js";
 import { INDIA_CITIES_BY_STATE } from "../../data/indiaLocations";
