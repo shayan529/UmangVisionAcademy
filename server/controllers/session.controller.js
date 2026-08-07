@@ -115,59 +115,12 @@ export const getInstructorSessions = async (req, res) => {
 export const getStudentSessions = async (req, res) => {
   try {
     const studentId = req.user._id.toString();
-    const cacheKey = `student:sessions:${studentId}`;
+    const cacheKey = `student:sessions:all:${studentId}`;
 
     const sessions = await cacheResponse(cacheKey, 15, async () => {
-      const query = { $or: [{ students: req.user._id }] };
-      if (
-        req.user.subscription?.status === "active" &&
-        req.user.selectedClass
-      ) {
-        const escapedClass = req.user.selectedClass.replace(
-          /[-/\\^$*+?.()|[\]{}]/g,
-          "\\$&",
-        );
-        query.$or.push({ category: new RegExp(`^${escapedClass}$`, "i") });
-      }
-
-      const enrolledCourses = await Course.find(query)
-        .select("_id instructor category")
-        .lean();
-
-      if (enrolledCourses.length === 0) {
-        return [];
-      }
-
-      const enrolledCourseIds = enrolledCourses.map((c) => c._id);
-      const instructorIds = enrolledCourses
-        .map((c) => c.instructor?.toString())
-        .filter(Boolean);
-
-      const enrolledClasses = new Set();
-      if (req.user.selectedClass) {
-        enrolledClasses.add(req.user.selectedClass.toLowerCase().trim());
-      }
-      enrolledCourses.forEach((c) => {
-        if (c.category) {
-          enrolledClasses.add(c.category.toLowerCase().trim());
-        }
-      });
-
-      const classRegexPatterns = Array.from(enrolledClasses).map(
-        (cls) => new RegExp(`^${cls.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}$`, "i")
-      );
-
-      const condition1 = { course: { $in: enrolledCourseIds } };
-      const condition2 = {
-        instructor: { $in: instructorIds },
-        $or: [
-          { class: null },
-          { class: "" },
-          ...(classRegexPatterns.length > 0 ? [{ class: { $in: classRegexPatterns } }] : []),
-        ],
-      };
-
-      return await Session.find({ $or: [condition1, condition2] })
+      // All sessions are visible to every logged-in student,
+      // regardless of whether they are enrolled in the course.
+      return await Session.find({})
         .populate("course", "title category")
         .populate("instructor", "name")
         .sort({ date: 1 })
@@ -179,6 +132,7 @@ export const getStudentSessions = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 // GET /sessions/:id
 export const getSessionById = async (req, res) => {
