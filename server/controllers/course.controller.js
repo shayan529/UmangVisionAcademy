@@ -1127,3 +1127,93 @@ export const assignCoursesToInstructor = async (req, res) => {
   }
 };
 
+// ── unassignCoursesFromStudent ────────────────────────────────────────────────
+export const unassignCoursesFromStudent = async (req, res) => {
+  try {
+    const { studentId, courseIds = [] } = req.body;
+
+    if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ message: "Valid studentId is required." });
+    }
+    const validCourseIds = (Array.isArray(courseIds) ? courseIds : []).filter(
+      (id) => mongoose.Types.ObjectId.isValid(id),
+    );
+
+    if (validCourseIds.length === 0) {
+      return res.status(400).json({ message: "No valid courseIds provided." });
+    }
+
+    const canEdit =
+      hasBaseRole(req.user, "admin") ||
+      hasPermissionGrant(req.user, "users", "edit") ||
+      hasBaseRole(req.user, "staff");
+
+    if (!canEdit) {
+      return res.status(403).json({ message: "Access denied — admin or staff only." });
+    }
+
+    // Remove studentId from Course.students
+    await Course.updateMany(
+      { _id: { $in: validCourseIds } },
+      { $pull: { students: studentId } },
+    );
+
+    // Remove courseIds from User.enrolledCourses & User.instructorAssistanceCourses
+    await User.findByIdAndUpdate(studentId, {
+      $pull: {
+        enrolledCourses: { $in: validCourseIds },
+        instructorAssistanceCourses: { $in: validCourseIds },
+      },
+    });
+
+    // Invalidate course cache
+    await Promise.all(
+      validCourseIds.map((id) =>
+        invalidateCourseCache(id).catch((err) =>
+          console.error("[Cache] Failed to invalidate course cache:", err.message),
+        ),
+      ),
+    );
+
+    await deleteKey(`user:${studentId}`);
+
+    res.json({
+      success: true,
+      message: "Courses unassigned from student successfully.",
+      unassignedCount: validCourseIds.length,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── toggleStudentInstructorAssistance ───────────────────────────────────────
+export const toggleStudentInstructorAssistance = async (req, res) => {
+  try {
+    const { studentId, courseId, enabled } = req.body;
+    if (!studentId || !courseId) {
+      return res.status(400).json({ message: "studentId and courseId are required." });
+    }
+
+    const canEdit =
+      hasBaseRole(req.user, "admin") ||
+      hasPermissionGrant(req.user, "users", "edit") ||
+      hasBaseRole(req.user, "staff");
+
+    if (!canEdit) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const update = enabled
+      ? { $addToSet: { instructorAssistanceCourses: courseId } }
+      : { $pull: { instructorAssistanceCourses: courseId } };
+
+    await User.findByIdAndUpdate(studentId, update);
+    await deleteKey(`user:${studentId}`);
+
+    res.json({ success: true, enabled: Boolean(enabled) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+

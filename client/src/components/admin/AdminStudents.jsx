@@ -768,11 +768,12 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
 };
 
 /* ─── Student Details Modal ──────────────────────────── */
-const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
+const StudentDetailsModal = ({ student, courses = [], onClose, onEdit, refreshUsers }) => {
+  const [showCourseManager, setShowCourseManager] = useState(false);
   if (!student) return null;
 
   const enrolled = courses.filter((c) =>
-    c.students?.some((sid) => (sid._id || sid) === student._id),
+    c.students?.some((sid) => (sid._id || sid).toString() === student._id?.toString()),
   );
 
   const enrolledFromProfile = (student.enrolledCourses || [])
@@ -787,6 +788,12 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
   const subscription = student.subscription || {};
   const coins = typeof student.coins === "number" ? student.coins : 0;
   const rupeeValue = (coins / 25).toFixed(2);
+
+  const assistanceSet = new Set(
+    (student.instructorAssistanceCourses || []).map((c) =>
+      (c._id || c).toString(),
+    ),
+  );
 
   return createPortal(
     <div
@@ -965,21 +972,56 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
             </p>
           )}
 
-          {/* Courses */}
-          <SectionTitle icon={BookOpen}>
-            Enrolled Courses ({enrolled.length || enrolledFromProfile.length})
-          </SectionTitle>
+          {/* Courses Section with Manage Button */}
+          <div className="flex items-center justify-between gap-3 mt-6 mb-2">
+            <div className="flex items-center gap-2">
+              <BookOpen size={16} className="text-indigo-400" />
+              <h3 className="text-sm font-extrabold text-white">
+                Enrolled Courses ({enrolled.length || enrolledFromProfile.length})
+              </h3>
+            </div>
+            <button
+              onClick={() => setShowCourseManager(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-indigo-300 bg-indigo-600/20 border border-indigo-500/30 hover:bg-indigo-600/30 transition shadow-sm hover:scale-105 active:scale-95"
+            >
+              <BookPlus size={14} />
+              Manage & Assign / Unassign Courses
+            </button>
+          </div>
+
           {enrolled.length > 0 ? (
             <ul className="flex flex-col gap-2">
-              {enrolled.map((c) => (
-                <li
-                  key={c._id}
-                  className="flex items-center gap-2.5 text-sm text-slate-300 bg-slate-900/40 border border-slate-800/70 rounded-lg px-4 py-3"
-                >
-                  <BookOpen size={14} className="text-indigo-400 flex-none" />
-                  <span className="truncate font-medium">{c.title}</span>
-                </li>
-              ))}
+              {enrolled.map((c) => {
+                const hasAssistance = assistanceSet.has(c._id.toString());
+                return (
+                  <li
+                    key={c._id}
+                    className="flex items-center justify-between gap-3 text-sm text-slate-300 bg-slate-900/50 border border-slate-800/80 rounded-xl p-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      {c.thumbnailUrl ? (
+                        <img src={c.thumbnailUrl} alt={c.title} className="w-10 h-10 rounded-lg object-cover border border-slate-700 flex-none" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-indigo-950 border border-indigo-800/60 flex items-center justify-center text-indigo-400 flex-none">
+                          <BookOpen size={16} />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate font-bold text-xs text-white">{c.title}</p>
+                        <p className="text-[11px] text-slate-400 truncate mt-0.5">{c.instructor?.name ? `Instructor: ${c.instructor.name}` : c.category || "Course"}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-none">
+                      {hasAssistance && (
+                        <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold">
+                          ✨ Assistance
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           ) : enrolledFromProfile.length > 0 ? (
             <ul className="flex flex-col gap-2">
@@ -994,9 +1036,25 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-slate-500 italic">
-              Not enrolled in any course yet.
-            </p>
+            <div className="text-center py-6 border border-dashed border-slate-800 rounded-xl bg-slate-900/30">
+              <p className="text-xs text-slate-400">Not enrolled in any course yet.</p>
+              <button
+                onClick={() => setShowCourseManager(true)}
+                className="mt-2 text-xs text-indigo-400 font-bold hover:underline"
+              >
+                + Assign First Course
+              </button>
+            </div>
+          )}
+
+          {/* Modal Overlay for Course Manager */}
+          {showCourseManager && (
+            <StudentCourseManagerModal
+              student={student}
+              courses={courses}
+              onClose={() => setShowCourseManager(false)}
+              onUpdated={refreshUsers}
+            />
           )}
 
           {/* Certificates */}
@@ -1089,73 +1147,137 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit }) => {
   );
 };
 
-/* ─── Assign Course Modal ────────────────────────────── */
-const AssignCourseModal = ({ student, courses = [], onClose, onAssigned }) => {
-  const [selectedCourses, setSelectedCourses] = useState([]);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+/* ─── Student Course Manager Modal (View, Assign, Unassign, Assistance) ─────── */
+const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }) => {
+  const [activeTab, setActiveTab] = useState("assigned"); // "assigned" | "available"
   const [searchQuery, setSearchQuery] = useState("");
   const [classFilter, setClassFilter] = useState("");
   const [subjectFilter, setSubjectFilter] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [selectedToAssign, setSelectedToAssign] = useState([]);
+  const [withAssistanceNew, setWithAssistanceNew] = useState(false);
+  const [assistanceCourses, setAssistanceCourses] = useState(() => {
+    return new Set(
+      (student.instructorAssistanceCourses || []).map((c) =>
+        (c._id || c).toString(),
+      ),
+    );
+  });
 
   const enrolledCourseIds = new Set(
-    courses
-      .filter((c) => c.students?.some((sid) => (sid._id || sid) === student._id))
-      .map((c) => c._id)
+    (student.enrolledCourses || [])
+      .map((c) => (c._id || c).toString())
+      .concat(
+        courses
+          .filter((c) => c.students?.some((sid) => (sid._id || sid).toString() === student._id?.toString()))
+          .map((c) => c._id.toString()),
+      ),
   );
 
-  const availableCourses = courses.filter((c) => !enrolledCourseIds.has(c._id));
+  const assignedCourses = courses.filter((c) => enrolledCourseIds.has(c._id.toString()));
+  const availableCourses = courses.filter((c) => !enrolledCourseIds.has(c._id.toString()));
 
   const uniqueClasses = Array.from(
-    new Set(availableCourses.map((c) => c.category).filter(Boolean))
+    new Set(courses.map((c) => c.category).filter(Boolean)),
   ).sort();
 
   const uniqueSubjects = Array.from(
-    new Set(availableCourses.map((c) => subjectOf(c.title)).filter(Boolean))
+    new Set(courses.map((c) => subjectOf(c.title)).filter(Boolean)),
   ).sort();
 
-  const filteredCourses = availableCourses.filter((c) => {
-    const subject = subjectOf(c.title);
-    const matchesSearch =
-      !searchQuery ||
-      c.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.category && c.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (subject && subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (c.instructor?.name && c.instructor.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (c.instructor?.email && c.instructor.email.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filterCourseList = (list) => {
+    return list.filter((c) => {
+      const subject = subjectOf(c.title);
+      const qLower = searchQuery.trim().toLowerCase();
+      const matchesSearch =
+        !qLower ||
+        c.title?.toLowerCase().includes(qLower) ||
+        (c.category && c.category.toLowerCase().includes(qLower)) ||
+        (subject && subject.toLowerCase().includes(qLower)) ||
+        (c.instructor?.name && c.instructor.name.toLowerCase().includes(qLower));
 
-    const matchesClass = !classFilter || c.category === classFilter;
-    const matchesSubject = !subjectFilter || subject === subjectFilter;
+      const matchesClass = !classFilter || c.category === classFilter;
+      const matchesSubject = !subjectFilter || subject === subjectFilter;
 
-    return matchesSearch && matchesClass && matchesSubject;
-  });
+      return matchesSearch && matchesClass && matchesSubject;
+    });
+  };
 
-  const toggleCourse = (courseId) => {
-    setSelectedCourses((prev) =>
-      prev.includes(courseId)
-        ? prev.filter((id) => id !== courseId)
-        : [...prev, courseId]
+  const filteredAssigned = filterCourseList(assignedCourses);
+  const filteredAvailable = filterCourseList(availableCourses);
+
+  const toggleSelectAssign = (id) => {
+    setSelectedToAssign((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
-  const handleSubmit = async () => {
-    if (selectedCourses.length === 0) {
-      setError("Please select at least one course.");
+  const handleUnassignCourse = async (courseId) => {
+    setActionLoadingId(courseId);
+    setError("");
+    setSuccessMsg("");
+    try {
+      await api.post("/courses/unassign", {
+        studentId: student._id,
+        courseIds: [courseId],
+      });
+      setSuccessMsg("Course unassigned successfully.");
+      if (onUpdated) await onUpdated();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Failed to unassign course.");
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleToggleAssistance = async (courseId, enable) => {
+    setActionLoadingId(courseId);
+    setError("");
+    setSuccessMsg("");
+    try {
+      await api.post("/courses/toggle-assistance", {
+        studentId: student._id,
+        courseId,
+        enabled: enable,
+      });
+      setAssistanceCourses((prev) => {
+        const next = new Set(prev);
+        if (enable) next.add(courseId.toString());
+        else next.delete(courseId.toString());
+        return next;
+      });
+      setSuccessMsg(`Instructor assistance ${enable ? "enabled" : "disabled"}.`);
+      if (onUpdated) await onUpdated();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Failed to update assistance status.");
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleBatchAssign = async () => {
+    if (selectedToAssign.length === 0) {
+      setError("Please select at least one course to assign.");
       return;
     }
     setSaving(true);
     setError("");
+    setSuccessMsg("");
     try {
       await api.post("/courses/enroll", {
-        courseIds: selectedCourses,
         studentId: student._id,
+        courseIds: selectedToAssign,
+        withInstructorAssistance: withAssistanceNew,
       });
-      if (onAssigned) await onAssigned();
-      onClose();
+      setSuccessMsg(`Assigned ${selectedToAssign.length} course(s) to ${student.name}.`);
+      setSelectedToAssign([]);
+      if (onUpdated) await onUpdated();
+      setActiveTab("assigned");
     } catch (err) {
-      setError(
-        err.response?.data?.message || err.message || "Failed to assign courses."
-      );
+      setError(err.response?.data?.message || err.message || "Failed to assign courses.");
     } finally {
       setSaving(false);
     }
@@ -1163,231 +1285,369 @@ const AssignCourseModal = ({ student, courses = [], onClose, onAssigned }) => {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-3xl max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl"
+        className="w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl border border-slate-800 bg-[#090e1a] shadow-2xl overflow-hidden text-slate-100 font-sans"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-5 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
-          <div className="flex items-center gap-3 min-w-0">
-            <Av name={student.name} src={student.avatarUrl} size={40} />
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 border-b border-slate-800/80 bg-[#0f172a]/90 backdrop-blur shrink-0">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <Av name={student.name} src={student.avatarUrl} size={48} />
             <div className="min-w-0">
-              <p className="text-base font-extrabold text-white truncate">
-                Assign Courses
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-extrabold text-white truncate">{student.name}</h3>
+                <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-xs font-bold border border-indigo-500/30">
+                  {assignedCourses.length} Assigned
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 truncate mt-0.5">
+                {student.email || student.phoneNumber || "Student Account"}
               </p>
-              <p className="text-xs text-slate-500 truncate">{student.email}</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="flex-none p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
-          >
-            <X size={20} />
-          </button>
+
+          <div className="flex items-center gap-2 self-end sm:self-center">
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
-        <div className="p-6 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <FieldLabel>Select courses to assign</FieldLabel>
-            {availableCourses.length > 0 && (
-              <span className="text-[11px] font-semibold text-slate-500 bg-slate-900/60 border border-slate-800 rounded-md px-2 py-0.5">
-                Showing {filteredCourses.length} of {availableCourses.length}
+        {/* Tab & Search Bar */}
+        <div className="p-4 sm:p-6 border-b border-slate-800/80 bg-[#070b14] space-y-4 shrink-0">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* Tabs */}
+            <div className="flex items-center gap-1.5 p-1 bg-slate-900/80 rounded-2xl border border-slate-800">
+              <button
+                onClick={() => setActiveTab("assigned")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
+                  activeTab === "assigned"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <BookOpen size={14} />
+                Assigned Courses ({assignedCourses.length})
+              </button>
+              <button
+                onClick={() => setActiveTab("available")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
+                  activeTab === "available"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <BookPlus size={14} />
+                Assign New Courses ({availableCourses.length})
+              </button>
+            </div>
+
+            {/* Quick status feedback */}
+            {successMsg && (
+              <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20 animate-fadeIn">
+                ✓ {successMsg}
               </span>
             )}
           </div>
 
-          {availableCourses.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-900/20 p-3 rounded-xl border border-slate-800/80">
-              <div className="sm:col-span-2 relative">
-                <Search
-                  size={14}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Search courses..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 transition duration-150"
-                />
-              </div>
+          {/* Search & Filters Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div className="sm:col-span-2 relative">
+              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Search by course title, category, or instructor…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#111726] border border-slate-800 hover:border-slate-700 focus:border-indigo-500 outline-none rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder:text-slate-500 transition"
+              />
+            </div>
 
-              <div>
-                <select
-                  value={classFilter}
-                  onChange={(e) => setClassFilter(e.target.value)}
-                  className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2 px-3 text-xs text-white transition duration-150"
-                >
-                  <option value="">All Classes</option>
-                  {uniqueClasses.map((cls) => (
-                    <option key={cls} value={cls}>
-                      {cls}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div>
+              <select
+                value={classFilter}
+                onChange={(e) => setClassFilter(e.target.value)}
+                className="w-full bg-[#111726] border border-slate-800 hover:border-slate-700 focus:border-indigo-500 outline-none rounded-xl py-2 px-3 text-xs text-white transition"
+              >
+                <option value="">All Categories / Classes</option>
+                {uniqueClasses.map((cls) => (
+                  <option key={cls} value={cls}>{cls}</option>
+                ))}
+              </select>
+            </div>
 
-              <div>
-                <select
-                  value={subjectFilter}
-                  onChange={(e) => setSubjectFilter(e.target.value)}
-                  className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2 px-3 text-xs text-white transition duration-150"
-                >
-                  <option value="">All Subjects</option>
-                  {uniqueSubjects.map((sub) => (
-                    <option key={sub} value={sub}>
-                      {sub}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div>
+              <select
+                value={subjectFilter}
+                onChange={(e) => setSubjectFilter(e.target.value)}
+                className="w-full bg-[#111726] border border-slate-800 hover:border-slate-700 focus:border-indigo-500 outline-none rounded-xl py-2 px-3 text-xs text-white transition"
+              >
+                <option value="">All Subjects</option>
+                {uniqueSubjects.map((sub) => (
+                  <option key={sub} value={sub}>{sub}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Main Body */}
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
+          {error && (
+            <div className="flex items-start gap-2.5 rounded-2xl border border-red-500/30 bg-red-500/10 p-3.5 text-red-300 text-xs">
+              <AlertCircle size={16} className="mt-0.5 flex-none" />
+              <p>{error}</p>
             </div>
           )}
 
-          {availableCourses.length === 0 ? (
-            <p className="text-sm text-slate-500 italic">
-              This student is already enrolled in all available courses.
-            </p>
-          ) : filteredCourses.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-slate-500 italic text-sm border border-dashed border-slate-800 rounded-xl">
-              No courses match your filter criteria.
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2.5 max-h-[26rem] overflow-y-auto pr-1">
-              {filteredCourses.map((c) => {
-                const active = selectedCourses.includes(c._id);
-                const subject = subjectOf(c.title);
-                return (
-                  <button
-                    key={c._id}
-                    type="button"
-                    onClick={() => toggleCourse(c._id)}
-                    className={`w-full text-left rounded-xl border p-3.5 transition ${active
-                      ? "bg-emerald-500/10 border-emerald-500/40"
-                      : "bg-slate-900/40 border-slate-700 hover:border-slate-600"
-                      }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        {/* Course title */}
-                        <p
-                          className={`font-semibold text-sm truncate ${active ? "text-emerald-300" : "text-white"
-                            }`}
-                        >
-                          {c.title}
-                        </p>
+          {/* TAB 1: ASSIGNED COURSES */}
+          {activeTab === "assigned" && (
+            <>
+              {assignedCourses.length === 0 ? (
+                <div className="text-center py-14 px-4 border border-dashed border-slate-800 rounded-3xl bg-slate-900/20">
+                  <BookOpen size={36} className="text-slate-600 mx-auto mb-3" />
+                  <h4 className="text-slate-200 font-bold text-sm">No courses assigned yet</h4>
+                  <p className="text-slate-500 text-xs mt-1">Switch to the "Assign New Courses" tab to enroll this student in courses.</p>
+                </div>
+              ) : filteredAssigned.length === 0 ? (
+                <div className="text-center py-10 text-slate-500 text-xs border border-dashed border-slate-800 rounded-2xl">
+                  No assigned courses match "{searchQuery}".
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3">
+                  {filteredAssigned.map((c) => {
+                    const cid = c._id.toString();
+                    const hasAssistance = assistanceCourses.has(cid);
+                    const isLoadingThis = actionLoadingId === c._id;
+                    const subject = subjectOf(c.title);
 
-                        {/* Subject / class / board badges */}
-                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                          {subject && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20 text-[10px] font-bold text-sky-300 uppercase tracking-wide">
-                              <Tag size={10} className="flex-none" />
-                              {subject}
-                            </span>
+                    return (
+                      <div
+                        key={c._id}
+                        className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-slate-800/90 bg-[#111827]/80 hover:bg-[#131b2e] hover:border-slate-700/80 transition-all shadow-md"
+                      >
+                        <div className="flex items-start gap-3.5 min-w-0">
+                          {c.thumbnailUrl ? (
+                            <img
+                              src={c.thumbnailUrl}
+                              alt={c.title}
+                              className="w-14 h-14 rounded-xl object-cover border border-slate-700/80 shrink-0 mt-0.5"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-900 to-violet-950 border border-indigo-800/60 flex items-center justify-center text-indigo-300 font-bold shrink-0 mt-0.5">
+                              <BookOpen size={22} />
+                            </div>
                           )}
-                          {c.category && (
-                            <span className="px-2 py-0.5 rounded-md bg-slate-800/80 text-[10px] font-semibold text-slate-300 uppercase tracking-wide">
-                              {c.category}
-                            </span>
-                          )}
-                          {c.board && (
-                            <span className="px-2 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-[10px] font-semibold text-purple-300 uppercase tracking-wide">
-                              {c.board}
-                            </span>
-                          )}
+
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-bold text-sm text-white leading-snug line-clamp-2">
+                              {c.title}
+                            </h4>
+                            {c.instructor?.name && (
+                              <p className="text-[11px] text-indigo-400 font-medium mt-1 flex items-center gap-1">
+                                <GraduationCap size={12} className="text-indigo-400" />
+                                {c.instructor.name}
+                              </p>
+                            )}
+
+                            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                              {subject && (
+                                <span className="px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20 text-[10px] font-bold text-sky-300 uppercase tracking-wide">
+                                  {subject}
+                                </span>
+                              )}
+                              {c.category && (
+                                <span className="px-2 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-[10px] font-semibold text-purple-300 uppercase tracking-wide">
+                                  {c.category}
+                                </span>
+                              )}
+                              {c.board && (
+                                <span className="px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-[10px] font-semibold text-blue-300 uppercase tracking-wide">
+                                  {c.board}
+                                </span>
+                              )}
+                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-[10px] font-extrabold text-slate-300">
+                                ₹{c.price ?? 0}
+                              </span>
+                            </div>
+                          </div>
                         </div>
 
-                        {/* Instructor name + email, or a flag when missing */}
-                        {c.instructor?.name || c.instructor?.email ? (
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 pt-2.5 border-t border-slate-800/70">
-                            {c.instructor?.name && (
-                              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-300">
-                                <GraduationCap
-                                  size={12}
-                                  className="flex-none text-slate-500"
-                                />
-                                <span className="truncate">
-                                  {c.instructor.name}
-                                </span>
-                              </span>
+                        {/* Right side controls */}
+                        <div className="flex items-center gap-2.5 justify-end shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-800">
+                          {/* Toggle Instructor Assistance */}
+                          <button
+                            onClick={() => handleToggleAssistance(c._id, !hasAssistance)}
+                            disabled={isLoadingThis}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition border ${
+                              hasAssistance
+                                ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30"
+                                : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
+                            }`}
+                            title="Toggle whether student can ask instructor doubts for this course"
+                          >
+                            <Sparkles size={13} className={hasAssistance ? "text-indigo-400" : "text-slate-500"} />
+                            {hasAssistance ? "Assistance ON" : "Assistance OFF"}
+                          </button>
+
+                          {/* Unassign Course Button */}
+                          <button
+                            onClick={() => handleUnassignCourse(c._id)}
+                            disabled={isLoadingThis}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition disabled:opacity-50"
+                          >
+                            {isLoadingThis ? (
+                              <Loader2 size={13} className="animate-spin" />
+                            ) : (
+                              <Trash2 size={13} />
                             )}
-                            {c.instructor?.email && (
-                              <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-500 min-w-0">
-                                <Mail
-                                  size={11}
-                                  className="flex-none text-slate-600"
-                                />
-                                <span className="truncate">
-                                  {c.instructor.email}
-                                </span>
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-slate-800/70 text-[11px] font-medium text-amber-400/80 italic">
-                            <AlertCircle size={11} className="flex-none" />
-                            Instructor account deleted
-                          </div>
-                        )}
+                            Unassign
+                          </button>
+                        </div>
                       </div>
-
-                      {/* Selection indicator */}
-                      <div className="flex-none pt-0.5">
-                        {active ? (
-                          <CheckCircle2
-                            size={19}
-                            className="text-emerald-400"
-                          />
-                        ) : (
-                          <div className="w-[19px] h-[19px] rounded-full border-2 border-slate-700" />
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {error && (
-            <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-red-300 mt-2">
-              <AlertCircle size={15} className="mt-0.5 flex-none" />
-              <p className="text-xs">{error}</p>
-            </div>
-          )}
-
-          <div className="flex items-center justify-end gap-3 mt-4">
-            <button
-              onClick={onClose}
-              disabled={saving}
-              className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition disabled:opacity-60"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={saving || availableCourses.length === 0}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition disabled:opacity-60"
-            >
-              {saving ? (
-                <>
-                  <Loader2 size={15} className="animate-spin" />
-                  Assigning...
-                </>
-              ) : (
-                <>
-                  <BookPlus size={15} />
-                  Assign Selected
-                </>
+                    );
+                  })}
+                </div>
               )}
-            </button>
-          </div>
+            </>
+          )}
+
+          {/* TAB 2: ASSIGN NEW COURSES */}
+          {activeTab === "available" && (
+            <>
+              {availableCourses.length === 0 ? (
+                <div className="text-center py-14 px-4 border border-dashed border-slate-800 rounded-3xl bg-slate-900/20">
+                  <CheckCircle2 size={36} className="text-emerald-500 mx-auto mb-3" />
+                  <h4 className="text-slate-200 font-bold text-sm">All courses already assigned</h4>
+                  <p className="text-slate-500 text-xs mt-1">This student is already enrolled in all available courses in the academy.</p>
+                </div>
+              ) : filteredAvailable.length === 0 ? (
+                <div className="text-center py-10 text-slate-500 text-xs border border-dashed border-slate-800 rounded-2xl">
+                  No courses match "{searchQuery}".
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Top options bar */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-indigo-950/30 border border-indigo-500/20">
+                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={withAssistanceNew}
+                        onChange={(e) => setWithAssistanceNew(e.target.checked)}
+                        className="w-4 h-4 accent-indigo-600 rounded cursor-pointer"
+                      />
+                      <span className="text-xs font-extrabold text-white flex items-center gap-1.5">
+                        <Sparkles size={14} className="text-indigo-400" />
+                        Include Instructor Assistance (₹500 feature)
+                      </span>
+                    </label>
+                    <span className="text-[11px] font-semibold text-slate-400">
+                      {selectedToAssign.length} course(s) selected
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2.5 max-h-[22rem] overflow-y-auto pr-1">
+                    {filteredAvailable.map((c) => {
+                      const isSelected = selectedToAssign.includes(c._id);
+                      const subject = subjectOf(c.title);
+
+                      return (
+                        <div
+                          key={c._id}
+                          onClick={() => toggleSelectAssign(c._id)}
+                          className={`w-full flex items-start justify-between gap-3.5 p-3.5 rounded-2xl border transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-emerald-500/10 border-emerald-500/40 shadow-md"
+                              : "bg-slate-900/40 border-slate-800/80 hover:border-slate-700"
+                          }`}
+                        >
+                          <div className="flex items-start gap-3 min-w-0">
+                            {c.thumbnailUrl ? (
+                              <img
+                                src={c.thumbnailUrl}
+                                alt={c.title}
+                                className="w-12 h-12 rounded-xl object-cover border border-slate-700 shrink-0 mt-0.5"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 font-bold shrink-0 mt-0.5">
+                                <BookOpen size={18} />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className={`font-bold text-xs line-clamp-1 ${isSelected ? "text-emerald-300" : "text-white"}`}>
+                                {c.title}
+                              </p>
+                              {c.instructor?.name && (
+                                <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                                  {c.instructor.name}
+                                </p>
+                              )}
+                              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                {subject && (
+                                  <span className="px-2 py-0.5 rounded-md bg-sky-500/10 text-[9px] font-bold text-sky-300">
+                                    {subject}
+                                  </span>
+                                )}
+                                {c.category && (
+                                  <span className="px-2 py-0.5 rounded-md bg-slate-800 text-[9px] font-semibold text-slate-300">
+                                    {c.category}
+                                  </span>
+                                )}
+                                {c.board && (
+                                  <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-[9px] font-semibold text-purple-300">
+                                    {c.board}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex-none pt-1">
+                            {isSelected ? (
+                              <CheckCircle2 size={20} className="text-emerald-400" />
+                            ) : (
+                              <div className="w-5 h-5 rounded-full border-2 border-slate-700 hover:border-slate-500" />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                    <button
+                      onClick={handleBatchAssign}
+                      disabled={saving || selectedToAssign.length === 0}
+                      className="flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-emerald-600 hover:bg-emerald-500 transition shadow-lg shadow-emerald-600/20 disabled:opacity-50"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 size={15} className="animate-spin" />
+                          Assigning...
+                        </>
+                      ) : (
+                        <>
+                          <BookPlus size={15} />
+                          Assign {selectedToAssign.length > 0 ? `${selectedToAssign.length} Selected Course(s)` : "Courses"}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 };
 
@@ -1657,6 +1917,7 @@ const AdminStudents = ({
           student={selectedStudent}
           courses={courses}
           onClose={() => setSelectedStudent(null)}
+          refreshUsers={refreshUsers}
           onEdit={
             canEdit
               ? () => {
@@ -1685,11 +1946,11 @@ const AdminStudents = ({
       )}
 
       {assigningStudent && (
-        <AssignCourseModal
+        <StudentCourseManagerModal
           student={assigningStudent}
           courses={approvedCourses}
           onClose={() => setAssigningStudent(null)}
-          onAssigned={handleMutationSuccess}
+          onUpdated={handleMutationSuccess}
         />
       )}
 
