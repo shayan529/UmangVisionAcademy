@@ -20,7 +20,9 @@
     "roleAdmin": "Admin",
     "roleInstructor": "Instructor",
     "roleStudent": "Student",
-    "roleMultiple": "Multiple Roles"
+    "roleMultiple": "Multiple Roles",
+    "register": "Register",
+    "loginRegister": "Login / Register"
   },
   "home": {
     "hero_title": "Discover. Prepare. Succeed.",
@@ -54,14 +56,7 @@
     "submitting": "Submitting…",
     "rated": "Rated",
     "rateCourse": "Rate Course",
-    "ratingLabels": [
-      "",
-      "Poor",
-      "Fair",
-      "Good",
-      "Very Good",
-      "Excellent"
-    ],
+    "ratingLabels": ["", "Poor", "Fair", "Good", "Very Good", "Excellent"],
     "select_course_type": "Course Type",
     "courseTypeAll": "All",
     "courseTypeClasses": "Classes",
@@ -1438,7 +1433,8 @@
     "settings": "Settings",
     "mockTests": "Mock Tests",
     "notes": "Notes",
-    "reels": "Reels"
+    "reels": "Reels",
+    "student_queries": "Student Queries"
   },
   "instructorCourses": {
     "createNewCourse": "Create New Course",

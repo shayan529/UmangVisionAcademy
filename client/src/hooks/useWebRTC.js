@@ -100,11 +100,20 @@ export function useWebRTC({ sessionId, userId, onCallEnded }) {
 
         if (cancelled) return;
 
-        // 2. Get local media
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 1280, height: 720 },
-          audio: { echoCancellation: true, noiseSuppression: true },
-        });
+        // 2. Get local media. A desktop without a webcam (or a DevTools
+        // device-emulation tab) can still join the call and receive media.
+        let stream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 1280, height: 720 },
+            audio: { echoCancellation: true, noiseSuppression: true },
+          });
+        } catch (mediaError) {
+          console.warn("[WebRTC] Camera and microphone unavailable, joining without local media:", mediaError);
+          stream = new MediaStream();
+          setAudioEnabled(false);
+          setVideoEnabled(false);
+        }
         if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
 
         localStreamRef.current = stream;
@@ -114,6 +123,12 @@ export function useWebRTC({ sessionId, userId, onCallEnded }) {
         const pc = new RTCPeerConnection({ iceServers });
         pcRef.current = pc;
         stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+        if (stream.getAudioTracks().length === 0) {
+          pc.addTransceiver("audio", { direction: "recvonly" });
+        }
+        if (stream.getVideoTracks().length === 0) {
+          pc.addTransceiver("video", { direction: "recvonly" });
+        }
 
         pc.ontrack = (e) => {
           if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];

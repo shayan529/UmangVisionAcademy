@@ -54,14 +54,7 @@
     "submitting": "सबमिट होत आहे…",
     "rated": "रेट किया गया",
     "rateCourse": "अभ्यासक्रम को रेट करा",
-    "ratingLabels": [
-      "",
-      "खराब",
-      "औसत",
-      "अच्छा",
-      "बहुत अच्छा",
-      "उत्कृष्ट"
-    ],
+    "ratingLabels": ["", "खराब", "औसत", "अच्छा", "बहुत अच्छा", "उत्कृष्ट"],
     "select_course_type": "अभ्यासक्रम का प्रकार",
     "courseTypeAll": "सब",
     "courseTypeClasses": "इयत्ताएं",
@@ -1438,7 +1431,8 @@
     "settings": "विन्यास",
     "mockTests": "आभासी परीक्षण",
     "notes": "नोट्स",
-    "reels": "रील्स"
+    "reels": "रील्स",
+    "student_queries": "विद्यार्थी प्रश्न"
   },
   "instructorCourses": {
     "createNewCourse": "नया अभ्यासक्रम बनाएं",

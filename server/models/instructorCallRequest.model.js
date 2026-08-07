@@ -51,6 +51,12 @@ const instructorCallRequestSchema = new Schema(
       default: "",
       maxlength: 1000,
     },
+    meetingLink: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 2000,
+    },
     decidedAt: { type: Date, default: null },
   },
   { timestamps: true },

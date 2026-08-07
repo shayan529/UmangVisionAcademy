@@ -14,6 +14,7 @@ import express from "express";
 import crypto  from "crypto";
 import { protect } from "../middleware/auth.middleware.js";
 import Session from "../models/session.model.js";
+import InstructorCallRequest from "../models/instructorCallRequest.model.js";
 
 const router = express.Router();
 router.use(protect);
@@ -43,10 +44,39 @@ function buildIceServers(creds) {
   return servers;
 }
 
+const buildInstructorCallSessionId = (conversationId) =>
+  crypto
+    .createHash("sha256")
+    .update(String(conversationId))
+    .digest("hex")
+    .slice(0, 24);
+
 // ── GET /api/webrtc/session/:sessionId/credentials ───────────────────────────
 // Used when joining a scheduled live session (Session model).
 router.get("/session/:sessionId/credentials", async (req, res) => {
   try {
+    const uid = req.user._id.toString();
+
+    // Ask-Instructor calls use a deterministic hash of the conversation ID,
+    // rather than an entry in the scheduled Session collection.
+    const approvedCalls = await InstructorCallRequest.find({
+      status: "approved",
+      $or: [{ student: req.user._id }, { instructor: req.user._id }],
+    })
+      .select("conversation student instructor")
+      .lean();
+    const instructorCall = approvedCalls.find(
+      (call) =>
+        buildInstructorCallSessionId(call.conversation) === req.params.sessionId,
+    );
+
+    if (instructorCall) {
+      const role =
+        instructorCall.instructor.toString() === uid ? "instructor" : "student";
+      const creds = mintTurnCredentials(uid);
+      return res.json({ iceServers: buildIceServers(creds), role });
+    }
+
     const session = await Session.findById(req.params.sessionId)
       .select("instructor date time")
       .lean();
@@ -54,7 +84,6 @@ router.get("/session/:sessionId/credentials", async (req, res) => {
     if (!session)
       return res.status(404).json({ message: "Session not found" });
 
-    const uid         = req.user._id.toString();
     const instructorId = session.instructor?.toString();
 
     // For 1:1 calls we allow the instructor or any enrolled student.

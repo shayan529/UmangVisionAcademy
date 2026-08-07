@@ -54,14 +54,7 @@
     "submitting": "জমা হচ্ছে…",
     "rated": "রেট কিযা গযা",
     "rateCourse": "কোর্স কো রেট করুন",
-    "ratingLabels": [
-      "",
-      "খরাব",
-      "ঔসত",
-      "অচ্ছা",
-      "বহুত অচ্ছা",
-      "উত্কৃষ্ট"
-    ],
+    "ratingLabels": ["", "খরাব", "ঔসত", "অচ্ছা", "বহুত অচ্ছা", "উত্কৃষ্ট"],
     "select_course_type": "কোর্সের ধরন",
     "courseTypeAll": "সব",
     "courseTypeClasses": "শ্রেণীসমূহ",
@@ -1439,7 +1432,8 @@
     "settings": "঵িন্যাস",
     "mockTests": "আভাসী পরীক্ষণ",
     "notes": "নোট্স",
-    "reels": "রীল্স"
+    "reels": "রীল্স",
+    "student_queries": "ছাত্র প্রশ্ন"
   },
   "instructorCourses": {
     "createNewCourse": "নযা কোর্স বনাএं",

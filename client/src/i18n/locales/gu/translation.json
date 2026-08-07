@@ -54,14 +54,7 @@
     "submitting": "સબમિટ થઈ રહ્યું છે…",
     "rated": "રેટ કિયા ગયા",
     "rateCourse": "અભ્યાસક્રમ કો રેટ કરો",
-    "ratingLabels": [
-      "",
-      "ખરાબ",
-      "ઔસત",
-      "અચ્છા",
-      "બહુત અચ્છા",
-      "ઉત્કૃષ્ટ"
-    ],
+    "ratingLabels": ["", "ખરાબ", "ઔસત", "અચ્છા", "બહુત અચ્છા", "ઉત્કૃષ્ટ"],
     "select_course_type": "અભ્યાસક્રમ કા પ્રકાર",
     "courseTypeAll": "સબ",
     "courseTypeClasses": "ધોરણએं",
@@ -1439,7 +1432,8 @@
     "settings": "વિન્યાસ",
     "mockTests": "આભાસી પરીક્ષણ",
     "notes": "નોટ્સ",
-    "reels": "રીલ્સ"
+    "reels": "રીલ્સ",
+    "student_queries": "વિદ્યાર્થી પ્રશ્નો"
   },
   "instructorCourses": {
     "createNewCourse": "નયા અભ્યાસક્રમ બનાએं",

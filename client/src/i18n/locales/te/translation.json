@@ -54,14 +54,7 @@
     "submitting": "సబమిట హో రహా హై…",
     "rated": "రేట కియా గయా",
     "rateCourse": "కోర్సు కో రేట చేయండి",
-    "ratingLabels": [
-      "",
-      "ఖరాబ",
-      "ఔసత",
-      "అచ్ఛా",
-      "బహుత అచ్ఛా",
-      "ఉత్కృష్ట"
-    ],
+    "ratingLabels": ["", "ఖరాబ", "ఔసత", "అచ్ఛా", "బహుత అచ్ఛా", "ఉత్కృష్ట"],
     "select_course_type": "కోర్సు కా ప్రకార",
     "courseTypeAll": "సబ",
     "courseTypeClasses": "తరగతిఏं",
@@ -1439,7 +1432,8 @@
     "settings": "విన్యాస",
     "mockTests": "ఆభాసీ పరీక్షణ",
     "notes": "నోట్స",
-    "reels": "రీల్స"
+    "reels": "రీల్స",
+    "student_queries": "విద్యార్థి ప్రశ్నలు"
   },
   "instructorCourses": {
     "createNewCourse": "నయా కోర్సు బనాఏं",

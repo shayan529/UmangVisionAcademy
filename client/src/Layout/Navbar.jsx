@@ -448,17 +448,9 @@ button.btn-red:hover,
                 </span>
               </div>
             ) : !user ? (
-              <>
-                <Link
-                  to="/login"
-                  className="text-white text-[15px] font-semibold hover:text-indigo-300 transition-colors"
-                >
-                  {t("nav.login")}
-                </Link>
-                <Link to="/become-instructor" className="btn-navy">
-                  {t("nav.getStarted")}
-                </Link>
-              </>
+              <Link to="/login" className="btn-navy">
+                {t("nav.loginRegister", "Login / Register")}
+              </Link>
             ) : (
               <>
                 <div className="text-right">
@@ -661,25 +653,18 @@ button.btn-red:hover,
               {t("nav.verifyingSession")}
             </div>
           ) : !user ? (
-            <div className="flex gap-2 pt-1">
+            <div className="pt-1">
               <Link
                 to="/login"
                 onClick={closeMobile}
-                className="flex-1 text-center text-sm font-semibold py-2 px-3 rounded-lg border border-indigo-400/40 text-indigo-300 hover:bg-indigo-400/10 transition-colors"
-              >
-                {t("nav.login")}
-              </Link>
-              <Link
-                to="/become-instructor"
-                onClick={closeMobile}
-                className="btn-navy flex-1 text-center"
+                className="btn-navy w-full text-center"
                 style={{
                   borderRadius: "0.5rem",
                   padding: "0.5rem 0.75rem",
                   display: "flex",
                 }}
               >
-                {t("nav.getStarted")}
+                {t("nav.loginRegister", "Login / Register")}
               </Link>
             </div>
           ) : (

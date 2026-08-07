@@ -54,14 +54,7 @@
     "submitting": "ஸபமிட ஹோ ரஹா ஹை…",
     "rated": "ரேட கியா கயா",
     "rateCourse": "பாடநெறி கோ ரேட செய்க",
-    "ratingLabels": [
-      "",
-      "஖ராப",
-      "ஔஸத",
-      "அய்஛ா",
-      "பஹுத அய்஛ா",
-      "உத்க௃ஷ்ட"
-    ],
+    "ratingLabels": ["", "஖ராப", "ஔஸத", "அய்஛ா", "பஹுத அய்஛ா", "உத்க௃ஷ்ட"],
     "select_course_type": "பாடநெறி கா ப்ரகார",
     "courseTypeAll": "ஸப",
     "courseTypeClasses": "வகுப்புஏं",
@@ -1439,7 +1432,8 @@
     "settings": "விந்யாஸ",
     "mockTests": "ஆபாஸீ பரீக்ஷண",
     "notes": "நோட்ஸ",
-    "reels": "ரீல்ஸ"
+    "reels": "ரீல்ஸ",
+    "student_queries": "மாணவர் கேள்விகள்"
   },
   "instructorCourses": {
     "createNewCourse": "நயா பாடநெறி பநாஏं",

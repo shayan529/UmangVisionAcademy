@@ -63,6 +63,87 @@ const isInstructorUser = async (user) => {
   return false;
 };
 
+// ── Deduplication Helpers ──────────────────────────────────────────────────────
+/**
+ * Merges duplicate conversations between the same student and instructor.
+ * Keeps the most recently updated conversation as primary, merges messages
+ * from older duplicates into it, and deletes the duplicate documents.
+ */
+const deduplicateStudentInstructorConversations = async (studentId, instructorId) => {
+  try {
+    const convs = await Conversation.find({
+      student: studentId,
+      instructor: instructorId,
+      archived: false,
+    }).sort({ updatedAt: -1 });
+
+    if (convs.length <= 1) return;
+
+    const primary = convs[0];
+    const duplicates = convs.slice(1);
+
+    let newMessages = [];
+    for (const dup of duplicates) {
+      if (dup.messages && dup.messages.length > 0) {
+        newMessages.push(...dup.messages);
+      }
+    }
+
+    if (newMessages.length > 0) {
+      const combinedMessages = [...(primary.messages || []), ...newMessages].sort(
+        (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
+      );
+
+      const lastMsg = combinedMessages[combinedMessages.length - 1];
+
+      await Conversation.updateOne(
+        { _id: primary._id },
+        {
+          $set: {
+            messages: combinedMessages,
+            lastMessage: lastMsg
+              ? {
+                  text: lastMsg.text || (lastMsg.media?.length ? "[Attachment]" : ""),
+                  at: lastMsg.createdAt || new Date(),
+                  senderRole: lastMsg.senderRole || "",
+                }
+              : primary.lastMessage,
+          },
+        }
+      );
+    }
+
+    const dupIds = duplicates.map((d) => d._id);
+    await Conversation.deleteMany({ _id: { $in: dupIds } });
+  } catch (err) {
+    console.error("[instructorChat] deduplicateStudentInstructorConversations error:", err);
+  }
+};
+
+const deduplicateAllConversations = async (userFilter) => {
+  try {
+    const convs = await Conversation.find(userFilter).select("student instructor updatedAt").lean();
+    const seen = new Set();
+    const pairsToDedupe = [];
+
+    for (const c of convs) {
+      if (!c.student || !c.instructor) continue;
+      const key = `${c.student.toString()}_${c.instructor.toString()}`;
+      if (seen.has(key)) {
+        pairsToDedupe.push({ studentId: c.student, instructorId: c.instructor });
+      } else {
+        seen.add(key);
+      }
+    }
+
+    for (const pair of pairsToDedupe) {
+      await deduplicateStudentInstructorConversations(pair.studentId, pair.instructorId);
+    }
+  } catch (err) {
+    console.error("[instructorChat] deduplicateAllConversations error:", err);
+  }
+};
+
 // ── POST /conversations ───────────────────────────────────────────────────────
 export const getOrCreateConversation = async (req, res) => {
   try {
@@ -91,30 +172,42 @@ export const getOrCreateConversation = async (req, res) => {
     if (!isInstr)
       return res.status(404).json({ message: "User is not an instructor" });
 
-    // Note: we intentionally skip a hard enrollment check here.
-    // The student obtained this instructorId from /available-instructors,
-    // which already verifies enrollment. Repeating it here would block
-    // subscription-enrolled students whose IDs aren't in course.students[].
-
     // Validate courseId format if provided (but don't re-check enrollment)
     if (courseId && !Types.ObjectId.isValid(courseId))
       return res.status(400).json({ message: "Invalid courseId" });
 
-    // Find or create the conversation
+    // Strict 1 chat per (student, instructor) pair:
+    // Deduplicate any legacy threads first
+    await deduplicateStudentInstructorConversations(studentId, instructorId);
+
     const filter = {
       student: studentId,
       instructor: instructorId,
       archived: false,
     };
-    if (courseId) filter.course = courseId;
 
-    let conv = await Conversation.findOne(filter)
-      .populate("student", "_id name avatarUrl")
-      .populate("instructor", "_id name avatarUrl")
-      .populate("course", "_id title")
-      .lean();
+    let conv = await Conversation.findOne(filter);
 
-    if (!conv) {
+    if (conv) {
+      // Update course and subject on existing conversation if provided
+      let modified = false;
+      if (courseId && (!conv.course || conv.course.toString() !== courseId.toString())) {
+        conv.course = courseId;
+        modified = true;
+      }
+      if (safeSubject && conv.subject !== safeSubject) {
+        conv.subject = safeSubject;
+        modified = true;
+      }
+      if (modified) {
+        await conv.save();
+      }
+      conv = await Conversation.findById(conv._id)
+        .populate("student", "_id name avatarUrl")
+        .populate("instructor", "_id name avatarUrl")
+        .populate("course", "_id title")
+        .lean();
+    } else {
       const created = await Conversation.create({
         student: studentId,
         instructor: instructorId,
@@ -154,6 +247,11 @@ export const listConversations = async (req, res) => {
       filter.instructor = req.user._id;
     } else {
       filter.student = req.user._id;
+    }
+
+    // Deduplicate any legacy multiple threads between the same (student, instructor)
+    if (!showArchived) {
+      await deduplicateAllConversations(filter);
     }
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -206,11 +304,9 @@ export const submitCallRequest = async (req, res) => {
     });
 
     if (existing)
-      return res
-        .status(409)
-        .json({
-          message: "A call request is already pending for this conversation",
-        });
+      return res.status(409).json({
+        message: "A call request is already pending for this conversation",
+      });
 
     const created = await CallRequest.create({
       conversation: conversationId,
@@ -295,32 +391,63 @@ export const approveCallRequest = async (req, res) => {
       request.instructor._id.toString() !== req.user._id.toString() &&
       !isAdminOrStaff(req.user)
     ) {
-      return res
-        .status(403)
-        .json({
-          message: "Only the assigned instructor can approve this request",
-        });
+      return res.status(403).json({
+        message: "Only the assigned instructor can approve this request",
+      });
     }
 
     request.status = "approved";
     request.response = String(req.body.response || "")
       .trim()
       .slice(0, 1000);
+    request.meetingLink = String(req.body.meetingLink || "")
+      .trim()
+      .slice(0, 2000);
     request.decidedAt = new Date();
     await request.save();
 
-    const sessionId = buildCallSessionId(request.conversation._id.toString());
+    // Persist the invitation in the direct-message thread. This reaches a
+    // student who is offline just as reliably as one currently in the chat.
+    const conversation = await Conversation.findByIdAndUpdate(
+      request.conversation._id,
+      {
+        $push: {
+          messages: {
+            sender: request.instructor._id,
+            senderRole: "instructor",
+            text: `Please join the meet ASAP\n${request.meetingLink}`,
+            media: [],
+            readBy: [request.instructor._id],
+          },
+        },
+        $inc: { studentUnread: 1 },
+        $set: {
+          "lastMessage.text": "Please join the meet ASAP",
+          "lastMessage.at": new Date(),
+          "lastMessage.senderRole": "instructor",
+          updatedAt: new Date(),
+        },
+      },
+      { new: true, select: "messages" },
+    );
+    const savedMessage = conversation.messages[conversation.messages.length - 1];
+    emitIChatEvent(req, request.conversation._id.toString(), "ic:message", {
+      conversationId: request.conversation._id.toString(),
+      message: { ...savedMessage.toObject(), sender: request.instructor },
+    });
+
     emitIChatEvent(
       req,
       request.conversation._id.toString(),
-      "webrtc:call-initiated",
+      "meet:request-approved",
       {
-        sessionId,
         requestId: request._id.toString(),
+        meetingLink: request.meetingLink,
+        response: request.response,
       },
     );
 
-    res.json({ request, sessionId });
+    res.json({ request, meetingLink: request.meetingLink });
   } catch (err) {
     console.error("[instructorChat] approveCallRequest:", err);
     res.status(500).json({ message: err.message });
@@ -351,12 +478,10 @@ export const rejectCallRequest = async (req, res) => {
       request.instructor._id.toString() !== req.user._id.toString() &&
       !isAdminOrStaff(req.user)
     ) {
-      return res
-        .status(403)
-        .json({
-          message:
-            "Only the requester student or assigned instructor can reject this request",
-        });
+      return res.status(403).json({
+        message:
+          "Only the requester student or assigned instructor can reject this request",
+      });
     }
 
     request.status = "rejected";
@@ -369,7 +494,7 @@ export const rejectCallRequest = async (req, res) => {
     emitIChatEvent(
       req,
       request.conversation._id.toString(),
-      "webrtc:call-decline",
+      "meet:request-rejected",
       {
         conversationId: request.conversation._id.toString(),
         requestId: request._id.toString(),
