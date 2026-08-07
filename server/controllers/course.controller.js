@@ -314,6 +314,7 @@ export const getAllCoursesAdmin = async (req, res) => {
   try {
     const courses = await Course.find({})
       .populate("instructor", "name email")
+      .populate("students", "name email avatarUrl phoneNumber subscription selectedClass")
       .sort({ createdAt: -1 })
       .lean();
     res.json(courses);

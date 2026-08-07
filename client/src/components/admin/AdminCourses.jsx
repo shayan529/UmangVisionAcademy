@@ -1,5 +1,5 @@
-import { useState } from "react";
-import React from "react";
+import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { useDispatch } from "react-redux";
 import api from "../../config/api.js";
 import { fetchAllCoursesAdmin } from "../../redux/slices/courseSlice";
@@ -1297,6 +1297,215 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, onEdit
   );
 }
 
+// ── Student Quick View Modal ──────────────────────────────────────────────────
+function StudentQuickViewModal({ student, onClose }) {
+  if (!student) return null;
+  const sub = student.subscription || {};
+  const hasActivePlan = sub.status === "active" && sub.plan;
+  return createPortal(
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: "min(460px,100%)", maxHeight: "80vh", overflowY: "auto", background: "#0f172a", borderRadius: 16, border: "1px solid #1e293b", padding: 24 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {student.avatarUrl
+              ? <img src={student.avatarUrl} alt="" style={{ width: 48, height: 48, borderRadius: 12, objectFit: "cover" }} />
+              : <div style={{ width: 48, height: 48, borderRadius: 12, background: "#1e293b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#64748b" }}>{student.name?.slice(0, 2).toUpperCase() || "?"}</div>
+            }
+            <div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{student.name}</h3>
+              <p style={{ fontSize: 12, color: "#64748b", margin: "2px 0 0" }}>{student.email || student.phoneNumber || "—"}</p>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #334155", background: "#1e293b", color: "#94a3b8", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>x</button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ background: "#111827", borderRadius: 10, padding: 12, border: "1px solid #1e293b" }}>
+              <p style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Email</p>
+              <p style={{ fontSize: 12, color: "#e2e8f0", fontWeight: 600, wordBreak: "break-all" }}>{student.email || "—"}</p>
+            </div>
+            <div style={{ background: "#111827", borderRadius: 10, padding: 12, border: "1px solid #1e293b" }}>
+              <p style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Phone</p>
+              <p style={{ fontSize: 12, color: "#e2e8f0", fontWeight: 600 }}>{student.phoneNumber || "—"}</p>
+            </div>
+          </div>
+          {hasActivePlan && (
+            <div style={{ background: "#111827", borderRadius: 10, padding: 12, border: "1px solid #1e293b" }}>
+              <p style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase", fontWeight: 700, marginBottom: 6 }}>Active Subscription</p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: "#10b981", color: "#fff" }}>{sub.label || sub.plan}</span>
+                {student.selectedClass && <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: "#334155", color: "#94a3b8" }}>{student.selectedClass}</span>}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// ── Enrolled Students Section (used inside CourseDrawer) ──────────────────────
+function EnrolledStudentsSection({ students }) {
+  const [expanded, setExpanded] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  if (!students || students.length === 0) return null;
+  return (
+    <>
+      <div>
+        <button onClick={() => setExpanded(!expanded)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#111827", border: "1px solid #1e293b", borderRadius: 10, padding: "12px 14px", fontSize: 11, fontWeight: 700, color: "#f1f5f9", textTransform: "uppercase", letterSpacing: "0.08em", cursor: "pointer" }}>
+          <span>Enrolled Students ({students.length})</span>
+          <span style={{ fontSize: 14 }}>{expanded ? "▼" : "▶"}</span>
+        </button>
+        {expanded && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+            {students.map((s) => {
+              const sub = s.subscription || {};
+              const hasActivePlan = sub.status === "active" && sub.plan;
+              return (
+                <div key={s._id} onClick={() => setSelectedStudent(s)} style={{ background: "#111827", border: "1px solid #1e293b", borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#334155"; e.currentTarget.style.background = "#1e293b"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#1e293b"; e.currentTarget.style.background = "#111827"; }}
+                >
+                  {s.avatarUrl
+                    ? <img src={s.avatarUrl} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
+                    : <div style={{ width: 36, height: 36, borderRadius: 8, background: "#1e293b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#64748b" }}>{s.name?.slice(0, 2).toUpperCase() || "?"}</div>
+                  }
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</p>
+                    <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.email || s.phoneNumber || "—"}</p>
+                  </div>
+                  {hasActivePlan && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 12, background: "#10b98120", color: "#10b981", border: "1px solid #10b98140", flexShrink: 0 }}>{sub.plan === "premium" ? "Premium" : "Base"}</span>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      {selectedStudent && <StudentQuickViewModal student={selectedStudent} onClose={() => setSelectedStudent(null)} />}
+    </>
+  );
+}
+
+// ── Approved Courses View ─────────────────────────────────────────────────────
+function ApprovedCoursesView({ courses }) {
+  const approved = courses.filter((c) => c.approvalStatus === "approved");
+  const [search, setSearch] = useState("");
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState(null);
+
+  const filtered = approved.filter(
+    (c) => !search ||
+      c.title?.toLowerCase().includes(search.toLowerCase()) ||
+      c.instructor?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      c.category?.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const filteredStudents = (selectedCourse?.students || []).filter(
+    (s) => !studentSearch ||
+      s.name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+      s.email?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+      s.phoneNumber?.includes(studentSearch),
+  );
+
+  return (
+    <>
+      <div style={{ marginBottom: 20 }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: "#818cf8", textTransform: "uppercase", marginBottom: 4 }}>Course Management</p>
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#f1f5f9", margin: 0 }}>Approved Courses</h2>
+        <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>{approved.length} published course{approved.length !== 1 ? "s" : ""} — click the eye icon to view enrolled students</p>
+      </div>
+
+      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by course title, instructor, or category..." style={{ width: "100%", padding: "9px 14px", background: "#111827", border: "1px solid #1e293b", borderRadius: 10, color: "#f1f5f9", fontSize: 13, outline: "none", marginBottom: 14, boxSizing: "border-box" }} />
+
+      {filtered.length === 0
+        ? <div style={{ textAlign: "center", padding: "60px 0" }}><p style={{ fontSize: 32, margin: "0 0 10px" }}>📭</p><p style={{ color: "#64748b", fontWeight: 600 }}>No approved courses found.</p></div>
+        : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {filtered.map((course) => (
+              <div key={course._id} style={{ background: "#111827", border: "1px solid #1e293b", borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 10, background: "#1e293b", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+                  {course.thumbnailUrl ? <img src={course.thumbnailUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "📚"}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{course.title}</p>
+                  <div style={{ display: "flex", gap: 10, marginTop: 4, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 11, color: "#64748b" }}>by {course.instructor?.name ?? "Unknown"}</span>
+                    {course.category && <span style={{ fontSize: 11, color: "#64748b" }}>{course.category}</span>}
+                    <span style={{ fontSize: 11, color: "#64748b" }}>{course.lessons?.length ?? 0} lessons</span>
+                    <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700 }}>{course.students?.length ?? 0} students</span>
+                    {course.price > 0 && <span style={{ fontSize: 11, color: "#64748b" }}>Rs.{course.price}</span>}
+                  </div>
+                </div>
+                <button onClick={() => { setSelectedCourse(course); setStudentSearch(""); }} title="View enrolled students"
+                  style={{ width: 36, height: 36, borderRadius: 10, border: "1px solid #334155", background: "#1e293b", color: "#818cf8", fontSize: 16, cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  &#128065;
+                </button>
+              </div>
+            ))}
+          </div>
+        )
+      }
+
+      {selectedCourse && createPortal(
+        <div onClick={() => setSelectedCourse(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 200, display: "flex", justifyContent: "flex-end" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(560px,100vw)", height: "100%", background: "#0d1526", borderLeft: "1px solid #1e293b", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #1e293b", flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                    {selectedCourse.thumbnailUrl && <img src={selectedCourse.thumbnailUrl} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />}
+                    <h3 style={{ fontSize: 16, fontWeight: 800, color: "#f1f5f9", margin: 0, lineHeight: 1.3 }}>{selectedCourse.title}</h3>
+                  </div>
+                  <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>{selectedCourse.instructor?.name} — {selectedCourse.students?.length ?? 0} enrolled student{(selectedCourse.students?.length ?? 0) !== 1 ? "s" : ""}</p>
+                </div>
+                <button onClick={() => setSelectedCourse(null)} style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #334155", background: "#1e293b", color: "#94a3b8", fontSize: 18, cursor: "pointer", flexShrink: 0 }}>x</button>
+              </div>
+              <input value={studentSearch} onChange={(e) => setStudentSearch(e.target.value)} placeholder="Search students by name, email or phone..." style={{ width: "100%", padding: "8px 12px", background: "#111827", border: "1px solid #1e293b", borderRadius: 8, color: "#f1f5f9", fontSize: 12, outline: "none", boxSizing: "border-box" }} />
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "12px 24px" }}>
+              {filteredStudents.length === 0
+                ? <div style={{ textAlign: "center", padding: "60px 0" }}><p style={{ color: "#64748b", fontWeight: 600, fontSize: 13 }}>{(selectedCourse.students?.length ?? 0) === 0 ? "No students enrolled yet." : "No students match your search."}</p></div>
+                : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {filteredStudents.map((s) => {
+                      const sub = s.subscription || {};
+                      const hasActivePlan = sub.status === "active" && sub.plan;
+                      return (
+                        <div key={s._id} onClick={() => setSelectedStudent(s)}
+                          style={{ background: "#111827", border: "1px solid #1e293b", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#334155"; e.currentTarget.style.background = "#1e293b"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#1e293b"; e.currentTarget.style.background = "#111827"; }}
+                        >
+                          {s.avatarUrl
+                            ? <img src={s.avatarUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                            : <div style={{ width: 40, height: 40, borderRadius: 10, background: "#1e293b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#64748b", flexShrink: 0 }}>{s.name?.slice(0, 2).toUpperCase() || "?"}</div>
+                          }
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</p>
+                            <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.email || "—"}{s.phoneNumber ? ` · ${s.phoneNumber}` : ""}</p>
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
+                            {hasActivePlan && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 12, background: "#10b98120", color: "#10b981", border: "1px solid #10b98140" }}>{sub.plan === "premium" ? "Premium" : "Base Plan"}</span>}
+                            <span style={{ fontSize: 10, color: "#475569" }}>View details</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              }
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+      {selectedStudent && <StudentQuickViewModal student={selectedStudent} onClose={() => setSelectedStudent(null)} />}
+    </>
+  );
+}
+
 // ── Main AdminCourses ─────────────────────────────────────────────────────────
 export default function AdminCourses({
   courses,
@@ -1312,7 +1521,7 @@ export default function AdminCourses({
 }) {
   const dispatch = useDispatch();
   const canManage = canCreate || canEdit || canDelete;
-  const [mode, setMode] = useState("review"); // "review" | "manage"
+  const [mode, setMode] = useState("review"); // "approved" | "review" | "manage"
   const [editingCourse, setEditingCourse] = useState(null);
   const [toastMsg, setToastMsg] = useState("");
   const [filterStatus, setFilterStatus] = useState("pending");
@@ -1406,8 +1615,7 @@ export default function AdminCourses({
       `}</style>
 
       {/* Mode Switcher */}
-      {canManage && (
-        <div
+      <div
           style={{
             display: "flex",
             flexWrap: "wrap",
@@ -1422,10 +1630,23 @@ export default function AdminCourses({
           }}
         >
           <button
-            onClick={() => {
-              setMode("review");
-              setEditingCourse(null);
+            onClick={() => { setMode("approved"); setEditingCourse(null); }}
+            style={{
+              padding: "8px 18px",
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+              border: "none",
+              background: mode === "approved" ? "linear-gradient(135deg,#0891b2,#0e7490)" : "transparent",
+              color: mode === "approved" ? "#fff" : "#94a3b8",
+              transition: "all 0.2s",
             }}
+          >
+            Approved Courses
+          </button>
+          <button
+            onClick={() => { setMode("review"); setEditingCourse(null); }}
             style={{
               padding: "8px 18px",
               borderRadius: 10,
@@ -1440,23 +1661,28 @@ export default function AdminCourses({
           >
             Review Submissions
           </button>
-          <button
-            onClick={() => setMode("manage")}
-            style={{
-              padding: "8px 18px",
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              border: "none",
-              background: mode === "manage" ? "linear-gradient(135deg,#7c3aed,#db2777)" : "transparent",
-              color: mode === "manage" ? "#fff" : "#94a3b8",
-              transition: "all 0.2s",
-            }}
-          >
-            Manage & Edit Courses
-          </button>
+          {canManage && (
+            <button
+              onClick={() => setMode("manage")}
+              style={{
+                padding: "8px 18px",
+                borderRadius: 10,
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                border: "none",
+                background: mode === "manage" ? "linear-gradient(135deg,#7c3aed,#db2777)" : "transparent",
+                color: mode === "manage" ? "#fff" : "#94a3b8",
+                transition: "all 0.2s",
+              }}
+            >
+              Manage &amp; Edit Courses
+            </button>
+          )}
         </div>
+
+      {mode === "approved" && (
+        <ApprovedCoursesView courses={courses} />
       )}
 
       {canManage && mode === "manage" ? (
@@ -1493,7 +1719,7 @@ export default function AdminCourses({
             initialEditCourse={editingCourse}
           />
         </div>
-      ) : (
+      ) : mode === "review" ? (
         <>
 
       {/* Header */}
@@ -1907,7 +2133,7 @@ export default function AdminCourses({
           loading={actioning}
         />
       )}
-      </> )}
+      </> ) : null}
       <Toast msg={toastMsg} />
     </>
   );
