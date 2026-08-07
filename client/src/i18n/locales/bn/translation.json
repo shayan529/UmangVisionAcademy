@@ -292,7 +292,8 @@
     }
   },
   "courseCard": {
-    "viewDemo": "ডেমো দেখুন",
+    "viewDemo": "বিবরণ দেখুন",
+    "viewDetails": "বিবরণ দেখুন",
     "enrollNow": "অভী নামাंকন করুন",
     "buyNow": "অভী কিনুন",
     "continueLearning": "সীখনা চালিয়ে যান →",

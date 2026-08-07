@@ -292,7 +292,8 @@
     }
   },
   "courseCard": {
-    "viewDemo": "஡ேமோ காண்க",
+    "viewDemo": "விவரங்களைக் காண்க",
+    "viewDetails": "விவரங்களைக் காண்க",
     "enrollNow": "அபீ நாமாंகந செய்க",
     "buyNow": "அபீ வாங்குங்கள்",
     "continueLearning": "ஸீ஖நா தொடரவும் →",

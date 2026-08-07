@@ -292,7 +292,8 @@
     }
   },
   "courseCard": {
-    "viewDemo": "ડેમો જુઓ",
+    "viewDemo": "વિગતો જુઓ",
+    "viewDetails": "વિગતો જુઓ",
     "enrollNow": "અભી નામાंકન કરો",
     "buyNow": "અભી ખરીદો",
     "continueLearning": "સીખના ચાલુ રાખો →",
