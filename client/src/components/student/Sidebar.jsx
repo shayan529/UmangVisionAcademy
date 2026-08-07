@@ -278,7 +278,7 @@ const Sidebar = ({
 
   return (
     <>
-      <aside className="hidden md:flex flex-col bg-slate-950 border-r border-slate-800 w-[260px] min-w-[260px] shrink-0 sticky top-16 h-[calc(100vh-64px)] z-40">
+      <aside className="hidden md:flex flex-col bg-slate-950 border-r border-slate-800 w-[260px] min-w-[260px] shrink-0 sticky top-0 h-screen z-40">
         <SidebarBody />
       </aside>
 

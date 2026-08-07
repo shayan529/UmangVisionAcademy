@@ -234,7 +234,7 @@ const Layout = () => {
       
       <div 
         {...(showMobileBottomBar ? swipeHandlers : {})} 
-        className={showNavbarAndFooter ? "pt-16 pb-8" : ""}
+        className={showNavbarAndFooter ? "pb-8" : ""}
       >
         <div className={showMobileBottomBar ? slideAnim : ""}>
           <Suspense fallback={

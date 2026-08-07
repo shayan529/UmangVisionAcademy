@@ -482,8 +482,8 @@ export default function InstructorDashboard() {
             width: 230,
             flexDirection: "column",
             position: "sticky",
-            top: 64,
-            height: "calc(100vh - 64px)",
+            top: 0,
+            height: "100vh",
             flexShrink: 0,
           }}
         >

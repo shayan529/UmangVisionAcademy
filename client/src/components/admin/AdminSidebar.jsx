@@ -152,8 +152,8 @@ const AdminSidebar = ({
       <aside
         className={`bg-slate-950 border-r border-slate-800 flex flex-col overflow-hidden
     transition-transform duration-300 ease-in-out
-    fixed top-16 bottom-0 left-0 z-[200] shadow-[4px_0_24px_rgba(0,0,0,0.6)]
-    md:sticky md:top-16 md:h-[calc(100vh-64px)] md:shadow-none md:translate-x-0 md:overflow-y-auto
+    fixed inset-y-0 left-0 z-[200] shadow-[4px_0_24px_rgba(0,0,0,0.6)]
+    md:relative md:inset-y-auto md:h-auto md:shadow-none md:translate-x-0
     ${collapsed ? "w-[68px] min-w-[68px]" : "w-[220px] min-w-[220px]"}
     ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
   `}
