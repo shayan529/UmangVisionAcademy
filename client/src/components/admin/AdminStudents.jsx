@@ -774,18 +774,43 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit, refreshUs
   const [showCourseManager, setShowCourseManager] = useState(false);
   if (!student) return null;
 
-  const enrolled = courses.filter((c) =>
-    c.students?.some((sid) => (sid._id || sid).toString() === student._id?.toString()),
+  const enrolledMap = new Map();
+  const studentEnrolledIds = new Set(
+    (student.enrolledCourses || [])
+      .map((ec) => {
+        if (typeof ec === "string") return ec;
+        if (ec && ec._id) return ec._id.toString();
+        return ec?.toString() || "";
+      })
+      .filter(Boolean),
   );
 
-  const enrolledFromProfile = (student.enrolledCourses || [])
-    .map((ec) => {
-      const id = ec._id || ec;
-      const title =
-        ec.title || courses.find((c) => c._id === id)?.title || null;
-      return { id, title };
-    })
-    .filter((ec) => ec.title);
+  courses.forEach((c) => {
+    if (
+      studentEnrolledIds.has(c._id.toString()) ||
+      c.students?.some((sid) => (sid._id || sid).toString() === student._id?.toString())
+    ) {
+      enrolledMap.set(c._id.toString(), c);
+    }
+  });
+
+  (student.enrolledCourses || []).forEach((ec) => {
+    if (ec && typeof ec === "object" && ec._id) {
+      const idStr = ec._id.toString();
+      if (!enrolledMap.has(idStr)) {
+        enrolledMap.set(idStr, {
+          _id: ec._id,
+          title: ec.title || "Enrolled Course",
+          category: ec.category || "",
+          thumbnailUrl: ec.thumbnailUrl || null,
+          instructor: ec.instructor || null,
+        });
+      }
+    }
+  });
+
+  const enrolled = Array.from(enrolledMap.values());
+  const enrolledFromProfile = [];
 
   const subscription = student.subscription || {};
   const coins = typeof student.coins === "number" ? student.coins : 0;
@@ -1169,18 +1194,50 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
     );
   });
 
-  const enrolledCourseIds = new Set(
+  const studentEnrolledIds = new Set(
     (student.enrolledCourses || [])
-      .map((c) => (c._id || c).toString())
-      .concat(
-        courses
-          .filter((c) => c.students?.some((sid) => (sid._id || sid).toString() === student._id?.toString()))
-          .map((c) => c._id.toString()),
-      ),
+      .map((ec) => {
+        if (typeof ec === "string") return ec;
+        if (ec && ec._id) return ec._id.toString();
+        return ec?.toString() || "";
+      })
+      .filter(Boolean),
   );
 
-  const assignedCourses = courses.filter((c) => enrolledCourseIds.has(c._id.toString()));
-  const availableCourses = courses.filter((c) => !enrolledCourseIds.has(c._id.toString()));
+  courses.forEach((c) => {
+    if (c.students?.some((sid) => (sid._id || sid).toString() === student._id?.toString())) {
+      studentEnrolledIds.add(c._id.toString());
+    }
+  });
+
+  const assignedCoursesMap = new Map();
+
+  courses.forEach((c) => {
+    if (studentEnrolledIds.has(c._id.toString())) {
+      assignedCoursesMap.set(c._id.toString(), c);
+    }
+  });
+
+  (student.enrolledCourses || []).forEach((ec) => {
+    if (ec && typeof ec === "object" && ec._id) {
+      const idStr = ec._id.toString();
+      if (!assignedCoursesMap.has(idStr)) {
+        assignedCoursesMap.set(idStr, {
+          _id: ec._id,
+          title: ec.title || "Enrolled Course",
+          category: ec.category || "",
+          board: ec.board || "",
+          price: ec.price ?? 0,
+          thumbnailUrl: ec.thumbnailUrl || null,
+          instructor: ec.instructor || null,
+        });
+      }
+    }
+  });
+
+  const assignedCourses = Array.from(assignedCoursesMap.values());
+  const assignedIds = new Set(assignedCourses.map((c) => c._id.toString()));
+  const availableCourses = courses.filter((c) => !assignedIds.has(c._id.toString()));
 
   const uniqueClasses = Array.from(
     new Set(courses.map((c) => c.category).filter(Boolean)),
@@ -1950,7 +2007,7 @@ const AdminStudents = ({
       {assigningStudent && (
         <StudentCourseManagerModal
           student={assigningStudent}
-          courses={approvedCourses}
+          courses={courses}
           onClose={() => setAssigningStudent(null)}
           onUpdated={handleMutationSuccess}
         />
