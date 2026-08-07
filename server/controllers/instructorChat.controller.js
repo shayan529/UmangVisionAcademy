@@ -645,14 +645,30 @@ export const deleteMessage = async (req, res) => {
 export const getAvailableInstructors = async (req, res) => {
   try {
     const studentId = req.user._id;
+    const dbUser = await User.findById(studentId)
+      .select("instructorAssistanceCourses enrolledCourses subscription selectedClass")
+      .lean();
 
-    // Build a query that finds courses this student can access:
-    //   1. Direct enrollment — studentId is in course.students[]
-    //   2. Subscription-based — student has an active subscription and
-    //      their selectedClass matches the course category
-    const orClauses = [{ students: studentId }];
-
+    const assistanceCourseIds = (dbUser?.instructorAssistanceCourses ?? []).map((id) =>
+      id.toString(),
+    );
+    const enrolledCourseIds = (dbUser?.enrolledCourses ?? []).map((id) =>
+      id.toString(),
+    );
     const hasActiveSub = req.user.subscription?.status === "active";
+
+    // If student bought with assistance, allow those specific courses.
+    // If instructorAssistanceCourses is empty but enrolledCourses has legacy enrollments, fallback to enrolledCourses.
+    let allowedCourseIds = assistanceCourseIds;
+    if (assistanceCourseIds.length === 0 && enrolledCourseIds.length > 0) {
+      allowedCourseIds = enrolledCourseIds;
+    }
+
+    const orClauses = [];
+    if (allowedCourseIds.length > 0) {
+      orClauses.push({ _id: { $in: allowedCourseIds } });
+    }
+
     if (hasActiveSub && req.user.selectedClass) {
       orClauses.push({
         category: new RegExp(
@@ -661,6 +677,8 @@ export const getAvailableInstructors = async (req, res) => {
         ),
       });
     }
+
+    if (!orClauses.length) return res.json([]);
 
     const courses = await Course.find({ $or: orClauses })
       .select(

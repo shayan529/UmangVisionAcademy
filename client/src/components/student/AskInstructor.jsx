@@ -998,16 +998,22 @@ const AskInstructor = () => {
             )}
 
             {!availableLoading && availableInstructors.length === 0 && (
-              <div className="text-center py-14 px-4 bg-slate-900/30 rounded-3xl border border-slate-800/60 my-4">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mx-auto mb-3">
-                  <BookOpen size={24} />
+              <div className="text-center py-12 px-4 bg-slate-900/40 rounded-3xl border border-slate-800/80 my-4 space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mx-auto mb-1">
+                  <Sparkles size={26} />
                 </div>
-                <h4 className="text-slate-200 text-sm font-bold">
-                  No enrolled courses found
+                <h4 className="text-slate-100 text-sm font-extrabold">
+                  Instructor Assistance Not Unlocked
                 </h4>
-                <p className="text-slate-400 text-xs mt-1.5 leading-relaxed max-w-xs mx-auto">
-                  Enrol in a course from your dashboard to connect with instructors directly.
+                <p className="text-slate-400 text-xs leading-relaxed max-w-xs mx-auto">
+                  Ask Instructor chat is available for courses purchased with the <span className="text-indigo-300 font-bold">✨ Buy with Instructor Assistance</span> option (₹500).
                 </p>
+                <button
+                  onClick={() => navigate("/courses")}
+                  className="mt-2 inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md shadow-indigo-600/30 hover:scale-105 active:scale-95"
+                >
+                  Browse Courses (₹500)
+                </button>
               </div>
             )}
 

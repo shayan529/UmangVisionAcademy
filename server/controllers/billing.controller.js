@@ -252,9 +252,24 @@ export const verifyPayment = async (req, res) => {
           ),
         ),
       );
-      await User.findByIdAndUpdate(req.user._id, {
+      const { withInstructorAssistance, assistanceCourseIds } = req.body;
+      const targetAssistanceIds =
+        Array.isArray(assistanceCourseIds) && assistanceCourseIds.length > 0
+          ? assistanceCourseIds
+          : withInstructorAssistance
+          ? courseIds
+          : [];
+
+      const userUpdate = {
         $addToSet: { enrolledCourses: { $each: courseIds } },
-      });
+      };
+      if (targetAssistanceIds.length > 0) {
+        userUpdate.$addToSet.instructorAssistanceCourses = {
+          $each: targetAssistanceIds,
+        };
+      }
+
+      await User.findByIdAndUpdate(req.user._id, userUpdate);
       await Cart.findOneAndUpdate(
         { user: req.user._id },
         { $pull: { courses: { $in: courseIds } } },

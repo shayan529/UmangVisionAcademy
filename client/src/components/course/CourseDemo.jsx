@@ -410,6 +410,8 @@ const EnrollCard = ({
   onEnroll,
   onViewDemo,
   navigate,
+  withInstructorAssistance,
+  setWithInstructorAssistance,
 }) => {
   const { t } = useTranslation();
 
@@ -459,20 +461,107 @@ const EnrollCard = ({
           </div>
         ) : (
           <>
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 36, fontWeight: 800, color: "#f1f5f9" }}>
-                {course.price ? (
+                {withInstructorAssistance ? (
+                  <span style={{ color: "#818cf8" }}>₹500</span>
+                ) : course.price ? (
                   `₹${course.price}`
                 ) : (
                   <span style={{ color: "#34d399" }}>{t("courses.free")}</span>
                 )}
               </div>
-              {course.price > 0 && (
-                <p style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
-                  {t("demo.lifetime")}
-                </p>
-              )}
+              <p style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
+                {withInstructorAssistance
+                  ? "Course + Direct Instructor Chat & Doubt Resolution"
+                  : t("demo.lifetime")}
+              </p>
             </div>
+
+            {/* ── Highlighted Option: Buy with Instructor Assistance ── */}
+            {!canAccess && (
+              <div
+                onClick={() => setWithInstructorAssistance((prev) => !prev)}
+                style={{
+                  marginBottom: 16,
+                  padding: "12px 14px",
+                  borderRadius: 16,
+                  background: withInstructorAssistance
+                    ? "linear-gradient(135deg, rgba(124, 58, 237, 0.35), rgba(99, 102, 241, 0.22))"
+                    : "rgba(30, 41, 59, 0.6)",
+                  border: `2px solid ${withInstructorAssistance ? "#818cf8" : "#334155"}`,
+                  boxShadow: withInstructorAssistance
+                    ? "0 0 20px rgba(124, 58, 237, 0.4)"
+                    : "none",
+                  cursor: "pointer",
+                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 6,
+                      border: `2px solid ${withInstructorAssistance ? "#818cf8" : "#64748b"}`,
+                      background: withInstructorAssistance ? "#7c3aed" : "transparent",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#fff",
+                      fontSize: 12,
+                      fontWeight: 800,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {withInstructorAssistance && "✓"}
+                  </div>
+                  <div>
+                    <p
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 800,
+                        color: withInstructorAssistance ? "#ffffff" : "#e2e8f0",
+                        margin: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <span>✨ Buy with Instructor Assistance</span>
+                    </p>
+                    <p
+                      style={{
+                        fontSize: 10,
+                        color: withInstructorAssistance ? "#c7d2fe" : "#94a3b8",
+                        margin: "2px 0 0 0",
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      Direct chat & 1-on-1 doubt solving with instructor
+                    </p>
+                  </div>
+                </div>
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 900,
+                    color: "#a5b4fc",
+                    background: "rgba(99, 102, 241, 0.2)",
+                    padding: "3px 8px",
+                    borderRadius: 8,
+                    border: "1px solid rgba(99, 102, 241, 0.3)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  ₹500
+                </span>
+              </div>
+            )}
 
             <button
               className="enroll-btn"
@@ -647,6 +736,8 @@ export default function CourseDemo() {
     user.selectedClass.toLowerCase().trim() === course.category.toLowerCase().trim();
   const [enrollingFree, setEnrollingFree] = useState(false);
 
+  const [withInstructorAssistance, setWithInstructorAssistance] = useState(false);
+
   useEffect(() => {
     if (!id || id === "undefined") navigate("/courses", { replace: true });
   }, [id, navigate]);
@@ -670,11 +761,12 @@ export default function CourseDemo() {
     if (isFreeWithPlan && !canAccess) {
       try {
         setEnrollingFree(true);
-        await api.post("/courses/enroll", { courseIds: [id] });
-        // Update user state so UI knows they are enrolled
+        await api.post("/courses/enroll", {
+          courseIds: [id],
+          withInstructorAssistance,
+        });
         await dispatch(loadCurrentUser());
         await dispatch(fetchEnrolledCourses());
-        // After successful enrollment, simply reload or navigate to the course
         navigate(`/courses/${id}`);
       } catch (err) {
         alert(err.response?.data?.message || "Error enrolling for free.");
@@ -684,6 +776,22 @@ export default function CourseDemo() {
     }
 
     dispatch(addToCart(id));
+    if (withInstructorAssistance) {
+      try {
+        const stored = JSON.parse(
+          localStorage.getItem("instructorAssistanceCourses") || "[]",
+        );
+        if (!stored.includes(id)) {
+          stored.push(id);
+          localStorage.setItem(
+            "instructorAssistanceCourses",
+            JSON.stringify(stored),
+          );
+        }
+      } catch (e) {
+        console.error("LocalStorage save error:", e);
+      }
+    }
     setAddedToCart(true);
   };
 
@@ -708,6 +816,8 @@ export default function CourseDemo() {
     onEnroll: handleEnrollClick,
     onViewDemo: handleViewDemoClick,
     navigate,
+    withInstructorAssistance,
+    setWithInstructorAssistance,
   };
 
   return (

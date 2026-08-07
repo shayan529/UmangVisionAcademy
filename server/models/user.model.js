@@ -138,6 +138,12 @@ const userSchema = new Schema(
         ref: "Course",
       },
     ],
+    instructorAssistanceCourses: [
+      {
+        type: Types.ObjectId,
+        ref: "Course",
+      },
+    ],
     // Per-course lesson progress stored as: { [courseId]: { completed: [idx], lastLesson, lessonProgress: { [lessonIdx]: seconds } } }
     courseProgress: {
       type: Schema.Types.Mixed,

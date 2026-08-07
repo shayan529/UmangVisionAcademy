@@ -666,8 +666,14 @@ export const enrollCourses = async (req, res) => {
           });
         }
         if (!alreadyInUser) {
+          const userUpdate = { $addToSet: { enrolledCourses: courseId } };
+          if (req.body.withInstructorAssistance) {
+            userUpdate.$addToSet.instructorAssistanceCourses = courseId;
+          }
+          await User.findByIdAndUpdate(studentId, userUpdate);
+        } else if (req.body.withInstructorAssistance) {
           await User.findByIdAndUpdate(studentId, {
-            $addToSet: { enrolledCourses: courseId },
+            $addToSet: { instructorAssistanceCourses: courseId },
           });
         }
         enrolled.push(courseId);
