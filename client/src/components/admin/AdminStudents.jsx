@@ -28,6 +28,8 @@ import {
   Tag,
   Sparkles,
   CheckCircle2,
+  Users,
+  FileSpreadsheet,
 } from "lucide-react";
 import api from "../../config/api.js";
 import { INDIA_CITIES_BY_STATE } from "../../data/indiaLocations";
@@ -1532,22 +1534,20 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
             <div className="flex items-center gap-1.5 p-1 bg-slate-900/80 rounded-2xl border border-slate-800">
               <button
                 onClick={() => setActiveTab("assigned")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
-                  activeTab === "assigned"
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${activeTab === "assigned"
                     ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                     : "text-slate-400 hover:text-slate-200"
-                }`}
+                  }`}
               >
                 <BookOpen size={14} />
                 Assigned Courses ({assignedCourses.length})
               </button>
               <button
                 onClick={() => setActiveTab("available")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
-                  activeTab === "available"
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${activeTab === "available"
                     ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                     : "text-slate-400 hover:text-slate-200"
-                }`}
+                  }`}
               >
                 <BookPlus size={14} />
                 Assign New Courses ({availableCourses.length})
@@ -1637,11 +1637,10 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
                     return (
                       <div
                         key={c._id}
-                        className={`group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border transition-all shadow-md ${
-                          isViaPlan
+                        className={`group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border transition-all shadow-md ${isViaPlan
                             ? "border-emerald-800/50 bg-emerald-950/20 hover:bg-emerald-950/30 hover:border-emerald-700/60"
                             : "border-slate-800/90 bg-[#111827]/80 hover:bg-[#131b2e] hover:border-slate-700/80"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-start gap-3.5 min-w-0">
                           {c.thumbnailUrl ? (
@@ -1703,11 +1702,10 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
                           <button
                             onClick={() => handleToggleAssistance(c._id, !hasAssistance, isViaPlan)}
                             disabled={isLoadingThis}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition border ${
-                              hasAssistance
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition border ${hasAssistance
                                 ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30"
                                 : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
-                            }`}
+                              }`}
                             title={
                               isViaPlan && !isPremiumPlan
                                 ? "Base plan doesn't include assistance by default, but admin can enable it manually"
@@ -1799,11 +1797,10 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
                         <div
                           key={c._id}
                           onClick={() => toggleSelectAssign(c._id)}
-                          className={`w-full flex items-start justify-between gap-3.5 p-3.5 rounded-2xl border transition-all cursor-pointer ${
-                            isSelected
+                          className={`w-full flex items-start justify-between gap-3.5 p-3.5 rounded-2xl border transition-all cursor-pointer ${isSelected
                               ? "bg-emerald-500/10 border-emerald-500/40 shadow-md"
                               : "bg-slate-900/40 border-slate-800/80 hover:border-slate-700"
-                          }`}
+                            }`}
                         >
                           <div className="flex items-start gap-3 min-w-0">
                             {c.thumbnailUrl ? (
@@ -1889,6 +1886,26 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
   );
 };
 
+/* ─── Action button used in each student row ──────────── */
+const RowAction = ({ icon: Icon, label, onClick, tone = "slate" }) => {
+  const tones = {
+    slate: "text-slate-300 bg-slate-800/60 border-slate-700 hover:bg-slate-800 hover:border-slate-600",
+    indigo: "text-indigo-300 bg-indigo-500/10 border-indigo-500/25 hover:bg-indigo-500/20 hover:border-indigo-500/40",
+    emerald: "text-emerald-300 bg-emerald-500/10 border-emerald-500/25 hover:bg-emerald-500/20 hover:border-emerald-500/40",
+    sky: "text-sky-300 bg-sky-500/10 border-sky-500/25 hover:bg-sky-500/20 hover:border-sky-500/40",
+    red: "text-red-300 bg-red-500/10 border-red-500/25 hover:bg-red-500/20 hover:border-red-500/40",
+  };
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border transition duration-150 ${tones[tone]}`}
+    >
+      <Icon size={12} />
+      {label}
+    </button>
+  );
+};
+
 const AdminStudents = ({
   students = [],
   courses = [],
@@ -1908,6 +1925,20 @@ const AdminStudents = ({
       s.email?.toLowerCase().includes(ql) ||
       s.phoneNumber?.toLowerCase().includes(ql),
   );
+  const enrolledCount = students.filter((s) => {
+    const countedIds = new Set();
+    courses.forEach((c) => {
+      if (c.students?.some((sid) => (sid._id || sid).toString() === s._id?.toString())) {
+        countedIds.add(c._id.toString());
+      }
+    });
+    (s.enrolledCourses || []).forEach((ec) => {
+      const id = ec?._id ? ec._id.toString() : ec?.toString();
+      if (id) countedIds.add(id);
+    });
+    return countedIds.size > 0 || s.subscription?.status === "active";
+  }).length;
+
   const bulkFileInputRef = useRef(null);
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState("");
@@ -1929,32 +1960,54 @@ const AdminStudents = ({
     if (refreshUsers) await refreshUsers();
   };
 
+  const EXPECTED_COLUMNS = ["name", "email", "phoneNumber", "password", "city", "state", "pincode"];
+
   return (
-    <div className="flex flex-col gap-6 max-w-4xl animate-fadeIn">
+    <div className="flex flex-col gap-6 max-w-5xl animate-fadeIn">
       {/* Header section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <p className="text-xs text-indigo-400 font-bold tracking-wider uppercase mb-1">
-            Accounts Management
-          </p>
-          <h2 className="text-2xl font-extrabold text-white flex items-center gap-2">
-            Platform Students
-            <span className="text-sm font-semibold text-slate-500 bg-slate-900/60 border border-slate-800 rounded-md px-2 py-0.5 mt-0.5">
-              {filtS.length} Total
-            </span>
-          </h2>
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <p className="text-xs text-indigo-400 font-bold tracking-wider uppercase mb-1 flex items-center gap-1.5">
+              <Users size={12} />
+              Accounts Management
+            </p>
+            <h2 className="text-2xl font-extrabold text-white">Platform Students</h2>
+            <p className="text-xs text-slate-500 mt-1">
+              View profiles, assign courses, edit records, or add new students.
+            </p>
+          </div>
+
+          {/* Quick stats */}
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col items-start px-4 py-2.5 rounded-xl bg-slate-900/50 border border-slate-800/80 min-w-[92px]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total</span>
+              <span className="text-lg font-extrabold text-white leading-tight">{students.length}</span>
+            </div>
+            <div className="flex flex-col items-start px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 min-w-[92px]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400/80">Enrolled</span>
+              <span className="text-lg font-extrabold text-emerald-300 leading-tight">{enrolledCount}</span>
+            </div>
+            {q && (
+              <div className="flex flex-col items-start px-4 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 min-w-[92px]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400/80">Matching</span>
+                <span className="text-lg font-extrabold text-indigo-300 leading-tight">{filtS.length}</span>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 w-full md:w-auto">
-          <div className="relative w-full sm:flex-1 md:flex-none md:w-72 shrink-0">
+        {/* Search + primary actions */}
+        <div className="flex flex-col sm:flex-row gap-2.5">
+          <div className="relative flex-1">
             <Search
               size={14}
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
             />
             <input
               type="text"
-              className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 transition duration-150"
-              placeholder="Search students database..."
+              className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 pl-9 pr-4 text-sm text-white placeholder-slate-500 transition duration-150"
+              placeholder="Search by name, email, or phone number…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
@@ -1964,7 +2017,7 @@ const AdminStudents = ({
             <button
               type="button"
               onClick={() => setAddingStudent(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 transition"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition shrink-0"
             >
               <UserPlus size={14} />
               Add Student
@@ -1982,26 +2035,13 @@ const AdminStudents = ({
                 setShowBulkImportModal(true);
               }}
               disabled={importing}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-2.5 text-xs font-bold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60 shrink-0"
             >
               <Upload size={14} />
               {importing ? "Importing..." : "Bulk Import"}
             </button>
           )}
         </div>
-      </div>
-
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/30 p-4 text-xs text-slate-300">
-        <p className="font-semibold text-slate-200 mb-1">Expected columns</p>
-        <p className="text-slate-400">
-          Use any of: <span className="font-medium">name</span>,{" "}
-          <span className="font-medium">email</span>,{" "}
-          <span className="font-medium">phoneNumber</span>,{" "}
-          <span className="font-medium">password</span>,{" "}
-          <span className="font-medium">city</span>,{" "}
-          <span className="font-medium">state</span>,{" "}
-          <span className="font-medium">pincode</span>
-        </p>
       </div>
 
       {importError && (
@@ -2040,7 +2080,16 @@ const AdminStudents = ({
       )}
 
       {/* Grid listing */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
+        {filtS.length > 0 && (
+          <div className="flex items-center gap-2 px-1 text-[10px] font-bold uppercase tracking-wider text-slate-600">
+            <span className="flex-1">Student</span>
+            <span className="hidden sm:block w-16 text-right">Role</span>
+            <span className="hidden sm:block w-20 text-right">Courses</span>
+            <span className="w-auto text-right">Actions</span>
+          </div>
+        )}
+
         {filtS.map((s) => {
           // Count all enrolled courses across all three sources:
           //   1. Courses where s._id is in Course.students array
@@ -2087,78 +2136,67 @@ const AdminStudents = ({
           }
 
           const studentCoursesCount = countedIds.size;
+          const role = s.role || "student";
 
           return (
             <div
               key={s._id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3.5 bg-slate-900/35 border border-slate-800/80 rounded-2xl transition duration-150 hover:border-slate-700/60"
+              className="flex flex-col lg:flex-row lg:items-center gap-3.5 lg:gap-4 p-4 bg-slate-900/35 border border-slate-800/80 rounded-2xl transition duration-150 hover:border-slate-700/60 hover:bg-slate-900/55"
             >
-              <div className="flex items-center gap-3.5 min-w-0 w-full sm:w-auto">
-                <Av name={s.name} src={s.avatarUrl} size={36} />
+              {/* Identity */}
+              <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                <Av name={s.name} src={s.avatarUrl} size={40} />
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-slate-200 truncate">
+                  <p className="text-sm font-bold text-slate-100 truncate">
                     {s.name}
                   </p>
-                  {s.phoneNumber && (
-                    <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">
-                      {s.phoneNumber}
-                    </p>
-                  )}
-                  <p className="text-[10px] text-slate-500 truncate mt-0.5">
-                    {s.email}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
+                    {s.phoneNumber && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 font-medium">
+                        <Phone size={10} className="text-slate-500" />
+                        {s.phoneNumber}
+                      </span>
+                    )}
+                    {s.email && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 truncate">
+                        <Mail size={10} className="text-slate-600 shrink-0" />
+                        <span className="truncate">{s.email}</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 sm:gap-4 shrink-0 justify-start sm:justify-end w-full sm:w-auto">
-                {/* Role tag */}
-                {(() => {
-                  const role = s.role || "student";
-                  return (
-                    <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full">
-                      {role}
-                    </span>
-                  );
-                })()}
-                <span className="text-xs font-semibold text-slate-400 min-w-[4.375rem] text-right">
-                  {studentCoursesCount} course
-                  {studentCoursesCount !== 1 ? "s" : ""}
+              {/* Status badges */}
+              <div className="flex items-center gap-2 shrink-0 lg:w-auto">
+                <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-full">
+                  {role}
                 </span>
-
-                {/* Details button */}
-                <button
-                  onClick={() => setSelectedStudent(s)}
-                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 hover:border-indigo-500/30 transition duration-150"
+                <span
+                  className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border ${studentCoursesCount > 0
+                      ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-300"
+                      : "bg-slate-800/60 border-slate-700 text-slate-500"
+                    }`}
                 >
-                  <Eye size={12} />
-                  Details
-                </button>
+                  <BookOpen size={11} />
+                  {studentCoursesCount} course{studentCoursesCount !== 1 ? "s" : ""}
+                </span>
+              </div>
 
-                {/* Assign button */}
+              {/* Actions — every capability visible and labeled, no overflow menus */}
+              <div className="flex flex-wrap items-center gap-1.5 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-800/60 lg:pl-3 lg:border-l">
+                <RowAction icon={Eye} label="Details" tone="indigo" onClick={() => setSelectedStudent(s)} />
                 {canEdit && (
-                  <button
-                    onClick={() => setAssigningStudent(s)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/30 transition duration-150"
-                  >
-                    <BookPlus size={12} />
-                    Assign
-                  </button>
+                  <RowAction icon={BookPlus} label="Assign" tone="emerald" onClick={() => setAssigningStudent(s)} />
                 )}
-
-                {/* Edit button */}
                 {canEdit && (
-                  <button
-                    onClick={() => setEditingStudent(s)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/20 hover:bg-sky-500/20 hover:border-sky-500/30 transition duration-150"
-                  >
-                    <Pencil size={12} />
-                    Edit
-                  </button>
+                  <RowAction icon={Pencil} label="Edit" tone="sky" onClick={() => setEditingStudent(s)} />
                 )}
-
-                {/* Delete button */}
                 {canDelete && (
-                  <button
+                  <RowAction
+                    icon={Trash2}
+                    label="Remove"
+                    tone="red"
                     onClick={() => {
                       if (
                         window.confirm(
@@ -2168,11 +2206,7 @@ const AdminStudents = ({
                         deleteUser(s._id, "student");
                       }
                     }}
-                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/30 transition duration-150"
-                  >
-                    <Trash2 size={12} />
-                    Remove
-                  </button>
+                  />
                 )}
               </div>
             </div>
@@ -2281,9 +2315,12 @@ const AdminStudents = ({
                 />
                 {bulkImportFile ? (
                   <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/50 p-3.5">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-slate-200 truncate">{bulkImportFile.name}</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">{(bulkImportFile.size / 1024).toFixed(1)} KB</p>
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <FileSpreadsheet size={18} className="text-indigo-400 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-slate-200 truncate">{bulkImportFile.name}</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">{(bulkImportFile.size / 1024).toFixed(1)} KB</p>
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -2308,17 +2345,18 @@ const AdminStudents = ({
                 )}
               </div>
 
-              <div className="rounded-xl border border-slate-800 bg-slate-950/30 p-3 text-xs text-slate-300">
-                <p className="font-semibold text-slate-200 mb-1">Expected columns</p>
-                <p className="text-slate-400">
-                  <span className="font-medium">name</span>,{" "}
-                  <span className="font-medium">email</span>,{" "}
-                  <span className="font-medium">phoneNumber</span>,{" "}
-                  <span className="font-medium">password</span>,{" "}
-                  <span className="font-medium">city</span>,{" "}
-                  <span className="font-medium">state</span>,{" "}
-                  <span className="font-medium">pincode</span>
-                </p>
+              <div className="rounded-xl border border-slate-800 bg-slate-950/30 p-3.5">
+                <p className="font-semibold text-slate-200 text-xs mb-2">Expected columns</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {EXPECTED_COLUMNS.map((col) => (
+                    <span
+                      key={col}
+                      className="px-2 py-0.5 rounded-md bg-slate-800/80 text-[10px] font-mono font-semibold text-slate-300"
+                    >
+                      {col}
+                    </span>
+                  ))}
+                </div>
               </div>
 
               {/* Course selection */}

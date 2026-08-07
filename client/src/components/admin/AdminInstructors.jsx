@@ -637,7 +637,6 @@ const EditInstructorModal = ({ instructor, onClose, onSaved }) => {
 };
 
 /* ─── Assign Courses Modal ────────────────────────────── */
-/* ─── Assign Courses Modal ────────────────────────────── */
 const AssignCoursesModal = ({
   instructor,
   courses = [],
@@ -797,44 +796,40 @@ const AssignCoursesModal = ({
             <button
               type="button"
               onClick={() => setStatusFilter("all")}
-              className={`px-2.5 py-1 rounded-lg font-semibold transition ${
-                statusFilter === "all"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
-              }`}
+              className={`px-2.5 py-1 rounded-lg font-semibold transition ${statusFilter === "all"
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
+                }`}
             >
               All ({courses.length})
             </button>
             <button
               type="button"
               onClick={() => setStatusFilter("unassigned")}
-              className={`px-2.5 py-1 rounded-lg font-semibold transition ${
-                statusFilter === "unassigned"
-                  ? "bg-slate-700 text-white"
-                  : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
-              }`}
+              className={`px-2.5 py-1 rounded-lg font-semibold transition ${statusFilter === "unassigned"
+                ? "bg-slate-700 text-white"
+                : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
+                }`}
             >
               Unassigned
             </button>
             <button
               type="button"
               onClick={() => setStatusFilter("this_instructor")}
-              className={`px-2.5 py-1 rounded-lg font-semibold transition ${
-                statusFilter === "this_instructor"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
-              }`}
+              className={`px-2.5 py-1 rounded-lg font-semibold transition ${statusFilter === "this_instructor"
+                ? "bg-emerald-600 text-white"
+                : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
+                }`}
             >
               {instructor.name}'s
             </button>
             <button
               type="button"
               onClick={() => setStatusFilter("assigned")}
-              className={`px-2.5 py-1 rounded-lg font-semibold transition ${
-                statusFilter === "assigned"
-                  ? "bg-amber-600 text-white"
-                  : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
-              }`}
+              className={`px-2.5 py-1 rounded-lg font-semibold transition ${statusFilter === "assigned"
+                ? "bg-amber-600 text-white"
+                : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
+                }`}
             >
               Other Instructors'
             </button>
@@ -912,17 +907,16 @@ const AssignCoursesModal = ({
                 <div
                   key={c._id}
                   onClick={() => toggleCourse(c._id)}
-                  className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition cursor-pointer select-none ${
-                    isChecked
-                      ? "bg-indigo-500/10 border-indigo-500/40 text-white"
-                      : "bg-slate-900/30 border-slate-800/80 hover:border-slate-700/80 text-slate-300"
-                  }`}
+                  className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition cursor-pointer select-none ${isChecked
+                    ? "bg-indigo-500/10 border-indigo-500/40 text-white"
+                    : "bg-slate-900/30 border-slate-800/80 hover:border-slate-700/80 text-slate-300"
+                    }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <input
                       type="checkbox"
                       checked={isChecked}
-                      onChange={() => {}}
+                      onChange={() => { }}
                       className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 flex-none"
                     />
                     <div className="min-w-0">
@@ -1195,14 +1189,30 @@ const AdminInstructors = ({
   canDelete = true,
 }) => {
   const ql = q.toLowerCase();
-  const filtI = enrichedInstructors.filter(
-    (i) =>
-      i.name?.toLowerCase().includes(ql) || i.email?.toLowerCase().includes(ql),
-  );
+  const [activeStatFilter, setActiveStatFilter] = useState(null); // null | "with_courses" | "with_students"
+
+  const filtI = enrichedInstructors.filter((i) => {
+    const matchesSearch =
+      i.name?.toLowerCase().includes(ql) || i.email?.toLowerCase().includes(ql);
+    if (!matchesSearch) return false;
+    if (activeStatFilter === "with_courses") return (i.mc?.length || 0) > 0;
+    if (activeStatFilter === "with_students") return (i.stu || 0) > 0;
+    return true;
+  });
   const [selectedInstructor, setSelectedInstructor] = useState(null);
   const [editingInstructor, setEditingInstructor] = useState(null);
   const [addingInstructor, setAddingInstructor] = useState(false);
   const [assigningCoursesInstructor, setAssigningCoursesInstructor] = useState(null);
+
+  // ── Header stat pills ──────────────────────────────────────────────────
+  const totalCoursesTaught = useMemo(
+    () => enrichedInstructors.reduce((sum, i) => sum + (i.mc?.length || 0), 0),
+    [enrichedInstructors],
+  );
+  const totalStudentsTaught = useMemo(
+    () => enrichedInstructors.reduce((sum, i) => sum + (i.stu || 0), 0),
+    [enrichedInstructors],
+  );
 
   // ── Bulk import state ──────────────────────────────────────────────────
   const fileInputRef = useRef(null);
@@ -1268,54 +1278,147 @@ const AdminInstructors = ({
   return (
     <div className="flex flex-col gap-6 max-w-4xl animate-fadeIn">
       {/* Header section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col gap-4">
         <div>
           <p className="text-xs text-indigo-400 font-bold tracking-wider uppercase mb-1">
             Accounts Management
           </p>
-          <h2 className="text-2xl font-extrabold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-extrabold text-white">
             Platform Instructors
-            <span className="text-sm font-semibold text-slate-500 bg-slate-900/60 border border-slate-800 rounded-md px-2 py-0.5 mt-0.5">
-              {filtI.length} Active
-            </span>
           </h2>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-          {/* Search Box */}
-          <div className="relative w-full sm:w-64 md:w-72 shrink-0">
+        {/* Quick-glance stat pills — click to filter */}
+        <div className="flex flex-wrap gap-2">
+          {/* Total Instructors — resets filter */}
+          <button
+            type="button"
+            onClick={() => setActiveStatFilter(null)}
+            title="Show all instructors"
+            className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 transition-all duration-150 ${
+              activeStatFilter === null
+                ? "border-indigo-500/60 bg-indigo-600/20 ring-1 ring-indigo-500/40 shadow-md shadow-indigo-950/30"
+                : "border-indigo-500/20 bg-indigo-500/10 hover:bg-indigo-500/20 hover:border-indigo-500/40"
+            }`}
+          >
+            <GraduationCap size={14} className="text-indigo-400" />
+            <span className="text-xs font-bold text-indigo-300">{enrichedInstructors.length}</span>
+            <span className="text-[11px] text-indigo-300/70 font-medium">Total Instructors</span>
+            {activeStatFilter === null && (
+              <span className="ml-0.5 text-[9px] font-extrabold uppercase tracking-wider text-indigo-400 bg-indigo-500/20 border border-indigo-500/30 px-1.5 py-0.5 rounded-md">
+                Active
+              </span>
+            )}
+          </button>
+
+          {/* Courses Taught — filter to instructors with ≥1 course */}
+          <button
+            type="button"
+            onClick={() => setActiveStatFilter(activeStatFilter === "with_courses" ? null : "with_courses")}
+            title="Show only instructors who have courses assigned"
+            className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 transition-all duration-150 ${
+              activeStatFilter === "with_courses"
+                ? "border-emerald-500/60 bg-emerald-600/20 ring-1 ring-emerald-500/40 shadow-md shadow-emerald-950/30"
+                : "border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/20 hover:border-emerald-500/40 cursor-pointer"
+            }`}
+          >
+            <BookOpen size={14} className="text-emerald-400" />
+            <span className="text-xs font-bold text-emerald-300">{totalCoursesTaught}</span>
+            <span className="text-[11px] text-emerald-300/70 font-medium">Courses Taught</span>
+            {activeStatFilter === "with_courses" && (
+              <span className="ml-0.5 text-[9px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-1.5 py-0.5 rounded-md">
+                Filtered
+              </span>
+            )}
+          </button>
+
+          {/* Students Taught — filter to instructors with ≥1 student */}
+          <button
+            type="button"
+            onClick={() => setActiveStatFilter(activeStatFilter === "with_students" ? null : "with_students")}
+            title="Show only instructors who have taught students"
+            className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 transition-all duration-150 ${
+              activeStatFilter === "with_students"
+                ? "border-sky-500/60 bg-sky-600/20 ring-1 ring-sky-500/40 shadow-md shadow-sky-950/30"
+                : "border-sky-500/20 bg-sky-500/10 hover:bg-sky-500/20 hover:border-sky-500/40 cursor-pointer"
+            }`}
+          >
+            <Users size={14} className="text-sky-400" />
+            <span className="text-xs font-bold text-sky-300">{totalStudentsTaught}</span>
+            <span className="text-[11px] text-sky-300/70 font-medium">Students Taught</span>
+            {activeStatFilter === "with_students" && (
+              <span className="ml-0.5 text-[9px] font-extrabold uppercase tracking-wider text-sky-400 bg-sky-500/20 border border-sky-500/30 px-1.5 py-0.5 rounded-md">
+                Filtered
+              </span>
+            )}
+          </button>
+
+          {/* Matching — visible when search is active */}
+          {q.trim() && (
+            <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3.5 py-2">
+              <Search size={14} className="text-amber-400" />
+              <span className="text-xs font-bold text-amber-300">{filtI.length}</span>
+              <span className="text-[11px] text-amber-300/70 font-medium">Matching</span>
+            </div>
+          )}
+
+          {/* Active filter indicator badge */}
+          {activeStatFilter && (
+            <button
+              type="button"
+              onClick={() => setActiveStatFilter(null)}
+              title="Clear filter"
+              className="flex items-center gap-1.5 rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-[11px] font-bold text-rose-300 hover:bg-rose-500/20 hover:border-rose-500/40 transition"
+            >
+              <X size={12} />
+              Clear Filter
+            </button>
+          )}
+        </div>
+
+        {/* Search + primary actions, full-width and clearly labeled */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
+          <div className="relative flex-1 min-w-0">
             <Search
               size={14}
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
             />
             <input
               type="text"
-              className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 transition duration-150"
-              placeholder="Search instructors database..."
+              className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 pl-9 pr-4 text-xs text-white placeholder-slate-500 transition duration-150"
+              placeholder="Search instructors by name or email..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            {canCreate && <button
-              type="button"
-              onClick={() => setAddingInstructor(true)}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 transition"
-            >
-              <UserPlus size={14} />
-              Add Instructor
-            </button>}
+            {canCreate && (
+              <button
+                type="button"
+                onClick={() => setAddingInstructor(true)}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 transition"
+              >
+                <UserPlus size={14} />
+                Add Instructor
+              </button>
+            )}
 
-            {canCreate && <button
-              type="button"
-              onClick={handleImportClick}
-              disabled={importing}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60"
-            >
-              <Upload size={14} />
-              {importing ? "Importing..." : "Bulk Import"}
-            </button>}
+            {canCreate && (
+              <button
+                type="button"
+                onClick={handleImportClick}
+                disabled={importing}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60"
+              >
+                {importing ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Upload size={14} />
+                )}
+                {importing ? "Importing..." : "Bulk Import"}
+              </button>
+            )}
           </div>
           <input
             ref={fileInputRef}
@@ -1328,17 +1431,20 @@ const AdminInstructors = ({
       </div>
 
       <div className="rounded-2xl border border-slate-800 bg-slate-950/30 p-4 text-xs text-slate-300">
-        <p className="font-semibold text-slate-200 mb-1">Expected columns</p>
-        <p className="text-slate-400">
-          Use any of: <span className="font-medium">name</span>,{" "}
-          <span className="font-medium">email</span>,{" "}
-          <span className="font-medium">phoneNumber</span>,{" "}
-          <span className="font-medium">password</span>,{" "}
-          <span className="font-medium">city</span>,{" "}
-          <span className="font-medium">state</span>,{" "}
-          <span className="font-medium">pincode</span>
-        </p>
-        <p className="text-slate-500 mt-1.5">
+        <p className="font-semibold text-slate-200 mb-2">Expected columns</p>
+        <div className="flex flex-wrap gap-1.5">
+          {["name", "email", "phoneNumber", "password", "city", "state", "pincode"].map(
+            (col) => (
+              <span
+                key={col}
+                className="font-mono text-[11px] bg-slate-900 border border-slate-800 text-slate-300 rounded-md px-2 py-1"
+              >
+                {col}
+              </span>
+            ),
+          )}
+        </div>
+        <p className="text-slate-500 mt-2.5">
           Specialization and bio aren't part of bulk import — add those
           afterward via Edit if needed.
         </p>
@@ -1376,6 +1482,14 @@ const AdminInstructors = ({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* Column header hint (desktop only, matches the card layout below) */}
+      {filtI.length > 0 && (
+        <div className="hidden md:flex items-center justify-between px-5 text-[10px] font-bold uppercase tracking-wider text-slate-600">
+          <span>Instructor / Performance</span>
+          <span>Actions</span>
         </div>
       )}
 
@@ -1444,8 +1558,8 @@ const AdminInstructors = ({
               </div>
             </div>
 
-            {/* Right section: actions */}
-            <div className="grid grid-cols-2 sm:flex sm:items-center md:items-end justify-between md:justify-start gap-2 shrink-0 w-full md:w-auto border-t md:border-t-0 border-slate-800/60 pt-3 md:pt-0">
+            {/* Divider before actions — visible on both mobile (top) and desktop (left) */}
+            <div className="grid grid-cols-2 sm:flex sm:items-center md:items-end justify-between md:justify-start gap-2 shrink-0 w-full md:w-auto border-t md:border-t-0 md:border-l border-slate-800/60 pt-3 md:pt-0 md:pl-5">
               {/* Details button */}
               <button
                 onClick={() => setSelectedInstructor(inst)}
@@ -1515,9 +1629,9 @@ const AdminInstructors = ({
           onAssignCourses={
             canEdit
               ? () => {
-                  setAssigningCoursesInstructor(selectedInstructor);
-                  setSelectedInstructor(null);
-                }
+                setAssigningCoursesInstructor(selectedInstructor);
+                setSelectedInstructor(null);
+              }
               : null
           }
           onEdit={
