@@ -20,6 +20,7 @@ import {
   assignCoursesToInstructor,
   unassignCoursesFromStudent,
   toggleStudentInstructorAssistance,
+  togglePlanCourseExclusion,
 } from "../controllers/course.controller.js";
 import {
   protect,
@@ -52,6 +53,7 @@ router.get("/:id/progress", protect, getCourseProgress);
 router.post("/enroll", protect, enrollCourses);
 router.post("/unassign", protect, unassignCoursesFromStudent);
 router.post("/toggle-assistance", protect, toggleStudentInstructorAssistance);
+router.post("/plan-exclude", protect, togglePlanCourseExclusion);
 
 // ── Protected: CRUD + actions ─────────────────────────────────────────────────
 router.get("/", protect, getCourses);

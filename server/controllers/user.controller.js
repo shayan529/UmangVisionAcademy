@@ -666,7 +666,13 @@ export const getUsers = async (req, res) => {
     if (req.query.role) {
       query.role = req.query.role;
     }
-    const users = await User.find(query).select("-password");
+    // Populate enrolledCourses with enough fields for the admin detail modal.
+    // Students who purchased a plan don't get courses added to enrolledCourses
+    // at payment time — their access is subscription-based — so we also include
+    // subscription and selectedClass so the frontend can derive plan courses.
+    const users = await User.find(query)
+      .select("-password")
+      .populate("enrolledCourses", "title category thumbnailUrl instructor");
     res.json(await hydrateUsersRoles(users));
   } catch (error) {
     res.status(500).json({ error: error.message });

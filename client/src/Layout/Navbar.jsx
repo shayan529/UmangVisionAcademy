@@ -206,7 +206,7 @@ const Navbar = () => {
   return (
     <>
       <nav
-        className="w-full sticky top-0 z-50 bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10"
+        className="w-full sticky top-0 z-[300] bg-[#0f172a]/90 backdrop-blur-lg border-b border-white/10"
         style={{ pointerEvents: "auto" }}
       >
         <style>{`

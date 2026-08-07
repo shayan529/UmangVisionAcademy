@@ -494,15 +494,15 @@ export default function InstructorDashboard() {
         {sidebarOpen && (
           <div
             onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 z-[150] bg-slate-950/75 backdrop-blur-xs md:hidden"
+            className="fixed top-[64px] inset-x-0 bottom-0 z-30 bg-slate-950/75 backdrop-blur-xs md:hidden"
           />
         )}
 
         {/* Mobile drawer */}
         <aside
-          className={`bg-slate-950 border-r border-slate-800 flex-col transition-all duration-300 z-[200] md:hidden
+          className={`bg-slate-950 border-r border-slate-800 flex-col transition-all duration-300 z-40 md:hidden
             ${sidebarOpen
-              ? "fixed inset-y-0 left-0 h-screen w-[220px] shadow-[4px_0_24px_rgba(0,0,0,0.6)] flex"
+              ? "fixed top-[64px] bottom-0 h-[calc(100vh-64px)] left-0 w-[220px] shadow-[4px_0_24px_rgba(0,0,0,0.6)] flex"
               : "hidden"
             }
           `}

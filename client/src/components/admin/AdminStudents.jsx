@@ -774,6 +774,20 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit, refreshUs
   const [showCourseManager, setShowCourseManager] = useState(false);
   if (!student) return null;
 
+  const subscription = student.subscription || {};
+  const hasActivePlan =
+    subscription.status === "active" &&
+    subscription.plan &&
+    student.selectedClass;
+
+  // ── Build enrolled course map ─────────────────────────────────────────────
+  // Sources (in priority order):
+  //   1. student.enrolledCourses (direct purchase / admin-assigned) — now
+  //      populated with full objects from the server after Task 1 fix
+  //   2. courses[].students cross-reference (catches legacy records)
+  //   3. Plan subscription: all approved courses whose category matches the
+  //      student's selectedClass (students on a plan never get courseIds
+  //      written to enrolledCourses — their access is subscription-based)
   const enrolledMap = new Map();
   const studentEnrolledIds = new Set(
     (student.enrolledCourses || [])
@@ -790,10 +804,11 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit, refreshUs
       studentEnrolledIds.has(c._id.toString()) ||
       c.students?.some((sid) => (sid._id || sid).toString() === student._id?.toString())
     ) {
-      enrolledMap.set(c._id.toString(), c);
+      enrolledMap.set(c._id.toString(), { ...c, _viaPlan: false });
     }
   });
 
+  // Hydrate from populated enrolledCourses objects (server now returns these)
   (student.enrolledCourses || []).forEach((ec) => {
     if (ec && typeof ec === "object" && ec._id) {
       const idStr = ec._id.toString();
@@ -804,15 +819,30 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit, refreshUs
           category: ec.category || "",
           thumbnailUrl: ec.thumbnailUrl || null,
           instructor: ec.instructor || null,
+          _viaPlan: false,
         });
       }
     }
   });
 
+  // Add plan-based courses: match approved courses by selectedClass category
+  if (hasActivePlan) {
+    const classLower = student.selectedClass.toLowerCase();
+    courses.forEach((c) => {
+      const idStr = c._id.toString();
+      if (
+        !enrolledMap.has(idStr) &&
+        c.category?.toLowerCase() === classLower &&
+        (c.approvalStatus === "approved" || c.published)
+      ) {
+        enrolledMap.set(idStr, { ...c, _viaPlan: true });
+      }
+    });
+  }
+
   const enrolled = Array.from(enrolledMap.values());
   const enrolledFromProfile = [];
 
-  const subscription = student.subscription || {};
   const coins = typeof student.coins === "number" ? student.coins : 0;
   const rupeeValue = (coins / 25).toFixed(2);
 
@@ -1005,6 +1035,11 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit, refreshUs
               <BookOpen size={16} className="text-indigo-400" />
               <h3 className="text-sm font-extrabold text-white">
                 Enrolled Courses ({enrolled.length || enrolledFromProfile.length})
+                {hasActivePlan && enrolled.some((c) => c._viaPlan) && (
+                  <span className="ml-2 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded px-1.5 py-0.5 align-middle">
+                    includes plan courses
+                  </span>
+                )}
               </h3>
             </div>
             <button
@@ -1040,6 +1075,11 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit, refreshUs
                     </div>
 
                     <div className="flex items-center gap-2 flex-none">
+                      {c._viaPlan && (
+                        <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
+                          📋 Via Plan
+                        </span>
+                      )}
                       {hasAssistance && (
                         <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold">
                           ✨ Assistance
@@ -1186,12 +1226,42 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
   const [successMsg, setSuccessMsg] = useState("");
   const [selectedToAssign, setSelectedToAssign] = useState([]);
   const [withAssistanceNew, setWithAssistanceNew] = useState(false);
+
+  // ── Plan subscription check ───────────────────────────────────────────────
+  const subscription = student.subscription || {};
+  const hasActivePlan =
+    subscription.status === "active" &&
+    subscription.plan &&
+    student.selectedClass;
+
+  // Premium plan includes instructor assistance by default for all plan courses.
+  // Base plan does NOT include assistance.
+  const isPremiumPlan = subscription.plan === "premium";
+
+  // ── Build assistance set ─────────────────────────────────────────────────
+  // Start with the student's existing instructorAssistanceCourses, then seed
+  // plan courses with assistance if they're on the premium plan.
   const [assistanceCourses, setAssistanceCourses] = useState(() => {
-    return new Set(
+    const set = new Set(
       (student.instructorAssistanceCourses || []).map((c) =>
         (c._id || c).toString(),
       ),
     );
+
+    // Auto-seed assistance for plan courses when premium plan is active
+    if (hasActivePlan && isPremiumPlan && student.selectedClass) {
+      const classLower = student.selectedClass.toLowerCase();
+      courses.forEach((c) => {
+        if (
+          c.category?.toLowerCase() === classLower &&
+          (c.approvalStatus === "approved" || c.published)
+        ) {
+          set.add(c._id.toString());
+        }
+      });
+    }
+
+    return set;
   });
 
   const studentEnrolledIds = new Set(
@@ -1212,12 +1282,14 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
 
   const assignedCoursesMap = new Map();
 
+  // Source 1: Direct enrollments (cart purchase or admin assign)
   courses.forEach((c) => {
     if (studentEnrolledIds.has(c._id.toString())) {
-      assignedCoursesMap.set(c._id.toString(), c);
+      assignedCoursesMap.set(c._id.toString(), { ...c, _viaPlan: false });
     }
   });
 
+  // Source 2: Populated enrolledCourses objects from server
   (student.enrolledCourses || []).forEach((ec) => {
     if (ec && typeof ec === "object" && ec._id) {
       const idStr = ec._id.toString();
@@ -1230,10 +1302,31 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
           price: ec.price ?? 0,
           thumbnailUrl: ec.thumbnailUrl || null,
           instructor: ec.instructor || null,
+          _viaPlan: false,
         });
       }
     }
   });
+
+  // Source 3: Plan-based courses (subscription + selectedClass category match)
+  if (hasActivePlan) {
+    const classLower = student.selectedClass.toLowerCase();
+    const excludedIds = new Set(
+      (student.planExcludedCourses || []).map((id) => (id._id || id).toString()),
+    );
+
+    courses.forEach((c) => {
+      const idStr = c._id.toString();
+      if (
+        !assignedCoursesMap.has(idStr) &&
+        !excludedIds.has(idStr) &&
+        c.category?.toLowerCase() === classLower &&
+        (c.approvalStatus === "approved" || c.published)
+      ) {
+        assignedCoursesMap.set(idStr, { ...c, _viaPlan: true });
+      }
+    });
+  }
 
   const assignedCourses = Array.from(assignedCoursesMap.values());
   const assignedIds = new Set(assignedCourses.map((c) => c._id.toString()));
@@ -1292,16 +1385,27 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
     }
   };
 
-  const handleToggleAssistance = async (courseId, enable) => {
+  const handleToggleAssistance = async (courseId, enable, isViaPlan = false) => {
     setActionLoadingId(courseId);
     setError("");
     setSuccessMsg("");
     try {
-      await api.post("/courses/toggle-assistance", {
-        studentId: student._id,
-        courseId,
-        enabled: enable,
-      });
+      if (isViaPlan) {
+        // For plan courses use the plan-exclude endpoint which handles assistance
+        // as part of the same call — no need to hit toggle-assistance separately.
+        await api.post("/courses/plan-exclude", {
+          studentId: student._id,
+          courseId,
+          excluded: false,
+          assistanceEnabled: enable,
+        });
+      } else {
+        await api.post("/courses/toggle-assistance", {
+          studentId: student._id,
+          courseId,
+          enabled: enable,
+        });
+      }
       setAssistanceCourses((prev) => {
         const next = new Set(prev);
         if (enable) next.add(courseId.toString());
@@ -1312,6 +1416,49 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
       if (onUpdated) await onUpdated();
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Failed to update assistance status.");
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // Remove a plan course from this student's access by adding it to
+  // planExcludedCourses. This hides it from the student's enrolled list
+  // without affecting other plan students.
+  const handleRemovePlanAccess = async (courseId) => {
+    setActionLoadingId(courseId);
+    setError("");
+    setSuccessMsg("");
+    try {
+      await api.post("/courses/plan-exclude", {
+        studentId: student._id,
+        courseId,
+        excluded: true,
+      });
+      setSuccessMsg("Plan access removed for this course.");
+      if (onUpdated) await onUpdated();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Failed to remove plan access.");
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // Restore a plan course that was previously excluded
+  const handleRestorePlanAccess = async (courseId) => {
+    setActionLoadingId(courseId);
+    setError("");
+    setSuccessMsg("");
+    try {
+      await api.post("/courses/plan-exclude", {
+        studentId: student._id,
+        courseId,
+        excluded: false,
+        assistanceEnabled: isPremiumPlan,
+      });
+      setSuccessMsg("Plan access restored.");
+      if (onUpdated) await onUpdated();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Failed to restore plan access.");
     } finally {
       setActionLoadingId(null);
     }
@@ -1485,11 +1632,16 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
                     const hasAssistance = assistanceCourses.has(cid);
                     const isLoadingThis = actionLoadingId === c._id;
                     const subject = subjectOf(c.title);
+                    const isViaPlan = Boolean(c._viaPlan);
 
                     return (
                       <div
                         key={c._id}
-                        className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-slate-800/90 bg-[#111827]/80 hover:bg-[#131b2e] hover:border-slate-700/80 transition-all shadow-md"
+                        className={`group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border transition-all shadow-md ${
+                          isViaPlan
+                            ? "border-emerald-800/50 bg-emerald-950/20 hover:bg-emerald-950/30 hover:border-emerald-700/60"
+                            : "border-slate-800/90 bg-[#111827]/80 hover:bg-[#131b2e] hover:border-slate-700/80"
+                        }`}
                       >
                         <div className="flex items-start gap-3.5 min-w-0">
                           {c.thumbnailUrl ? (
@@ -1505,9 +1657,16 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
                           )}
 
                           <div className="min-w-0 flex-1">
-                            <h4 className="font-bold text-sm text-white leading-snug line-clamp-2">
-                              {c.title}
-                            </h4>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-bold text-sm text-white leading-snug line-clamp-2">
+                                {c.title}
+                              </h4>
+                              {isViaPlan && (
+                                <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/30 text-[10px] font-bold text-emerald-300 shrink-0">
+                                  📋 {isPremiumPlan ? "Premium Plan" : "Base Plan"}
+                                </span>
+                              )}
+                            </div>
                             {c.instructor?.name && (
                               <p className="text-[11px] text-indigo-400 font-medium mt-1 flex items-center gap-1">
                                 <GraduationCap size={12} className="text-indigo-400" />
@@ -1539,35 +1698,55 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
                         </div>
 
                         {/* Right side controls */}
-                        <div className="flex items-center gap-2.5 justify-end shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-800">
-                          {/* Toggle Instructor Assistance */}
+                        <div className="flex items-center gap-2.5 justify-end shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-800/60">
+                          {/* Toggle Instructor Assistance — admin can always toggle regardless of plan type */}
                           <button
-                            onClick={() => handleToggleAssistance(c._id, !hasAssistance)}
+                            onClick={() => handleToggleAssistance(c._id, !hasAssistance, isViaPlan)}
                             disabled={isLoadingThis}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition border ${
                               hasAssistance
                                 ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30"
                                 : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
                             }`}
-                            title="Toggle whether student can ask instructor doubts for this course"
+                            title={
+                              isViaPlan && !isPremiumPlan
+                                ? "Base plan doesn't include assistance by default, but admin can enable it manually"
+                                : "Toggle whether student can ask instructor doubts for this course"
+                            }
                           >
                             <Sparkles size={13} className={hasAssistance ? "text-indigo-400" : "text-slate-500"} />
                             {hasAssistance ? "Assistance ON" : "Assistance OFF"}
                           </button>
 
-                          {/* Unassign Course Button */}
-                          <button
-                            onClick={() => handleUnassignCourse(c._id)}
-                            disabled={isLoadingThis}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition disabled:opacity-50"
-                          >
-                            {isLoadingThis ? (
-                              <Loader2 size={13} className="animate-spin" />
-                            ) : (
-                              <Trash2 size={13} />
-                            )}
-                            Unassign
-                          </button>
+                          {/* Remove / Unassign button — context-aware */}
+                          {isViaPlan ? (
+                            <button
+                              onClick={() => handleRemovePlanAccess(c._id)}
+                              disabled={isLoadingThis}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition disabled:opacity-50"
+                              title="Remove this course from the student's plan access"
+                            >
+                              {isLoadingThis ? (
+                                <Loader2 size={13} className="animate-spin" />
+                              ) : (
+                                <Trash2 size={13} />
+                              )}
+                              Remove Plan Access
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleUnassignCourse(c._id)}
+                              disabled={isLoadingThis}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition disabled:opacity-50"
+                            >
+                              {isLoadingThis ? (
+                                <Loader2 size={13} className="animate-spin" />
+                              ) : (
+                                <Trash2 size={13} />
+                              )}
+                              Unassign
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -1863,9 +2042,51 @@ const AdminStudents = ({
       {/* Grid listing */}
       <div className="flex flex-col gap-3">
         {filtS.map((s) => {
-          const studentCoursesCount = courses.filter((c) =>
-            c.students?.some((sid) => (sid._id || sid) === s._id),
-          ).length;
+          // Count all enrolled courses across all three sources:
+          //   1. Courses where s._id is in Course.students array
+          //   2. s.enrolledCourses (direct purchase / admin-assigned, now populated)
+          //   3. Plan-based courses (subscription + selectedClass category match,
+          //      minus any planExcludedCourses)
+          const countedIds = new Set();
+
+          // Source 1: Course.students cross-reference
+          courses.forEach((c) => {
+            if (c.students?.some((sid) => (sid._id || sid).toString() === s._id?.toString())) {
+              countedIds.add(c._id.toString());
+            }
+          });
+
+          // Source 2: populated enrolledCourses on the user object
+          (s.enrolledCourses || []).forEach((ec) => {
+            const id = ec?._id ? ec._id.toString() : ec?.toString();
+            if (id) countedIds.add(id);
+          });
+
+          // Source 3: plan-based courses
+          const sub = s.subscription || {};
+          const hasActivePlan =
+            sub.status === "active" && sub.plan && s.selectedClass;
+          if (hasActivePlan) {
+            const classLower = s.selectedClass.toLowerCase();
+            const excludedIds = new Set(
+              (s.planExcludedCourses || []).map((id) =>
+                (id?._id || id).toString(),
+              ),
+            );
+            courses.forEach((c) => {
+              const idStr = c._id.toString();
+              if (
+                !countedIds.has(idStr) &&
+                !excludedIds.has(idStr) &&
+                c.category?.toLowerCase() === classLower &&
+                (c.approvalStatus === "approved" || c.published)
+              ) {
+                countedIds.add(idStr);
+              }
+            });
+          }
+
+          const studentCoursesCount = countedIds.size;
 
           return (
             <div

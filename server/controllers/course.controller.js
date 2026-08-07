@@ -418,7 +418,7 @@ export const enrolledCourses = async (req, res) => {
     const studentId = req.user._id;
 
     const student = await User.findById(studentId)
-      .select("quizSubmissions subscription selectedClass courseProgress")
+      .select("quizSubmissions subscription selectedClass courseProgress planExcludedCourses")
       .lean();
 
     const query = { $or: [{ students: studentId }] };
@@ -426,6 +426,12 @@ export const enrolledCourses = async (req, res) => {
     if (student?.subscription?.status === "active" && student?.selectedClass) {
       const escapedClass = student.selectedClass.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
       query.$or.push({ category: new RegExp(`^${escapedClass}$`, "i") });
+    }
+
+    // Exclude courses an admin has explicitly removed from this student's plan access
+    const excludedIds = (student?.planExcludedCourses ?? []).map((id) => id.toString());
+    if (excludedIds.length > 0) {
+      query._id = { $nin: student.planExcludedCourses };
     }
 
     const courses = await Course.find(query)
@@ -1217,3 +1223,62 @@ export const toggleStudentInstructorAssistance = async (req, res) => {
   }
 };
 
+
+// ── togglePlanCourseExclusion ─────────────────────────────────────────────────
+// POST /courses/plan-exclude
+// Adds or removes a course from a student's planExcludedCourses array.
+// excluded: true  → student can no longer access this course via their plan
+// excluded: false → restore plan access (remove from exclusion list)
+// Also handles instructorAssistanceCourses in the same call so the admin can
+// set assistance state at the same time as toggling exclusion.
+export const togglePlanCourseExclusion = async (req, res) => {
+  try {
+    const { studentId, courseId, excluded, assistanceEnabled } = req.body;
+
+    if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ message: "Valid studentId is required." });
+    }
+    if (!courseId || !mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: "Valid courseId is required." });
+    }
+
+    const canEdit =
+      hasBaseRole(req.user, "admin") ||
+      hasPermissionGrant(req.user, "users", "edit") ||
+      hasBaseRole(req.user, "staff");
+
+    if (!canEdit) {
+      return res.status(403).json({ message: "Access denied — admin or staff only." });
+    }
+
+    // Build the update atomically — exclusion toggle + optional assistance toggle
+    const update = {};
+
+    if (excluded === true) {
+      // Remove from plan: add to excluded list, strip any assistance
+      update.$addToSet = { planExcludedCourses: courseId };
+      update.$pull = { instructorAssistanceCourses: courseId };
+    } else {
+      // Restore plan access: remove from excluded list
+      update.$pull = { planExcludedCourses: courseId };
+    }
+
+    // If assistanceEnabled is explicitly passed (not undefined), honour it.
+    // Can't combine $addToSet and $pull on the same path in one op, so run
+    // the assistance update separately when needed.
+    await User.findByIdAndUpdate(studentId, update);
+
+    if (typeof assistanceEnabled === "boolean" && excluded !== true) {
+      const assistanceUpdate = assistanceEnabled
+        ? { $addToSet: { instructorAssistanceCourses: courseId } }
+        : { $pull: { instructorAssistanceCourses: courseId } };
+      await User.findByIdAndUpdate(studentId, assistanceUpdate);
+    }
+
+    await deleteKey(`user:${studentId}`);
+
+    res.json({ success: true, excluded: Boolean(excluded) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

@@ -145,15 +145,15 @@ const AdminSidebar = ({
       {/* ── Mobile backdrop ── */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-sm md:hidden"
+          className="fixed top-[64px] inset-x-0 bottom-0 z-30 bg-black/60 backdrop-blur-sm md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
       <aside
         className={`bg-slate-950 border-r border-slate-800 flex flex-col overflow-hidden
     transition-transform duration-300 ease-in-out
-    fixed inset-y-0 left-0 z-[200] shadow-[4px_0_24px_rgba(0,0,0,0.6)]
-    md:relative md:inset-y-auto md:h-auto md:shadow-none md:translate-x-0
+    fixed top-[64px] md:top-0 bottom-0 h-[calc(100vh-64px)] md:h-auto left-0 z-40 shadow-[4px_0_24px_rgba(0,0,0,0.6)]
+    md:relative md:inset-y-auto md:shadow-none md:translate-x-0
     ${collapsed ? "w-[68px] min-w-[68px]" : "w-[220px] min-w-[220px]"}
     ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
   `}

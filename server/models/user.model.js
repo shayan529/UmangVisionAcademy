@@ -231,6 +231,11 @@ const userSchema = new Schema(
       },
     ],
     purchasedPYQs: [{ type: String }],
+    // ── Plan access overrides ─────────────────────────────────────────────────
+    // Courses explicitly removed from a student's plan access by an admin.
+    // The enrolledCourses route excludes these from the subscription category
+    // query so the student can no longer access them even if the plan is active.
+    planExcludedCourses: [{ type: Types.ObjectId, ref: "Course" }],
     // ── Moderation fields ────────────────────────────────────────────────────
     isActive: { type: Boolean, default: true },
     banReason: { type: String, default: "" },
