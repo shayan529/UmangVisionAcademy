@@ -349,10 +349,15 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
         </div>
 
         {conv.course?.title && (
-          <div className="mt-1 flex items-center gap-1">
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <span className="inline-block text-[10px] text-indigo-400 font-semibold truncate px-2 py-0.5 bg-indigo-500/10 rounded-md border border-indigo-500/20">
               {conv.course.title}
             </span>
+            {conv.assistanceDisabled && (
+              <span className="inline-block text-[9px] text-amber-300 font-bold px-2 py-0.5 bg-amber-500/15 rounded-md border border-amber-500/30">
+                Assistance OFF
+              </span>
+            )}
           </div>
         )}
 
@@ -1223,7 +1228,7 @@ const AskInstructor = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={requestVideoCall}
-                  disabled={Boolean(activeCallRequest) || isSubmittingCall}
+                  disabled={Boolean(activeCallRequest) || isSubmittingCall || activeConversation?.assistanceDisabled}
                   title="Request a 1-on-1 Google Meet link"
                   className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-md shadow-indigo-600/20"
                 >
@@ -1247,6 +1252,19 @@ const AskInstructor = () => {
                 )}
               </div>
             </div>
+
+            {/* Assistance OFF Banner */}
+            {activeConversation?.assistanceDisabled && (
+              <div className="bg-amber-500/10 border-b border-amber-500/25 px-4 py-3 flex items-center justify-between gap-3 text-amber-200 text-xs shrink-0 animate-fadeIn">
+                <div className="flex items-center gap-2 font-bold">
+                  <Sparkles size={16} className="text-amber-400 shrink-0" />
+                  Instructor Assistance is turned OFF for this course.
+                </div>
+                <span className="text-[10px] font-extrabold text-amber-300 uppercase tracking-wider bg-amber-500/20 px-2.5 py-0.5 rounded-md border border-amber-500/30">
+                  Read-Only Mode
+                </span>
+              </div>
+            )}
 
             {/* Messages Body */}
             <div
@@ -1272,17 +1290,19 @@ const AskInstructor = () => {
                   </p>
 
                   {/* Quick Suggestions */}
-                  <div className="flex flex-wrap justify-center gap-2 max-w-md mt-3">
-                    {QUICK_PROMPTS.map((prompt, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => sendMessage(prompt)}
-                        className="text-[11px] text-indigo-300 hover:text-white bg-slate-900/80 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/40 px-3 py-1.5 rounded-full transition-all"
-                      >
-                        "{prompt}"
-                      </button>
-                    ))}
-                  </div>
+                  {!activeConversation?.assistanceDisabled && (
+                    <div className="flex flex-wrap justify-center gap-2 max-w-md mt-3">
+                      {QUICK_PROMPTS.map((prompt, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => sendMessage(prompt)}
+                          className="text-[11px] text-indigo-300 hover:text-white bg-slate-900/80 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/40 px-3 py-1.5 rounded-full transition-all"
+                        >
+                          "{prompt}"
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1361,12 +1381,14 @@ const AskInstructor = () => {
                   ref={fileInputRef}
                   onChange={handleFileChange}
                   multiple
+                  disabled={activeConversation?.assistanceDisabled || activeConversation?.isBlocked}
                   accept="image/*,application/pdf,video/mp4"
                   className="hidden"
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-2 rounded-xl text-slate-400 hover:text-indigo-400 hover:bg-slate-800/60 transition shrink-0"
+                  disabled={activeConversation?.assistanceDisabled || activeConversation?.isBlocked}
+                  className="p-2 rounded-xl text-slate-400 hover:text-indigo-400 hover:bg-slate-800/60 disabled:opacity-40 disabled:cursor-not-allowed transition shrink-0"
                   title="Attach media or document"
                 >
                   <Paperclip size={18} />
@@ -1374,15 +1396,20 @@ const AskInstructor = () => {
                 <textarea
                   value={text}
                   onChange={(e) => handleTyping(e.target.value)}
+                  disabled={activeConversation?.assistanceDisabled || activeConversation?.isBlocked}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
                       sendMessage();
                     }
                   }}
-                  placeholder="Type your question… (Press Enter to send, Shift+Enter for new line)"
+                  placeholder={
+                    activeConversation?.assistanceDisabled
+                      ? "Instructor assistance is turned OFF for this course."
+                      : "Type your question… (Press Enter to send, Shift+Enter for new line)"
+                  }
                   rows={1}
-                  className="flex-1 bg-transparent text-slate-100 text-sm py-2 outline-none resize-none max-h-32 overflow-y-auto uva-chat-scroll placeholder:text-slate-500 leading-relaxed"
+                  className="flex-1 bg-transparent text-slate-100 text-sm py-2 outline-none resize-none max-h-32 overflow-y-auto uva-chat-scroll placeholder:text-slate-500 leading-relaxed disabled:opacity-50 cursor-not-allowed"
                   style={{ minHeight: 40 }}
                 />
                 <button
@@ -1390,7 +1417,9 @@ const AskInstructor = () => {
                   disabled={
                     (!text.trim() && pendingMedia.length === 0) ||
                     sending ||
-                    uploading
+                    uploading ||
+                    activeConversation?.assistanceDisabled ||
+                    activeConversation?.isBlocked
                   }
                   className="p-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all shrink-0 shadow-md shadow-indigo-600/20 active:scale-95"
                 >

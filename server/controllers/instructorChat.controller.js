@@ -284,7 +284,23 @@ export const listConversations = async (req, res) => {
       Conversation.countDocuments(filter),
     ]);
 
-    res.json({ conversations: convs, total, page: Number(page) });
+    const isStudentUser = !isAdminOrStaff(req.user) && !hasBaseRole(req.user, "instructor");
+    let assistanceSet = new Set();
+    let hasActiveSub = false;
+
+    if (isStudentUser) {
+      const studentDoc = await User.findById(req.user._id).select("instructorAssistanceCourses subscription").lean();
+      assistanceSet = new Set((studentDoc?.instructorAssistanceCourses || []).map((id) => id.toString()));
+      hasActiveSub = studentDoc?.subscription?.status === "active";
+    }
+
+    const enhancedConvs = convs.map((c) => {
+      const courseIdStr = c.course?._id?.toString() || c.course?.toString();
+      const assistanceDisabled = isStudentUser && Boolean(courseIdStr) && !assistanceSet.has(courseIdStr) && !hasActiveSub;
+      return { ...c, assistanceDisabled };
+    });
+
+    res.json({ conversations: enhancedConvs, total, page: Number(page) });
   } catch (err) {
     console.error("[instructorChat] listConversations:", err);
     res.status(500).json({ message: err.message });
@@ -312,6 +328,15 @@ export const submitCallRequest = async (req, res) => {
       return res
         .status(403)
         .json({ message: "Only the student can request a call" });
+
+    if (conv.course) {
+      const studentDoc = await User.findById(req.user._id).select("instructorAssistanceCourses subscription").lean();
+      const assistanceSet = new Set((studentDoc?.instructorAssistanceCourses || []).map((id) => id.toString()));
+      const hasActiveSub = studentDoc?.subscription?.status === "active";
+      if (!assistanceSet.has(conv.course._id.toString()) && !hasActiveSub) {
+        return res.status(403).json({ message: "Instructor assistance is disabled for this course." });
+      }
+    }
 
     const existing = await CallRequest.findOne({
       conversation: conversationId,

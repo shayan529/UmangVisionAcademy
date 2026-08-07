@@ -181,6 +181,17 @@ function registerInstructorChat(io) {
           });
         }
 
+        if (isStudent && conv.course) {
+          const studentDoc = await User.findById(me._id).select("instructorAssistanceCourses subscription").lean();
+          const assistanceSet = new Set((studentDoc?.instructorAssistanceCourses || []).map((id) => id.toString()));
+          const hasActiveSub = studentDoc?.subscription?.status === "active";
+          if (!assistanceSet.has(conv.course.toString()) && !hasActiveSub) {
+            return socket.emit("ic:error", {
+              message: "Instructor Assistance is disabled for this course.",
+            });
+          }
+        }
+
         // Sanitise media list
         const safeMedia = (Array.isArray(media) ? media : [])
           .filter((m) => m?.url)
