@@ -109,6 +109,9 @@ export const API_ENDPOINTS = {
     CONVERSATIONS: "/instructor-chat/conversations",
     CONVERSATION: (id) => `/instructor-chat/conversations/${id}`,
     ARCHIVE: (id) => `/instructor-chat/conversations/${id}/archive`,
+    DELETE_CONVERSATION: (id) => `/instructor-chat/conversations/${id}`,
+    BLOCK_CONVERSATION: (id) => `/instructor-chat/conversations/${id}/block`,
+    REPORT_CONVERSATION: (id) => `/instructor-chat/conversations/${id}/report`,
     DELETE_MESSAGE: (id, mid) =>
       `/instructor-chat/conversations/${id}/messages/${mid}`,
     CALL_REQUESTS: "/instructor-chat/call-requests",

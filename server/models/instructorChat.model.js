@@ -78,6 +78,16 @@ const conversationSchema = new Schema(
     },
     // Soft-close: instructor or admin can archive a resolved thread
     archived: { type: Boolean, default: false },
+    // Block status: instructor can block student from sending messages
+    isBlocked: { type: Boolean, default: false },
+    blockedBy: { type: Types.ObjectId, ref: "User", default: null },
+    blockedReason: { type: String, trim: true, default: "" },
+    // Report status: instructor can report student behavior
+    isReported: { type: Boolean, default: false },
+    reportReason: { type: String, trim: true, default: "" },
+    reportDetails: { type: String, trim: true, default: "" },
+    reportedAt: { type: Date, default: null },
+    reportedBy: { type: Types.ObjectId, ref: "User", default: null },
   },
   { timestamps: true },
 );

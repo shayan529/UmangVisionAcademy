@@ -35,7 +35,7 @@ const room = (convId) => `ichat:${convId}`;
 async function assertParticipant(userId, conversationId) {
   if (!Types.ObjectId.isValid(conversationId)) return null;
   const conv = await Conversation.findById(conversationId)
-    .select("student instructor archived")
+    .select("student instructor archived isBlocked blockedBy")
     .lean();
   if (!conv) return null;
   const uid = userId.toString();
@@ -174,6 +174,12 @@ function registerInstructorChat(io) {
 
         const isStudent = conv.student.toString() === me._id.toString();
         const senderRole = isStudent ? "student" : "instructor";
+
+        if (conv.isBlocked && isStudent) {
+          return socket.emit("ic:error", {
+            message: "This chat has been blocked by the instructor.",
+          });
+        }
 
         // Sanitise media list
         const safeMedia = (Array.isArray(media) ? media : [])

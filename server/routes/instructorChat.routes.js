@@ -12,6 +12,9 @@ import {
   listCallRequests,
   approveCallRequest,
   rejectCallRequest,
+  deleteConversation,
+  toggleBlockConversation,
+  reportConversation,
 } from "../controllers/instructorChat.controller.js";
 
 const router = express.Router();
@@ -46,6 +49,9 @@ router.post("/conversations", studentOnly, getOrCreateConversation);
 router.get("/conversations", canAccessChat, listConversations);
 router.get("/conversations/:id", canAccessChat, getConversation);
 router.patch("/conversations/:id/archive", canAccessChat, archiveConversation);
+router.delete("/conversations/:id", canAccessChat, deleteConversation);
+router.patch("/conversations/:id/block", canAccessChat, toggleBlockConversation);
+router.post("/conversations/:id/report", canAccessChat, reportConversation);
 router.delete("/conversations/:id/messages/:mid", canAccessChat, deleteMessage);
 
 // Call request workflow

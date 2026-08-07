@@ -700,3 +700,121 @@ export const getAvailableInstructors = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// ── DELETE /conversations/:id ──────────────────────────────────────────────────
+export const deleteConversation = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!Types.ObjectId.isValid(id))
+      return res.status(400).json({ message: "Invalid conversation id" });
+
+    const conv = await Conversation.findById(id).select("instructor student");
+    if (!conv)
+      return res.status(404).json({ message: "Conversation not found" });
+
+    const uid = req.user._id.toString();
+    const isInstructor = conv.instructor?.toString() === uid;
+    const isStudent = conv.student?.toString() === uid;
+
+    if (!isInstructor && !isStudent && !isAdminOrStaff(req.user))
+      return res
+        .status(403)
+        .json({ message: "Only thread participants or admin can delete chat" });
+
+    await Conversation.findByIdAndDelete(id);
+    await CallRequest.deleteMany({ conversation: id });
+
+    emitIChatEvent(req, id, "ic:conversation-deleted", { conversationId: id });
+
+    res.json({ success: true, conversationId: id });
+  } catch (err) {
+    console.error("[instructorChat] deleteConversation:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── PATCH /conversations/:id/block ───────────────────────────────────────────
+export const toggleBlockConversation = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isBlocked = true, reason = "" } = req.body;
+
+    if (!Types.ObjectId.isValid(id))
+      return res.status(400).json({ message: "Invalid conversation id" });
+
+    const conv = await Conversation.findById(id);
+    if (!conv)
+      return res.status(404).json({ message: "Conversation not found" });
+
+    const uid = req.user._id.toString();
+    const isInstructor = conv.instructor.toString() === uid;
+
+    if (!isInstructor && !isAdminOrStaff(req.user))
+      return res
+        .status(403)
+        .json({ message: "Only the instructor or admin can block/unblock student" });
+
+    conv.isBlocked = Boolean(isBlocked);
+    conv.blockedBy = isBlocked ? req.user._id : null;
+    conv.blockedReason = isBlocked ? String(reason || "").trim().slice(0, 500) : "";
+    await conv.save();
+
+    emitIChatEvent(req, id, "ic:blocked-status", {
+      conversationId: id,
+      isBlocked: conv.isBlocked,
+      blockedReason: conv.blockedReason,
+    });
+
+    res.json({
+      success: true,
+      isBlocked: conv.isBlocked,
+      blockedReason: conv.blockedReason,
+    });
+  } catch (err) {
+    console.error("[instructorChat] toggleBlockConversation:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── POST /conversations/:id/report ────────────────────────────────────────────
+export const reportConversation = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason = "", details = "" } = req.body;
+
+    if (!Types.ObjectId.isValid(id))
+      return res.status(400).json({ message: "Invalid conversation id" });
+
+    if (!reason || !reason.trim())
+      return res.status(400).json({ message: "Report reason is required" });
+
+    const conv = await Conversation.findById(id);
+    if (!conv)
+      return res.status(404).json({ message: "Conversation not found" });
+
+    const uid = req.user._id.toString();
+    const isInstructor = conv.instructor.toString() === uid;
+
+    if (!isInstructor && !isAdminOrStaff(req.user))
+      return res
+        .status(403)
+        .json({ message: "Only the instructor or admin can report student" });
+
+    conv.isReported = true;
+    conv.reportReason = String(reason).trim().slice(0, 200);
+    conv.reportDetails = String(details || "").trim().slice(0, 1000);
+    conv.reportedAt = new Date();
+    conv.reportedBy = req.user._id;
+    await conv.save();
+
+    res.json({
+      success: true,
+      isReported: true,
+      reportReason: conv.reportReason,
+    });
+  } catch (err) {
+    console.error("[instructorChat] reportConversation:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
