@@ -1154,7 +1154,7 @@ const AskInstructor = () => {
 
       {/* ── Right Panel: Main Chat Window ── */}
       <div
-        className={`flex-1 flex flex-col min-w-0 bg-[#070b14] ${
+        className={`flex-1 flex flex-col min-w-0 bg-[#070b14] relative ${
           view !== "chat" ? "hidden md:flex" : "flex"
         }`}
       >
@@ -1224,7 +1224,7 @@ const AskInstructor = () => {
                 </div>
               </div>
 
-              {/* Action Toolbar */}
+            {/* Action Toolbar */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={requestVideoCall}
@@ -1253,16 +1253,76 @@ const AskInstructor = () => {
               </div>
             </div>
 
-            {/* Assistance OFF Banner */}
+            {/* Backdrop Blur Lock Overlay & Upgrade Popup */}
             {activeConversation?.assistanceDisabled && (
-              <div className="bg-amber-500/10 border-b border-amber-500/25 px-4 py-3 flex items-center justify-between gap-3 text-amber-200 text-xs shrink-0 animate-fadeIn">
-                <div className="flex items-center gap-2 font-bold">
-                  <Sparkles size={16} className="text-amber-400 shrink-0" />
-                  Instructor Assistance is turned OFF for this course.
+              <div className="absolute inset-0 z-30 flex items-center justify-center bg-[#070b14]/75 backdrop-blur-md p-4 animate-fadeIn">
+                <div className="w-full max-w-md rounded-3xl border border-indigo-500/40 bg-[#0f172a]/95 p-6 sm:p-7 shadow-2xl shadow-indigo-950/80 text-center relative overflow-hidden">
+                  {/* Background Glow */}
+                  <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+                  <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
+
+                  {/* Header Icon */}
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-700 flex items-center justify-center text-white mx-auto shadow-lg shadow-indigo-600/30 mb-4">
+                    <Sparkles size={30} />
+                  </div>
+
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-extrabold uppercase tracking-wider mb-2">
+                    ✨ Access Instructor Assistance
+                  </span>
+
+                  <h3 className="text-xl font-black text-white leading-tight">
+                    Unlock Direct Instructor Support
+                  </h3>
+
+                  <p className="text-slate-300 text-xs mt-2 leading-relaxed">
+                    Instructor Assistance is currently turned OFF for <span className="text-white font-bold">{activeConversation.course?.title || "this course"}</span>.
+                  </p>
+
+                  {/* Benefits Box */}
+                  <div className="mt-5 space-y-2.5 text-left bg-slate-900/80 rounded-2xl border border-slate-800 p-4">
+                    <p className="text-[11px] font-extrabold text-indigo-400 uppercase tracking-wider mb-1">
+                      Instructor Assistance Benefits:
+                    </p>
+                    <div className="flex items-center gap-2.5 text-xs text-slate-200">
+                      <ShieldCheck size={16} className="text-emerald-400 shrink-0" />
+                      <span>1-on-1 Direct Q&A with course instructors</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-xs text-slate-200">
+                      <Video size={16} className="text-indigo-400 shrink-0" />
+                      <span>Priority 1-on-1 Google Meet video sessions</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-xs text-slate-200">
+                      <BookOpen size={16} className="text-sky-400 shrink-0" />
+                      <span>Detailed doubt explanations & study support</span>
+                    </div>
+                  </div>
+
+                  {/* Upgrade Price Highlight */}
+                  <div className="mt-5 p-3.5 rounded-2xl bg-gradient-to-r from-indigo-950/60 to-violet-950/60 border border-indigo-500/30 flex items-center justify-between gap-3">
+                    <div className="text-left">
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                        Upgrade Option
+                      </p>
+                      <p className="text-sm font-extrabold text-white">
+                        Buy with Assistance
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs text-slate-400 line-through mr-1.5">₹500</span>
+                      <span className="text-base font-black text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-xl border border-amber-500/30">
+                        Pay ₹400 More
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <button
+                    onClick={() => navigate("/courses")}
+                    className="w-full mt-5 bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold py-3.5 px-6 rounded-2xl shadow-xl shadow-indigo-600/30 text-xs transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <Sparkles size={16} /> Unlock Instructor Assistance (Pay ₹400 More)
+                  </button>
                 </div>
-                <span className="text-[10px] font-extrabold text-amber-300 uppercase tracking-wider bg-amber-500/20 px-2.5 py-0.5 rounded-md border border-amber-500/30">
-                  Read-Only Mode
-                </span>
               </div>
             )}
 
