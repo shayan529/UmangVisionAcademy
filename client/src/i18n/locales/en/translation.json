@@ -268,7 +268,8 @@
     }
   },
   "courseCard": {
-    "viewDemo": "View Demo",
+    "viewDemo": "View Details",
+    "viewDetails": "View Details",
     "enrollNow": "Enroll Now",
     "buyNow": "Buy Now",
     "continueLearning": "Continue Learning →",

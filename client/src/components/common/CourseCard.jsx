@@ -170,7 +170,7 @@ const CourseCard = ({ course }) => {
                       onClick={(e) => e.stopPropagation()}
                       className="w-full border border-slate-500 hover:border-slate-300 text-slate-200 hover:text-white hover:bg-slate-600/40 transition py-1.5 md:py-2.5 rounded-lg text-xs md:text-sm font-bold text-center cursor-pointer"
                     >
-                      {t("courseCard.viewDemo")}
+                      {t("courseCard.viewDetails", "View Details")}
                     </button>
                   </Link>
                 )}
