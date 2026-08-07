@@ -749,6 +749,22 @@ const CustomYouTubePlayer = ({ videoId, title }) => {
 const SessionRoom = ({ session, currentUser, onLeave }) => {
   const videoId = extractYouTubeId(session.url);
 
+  // Detect the type of link so we can show an appropriate UI
+  const url = session.url || "";
+  const isGoogleMeet = /meet\.google\.com/i.test(url);
+  const isZoom = /zoom\.us\/j/i.test(url);
+  const isTeams = /teams\.microsoft\.com/i.test(url);
+  const isLiveLink = isGoogleMeet || isZoom || isTeams;
+
+  // Icon + label per platform
+  const getLivePlatform = () => {
+    if (isGoogleMeet) return { name: "Google Meet", icon: "🎥", color: "#4285F4", bg: "#e8f0fe" };
+    if (isZoom)       return { name: "Zoom", icon: "💻", color: "#2D8CFF", bg: "#e6f2ff" };
+    if (isTeams)      return { name: "Microsoft Teams", icon: "🟣", color: "#6264A7", bg: "#edecf4" };
+    return { name: "Live Session", icon: "🔗", color: "#7c3aed", bg: "#ede9fe" };
+  };
+  const platform = getLivePlatform();
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
@@ -785,9 +801,10 @@ const SessionRoom = ({ session, currentUser, onLeave }) => {
 
       {/* Video + Chat — side by side like YouTube */}
       <div className="flex flex-col lg:flex-row gap-5 items-start">
-        {/* Video column */}
+        {/* Video / Meeting column */}
         <div className="flex-1 min-w-0 w-full">
           {videoId ? (
+            /* ── YouTube embed ── */
             <div
               className="relative w-full rounded-2xl overflow-hidden bg-black shadow-lg shadow-black/40"
               style={{ paddingTop: "56.25%" }}
@@ -796,23 +813,93 @@ const SessionRoom = ({ session, currentUser, onLeave }) => {
                 <CustomYouTubePlayer videoId={videoId} title={session.title} />
               </div>
             </div>
-          ) : (
-            <div className="w-full rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center py-20">
-              <div className="text-center">
-                <p className="text-slate-400 mb-3">
-                  Could not parse a YouTube URL from this session.
+          ) : isLiveLink ? (
+            /* ── Google Meet / Zoom / Teams join card ── */
+            <div className="w-full rounded-2xl bg-slate-900 border border-slate-700 overflow-hidden shadow-lg shadow-black/30">
+              {/* Animated gradient top bar */}
+              <div
+                className="h-1.5 w-full"
+                style={{
+                  background: `linear-gradient(90deg, ${platform.color}80, ${platform.color}, ${platform.color}80)`,
+                  backgroundSize: "200% 100%",
+                  animation: "shimmer 2s linear infinite",
+                }}
+              />
+              <div className="flex flex-col items-center justify-center py-16 px-8 gap-6 text-center">
+                {/* Platform icon badge */}
+                <div
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl shadow-xl"
+                  style={{ background: `${platform.color}18`, border: `2px solid ${platform.color}40` }}
+                >
+                  {platform.icon}
+                </div>
+
+                <div>
+                  <p className="text-slate-400 text-sm font-medium uppercase tracking-widest mb-1">
+                    Live Session
+                  </p>
+                  <h3 className="text-white text-xl font-bold mb-1">{session.title}</h3>
+                  <p className="text-slate-500 text-sm">
+                    This session is hosted on <span className="font-semibold" style={{ color: platform.color }}>{platform.name}</span>.
+                  </p>
+                </div>
+
+                {/* Live dot + time */}
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800 border border-slate-700 text-sm text-slate-300">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                  </span>
+                  📅 {session.date} &nbsp;·&nbsp; 🕒 {format12Hour(session.time)}
+                </div>
+
+                {/* Join button */}
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-white text-base transition-all duration-200 hover:scale-105 hover:shadow-2xl active:scale-95"
+                  style={{
+                    background: `linear-gradient(135deg, ${platform.color}, ${platform.color}cc)`,
+                    boxShadow: `0 4px 24px ${platform.color}50`,
+                  }}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+                  </svg>
+                  Join on {platform.name}
+                </a>
+
+                <p className="text-slate-600 text-xs">
+                  Opens in a new tab — make sure pop-ups are allowed.
                 </p>
-                {session.url && (
-                  <a
-                    href={session.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-purple-400 underline text-sm"
-                  >
-                    Open link manually
-                  </a>
-                )}
               </div>
+            </div>
+          ) : url ? (
+            /* ── Generic external link ── */
+            <div className="w-full rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center py-20">
+              <div className="text-center flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-3xl">
+                  🔗
+                </div>
+                <p className="text-slate-400 text-sm">This session uses an external link.</p>
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm transition"
+                >
+                  Open Session Link
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          ) : (
+            /* ── No URL at all ── */
+            <div className="w-full rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center py-20">
+              <p className="text-slate-500 text-sm">No session link has been added yet.</p>
             </div>
           )}
         </div>
@@ -825,6 +912,7 @@ const SessionRoom = ({ session, currentUser, onLeave }) => {
     </div>
   );
 };
+
 
 // ─── Session Card ─────────────────────────────────────────────────────────────
 
