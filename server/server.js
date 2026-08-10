@@ -147,7 +147,8 @@ app.use(cors(corsOptions));
 // STEP 2: Explicitly handle OPTIONS preflight requests for ALL routes BEFORE
 // the rate limiter. Without this, preflight requests get rate-limited first
 // and the CORS headers never reach the browser.
-app.options("*", cors(corsOptions));
+// Note: bare "*" is not supported in newer path-to-regexp — use regex instead.
+app.options(/.*/, cors(corsOptions));
 
 app.use(
   helmet({
