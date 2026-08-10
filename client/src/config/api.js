@@ -1,22 +1,23 @@
 import axios from "axios";
 
 // ── Environment detection ─────────────────────────────────────────────────────
-const IS_LOCAL = typeof window !== "undefined" && (
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1" ||
-  window.location.hostname.startsWith("192.168.") ||
-  window.location.hostname.startsWith("10.")
-);
+const IS_LOCAL =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname.startsWith("192.168.") ||
+    window.location.hostname.startsWith("10."));
 
 // Vercel hosts both frontend and backend on the SAME origin.
 // vercel.json rewrites: /api/* → server/server.js, /socket.io/* → server/server.js
-const IS_VERCEL = typeof window !== "undefined" && (
-  window.location.hostname.includes("vercel.app") ||
-  window.location.hostname.includes("umangvisionacademy.com")
-);
+const IS_VERCEL =
+  typeof window !== "undefined" &&
+  (window.location.hostname.includes("vercel.app") ||
+    window.location.hostname.includes("umangvisionacademy.com"));
 
 // Fallback for when served from Render directly
-const IS_RENDER = typeof window !== "undefined" &&
+const IS_RENDER =
+  typeof window !== "undefined" &&
   window.location.hostname.includes("onrender.com");
 
 const getDefaultApiBaseUrl = () => {
@@ -51,30 +52,31 @@ export const SOCKET_URL =
 // every request is a new HTTP invocation, so long-lived connections are killed.
 // Solution: use polling-only on Vercel (HTTP long-poll works fine through
 // serverless). On local dev, start with polling then upgrade to WS as usual.
-export const SOCKET_OPTIONS = IS_VERCEL || IS_RENDER
-  ? {
-      // Polling only — no WebSocket upgrade attempted.
-      // This is reliable on Vercel serverless even though it's slightly less
-      // efficient than WebSockets (latency is ~200–500 ms per poll cycle).
-      transports: ["polling"],
-      upgrade: false,
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 2000,
-      reconnectionDelayMax: 10000,
-      timeout: 20000,
-    }
-  : {
-      // Local dev: start with polling and auto-upgrade to WS when available
-      transports: ["polling", "websocket"],
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      timeout: 20000,
-    };
-
-
+export const SOCKET_OPTIONS =
+  IS_VERCEL || IS_RENDER
+    ? {
+        // Polling only — no WebSocket upgrade attempted.
+        // This is reliable on Vercel serverless even though it's slightly less
+        // efficient than WebSockets (latency is ~200–500 ms per poll cycle).
+        transports: ["polling"],
+        upgrade: false,
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 2000,
+        reconnectionDelayMax: 10000,
+        timeout: 20000,
+        path: "/socket.io",
+      }
+    : {
+        // Local dev: start with polling and auto-upgrade to WS when available
+        transports: ["polling", "websocket"],
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 20000,
+        path: "/socket.io",
+      };
 
 export const API_ENDPOINTS = {
   // Auth endpoints
@@ -141,7 +143,8 @@ export const API_ENDPOINTS = {
       `/instructor-chat/call-requests/${id}/approve`,
     CALL_REQUEST_REJECT: (id) => `/instructor-chat/call-requests/${id}/reject`,
     ADMIN_REPORTS: "/instructor-chat/admin/reports",
-    ADMIN_REPORT_MESSAGES: (id) => `/instructor-chat/admin/reports/${id}/messages`,
+    ADMIN_REPORT_MESSAGES: (id) =>
+      `/instructor-chat/admin/reports/${id}/messages`,
     ADMIN_REPORT_ACTION: (id) => `/instructor-chat/admin/reports/${id}/action`,
   },
 

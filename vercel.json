@@ -19,7 +19,11 @@
       "destination": "/server/server.js"
     },
     {
-      "source": "/socket.io/(.*)",
+      "source": "/socket.io",
+      "destination": "/server/server.js"
+    },
+    {
+      "source": "/socket.io/:path*",
       "destination": "/server/server.js"
     },
     {
