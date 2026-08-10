@@ -20,23 +20,28 @@ const IS_RENDER =
   typeof window !== "undefined" &&
   window.location.hostname.includes("onrender.com");
 
+const BACKEND_URLS = [
+  "https://umangvisionacademy.onrender.com",
+  "https://umangvisionacademy-42sz.onrender.com",
+];
+
+const getRandomBackendUrl = () => {
+  const index = Math.floor(Math.random() * BACKEND_URLS.length);
+  return BACKEND_URLS[index];
+};
+
 const getDefaultApiBaseUrl = () => {
   if (typeof window !== "undefined") {
     if (IS_LOCAL) return `http://${window.location.hostname}:5000/api`;
-    // Same-origin proxy on Vercel — no CORS needed
-    if (IS_VERCEL || IS_RENDER) return `${window.location.origin}/api`;
   }
-  return "https://umangvisionacademy.onrender.com/api";
+  return `${getRandomBackendUrl()}/api`;
 };
 
 const getDefaultSocketUrl = () => {
   if (typeof window !== "undefined") {
     if (IS_LOCAL) return `http://${window.location.hostname}:5000`;
-    // On Vercel: socket.io is routed via vercel.json → server/server.js
-    // Use same origin so the /socket.io/* rewrite applies.
-    if (IS_VERCEL || IS_RENDER) return window.location.origin;
   }
-  return "https://umangvisionacademy.onrender.com";
+  return getRandomBackendUrl();
 };
 
 export const API_BASE_URL =
