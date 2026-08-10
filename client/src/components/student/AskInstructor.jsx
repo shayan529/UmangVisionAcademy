@@ -123,11 +123,11 @@ const CustomStyles = () => (
 // ── Date divider ──────────────────────────────────────────────────────────────
 const DateDivider = ({ label }) => (
   <div className="flex items-center gap-3 my-6 select-none px-4">
-    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#222c3f] to-transparent" />
-    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 bg-[#151c28] border border-[#222c3f] px-4 py-1 rounded-full shadow-sm">
+    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#223068] to-transparent" />
+    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-300 bg-[#101738] border border-[#223068] px-4 py-1 rounded-full shadow-sm">
       {label}
     </span>
-    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#222c3f] to-transparent" />
+    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#223068] to-transparent" />
   </div>
 );
 
@@ -136,20 +136,20 @@ const ImageModal = ({ src, alt, onClose }) => {
   if (!src) return null;
   return (
     <div
-      className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 pro-msg-in"
+      className="fixed inset-0 z-[99999] bg-[#050712]/95 backdrop-blur-md flex items-center justify-center p-4 pro-msg-in"
       onClick={onClose}
     >
       <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center">
         <button
           onClick={onClose}
-          className="absolute -top-12 right-0 p-2 text-zinc-400 hover:text-white bg-[#151c28] border border-[#222c3f] rounded-full transition cursor-pointer"
+          className="absolute -top-12 right-0 p-2 text-zinc-300 hover:text-white bg-[#101738] border border-[#223068] rounded-full transition cursor-pointer"
         >
           <X size={20} />
         </button>
         <img
           src={src}
           alt={alt || "Full preview"}
-          className="max-w-full max-h-[85vh] object-contain rounded-2xl border border-[#222c3f] shadow-2xl"
+          className="max-w-full max-h-[85vh] object-contain rounded-2xl border border-[#223068] shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         />
         <a
@@ -182,7 +182,7 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
       <div
         className={`flex ${isMe ? "justify-end" : "justify-start"} ${groupStart ? "mt-3" : "mt-1"} px-2`}
       >
-        <span className="text-[11px] text-zinc-500 italic px-3.5 py-1.5 rounded-2xl border border-[#222c3f] bg-[#151c28]/60 flex items-center gap-1.5">
+        <span className="text-[11px] text-zinc-400 italic px-3.5 py-1.5 rounded-2xl border border-[#223068] bg-[#101738]/60 flex items-center gap-1.5">
           <Trash2 size={11} className="opacity-60" /> Message deleted
         </span>
       </div>
@@ -202,13 +202,13 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
         {/* Message Actions Menu on Hover */}
         {hover && (
           <div
-            className={`absolute top-0 -translate-y-1/2 z-20 flex items-center gap-1 bg-[#151c28] border border-[#222c3f] rounded-xl p-1 shadow-xl backdrop-blur-md transition-all ${isMe ? "right-0 translate-x-2" : "left-0 -translate-x-2"
+            className={`absolute top-0 -translate-y-1/2 z-20 flex items-center gap-1 bg-[#101738] border border-[#2e418b] rounded-xl p-1 shadow-xl backdrop-blur-md transition-all ${isMe ? "right-0 translate-x-2" : "left-0 -translate-x-2"
               }`}
           >
             {msg.text && (
               <button
                 onClick={copyText}
-                className="p-1.5 rounded-lg hover:bg-[#1e2738] text-zinc-400 hover:text-emerald-400 transition cursor-pointer"
+                className="p-1.5 rounded-lg hover:bg-[#182352] text-zinc-300 hover:text-emerald-400 transition cursor-pointer"
                 title="Copy text"
               >
                 <Copy size={12} />
@@ -217,7 +217,7 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
             {isMe && onDelete && (
               <button
                 onClick={() => onDelete(msg._id)}
-                className="p-1.5 rounded-lg hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 transition cursor-pointer"
+                className="p-1.5 rounded-lg hover:bg-rose-500/20 text-zinc-300 hover:text-rose-400 transition cursor-pointer"
                 title="Delete message"
               >
                 <Trash2 size={12} />
@@ -233,7 +233,7 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
               className={`px-4 py-3 text-[13.5px] leading-relaxed break-words shadow-md transition-all ${isMe
                   ? `bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white rounded-[22px] ${groupEnd ? "rounded-br-xs" : ""
                   }`
-                  : `bg-[#151c28] border border-[#222c3f] text-zinc-100 rounded-[22px] ${groupEnd ? "rounded-bl-xs" : ""
+                  : `bg-[#101738] border border-[#223068] text-zinc-100 rounded-[22px] ${groupEnd ? "rounded-bl-xs" : ""
                   }`
                 }`}
             >
@@ -245,7 +245,7 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
           {(msg.media ?? []).map((m, i) => (
             <div key={i} className={msg.text || i > 0 ? "mt-2" : ""}>
               {m.mimeType?.startsWith("image/") ? (
-                <div className="relative group/img overflow-hidden rounded-2xl border border-[#222c3f] shadow-md bg-[#0e131d]">
+                <div className="relative group/img overflow-hidden rounded-2xl border border-[#223068] shadow-md bg-[#090e24]">
                   <img
                     src={m.url}
                     alt={m.filename || "image"}
@@ -265,7 +265,7 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
                   href={m.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 bg-[#151c28] hover:bg-[#1b2434] border border-[#222c3f] text-zinc-200 text-xs px-4 py-3 rounded-2xl transition-all shadow-md group/file"
+                  className="flex items-center gap-3 bg-[#101738] hover:bg-[#182352] border border-[#223068] text-zinc-200 text-xs px-4 py-3 rounded-2xl transition-all shadow-md group/file"
                 >
                   <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover/file:scale-110 transition-transform">
                     <FileText size={18} />
@@ -311,14 +311,14 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-start gap-3.5 p-3.5 rounded-2xl text-left transition-all duration-200 border relative overflow-hidden group cursor-pointer ${isActive
-          ? "bg-[#1c273a] border-emerald-500/60 shadow-lg shadow-emerald-950/30"
-          : "border-[#222c3f] hover:border-[#2e3b54] bg-[#151c28] hover:bg-[#1a2333]"
+      className={`w-full flex items-start gap-3.5 p-3.5 rounded-2xl text-left transition-all duration-200 relative overflow-hidden group cursor-pointer ${isActive
+          ? "bg-[#0e1736] border-2 border-emerald-500 shadow-xl shadow-emerald-500/15 ring-1 ring-emerald-500/40"
+          : "bg-[#131b3e] border border-[#223062] hover:bg-[#182352] hover:border-[#2f438a]"
         }`}
     >
       {/* Active Left Indicator Bar */}
       {isActive && (
-        <span className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-r" />
+        <span className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-400 via-teal-400 to-emerald-500 rounded-r" />
       )}
 
       {/* Instructor Avatar with Online Indicator */}
@@ -327,20 +327,20 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
           <img
             src={instructor.avatarUrl}
             alt={instructor.name}
-            className="w-11 h-11 rounded-2xl object-cover ring-1 ring-[#222c3f]"
+            className="w-11 h-11 rounded-2xl object-cover ring-1 ring-[#223062]"
           />
         ) : (
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 flex items-center justify-center text-white font-bold text-sm shadow-sm">
             {initialOf(instructor?.name)}
           </div>
         )}
-        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#151c28] rounded-full shadow-xs" />
+        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#131b3e] rounded-full shadow-xs" />
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-1 mb-1">
           <div className="flex items-center gap-1.5 truncate">
-            <span className="font-bold text-[13px] text-zinc-100 truncate group-hover:text-white transition-colors">
+            <span className="font-bold text-[13px] text-white truncate transition-colors">
               {instructor?.name || "Instructor"}
             </span>
             <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.2 rounded-md shrink-0">
@@ -740,8 +740,8 @@ const AskInstructor = () => {
 
       {/* Approved Meet link Modal */}
       {approvedMeeting && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 pro-msg-in">
-          <div className="w-full max-w-md rounded-3xl border border-emerald-500/50 bg-[#0d121c] p-6 sm:p-7 shadow-2xl">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#050712]/85 backdrop-blur-md p-4 pro-msg-in">
+          <div className="w-full max-w-md rounded-3xl border border-emerald-500/50 bg-[#0e1432] p-6 sm:p-7 shadow-2xl">
             <div className="flex items-center gap-3.5 text-emerald-400 font-bold">
               <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shadow-inner">
                 <Video size={24} />
@@ -752,11 +752,11 @@ const AskInstructor = () => {
               </div>
             </div>
             {approvedMeeting.response && (
-              <p className="mt-4 text-xs text-zinc-300 bg-[#151c28] p-3.5 rounded-xl border border-[#222c3f] leading-relaxed">
+              <p className="mt-4 text-xs text-zinc-300 bg-[#101738] p-3.5 rounded-xl border border-[#223068] leading-relaxed">
                 "{approvedMeeting.response}"
               </p>
             )}
-            <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-[#060910] p-4">
+            <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-[#080b18] p-4">
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">
                 Meeting URL
               </span>
@@ -775,7 +775,7 @@ const AskInstructor = () => {
               </a>
               <button
                 onClick={() => setApprovedMeeting(null)}
-                className="rounded-xl border border-[#222c3f] px-4 py-3 text-xs font-bold text-zinc-300 transition hover:border-zinc-500 hover:text-white cursor-pointer"
+                className="rounded-xl border border-[#223068] px-4 py-3 text-xs font-bold text-zinc-300 transition hover:border-zinc-500 hover:text-white cursor-pointer"
               >
                 Dismiss
               </button>
@@ -786,11 +786,11 @@ const AskInstructor = () => {
 
       {/* ── Left Sidebar Pane ── */}
       <div
-        className={`flex flex-col w-full md:w-[360px] lg:w-[400px] border-r border-[#1e2538] bg-[#000000] shrink-0 ${view === "chat" ? "hidden md:flex" : "flex"
+        className={`flex flex-col w-full md:w-[360px] lg:w-[400px] border-r border-[#1a244d] bg-[#080b18] shrink-0 ${view === "chat" ? "hidden md:flex" : "flex"
           }`}
       >
         {/* Header Bar */}
-        <div className="p-4 sm:p-5 border-b border-[#1e2538] shrink-0 space-y-3.5 bg-[#060910]">
+        <div className="p-4 sm:p-5 border-b border-[#1a244d] shrink-0 space-y-3.5 bg-[#0b1028]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
@@ -827,7 +827,7 @@ const AskInstructor = () => {
               value={threadSearch}
               onChange={(e) => setThreadSearch(e.target.value)}
               placeholder="Search conversations or subjects…"
-              className="w-full bg-[#151c28] border border-[#222c3f] text-zinc-100 text-xs rounded-xl pl-9 pr-8 py-2.5 outline-none focus:border-emerald-500/80 transition-all placeholder:text-zinc-500 font-medium"
+              className="w-full bg-[#101738] border border-[#223068] text-zinc-100 text-xs rounded-xl pl-9 pr-8 py-2.5 outline-none focus:border-emerald-500/80 transition-all placeholder:text-zinc-500 font-medium"
             />
             {threadSearch && (
               <button
@@ -840,7 +840,7 @@ const AskInstructor = () => {
           </div>
 
           {/* Filter Pills */}
-          <div className="flex gap-1.5 p-1 bg-[#0e131d] border border-[#1e2538] rounded-xl">
+          <div className="flex gap-1.5 p-1 bg-[#0e1432] border border-[#1a244d] rounded-xl">
             <button
               onClick={() => {
                 setView("threads");
@@ -890,12 +890,12 @@ const AskInstructor = () => {
                 {[0, 1, 2].map((i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-[#151c28]/60 animate-pulse border border-[#222c3f]"
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-[#101738]/60 animate-pulse border border-[#223068]"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-[#1a2333] shrink-0" />
+                    <div className="w-12 h-12 rounded-xl bg-[#182352] shrink-0" />
                     <div className="flex-1 space-y-2">
-                      <div className="h-3.5 w-3/4 bg-[#1a2333] rounded" />
-                      <div className="h-2.5 w-1/2 bg-[#1a2333]/60 rounded" />
+                      <div className="h-3.5 w-3/4 bg-[#182352] rounded" />
+                      <div className="h-2.5 w-1/2 bg-[#182352]/60 rounded" />
                     </div>
                   </div>
                 ))}
@@ -903,7 +903,7 @@ const AskInstructor = () => {
             )}
 
             {!availableLoading && availableInstructors.length === 0 && (
-              <div className="text-center py-12 px-4 bg-[#151c28]/50 rounded-3xl border border-[#222c3f] my-4 space-y-3">
+              <div className="text-center py-12 px-4 bg-[#101738]/50 rounded-3xl border border-[#223068] my-4 space-y-3">
                 <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto mb-1">
                   <Sparkles size={26} />
                 </div>
@@ -930,15 +930,15 @@ const AskInstructor = () => {
                     key={item.courseId}
                     onClick={() => setSelectedCourse(item)}
                     className={`w-full flex items-start gap-3.5 p-3.5 rounded-2xl border transition-all cursor-pointer ${isSelected
-                        ? "border-emerald-500 bg-[#1c273a] shadow-md shadow-emerald-950/40"
-                        : "border-[#222c3f] hover:border-[#2e3b54] bg-[#151c28] hover:bg-[#1a2333]"
+                        ? "border-emerald-500 bg-[#141e48] shadow-md shadow-emerald-950/40"
+                        : "border-[#223068] hover:border-[#2e418b] bg-[#101738] hover:bg-[#151f48]"
                       }`}
                   >
                     {item.thumbnail ? (
                       <img
                         src={item.thumbnail}
                         alt={item.courseTitle}
-                        className="w-12 h-12 rounded-xl object-cover shrink-0 border border-[#222c3f] mt-0.5"
+                        className="w-12 h-12 rounded-xl object-cover shrink-0 border border-[#223068] mt-0.5"
                       />
                     ) : (
                       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold shrink-0 mt-0.5">
@@ -958,14 +958,14 @@ const AskInstructor = () => {
               })}
 
             {selectedCourse && (
-              <div className="mt-4 pt-4 border-t border-[#1e2538] space-y-3">
+              <div className="mt-4 pt-4 border-t border-[#1a244d] space-y-3">
                 <span className="text-xs font-bold text-zinc-300 block">
                   Select Topic / Subject
                 </span>
                 <select
                   value={selectedSubject}
                   onChange={(e) => setSelectedSubject(e.target.value)}
-                  className="w-full bg-[#151c28] border border-[#222c3f] text-zinc-100 text-xs rounded-xl p-3 outline-none focus:border-emerald-500"
+                  className="w-full bg-[#101738] border border-[#223068] text-zinc-100 text-xs rounded-xl p-3 outline-none focus:border-emerald-500"
                 >
                   <option value="">General Doubts & Strategy</option>
                   {(selectedCourse.subjects || []).map((s, idx) => (
@@ -996,12 +996,12 @@ const AskInstructor = () => {
                 {[0, 1, 2].map((i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-[#151c28]/60 animate-pulse border border-[#222c3f]"
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-[#101738]/60 animate-pulse border border-[#223068]"
                   >
-                    <div className="w-11 h-11 rounded-2xl bg-[#1a2333] shrink-0" />
+                    <div className="w-11 h-11 rounded-2xl bg-[#182352] shrink-0" />
                     <div className="flex-1 space-y-2">
-                      <div className="h-3.5 w-2/3 bg-[#1a2333] rounded" />
-                      <div className="h-2.5 w-1/2 bg-[#1a2333]/60 rounded" />
+                      <div className="h-3.5 w-2/3 bg-[#182352] rounded" />
+                      <div className="h-2.5 w-1/2 bg-[#182352]/60 rounded" />
                     </div>
                   </div>
                 ))}
@@ -1042,12 +1042,12 @@ const AskInstructor = () => {
 
       {/* ── Right Panel: Main Chat Canvas ── */}
       <div
-        className={`flex-1 flex flex-col min-w-0 bg-[#000000] relative ${view !== "chat" ? "hidden md:flex" : "flex"
+        className={`flex-1 flex flex-col min-w-0 bg-[#080b18] relative ${view !== "chat" ? "hidden md:flex" : "flex"
           }`}
       >
         {!activeConversation ? (
           /* Empty Chat Placeholder */
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 gap-5 bg-gradient-to-b from-[#080d17] via-[#04060a] to-[#000000]">
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 gap-5 bg-gradient-to-b from-[#0e1432] via-[#0b1028] to-[#080b18]">
             <div className="w-20 h-20 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-xl pro-glow-active">
               <MessageSquare size={38} />
             </div>
@@ -1060,11 +1060,11 @@ const AskInstructor = () => {
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3.5 max-w-md mt-2">
-              <div className="p-3.5 bg-[#151c28] border border-[#222c3f] rounded-2xl text-left shadow-sm">
+              <div className="p-3.5 bg-[#101738] border border-[#223068] rounded-2xl text-left shadow-sm">
                 <span className="text-xs font-bold text-emerald-400 block mb-1">⚡ Fast Clarifications</span>
                 <span className="text-[11px] text-zinc-400 leading-snug block">Direct step-by-step guidance on homework & formulas.</span>
               </div>
-              <div className="p-3.5 bg-[#151c28] border border-[#222c3f] rounded-2xl text-left shadow-sm">
+              <div className="p-3.5 bg-[#101738] border border-[#223068] rounded-2xl text-left shadow-sm">
                 <span className="text-xs font-bold text-teal-400 block mb-1">📹 1-on-1 Video Meets</span>
                 <span className="text-[11px] text-zinc-400 leading-snug block">Request Google Meet link for face-to-face problem solving.</span>
               </div>
@@ -1073,11 +1073,11 @@ const AskInstructor = () => {
         ) : (
           <>
             {/* Main Chat Header */}
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2538] bg-[#060910] shrink-0">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#1a244d] bg-[#0b1028] shrink-0">
               <div className="flex items-center gap-3.5 min-w-0">
                 <button
                   onClick={() => setView("threads")}
-                  className="md:hidden p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-[#151c28] transition cursor-pointer"
+                  className="md:hidden p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-[#101738] transition cursor-pointer"
                 >
                   <ChevronLeft size={20} />
                 </button>
@@ -1093,7 +1093,7 @@ const AskInstructor = () => {
                       {initialOf(instructor?.name)}
                     </div>
                   )}
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#151c28] rounded-full shadow-xs" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#101738] rounded-full shadow-xs" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-sm font-bold text-white truncate flex items-center gap-2">
@@ -1132,7 +1132,7 @@ const AskInstructor = () => {
                 {activeCallRequest && (
                   <button
                     onClick={cancelCallRequest}
-                    className="text-xs text-zinc-400 hover:text-rose-400 px-3 py-2 rounded-xl border border-[#222c3f] hover:border-rose-500/40 transition cursor-pointer"
+                    className="text-xs text-zinc-400 hover:text-rose-400 px-3 py-2 rounded-xl border border-[#223068] hover:border-rose-500/40 transition cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1142,8 +1142,8 @@ const AskInstructor = () => {
 
             {/* Locked Assistance Overlay */}
             {activeConversation?.assistanceDisabled && (
-              <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-fadeIn">
-                <div className="w-full max-w-md rounded-3xl border border-emerald-500/40 bg-[#0d121c]/95 p-6 sm:p-7 shadow-2xl text-center relative overflow-hidden">
+              <div className="absolute inset-0 z-30 flex items-center justify-center bg-[#050712]/85 backdrop-blur-md p-4 animate-fadeIn">
+                <div className="w-full max-w-md rounded-3xl border border-emerald-500/40 bg-[#0e1432]/95 p-6 sm:p-7 shadow-2xl text-center relative overflow-hidden">
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 flex items-center justify-center text-white mx-auto shadow-lg shadow-emerald-600/30 mb-4">
                     <Sparkles size={30} />
                   </div>
@@ -1160,7 +1160,7 @@ const AskInstructor = () => {
                     Instructor Assistance is currently turned OFF for <span className="text-white font-bold">{activeConversation.course?.title || "this course"}</span>.
                   </p>
 
-                  <div className="mt-5 space-y-2.5 text-left bg-[#151c28] rounded-2xl border border-[#222c3f] p-4">
+                  <div className="mt-5 space-y-2.5 text-left bg-[#101738] rounded-2xl border border-[#223068] p-4">
                     <p className="text-[11px] font-extrabold text-emerald-400 uppercase tracking-wider mb-1">
                       Instructor Assistance Benefits:
                     </p>
@@ -1191,7 +1191,7 @@ const AskInstructor = () => {
             {/* Messages Body Canvas */}
             <div
               ref={messagesContainerRef}
-              className="flex-1 overflow-y-auto pro-chat-scroll px-4 sm:px-6 py-5 bg-[#000000]"
+              className="flex-1 overflow-y-auto pro-chat-scroll px-4 sm:px-6 py-5 bg-[#080b18]"
             >
               {messagesLoading && (
                 <div className="flex items-center justify-center py-10">
@@ -1201,7 +1201,7 @@ const AskInstructor = () => {
 
               {!messagesLoading && messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center text-center py-16 px-4 gap-3.5">
-                  <div className="w-16 h-16 rounded-3xl bg-[#151c28] border border-[#222c3f] flex items-center justify-center text-3xl mb-1 shadow-inner">
+                  <div className="w-16 h-16 rounded-3xl bg-[#101738] border border-[#223068] flex items-center justify-center text-3xl mb-1 shadow-inner">
                     👋
                   </div>
                   <h4 className="text-zinc-100 text-base font-bold">
@@ -1218,7 +1218,7 @@ const AskInstructor = () => {
                         <button
                           key={idx}
                           onClick={() => sendMessage(prompt)}
-                          className="text-[11.5px] text-zinc-300 hover:text-white bg-[#151c28] hover:bg-[#1a2436] border border-[#222c3f] hover:border-emerald-500/40 px-3.5 py-2 rounded-full transition-all cursor-pointer shadow-sm"
+                          className="text-[11.5px] text-zinc-300 hover:text-white bg-[#101738] hover:bg-[#182352] border border-[#223068] hover:border-emerald-500/40 px-3.5 py-2 rounded-full transition-all cursor-pointer shadow-sm"
                         >
                           "{prompt}"
                         </button>
@@ -1247,7 +1247,7 @@ const AskInstructor = () => {
               {/* Typing indicator */}
               {typing?.isTyping && typing.userId !== user?._id?.toString() && (
                 <div className="flex justify-start mt-3 px-2 pro-msg-in">
-                  <div className="bg-[#151c28] rounded-2xl rounded-bl-xs px-4 py-2.5 flex gap-2 items-center border border-[#222c3f] shadow-sm">
+                  <div className="bg-[#101738] rounded-2xl rounded-bl-xs px-4 py-2.5 flex gap-2 items-center border border-[#223068] shadow-sm">
                     <div className="flex gap-1">
                       {[0, 1, 2].map((i) => (
                         <span
@@ -1267,17 +1267,17 @@ const AskInstructor = () => {
 
             {/* Media Attachment Previews */}
             {pendingMedia.length > 0 && (
-              <div className="flex gap-3 px-4 py-3 border-t border-[#1e2538] bg-[#060910] overflow-x-auto shrink-0 pro-chat-scroll">
+              <div className="flex gap-3 px-4 py-3 border-t border-[#1a244d] bg-[#0b1028] overflow-x-auto shrink-0 pro-chat-scroll">
                 {pendingMedia.map((pm) => (
                   <div key={pm.id} className="relative shrink-0 group">
                     {pm.preview ? (
                       <img
                         src={pm.preview}
                         alt="preview"
-                        className="w-16 h-16 rounded-xl object-cover border border-[#222c3f] shadow-md"
+                        className="w-16 h-16 rounded-xl object-cover border border-[#223068] shadow-md"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-xl bg-[#151c28] border border-[#222c3f] flex flex-col items-center justify-center p-1 text-center">
+                      <div className="w-16 h-16 rounded-xl bg-[#101738] border border-[#223068] flex flex-col items-center justify-center p-1 text-center">
                         <FileText size={18} className="text-emerald-400 mb-1" />
                         <span className="text-[9px] text-zinc-300 truncate w-full px-1">
                           {pm.file.name}
@@ -1296,8 +1296,8 @@ const AskInstructor = () => {
             )}
 
             {/* Modern Input Dock */}
-            <div className="p-3.5 sm:p-4 border-t border-[#1e2538] bg-[#060910] shrink-0">
-              <div className="flex items-end gap-2 bg-[#151c28] border border-[#222c3f] focus-within:border-emerald-500/80 rounded-2xl px-3 py-2 transition-all shadow-inner">
+            <div className="p-3.5 sm:p-4 border-t border-[#1a244d] bg-[#0b1028] shrink-0">
+              <div className="flex items-end gap-2 bg-[#101738] border border-[#223068] focus-within:border-emerald-500/80 rounded-2xl px-3 py-2 transition-all shadow-inner">
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -1310,7 +1310,7 @@ const AskInstructor = () => {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={activeConversation?.assistanceDisabled || activeConversation?.isBlocked}
-                  className="p-2.5 rounded-xl text-zinc-400 hover:text-emerald-400 hover:bg-[#1a2333] disabled:opacity-40 disabled:cursor-not-allowed transition shrink-0 cursor-pointer"
+                  className="p-2.5 rounded-xl text-zinc-400 hover:text-emerald-400 hover:bg-[#182352] disabled:opacity-40 disabled:cursor-not-allowed transition shrink-0 cursor-pointer"
                   title="Attach media or document"
                 >
                   <Paperclip size={18} />
