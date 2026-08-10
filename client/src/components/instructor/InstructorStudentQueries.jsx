@@ -791,7 +791,7 @@ export default function InstructorStudentQueries({ showToast }) {
   }, [messages, user]);
 
   return (
-    <div className="flex h-[calc(100vh-4.5rem)] md:h-[calc(100vh-5.5rem)] w-full bg-[#080b18] rounded-2xl md:rounded-3xl overflow-hidden border border-[#1a244d] shadow-2xl relative text-zinc-100 font-sans">
+    <div className="flex h-[calc(100dvh-9rem)] md:h-[calc(100vh-5.5rem)] w-full bg-[#080b18] rounded-2xl md:rounded-3xl overflow-hidden border border-[#1a244d] shadow-2xl relative text-zinc-100 font-sans">
       <CustomStyles />
 
       {/* Lightbox Modal */}

@@ -1,17 +1,12 @@
 import axios from "axios";
 
-// IMPORTANT: Do NOT use window.location.origin here.
-// In a normal browser tab this correctly resolves to your real domain.
-// But inside the Capacitor Android WebView, window.location.origin points
-// to the WebView's internal origin (e.g. "capacitor://localhost" or
-// "http://localhost"), NOT your deployed backend — so every request would
-// silently fail to reach the real server. We hardcode the production URL
-// instead so both the website AND the APK always hit the right place.
+// IMPORTANT: Do NOT use window.location.origin for WebSockets or APIs on Vercel.
+// Vercel serverless functions do not support WebSockets (Socket.io) and cannot host
+// the persistent backend. We point production traffic to the Render backend.
 const PRODUCTION_API_BASE_URL = "https://umangvisionacademy.onrender.com/api";
+const PRODUCTION_SOCKET_URL = "https://umangvisionacademy.onrender.com";
 
 const getDefaultApiBaseUrl = () => {
-  // Local dev convenience: if running on localhost, 10.0.2.2, or a local IP
-  // in a normal browser or WebView, keep hitting the local backend.
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
     if (
@@ -22,13 +17,15 @@ const getDefaultApiBaseUrl = () => {
     ) {
       return `http://${hostname}:5000/api`;
     }
-    // For Vercel, Render, or any custom domain, use the current origin
-    return `${window.location.origin}/api`;
+    // If frontend is served directly by the Render backend instance
+    if (hostname.includes("onrender.com")) {
+      return `${window.location.origin}/api`;
+    }
+    // On Vercel (e.g. *.vercel.app) or any static host, use the Render backend API
+    return PRODUCTION_API_BASE_URL;
   }
   return PRODUCTION_API_BASE_URL;
 };
-
-const PRODUCTION_SOCKET_URL = "https://umangvisionacademy.onrender.com";
 
 const getDefaultSocketUrl = () => {
   if (typeof window !== "undefined") {
@@ -41,8 +38,8 @@ const getDefaultSocketUrl = () => {
     ) {
       return `http://${hostname}:5000`;
     }
-    // For Vercel, Render, or any custom domain, use the current origin
-    return window.location.origin;
+    // On Vercel or any static host, WebSocket server is hosted on Render
+    return PRODUCTION_SOCKET_URL;
   }
   return PRODUCTION_SOCKET_URL;
 };
