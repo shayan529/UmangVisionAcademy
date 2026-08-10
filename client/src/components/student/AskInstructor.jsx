@@ -537,6 +537,12 @@ const AskInstructor = () => {
     }
   };
 
+  useEffect(() => {
+    if (activeConversation && view !== "chat") {
+      setView("chat");
+    }
+  }, [activeConversation, view]);
+
   // 5. Create / Start New Chat
   const handleStartChat = async () => {
     if (!selectedCourse) {
@@ -880,7 +886,10 @@ const AskInstructor = () => {
             <input
               value={threadSearch}
               onChange={(e) => setThreadSearch(e.target.value)}
-              placeholder={t("chat.searchPlaceholder", "Search conversations or subjects…")}
+              placeholder={t(
+                "chat.searchPlaceholder",
+                "Search conversations or subjects…",
+              )}
               className="w-full bg-[#101738] border border-[#223068] text-zinc-100 text-xs rounded-xl pl-9 pr-8 py-2.5 outline-none focus:border-emerald-500/80 transition-all placeholder:text-zinc-500 font-medium"
             />
             {threadSearch && (
@@ -919,7 +928,8 @@ const AskInstructor = () => {
                   : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
-              {t("chat.unread", "Unread")} {totalUnreadCount > 0 && `(${totalUnreadCount})`}
+              {t("chat.unread", "Unread")}{" "}
+              {totalUnreadCount > 0 && `(${totalUnreadCount})`}
             </button>
           </div>
         </div>
@@ -936,7 +946,8 @@ const AskInstructor = () => {
                   onClick={() => setView("threads")}
                   className="text-xs text-emerald-400 hover:text-emerald-300 font-bold transition cursor-pointer"
                 >
-                  {t("chat.activeChats", "Active Chats")} ({conversations.length})
+                  {t("chat.activeChats", "Active Chats")} (
+                  {conversations.length})
                 </button>
               )}
             </div>
