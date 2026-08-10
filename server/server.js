@@ -273,6 +273,9 @@ app.get("/api", (req, res) => {
   res.json({ message: "API is running" });
 });
 
+app.use("/", (req, res) => {
+  res.json({ message: "Welcome to the Umang Vision Academy API" });
+});
 app.use("/api/users", userRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/instructor-applications", instructorApplicationRoutes);
@@ -310,7 +313,11 @@ app.use((err, req, res, next) => {
   // Ensure CORS headers are present even on unhandled errors so the browser
   // can read the error body instead of showing an opaque CORS failure.
   const origin = req.headers.origin;
-  if (origin && isOriginAllowed(origin) && !res.getHeader("Access-Control-Allow-Origin")) {
+  if (
+    origin &&
+    isOriginAllowed(origin) &&
+    !res.getHeader("Access-Control-Allow-Origin")
+  ) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.vary("Origin");
