@@ -1,61 +1,42 @@
 import axios from "axios";
 
-// IMPORTANT: On Vercel, API calls are proxied through vercel.json rewrites:
-//   /api/*  →  server/server.js  (same-origin, no CORS)
-// This means we can use relative URLs on Vercel, completely eliminating the
-// cross-origin issue. WebSockets still point to Render directly because
-// Vercel serverless functions cannot maintain persistent socket connections.
-const PRODUCTION_API_BASE_URL = "https://umangvisionacademy.onrender.com/api";
+// ── Environment detection ─────────────────────────────────────────────────────
+const IS_LOCAL = typeof window !== "undefined" && (
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+);
 
-const PRODUCTION_SOCKET_URL = "https://umangvisionacademy.onrender.com";
+// Vercel hosts both frontend and backend on the SAME origin.
+// vercel.json rewrites: /api/* → server/server.js, /socket.io/* → server/server.js
+const IS_VERCEL = typeof window !== "undefined" && (
+  window.location.hostname.includes("vercel.app") ||
+  window.location.hostname.includes("umangvisionacademy.com")
+);
+
+// Fallback for when served from Render directly
+const IS_RENDER = typeof window !== "undefined" &&
+  window.location.hostname.includes("onrender.com");
 
 const getDefaultApiBaseUrl = () => {
   if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
-
-    // Local development — hit the local dev server directly
-    if (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname.startsWith("192.168.") ||
-      hostname.startsWith("10.")
-    ) {
-      return `http://${hostname}:5000/api`;
-    }
-
-    // If the frontend is served by the Render backend itself
-    if (hostname.includes("onrender.com")) {
-      return `${window.location.origin}/api`;
-    }
-
-    // On Vercel — use a RELATIVE path so requests go through Vercel's own
-    // proxy (vercel.json: /api/* → server/server.js).
-    // This avoids cross-origin requests to Render entirely.
-    if (hostname.includes("vercel.app") || hostname.includes("umangvisionacademy.com")) {
-      return "/api";
-    }
+    if (IS_LOCAL) return `http://${window.location.hostname}:5000/api`;
+    // Same-origin proxy on Vercel — no CORS needed
+    if (IS_VERCEL || IS_RENDER) return `${window.location.origin}/api`;
   }
-  return PRODUCTION_API_BASE_URL;
+  return "https://umangvisionacademy.onrender.com/api";
 };
 
 const getDefaultSocketUrl = () => {
   if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
-    if (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname.startsWith("192.168.") ||
-      hostname.startsWith("10.")
-    ) {
-      return `http://${hostname}:5000`;
-    }
-    // WebSockets must always point to Render directly (Vercel doesn't support
-    // persistent WebSocket connections in serverless functions)
-    return PRODUCTION_SOCKET_URL;
+    if (IS_LOCAL) return `http://${window.location.hostname}:5000`;
+    // On Vercel: socket.io is routed via vercel.json → server/server.js
+    // Use same origin so the /socket.io/* rewrite applies.
+    if (IS_VERCEL || IS_RENDER) return window.location.origin;
   }
-  return PRODUCTION_SOCKET_URL;
+  return "https://umangvisionacademy.onrender.com";
 };
-
 
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
@@ -64,6 +45,36 @@ export const API_BASE_URL =
 
 export const SOCKET_URL =
   import.meta.env.VITE_SOCKET_URL || getDefaultSocketUrl();
+
+// ── Socket.IO transport options ───────────────────────────────────────────────
+// Vercel serverless functions do NOT support the WebSocket protocol upgrade —
+// every request is a new HTTP invocation, so long-lived connections are killed.
+// Solution: use polling-only on Vercel (HTTP long-poll works fine through
+// serverless). On local dev, start with polling then upgrade to WS as usual.
+export const SOCKET_OPTIONS = IS_VERCEL || IS_RENDER
+  ? {
+      // Polling only — no WebSocket upgrade attempted.
+      // This is reliable on Vercel serverless even though it's slightly less
+      // efficient than WebSockets (latency is ~200–500 ms per poll cycle).
+      transports: ["polling"],
+      upgrade: false,
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 10000,
+      timeout: 20000,
+    }
+  : {
+      // Local dev: start with polling and auto-upgrade to WS when available
+      transports: ["polling", "websocket"],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
+    };
+
+
 
 export const API_ENDPOINTS = {
   // Auth endpoints

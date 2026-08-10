@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { io } from "socket.io-client";
 import toast from "react-hot-toast";
-import { SOCKET_URL, API_ENDPOINTS } from "../../config/api.js";
+import { SOCKET_URL, SOCKET_OPTIONS, API_ENDPOINTS } from "../../config/api.js";
 import { uploadFile } from "../../utils/uploadFile.js";
 import {
   fetchConversations,
@@ -458,7 +458,7 @@ export default function InstructorStudentQueries({ showToast }) {
     const token = localStorage.getItem("authToken");
     const socket = io(`${SOCKET_URL}/ichat`, {
       auth: { token },
-      transports: ["websocket", "polling"],
+      ...SOCKET_OPTIONS,
     });
     socketRef.current = socket;
 

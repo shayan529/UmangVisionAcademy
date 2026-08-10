@@ -13,7 +13,7 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
 import { io }                                        from "socket.io-client";
-import { API_BASE_URL, SOCKET_URL }                  from "../config/api.js";
+import { API_BASE_URL, SOCKET_URL, SOCKET_OPTIONS } from "../config/api.js";
 
 export function useWebRTC({ sessionId, userId, onCallEnded }) {
   const pcRef               = useRef(null);
@@ -151,7 +151,7 @@ export function useWebRTC({ sessionId, userId, onCallEnded }) {
         // 4. Signaling socket — reuse the project's SOCKET_URL
         const socket = io(SOCKET_URL, {
           auth: { token },
-          transports: ["websocket"],
+          ...SOCKET_OPTIONS,
         });
         socketRef.current = socket;
 

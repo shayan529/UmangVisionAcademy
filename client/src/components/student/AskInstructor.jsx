@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { io } from "socket.io-client";
 import toast from "react-hot-toast";
-import { SOCKET_URL, API_ENDPOINTS } from "../../config/api.js";
+import { SOCKET_URL, SOCKET_OPTIONS, API_ENDPOINTS } from "../../config/api.js";
 import api from "../../config/api.js";
 import { uploadFile } from "../../utils/uploadFile.js";
 import {
@@ -452,7 +452,7 @@ const AskInstructor = () => {
     const token = localStorage.getItem("authToken");
     const socket = io(`${SOCKET_URL}/ichat`, {
       auth: { token },
-      transports: ["websocket", "polling"],
+      ...SOCKET_OPTIONS,
     });
     socketRef.current = socket;
 

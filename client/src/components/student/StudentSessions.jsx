@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { fetchSessions } from "../../redux/slices/sessionSlice";
 import { io } from "socket.io-client";
-import { SOCKET_URL } from "../../config/api.js";
+import { SOCKET_URL, SOCKET_OPTIONS } from "../../config/api.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -90,12 +90,7 @@ const ChatPanel = ({ sessionId, currentUser }) => {
     try {
       socket = io(socketUrl, {
         withCredentials: true,
-        reconnection: true,
-        reconnectionAttempts: Infinity,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
-        timeout: 20000,
-        transports: ["polling", "websocket"],
+        ...SOCKET_OPTIONS,
       });
     } catch {
       setError("Unable to connect to chat server.");
