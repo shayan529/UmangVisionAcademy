@@ -117,11 +117,11 @@ const CustomStyles = () => (
 // ── Date divider ──────────────────────────────────────────────────────────────
 const DateDivider = ({ label }) => (
   <div className="flex items-center gap-3 my-6 select-none px-4">
-    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
-    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 bg-zinc-900 border border-zinc-800 px-4 py-1 rounded-full shadow-sm">
+    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#222c3f] to-transparent" />
+    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 bg-[#151c28] border border-[#222c3f] px-4 py-1 rounded-full shadow-sm">
       {label}
     </span>
-    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
+    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#222c3f] to-transparent" />
   </div>
 );
 
@@ -130,20 +130,20 @@ const ImageModal = ({ src, alt, onClose }) => {
   if (!src) return null;
   return (
     <div
-      className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 pro-msg-in"
+      className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 pro-msg-in"
       onClick={onClose}
     >
       <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center">
         <button
           onClick={onClose}
-          className="absolute -top-12 right-0 p-2 text-zinc-400 hover:text-white bg-zinc-800/80 rounded-full transition cursor-pointer"
+          className="absolute -top-12 right-0 p-2 text-zinc-400 hover:text-white bg-[#151c28] border border-[#222c3f] rounded-full transition cursor-pointer"
         >
           <X size={20} />
         </button>
         <img
           src={src}
           alt={alt || "Full preview"}
-          className="max-w-full max-h-[85vh] object-contain rounded-2xl border border-zinc-800 shadow-2xl"
+          className="max-w-full max-h-[85vh] object-contain rounded-2xl border border-[#222c3f] shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         />
         <a
@@ -176,7 +176,7 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
       <div
         className={`flex ${isMe ? "justify-end" : "justify-start"} ${groupStart ? "mt-3" : "mt-1"} px-2`}
       >
-        <span className="text-[11px] text-zinc-500 italic px-3.5 py-1.5 rounded-2xl border border-zinc-800 bg-zinc-900/60 flex items-center gap-1.5">
+        <span className="text-[11px] text-zinc-500 italic px-3.5 py-1.5 rounded-2xl border border-[#222c3f] bg-[#151c28]/60 flex items-center gap-1.5">
           <Trash2 size={11} className="opacity-60" /> Message deleted
         </span>
       </div>
@@ -196,13 +196,13 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
         {/* Message Actions Menu on Hover */}
         {hover && (
           <div
-            className={`absolute top-0 -translate-y-1/2 z-20 flex items-center gap-1 bg-zinc-900 border border-zinc-700/80 rounded-xl p-1 shadow-xl backdrop-blur-md transition-all ${isMe ? "right-0 translate-x-2" : "left-0 -translate-x-2"
+            className={`absolute top-0 -translate-y-1/2 z-20 flex items-center gap-1 bg-[#151c28] border border-[#222c3f] rounded-xl p-1 shadow-xl backdrop-blur-md transition-all ${isMe ? "right-0 translate-x-2" : "left-0 -translate-x-2"
               }`}
           >
             {msg.text && (
               <button
                 onClick={copyText}
-                className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-emerald-400 transition cursor-pointer"
+                className="p-1.5 rounded-lg hover:bg-[#1e2738] text-zinc-400 hover:text-emerald-400 transition cursor-pointer"
                 title="Copy text"
               >
                 <Copy size={12} />
@@ -227,7 +227,7 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
               className={`px-4 py-3 text-[13.5px] leading-relaxed break-words shadow-md transition-all ${isMe
                   ? `bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white rounded-[22px] ${groupEnd ? "rounded-br-xs" : ""
                   }`
-                  : `bg-[#181b24] border border-zinc-800/80 text-zinc-100 rounded-[22px] ${groupEnd ? "rounded-bl-xs" : ""
+                  : `bg-[#151c28] border border-[#222c3f] text-zinc-100 rounded-[22px] ${groupEnd ? "rounded-bl-xs" : ""
                   }`
                 }`}
             >
@@ -239,7 +239,7 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
           {(msg.media ?? []).map((m, i) => (
             <div key={i} className={msg.text || i > 0 ? "mt-2" : ""}>
               {m.mimeType?.startsWith("image/") ? (
-                <div className="relative group/img overflow-hidden rounded-2xl border border-zinc-800 shadow-md bg-zinc-950">
+                <div className="relative group/img overflow-hidden rounded-2xl border border-[#222c3f] shadow-md bg-[#0e131d]">
                   <img
                     src={m.url}
                     alt={m.filename || "image"}
@@ -259,7 +259,7 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
                   href={m.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 bg-[#181b24] hover:bg-zinc-800/80 border border-zinc-800 text-zinc-200 text-xs px-4 py-3 rounded-2xl transition-all shadow-md group/file"
+                  className="flex items-center gap-3 bg-[#151c28] hover:bg-[#1b2434] border border-[#222c3f] text-zinc-200 text-xs px-4 py-3 rounded-2xl transition-all shadow-md group/file"
                 >
                   <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover/file:scale-110 transition-transform">
                     <FileText size={18} />
@@ -306,8 +306,8 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
     <button
       onClick={onClick}
       className={`w-full flex items-start gap-3.5 p-3.5 rounded-2xl text-left transition-all duration-200 border relative overflow-hidden group cursor-pointer ${isActive
-          ? "bg-[#1f2430] border-emerald-500/50 shadow-lg shadow-emerald-950/20"
-          : "border-zinc-800/70 hover:border-zinc-700 bg-[#151720] hover:bg-[#1b1e2a]"
+          ? "bg-[#1c273a] border-emerald-500/60 shadow-lg shadow-emerald-950/30"
+          : "border-[#222c3f] hover:border-[#2e3b54] bg-[#151c28] hover:bg-[#1a2333]"
         }`}
     >
       {isActive && (
@@ -320,15 +320,15 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
           <img
             src={student.avatarUrl}
             alt={student.name}
-            className="w-11 h-11 rounded-2xl object-cover ring-1 ring-zinc-700"
+            className="w-11 h-11 rounded-2xl object-cover ring-1 ring-[#222c3f]"
           />
         ) : (
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-zinc-700 to-zinc-800 border border-zinc-700 flex items-center justify-center text-emerald-400 font-bold text-sm shadow-sm">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 border border-emerald-500/40 flex items-center justify-center text-white font-bold text-sm shadow-sm">
             {initialOf(student?.name)}
           </div>
         )}
         {conv.assistanceActive && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#151720] rounded-full" title="Assistance Active" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#151c28] rounded-full" title="Assistance Active" />
         )}
       </div>
 
@@ -350,7 +350,7 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
         </div>
 
         {/* Course / Subject badge */}
-        <p className="text-[11px] font-medium text-emerald-400/90 truncate mb-1 flex items-center gap-1">
+        <p className="text-[11px] font-medium text-emerald-400 truncate mb-1 flex items-center gap-1">
           <BookOpen size={11} className="shrink-0 text-emerald-400" />
           <span>{conv.course?.title || "Class Query"}</span>
           {conv.subject ? <span className="text-zinc-400">· {conv.subject}</span> : null}
@@ -739,7 +739,7 @@ export default function InstructorStudentQueries({ showToast }) {
   }, [messages, user]);
 
   return (
-    <div className="flex h-[calc(100vh-4.5rem)] md:h-[calc(100vh-5.5rem)] w-full bg-[#0d0e12] rounded-2xl md:rounded-3xl overflow-hidden border border-zinc-800/80 shadow-2xl relative text-zinc-100 font-sans">
+    <div className="flex h-[calc(100vh-4.5rem)] md:h-[calc(100vh-5.5rem)] w-full bg-[#000000] rounded-2xl md:rounded-3xl overflow-hidden border border-[#1e2538] shadow-2xl relative text-zinc-100 font-sans">
       <CustomStyles />
 
       {/* Lightbox Modal */}
@@ -750,8 +750,8 @@ export default function InstructorStudentQueries({ showToast }) {
 
       {/* Share Meet Link Modal */}
       {meetModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 pro-msg-in">
-          <div className="w-full max-w-md rounded-3xl border border-emerald-500/50 bg-[#161922] p-6 sm:p-7 shadow-2xl">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 pro-msg-in">
+          <div className="w-full max-w-md rounded-3xl border border-emerald-500/50 bg-[#0d121c] p-6 sm:p-7 shadow-2xl">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
@@ -771,13 +771,13 @@ export default function InstructorStudentQueries({ showToast }) {
                   setMeetModalOpen(false);
                   setMeetingLinkInput("");
                 }}
-                className="rounded-xl p-1.5 text-zinc-400 transition hover:bg-zinc-800 hover:text-white cursor-pointer"
+                className="rounded-xl p-1.5 text-zinc-400 transition hover:bg-[#151c28] hover:text-white cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <p className="text-xs text-zinc-300 mt-4 leading-relaxed bg-zinc-900/80 p-3.5 rounded-xl border border-zinc-800">
+            <p className="text-xs text-zinc-300 mt-4 leading-relaxed bg-[#151c28] p-3.5 rounded-xl border border-[#222c3f]">
               Paste your Google Meet or Zoom link below. It will be sent directly to the student's active chat.
             </p>
 
@@ -785,7 +785,7 @@ export default function InstructorStudentQueries({ showToast }) {
               value={meetingLinkInput}
               onChange={(e) => setMeetingLinkInput(e.target.value)}
               placeholder="https://meet.google.com/abc-defg-hij"
-              className="mt-4 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-xs text-emerald-300 outline-none focus:border-emerald-500 font-mono"
+              className="mt-4 w-full rounded-xl border border-[#222c3f] bg-[#060910] px-4 py-3 text-xs text-emerald-300 outline-none focus:border-emerald-500 font-mono"
             />
 
             <div className="mt-6 flex gap-3">
@@ -801,7 +801,7 @@ export default function InstructorStudentQueries({ showToast }) {
                   setMeetModalOpen(false);
                   setMeetingLinkInput("");
                 }}
-                className="rounded-xl border border-zinc-700 px-4 py-3 text-xs font-bold text-zinc-300 transition hover:border-zinc-500 hover:text-white cursor-pointer"
+                className="rounded-xl border border-[#222c3f] px-4 py-3 text-xs font-bold text-zinc-300 transition hover:border-zinc-500 hover:text-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -812,8 +812,8 @@ export default function InstructorStudentQueries({ showToast }) {
 
       {/* Report Student Modal */}
       {reportModalOpen && activeConversation && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 pro-msg-in">
-          <div className="w-full max-w-md rounded-3xl border border-rose-500/50 bg-[#161922] p-6 sm:p-7 shadow-2xl">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 pro-msg-in">
+          <div className="w-full max-w-md rounded-3xl border border-rose-500/50 bg-[#0d121c] p-6 sm:p-7 shadow-2xl">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-400">
@@ -830,7 +830,7 @@ export default function InstructorStudentQueries({ showToast }) {
               </div>
               <button
                 onClick={() => setReportModalOpen(false)}
-                className="rounded-xl p-1.5 text-zinc-400 transition hover:bg-zinc-800 hover:text-white cursor-pointer"
+                className="rounded-xl p-1.5 text-zinc-400 transition hover:bg-[#151c28] hover:text-white cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -846,7 +846,7 @@ export default function InstructorStudentQueries({ showToast }) {
                     key={reason}
                     className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition text-xs ${selectedReportReason === reason
                         ? "bg-rose-950/40 border-rose-500/60 text-white font-semibold"
-                        : "bg-zinc-900/60 border-zinc-800 text-zinc-300 hover:border-zinc-700"
+                        : "bg-[#151c28] border-[#222c3f] text-zinc-300 hover:border-zinc-700"
                       }`}
                   >
                     <input
@@ -870,7 +870,7 @@ export default function InstructorStudentQueries({ showToast }) {
                   onChange={(e) => setReportDetails(e.target.value)}
                   placeholder="Provide context or explanation for admin review…"
                   rows={3}
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-xs text-zinc-200 outline-none focus:border-rose-500"
+                  className="w-full rounded-xl border border-[#222c3f] bg-[#060910] p-3 text-xs text-zinc-200 outline-none focus:border-rose-500"
                 />
               </div>
             </div>
@@ -886,7 +886,7 @@ export default function InstructorStudentQueries({ showToast }) {
               </button>
               <button
                 onClick={() => setReportModalOpen(false)}
-                className="rounded-xl border border-zinc-700 px-4 py-3 text-xs font-bold text-zinc-300 transition hover:border-zinc-500 hover:text-white cursor-pointer"
+                className="rounded-xl border border-[#222c3f] px-4 py-3 text-xs font-bold text-zinc-300 transition hover:border-zinc-500 hover:text-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -897,11 +897,11 @@ export default function InstructorStudentQueries({ showToast }) {
 
       {/* ── Left Sidebar Pane ── */}
       <div
-        className={`flex flex-col w-full md:w-[360px] lg:w-[400px] border-r border-zinc-800/80 bg-[#13151c] shrink-0 ${mobileView === "chat" ? "hidden md:flex" : "flex"
+        className={`flex flex-col w-full md:w-[360px] lg:w-[400px] border-r border-[#1e2538] bg-[#000000] shrink-0 ${mobileView === "chat" ? "hidden md:flex" : "flex"
           }`}
       >
         {/* Header Bar */}
-        <div className="p-4 sm:p-5 border-b border-zinc-800/80 shrink-0 space-y-3.5 bg-[#101218]">
+        <div className="p-4 sm:p-5 border-b border-[#1e2538] shrink-0 space-y-3.5 bg-[#060910]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
@@ -933,7 +933,7 @@ export default function InstructorStudentQueries({ showToast }) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search student or course…"
-              className="w-full bg-[#181b24] border border-zinc-800 text-zinc-100 text-xs rounded-xl pl-9 pr-8 py-2.5 outline-none focus:border-emerald-500/70 transition-all placeholder:text-zinc-500 font-medium"
+              className="w-full bg-[#151c28] border border-[#222c3f] text-zinc-100 text-xs rounded-xl pl-9 pr-8 py-2.5 outline-none focus:border-emerald-500/80 transition-all placeholder:text-zinc-500 font-medium"
             />
             {search && (
               <button
@@ -946,7 +946,7 @@ export default function InstructorStudentQueries({ showToast }) {
           </div>
 
           {/* Filter Pills */}
-          <div className="flex gap-1.5 p-1 bg-[#181b24] border border-zinc-800/80 rounded-xl">
+          <div className="flex gap-1.5 p-1 bg-[#0e131d] border border-[#1e2538] rounded-xl">
             <button
               onClick={() => setFilter("all")}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${filter === "all"
@@ -975,12 +975,12 @@ export default function InstructorStudentQueries({ showToast }) {
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-3 p-3.5 rounded-2xl bg-zinc-900/40 animate-pulse border border-zinc-800/40"
+                  className="flex items-center gap-3 p-3.5 rounded-2xl bg-[#151c28]/60 animate-pulse border border-[#222c3f]"
                 >
-                  <div className="w-11 h-11 rounded-2xl bg-zinc-800 shrink-0" />
+                  <div className="w-11 h-11 rounded-2xl bg-[#1a2333] shrink-0" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-3.5 w-2/3 bg-zinc-800 rounded" />
-                    <div className="h-2.5 w-1/2 bg-zinc-800/60 rounded" />
+                    <div className="h-3.5 w-2/3 bg-[#1a2333] rounded" />
+                    <div className="h-2.5 w-1/2 bg-[#1a2333]/60 rounded" />
                   </div>
                 </div>
               ))}
@@ -989,7 +989,7 @@ export default function InstructorStudentQueries({ showToast }) {
 
           {!conversationsLoading && visibleConvs.length === 0 && (
             <div className="text-center py-16 px-4">
-              <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 mx-auto mb-2">
+              <div className="w-12 h-12 rounded-2xl bg-[#151c28] border border-[#222c3f] flex items-center justify-center text-zinc-500 mx-auto mb-2">
                 <CheckCircle2 size={24} />
               </div>
               <p className="text-xs text-zinc-300 font-bold">All caught up!</p>
@@ -1012,12 +1012,12 @@ export default function InstructorStudentQueries({ showToast }) {
 
       {/* ── Right Panel: Main Chat Canvas ── */}
       <div
-        className={`flex-1 flex flex-col min-w-0 bg-[#0d0e12] relative ${mobileView !== "chat" ? "hidden md:flex" : "flex"
+        className={`flex-1 flex flex-col min-w-0 bg-[#000000] relative ${mobileView !== "chat" ? "hidden md:flex" : "flex"
           }`}
       >
         {!activeConversation ? (
           /* Empty Chat Placeholder */
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 gap-5 bg-gradient-to-b from-[#12141a] via-[#0f1016] to-[#0d0e12]">
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 gap-5 bg-gradient-to-b from-[#080d17] via-[#04060a] to-[#000000]">
             <div className="w-20 h-20 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-xl">
               <MessageSquare size={38} />
             </div>
@@ -1033,11 +1033,11 @@ export default function InstructorStudentQueries({ showToast }) {
         ) : (
           <>
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800/80 bg-[#101218] shrink-0">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2538] bg-[#060910] shrink-0">
               <div className="flex items-center gap-3.5 min-w-0">
                 <button
                   onClick={() => setMobileView("list")}
-                  className="md:hidden p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
+                  className="md:hidden p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-[#151c28] transition cursor-pointer"
                 >
                   <ChevronLeft size={20} />
                 </button>
@@ -1049,7 +1049,7 @@ export default function InstructorStudentQueries({ showToast }) {
                       className="w-10 h-10 rounded-2xl object-cover ring-2 ring-emerald-500/60"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-zinc-700 to-zinc-800 border border-zinc-700 flex items-center justify-center text-emerald-400 font-bold text-sm ring-2 ring-emerald-500/60 shadow-sm">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 border border-emerald-500/40 flex items-center justify-center text-white font-bold text-sm ring-2 ring-emerald-500/60 shadow-sm">
                       {initialOf(student?.name)}
                     </div>
                   )}
@@ -1064,9 +1064,9 @@ export default function InstructorStudentQueries({ showToast }) {
                     )}
                   </h3>
                   <p className="text-xs text-zinc-400 truncate flex items-center gap-1.5 mt-0.5">
-                    <span className="text-zinc-300 font-medium">{activeConversation.course?.title || "Class Query"}</span>
+                    <span className="text-emerald-400 font-medium">{activeConversation.course?.title || "Class Query"}</span>
                     {activeConversation.subject && (
-                      <span className="text-emerald-400/90">· {activeConversation.subject}</span>
+                      <span className="text-zinc-400">· {activeConversation.subject}</span>
                     )}
                   </p>
                 </div>
@@ -1086,26 +1086,26 @@ export default function InstructorStudentQueries({ showToast }) {
                 <div className="relative">
                   <button
                     onClick={() => setActionMenuOpen((prev) => !prev)}
-                    className="p-2 rounded-xl border border-zinc-800 bg-[#181b24] hover:bg-zinc-800 text-zinc-300 transition cursor-pointer"
+                    className="p-2 rounded-xl border border-[#222c3f] bg-[#151c28] hover:bg-[#1a2333] text-zinc-300 transition cursor-pointer"
                   >
                     <MoreVertical size={16} />
                   </button>
 
                   {actionMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl p-1.5 z-50 pro-msg-in">
+                    <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-[#0d121c] border border-[#222c3f] shadow-2xl p-1.5 z-50 pro-msg-in">
                       <button
                         onClick={() => {
                           setReportModalOpen(true);
                           setActionMenuOpen(false);
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-xl transition cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-300 hover:text-white hover:bg-[#151c28] rounded-xl transition cursor-pointer"
                       >
                         <Flag size={14} className="text-rose-400" />
                         Report Student
                       </button>
                       <button
                         onClick={toggleBlockStudent}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-xl transition cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-300 hover:text-white hover:bg-[#151c28] rounded-xl transition cursor-pointer"
                       >
                         <Ban size={14} className="text-amber-400" />
                         {activeConversation.isBlocked ? "Unblock Student" : "Block Student"}
@@ -1119,7 +1119,7 @@ export default function InstructorStudentQueries({ showToast }) {
             {/* Messages Canvas */}
             <div
               ref={messagesContainerRef}
-              className="flex-1 overflow-y-auto pro-chat-scroll px-4 sm:px-6 py-5 bg-gradient-to-b from-[#0d0e12] via-[#101217] to-[#0d0e12]"
+              className="flex-1 overflow-y-auto pro-chat-scroll px-4 sm:px-6 py-5 bg-[#000000]"
             >
               {messagesLoading && (
                 <div className="flex items-center justify-center py-10">
@@ -1146,7 +1146,7 @@ export default function InstructorStudentQueries({ showToast }) {
               {/* Typing indicator */}
               {typing?.isTyping && typing.userId !== user?._id?.toString() && (
                 <div className="flex justify-start mt-3 px-2 pro-msg-in">
-                  <div className="bg-[#181b24] rounded-2xl rounded-bl-xs px-4 py-2.5 flex gap-2 items-center border border-zinc-800 shadow-sm">
+                  <div className="bg-[#151c28] rounded-2xl rounded-bl-xs px-4 py-2.5 flex gap-2 items-center border border-[#222c3f] shadow-sm">
                     <div className="flex gap-1">
                       {[0, 1, 2].map((i) => (
                         <span
@@ -1166,17 +1166,17 @@ export default function InstructorStudentQueries({ showToast }) {
 
             {/* Media Attachment Previews */}
             {pendingMedia.length > 0 && (
-              <div className="flex gap-3 px-4 py-3 border-t border-zinc-800/80 bg-[#101218] overflow-x-auto shrink-0 pro-chat-scroll">
+              <div className="flex gap-3 px-4 py-3 border-t border-[#1e2538] bg-[#060910] overflow-x-auto shrink-0 pro-chat-scroll">
                 {pendingMedia.map((pm) => (
                   <div key={pm.id} className="relative shrink-0 group">
                     {pm.preview ? (
                       <img
                         src={pm.preview}
                         alt="preview"
-                        className="w-16 h-16 rounded-xl object-cover border border-zinc-700 shadow-md"
+                        className="w-16 h-16 rounded-xl object-cover border border-[#222c3f] shadow-md"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-xl bg-zinc-900 border border-zinc-700 flex flex-col items-center justify-center p-1 text-center">
+                      <div className="w-16 h-16 rounded-xl bg-[#151c28] border border-[#222c3f] flex flex-col items-center justify-center p-1 text-center">
                         <FileText size={18} className="text-emerald-400 mb-1" />
                         <span className="text-[9px] text-zinc-300 truncate w-full px-1">
                           {pm.file.name}
@@ -1195,8 +1195,8 @@ export default function InstructorStudentQueries({ showToast }) {
             )}
 
             {/* Input Dock */}
-            <div className="p-3.5 sm:p-4 border-t border-zinc-800/80 bg-[#101218] shrink-0">
-              <div className="flex items-end gap-2 bg-[#181b24] border border-zinc-800 focus-within:border-emerald-500/80 rounded-2xl px-3 py-2 transition-all shadow-inner">
+            <div className="p-3.5 sm:p-4 border-t border-[#1e2538] bg-[#060910] shrink-0">
+              <div className="flex items-end gap-2 bg-[#151c28] border border-[#222c3f] focus-within:border-emerald-500/80 rounded-2xl px-3 py-2 transition-all shadow-inner">
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -1209,7 +1209,7 @@ export default function InstructorStudentQueries({ showToast }) {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={activeConversation?.isBlocked}
-                  className="p-2.5 rounded-xl text-zinc-400 hover:text-emerald-400 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition shrink-0 cursor-pointer"
+                  className="p-2.5 rounded-xl text-zinc-400 hover:text-emerald-400 hover:bg-[#1a2333] disabled:opacity-40 disabled:cursor-not-allowed transition shrink-0 cursor-pointer"
                   title="Attach solution document or image"
                 >
                   <Paperclip size={18} />
