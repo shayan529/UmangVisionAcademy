@@ -1,14 +1,19 @@
 import axios from "axios";
 
-// IMPORTANT: Do NOT use window.location.origin for WebSockets or APIs on Vercel.
-// Vercel serverless functions do not support WebSockets (Socket.io) and cannot host
-// the persistent backend. We point production traffic to the Render backend.
+// IMPORTANT: On Vercel, API calls are proxied through vercel.json rewrites:
+//   /api/*  →  server/server.js  (same-origin, no CORS)
+// This means we can use relative URLs on Vercel, completely eliminating the
+// cross-origin issue. WebSockets still point to Render directly because
+// Vercel serverless functions cannot maintain persistent socket connections.
 const PRODUCTION_API_BASE_URL = "https://umangvisionacademy.onrender.com/api";
+
 const PRODUCTION_SOCKET_URL = "https://umangvisionacademy.onrender.com";
 
 const getDefaultApiBaseUrl = () => {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
+
+    // Local development — hit the local dev server directly
     if (
       hostname === "localhost" ||
       hostname === "127.0.0.1" ||
@@ -17,12 +22,18 @@ const getDefaultApiBaseUrl = () => {
     ) {
       return `http://${hostname}:5000/api`;
     }
-    // If frontend is served directly by the Render backend instance
+
+    // If the frontend is served by the Render backend itself
     if (hostname.includes("onrender.com")) {
       return `${window.location.origin}/api`;
     }
-    // On Vercel (e.g. *.vercel.app) or any static host, use the Render backend API
-    return PRODUCTION_API_BASE_URL;
+
+    // On Vercel — use a RELATIVE path so requests go through Vercel's own
+    // proxy (vercel.json: /api/* → server/server.js).
+    // This avoids cross-origin requests to Render entirely.
+    if (hostname.includes("vercel.app") || hostname.includes("umangvisionacademy.com")) {
+      return "/api";
+    }
   }
   return PRODUCTION_API_BASE_URL;
 };
@@ -38,11 +49,13 @@ const getDefaultSocketUrl = () => {
     ) {
       return `http://${hostname}:5000`;
     }
-    // On Vercel or any static host, WebSocket server is hosted on Render
+    // WebSockets must always point to Render directly (Vercel doesn't support
+    // persistent WebSocket connections in serverless functions)
     return PRODUCTION_SOCKET_URL;
   }
   return PRODUCTION_SOCKET_URL;
 };
+
 
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
