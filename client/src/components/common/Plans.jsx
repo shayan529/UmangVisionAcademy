@@ -19,6 +19,30 @@ import {
 
 const BillingPage = lazy(() => import("../../pages/BillingPage"));
 
+// Feature key map for multilingual support
+const FEATURE_KEY_MAP = {
+  "All Class Subjects Covered": "plans.features.allSubjectsCovered",
+  "Live Lessons & Study Resources": "plans.features.liveLessonsResources",
+  "AI Tutor & Quizzes": "plans.features.aiTutorQuizzes",
+  "3-Page Smart Progress Report Card": "plans.features.progressReport3",
+  "3 Practice Tests & 3-Year Question Bank": "plans.features.practiceTests3",
+  "2 Expert Career Counselling Sessions/Year": "plans.features.careerSessions2",
+  "Everything in Basic Plan": "plans.features.everythingInBasic",
+  "8-Page Detailed Performance Report Card ⬆️": "plans.features.progressReport8",
+  "5 Advanced Tests & 10-Year Question Bank ⬆️": "plans.features.advancedTests5",
+  "Subject, Class & Competitive Exam SMS Alerts": "plans.features.smsAlerts",
+  "5 Expert Career Counselling Sessions/Year ⬆️": "plans.features.careerSessions5",
+  "Live Support & Personalized Learning Paths": "plans.features.liveSupportPaths",
+  "Priority Instructor & Mentor Collaboration": "plans.features.priorityInstructorMentor",
+  "Everything in Premium Plan": "plans.features.everythingInPremium",
+  "12-Page Comprehensive Report Card ⬆️": "plans.features.progressReport12",
+  "10 Tests per Wing / Domain": "plans.features.testsPerWing10",
+  "10-Year Complete Question Bank Archive": "plans.features.questionBank10Years",
+  "International Study Counselling & Support (EXCLUSIVE)": "plans.features.intlStudyCounselling",
+  "Higher-Study Scholarship Eligibility* (EXCLUSIVE)": "plans.features.scholarshipEligibility",
+  "VIP Priority Mentor & Fast-Track Doubt Resolution": "plans.features.vipMentorFastTrack",
+};
+
 const Plans = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -110,6 +134,10 @@ const Plans = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
               {SMART_PLANS.map((plan) => {
                 const isSelectedPlan = subscription?.plan === plan.id;
+                const translatedPlanTitle = t(`plans.${plan.id}Plan`, `${plan.title} Plan`);
+                const translatedTagline = t(`plans.tagline${plan.title}`, plan.tagline);
+                const translatedCta = t(`plans.choose${plan.title}`, plan.buttonText);
+
                 return (
                   <div
                     key={plan.id}
@@ -151,10 +179,10 @@ const Plans = () => {
                       </div>
 
                       <h3 className="text-2xl sm:text-3xl font-black text-white">
-                        {plan.title} Plan
+                        {translatedPlanTitle}
                       </h3>
                       <p className="text-xs text-slate-400 mt-2 min-h-[36px] leading-relaxed">
-                        {plan.tagline}
+                        {translatedTagline}
                       </p>
 
                       {/* Price */}
@@ -167,7 +195,7 @@ const Plans = () => {
                             {plan.price}
                           </span>
                           <span className="text-sm font-bold text-slate-400">
-                            /{plan.period}
+                            /{t("plans.perYear", plan.period)}
                           </span>
                         </div>
                         <span className="text-[11px] text-slate-500 font-semibold block mt-1">
@@ -178,22 +206,27 @@ const Plans = () => {
                       {/* Feature Bullets */}
                       <div className="space-y-3.5 mb-8">
                         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                          {t("plans.includedIn", { plan: plan.title, defaultValue: `Included in ${plan.title}:` })}
+                          {t("plans.includedIn", { plan: translatedPlanTitle, defaultValue: `Included in ${translatedPlanTitle}:` })}
                         </p>
-                        {plan.keyFeatures.map((feat, idx) => (
-                          <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-300">
-                            <div
-                              className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]"
-                              style={{
-                                background: `${plan.color}25`,
-                                color: plan.color,
-                              }}
-                            >
-                              ✓
+                        {plan.keyFeatures.map((feat, idx) => {
+                          const transKey = FEATURE_KEY_MAP[feat];
+                          const translatedFeature = transKey ? t(transKey, feat) : feat;
+
+                          return (
+                            <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-300">
+                              <div
+                                className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]"
+                                style={{
+                                  background: `${plan.color}25`,
+                                  color: plan.color,
+                                }}
+                              >
+                                ✓
+                              </div>
+                              <span className="leading-snug">{translatedFeature}</span>
                             </div>
-                            <span className="leading-snug">{feat}</span>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -211,7 +244,7 @@ const Plans = () => {
                           color: plan.vip ? "#0f172a" : "#ffffff",
                         }}
                       >
-                        {user ? plan.buttonText : t("nav.login", "Log in to Subscribe")}
+                        {user ? translatedCta : t("nav.login", "Log in to Subscribe")}
                         <ArrowRight size={16} />
                       </button>
                     </div>

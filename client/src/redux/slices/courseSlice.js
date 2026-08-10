@@ -21,9 +21,11 @@ export const fetchCourses = createAsyncThunk(
 
 export const fetchPublishedCourses = createAsyncThunk(
   "courses/fetchPublished",
-  async (_, { rejectWithValue }) => {
+  async (params = {}, { rejectWithValue }) => {
     try {
-      const { data } = await api.get(API_ENDPOINTS.COURSES.PUBLIC);
+      const { data } = await api.get(API_ENDPOINTS.COURSES.PUBLIC, {
+        params,
+      });
       const raw = Array.isArray(data)
         ? data
         : (data.courses ?? data.data ?? []);
@@ -49,7 +51,10 @@ export const fetchEnrolledCourses = createAsyncThunk(
   },
   {
     condition: (_, { getState }) => {
-      const token = typeof localStorage !== "undefined" ? localStorage.getItem("authToken") : null;
+      const token =
+        typeof localStorage !== "undefined"
+          ? localStorage.getItem("authToken")
+          : null;
       const { user, isAuthenticated } = getState().auth || {};
       if (!token && !user && !isAuthenticated) {
         return false;

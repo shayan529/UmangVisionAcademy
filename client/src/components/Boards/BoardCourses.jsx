@@ -57,17 +57,20 @@ const BoardCourses = () => {
   const [selectedClass, setSelectedClass] = useState("All");
   const [selectedSubject, setSelectedSubject] = useState("All");
   const [selectedLanguage, setSelectedLanguage] = useState(ALL_LANGUAGES);
+  const [visibleCourseCount, setVisibleCourseCount] = useState(20);
 
-  // Fetch published courses once; if already in store this is a no-op
+  // Fetch board-specific published courses when the board changes.
   useEffect(() => {
-    dispatch(fetchPublishedCourses());
-  }, [dispatch]);
+    const boardName = boardLabel(board);
+    dispatch(fetchPublishedCourses({ board: boardName, limit: 80 }));
+  }, [dispatch, board]);
 
-  // Reset filters when board param changes
+  // Reset filters and page size when board changes
   useEffect(() => {
     setSelectedClass("All");
     setSelectedSubject("All");
     setSelectedLanguage(ALL_LANGUAGES);
+    setVisibleCourseCount(20);
   }, [board]);
 
   // ── Filter to this board ──────────────────────────────────────────────────
@@ -88,65 +91,35 @@ const BoardCourses = () => {
     [boardCourses],
   );
 
-  const subjects = useMemo(
-    () => {
-      const set = new Set();
-      boardCourses.forEach((course) => {
-        const isBulk = (course.lessons ?? []).some((l) => l.subject) ||
-                       (course.notes ?? []).some((n) => n.subject) ||
-                       (course.subjectQuizzes ?? []).length > 0 ||
-                       (course.subjectDetails ?? []).length > 0;
-        if (isBulk) {
-          const courseSubjects = [
-            ...(course.lessons ?? []).map((l) => l.subject),
-            ...(course.notes ?? []).map((n) => n.subject),
-            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
-            ...(course.subjectDetails ?? []).map((d) => d.subject),
-          ];
-          courseSubjects.forEach((sub) => {
-            if (sub) set.add(sub.trim());
-          });
-        } else {
-          if (course.title) {
-            set.add(course.title.trim());
-          }
-        }
+  const subjects = useMemo(() => {
+    const set = new Set();
+    boardCourses.forEach((course) => {
+      (course.tags ?? []).forEach((tag) => {
+        if (tag) set.add(tag.trim());
       });
-      return ["All", ...Array.from(set).sort()];
-    },
-    [boardCourses],
-  );
+      if (course.category) set.add(course.category.trim());
+      if (course.title) set.add(course.title.trim());
+    });
+    return ["All", ...Array.from(set).sort()];
+  }, [boardCourses]);
 
-  // ── Filtered list ─────────────────────────────────────────────────────────
   const filteredCourses = useMemo(
     () =>
       boardCourses.filter((course) => {
         const classMatch =
           selectedClass === "All" || course.category === selectedClass;
 
-        const isBulk = (course.lessons ?? []).some((l) => l.subject) ||
-                       (course.notes ?? []).some((n) => n.subject) ||
-                       (course.subjectQuizzes ?? []).length > 0 ||
-                       (course.subjectDetails ?? []).length > 0;
-
-        let courseSubjects = [];
-        if (isBulk) {
-          courseSubjects = [
-            ...(course.lessons ?? []).map((l) => l.subject),
-            ...(course.notes ?? []).map((n) => n.subject),
-            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
-            ...(course.subjectDetails ?? []).map((d) => d.subject),
-          ].filter(Boolean).map(s => s.trim().toLowerCase());
-        } else {
-          if (course.title) {
-            courseSubjects = [course.title.trim().toLowerCase()];
-          }
-        }
+        const courseSubjects = [
+          ...(course.tags ?? []).filter(Boolean),
+          course.category,
+          course.title,
+        ]
+          .filter(Boolean)
+          .map((value) => value.trim().toLowerCase());
 
         const subjectMatch =
           selectedSubject === "All" ||
-          courseSubjects.includes(selectedSubject.trim().toLowerCase()) ||
-          (course.title?.split(" - ")[0] ?? course.title) === selectedSubject;
+          courseSubjects.includes(selectedSubject.trim().toLowerCase());
 
         const languageMatch =
           selectedLanguage === ALL_LANGUAGES ||
@@ -157,14 +130,20 @@ const BoardCourses = () => {
     [boardCourses, selectedClass, selectedSubject, selectedLanguage],
   );
 
+  const displayedCourses = useMemo(
+    () => filteredCourses.slice(0, visibleCourseCount),
+    [filteredCourses, visibleCourseCount],
+  );
+
   const handleCourseClick = (courseId) => {
     if (!user) {
       navigate("/login", { state: { from: `/board/${board}` } });
       return;
     }
-    
+
     // Custom-role staff / admins are not allowed to view demos or full course pages.
-    const canEnroll = hasBaseRole(user, "student") || hasBaseRole(user, "instructor");
+    const canEnroll =
+      hasBaseRole(user, "student") || hasBaseRole(user, "instructor");
     if (!canEnroll) {
       return;
     }
@@ -207,9 +186,18 @@ const BoardCourses = () => {
             {!loading && (
               <div className="flex gap-4 flex-wrap">
                 {[
-                  { label: t("boardCourses.statCourses"), value: boardCourses.length },
-                  { label: t("boardCourses.statClasses"), value: classes.length - 1 },
-                  { label: t("boardCourses.statSubjects"), value: subjects.length - 1 },
+                  {
+                    label: t("boardCourses.statCourses"),
+                    value: boardCourses.length,
+                  },
+                  {
+                    label: t("boardCourses.statClasses"),
+                    value: classes.length - 1,
+                  },
+                  {
+                    label: t("boardCourses.statSubjects"),
+                    value: subjects.length - 1,
+                  },
                 ].map((s) => (
                   <div
                     key={s.label}
@@ -365,32 +353,54 @@ const BoardCourses = () => {
             </button>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {filteredCourses.map((course) => (
-              <div
-                key={course._id}
-                onClick={() => handleCourseClick(course._id)}
-                className="cursor-pointer"
-              >
-                <CourseCard
-                  course={{
-                    _id: course._id,
-                    title: course.title,
-                    instructor: instructorName(course.instructor),
-                    instructorId: typeof course.instructor === 'object' ? course.instructor?._id : null,
-                    rating: course.ratingAverage ?? 0,
-                    reviews: course.reviewCount ?? 0,
-                    price: course.price > 0 ? `₹${course.price}` : t("courses.free"),
-                    rawPrice: course.price,
-                    image: course.thumbnailUrl ?? null,
-                    board: course.board ?? null,
-                    category: course.category ?? null,
-                    language: course.language ?? null,
-                  }}
-                />
+          <>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {displayedCourses.map((course) => (
+                <div
+                  key={course._id}
+                  onClick={() => handleCourseClick(course._id)}
+                  className="cursor-pointer"
+                >
+                  <CourseCard
+                    course={{
+                      _id: course._id,
+                      title: course.title,
+                      instructor: instructorName(course.instructor),
+                      instructorId:
+                        typeof course.instructor === "object"
+                          ? course.instructor?._id
+                          : null,
+                      rating: course.ratingAverage ?? 0,
+                      reviews: course.reviewCount ?? 0,
+                      price:
+                        course.price > 0
+                          ? `₹${course.price}`
+                          : t("courses.free"),
+                      rawPrice: course.price,
+                      image: course.thumbnailUrl ?? null,
+                      board: course.board ?? null,
+                      category: course.category ?? null,
+                      language: course.language ?? null,
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+            {filteredCourses.length > visibleCourseCount && (
+              <div className="mt-8 flex justify-center">
+                <button
+                  onClick={() =>
+                    setVisibleCourseCount((prev) =>
+                      Math.min(prev + 20, filteredCourses.length),
+                    )
+                  }
+                  className="px-6 py-2 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition"
+                >
+                  {t("courses.loadMore", "Load more courses")}
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </section>

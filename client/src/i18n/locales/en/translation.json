@@ -287,9 +287,9 @@
     "basicCol": "📋 BASIC",
     "premiumCol": "📋 PREMIUM ⭐",
     "eliteCol": "📋 ELITE 👑",
-    "chooseBasic": "Choose Basic",
-    "choosePremium": "Choose Premium",
-    "chooseElite": "Choose Elite",
+    "chooseBasic": "Enroll in Basic Plan",
+    "choosePremium": "Choose Premium Plan",
+    "chooseElite": "Unlock Elite Access",
     "faqTitle": "Frequently Asked Questions about Smart Learning Plans",
     "faq1Q": "How does Class selection work?",
     "faq1A": "When you activate your plan, you select your grade (e.g. Class 9, 10, 11, or 12). All syllabus subjects, live lessons, notes, and recorded classes for that grade are automatically unlocked for you.",
@@ -298,7 +298,38 @@
     "faq3Q": "Can I upgrade my plan mid-year?",
     "faq3A": "Yes! You can easily upgrade from Basic to Premium or Elite anytime from your Student Dashboard Billing page.",
     "faq4Q": "How do Career Counselling sessions work?",
-    "faq4A": "Basic plans include 2 sessions per year, while Premium & Elite plans include 5 sessions per year. You can book 1-on-1 video consultations with certified counsellors directly in your dashboard."
+    "faq4A": "Basic plans include 2 sessions per year, while Premium & Elite plans include 5 sessions per year. You can book 1-on-1 video consultations with certified counsellors directly in your dashboard.",
+    "billedAnnuallyShort": "Billed annually • Full 365-day unlimited access",
+    "perYear": "year",
+    "perYearLabel": "/year",
+    "planBasic": "Basic Plan",
+    "planPremium": "Premium Plan",
+    "planElite": "Elite Plan",
+    "taglineBasic": "Essential foundation for school curriculum and smart daily learning.",
+    "taglinePremium": "Comprehensive mastery with competitive exam alerts, live support & mentor collaboration.",
+    "taglineElite": "The ultimate VIP suite with International Study Guidance & Higher-Study Scholarship Eligibility.",
+    "features": {
+      "allSubjectsCovered": "All Class Subjects Covered",
+      "liveLessonsResources": "Live Lessons & Study Resources",
+      "aiTutorQuizzes": "AI Tutor & Quizzes",
+      "progressReport3": "3-Page Smart Progress Report Card",
+      "practiceTests3": "3 Practice Tests & 3-Year Question Bank",
+      "careerSessions2": "2 Expert Career Counselling Sessions/Year",
+      "everythingInBasic": "Everything in Basic Plan",
+      "progressReport8": "8-Page Detailed Performance Report Card ⬆️",
+      "advancedTests5": "5 Advanced Tests & 10-Year Question Bank ⬆️",
+      "smsAlerts": "Subject, Class & Competitive Exam SMS Alerts",
+      "careerSessions5": "5 Expert Career Counselling Sessions/Year ⬆️",
+      "liveSupportPaths": "Live Support & Personalized Learning Paths",
+      "priorityInstructorMentor": "Priority Instructor & Mentor Collaboration",
+      "everythingInPremium": "Everything in Premium Plan",
+      "progressReport12": "12-Page Comprehensive Report Card ⬆️",
+      "testsPerWing10": "10 Tests per Wing / Domain",
+      "questionBank10Years": "10-Year Complete Question Bank Archive",
+      "intlStudyCounselling": "International Study Counselling & Support (EXCLUSIVE)",
+      "scholarshipEligibility": "Higher-Study Scholarship Eligibility* (EXCLUSIVE)",
+      "vipMentorFastTrack": "VIP Priority Mentor & Fast-Track Doubt Resolution"
+    }
   },
   "courseCard": {
     "viewDemo": "View Details",
@@ -1125,7 +1156,8 @@
     "counsellingAndAdvisory": "Advisory & Global Hub",
     "careerCounselling": "Career Counselling",
     "internationalStudy": "International Study",
-    "scholarships": "Scholarships"
+    "scholarships": "Scholarships",
+    "askInstructor": "Ask Instructor"
   },
   "studyNotes": {
     "title": "Class Notes",
@@ -1472,7 +1504,8 @@
     "mockTests": "Mock Tests",
     "notes": "Notes",
     "reels": "Reels",
-    "student_queries": "Student Queries"
+    "student_queries": "Student Queries",
+    "mentorship": "Mentorship & Advisory"
   },
   "instructorCourses": {
     "createNewCourse": "Create New Course",
@@ -1875,7 +1908,9 @@
     "payments": "Payments",
     "mockTests": "Mock Tests",
     "counselling": "Counselling",
-    "scholarships": "Scholarships"
+    "scholarships": "Scholarships",
+    "references": "References",
+    "chatReports": "Chat Reports"
   },
   "adminOverview": {
     "totalRevenue": "Total Revenue",
@@ -2062,5 +2097,34 @@
     "subtitle": "Review Elite student scholarship nominations, evaluate financial justifications, grant awards, and manage the Global Scholarship Directory.",
     "awardGrant": "Award Higher-Study Grant",
     "addListing": "Add New Scholarship Listing"
+  },
+  "chat": {
+    "askInstructor": "Ask Instructor",
+    "directWorkspace": "Direct Q&A Workspace",
+    "newChat": "New Chat",
+    "searchPlaceholder": "Search conversations or subjects…",
+    "allChats": "All Chats",
+    "unread": "Unread",
+    "selectCourse": "Select Enrolled Course",
+    "activeChats": "Active Chats",
+    "selectTopic": "Select Topic / Subject",
+    "generalDoubts": "General Doubts & Strategy",
+    "openChat": "Open Chat Window",
+    "allCaughtUp": "All caught up!",
+    "typeQuestion": "Type your question… (Press Enter to send, Shift+Enter for new line)",
+    "typeResponse": "Type your response to the student… (Press Enter to send, Shift+Enter for new line)",
+    "facultyDesk": "Faculty Response Desk",
+    "facultyBadge": "FACULTY",
+    "studentBadge": "STUDENT",
+    "meetReady": "Google Meet Link Ready",
+    "meetRequested": "Meet Requested",
+    "shareMeetLink": "Share Meet Link",
+    "joinMeetNow": "Join Google Meet Now",
+    "dismiss": "Dismiss",
+    "cancel": "Cancel",
+    "typing": "is typing…",
+    "messageDeleted": "Message deleted",
+    "copyText": "Text copied to clipboard",
+    "attachMedia": "Attach media or document"
   }
 }

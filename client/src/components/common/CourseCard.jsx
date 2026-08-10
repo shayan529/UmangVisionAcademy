@@ -23,10 +23,16 @@ const CourseCard = ({ course }) => {
   const [imgError, setImgError] = useState(false);
 
   // Only base "student" or "instructor" accounts can enroll / add to cart.
-  // Custom-role staff (HR Manager, etc.) and base "admin" are not meant 
+  // Custom-role staff (HR Manager, etc.) and base "admin" are not meant
   // to be purchasing or enrolling in courses, and they don't see the View Demo button.
   const canEnroll =
     hasBaseRole(user, "student") || hasBaseRole(user, "instructor");
+
+  const studentCount =
+    course.studentsCount ??
+    course.students?.length ??
+    course.enrolledCount ??
+    0;
 
   const handleBuy = (e) => {
     e.stopPropagation();
@@ -64,8 +70,18 @@ const CourseCard = ({ course }) => {
         {(!imgLoaded || imgError) && (
           <div className="absolute inset-0 bg-slate-700/60 flex items-center justify-center">
             {imgError ? (
-              <svg className="w-10 h-10 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg
+                className="w-10 h-10 text-slate-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
               </svg>
             ) : (
               <div className="absolute inset-0 overflow-hidden">
@@ -149,6 +165,11 @@ const CourseCard = ({ course }) => {
               </span>
             </div>
 
+            <div className="text-slate-400 text-[10px] md:text-xs mt-1">
+              {studentCount.toLocaleString()}{" "}
+              {t("courseCard.students", "students")}
+            </div>
+
             {/* Price */}
             <h2 className="text-sm md:text-xl font-extrabold text-white">
               {course.price}
@@ -178,13 +199,18 @@ const CourseCard = ({ course }) => {
                 <button
                   onClick={handleBuy}
                   disabled={!canEnroll && user}
-                  className={`flex-1 transition py-1.5 md:py-2.5 rounded-lg text-xs md:text-sm font-bold text-center cursor-pointer border-none ${(!canEnroll && user)
+                  className={`flex-1 transition py-1.5 md:py-2.5 rounded-lg text-xs md:text-sm font-bold text-center cursor-pointer border-none ${
+                    !canEnroll && user
                       ? "bg-slate-700 text-slate-400 border border-slate-600 cursor-not-allowed"
                       : "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white hover:shadow-[0_0_15px_rgba(124,58,237,0.4)]"
-                    }`}
-                  title={(!canEnroll && user) ? "Not available for admins or staff" : ""}
+                  }`}
+                  title={
+                    !canEnroll && user
+                      ? "Not available for admins or staff"
+                      : ""
+                  }
                 >
-                  {(!canEnroll && user)
+                  {!canEnroll && user
                     ? "Locked"
                     : course.rawPrice > 0
                       ? t("courseCard.buyNow")

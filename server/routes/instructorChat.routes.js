@@ -18,6 +18,7 @@ import {
   listAdminReports,
   getAdminReportMessages,
   takeAdminReportAction,
+  isInstructorUser,
 } from "../controllers/instructorChat.controller.js";
 
 const router = express.Router();
@@ -26,15 +27,21 @@ router.use(protect);
 // ── Permission middleware ─────────────────────────────────────────────────────
 // Students, instructors, admins, and staff with the ask_instructor grant
 // can all access these endpoints.
-const canAccessChat = (req, res, next) => {
+const canAccessChat = async (req, res, next) => {
   const u = req.user;
   if (
     hasBaseRole(u, "student") ||
     hasBaseRole(u, "instructor") ||
     hasBaseRole(u, "admin") ||
     hasPermissionGrant(u, "ask_instructor", "view")
-  )
+  ) {
     return next();
+  }
+
+  if (await isInstructorUser(u)) {
+    return next();
+  }
+
   return res.status(403).json({ message: "Access denied" });
 };
 
@@ -49,7 +56,11 @@ router.get("/available-instructors", studentOnly, getAvailableInstructors);
 
 // Admin Moderation & Reports
 router.get("/admin/reports", canAccessChat, listAdminReports);
-router.get("/admin/reports/:id/messages", canAccessChat, getAdminReportMessages);
+router.get(
+  "/admin/reports/:id/messages",
+  canAccessChat,
+  getAdminReportMessages,
+);
 router.post("/admin/reports/:id/action", canAccessChat, takeAdminReportAction);
 
 // Conversation CRUD
@@ -58,7 +69,11 @@ router.get("/conversations", canAccessChat, listConversations);
 router.get("/conversations/:id", canAccessChat, getConversation);
 router.patch("/conversations/:id/archive", canAccessChat, archiveConversation);
 router.delete("/conversations/:id", canAccessChat, deleteConversation);
-router.patch("/conversations/:id/block", canAccessChat, toggleBlockConversation);
+router.patch(
+  "/conversations/:id/block",
+  canAccessChat,
+  toggleBlockConversation,
+);
 router.post("/conversations/:id/report", canAccessChat, reportConversation);
 router.delete("/conversations/:id/messages/:mid", canAccessChat, deleteMessage);
 

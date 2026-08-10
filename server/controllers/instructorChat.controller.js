@@ -48,7 +48,7 @@ const isAdminOrStaff = (user) =>
  *   - role is an ObjectId / custom Role   (fetched from courses below)
  *   - user has at least one published course (fallback ownership check)
  */
-const isInstructorUser = async (user) => {
+export const isInstructorUser = async (user) => {
   if (!user) return false;
 
   // Fast path — base role string
@@ -69,7 +69,10 @@ const isInstructorUser = async (user) => {
  * Keeps the most recently updated conversation as primary, merges messages
  * from older duplicates into it, and deletes the duplicate documents.
  */
-const deduplicateStudentInstructorConversations = async (studentId, instructorId) => {
+const deduplicateStudentInstructorConversations = async (
+  studentId,
+  instructorId,
+) => {
   try {
     const convs = await Conversation.find({
       student: studentId,
@@ -90,9 +93,10 @@ const deduplicateStudentInstructorConversations = async (studentId, instructorId
     }
 
     if (newMessages.length > 0) {
-      const combinedMessages = [...(primary.messages || []), ...newMessages].sort(
-        (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
-      );
+      const combinedMessages = [
+        ...(primary.messages || []),
+        ...newMessages,
+      ].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
 
       const lastMsg = combinedMessages[combinedMessages.length - 1];
 
@@ -103,26 +107,33 @@ const deduplicateStudentInstructorConversations = async (studentId, instructorId
             messages: combinedMessages,
             lastMessage: lastMsg
               ? {
-                  text: lastMsg.text || (lastMsg.media?.length ? "[Attachment]" : ""),
+                  text:
+                    lastMsg.text ||
+                    (lastMsg.media?.length ? "[Attachment]" : ""),
                   at: lastMsg.createdAt || new Date(),
                   senderRole: lastMsg.senderRole || "",
                 }
               : primary.lastMessage,
           },
-        }
+        },
       );
     }
 
     const dupIds = duplicates.map((d) => d._id);
     await Conversation.deleteMany({ _id: { $in: dupIds } });
   } catch (err) {
-    console.error("[instructorChat] deduplicateStudentInstructorConversations error:", err);
+    console.error(
+      "[instructorChat] deduplicateStudentInstructorConversations error:",
+      err,
+    );
   }
 };
 
 const deduplicateAllConversations = async (userFilter) => {
   try {
-    const convs = await Conversation.find(userFilter).select("student instructor updatedAt").lean();
+    const convs = await Conversation.find(userFilter)
+      .select("student instructor updatedAt")
+      .lean();
     const seen = new Set();
     const pairsToDedupe = [];
 
@@ -130,14 +141,20 @@ const deduplicateAllConversations = async (userFilter) => {
       if (!c.student || !c.instructor) continue;
       const key = `${c.student.toString()}_${c.instructor.toString()}`;
       if (seen.has(key)) {
-        pairsToDedupe.push({ studentId: c.student, instructorId: c.instructor });
+        pairsToDedupe.push({
+          studentId: c.student,
+          instructorId: c.instructor,
+        });
       } else {
         seen.add(key);
       }
     }
 
     for (const pair of pairsToDedupe) {
-      await deduplicateStudentInstructorConversations(pair.studentId, pair.instructorId);
+      await deduplicateStudentInstructorConversations(
+        pair.studentId,
+        pair.instructorId,
+      );
     }
   } catch (err) {
     console.error("[instructorChat] deduplicateAllConversations error:", err);
@@ -178,10 +195,12 @@ export const getOrCreateConversation = async (req, res) => {
         return res.status(400).json({ message: "Invalid courseId" });
       }
       if (!isAdminOrStaff(req.user)) {
-        const studentDoc = await User.findById(studentId).select("instructorAssistanceCourses subscription").lean();
-        const hasAssistance = (studentDoc?.instructorAssistanceCourses || []).some(
-          (id) => id.toString() === courseId.toString(),
-        );
+        const studentDoc = await User.findById(studentId)
+          .select("instructorAssistanceCourses subscription")
+          .lean();
+        const hasAssistance = (
+          studentDoc?.instructorAssistanceCourses || []
+        ).some((id) => id.toString() === courseId.toString());
         const hasActiveSub = studentDoc?.subscription?.status === "active";
         if (!hasAssistance && !hasActiveSub) {
           return res.status(403).json({
@@ -206,7 +225,10 @@ export const getOrCreateConversation = async (req, res) => {
     if (conv) {
       // Update course and subject on existing conversation if provided
       let modified = false;
-      if (courseId && (!conv.course || conv.course.toString() !== courseId.toString())) {
+      if (
+        courseId &&
+        (!conv.course || conv.course.toString() !== courseId.toString())
+      ) {
         conv.course = courseId;
         modified = true;
       }
@@ -284,19 +306,30 @@ export const listConversations = async (req, res) => {
       Conversation.countDocuments(filter),
     ]);
 
-    const isStudentUser = !isAdminOrStaff(req.user) && !hasBaseRole(req.user, "instructor");
+    const isStudentUser =
+      !isAdminOrStaff(req.user) && !hasBaseRole(req.user, "instructor");
     let assistanceSet = new Set();
     let hasActiveSub = false;
 
     if (isStudentUser) {
-      const studentDoc = await User.findById(req.user._id).select("instructorAssistanceCourses subscription").lean();
-      assistanceSet = new Set((studentDoc?.instructorAssistanceCourses || []).map((id) => id.toString()));
+      const studentDoc = await User.findById(req.user._id)
+        .select("instructorAssistanceCourses subscription")
+        .lean();
+      assistanceSet = new Set(
+        (studentDoc?.instructorAssistanceCourses || []).map((id) =>
+          id.toString(),
+        ),
+      );
       hasActiveSub = studentDoc?.subscription?.status === "active";
     }
 
     const enhancedConvs = convs.map((c) => {
       const courseIdStr = c.course?._id?.toString() || c.course?.toString();
-      const assistanceDisabled = isStudentUser && Boolean(courseIdStr) && !assistanceSet.has(courseIdStr) && !hasActiveSub;
+      const assistanceDisabled =
+        isStudentUser &&
+        Boolean(courseIdStr) &&
+        !assistanceSet.has(courseIdStr) &&
+        !hasActiveSub;
       return { ...c, assistanceDisabled };
     });
 
@@ -330,11 +363,21 @@ export const submitCallRequest = async (req, res) => {
         .json({ message: "Only the student can request a call" });
 
     if (conv.course) {
-      const studentDoc = await User.findById(req.user._id).select("instructorAssistanceCourses subscription").lean();
-      const assistanceSet = new Set((studentDoc?.instructorAssistanceCourses || []).map((id) => id.toString()));
+      const studentDoc = await User.findById(req.user._id)
+        .select("instructorAssistanceCourses subscription")
+        .lean();
+      const assistanceSet = new Set(
+        (studentDoc?.instructorAssistanceCourses || []).map((id) =>
+          id.toString(),
+        ),
+      );
       const hasActiveSub = studentDoc?.subscription?.status === "active";
       if (!assistanceSet.has(conv.course._id.toString()) && !hasActiveSub) {
-        return res.status(403).json({ message: "Instructor assistance is disabled for this course." });
+        return res
+          .status(403)
+          .json({
+            message: "Instructor assistance is disabled for this course.",
+          });
       }
     }
 
@@ -470,7 +513,8 @@ export const approveCallRequest = async (req, res) => {
       },
       { new: true, select: "messages" },
     );
-    const savedMessage = conversation.messages[conversation.messages.length - 1];
+    const savedMessage =
+      conversation.messages[conversation.messages.length - 1];
     emitIChatEvent(req, request.conversation._id.toString(), "ic:message", {
       conversationId: request.conversation._id.toString(),
       message: { ...savedMessage.toObject(), sender: request.instructor },
@@ -686,11 +730,13 @@ export const getAvailableInstructors = async (req, res) => {
   try {
     const studentId = req.user._id;
     const dbUser = await User.findById(studentId)
-      .select("instructorAssistanceCourses enrolledCourses subscription selectedClass")
+      .select(
+        "instructorAssistanceCourses enrolledCourses subscription selectedClass",
+      )
       .lean();
 
-    const assistanceCourseIds = (dbUser?.instructorAssistanceCourses ?? []).map((id) =>
-      id.toString(),
+    const assistanceCourseIds = (dbUser?.instructorAssistanceCourses ?? []).map(
+      (id) => id.toString(),
     );
     const enrolledCourseIds = (dbUser?.enrolledCourses ?? []).map((id) =>
       id.toString(),
@@ -806,11 +852,17 @@ export const toggleBlockConversation = async (req, res) => {
     if (!isInstructor && !isAdminOrStaff(req.user))
       return res
         .status(403)
-        .json({ message: "Only the instructor or admin can block/unblock student" });
+        .json({
+          message: "Only the instructor or admin can block/unblock student",
+        });
 
     conv.isBlocked = Boolean(isBlocked);
     conv.blockedBy = isBlocked ? req.user._id : null;
-    conv.blockedReason = isBlocked ? String(reason || "").trim().slice(0, 500) : "";
+    conv.blockedReason = isBlocked
+      ? String(reason || "")
+          .trim()
+          .slice(0, 500)
+      : "";
     await conv.save();
 
     emitIChatEvent(req, id, "ic:blocked-status", {
@@ -856,7 +908,9 @@ export const reportConversation = async (req, res) => {
 
     conv.isReported = true;
     conv.reportReason = String(reason).trim().slice(0, 200);
-    conv.reportDetails = String(details || "").trim().slice(0, 1000);
+    conv.reportDetails = String(details || "")
+      .trim()
+      .slice(0, 1000);
     conv.reportedAt = new Date();
     conv.reportedBy = req.user._id;
     await conv.save();
@@ -886,7 +940,10 @@ export const listAdminReports = async (req, res) => {
       .sort({ updatedAt: -1 })
       .select("-messages")
       .populate("student", "_id name avatarUrl email isSuspended suspendReason")
-      .populate("instructor", "_id name avatarUrl email isSuspended suspendReason")
+      .populate(
+        "instructor",
+        "_id name avatarUrl email isSuspended suspendReason",
+      )
       .populate("course", "_id title")
       .populate("reportedBy", "_id name role")
       .populate("blockedBy", "_id name role")
@@ -994,5 +1051,3 @@ export const takeAdminReportAction = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
-

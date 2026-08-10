@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { fetchPublishedCourses, fetchEnrolledCourses } from "../../redux/slices/courseSlice";
+import {
+  fetchPublishedCourses,
+  fetchEnrolledCourses,
+} from "../../redux/slices/courseSlice";
 import CourseCard from "./CourseCard";
 import { FaStar } from "react-icons/fa";
 import api from "../../config/api";
@@ -47,7 +50,9 @@ const RatingModal = ({ course, onClose, onSubmit }) => {
   const [submitting, setSubmitting] = useState(false);
 
   const rawLabels = t("courses.ratingLabels", { returnObjects: true });
-  const labels = Array.isArray(rawLabels) ? rawLabels : ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
+  const labels = Array.isArray(rawLabels)
+    ? rawLabels
+    : ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
 
   const handleSubmit = async () => {
     if (!selected) return toast.error("Please select a rating");
@@ -66,7 +71,9 @@ const RatingModal = ({ course, onClose, onSubmit }) => {
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h3 className="text-white font-bold text-lg">{t("courses.ratingModalTitle")}</h3>
+            <h3 className="text-white font-bold text-lg">
+              {t("courses.ratingModalTitle")}
+            </h3>
             <p className="text-slate-400 text-sm mt-0.5 line-clamp-1">
               {course.title}
             </p>
@@ -91,10 +98,11 @@ const RatingModal = ({ course, onClose, onSubmit }) => {
                 className="transition-transform hover:scale-110"
               >
                 <FaStar
-                  className={`text-3xl transition-colors ${star <= (hovered || selected)
-                    ? "text-amber-400"
-                    : "text-slate-600"
-                    }`}
+                  className={`text-3xl transition-colors ${
+                    star <= (hovered || selected)
+                      ? "text-amber-400"
+                      : "text-slate-600"
+                  }`}
                 />
               </button>
             ))}
@@ -184,7 +192,7 @@ const Courses = () => {
   // Build a Set of enrolled course IDs for O(1) lookup
   const enrolledIdSet = useMemo(
     () => new Set(enrolledCourses.map((c) => c._id?.toString())),
-    [enrolledCourses]
+    [enrolledCourses],
   );
 
   const [selectedCourseType, setSelectedCourseType] = useState(TYPE_ALL);
@@ -195,6 +203,7 @@ const Courses = () => {
   const [selectedLanguage, setSelectedLanguage] = useState(ALL_LANGUAGES);
   const [ratingCourse, setRatingCourse] = useState(null); // course being rated
   const [submittedRatings, setSubmittedRatings] = useState({}); // { courseId: rating }
+  const [visibleCourseCount, setVisibleCourseCount] = useState(20);
 
   useEffect(() => {
     dispatch(fetchPublishedCourses());
@@ -213,9 +222,7 @@ const Courses = () => {
   // ── Derived filter options ─────────────────────────────────────────────────
   const dynamicClasses = useMemo(
     () => [
-      ...new Set(
-        allCourses.map((c) => c.category).filter(isClassCategory),
-      ),
+      ...new Set(allCourses.map((c) => c.category).filter(isClassCategory)),
     ],
     [allCourses],
   );
@@ -238,36 +245,23 @@ const Courses = () => {
     [allCourses],
   );
 
-  const dynamicSubjects = useMemo(
-    () => {
-      const subjects = new Set();
-      allCourses.forEach((course) => {
-        const isBulk = (course.lessons ?? []).some((l) => l.subject) ||
-          (course.notes ?? []).some((n) => n.subject) ||
-          (course.subjectQuizzes ?? []).length > 0 ||
-          (course.subjectDetails ?? []).length > 0;
-        if (isBulk) {
-          const courseSubjects = [
-            ...(course.lessons ?? []).map((l) => l.subject),
-            ...(course.notes ?? []).map((n) => n.subject),
-            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
-            ...(course.subjectDetails ?? []).map((d) => d.subject),
-          ];
-          courseSubjects.forEach((sub) => {
-            if (sub) {
-              subjects.add(sub.trim());
-            }
-          });
-        } else {
-          if (course.title) {
-            subjects.add(course.title.trim());
-          }
-        }
-      });
-      return Array.from(subjects).sort();
-    },
-    [allCourses],
-  );
+  const dynamicSubjects = useMemo(() => {
+    const subjects = new Set();
+    allCourses.forEach((course) => {
+      if (course.tags?.length) {
+        course.tags.forEach((tag) => {
+          if (tag) subjects.add(tag.trim());
+        });
+      }
+      if (course.category) {
+        subjects.add(course.category.trim());
+      }
+      if (course.title) {
+        subjects.add(course.title.trim());
+      }
+    });
+    return Array.from(subjects).sort();
+  }, [allCourses]);
 
   const dynamicBoards = useMemo(
     () => [...new Set(allCourses.map((c) => c.board).filter(Boolean))],
@@ -290,24 +284,13 @@ const Courses = () => {
             ? selectedExam === ALL_EXAMS || course.category === selectedExam
             : selectedClass === ALL || course.category === selectedClass;
 
-        const isBulk = (course.lessons ?? []).some((l) => l.subject) ||
-          (course.notes ?? []).some((n) => n.subject) ||
-          (course.subjectQuizzes ?? []).length > 0 ||
-          (course.subjectDetails ?? []).length > 0;
-
-        let courseSubjects = [];
-        if (isBulk) {
-          courseSubjects = [
-            ...(course.lessons ?? []).map((l) => l.subject),
-            ...(course.notes ?? []).map((n) => n.subject),
-            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
-            ...(course.subjectDetails ?? []).map((d) => d.subject),
-          ].filter(Boolean).map(s => s.trim().toLowerCase());
-        } else {
-          if (course.title) {
-            courseSubjects = [course.title.trim().toLowerCase()];
-          }
-        }
+        const courseSubjects = [
+          ...(course.tags ?? []).filter(Boolean),
+          course.category,
+          course.title,
+        ]
+          .filter(Boolean)
+          .map((value) => value.trim().toLowerCase());
 
         const subjectMatch =
           selectedSubject === "All Subjects" ||
@@ -328,7 +311,9 @@ const Courses = () => {
           !course.language ||
           course.language.toLowerCase() === selectedLanguage.toLowerCase();
 
-        return typeMatch && classMatch && subjectMatch && boardMatch && languageMatch;
+        return (
+          typeMatch && classMatch && subjectMatch && boardMatch && languageMatch
+        );
       }),
     [
       allCourses,
@@ -352,15 +337,27 @@ const Courses = () => {
     if (enrolledIdSet.has(courseIdStr)) return true;
 
     // Fallback check 1: check user object's enrolledCourses array
-    if (user.enrolledCourses?.some((id) => (id._id || id).toString() === courseIdStr)) return true;
+    if (
+      user.enrolledCourses?.some(
+        (id) => (id._id || id).toString() === courseIdStr,
+      )
+    )
+      return true;
 
     // Fallback check 2: check course object's students array
-    if (Array.isArray(course.students) && course.students.some((id) => (id._id || id).toString() === userIdStr)) return true;
+    if (
+      Array.isArray(course.students) &&
+      course.students.some((id) => (id._id || id).toString() === userIdStr)
+    )
+      return true;
 
     // Secondary check: subscription-based access
     const hasActiveSubscription = user.subscription?.status === "active";
-    const matchesClass = user.selectedClass && course.category &&
-      user.selectedClass.toLowerCase().trim() === course.category.toLowerCase().trim();
+    const matchesClass =
+      user.selectedClass &&
+      course.category &&
+      user.selectedClass.toLowerCase().trim() ===
+        course.category.toLowerCase().trim();
 
     return !!(hasActiveSubscription && matchesClass);
   };
@@ -388,7 +385,7 @@ const Courses = () => {
     // Check the ratings array from the DB (field is `ratings`, not `reviews`)
     if (Array.isArray(course.ratings)) {
       return course.ratings.some(
-        (r) => (r.user?._id ?? r.user)?.toString() === user._id?.toString()
+        (r) => (r.user?._id ?? r.user)?.toString() === user._id?.toString(),
       );
     }
     return false;
@@ -466,7 +463,7 @@ const Courses = () => {
               </h2>
               {!loading && allCourses.length > 0 && (
                 <span className="text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800/80 px-2.5 py-0.5 rounded-full">
-                  {`${filteredCourses.length} ${filteredCourses.length === 1 ? 'course' : 'courses'} available`}
+                  {`${filteredCourses.length} ${filteredCourses.length === 1 ? "course" : "courses"} available`}
                 </span>
               )}
             </div>
@@ -477,17 +474,24 @@ const Courses = () => {
             <div className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-800 bg-[#0f172a]/90 backdrop-blur-md max-w-full overflow-x-auto no-scrollbar">
               {[
                 { key: TYPE_ALL, label: t("courses.courseTypeAll", "All") },
-                { key: TYPE_CLASSES, label: t("courses.courseTypeClasses", "Classes") },
-                { key: TYPE_COMPETITIVE, label: t("courses.courseTypeCompetitive", "Competitive Exam") },
+                {
+                  key: TYPE_CLASSES,
+                  label: t("courses.courseTypeClasses", "Classes"),
+                },
+                {
+                  key: TYPE_COMPETITIVE,
+                  label: t("courses.courseTypeCompetitive", "Competitive Exam"),
+                },
               ].map((opt) => (
                 <button
                   key={opt.key}
                   type="button"
                   onClick={() => handleCourseTypeChange(opt.key)}
-                  className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap shrink-0 ${selectedCourseType === opt.key
-                    ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xs"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                    }`}
+                  className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap shrink-0 ${
+                    selectedCourseType === opt.key
+                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xs"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                  }`}
                 >
                   {opt.label}
                 </button>
@@ -532,7 +536,10 @@ const Courses = () => {
                   ))}
                 </select>
                 <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                  <svg className="w-3.5 h-3.5 fill-current opacity-70" viewBox="0 0 20 20">
+                  <svg
+                    className="w-3.5 h-3.5 fill-current opacity-70"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                   </svg>
                 </div>
@@ -559,7 +566,10 @@ const Courses = () => {
                   ))}
                 </select>
                 <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                  <svg className="w-3.5 h-3.5 fill-current opacity-70" viewBox="0 0 20 20">
+                  <svg
+                    className="w-3.5 h-3.5 fill-current opacity-70"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                   </svg>
                 </div>
@@ -587,7 +597,10 @@ const Courses = () => {
                 ))}
               </select>
               <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                <svg className="w-3.5 h-3.5 fill-current opacity-70" viewBox="0 0 20 20">
+                <svg
+                  className="w-3.5 h-3.5 fill-current opacity-70"
+                  viewBox="0 0 20 20"
+                >
                   <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                 </svg>
               </div>
@@ -615,7 +628,10 @@ const Courses = () => {
                   ))}
                 </select>
                 <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                  <svg className="w-3.5 h-3.5 fill-current opacity-70" viewBox="0 0 20 20">
+                  <svg
+                    className="w-3.5 h-3.5 fill-current opacity-70"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                   </svg>
                 </div>
@@ -643,7 +659,10 @@ const Courses = () => {
                 ))}
               </select>
               <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                <svg className="w-3.5 h-3.5 fill-current opacity-70" viewBox="0 0 20 20">
+                <svg
+                  className="w-3.5 h-3.5 fill-current opacity-70"
+                  viewBox="0 0 20 20"
+                >
                   <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                 </svg>
               </div>
@@ -652,43 +671,78 @@ const Courses = () => {
         </div>
 
         {/* Active Filters Bar */}
-        {(selectedCourseType !== TYPE_ALL || selectedClass !== ALL || selectedExam !== ALL_EXAMS || selectedSubject !== ALL_SUBJECTS || selectedBoard !== ALL_BOARDS || selectedLanguage !== ALL_LANGUAGES) && (
+        {(selectedCourseType !== TYPE_ALL ||
+          selectedClass !== ALL ||
+          selectedExam !== ALL_EXAMS ||
+          selectedSubject !== ALL_SUBJECTS ||
+          selectedBoard !== ALL_BOARDS ||
+          selectedLanguage !== ALL_LANGUAGES) && (
           <div className="flex flex-wrap items-center gap-2 mb-8 p-3 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs">
             <span className="text-slate-400 font-semibold mr-1">Active:</span>
             {selectedCourseType !== TYPE_ALL && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-medium">
                 {selectedCourseType}
-                <button onClick={() => handleCourseTypeChange(TYPE_ALL)} className="hover:text-white font-bold">✕</button>
+                <button
+                  onClick={() => handleCourseTypeChange(TYPE_ALL)}
+                  className="hover:text-white font-bold"
+                >
+                  ✕
+                </button>
               </span>
             )}
             {selectedClass !== ALL && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
                 Class: {selectedClass}
-                <button onClick={() => setSelectedClass(ALL)} className="hover:text-white font-bold">✕</button>
+                <button
+                  onClick={() => setSelectedClass(ALL)}
+                  className="hover:text-white font-bold"
+                >
+                  ✕
+                </button>
               </span>
             )}
             {selectedExam !== ALL_EXAMS && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
                 Exam: {selectedExam}
-                <button onClick={() => setSelectedExam(ALL_EXAMS)} className="hover:text-white font-bold">✕</button>
+                <button
+                  onClick={() => setSelectedExam(ALL_EXAMS)}
+                  className="hover:text-white font-bold"
+                >
+                  ✕
+                </button>
               </span>
             )}
             {selectedSubject !== ALL_SUBJECTS && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 font-medium">
                 Subject: {selectedSubject}
-                <button onClick={() => setSelectedSubject(ALL_SUBJECTS)} className="hover:text-white font-bold">✕</button>
+                <button
+                  onClick={() => setSelectedSubject(ALL_SUBJECTS)}
+                  className="hover:text-white font-bold"
+                >
+                  ✕
+                </button>
               </span>
             )}
             {selectedBoard !== ALL_BOARDS && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-medium">
                 Board: {selectedBoard}
-                <button onClick={() => setSelectedBoard(ALL_BOARDS)} className="hover:text-white font-bold">✕</button>
+                <button
+                  onClick={() => setSelectedBoard(ALL_BOARDS)}
+                  className="hover:text-white font-bold"
+                >
+                  ✕
+                </button>
               </span>
             )}
             {selectedLanguage !== ALL_LANGUAGES && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 font-medium">
                 Lang: {selectedLanguage}
-                <button onClick={() => setSelectedLanguage(ALL_LANGUAGES)} className="hover:text-white font-bold">✕</button>
+                <button
+                  onClick={() => setSelectedLanguage(ALL_LANGUAGES)}
+                  className="hover:text-white font-bold"
+                >
+                  ✕
+                </button>
               </span>
             )}
             <button
@@ -715,88 +769,115 @@ const Courses = () => {
             ))}
           </div>
         ) : filteredCourses.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {filteredCourses.map((course, i) => {
-              const completed = isCompleted(course);
-              const enrolled = isEnrolled(course);
-              const rated = hasRated(course);
-              const sessionRating = submittedRatings[course._id];
-              // Find user's own rating from DB (for display after refresh)
-              const ownRating = sessionRating ??
-                course.ratings?.find(
-                  (r) => (r.user?._id ?? r.user)?.toString() === user?._id?.toString()
-                )?.rating ?? Math.round(course.ratingAverage ?? 0);
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {filteredCourses.slice(0, visibleCourseCount).map((course, i) => {
+                const completed = isCompleted(course);
+                const enrolled = isEnrolled(course);
+                const rated = hasRated(course);
+                const sessionRating = submittedRatings[course._id];
+                // Find user's own rating from DB (for display after refresh)
+                const ownRating =
+                  sessionRating ??
+                  course.ratings?.find(
+                    (r) =>
+                      (r.user?._id ?? r.user)?.toString() ===
+                      user?._id?.toString(),
+                  )?.rating ??
+                  Math.round(course.ratingAverage ?? 0);
 
-              return (
-                <div
-                  key={course._id}
-                  className="flex flex-col gap-2 animate-[fadeUp_0.4s_ease_both]"
-                  style={{ animationDelay: `${Math.min(i, 7) * 50}ms` }}
-                >
-                  {/* Course card */}
+                return (
                   <div
-                    onClick={() => handleCourseClick(course)}
-                    className="cursor-pointer"
+                    key={course._id}
+                    className="flex flex-col gap-2 animate-[fadeUp_0.4s_ease_both]"
+                    style={{ animationDelay: `${Math.min(i, 7) * 50}ms` }}
                   >
-                    <CourseCard
-                      course={{
-                        _id: course._id,
-                        title: course.title,
-                        instructor: instructorName(course.instructor),
-                        instructorId: typeof course.instructor === 'object' ? course.instructor?._id : null,
-                        rating: course.ratingAverage ?? 0,
-                        reviews: course.reviewCount ?? 0,
-                        price:
-                          course.price > 0
-                            ? `₹${course.price}`
-                            : t("courses.free"),
-                        rawPrice: course.price,
-                        image: course.thumbnailUrl ?? null,
-                        board: course.board ?? null,
-                        category: course.category ?? null,
-                        language: course.language ?? null,
-                        students:
-                          course.students?.length ?? course.enrolledCount ?? 0,
-                        enrolled,
-                      }}
-                    />
-                  </div>
-
-                  {/* Rating row — visible for all enrolled courses */}
-                  {enrolled && (
-                    <div className="flex items-center px-1">
-                      {rated ? (
-                        <div className="flex items-center gap-1.5 text-xs text-amber-400 font-medium">
-                          {[1, 2, 3, 4, 5].map((s) => (
-                            <FaStar
-                              key={s}
-                              className={
-                                s <= ownRating
-                                  ? "text-amber-400"
-                                  : "text-slate-600"
-                              }
-                            />
-                          ))}
-                          <span className="text-slate-400 ml-1">{t("courses.rated")}</span>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setRatingCourse(course);
-                          }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-semibold hover:bg-amber-500/20 hover:border-amber-500/40 transition-all"
-                        >
-                          <FaStar className="text-[11px]" />
-                          {t("courses.rateCourse")}
-                        </button>
-                      )}
+                    {/* Course card */}
+                    <div
+                      onClick={() => handleCourseClick(course)}
+                      className="cursor-pointer"
+                    >
+                      <CourseCard
+                        course={{
+                          _id: course._id,
+                          title: course.title,
+                          instructor: instructorName(course.instructor),
+                          instructorId:
+                            typeof course.instructor === "object"
+                              ? course.instructor?._id
+                              : null,
+                          rating: course.ratingAverage ?? 0,
+                          reviews: course.reviewCount ?? 0,
+                          price:
+                            course.price > 0
+                              ? `₹${course.price}`
+                              : t("courses.free"),
+                          rawPrice: course.price,
+                          image: course.thumbnailUrl ?? null,
+                          board: course.board ?? null,
+                          category: course.category ?? null,
+                          language: course.language ?? null,
+                          students:
+                            course.students?.length ??
+                            course.enrolledCount ??
+                            0,
+                          enrolled,
+                        }}
+                      />
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+
+                    {/* Rating row — visible for all enrolled courses */}
+                    {enrolled && (
+                      <div className="flex items-center px-1">
+                        {rated ? (
+                          <div className="flex items-center gap-1.5 text-xs text-amber-400 font-medium">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <FaStar
+                                key={s}
+                                className={
+                                  s <= ownRating
+                                    ? "text-amber-400"
+                                    : "text-slate-600"
+                                }
+                              />
+                            ))}
+                            <span className="text-slate-400 ml-1">
+                              {t("courses.rated")}
+                            </span>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setRatingCourse(course);
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-semibold hover:bg-amber-500/20 hover:border-amber-500/40 transition-all"
+                          >
+                            <FaStar className="text-[11px]" />
+                            {t("courses.rateCourse")}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {filteredCourses.length > visibleCourseCount && (
+              <div className="mt-8 flex justify-center">
+                <button
+                  onClick={() =>
+                    setVisibleCourseCount((prev) =>
+                      Math.min(prev + 20, filteredCourses.length),
+                    )
+                  }
+                  className="px-6 py-2 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition"
+                >
+                  {t("courses.loadMore", "Load more courses")}
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-20">
             <h3 className="text-3xl font-bold text-white">

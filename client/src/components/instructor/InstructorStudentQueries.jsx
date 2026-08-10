@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { io } from "socket.io-client";
 import toast from "react-hot-toast";
-import { SOCKET_URL } from "../../config/api.js";
-import api, { API_ENDPOINTS } from "../../config/api.js";
+import { SOCKET_URL, API_ENDPOINTS } from "../../config/api.js";
 import { uploadFile } from "../../utils/uploadFile.js";
 import {
   fetchConversations,
@@ -161,7 +161,14 @@ const ImageModal = ({ src, alt, onClose }) => {
 };
 
 // ── Message bubble ────────────────────────────────────────────────────────────
-const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) => {
+const Bubble = ({
+  msg,
+  isMe,
+  groupStart,
+  groupEnd,
+  onDelete,
+  onPreviewImage,
+}) => {
   const [hover, setHover] = useState(false);
 
   const copyText = () => {
@@ -190,14 +197,16 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
       onMouseLeave={() => setHover(false)}
     >
       <div
-        className={`relative max-w-[85%] sm:max-w-[75%] md:max-w-[65%] flex items-end gap-2.5 ${isMe ? "flex-row-reverse" : "flex-row"
-          }`}
+        className={`relative max-w-[85%] sm:max-w-[75%] md:max-w-[65%] flex items-end gap-2.5 ${
+          isMe ? "flex-row-reverse" : "flex-row"
+        }`}
       >
         {/* Message Actions Menu on Hover */}
         {hover && (
           <div
-            className={`absolute top-0 -translate-y-1/2 z-20 flex items-center gap-1 bg-[#101738] border border-[#2e418b] rounded-xl p-1 shadow-xl backdrop-blur-md transition-all ${isMe ? "right-0 translate-x-2" : "left-0 -translate-x-2"
-              }`}
+            className={`absolute top-0 -translate-y-1/2 z-20 flex items-center gap-1 bg-[#101738] border border-[#2e418b] rounded-xl p-1 shadow-xl backdrop-blur-md transition-all ${
+              isMe ? "right-0 translate-x-2" : "left-0 -translate-x-2"
+            }`}
           >
             {msg.text && (
               <button
@@ -224,12 +233,15 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
           {/* Main Text Content */}
           {msg.text && (
             <div
-              className={`px-4 py-3 text-[13.5px] leading-relaxed break-words shadow-md transition-all ${isMe
-                  ? `bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white rounded-[22px] ${groupEnd ? "rounded-br-xs" : ""
-                  }`
-                  : `bg-[#101738] border border-[#223068] text-zinc-100 rounded-[22px] ${groupEnd ? "rounded-bl-xs" : ""
-                  }`
-                }`}
+              className={`px-4 py-3 text-[13.5px] leading-relaxed break-words shadow-md transition-all ${
+                isMe
+                  ? `bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white rounded-[22px] ${
+                      groupEnd ? "rounded-br-xs" : ""
+                    }`
+                  : `bg-[#101738] border border-[#223068] text-zinc-100 rounded-[22px] ${
+                      groupEnd ? "rounded-bl-xs" : ""
+                    }`
+              }`}
             >
               {msg.text}
             </div>
@@ -268,9 +280,14 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
                     <p className="truncate max-w-[200px] font-semibold text-zinc-100">
                       {m.filename || "Attachment"}
                     </p>
-                    <p className="text-[10px] text-zinc-400">Click to open document</p>
+                    <p className="text-[10px] text-zinc-400">
+                      Click to open document
+                    </p>
                   </div>
-                  <ExternalLink size={14} className="text-zinc-400 group-hover/file:text-emerald-400" />
+                  <ExternalLink
+                    size={14}
+                    className="text-zinc-400 group-hover/file:text-emerald-400"
+                  />
                 </a>
               )}
             </div>
@@ -279,8 +296,11 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
           {/* Footer Metadata */}
           {groupEnd && (
             <div
-              className={`text-[10.5px] font-medium mt-1 flex items-center gap-1.5 ${isMe ? "justify-end text-zinc-400" : "justify-start text-zinc-400"
-                }`}
+              className={`text-[10.5px] font-medium mt-1 flex items-center gap-1.5 ${
+                isMe
+                  ? "justify-end text-zinc-400"
+                  : "justify-start text-zinc-400"
+              }`}
             >
               <span>{fmtTime(msg.createdAt)}</span>
               {isMe && (
@@ -305,10 +325,11 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-start gap-3.5 p-3.5 rounded-2xl text-left transition-all duration-200 relative overflow-hidden group cursor-pointer ${isActive
+      className={`w-full flex items-start gap-3.5 p-3.5 rounded-2xl text-left transition-all duration-200 relative overflow-hidden group cursor-pointer ${
+        isActive
           ? "bg-[#0e1736] border-2 border-emerald-500 shadow-xl shadow-emerald-500/15 ring-1 ring-emerald-500/40"
           : "bg-[#131b3e] border border-[#223062] hover:bg-[#182352] hover:border-[#2f438a]"
-        }`}
+      }`}
     >
       {/* Active Left Indicator Bar */}
       {isActive && (
@@ -329,7 +350,10 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
           </div>
         )}
         {conv.assistanceActive && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#131b3e] rounded-full" title="Assistance Active" />
+          <span
+            className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#131b3e] rounded-full"
+            title="Assistance Active"
+          />
         )}
       </div>
 
@@ -354,7 +378,9 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
         <p className="text-[11px] font-medium text-emerald-400 truncate mb-1 flex items-center gap-1">
           <BookOpen size={11} className="shrink-0 text-emerald-400" />
           <span>{conv.course?.title || "Class Query"}</span>
-          {conv.subject ? <span className="text-zinc-400">· {conv.subject}</span> : null}
+          {conv.subject ? (
+            <span className="text-zinc-400">· {conv.subject}</span>
+          ) : null}
         </p>
 
         {/* Last Message Preview */}
@@ -383,6 +409,7 @@ const REPORT_REASONS = [
 // ── MAIN INSTRUCTOR COMPONENT ─────────────────────────────────────────────────
 export default function InstructorStudentQueries({ showToast }) {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const { user } = useSelector((s) => s.auth);
   const {
     conversations = [],
@@ -410,7 +437,9 @@ export default function InstructorStudentQueries({ showToast }) {
   const [activeMeetRequest, setActiveMeetRequest] = useState(null);
 
   const [reportModalOpen, setReportModalOpen] = useState(false);
-  const [selectedReportReason, setSelectedReportReason] = useState(REPORT_REASONS[0]);
+  const [selectedReportReason, setSelectedReportReason] = useState(
+    REPORT_REASONS[0],
+  );
   const [reportDetails, setReportDetails] = useState("");
   const [submittingReport, setSubmittingReport] = useState(false);
 
@@ -426,8 +455,8 @@ export default function InstructorStudentQueries({ showToast }) {
   // 1. Socket Setup
   useEffect(() => {
     if (!user?._id) return;
-    const token = localStorage.getItem("token");
-    const socket = io(SOCKET_URL, {
+    const token = localStorage.getItem("authToken");
+    const socket = io(`${SOCKET_URL}/ichat`, {
       auth: { token },
       transports: ["websocket", "polling"],
     });
@@ -437,36 +466,55 @@ export default function InstructorStudentQueries({ showToast }) {
       console.log("Instructor Queries socket connected:", socket.id);
     });
 
-    socket.on("message:received", (msg) => {
+    socket.on(
+      "ic:history",
+      ({ messages: historyMessages = [], conversation }) => {
+        if (conversation) {
+          dispatch(setActiveConversation(conversation));
+        }
+        dispatch(setMessages(historyMessages));
+      },
+    );
+
+    socket.on("ic:message", (msg) => {
       dispatch(socketMessageReceived(msg));
       if (activeConversation?._id === msg.conversationId) {
-        socket.emit("message:read", { conversationId: msg.conversationId });
+        socket.emit("ic:read", { conversationId: msg.conversationId });
       }
     });
 
-    socket.on("typing:update", (data) => {
+    socket.on("ic:typing", (data) => {
       dispatch(socketTypingReceived(data));
     });
 
-    socket.on("message:readReceipt", (data) => {
+    socket.on("ic:read", (data) => {
       dispatch(socketReadReceived(data));
     });
 
-    socket.on("callRequest:new", (data) => {
+    socket.on("ic:error", (error) => {
+      if (error?.message) {
+        toast.error(error.message);
+      }
+    });
+
+    socket.on("webrtc:call-request", (data) => {
       setActiveMeetRequest(data);
       setMeetModalOpen(true);
-      toast((t) => (
-        <div className="flex items-center gap-3">
-          <Video size={18} className="text-emerald-500" />
-          <span>Student requested a Google Meet video session!</span>
-        </div>
-      ), { duration: 6000 });
+      toast(
+        (t) => (
+          <div className="flex items-center gap-3">
+            <Video size={18} className="text-emerald-500" />
+            <span>Student requested a Google Meet video session!</span>
+          </div>
+        ),
+        { duration: 6000 },
+      );
     });
 
     return () => {
       socket.disconnect();
     };
-  }, [user?._id, activeConversation?._id, dispatch]);
+  }, [user?._id, dispatch]);
 
   // 2. Fetch Conversations on Mount
   useEffect(() => {
@@ -488,10 +536,10 @@ export default function InstructorStudentQueries({ showToast }) {
     setActionMenuOpen(false);
 
     if (socketRef.current) {
-      socketRef.current.emit("conversation:join", {
+      socketRef.current.emit("ic:join", {
         conversationId: conv._id,
       });
-      socketRef.current.emit("message:read", {
+      socketRef.current.emit("ic:read", {
         conversationId: conv._id,
       });
     }
@@ -529,28 +577,22 @@ export default function InstructorStudentQueries({ showToast }) {
     }
 
     try {
-      const res = await api.post(
-        API_ENDPOINTS.INSTRUCTOR_CHAT.SEND_MESSAGE(activeConversation._id),
-        {
-          text: textToSend.trim(),
-          media: uploadedMedia,
-        }
-      );
+      if (!socketRef.current) {
+        throw new Error("Chat socket is not connected");
+      }
 
-      dispatch(socketMessageReceived(res.data.data));
+      socketRef.current.emit("ic:message", {
+        conversationId: activeConversation._id,
+        text: textToSend.trim(),
+        media: uploadedMedia,
+      });
+
       setText("");
       setPendingMedia([]);
-
-      if (socketRef.current) {
-        socketRef.current.emit("message:send", {
-          conversationId: activeConversation._id,
-          message: res.data.data,
-        });
-        socketRef.current.emit("typing:stop", {
-          conversationId: activeConversation._id,
-          userId: user?._id,
-        });
-      }
+      socketRef.current.emit("ic:typing", {
+        conversationId: activeConversation._id,
+        isTyping: false,
+      });
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to send reply");
     } finally {
@@ -563,8 +605,9 @@ export default function InstructorStudentQueries({ showToast }) {
     setText(val);
     if (!socketRef.current || !activeConversation?._id) return;
 
-    socketRef.current.emit("typing:start", {
+    socketRef.current.emit("ic:typing", {
       conversationId: activeConversation._id,
+      isTyping: true,
       userId: user?._id,
       name: user?.name,
     });
@@ -572,8 +615,9 @@ export default function InstructorStudentQueries({ showToast }) {
     clearTimeout(typingTimerRef.current);
     typingTimerRef.current = setTimeout(() => {
       if (socketRef.current && activeConversation?._id) {
-        socketRef.current.emit("typing:stop", {
+        socketRef.current.emit("ic:typing", {
           conversationId: activeConversation._id,
+          isTyping: false,
           userId: user?._id,
         });
       }
@@ -620,15 +664,18 @@ export default function InstructorStudentQueries({ showToast }) {
         API_ENDPOINTS.INSTRUCTOR_CHAT.APPROVE_CALL(activeConversation._id),
         {
           meetingLink: meetingLinkInput.trim(),
-          response: "Here is the Google Meet link for our interactive doubt resolution session.",
-        }
+          response:
+            "Here is the Google Meet link for our interactive doubt resolution session.",
+        },
       );
       toast.success("Meeting link sent to student!");
       setMeetModalOpen(false);
       setMeetingLinkInput("");
       setActiveMeetRequest(null);
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to share meeting link");
+      toast.error(
+        err?.response?.data?.message || "Failed to share meeting link",
+      );
     } finally {
       setSubmittingMeetLink(false);
     }
@@ -640,7 +687,7 @@ export default function InstructorStudentQueries({ showToast }) {
     try {
       await api.post(
         API_ENDPOINTS.INSTRUCTOR_CHAT.REPORT_STUDENT(activeConversation._id),
-        { reason: selectedReportReason, details: reportDetails }
+        { reason: selectedReportReason, details: reportDetails },
       );
       toast.success("Student query reported to academy moderators");
       setReportModalOpen(false);
@@ -655,7 +702,7 @@ export default function InstructorStudentQueries({ showToast }) {
   const toggleBlockStudent = async () => {
     try {
       const res = await api.post(
-        API_ENDPOINTS.INSTRUCTOR_CHAT.TOGGLE_BLOCK(activeConversation._id)
+        API_ENDPOINTS.INSTRUCTOR_CHAT.TOGGLE_BLOCK(activeConversation._id),
       );
       toast.success(res.data.message || "Student status updated");
       dispatch(fetchConversations());
@@ -699,7 +746,11 @@ export default function InstructorStudentQueries({ showToast }) {
     messages.forEach((msg, idx) => {
       const dateStr = fmtDate(msg.createdAt);
       if (dateStr && dateStr !== lastDateStr) {
-        items.push({ type: "divider", label: dateStr, key: `date-${msg._id || idx}` });
+        items.push({
+          type: "divider",
+          label: dateStr,
+          key: `date-${msg._id || idx}`,
+        });
         lastDateStr = dateStr;
       }
 
@@ -715,7 +766,7 @@ export default function InstructorStudentQueries({ showToast }) {
         sameDayAsPrev &&
         isSameSender(prev, msg) &&
         Math.abs(new Date(msg.createdAt) - new Date(prev.createdAt)) <
-        GROUP_WINDOW_MS &&
+          GROUP_WINDOW_MS &&
         !prev.deleted &&
         !msg.deleted;
       const closeToNext =
@@ -723,7 +774,7 @@ export default function InstructorStudentQueries({ showToast }) {
         fmtDate(next.createdAt) === fmtDate(msg.createdAt) &&
         isSameSender(next, msg) &&
         Math.abs(new Date(next.createdAt) - new Date(msg.createdAt)) <
-        GROUP_WINDOW_MS &&
+          GROUP_WINDOW_MS &&
         !next.deleted &&
         !msg.deleted;
 
@@ -779,7 +830,8 @@ export default function InstructorStudentQueries({ showToast }) {
             </div>
 
             <p className="text-xs text-zinc-300 mt-4 leading-relaxed bg-[#101738] p-3.5 rounded-xl border border-[#223068]">
-              Paste your Google Meet or Zoom link below. It will be sent directly to the student's active chat.
+              Paste your Google Meet or Zoom link below. It will be sent
+              directly to the student's active chat.
             </p>
 
             <input
@@ -845,10 +897,11 @@ export default function InstructorStudentQueries({ showToast }) {
                 {REPORT_REASONS.map((reason) => (
                   <label
                     key={reason}
-                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition text-xs ${selectedReportReason === reason
+                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition text-xs ${
+                      selectedReportReason === reason
                         ? "bg-rose-950/40 border-rose-500/60 text-white font-semibold"
                         : "bg-[#101738] border-[#223068] text-zinc-300 hover:border-zinc-700"
-                      }`}
+                    }`}
                   >
                     <input
                       type="radio"
@@ -898,8 +951,9 @@ export default function InstructorStudentQueries({ showToast }) {
 
       {/* ── Left Sidebar Pane ── */}
       <div
-        className={`flex flex-col w-full md:w-[360px] lg:w-[400px] border-r border-[#1a244d] bg-[#080b18] shrink-0 ${mobileView === "chat" ? "hidden md:flex" : "flex"
-          }`}
+        className={`flex flex-col w-full md:w-[360px] lg:w-[400px] border-r border-[#1a244d] bg-[#080b18] shrink-0 ${
+          mobileView === "chat" ? "hidden md:flex" : "flex"
+        }`}
       >
         {/* Header Bar */}
         <div className="p-4 sm:p-5 border-b border-[#1a244d] shrink-0 space-y-3.5 bg-[#0b1028]">
@@ -910,10 +964,10 @@ export default function InstructorStudentQueries({ showToast }) {
               </div>
               <div>
                 <h2 className="text-base font-black text-white tracking-tight leading-tight">
-                  Student Queries
+                  {t("instructorSidebar.student_queries", "Student Queries")}
                 </h2>
                 <span className="text-[11px] text-emerald-400 font-semibold">
-                  Faculty Advisory Inbox
+                  {t("chat.facultyDesk", "Faculty Response Desk")}
                 </span>
               </div>
             </div>
@@ -933,7 +987,7 @@ export default function InstructorStudentQueries({ showToast }) {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search student or course…"
+              placeholder={t("chat.searchPlaceholder", "Search student or course…")}
               className="w-full bg-[#101738] border border-[#223068] text-zinc-100 text-xs rounded-xl pl-9 pr-8 py-2.5 outline-none focus:border-emerald-500/80 transition-all placeholder:text-zinc-500 font-medium"
             />
             {search && (
@@ -950,21 +1004,23 @@ export default function InstructorStudentQueries({ showToast }) {
           <div className="flex gap-1.5 p-1 bg-[#0e1432] border border-[#1a244d] rounded-xl">
             <button
               onClick={() => setFilter("all")}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${filter === "all"
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                filter === "all"
                   ? "bg-emerald-600 text-white shadow-xs"
                   : "text-zinc-400 hover:text-zinc-200"
-                }`}
+              }`}
             >
-              All Queries
+              {t("chat.allChats", "All Queries")}
             </button>
             <button
               onClick={() => setFilter("unread")}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${filter === "unread"
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                filter === "unread"
                   ? "bg-emerald-600 text-white shadow-xs"
                   : "text-zinc-400 hover:text-zinc-200"
-                }`}
+              }`}
             >
-              Unanswered {totalUnread > 0 && `(${totalUnread})`}
+              {t("chat.unread", "Unread")} {totalUnread > 0 && `(${totalUnread})`}
             </button>
           </div>
         </div>
@@ -995,7 +1051,9 @@ export default function InstructorStudentQueries({ showToast }) {
               </div>
               <p className="text-xs text-zinc-300 font-bold">All caught up!</p>
               <p className="text-[11px] text-zinc-500 mt-1">
-                {filter === "unread" ? "No unanswered student queries." : "No student conversations found."}
+                {filter === "unread"
+                  ? "No unanswered student queries."
+                  : "No student conversations found."}
               </p>
             </div>
           )}
@@ -1013,8 +1071,9 @@ export default function InstructorStudentQueries({ showToast }) {
 
       {/* ── Right Panel: Main Chat Canvas ── */}
       <div
-        className={`flex-1 flex flex-col min-w-0 bg-[#080b18] relative ${mobileView !== "chat" ? "hidden md:flex" : "flex"
-          }`}
+        className={`flex-1 flex flex-col min-w-0 bg-[#080b18] relative ${
+          mobileView !== "chat" ? "hidden md:flex" : "flex"
+        }`}
       >
         {!activeConversation ? (
           /* Empty Chat Placeholder */
@@ -1027,7 +1086,8 @@ export default function InstructorStudentQueries({ showToast }) {
                 Faculty Response Desk
               </h3>
               <p className="text-zinc-400 text-xs mt-2 leading-relaxed">
-                Select a student query from the list to review questions, send step-by-step solutions, or schedule a Google Meet consultation.
+                Select a student query from the list to review questions, send
+                step-by-step solutions, or schedule a Google Meet consultation.
               </p>
             </div>
           </div>
@@ -1065,9 +1125,13 @@ export default function InstructorStudentQueries({ showToast }) {
                     )}
                   </h3>
                   <p className="text-xs text-zinc-400 truncate flex items-center gap-1.5 mt-0.5">
-                    <span className="text-emerald-400 font-medium">{activeConversation.course?.title || "Class Query"}</span>
+                    <span className="text-emerald-400 font-medium">
+                      {activeConversation.course?.title || "Class Query"}
+                    </span>
                     {activeConversation.subject && (
-                      <span className="text-zinc-400">· {activeConversation.subject}</span>
+                      <span className="text-zinc-400">
+                        · {activeConversation.subject}
+                      </span>
                     )}
                   </p>
                 </div>
@@ -1109,7 +1173,9 @@ export default function InstructorStudentQueries({ showToast }) {
                         className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-300 hover:text-white hover:bg-[#101738] rounded-xl transition cursor-pointer"
                       >
                         <Ban size={14} className="text-amber-400" />
-                        {activeConversation.isBlocked ? "Unblock Student" : "Block Student"}
+                        {activeConversation.isBlocked
+                          ? "Unblock Student"
+                          : "Block Student"}
                       </button>
                     </div>
                   )}

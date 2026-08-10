@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { io } from "socket.io-client";
 import toast from "react-hot-toast";
 import { SOCKET_URL, API_ENDPOINTS } from "../../config/api.js";
@@ -167,7 +168,14 @@ const ImageModal = ({ src, alt, onClose }) => {
 };
 
 // ── Message bubble ────────────────────────────────────────────────────────────
-const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) => {
+const Bubble = ({
+  msg,
+  isMe,
+  groupStart,
+  groupEnd,
+  onDelete,
+  onPreviewImage,
+}) => {
   const [hover, setHover] = useState(false);
 
   const copyText = () => {
@@ -196,14 +204,16 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
       onMouseLeave={() => setHover(false)}
     >
       <div
-        className={`relative max-w-[85%] sm:max-w-[75%] md:max-w-[65%] flex items-end gap-2.5 ${isMe ? "flex-row-reverse" : "flex-row"
-          }`}
+        className={`relative max-w-[85%] sm:max-w-[75%] md:max-w-[65%] flex items-end gap-2.5 ${
+          isMe ? "flex-row-reverse" : "flex-row"
+        }`}
       >
         {/* Message Actions Menu on Hover */}
         {hover && (
           <div
-            className={`absolute top-0 -translate-y-1/2 z-20 flex items-center gap-1 bg-[#101738] border border-[#2e418b] rounded-xl p-1 shadow-xl backdrop-blur-md transition-all ${isMe ? "right-0 translate-x-2" : "left-0 -translate-x-2"
-              }`}
+            className={`absolute top-0 -translate-y-1/2 z-20 flex items-center gap-1 bg-[#101738] border border-[#2e418b] rounded-xl p-1 shadow-xl backdrop-blur-md transition-all ${
+              isMe ? "right-0 translate-x-2" : "left-0 -translate-x-2"
+            }`}
           >
             {msg.text && (
               <button
@@ -230,12 +240,15 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
           {/* Main Text Content */}
           {msg.text && (
             <div
-              className={`px-4 py-3 text-[13.5px] leading-relaxed break-words shadow-md transition-all ${isMe
-                  ? `bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white rounded-[22px] ${groupEnd ? "rounded-br-xs" : ""
-                  }`
-                  : `bg-[#101738] border border-[#223068] text-zinc-100 rounded-[22px] ${groupEnd ? "rounded-bl-xs" : ""
-                  }`
-                }`}
+              className={`px-4 py-3 text-[13.5px] leading-relaxed break-words shadow-md transition-all ${
+                isMe
+                  ? `bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white rounded-[22px] ${
+                      groupEnd ? "rounded-br-xs" : ""
+                    }`
+                  : `bg-[#101738] border border-[#223068] text-zinc-100 rounded-[22px] ${
+                      groupEnd ? "rounded-bl-xs" : ""
+                    }`
+              }`}
             >
               {msg.text}
             </div>
@@ -274,9 +287,14 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
                     <p className="truncate max-w-[200px] font-semibold text-zinc-100">
                       {m.filename || "Attachment"}
                     </p>
-                    <p className="text-[10px] text-zinc-400">Click to open document</p>
+                    <p className="text-[10px] text-zinc-400">
+                      Click to open document
+                    </p>
                   </div>
-                  <ExternalLink size={14} className="text-zinc-400 group-hover/file:text-emerald-400" />
+                  <ExternalLink
+                    size={14}
+                    className="text-zinc-400 group-hover/file:text-emerald-400"
+                  />
                 </a>
               )}
             </div>
@@ -285,8 +303,11 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
           {/* Footer Metadata */}
           {groupEnd && (
             <div
-              className={`text-[10.5px] font-medium mt-1 flex items-center gap-1.5 ${isMe ? "justify-end text-zinc-400" : "justify-start text-zinc-400"
-                }`}
+              className={`text-[10.5px] font-medium mt-1 flex items-center gap-1.5 ${
+                isMe
+                  ? "justify-end text-zinc-400"
+                  : "justify-start text-zinc-400"
+              }`}
             >
               <span>{fmtTime(msg.createdAt)}</span>
               {isMe && (
@@ -311,10 +332,11 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-start gap-3.5 p-3.5 rounded-2xl text-left transition-all duration-200 relative overflow-hidden group cursor-pointer ${isActive
+      className={`w-full flex items-start gap-3.5 p-3.5 rounded-2xl text-left transition-all duration-200 relative overflow-hidden group cursor-pointer ${
+        isActive
           ? "bg-[#0e1736] border-2 border-emerald-500 shadow-xl shadow-emerald-500/15 ring-1 ring-emerald-500/40"
           : "bg-[#131b3e] border border-[#223062] hover:bg-[#182352] hover:border-[#2f438a]"
-        }`}
+      }`}
     >
       {/* Active Left Indicator Bar */}
       {isActive && (
@@ -356,13 +378,16 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
         <p className="text-[11px] font-medium text-emerald-400 truncate mb-1 flex items-center gap-1">
           <BookOpen size={11} className="shrink-0 text-emerald-400" />
           <span>{conv.course?.title || "Class Query"}</span>
-          {conv.subject ? <span className="text-zinc-400">· {conv.subject}</span> : null}
+          {conv.subject ? (
+            <span className="text-zinc-400">· {conv.subject}</span>
+          ) : null}
         </p>
 
         {/* Last Message Snippet */}
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs text-zinc-400 truncate group-hover:text-zinc-300 transition-colors">
-            {getLastMessageText(conv.lastMessage) || "Click to open conversation"}
+            {getLastMessageText(conv.lastMessage) ||
+              "Click to open conversation"}
           </p>
           {unread > 0 && (
             <span className="shrink-0 min-w-5 h-5 px-1.5 rounded-full bg-emerald-500 text-white font-black text-[10px] flex items-center justify-center shadow-md shadow-emerald-500/30 animate-pulse">
@@ -398,6 +423,8 @@ const AskInstructor = () => {
     typing,
   } = useSelector((s) => s.instructorChat);
 
+  const { t } = useTranslation();
+
   // Local state
   const [view, setView] = useState("threads"); // 'threads' | 'chat' | 'selector'
   const [filterTab, setFilterTab] = useState("all"); // 'all' | 'unread'
@@ -422,8 +449,8 @@ const AskInstructor = () => {
   // 1. Initialize Socket Connection
   useEffect(() => {
     if (!user?._id) return;
-    const token = localStorage.getItem("token");
-    const socket = io(SOCKET_URL, {
+    const token = localStorage.getItem("authToken");
+    const socket = io(`${SOCKET_URL}/ichat`, {
       auth: { token },
       transports: ["websocket", "polling"],
     });
@@ -433,26 +460,44 @@ const AskInstructor = () => {
       console.log("Student AskInstructor socket connected:", socket.id);
     });
 
-    socket.on("message:received", (msg) => {
+    socket.on(
+      "ic:history",
+      ({ messages: historyMessages = [], conversation }) => {
+        if (conversation) {
+          dispatch(setActiveConversation(conversation));
+        }
+        dispatch(setMessages(historyMessages));
+      },
+    );
+
+    socket.on("ic:message", (msg) => {
       dispatch(socketMessageReceived(msg));
       if (activeConversation?._id === msg.conversationId) {
-        socket.emit("message:read", { conversationId: msg.conversationId });
+        socket.emit("ic:read", { conversationId: msg.conversationId });
       }
     });
 
-    socket.on("typing:update", (data) => {
+    socket.on("ic:typing", (data) => {
       dispatch(socketTypingReceived(data));
     });
 
-    socket.on("message:readReceipt", (data) => {
+    socket.on("ic:read", (data) => {
       dispatch(socketReadReceived(data));
     });
 
-    socket.on("callRequest:status", (data) => {
+    socket.on("ic:error", (error) => {
+      if (error?.message) {
+        toast.error(error.message);
+      }
+    });
+
+    socket.on("webrtc:call-request", (data) => {
       if (data.status === "approved" && data.meetingLink) {
         setApprovedMeeting(data);
         setActiveCallRequest(null);
-        toast.success("Instructor approved your Google Meet request!", { duration: 5000 });
+        toast.success("Instructor approved your Google Meet request!", {
+          duration: 5000,
+        });
       } else if (data.status === "rejected") {
         setActiveCallRequest(null);
         toast.error("Instructor declined the video call request.");
@@ -462,7 +507,7 @@ const AskInstructor = () => {
     return () => {
       socket.disconnect();
     };
-  }, [user?._id, activeConversation?._id, dispatch]);
+  }, [user?._id, dispatch]);
 
   // 2. Fetch initial data
   useEffect(() => {
@@ -483,10 +528,10 @@ const AskInstructor = () => {
     dispatch(setActiveConversation(conv));
     setView("chat");
     if (socketRef.current) {
-      socketRef.current.emit("conversation:join", {
+      socketRef.current.emit("ic:join", {
         conversationId: conv._id,
       });
-      socketRef.current.emit("message:read", {
+      socketRef.current.emit("ic:read", {
         conversationId: conv._id,
       });
     }
@@ -503,12 +548,12 @@ const AskInstructor = () => {
         getOrCreateConversation({
           courseId: selectedCourse.courseId,
           subject: selectedSubject || selectedCourse.subjects?.[0] || "General",
-        })
+        }),
       ).unwrap();
 
       setView("chat");
       if (socketRef.current) {
-        socketRef.current.emit("conversation:join", {
+        socketRef.current.emit("ic:join", {
           conversationId: res._id,
         });
       }
@@ -522,8 +567,9 @@ const AskInstructor = () => {
     setText(val);
     if (!socketRef.current || !activeConversation?._id) return;
 
-    socketRef.current.emit("typing:start", {
+    socketRef.current.emit("ic:typing", {
       conversationId: activeConversation._id,
+      isTyping: true,
       userId: user?._id,
       name: user?.name,
     });
@@ -531,8 +577,9 @@ const AskInstructor = () => {
     clearTimeout(typingTimerRef.current);
     typingTimerRef.current = setTimeout(() => {
       if (socketRef.current && activeConversation?._id) {
-        socketRef.current.emit("typing:stop", {
+        socketRef.current.emit("ic:typing", {
           conversationId: activeConversation._id,
+          isTyping: false,
           userId: user?._id,
         });
       }
@@ -571,28 +618,22 @@ const AskInstructor = () => {
     }
 
     try {
-      const res = await api.post(
-        API_ENDPOINTS.INSTRUCTOR_CHAT.SEND_MESSAGE(activeConversation._id),
-        {
-          text: textToSend.trim(),
-          media: uploadedMedia,
-        }
-      );
+      if (!socketRef.current) {
+        throw new Error("Chat socket is not connected");
+      }
 
-      dispatch(socketMessageReceived(res.data.data));
+      socketRef.current.emit("ic:message", {
+        conversationId: activeConversation._id,
+        text: textToSend.trim(),
+        media: uploadedMedia,
+      });
+
       setText("");
       setPendingMedia([]);
-
-      if (socketRef.current) {
-        socketRef.current.emit("message:send", {
-          conversationId: activeConversation._id,
-          message: res.data.data,
-        });
-        socketRef.current.emit("typing:stop", {
-          conversationId: activeConversation._id,
-          userId: user?._id,
-        });
-      }
+      socketRef.current.emit("ic:typing", {
+        conversationId: activeConversation._id,
+        isTyping: false,
+      });
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to send message");
     } finally {
@@ -637,10 +678,14 @@ const AskInstructor = () => {
     try {
       const res = await api.post(
         API_ENDPOINTS.INSTRUCTOR_CHAT.REQUEST_CALL(activeConversation._id),
-        { topic: `Doubt resolution for ${activeConversation.course?.title || "class lesson"}` }
+        {
+          topic: `Doubt resolution for ${activeConversation.course?.title || "class lesson"}`,
+        },
       );
       setActiveCallRequest(res.data.data);
-      toast.success("Google Meet video session requested! Awaiting instructor approval.");
+      toast.success(
+        "Google Meet video session requested! Awaiting instructor approval.",
+      );
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to request call");
     } finally {
@@ -687,7 +732,11 @@ const AskInstructor = () => {
     messages.forEach((msg, idx) => {
       const dateStr = fmtDate(msg.createdAt);
       if (dateStr && dateStr !== lastDateStr) {
-        items.push({ type: "divider", label: dateStr, key: `date-${msg._id || idx}` });
+        items.push({
+          type: "divider",
+          label: dateStr,
+          key: `date-${msg._id || idx}`,
+        });
         lastDateStr = dateStr;
       }
 
@@ -703,7 +752,7 @@ const AskInstructor = () => {
         sameDayAsPrev &&
         isSameSender(prev, msg) &&
         Math.abs(new Date(msg.createdAt) - new Date(prev.createdAt)) <
-        GROUP_WINDOW_MS &&
+          GROUP_WINDOW_MS &&
         !prev.deleted &&
         !msg.deleted;
       const closeToNext =
@@ -711,7 +760,7 @@ const AskInstructor = () => {
         fmtDate(next.createdAt) === fmtDate(msg.createdAt) &&
         isSameSender(next, msg) &&
         Math.abs(new Date(next.createdAt) - new Date(msg.createdAt)) <
-        GROUP_WINDOW_MS &&
+          GROUP_WINDOW_MS &&
         !next.deleted &&
         !msg.deleted;
 
@@ -747,8 +796,12 @@ const AskInstructor = () => {
                 <Video size={24} />
               </div>
               <div>
-                <h3 className="text-base font-bold text-white">Google Meet Link Ready</h3>
-                <span className="text-xs text-zinc-400 font-normal">Approved by instructor</span>
+                <h3 className="text-base font-bold text-white">
+                  Google Meet Link Ready
+                </h3>
+                <span className="text-xs text-zinc-400 font-normal">
+                  Approved by instructor
+                </span>
               </div>
             </div>
             {approvedMeeting.response && (
@@ -786,8 +839,9 @@ const AskInstructor = () => {
 
       {/* ── Left Sidebar Pane ── */}
       <div
-        className={`flex flex-col w-full md:w-[360px] lg:w-[400px] border-r border-[#1a244d] bg-[#080b18] shrink-0 ${view === "chat" ? "hidden md:flex" : "flex"
-          }`}
+        className={`flex flex-col w-full md:w-[360px] lg:w-[400px] border-r border-[#1a244d] bg-[#080b18] shrink-0 ${
+          view === "chat" ? "hidden md:flex" : "flex"
+        }`}
       >
         {/* Header Bar */}
         <div className="p-4 sm:p-5 border-b border-[#1a244d] shrink-0 space-y-3.5 bg-[#0b1028]">
@@ -798,10 +852,10 @@ const AskInstructor = () => {
               </div>
               <div>
                 <h2 className="text-base font-black text-white tracking-tight leading-tight">
-                  Ask Instructor
+                  {t("chat.askInstructor", "Ask Instructor")}
                 </h2>
                 <span className="text-[11px] text-emerald-400 font-semibold">
-                  Direct Q&A Workspace
+                  {t("chat.directWorkspace", "Direct Q&A Workspace")}
                 </span>
               </div>
             </div>
@@ -813,7 +867,7 @@ const AskInstructor = () => {
               }}
               className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-md shadow-emerald-600/20 hover:scale-105 active:scale-95 cursor-pointer"
             >
-              <Plus size={15} /> New Chat
+              <Plus size={15} /> {t("chat.newChat", "New Chat")}
             </button>
           </div>
 
@@ -826,7 +880,7 @@ const AskInstructor = () => {
             <input
               value={threadSearch}
               onChange={(e) => setThreadSearch(e.target.value)}
-              placeholder="Search conversations or subjects…"
+              placeholder={t("chat.searchPlaceholder", "Search conversations or subjects…")}
               className="w-full bg-[#101738] border border-[#223068] text-zinc-100 text-xs rounded-xl pl-9 pr-8 py-2.5 outline-none focus:border-emerald-500/80 transition-all placeholder:text-zinc-500 font-medium"
             />
             {threadSearch && (
@@ -846,24 +900,26 @@ const AskInstructor = () => {
                 setView("threads");
                 setFilterTab("all");
               }}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${view === "threads" && filterTab === "all"
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                view === "threads" && filterTab === "all"
                   ? "bg-emerald-600 text-white shadow-xs"
                   : "text-zinc-400 hover:text-zinc-200"
-                }`}
+              }`}
             >
-              All Chats
+              {t("chat.allChats", "All Chats")}
             </button>
             <button
               onClick={() => {
                 setView("threads");
                 setFilterTab("unread");
               }}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${view === "threads" && filterTab === "unread"
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                view === "threads" && filterTab === "unread"
                   ? "bg-emerald-600 text-white shadow-xs"
                   : "text-zinc-400 hover:text-zinc-200"
-                }`}
+              }`}
             >
-              Unread {totalUnreadCount > 0 && `(${totalUnreadCount})`}
+              {t("chat.unread", "Unread")} {totalUnreadCount > 0 && `(${totalUnreadCount})`}
             </button>
           </div>
         </div>
@@ -873,14 +929,14 @@ const AskInstructor = () => {
           <div className="flex-1 overflow-y-auto pro-chat-scroll p-4 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
-                Select Enrolled Course
+                {t("chat.selectCourse", "Select Enrolled Course")}
               </span>
               {conversations.length > 0 && (
                 <button
                   onClick={() => setView("threads")}
                   className="text-xs text-emerald-400 hover:text-emerald-300 font-bold transition cursor-pointer"
                 >
-                  Active Chats ({conversations.length})
+                  {t("chat.activeChats", "Active Chats")} ({conversations.length})
                 </button>
               )}
             </div>
@@ -911,7 +967,12 @@ const AskInstructor = () => {
                   Instructor Assistance Not Unlocked
                 </h4>
                 <p className="text-zinc-400 text-xs leading-relaxed max-w-xs mx-auto">
-                  Ask Instructor chat is available for courses purchased with the <span className="text-emerald-300 font-bold">✨ Buy with Instructor Assistance</span> option (₹500).
+                  Ask Instructor chat is available for courses purchased with
+                  the{" "}
+                  <span className="text-emerald-300 font-bold">
+                    ✨ Buy with Instructor Assistance
+                  </span>{" "}
+                  option (₹500).
                 </p>
                 <button
                   onClick={() => navigate("/courses")}
@@ -929,10 +990,11 @@ const AskInstructor = () => {
                   <div
                     key={item.courseId}
                     onClick={() => setSelectedCourse(item)}
-                    className={`w-full flex items-start gap-3.5 p-3.5 rounded-2xl border transition-all cursor-pointer ${isSelected
+                    className={`w-full flex items-start gap-3.5 p-3.5 rounded-2xl border transition-all cursor-pointer ${
+                      isSelected
                         ? "border-emerald-500 bg-[#141e48] shadow-md shadow-emerald-950/40"
                         : "border-[#223068] hover:border-[#2e418b] bg-[#101738] hover:bg-[#151f48]"
-                      }`}
+                    }`}
                   >
                     {item.thumbnail ? (
                       <img
@@ -988,8 +1050,9 @@ const AskInstructor = () => {
         {/* ── View 2: Threads List ── */}
         {(view === "threads" || view === "chat") && (
           <div
-            className={`flex-1 overflow-y-auto pro-chat-scroll p-3.5 space-y-2.5 ${view === "chat" ? "hidden md:block" : ""
-              }`}
+            className={`flex-1 overflow-y-auto pro-chat-scroll p-3.5 space-y-2.5 ${
+              view === "chat" ? "hidden md:block" : ""
+            }`}
           >
             {conversationsLoading && (
               <div className="space-y-2.5">
@@ -1042,8 +1105,9 @@ const AskInstructor = () => {
 
       {/* ── Right Panel: Main Chat Canvas ── */}
       <div
-        className={`flex-1 flex flex-col min-w-0 bg-[#080b18] relative ${view !== "chat" ? "hidden md:flex" : "flex"
-          }`}
+        className={`flex-1 flex flex-col min-w-0 bg-[#080b18] relative ${
+          view !== "chat" ? "hidden md:flex" : "flex"
+        }`}
       >
         {!activeConversation ? (
           /* Empty Chat Placeholder */
@@ -1056,17 +1120,27 @@ const AskInstructor = () => {
                 Direct Faculty Doubt Clearing
               </h3>
               <p className="text-zinc-400 text-xs mt-2 leading-relaxed">
-                Select an ongoing chat from the list or click <span className="text-emerald-400 font-bold">+ New Chat</span> to connect 1-on-1 with your course instructors.
+                Select an ongoing chat from the list or click{" "}
+                <span className="text-emerald-400 font-bold">+ New Chat</span>{" "}
+                to connect 1-on-1 with your course instructors.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3.5 max-w-md mt-2">
               <div className="p-3.5 bg-[#101738] border border-[#223068] rounded-2xl text-left shadow-sm">
-                <span className="text-xs font-bold text-emerald-400 block mb-1">⚡ Fast Clarifications</span>
-                <span className="text-[11px] text-zinc-400 leading-snug block">Direct step-by-step guidance on homework & formulas.</span>
+                <span className="text-xs font-bold text-emerald-400 block mb-1">
+                  ⚡ Fast Clarifications
+                </span>
+                <span className="text-[11px] text-zinc-400 leading-snug block">
+                  Direct step-by-step guidance on homework & formulas.
+                </span>
               </div>
               <div className="p-3.5 bg-[#101738] border border-[#223068] rounded-2xl text-left shadow-sm">
-                <span className="text-xs font-bold text-teal-400 block mb-1">📹 1-on-1 Video Meets</span>
-                <span className="text-[11px] text-zinc-400 leading-snug block">Request Google Meet link for face-to-face problem solving.</span>
+                <span className="text-xs font-bold text-teal-400 block mb-1">
+                  📹 1-on-1 Video Meets
+                </span>
+                <span className="text-[11px] text-zinc-400 leading-snug block">
+                  Request Google Meet link for face-to-face problem solving.
+                </span>
               </div>
             </div>
           </div>
@@ -1103,9 +1177,13 @@ const AskInstructor = () => {
                     </span>
                   </h3>
                   <p className="text-xs text-zinc-400 truncate flex items-center gap-1.5 mt-0.5">
-                    <span className="text-emerald-400 font-medium">{activeConversation.course?.title || "General Query"}</span>
+                    <span className="text-emerald-400 font-medium">
+                      {activeConversation.course?.title || "General Query"}
+                    </span>
                     {activeConversation.subject && (
-                      <span className="text-zinc-400">· {activeConversation.subject}</span>
+                      <span className="text-zinc-400">
+                        · {activeConversation.subject}
+                      </span>
                     )}
                   </p>
                 </div>
@@ -1115,7 +1193,11 @@ const AskInstructor = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={requestVideoCall}
-                  disabled={Boolean(activeCallRequest) || isSubmittingCall || activeConversation?.assistanceDisabled}
+                  disabled={
+                    Boolean(activeCallRequest) ||
+                    isSubmittingCall ||
+                    activeConversation?.assistanceDisabled
+                  }
                   title="Request a 1-on-1 Google Meet link"
                   className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
                 >
@@ -1157,7 +1239,11 @@ const AskInstructor = () => {
                   </h3>
 
                   <p className="text-zinc-300 text-xs mt-2 leading-relaxed">
-                    Instructor Assistance is currently turned OFF for <span className="text-white font-bold">{activeConversation.course?.title || "this course"}</span>.
+                    Instructor Assistance is currently turned OFF for{" "}
+                    <span className="text-white font-bold">
+                      {activeConversation.course?.title || "this course"}
+                    </span>
+                    .
                   </p>
 
                   <div className="mt-5 space-y-2.5 text-left bg-[#101738] rounded-2xl border border-[#223068] p-4">
@@ -1165,7 +1251,10 @@ const AskInstructor = () => {
                       Instructor Assistance Benefits:
                     </p>
                     <div className="flex items-center gap-2.5 text-xs text-zinc-200">
-                      <ShieldCheck size={16} className="text-emerald-400 shrink-0" />
+                      <ShieldCheck
+                        size={16}
+                        className="text-emerald-400 shrink-0"
+                      />
                       <span>1-on-1 Direct Q&A with course instructors</span>
                     </div>
                     <div className="flex items-center gap-2.5 text-xs text-zinc-200">
@@ -1208,7 +1297,8 @@ const AskInstructor = () => {
                     Start conversation with {instructor?.name}
                   </h4>
                   <p className="text-zinc-400 text-xs max-w-xs leading-relaxed">
-                    Ask any question regarding lessons, study materials, formulas, or homework doubts.
+                    Ask any question regarding lessons, study materials,
+                    formulas, or homework doubts.
                   </p>
 
                   {/* Quick Suggestions */}
@@ -1303,13 +1393,19 @@ const AskInstructor = () => {
                   ref={fileInputRef}
                   onChange={handleFileChange}
                   multiple
-                  disabled={activeConversation?.assistanceDisabled || activeConversation?.isBlocked}
+                  disabled={
+                    activeConversation?.assistanceDisabled ||
+                    activeConversation?.isBlocked
+                  }
                   accept="image/*,application/pdf,video/mp4"
                   className="hidden"
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={activeConversation?.assistanceDisabled || activeConversation?.isBlocked}
+                  disabled={
+                    activeConversation?.assistanceDisabled ||
+                    activeConversation?.isBlocked
+                  }
                   className="p-2.5 rounded-xl text-zinc-400 hover:text-emerald-400 hover:bg-[#182352] disabled:opacity-40 disabled:cursor-not-allowed transition shrink-0 cursor-pointer"
                   title="Attach media or document"
                 >
@@ -1318,7 +1414,10 @@ const AskInstructor = () => {
                 <textarea
                   value={text}
                   onChange={(e) => handleTyping(e.target.value)}
-                  disabled={activeConversation?.assistanceDisabled || activeConversation?.isBlocked}
+                  disabled={
+                    activeConversation?.assistanceDisabled ||
+                    activeConversation?.isBlocked
+                  }
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();

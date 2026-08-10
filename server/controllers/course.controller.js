@@ -89,6 +89,25 @@ const shapeCourse = (c) => ({
   notes: c.notes ?? [],
 });
 
+const shapePublishedCourse = (c) => ({
+  _id: c._id,
+  title: c.title,
+  summary: c.summary,
+  category: c.category,
+  board: c.board ?? "",
+  language: c.language ?? "",
+  price: c.price,
+  thumbnailUrl: c.thumbnailUrl,
+  demoVideoUrl: c.demoVideoUrl,
+  ratingAverage: c.ratingAverage,
+  reviewCount: c.reviewCount,
+  durationHours: c.durationHours,
+  tags: c.tags ?? [],
+  createdAt: c.createdAt,
+  instructor: c.instructor,
+  studentsCount: c.studentsCount ?? 0,
+});
+
 // ── cache invalidation ────────────────────────────────────────────────────────
 // NOTE: previously this used invalidateCache("courses:published*"), which
 // relies on Upstash's KEYS/SCAN command. Upstash's REST client frequently
@@ -153,9 +172,12 @@ export const createCourse = async (req, res) => {
       quiz: quiz && typeof quiz === "object" ? quiz : undefined,
       published: false,
       approvalStatus: wantsPublish ? "pending" : "draft",
-      instructor: (hasBaseRole(req.user, "admin") || hasPermissionGrant(req.user, "courses", "create")) && instructor
-        ? instructor 
-        : req.user._id,
+      instructor:
+        (hasBaseRole(req.user, "admin") ||
+          hasPermissionGrant(req.user, "courses", "create")) &&
+        instructor
+          ? instructor
+          : req.user._id,
       board,
       language,
       students: [],
@@ -185,26 +207,116 @@ export const getCourses = async (req, res) => {
   }
 };
 
+const escapeRegex = (value = "") =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const buildExactMatcher = (value) => new RegExp(`^${escapeRegex(value)}$`, "i");
+
 // ── getPublishedCourses (public — only admin-approved) ────────────────────────
 export const getPublishedCourses = async (req, res) => {
   try {
-    const cacheKey = "courses:published";
+    const {
+      board,
+      category,
+      language,
+      subject,
+      limit: limitQuery,
+      page: pageQuery,
+    } = req.query;
+
+    const limit =
+      Number(limitQuery) > 0 ? Math.min(100, Number(limitQuery)) : 0;
+    const page = Number(pageQuery) >= 1 ? Number(pageQuery) : 1;
+    const skip = limit > 0 ? (page - 1) * limit : 0;
+
+    const cacheKey = [
+      "courses:published",
+      board ? `board=${board}` : null,
+      category ? `category=${category}` : null,
+      language ? `language=${language}` : null,
+      subject ? `subject=${subject}` : null,
+      limit ? `limit=${limit}` : null,
+      page > 1 ? `page=${page}` : null,
+    ]
+      .filter(Boolean)
+      .join("|");
+
     const cacheTtl = 7200; // Cache for 2 hours in Redis (invalidated on course updates)
     const courses = await cacheResponse(cacheKey, cacheTtl, async () => {
-      return await Course.find({
+      const match = {
         approvalStatus: "approved",
         published: true,
-      })
-        .populate("instructor", "name email")
-        .sort({ createdAt: -1 })
-        .lean();
+      };
+
+      if (board) match.board = buildExactMatcher(board);
+      if (category) match.category = buildExactMatcher(category);
+      if (language) match.language = buildExactMatcher(language);
+      if (subject) {
+        match.$or = [
+          { tags: subject },
+          { category: buildExactMatcher(subject) },
+          { title: { $regex: escapeRegex(subject), $options: "i" } },
+          { summary: { $regex: escapeRegex(subject), $options: "i" } },
+        ];
+      }
+
+      const pipeline = [{ $match: match }, { $sort: { createdAt: -1 } }];
+
+      if (skip > 0) pipeline.push({ $skip: skip });
+      if (limit > 0) pipeline.push({ $limit: limit });
+
+      pipeline.push(
+        {
+          $lookup: {
+            from: "users",
+            localField: "instructor",
+            foreignField: "_id",
+            as: "instructor",
+          },
+        },
+        {
+          $unwind: {
+            path: "$instructor",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            title: 1,
+            summary: 1,
+            category: 1,
+            board: 1,
+            language: 1,
+            price: 1,
+            thumbnailUrl: 1,
+            demoVideoUrl: 1,
+            ratingAverage: 1,
+            reviewCount: 1,
+            durationHours: 1,
+            tags: 1,
+            createdAt: 1,
+            studentsCount: { $size: { $ifNull: ["$students", []] } },
+            instructor: {
+              _id: "$instructor._id",
+              name: "$instructor.name",
+              email: "$instructor.email",
+            },
+          },
+        },
+      );
+
+      return await Course.aggregate(pipeline).exec();
     });
 
     if (process.env.NODE_ENV === "production") {
-      res.setHeader("Cache-Control", "public, max-age=60, s-maxage=600, stale-while-revalidate=1200");
+      res.setHeader(
+        "Cache-Control",
+        "public, max-age=60, s-maxage=600, stale-while-revalidate=1200",
+      );
     }
 
-    res.json(courses);
+    res.json(courses.map(shapePublishedCourse));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -217,9 +329,15 @@ export const getCourseByIdPublic = async (req, res) => {
     if (process.env.NODE_ENV !== "development") {
       const cached = await getJson(cacheKey);
       if (cached !== null) {
-        if (cached.notes !== undefined && (!cached.instructor || cached.instructor.avgRating !== undefined)) {
+        if (
+          cached.notes !== undefined &&
+          (!cached.instructor || cached.instructor.avgRating !== undefined)
+        ) {
           if (process.env.NODE_ENV === "production") {
-            res.setHeader("Cache-Control", "public, max-age=60, s-maxage=600, stale-while-revalidate=1200");
+            res.setHeader(
+              "Cache-Control",
+              "public, max-age=60, s-maxage=600, stale-while-revalidate=1200",
+            );
           }
           return res.json(cached);
         }
@@ -251,12 +369,12 @@ export const getCourseByIdPublic = async (req, res) => {
       board: course.board,
       instructor: course.instructor
         ? {
-          _id: course.instructor._id,
-          name: course.instructor.name,
-          email: course.instructor.email,
-          avgRating: ratingData.avgRating,
-          ratingCount: ratingData.ratingCount,
-        }
+            _id: course.instructor._id,
+            name: course.instructor.name,
+            email: course.instructor.email,
+            avgRating: ratingData.avgRating,
+            ratingCount: ratingData.ratingCount,
+          }
         : null,
       tags: course.tags,
       durationHours: course.durationHours,
@@ -298,11 +416,14 @@ export const getCourseByIdPublic = async (req, res) => {
 
     const cacheTtl = 7200; // Cache for 2 hours in Redis (invalidated on course updates)
     await setJson(cacheKey, shaped, cacheTtl);
-    
+
     if (process.env.NODE_ENV === "production") {
-      res.setHeader("Cache-Control", "public, max-age=60, s-maxage=600, stale-while-revalidate=1200");
+      res.setHeader(
+        "Cache-Control",
+        "public, max-age=60, s-maxage=600, stale-while-revalidate=1200",
+      );
     }
-    
+
     res.json(shaped);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -314,7 +435,10 @@ export const getAllCoursesAdmin = async (req, res) => {
   try {
     const courses = await Course.find({})
       .populate("instructor", "name email")
-      .populate("students", "name email avatarUrl phoneNumber subscription selectedClass")
+      .populate(
+        "students",
+        "name email avatarUrl phoneNumber subscription selectedClass",
+      )
       .sort({ createdAt: -1 })
       .lean();
     res.json(courses);
@@ -326,7 +450,8 @@ export const getAllCoursesAdmin = async (req, res) => {
 export const approveCourse = async (req, res) => {
   try {
     const existingCourse = await Course.findById(req.params.id);
-    if (!existingCourse) return res.status(404).json({ message: "Course not found" });
+    if (!existingCourse)
+      return res.status(404).json({ message: "Course not found" });
 
     const wasAlreadyApproved = existingCourse.approvalStatus === "approved";
 
@@ -349,8 +474,6 @@ export const approveCourse = async (req, res) => {
 
     if (!course) return res.status(404).json({ message: "Course not found" });
     await invalidateCourseCache(course._id);
-
-
 
     res.json({
       success: true,
@@ -419,24 +542,33 @@ export const enrolledCourses = async (req, res) => {
     const studentId = req.user._id;
 
     const student = await User.findById(studentId)
-      .select("quizSubmissions subscription selectedClass courseProgress planExcludedCourses")
+      .select(
+        "quizSubmissions subscription selectedClass courseProgress planExcludedCourses",
+      )
       .lean();
 
     const query = { $or: [{ students: studentId }] };
 
     if (student?.subscription?.status === "active" && student?.selectedClass) {
-      const escapedClass = student.selectedClass.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const escapedClass = student.selectedClass.replace(
+        /[-/\\^$*+?.()|[\]{}]/g,
+        "\\$&",
+      );
       query.$or.push({ category: new RegExp(`^${escapedClass}$`, "i") });
     }
 
     // Exclude courses an admin has explicitly removed from this student's plan access
-    const excludedIds = (student?.planExcludedCourses ?? []).map((id) => id.toString());
+    const excludedIds = (student?.planExcludedCourses ?? []).map((id) =>
+      id.toString(),
+    );
     if (excludedIds.length > 0) {
       query._id = { $nin: student.planExcludedCourses };
     }
 
     const courses = await Course.find(query)
-      .select("title summary category level price thumbnailUrl board language instructor tags lessons.title lessons.type ratings reviewCount ratingAverage")
+      .select(
+        "title summary category level price thumbnailUrl board language instructor tags lessons.title lessons.type ratings reviewCount ratingAverage",
+      )
       .populate("instructor", "name email")
       .lean();
 
@@ -505,7 +637,10 @@ export const saveCourseProgress = async (req, res) => {
       lessonProgress = {},
     } = req.body || {};
 
-    const course = await Course.findById(courseId).populate("instructor", "name");
+    const course = await Course.findById(courseId).populate(
+      "instructor",
+      "name",
+    );
     if (!course) return res.status(404).json({ message: "Course not found" });
 
     // Merge into user's courseProgress map
@@ -517,12 +652,17 @@ export const saveCourseProgress = async (req, res) => {
       updatedAt: new Date(),
     };
 
-    const student = await User.findByIdAndUpdate(studentId, { $set: update }, { new: true });
+    const student = await User.findByIdAndUpdate(
+      studentId,
+      { $set: update },
+      { new: true },
+    );
 
     if (course.certificate?.enabled) {
       const totalLessons = course.lessons?.length || course.totalLessons || 0;
       const completedCount = Array.isArray(completed) ? completed.length : 0;
-      const isProgressComplete = completedCount >= totalLessons && totalLessons > 0;
+      const isProgressComplete =
+        completedCount >= totalLessons && totalLessons > 0;
 
       if (isProgressComplete) {
         const requiresFinalQuiz = course.quiz?.questions?.length > 0;
@@ -635,12 +775,15 @@ export const enrollCourses = async (req, res) => {
       forbidden = [];
 
     // Pre-fetch user to check subscription and selected class
-    const userDoc = await User.findById(studentId).select("subscription selectedClass enrolledCourses");
+    const userDoc = await User.findById(studentId).select(
+      "subscription selectedClass enrolledCourses",
+    );
     const hasActiveSubscription = userDoc?.subscription?.status === "active";
     const userClass = userDoc?.selectedClass?.toLowerCase().trim();
 
     // Check if the user is an admin or staff (they can bypass payment checks)
-    const isAdminOrStaff = hasBaseRole(req.user, "admin") || hasBaseRole(req.user, "staff");
+    const isAdminOrStaff =
+      hasBaseRole(req.user, "admin") || hasBaseRole(req.user, "staff");
 
     await Promise.all(
       courseIds.map(async (courseId) => {
@@ -650,8 +793,12 @@ export const enrollCourses = async (req, res) => {
           return;
         }
 
-        const alreadyInUser = userDoc.enrolledCourses?.some(id => id.toString() === courseId);
-        const alreadyInCourse = course.students.some(id => id.toString() === studentId.toString());
+        const alreadyInUser = userDoc.enrolledCourses?.some(
+          (id) => id.toString() === courseId,
+        );
+        const alreadyInCourse = course.students.some(
+          (id) => id.toString() === studentId.toString(),
+        );
 
         if (alreadyInUser && alreadyInCourse) {
           alreadyEnrolled.push(courseId);
@@ -660,7 +807,10 @@ export const enrollCourses = async (req, res) => {
 
         // Price check logic
         if (!alreadyInUser && course.price > 0 && !isAdminOrStaff) {
-          const matchesClass = userClass && course.category && userClass === course.category.toLowerCase().trim();
+          const matchesClass =
+            userClass &&
+            course.category &&
+            userClass === course.category.toLowerCase().trim();
           if (!hasActiveSubscription || !matchesClass) {
             forbidden.push(courseId);
             return; // Skip enrolling this paid course without matching plan
@@ -688,7 +838,9 @@ export const enrollCourses = async (req, res) => {
     );
 
     if (forbidden.length > 0 && enrolled.length === 0) {
-      return res.status(403).json({ message: "Payment required for selected courses." });
+      return res
+        .status(403)
+        .json({ message: "Payment required for selected courses." });
     }
 
     await Promise.all(
@@ -712,10 +864,21 @@ export const enrollCourses = async (req, res) => {
 
     if (enrolled.length > 0) {
       const user = await User.findById(studentId);
-      if (user && user.email && user.notificationSettings?.emailNotifications !== false) {
-        const enrolledCourses = await Course.find({ _id: { $in: enrolled } }).select("title").lean();
-        const courseTitles = enrolledCourses.map(c => c.title);
-        sendCourseEnrollmentEmail(user.email, user.name, courseTitles, studentId).catch(console.error);
+      if (
+        user &&
+        user.email &&
+        user.notificationSettings?.emailNotifications !== false
+      ) {
+        const enrolledCourses = await Course.find({ _id: { $in: enrolled } })
+          .select("title")
+          .lean();
+        const courseTitles = enrolledCourses.map((c) => c.title);
+        sendCourseEnrollmentEmail(
+          user.email,
+          user.name,
+          courseTitles,
+          studentId,
+        ).catch(console.error);
       }
     }
 
@@ -738,7 +901,8 @@ export const getCourseById = async (req, res) => {
     const cached = await getJson(cacheKey);
     if (cached) {
       // Apply note status filtering dynamically for non-owners/non-admins
-      const isOwner = cached.instructor?._id?.toString() === req.user?._id?.toString();
+      const isOwner =
+        cached.instructor?._id?.toString() === req.user?._id?.toString();
       const isAdmin = hasBaseRole(req.user, "admin");
       if (!isOwner && !isAdmin && Array.isArray(cached.notes)) {
         return res.json({
@@ -762,12 +926,15 @@ export const getCourseById = async (req, res) => {
     }
 
     // Include student count without loading all user documents into memory
-    course.studentCount = Array.isArray(course.students) ? course.students.length : 0;
+    course.studentCount = Array.isArray(course.students)
+      ? course.students.length
+      : 0;
 
     // Cache the base course details for 60 seconds
     await setJson(cacheKey, course, 60);
 
-    const isOwner = course.instructor?._id?.toString() === req.user._id.toString();
+    const isOwner =
+      course.instructor?._id?.toString() === req.user._id.toString();
     const isAdmin = hasBaseRole(req.user, "admin");
     if (!isOwner && !isAdmin) {
       course.notes = (course.notes ?? []).filter(
@@ -808,7 +975,10 @@ export const updateCourse = async (req, res) => {
       instructor,
     } = req.body;
 
-    const hasAdminOrEdit = hasBaseRole(req.user, "admin") || hasPermissionGrant(req.user, "courses", "edit") || hasPermissionGrant(req.user, "courses", "create");
+    const hasAdminOrEdit =
+      hasBaseRole(req.user, "admin") ||
+      hasPermissionGrant(req.user, "courses", "edit") ||
+      hasPermissionGrant(req.user, "courses", "create");
     const query = hasAdminOrEdit
       ? { _id: req.params.id }
       : { _id: req.params.id, instructor: req.user._id };
@@ -859,11 +1029,10 @@ export const updateCourse = async (req, res) => {
         newApprovalStatus === "pending" ? "" : existing.rejectionReason,
     };
 
-    const course = await Course.findOneAndUpdate(
-      query,
-      allowedUpdates,
-      { new: true, runValidators: true },
-    );
+    const course = await Course.findOneAndUpdate(query, allowedUpdates, {
+      new: true,
+      runValidators: true,
+    });
 
     await invalidateCourseCache(course._id);
     res.json(shapeCourse(course));
@@ -1065,8 +1234,9 @@ export const submitQuiz = async (req, res) => {
     // stale cached copy that predates this quiz submission.
     await deleteKey(`user:${student._id}`);
 
-    const updatedCoinBalance = (await User.findById(student._id).select("coins"))
-      ?.coins;
+    const updatedCoinBalance = (
+      await User.findById(student._id).select("coins")
+    )?.coins;
 
     return res.json({
       success: true,
@@ -1089,7 +1259,9 @@ export const assignCoursesToInstructor = async (req, res) => {
   try {
     const { instructorId, courseIds = [], unassignedCourseIds = [] } = req.body;
     if (!instructorId || !mongoose.Types.ObjectId.isValid(instructorId)) {
-      return res.status(400).json({ message: "Valid instructorId is required." });
+      return res
+        .status(400)
+        .json({ message: "Valid instructorId is required." });
     }
 
     const instructorUser = await User.findById(instructorId);
@@ -1156,7 +1328,9 @@ export const unassignCoursesFromStudent = async (req, res) => {
       hasBaseRole(req.user, "staff");
 
     if (!canEdit) {
-      return res.status(403).json({ message: "Access denied — admin or staff only." });
+      return res
+        .status(403)
+        .json({ message: "Access denied — admin or staff only." });
     }
 
     // Remove studentId from Course.students
@@ -1177,7 +1351,10 @@ export const unassignCoursesFromStudent = async (req, res) => {
     await Promise.all(
       validCourseIds.map((id) =>
         invalidateCourseCache(id).catch((err) =>
-          console.error("[Cache] Failed to invalidate course cache:", err.message),
+          console.error(
+            "[Cache] Failed to invalidate course cache:",
+            err.message,
+          ),
         ),
       ),
     );
@@ -1199,7 +1376,9 @@ export const toggleStudentInstructorAssistance = async (req, res) => {
   try {
     const { studentId, courseId, enabled } = req.body;
     if (!studentId || !courseId) {
-      return res.status(400).json({ message: "studentId and courseId are required." });
+      return res
+        .status(400)
+        .json({ message: "studentId and courseId are required." });
     }
 
     const canEdit =
@@ -1223,7 +1402,6 @@ export const toggleStudentInstructorAssistance = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
 
 // ── togglePlanCourseExclusion ─────────────────────────────────────────────────
 // POST /courses/plan-exclude
@@ -1249,7 +1427,9 @@ export const togglePlanCourseExclusion = async (req, res) => {
       hasBaseRole(req.user, "staff");
 
     if (!canEdit) {
-      return res.status(403).json({ message: "Access denied — admin or staff only." });
+      return res
+        .status(403)
+        .json({ message: "Access denied — admin or staff only." });
     }
 
     // Build the update atomically — exclusion toggle + optional assistance toggle

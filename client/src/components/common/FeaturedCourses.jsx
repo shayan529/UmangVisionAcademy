@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { fetchPublishedCourses, fetchEnrolledCourses } from "../../redux/slices/courseSlice";
+import {
+  fetchPublishedCourses,
+  fetchEnrolledCourses,
+} from "../../redux/slices/courseSlice";
 import CourseCard from "./CourseCard";
 import { hasBaseRole } from "../../utils/permissions";
 
@@ -72,7 +75,7 @@ const Courses = () => {
   // Build a Set of enrolled course IDs for O(1) lookup
   const enrolledIdSet = useMemo(
     () => new Set(enrolledCourses.map((c) => c._id?.toString())),
-    [enrolledCourses]
+    [enrolledCourses],
   );
 
   const [selectedCourseType, setSelectedCourseType] = useState(TYPE_ALL);
@@ -97,9 +100,7 @@ const Courses = () => {
   // ── Derived filter options — recomputed only when courses change ──────────
   const dynamicClasses = useMemo(
     () => [
-      ...new Set(
-        allCourses.map((c) => c.category).filter(isClassCategory),
-      ),
+      ...new Set(allCourses.map((c) => c.category).filter(isClassCategory)),
     ],
     [allCourses],
   );
@@ -122,36 +123,23 @@ const Courses = () => {
     [allCourses],
   );
 
-  const dynamicSubjects = useMemo(
-    () => {
-      const subjects = new Set();
-      allCourses.forEach((course) => {
-        const isBulk = (course.lessons ?? []).some((l) => l.subject) ||
-          (course.notes ?? []).some((n) => n.subject) ||
-          (course.subjectQuizzes ?? []).length > 0 ||
-          (course.subjectDetails ?? []).length > 0;
-        if (isBulk) {
-          const courseSubjects = [
-            ...(course.lessons ?? []).map((l) => l.subject),
-            ...(course.notes ?? []).map((n) => n.subject),
-            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
-            ...(course.subjectDetails ?? []).map((d) => d.subject),
-          ];
-          courseSubjects.forEach((sub) => {
-            if (sub) {
-              subjects.add(sub.trim());
-            }
-          });
-        } else {
-          if (course.title) {
-            subjects.add(course.title.trim());
-          }
-        }
-      });
-      return Array.from(subjects).sort();
-    },
-    [allCourses],
-  );
+  const dynamicSubjects = useMemo(() => {
+    const subjects = new Set();
+    allCourses.forEach((course) => {
+      if (course.tags?.length) {
+        course.tags.forEach((tag) => {
+          if (tag) subjects.add(tag.trim());
+        });
+      }
+      if (course.category) {
+        subjects.add(course.category.trim());
+      }
+      if (course.title) {
+        subjects.add(course.title.trim());
+      }
+    });
+    return Array.from(subjects).sort();
+  }, [allCourses]);
 
   const dynamicBoards = useMemo(
     () => [...new Set(allCourses.map((c) => c.board).filter(Boolean))],
@@ -174,24 +162,13 @@ const Courses = () => {
             ? selectedExam === ALL_EXAMS || course.category === selectedExam
             : selectedClass === ALL || course.category === selectedClass;
 
-        const isBulk = (course.lessons ?? []).some((l) => l.subject) ||
-          (course.notes ?? []).some((n) => n.subject) ||
-          (course.subjectQuizzes ?? []).length > 0 ||
-          (course.subjectDetails ?? []).length > 0;
-
-        let courseSubjects = [];
-        if (isBulk) {
-          courseSubjects = [
-            ...(course.lessons ?? []).map((l) => l.subject),
-            ...(course.notes ?? []).map((n) => n.subject),
-            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
-            ...(course.subjectDetails ?? []).map((d) => d.subject),
-          ].filter(Boolean).map(s => s.trim().toLowerCase());
-        } else {
-          if (course.title) {
-            courseSubjects = [course.title.trim().toLowerCase()];
-          }
-        }
+        const courseSubjects = [
+          ...(course.tags ?? []).filter(Boolean),
+          course.category,
+          course.title,
+        ]
+          .filter(Boolean)
+          .map((value) => value.trim().toLowerCase());
 
         const subjectMatch =
           selectedSubject === "All Subjects" ||
@@ -212,7 +189,9 @@ const Courses = () => {
           !course.language ||
           course.language.toLowerCase() === selectedLanguage.toLowerCase();
 
-        return typeMatch && classMatch && subjectMatch && boardMatch && languageMatch;
+        return (
+          typeMatch && classMatch && subjectMatch && boardMatch && languageMatch
+        );
       }),
     [
       allCourses,
@@ -260,8 +239,11 @@ const Courses = () => {
 
     // Secondary check: subscription-based access
     const hasActiveSubscription = user.subscription?.status === "active";
-    const matchesClass = user.selectedClass && course.category &&
-      user.selectedClass.toLowerCase().trim() === course.category.toLowerCase().trim();
+    const matchesClass =
+      user.selectedClass &&
+      course.category &&
+      user.selectedClass.toLowerCase().trim() ===
+        course.category.toLowerCase().trim();
 
     return !!(hasActiveSubscription && matchesClass);
   };
@@ -275,7 +257,8 @@ const Courses = () => {
     }
 
     // Custom-role staff / admins are not allowed to view demos or full course pages.
-    const canEnroll = hasBaseRole(user, "student") || hasBaseRole(user, "instructor");
+    const canEnroll =
+      hasBaseRole(user, "student") || hasBaseRole(user, "instructor");
     if (!canEnroll) {
       return;
     }
@@ -307,7 +290,7 @@ const Courses = () => {
               </h2>
               {!loading && allCourses.length > 0 && (
                 <span className="text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800/80 px-2.5 py-0.5 rounded-full">
-                  {`${featuredList.length} ${featuredList.length === 1 ? 'course' : 'courses'} available`}
+                  {`${featuredList.length} ${featuredList.length === 1 ? "course" : "courses"} available`}
                 </span>
               )}
             </div>
@@ -318,17 +301,24 @@ const Courses = () => {
             <div className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-800 bg-[#0f172a]/90 backdrop-blur-md max-w-full overflow-x-auto no-scrollbar">
               {[
                 { key: TYPE_ALL, label: t("courses.courseTypeAll", "All") },
-                { key: TYPE_CLASSES, label: t("courses.courseTypeClasses", "Classes") },
-                { key: TYPE_COMPETITIVE, label: t("courses.courseTypeCompetitive", "Competitive Exam") },
+                {
+                  key: TYPE_CLASSES,
+                  label: t("courses.courseTypeClasses", "Classes"),
+                },
+                {
+                  key: TYPE_COMPETITIVE,
+                  label: t("courses.courseTypeCompetitive", "Competitive Exam"),
+                },
               ].map((opt) => (
                 <button
                   key={opt.key}
                   type="button"
                   onClick={() => handleCourseTypeChange(opt.key)}
-                  className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap shrink-0 ${selectedCourseType === opt.key
+                  className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap shrink-0 ${
+                    selectedCourseType === opt.key
                       ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xs"
                       : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                    }`}
+                  }`}
                 >
                   {opt.label}
                 </button>
@@ -373,7 +363,10 @@ const Courses = () => {
                   ))}
                 </select>
                 <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                  <svg className="w-3.5 h-3.5 fill-current opacity-70" viewBox="0 0 20 20">
+                  <svg
+                    className="w-3.5 h-3.5 fill-current opacity-70"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                   </svg>
                 </div>
@@ -400,7 +393,10 @@ const Courses = () => {
                   ))}
                 </select>
                 <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                  <svg className="w-3.5 h-3.5 fill-current opacity-70" viewBox="0 0 20 20">
+                  <svg
+                    className="w-3.5 h-3.5 fill-current opacity-70"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                   </svg>
                 </div>
@@ -428,7 +424,10 @@ const Courses = () => {
                 ))}
               </select>
               <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                <svg className="w-3.5 h-3.5 fill-current opacity-70" viewBox="0 0 20 20">
+                <svg
+                  className="w-3.5 h-3.5 fill-current opacity-70"
+                  viewBox="0 0 20 20"
+                >
                   <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                 </svg>
               </div>
@@ -456,7 +455,10 @@ const Courses = () => {
                   ))}
                 </select>
                 <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                  <svg className="w-3.5 h-3.5 fill-current opacity-70" viewBox="0 0 20 20">
+                  <svg
+                    className="w-3.5 h-3.5 fill-current opacity-70"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                   </svg>
                 </div>
@@ -484,7 +486,10 @@ const Courses = () => {
                 ))}
               </select>
               <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                <svg className="w-3.5 h-3.5 fill-current opacity-70" viewBox="0 0 20 20">
+                <svg
+                  className="w-3.5 h-3.5 fill-current opacity-70"
+                  viewBox="0 0 20 20"
+                >
                   <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                 </svg>
               </div>
@@ -493,43 +498,78 @@ const Courses = () => {
         </div>
 
         {/* Active Filters Bar */}
-        {(selectedCourseType !== TYPE_ALL || selectedClass !== ALL || selectedExam !== ALL_EXAMS || selectedSubject !== ALL_SUBJECTS || selectedBoard !== ALL_BOARDS || selectedLanguage !== ALL_LANGUAGES) && (
+        {(selectedCourseType !== TYPE_ALL ||
+          selectedClass !== ALL ||
+          selectedExam !== ALL_EXAMS ||
+          selectedSubject !== ALL_SUBJECTS ||
+          selectedBoard !== ALL_BOARDS ||
+          selectedLanguage !== ALL_LANGUAGES) && (
           <div className="flex flex-wrap items-center gap-2 mb-8 p-3 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs">
             <span className="text-slate-400 font-semibold mr-1">Active:</span>
             {selectedCourseType !== TYPE_ALL && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-medium">
                 {selectedCourseType}
-                <button onClick={() => handleCourseTypeChange(TYPE_ALL)} className="hover:text-white font-bold">✕</button>
+                <button
+                  onClick={() => handleCourseTypeChange(TYPE_ALL)}
+                  className="hover:text-white font-bold"
+                >
+                  ✕
+                </button>
               </span>
             )}
             {selectedClass !== ALL && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
                 Class: {selectedClass}
-                <button onClick={() => setSelectedClass(ALL)} className="hover:text-white font-bold">✕</button>
+                <button
+                  onClick={() => setSelectedClass(ALL)}
+                  className="hover:text-white font-bold"
+                >
+                  ✕
+                </button>
               </span>
             )}
             {selectedExam !== ALL_EXAMS && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
                 Exam: {selectedExam}
-                <button onClick={() => setSelectedExam(ALL_EXAMS)} className="hover:text-white font-bold">✕</button>
+                <button
+                  onClick={() => setSelectedExam(ALL_EXAMS)}
+                  className="hover:text-white font-bold"
+                >
+                  ✕
+                </button>
               </span>
             )}
             {selectedSubject !== ALL_SUBJECTS && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 font-medium">
                 Subject: {selectedSubject}
-                <button onClick={() => setSelectedSubject(ALL_SUBJECTS)} className="hover:text-white font-bold">✕</button>
+                <button
+                  onClick={() => setSelectedSubject(ALL_SUBJECTS)}
+                  className="hover:text-white font-bold"
+                >
+                  ✕
+                </button>
               </span>
             )}
             {selectedBoard !== ALL_BOARDS && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-medium">
                 Board: {selectedBoard}
-                <button onClick={() => setSelectedBoard(ALL_BOARDS)} className="hover:text-white font-bold">✕</button>
+                <button
+                  onClick={() => setSelectedBoard(ALL_BOARDS)}
+                  className="hover:text-white font-bold"
+                >
+                  ✕
+                </button>
               </span>
             )}
             {selectedLanguage !== ALL_LANGUAGES && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 font-medium">
                 Lang: {selectedLanguage}
-                <button onClick={() => setSelectedLanguage(ALL_LANGUAGES)} className="hover:text-white font-bold">✕</button>
+                <button
+                  onClick={() => setSelectedLanguage(ALL_LANGUAGES)}
+                  className="hover:text-white font-bold"
+                >
+                  ✕
+                </button>
               </span>
             )}
             <button
@@ -569,7 +609,10 @@ const Courses = () => {
                     _id: course._id,
                     title: course.title,
                     instructor: instructorName(course.instructor),
-                    instructorId: typeof course.instructor === 'object' ? course.instructor?._id : null,
+                    instructorId:
+                      typeof course.instructor === "object"
+                        ? course.instructor?._id
+                        : null,
                     rating: course.ratingAverage ?? 0,
                     reviews: course.reviewCount ?? 0,
                     price:
@@ -603,20 +646,20 @@ const Courses = () => {
               selectedSubject !== ALL_SUBJECTS ||
               selectedBoard !== ALL_BOARDS ||
               selectedLanguage !== ALL_LANGUAGES) && (
-                <button
-                  onClick={() => {
-                    setSelectedCourseType(TYPE_ALL);
-                    setSelectedClass(ALL);
-                    setSelectedExam(ALL_EXAMS);
-                    setSelectedSubject(ALL_SUBJECTS);
-                    setSelectedBoard(ALL_BOARDS);
-                    setSelectedLanguage(ALL_LANGUAGES);
-                  }}
-                  className="mt-6 px-6 py-2 rounded-xl border border-indigo-500/30 text-indigo-400 text-sm font-semibold hover:bg-indigo-500/10 transition"
-                >
-                  {t("courses.clearFilters")}
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  setSelectedCourseType(TYPE_ALL);
+                  setSelectedClass(ALL);
+                  setSelectedExam(ALL_EXAMS);
+                  setSelectedSubject(ALL_SUBJECTS);
+                  setSelectedBoard(ALL_BOARDS);
+                  setSelectedLanguage(ALL_LANGUAGES);
+                }}
+                className="mt-6 px-6 py-2 rounded-xl border border-indigo-500/30 text-indigo-400 text-sm font-semibold hover:bg-indigo-500/10 transition"
+              >
+                {t("courses.clearFilters")}
+              </button>
+            )}
           </div>
         )}
 
@@ -634,7 +677,11 @@ const Courses = () => {
                 stroke="currentColor"
                 strokeWidth={2.5}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13 7l5 5m0 0l-5 5m5-5H6"
+                />
               </svg>
               <span className="absolute inset-0 bg-emerald-50 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out" />
             </button>

@@ -107,14 +107,14 @@ const StaffSidebar = ({
   }, [rolesDropdownOpen]);
 
   const rawNavItems = [
-    { id: "overview", label: "Overview", icon: "📊" },
+    { id: "overview", label: t("adminSidebar.overview", "Overview"), icon: "📊" },
     ...(hasPermission(user, "courses", "view")
-      ? [{ id: "courses", label: "Courses", icon: "📚" }]
+      ? [{ id: "courses", label: t("adminSidebar.courses", "Courses"), icon: "📚" }]
       : []),
     ...(hasPermission(user, "users", "view")
       ? [
-          { id: "students", label: "Students", icon: "👥" },
-          { id: "instructors", label: "Instructors", icon: "🎓" },
+          { id: "students", label: t("adminSidebar.students", "Students"), icon: "👥" },
+          { id: "instructors", label: t("adminSidebar.instructors", "Instructors"), icon: "🎓" },
         ]
       : []),
     ...(hasAnyPermission(user, [
@@ -122,13 +122,13 @@ const StaffSidebar = ({
       ["payments", "refund"],
       ["payments", "export"],
     ])
-      ? [{ id: "payments", label: "Payments", icon: "💳" }]
+      ? [{ id: "payments", label: t("adminSidebar.payments", "Payments"), icon: "💳" }]
       : []),
     ...(hasPermission(user, "applications", "view")
       ? [
           {
             id: "applications",
-            label: "Applications",
+            label: t("adminSidebar.applications", "Applications"),
             icon: "📝",
             badge: applicationsCount,
           },
@@ -137,38 +137,38 @@ const StaffSidebar = ({
     ...(hasPermission(user, "notes", "view") ||
     hasPermission(user, "notes", "approve") ||
     hasPermission(user, "notes", "reject")
-      ? [{ id: "notes", label: "Notes Moderation", icon: "📄" }]
+      ? [{ id: "notes", label: t("adminSidebar.notes", "Notes Moderation"), icon: "📄" }]
       : []),
     ...(hasPermission(user, "reels", "view")
-      ? [{ id: "reels", label: "Reels Moderation", icon: "🎥" }]
+      ? [{ id: "reels", label: t("adminSidebar.reels", "Reels Moderation"), icon: "🎥" }]
       : []),
     ...(hasPermission(user, "mock_tests", "view")
-      ? [{ id: "mock_tests", label: "Mock Tests", icon: "📋" }]
+      ? [{ id: "mock_tests", label: t("adminSidebar.mockTests", "Mock Tests"), icon: "📋" }]
       : []),
     ...(hasPermission(user, "question_bank", "view")
-      ? [{ id: "question_bank", label: "Question Bank", icon: "🗂️" }]
+      ? [{ id: "question_bank", label: t("nav.questionBank", "Question Bank"), icon: "🗂️" }]
       : []),
     ...(hasPermission(user, "sessions", "view")
-      ? [{ id: "sessions", label: "Sessions", icon: "📅" }]
+      ? [{ id: "sessions", label: t("adminSidebar.sessions", "Sessions"), icon: "📅" }]
       : []),
     ...(hasPermission(user, "ai_tutor", "access")
-      ? [{ id: "ai_tutor", label: "AI Tutor", icon: "🤖" }]
+      ? [{ id: "ai_tutor", label: t("studentSidebar.aiTutor", "AI Tutor"), icon: "🤖" }]
       : []),
     ...(hasPermission(user, "references", "view")
-      ? [{ id: "references", label: "References", icon: "🔗" }]
+      ? [{ id: "references", label: t("adminSidebar.references", "References"), icon: "🔗" }]
       : []),
     ...(hasBaseRole(user, "admin")
-      ? [{ id: "roles", label: "Roles & Permissions", icon: "🔒" }]
+      ? [{ id: "roles", label: t("adminSidebar.roles", "Roles & Permissions"), icon: "🔒" }]
       : []),
     ...(hasBaseRole(user, "admin") ||
     hasPermission(user, "bulk_import", "view") ||
     hasPermission(user, "bulk_import", "import")
-      ? [{ id: "bulk_import", label: "Bulk Import", icon: "📥" }]
+      ? [{ id: "bulk_import", label: t("adminSidebar.bulkImport", "Bulk Import"), icon: "📥" }]
       : []),
     ...(hasBaseRole(user, "admin") ||
     hasPermission(user, "devices", "view") ||
     hasPermission(user, "devices", "revoke")
-      ? [{ id: "devices", label: "Logged In Devices", icon: "🖥️" }]
+      ? [{ id: "devices", label: t("adminSidebar.devices", "Logged In Devices"), icon: "🖥️" }]
       : []),
   ];
 
