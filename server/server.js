@@ -70,53 +70,46 @@ const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://localhost:5174", // Vite sometimes uses 5174 as fallback
   // Capacitor's Android WebView sends one of these as its Origin header
-  // depending on androidScheme config — without these, every request from
-  // the installed APK gets silently CORS-blocked even though the server
-  // itself responds fine (shows up client-side as a generic network error,
-  // and repeated failed/retried requests are also what makes the app feel slow).
   "https://localhost",
   "http://localhost",
   "capacitor://localhost",
   "https://umangvisionacademy.com",
   "https://www.umangvisionacademy.com",
+  // Production Vercel frontend — always allowed
+  "https://umang-vision-academy.vercel.app",
+  // Render backend itself (same-origin requests from server-side rendering)
+  "https://umangvisionacademy.onrender.com",
 ];
 
 if (process.env.CLIENT_URL) ALLOWED_ORIGINS.push(process.env.CLIENT_URL);
 if (process.env.FRONTEND_URL) ALLOWED_ORIGINS.push(process.env.FRONTEND_URL);
 
+// Shared origin check used by both Express CORS middleware and Socket.IO
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // curl, Postman, server-to-server
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  try {
+    const { hostname } = new URL(origin);
+    return (
+      hostname === "umangvisionacademy.com" ||
+      hostname === "www.umangvisionacademy.com" ||
+      hostname.endsWith(".vercel.app") ||
+      hostname.endsWith(".onrender.com") ||
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "10.0.2.2" ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("172.")
+    );
+  } catch {
+    return false;
+  }
+};
+
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (curl, Postman, server-to-server)
-    if (!origin) return callback(null, true);
-    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-
-    // Automatically allow requests from the deployment domain on Render or local development/private network IPs
-    try {
-      const originUrl = new URL(origin);
-      const hostname = originUrl.hostname;
-      if (
-        hostname === "umangvisionacademy.com" ||
-        hostname === "www.umangvisionacademy.com" ||
-        hostname === "umangvisionacademy.onrender.com" ||
-        hostname === "umang-vision-academy.vercel.app" ||
-        hostname.endsWith(".vercel.app") ||
-        hostname.endsWith(".onrender.com") ||
-        hostname === "localhost" ||
-        hostname === "127.0.0.1" ||
-        hostname === "10.0.2.2" ||
-        hostname.startsWith("192.168.") ||
-        hostname.startsWith("10.") ||
-        hostname.startsWith("172.")
-      ) {
-        return callback(null, true);
-      }
-    } catch (e) {
-      // Ignore invalid URL
-    }
-
-    // Instead of throwing an Error (which causes Express to return a 500 error),
-    // return callback(null, false) to deny CORS headers gracefully.
-    callback(null, false);
+    callback(null, isOriginAllowed(origin));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -129,7 +122,11 @@ const httpServer = createServer(app);
 // 2. Attach Socket.IO to the HTTP server
 const io = new Server(httpServer, {
   cors: {
-    origin: ALLOWED_ORIGINS,
+    // Use the same flexible origin check so Vercel preview URLs & Render
+    // subdomains are allowed for WebSocket handshakes, not just REST calls.
+    origin: (origin, callback) => {
+      callback(null, isOriginAllowed(origin));
+    },
     credentials: true,
     methods: ["GET", "POST"],
   },
