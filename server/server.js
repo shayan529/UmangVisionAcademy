@@ -136,7 +136,19 @@ const io = new Server(httpServer, {
 });
 // Make Socket.IO available inside request handlers for server-side events.
 app.set("io", io);
+
 // ── Middleware ────────────────────────────────────────────────────────────────
+// STEP 1: CORS must be the ABSOLUTE FIRST middleware so that even error
+// responses (503, 429, 500) include the correct Access-Control-Allow-Origin
+// header. Without this, the browser blocks the response entirely and the
+// actual status code/body is invisible to the client.
+app.use(cors(corsOptions));
+
+// STEP 2: Explicitly handle OPTIONS preflight requests for ALL routes BEFORE
+// the rate limiter. Without this, preflight requests get rate-limited first
+// and the CORS headers never reach the browser.
+app.options("*", cors(corsOptions));
+
 app.use(
   helmet({
     contentSecurityPolicy: false, // Disabled to prevent blocking dynamic third-party CDN assets and APIs
@@ -145,10 +157,6 @@ app.use(
     frameguard: false,
   }),
 );
-
-// CORS middleware MUST be registered before rate limiters or routes so that
-// preflight requests and error/rate-limited responses include appropriate CORS headers.
-app.use(cors(corsOptions));
 
 // Rate limiting to protect endpoints against API abuse/DDoS
 // Production limit is set to 1000 req / 15 min per IP. This is generous
@@ -242,6 +250,15 @@ const ensureDbConnected = async (req, res, next) => {
     next();
   } catch (err) {
     console.error("[ensureDbConnected] Failed:", err);
+    // Manually set CORS headers here as a failsafe — if the DB fails to
+    // connect and we return 503, the cors() middleware has already run but
+    // some proxy layers strip headers on error responses.
+    const origin = req.headers.origin;
+    if (origin && isOriginAllowed(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.vary("Origin");
+    }
     res
       .status(503)
       .json({ success: false, message: "Service temporarily unavailable" });
@@ -289,6 +306,14 @@ app.use("/api/webrtc", webrtcSessionRoutes);
 app.use((err, req, res, next) => {
   console.error("[Global Error Handler]", err);
   if (res.headersSent) return next(err);
+  // Ensure CORS headers are present even on unhandled errors so the browser
+  // can read the error body instead of showing an opaque CORS failure.
+  const origin = req.headers.origin;
+  if (origin && isOriginAllowed(origin) && !res.getHeader("Access-Control-Allow-Origin")) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.vary("Origin");
+  }
   res.status(err.status || err.statusCode || 500).json({
     success: false,
     message: err.message || "Internal Server Error",
