@@ -103,8 +103,8 @@ const CustomStyles = () => (
   <style>{`
     .pro-chat-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
     .pro-chat-scroll::-webkit-scrollbar-track { background: transparent; }
-    .pro-chat-scroll::-webkit-scrollbar-thumb { background: rgba(113, 113, 122, 0.25); border-radius: 999px; }
-    .pro-chat-scroll::-webkit-scrollbar-thumb:hover { background: rgba(113, 113, 122, 0.45); }
+    .pro-chat-scroll::-webkit-scrollbar-thumb { background: rgba(113, 113, 122, 0.35); border-radius: 999px; }
+    .pro-chat-scroll::-webkit-scrollbar-thumb:hover { background: rgba(113, 113, 122, 0.55); }
 
     @keyframes pro-pop-in {
       from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.98); }
@@ -118,7 +118,7 @@ const CustomStyles = () => (
 const DateDivider = ({ label }) => (
   <div className="flex items-center gap-3 my-6 select-none px-4">
     <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
-    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 bg-zinc-900/90 border border-zinc-800 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
+    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 bg-zinc-900 border border-zinc-800 px-4 py-1 rounded-full shadow-sm">
       {label}
     </span>
     <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
@@ -176,7 +176,7 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
       <div
         className={`flex ${isMe ? "justify-end" : "justify-start"} ${groupStart ? "mt-3" : "mt-1"} px-2`}
       >
-        <span className="text-[11px] text-zinc-500 italic px-3.5 py-1.5 rounded-2xl border border-zinc-800/50 bg-zinc-900/40 flex items-center gap-1.5">
+        <span className="text-[11px] text-zinc-500 italic px-3.5 py-1.5 rounded-2xl border border-zinc-800 bg-zinc-900/60 flex items-center gap-1.5">
           <Trash2 size={11} className="opacity-60" /> Message deleted
         </span>
       </div>
@@ -190,16 +190,14 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
       onMouseLeave={() => setHover(false)}
     >
       <div
-        className={`relative max-w-[85%] sm:max-w-[75%] md:max-w-[65%] flex items-end gap-2.5 ${
-          isMe ? "flex-row-reverse" : "flex-row"
-        }`}
+        className={`relative max-w-[85%] sm:max-w-[75%] md:max-w-[65%] flex items-end gap-2.5 ${isMe ? "flex-row-reverse" : "flex-row"
+          }`}
       >
         {/* Message Actions Menu on Hover */}
         {hover && (
           <div
-            className={`absolute top-0 -translate-y-1/2 z-20 flex items-center gap-1 bg-zinc-900 border border-zinc-700/80 rounded-xl p-1 shadow-xl backdrop-blur-md transition-all ${
-              isMe ? "right-0 translate-x-2" : "left-0 -translate-x-2"
-            }`}
+            className={`absolute top-0 -translate-y-1/2 z-20 flex items-center gap-1 bg-zinc-900 border border-zinc-700/80 rounded-xl p-1 shadow-xl backdrop-blur-md transition-all ${isMe ? "right-0 translate-x-2" : "left-0 -translate-x-2"
+              }`}
           >
             {msg.text && (
               <button
@@ -226,15 +224,12 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
           {/* Main Text Content */}
           {msg.text && (
             <div
-              className={`px-4 py-3 text-[13.5px] leading-relaxed break-words shadow-md transition-all ${
-                isMe
-                  ? `bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white rounded-[22px] ${
-                      groupEnd ? "rounded-br-xs" : ""
-                    }`
-                  : `bg-[#1a1d26] border border-zinc-800/80 text-zinc-100 rounded-[22px] ${
-                      groupEnd ? "rounded-bl-xs" : ""
-                    }`
-              }`}
+              className={`px-4 py-3 text-[13.5px] leading-relaxed break-words shadow-md transition-all ${isMe
+                  ? `bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white rounded-[22px] ${groupEnd ? "rounded-br-xs" : ""
+                  }`
+                  : `bg-[#181b24] border border-zinc-800/80 text-zinc-100 rounded-[22px] ${groupEnd ? "rounded-bl-xs" : ""
+                  }`
+                }`}
             >
               {msg.text}
             </div>
@@ -244,7 +239,7 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
           {(msg.media ?? []).map((m, i) => (
             <div key={i} className={msg.text || i > 0 ? "mt-2" : ""}>
               {m.mimeType?.startsWith("image/") ? (
-                <div className="relative group/img overflow-hidden rounded-2xl border border-zinc-800 shadow-lg bg-zinc-950">
+                <div className="relative group/img overflow-hidden rounded-2xl border border-zinc-800 shadow-md bg-zinc-950">
                   <img
                     src={m.url}
                     alt={m.filename || "image"}
@@ -264,7 +259,7 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
                   href={m.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 bg-[#1a1d26] hover:bg-zinc-800/80 border border-zinc-800 text-zinc-200 text-xs px-4 py-3 rounded-2xl transition-all shadow-md group/file"
+                  className="flex items-center gap-3 bg-[#181b24] hover:bg-zinc-800/80 border border-zinc-800 text-zinc-200 text-xs px-4 py-3 rounded-2xl transition-all shadow-md group/file"
                 >
                   <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover/file:scale-110 transition-transform">
                     <FileText size={18} />
@@ -284,9 +279,8 @@ const Bubble = ({ msg, isMe, groupStart, groupEnd, onDelete, onPreviewImage }) =
           {/* Footer Metadata */}
           {groupEnd && (
             <div
-              className={`text-[10.5px] font-medium mt-1 flex items-center gap-1.5 ${
-                isMe ? "justify-end text-zinc-400" : "justify-start text-zinc-400"
-              }`}
+              className={`text-[10.5px] font-medium mt-1 flex items-center gap-1.5 ${isMe ? "justify-end text-zinc-400" : "justify-start text-zinc-400"
+                }`}
             >
               <span>{fmtTime(msg.createdAt)}</span>
               {isMe && (
@@ -311,11 +305,10 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-start gap-3.5 p-3.5 rounded-2xl text-left transition-all duration-200 border relative overflow-hidden group cursor-pointer ${
-        isActive
+      className={`w-full flex items-start gap-3.5 p-3.5 rounded-2xl text-left transition-all duration-200 border relative overflow-hidden group cursor-pointer ${isActive
           ? "bg-[#1f2430] border-emerald-500/50 shadow-lg shadow-emerald-950/20"
-          : "border-zinc-800/60 hover:border-zinc-700 bg-[#161922] hover:bg-[#1a1e28]"
-      }`}
+          : "border-zinc-800/70 hover:border-zinc-700 bg-[#151720] hover:bg-[#1b1e2a]"
+        }`}
     >
       {isActive && (
         <span className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-r" />
@@ -335,7 +328,7 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
           </div>
         )}
         {conv.assistanceActive && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#161922] rounded-full" title="Assistance Active" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#151720] rounded-full" title="Assistance Active" />
         )}
       </div>
 
@@ -463,7 +456,7 @@ export default function InstructorStudentQueries({ showToast }) {
       setMeetModalOpen(true);
       toast((t) => (
         <div className="flex items-center gap-3">
-          <Video size={18} className="text-emerald-400" />
+          <Video size={18} className="text-emerald-500" />
           <span>Student requested a Google Meet video session!</span>
         </div>
       ), { duration: 6000 });
@@ -721,7 +714,7 @@ export default function InstructorStudentQueries({ showToast }) {
         sameDayAsPrev &&
         isSameSender(prev, msg) &&
         Math.abs(new Date(msg.createdAt) - new Date(prev.createdAt)) <
-          GROUP_WINDOW_MS &&
+        GROUP_WINDOW_MS &&
         !prev.deleted &&
         !msg.deleted;
       const closeToNext =
@@ -729,7 +722,7 @@ export default function InstructorStudentQueries({ showToast }) {
         fmtDate(next.createdAt) === fmtDate(msg.createdAt) &&
         isSameSender(next, msg) &&
         Math.abs(new Date(next.createdAt) - new Date(msg.createdAt)) <
-          GROUP_WINDOW_MS &&
+        GROUP_WINDOW_MS &&
         !next.deleted &&
         !msg.deleted;
 
@@ -746,7 +739,7 @@ export default function InstructorStudentQueries({ showToast }) {
   }, [messages, user]);
 
   return (
-    <div className="flex h-[calc(100vh-4.5rem)] md:h-[calc(100vh-5.5rem)] w-full bg-[#12141a] rounded-2xl md:rounded-3xl overflow-hidden border border-zinc-800/80 shadow-2xl relative text-zinc-100 font-sans">
+    <div className="flex h-[calc(100vh-4.5rem)] md:h-[calc(100vh-5.5rem)] w-full bg-[#0d0e12] rounded-2xl md:rounded-3xl overflow-hidden border border-zinc-800/80 shadow-2xl relative text-zinc-100 font-sans">
       <CustomStyles />
 
       {/* Lightbox Modal */}
@@ -851,11 +844,10 @@ export default function InstructorStudentQueries({ showToast }) {
                 {REPORT_REASONS.map((reason) => (
                   <label
                     key={reason}
-                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition text-xs ${
-                      selectedReportReason === reason
+                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition text-xs ${selectedReportReason === reason
                         ? "bg-rose-950/40 border-rose-500/60 text-white font-semibold"
                         : "bg-zinc-900/60 border-zinc-800 text-zinc-300 hover:border-zinc-700"
-                    }`}
+                      }`}
                   >
                     <input
                       type="radio"
@@ -905,12 +897,11 @@ export default function InstructorStudentQueries({ showToast }) {
 
       {/* ── Left Sidebar Pane ── */}
       <div
-        className={`flex flex-col w-full md:w-[360px] lg:w-[400px] border-r border-zinc-800/80 bg-[#161922] shrink-0 ${
-          mobileView === "chat" ? "hidden md:flex" : "flex"
-        }`}
+        className={`flex flex-col w-full md:w-[360px] lg:w-[400px] border-r border-zinc-800/80 bg-[#13151c] shrink-0 ${mobileView === "chat" ? "hidden md:flex" : "flex"
+          }`}
       >
         {/* Header Bar */}
-        <div className="p-4 sm:p-5 border-b border-zinc-800/80 shrink-0 space-y-3.5 bg-[#14161f]">
+        <div className="p-4 sm:p-5 border-b border-zinc-800/80 shrink-0 space-y-3.5 bg-[#101218]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
@@ -942,7 +933,7 @@ export default function InstructorStudentQueries({ showToast }) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search student or course…"
-              className="w-full bg-[#1a1d26] border border-zinc-800 text-zinc-100 text-xs rounded-xl pl-9 pr-8 py-2.5 outline-none focus:border-emerald-500/70 transition-all placeholder:text-zinc-500 font-medium"
+              className="w-full bg-[#181b24] border border-zinc-800 text-zinc-100 text-xs rounded-xl pl-9 pr-8 py-2.5 outline-none focus:border-emerald-500/70 transition-all placeholder:text-zinc-500 font-medium"
             />
             {search && (
               <button
@@ -955,24 +946,22 @@ export default function InstructorStudentQueries({ showToast }) {
           </div>
 
           {/* Filter Pills */}
-          <div className="flex gap-1.5 p-1 bg-[#1a1d26] border border-zinc-800/80 rounded-xl">
+          <div className="flex gap-1.5 p-1 bg-[#181b24] border border-zinc-800/80 rounded-xl">
             <button
               onClick={() => setFilter("all")}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                filter === "all"
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${filter === "all"
                   ? "bg-emerald-600 text-white shadow-xs"
                   : "text-zinc-400 hover:text-zinc-200"
-              }`}
+                }`}
             >
               All Queries
             </button>
             <button
               onClick={() => setFilter("unread")}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                filter === "unread"
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${filter === "unread"
                   ? "bg-emerald-600 text-white shadow-xs"
                   : "text-zinc-400 hover:text-zinc-200"
-              }`}
+                }`}
             >
               Unanswered {totalUnread > 0 && `(${totalUnread})`}
             </button>
@@ -1023,13 +1012,12 @@ export default function InstructorStudentQueries({ showToast }) {
 
       {/* ── Right Panel: Main Chat Canvas ── */}
       <div
-        className={`flex-1 flex flex-col min-w-0 bg-[#0e1015] relative ${
-          mobileView !== "chat" ? "hidden md:flex" : "flex"
-        }`}
+        className={`flex-1 flex flex-col min-w-0 bg-[#0d0e12] relative ${mobileView !== "chat" ? "hidden md:flex" : "flex"
+          }`}
       >
         {!activeConversation ? (
           /* Empty Chat Placeholder */
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 gap-5 bg-gradient-to-b from-[#141720] via-[#101217] to-[#0e1015]">
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 gap-5 bg-gradient-to-b from-[#12141a] via-[#0f1016] to-[#0d0e12]">
             <div className="w-20 h-20 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-xl">
               <MessageSquare size={38} />
             </div>
@@ -1045,7 +1033,7 @@ export default function InstructorStudentQueries({ showToast }) {
         ) : (
           <>
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800/80 bg-[#14161f] shrink-0">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800/80 bg-[#101218] shrink-0">
               <div className="flex items-center gap-3.5 min-w-0">
                 <button
                   onClick={() => setMobileView("list")}
@@ -1098,7 +1086,7 @@ export default function InstructorStudentQueries({ showToast }) {
                 <div className="relative">
                   <button
                     onClick={() => setActionMenuOpen((prev) => !prev)}
-                    className="p-2 rounded-xl border border-zinc-800 bg-[#1a1d26] hover:bg-zinc-800 text-zinc-300 transition cursor-pointer"
+                    className="p-2 rounded-xl border border-zinc-800 bg-[#181b24] hover:bg-zinc-800 text-zinc-300 transition cursor-pointer"
                   >
                     <MoreVertical size={16} />
                   </button>
@@ -1131,7 +1119,7 @@ export default function InstructorStudentQueries({ showToast }) {
             {/* Messages Canvas */}
             <div
               ref={messagesContainerRef}
-              className="flex-1 overflow-y-auto pro-chat-scroll px-4 sm:px-6 py-5 bg-gradient-to-b from-[#0e1015] via-[#101217] to-[#0e1015]"
+              className="flex-1 overflow-y-auto pro-chat-scroll px-4 sm:px-6 py-5 bg-gradient-to-b from-[#0d0e12] via-[#101217] to-[#0d0e12]"
             >
               {messagesLoading && (
                 <div className="flex items-center justify-center py-10">
@@ -1158,7 +1146,7 @@ export default function InstructorStudentQueries({ showToast }) {
               {/* Typing indicator */}
               {typing?.isTyping && typing.userId !== user?._id?.toString() && (
                 <div className="flex justify-start mt-3 px-2 pro-msg-in">
-                  <div className="bg-[#1a1d26] rounded-2xl rounded-bl-xs px-4 py-2.5 flex gap-2 items-center border border-zinc-800 shadow-sm">
+                  <div className="bg-[#181b24] rounded-2xl rounded-bl-xs px-4 py-2.5 flex gap-2 items-center border border-zinc-800 shadow-sm">
                     <div className="flex gap-1">
                       {[0, 1, 2].map((i) => (
                         <span
@@ -1178,7 +1166,7 @@ export default function InstructorStudentQueries({ showToast }) {
 
             {/* Media Attachment Previews */}
             {pendingMedia.length > 0 && (
-              <div className="flex gap-3 px-4 py-3 border-t border-zinc-800/80 bg-[#14161f] overflow-x-auto shrink-0 pro-chat-scroll">
+              <div className="flex gap-3 px-4 py-3 border-t border-zinc-800/80 bg-[#101218] overflow-x-auto shrink-0 pro-chat-scroll">
                 {pendingMedia.map((pm) => (
                   <div key={pm.id} className="relative shrink-0 group">
                     {pm.preview ? (
@@ -1207,8 +1195,8 @@ export default function InstructorStudentQueries({ showToast }) {
             )}
 
             {/* Input Dock */}
-            <div className="p-3.5 sm:p-4 border-t border-zinc-800/80 bg-[#14161f] shrink-0">
-              <div className="flex items-end gap-2 bg-[#1a1d26] border border-zinc-800 focus-within:border-emerald-500/80 rounded-2xl px-3 py-2 transition-all shadow-inner">
+            <div className="p-3.5 sm:p-4 border-t border-zinc-800/80 bg-[#101218] shrink-0">
+              <div className="flex items-end gap-2 bg-[#181b24] border border-zinc-800 focus-within:border-emerald-500/80 rounded-2xl px-3 py-2 transition-all shadow-inner">
                 <input
                   type="file"
                   ref={fileInputRef}
