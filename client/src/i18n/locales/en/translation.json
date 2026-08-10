@@ -3,7 +3,7 @@
     "courses": "Courses",
     "plans": "Plans",
     "blogs": "Blogs",
-    "login": "Login",
+    "login": "Sign In",
     "logout": "Logout",
     "questionBank": "Question Bank",
     "board": "Board",
@@ -329,6 +329,96 @@
       "intlStudyCounselling": "International Study Counselling & Support (EXCLUSIVE)",
       "scholarshipEligibility": "Higher-Study Scholarship Eligibility* (EXCLUSIVE)",
       "vipMentorFastTrack": "VIP Priority Mentor & Fast-Track Doubt Resolution"
+    },
+    "explore": "Explore →",
+    "selectPreferred": "Select your preferred learning plan to start learning today.",
+    "chooseBasicWithPrice": "Choose Basic (₹100)",
+    "choosePremiumWithPrice": "Choose Premium (₹500)",
+    "chooseEliteWithPrice": "Unlock Elite (₹1,000)",
+    "matrix": {
+      "val_all": "All Subjects",
+      "val_3pages": "3 Pages",
+      "val_8pages": "8 Pages ⬆️",
+      "val_12pages": "12 Pages ⬆️",
+      "val_3tests": "3 Tests",
+      "val_5tests": "5 Tests ⬆️",
+      "val_10tests": "10 Tests per Wing",
+      "val_subjectClass": "Subject & Class",
+      "val_subjectClassComp": "Subject, Class & Competitive Exams",
+      "val_3years": "3 Years",
+      "val_10years": "10 Years ⬆️",
+      "val_2sessions": "2 Sessions/Year",
+      "val_5sessions": "5 Sessions/Year ⬆️",
+      "val_5sessionsElite": "5 Sessions/Year",
+      "val_exclusive": "✓ EXCLUSIVE",
+      "subjects": {
+        "name": "Subjects",
+        "desc": "Complete coverage of all syllabus subjects for the selected class"
+      },
+      "liveLessons": {
+        "name": "Live Lessons & Resources",
+        "desc": "Interactive live classes with downloadable study handouts"
+      },
+      "aiTutor": {
+        "name": "AI Tutor & Quizzes",
+        "desc": "24/7 intelligent concept explanation and adaptive topic quizzes"
+      },
+      "reportCard": {
+        "name": "Progress Report Card",
+        "desc": "Multi-page diagnostic performance and mastery assessment"
+      },
+      "recordedVideos": {
+        "name": "Recorded Videos",
+        "desc": "On-demand high-definition lecture recordings with bookmarking"
+      },
+      "studyContent": {
+        "name": "Written Study Content",
+        "desc": "Curated chapter notes, revision digests, and formula sheets"
+      },
+      "tests": {
+        "name": "Tests",
+        "desc": "Full-length mock exam series with instant scoring and solutions"
+      },
+      "doubtClearing": {
+        "name": "AI Instructor Doubt-Clearing",
+        "desc": "Instant step-by-step guidance for homework and textbook questions"
+      },
+      "smsAlert": {
+        "name": "Exam \"SMS Alert\"",
+        "desc": "Real-time SMS and Whatsapp notification for exams and deadlines"
+      },
+      "questionBank": {
+        "name": "Question Bank",
+        "desc": "Previous years' solved question papers and model test archives"
+      },
+      "animationVideos": {
+        "name": "Animation Videos",
+        "desc": "3D visual animations for complex physics, chemistry, biology and math concepts"
+      },
+      "careerCounselling": {
+        "name": "Expert Career Counselling",
+        "desc": "1-on-1 personalized advisory with certified career psychologists & mentors"
+      },
+      "personalizedLearning": {
+        "name": "Live Support & Personalized Learning",
+        "desc": "Direct support desk and AI-tailored study roadmap aligned to your target rank"
+      },
+      "prioritySupport": {
+        "name": "Priority Instructor Support",
+        "desc": "Fast-track query handling queue with response time under 15 minutes"
+      },
+      "lmsResources": {
+        "name": "Premium LMS Resources & Mentor Collaboration",
+        "desc": "Exclusive formula masterclasses, VIP mentor groups, and AMA webinars"
+      },
+      "intlStudy": {
+        "name": "International Study Counselling & Support",
+        "desc": "University finder (USA, UK, Canada, Europe), SAT/IELTS prep guides, and SOP review"
+      },
+      "scholarships": {
+        "name": "Higher-Study Scholarship Eligibility*",
+        "desc": "Direct nomination for up to 100% higher-study college tuition grants and global scholarships"
+      }
     }
   },
   "courseCard": {

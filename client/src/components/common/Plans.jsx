@@ -43,6 +43,97 @@ const FEATURE_KEY_MAP = {
   "VIP Priority Mentor & Fast-Track Doubt Resolution": "plans.features.vipMentorFastTrack",
 };
 
+const MATRIX_CONFIG = {
+  "Subjects": {
+    nameKey: "plans.matrix.subjects.name",
+    descKey: "plans.matrix.subjects.desc",
+    basicKey: "plans.matrix.val_all",
+    premiumKey: "plans.matrix.val_all",
+    eliteKey: "plans.matrix.val_all",
+  },
+  "Live Lessons & Resources": {
+    nameKey: "plans.matrix.liveLessons.name",
+    descKey: "plans.matrix.liveLessons.desc",
+  },
+  "AI Tutor & Quizzes": {
+    nameKey: "plans.matrix.aiTutor.name",
+    descKey: "plans.matrix.aiTutor.desc",
+  },
+  "Progress Report Card": {
+    nameKey: "plans.matrix.reportCard.name",
+    descKey: "plans.matrix.reportCard.desc",
+    basicKey: "plans.matrix.val_3pages",
+    premiumKey: "plans.matrix.val_8pages",
+    eliteKey: "plans.matrix.val_12pages",
+  },
+  "Recorded Videos": {
+    nameKey: "plans.matrix.recordedVideos.name",
+    descKey: "plans.matrix.recordedVideos.desc",
+  },
+  "Written Study Content": {
+    nameKey: "plans.matrix.studyContent.name",
+    descKey: "plans.matrix.studyContent.desc",
+  },
+  "Tests": {
+    nameKey: "plans.matrix.tests.name",
+    descKey: "plans.matrix.tests.desc",
+    basicKey: "plans.matrix.val_3tests",
+    premiumKey: "plans.matrix.val_5tests",
+    eliteKey: "plans.matrix.val_10tests",
+  },
+  "AI Instructor Doubt-Clearing": {
+    nameKey: "plans.matrix.doubtClearing.name",
+    descKey: "plans.matrix.doubtClearing.desc",
+  },
+  'Exam "SMS Alert"': {
+    nameKey: "plans.matrix.smsAlert.name",
+    descKey: "plans.matrix.smsAlert.desc",
+    basicKey: "plans.matrix.val_subjectClass",
+    premiumKey: "plans.matrix.val_subjectClassComp",
+    eliteKey: "plans.matrix.val_subjectClassComp",
+  },
+  "Question Bank": {
+    nameKey: "plans.matrix.questionBank.name",
+    descKey: "plans.matrix.questionBank.desc",
+    basicKey: "plans.matrix.val_3years",
+    premiumKey: "plans.matrix.val_10years",
+    eliteKey: "plans.matrix.val_10years",
+  },
+  "Animation Videos": {
+    nameKey: "plans.matrix.animationVideos.name",
+    descKey: "plans.matrix.animationVideos.desc",
+  },
+  "Expert Career Counselling": {
+    nameKey: "plans.matrix.careerCounselling.name",
+    descKey: "plans.matrix.careerCounselling.desc",
+    basicKey: "plans.matrix.val_2sessions",
+    premiumKey: "plans.matrix.val_5sessions",
+    eliteKey: "plans.matrix.val_5sessionsElite",
+  },
+  "Live Support & Personalized Learning": {
+    nameKey: "plans.matrix.personalizedLearning.name",
+    descKey: "plans.matrix.personalizedLearning.desc",
+  },
+  "Priority Instructor Support": {
+    nameKey: "plans.matrix.prioritySupport.name",
+    descKey: "plans.matrix.prioritySupport.desc",
+  },
+  "Premium LMS Resources & Mentor Collaboration": {
+    nameKey: "plans.matrix.lmsResources.name",
+    descKey: "plans.matrix.lmsResources.desc",
+  },
+  "International Study Counselling & Support": {
+    nameKey: "plans.matrix.intlStudy.name",
+    descKey: "plans.matrix.intlStudy.desc",
+    eliteKey: "plans.matrix.val_exclusive",
+  },
+  "Higher-Study Scholarship Eligibility*": {
+    nameKey: "plans.matrix.scholarships.name",
+    descKey: "plans.matrix.scholarships.desc",
+    eliteKey: "plans.matrix.val_exclusive",
+  },
+};
+
 const Plans = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -284,7 +375,7 @@ const Plans = () => {
               {/* Top Table Title Banner (Deep Burgundy Header) */}
               <div className="bg-[#5b1419] py-4 px-6 text-center border-b border-red-900/60 shadow-inner">
                 <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-wider drop-shadow-md">
-                  SMART LEARNING PLANS
+                  {t("plans.heading", "SMART LEARNING PLANS")}
                 </h3>
               </div>
 
@@ -311,67 +402,76 @@ const Plans = () => {
                   </thead>
 
                   <tbody className="divide-y divide-slate-800 text-xs sm:text-sm font-medium">
-                    {SMART_PLAN_FEATURES.map((item, idx) => (
-                      <tr
-                        key={idx}
-                        className="hover:bg-slate-800/40 transition-colors"
-                      >
-                        {/* Feature Column */}
-                        <td className="p-3.5 sm:p-4 bg-[#232717] text-slate-200 font-bold border-r border-slate-800">
-                          <div className="flex items-center justify-between gap-2">
-                            <span>{item.feature}</span>
-                            {item.link && (
-                              <Link
-                                to={item.link}
-                                className="text-[10px] text-indigo-400 hover:underline shrink-0"
-                              >
-                                Explore →
-                              </Link>
-                            )}
-                          </div>
-                          <span className="text-[10px] text-slate-400 font-normal block mt-0.5">
-                            {item.desc}
-                          </span>
-                        </td>
+                    {SMART_PLAN_FEATURES.map((item, idx) => {
+                      const cfg = MATRIX_CONFIG[item.feature];
+                      const translatedFeature = cfg?.nameKey ? t(cfg.nameKey, item.feature) : item.feature;
+                      const translatedDesc = cfg?.descKey ? t(cfg.descKey, item.desc) : item.desc;
+                      const translatedBasic = cfg?.basicKey ? t(cfg.basicKey, item.basic) : (typeof item.basic === "string" ? item.basic : null);
+                      const translatedPremium = cfg?.premiumKey ? t(cfg.premiumKey, item.premium) : (typeof item.premium === "string" ? item.premium : null);
+                      const translatedElite = cfg?.eliteKey ? t(cfg.eliteKey, item.elite) : (typeof item.elite === "string" ? item.elite : null);
 
-                        {/* Basic Column */}
-                        <td className="p-3.5 sm:p-4 bg-[#1f2617] text-center border-r border-slate-800">
-                          {item.basic === true ? (
-                            <span className="text-lime-400 font-bold text-base">✓</span>
-                          ) : item.basic === false ? (
-                            <span className="text-slate-600 font-bold text-base">—</span>
-                          ) : (
-                            <span className="text-slate-200 font-semibold">{item.basic}</span>
-                          )}
-                        </td>
-
-                        {/* Premium Column */}
-                        <td className="p-3.5 sm:p-4 bg-[#2d161d] text-center border-r border-slate-800">
-                          {item.premium === true ? (
-                            <span className="text-rose-400 font-bold text-base">✓</span>
-                          ) : item.premium === false ? (
-                            <span className="text-slate-600 font-bold text-base">—</span>
-                          ) : (
-                            <span className="text-rose-200 font-bold">{item.premium}</span>
-                          )}
-                        </td>
-
-                        {/* Elite Column */}
-                        <td className="p-3.5 sm:p-4 bg-[#2c1c0e] text-center">
-                          {item.elite === true ? (
-                            <span className="text-amber-400 font-bold text-base">✓</span>
-                          ) : item.elite === false ? (
-                            <span className="text-slate-600 font-bold text-base">—</span>
-                          ) : item.exclusive ? (
-                            <span className="text-amber-300 font-black text-xs bg-amber-500/20 border border-amber-500/40 px-2.5 py-1 rounded-full inline-block">
-                              {item.elite}
+                      return (
+                        <tr
+                          key={idx}
+                          className="hover:bg-slate-800/40 transition-colors"
+                        >
+                          {/* Feature Column */}
+                          <td className="p-3.5 sm:p-4 bg-[#232717] text-slate-200 font-bold border-r border-slate-800">
+                            <div className="flex items-center justify-between gap-2">
+                              <span>{translatedFeature}</span>
+                              {item.link && (
+                                <Link
+                                  to={item.link}
+                                  className="text-[10px] text-indigo-400 hover:underline shrink-0 font-bold"
+                                >
+                                  {t("plans.explore", "Explore →")}
+                                </Link>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-normal block mt-0.5">
+                              {translatedDesc}
                             </span>
-                          ) : (
-                            <span className="text-amber-200 font-bold">{item.elite}</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+
+                          {/* Basic Column */}
+                          <td className="p-3.5 sm:p-4 bg-[#1f2617] text-center border-r border-slate-800">
+                            {item.basic === true ? (
+                              <span className="text-lime-400 font-bold text-base">✓</span>
+                            ) : item.basic === false ? (
+                              <span className="text-slate-600 font-bold text-base">—</span>
+                            ) : (
+                              <span className="text-slate-200 font-semibold">{translatedBasic || item.basic}</span>
+                            )}
+                          </td>
+
+                          {/* Premium Column */}
+                          <td className="p-3.5 sm:p-4 bg-[#2d161d] text-center border-r border-slate-800">
+                            {item.premium === true ? (
+                              <span className="text-rose-400 font-bold text-base">✓</span>
+                            ) : item.premium === false ? (
+                              <span className="text-slate-600 font-bold text-base">—</span>
+                            ) : (
+                              <span className="text-rose-200 font-bold">{translatedPremium || item.premium}</span>
+                            )}
+                          </td>
+
+                          {/* Elite Column */}
+                          <td className="p-3.5 sm:p-4 bg-[#2c1c0e] text-center">
+                            {item.elite === true ? (
+                              <span className="text-amber-400 font-bold text-base">✓</span>
+                            ) : item.elite === false ? (
+                              <span className="text-slate-600 font-bold text-base">—</span>
+                            ) : item.exclusive ? (
+                              <span className="text-amber-300 font-black text-xs bg-amber-500/20 border border-amber-500/40 px-2.5 py-1 rounded-full inline-block">
+                                {translatedElite || item.elite}
+                              </span>
+                            ) : (
+                              <span className="text-amber-200 font-bold">{translatedElite || item.elite}</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -385,19 +485,19 @@ const Plans = () => {
                   onClick={() => handlePlanClick(SMART_PLANS[0])}
                   className="py-3 rounded-xl bg-lime-700 hover:bg-lime-600 text-white font-bold text-xs cursor-pointer"
                 >
-                  {t("plans.chooseBasic", "Choose Basic (₹100)")}
+                  {t("plans.chooseBasicWithPrice", "Choose Basic (₹100)")}
                 </button>
                 <button
                   onClick={() => handlePlanClick(SMART_PLANS[1])}
                   className="py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs cursor-pointer shadow-lg shadow-rose-600/20"
                 >
-                  {t("plans.choosePremium", "Choose Premium (₹500)")}
+                  {t("plans.choosePremiumWithPrice", "Choose Premium (₹500)")}
                 </button>
                 <button
                   onClick={() => handlePlanClick(SMART_PLANS[2])}
                   className="py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs cursor-pointer shadow-lg shadow-amber-500/20"
                 >
-                  {t("plans.chooseElite", "Choose Elite (₹1,000)")}
+                  {t("plans.chooseEliteWithPrice", "Unlock Elite (₹1,000)")}
                 </button>
               </div>
             </div>
