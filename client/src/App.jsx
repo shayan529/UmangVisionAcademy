@@ -122,6 +122,9 @@ const BoardCourses = retryLazy(() => import("./components/Boards/BoardCourses"))
 const CoursePage = retryLazy(() => import("./components/course/CoursePage"));
 const ProgressPage = retryLazy(() => import("./components/student/ProgressPage"));
 const PurchaseHistory = retryLazy(() => import("./components/student/PurchaseHistory"));
+const CareerCounselling = retryLazy(() => import("./components/student/CareerCounselling"));
+const InternationalStudy = retryLazy(() => import("./components/student/InternationalStudy"));
+const ScholarshipsPortal = retryLazy(() => import("./components/student/ScholarshipsPortal"));
 const InstructorAboutPage = retryLazy(() => import("./components/common/InstructorAboutPage"));
 
 const ScrollToTop = () => {
@@ -413,6 +416,9 @@ function App() {
             <Route path="reels" element={<ReelsFeed />} />
             <Route path="my-reels" element={<MyReels />} />
             <Route path="purchase-history" element={<PurchaseHistory />} />
+            <Route path="career-counselling" element={<CareerCounselling />} />
+            <Route path="international-study" element={<InternationalStudy />} />
+            <Route path="scholarships" element={<ScholarshipsPortal />} />
 
             {/* ── Mock Tests ── */}
             <Route path="mock-tests" element={<MockTestsLayout />}>

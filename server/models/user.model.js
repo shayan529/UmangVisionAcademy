@@ -196,7 +196,7 @@ const userSchema = new Schema(
       },
     ],
     subscription: {
-      plan: { type: String, enum: ["base", "premium"], default: null },
+      plan: { type: String, enum: ["basic", "base", "premium", "elite"], default: null },
       label: { type: String, default: "" },
       status: {
         type: String,

@@ -28,13 +28,20 @@ const daysLeft = (endDate) => {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 };
 
+import { SMART_PLANS, SMART_PLAN_FEATURES } from "../data/plansData";
+
 const statusColors = {
   active: { bg: "#052e16", text: "#4ade80", label: "Active" },
   expired: { bg: "#2d0a0a", text: "#f87171", label: "Expired" },
   cancelled: { bg: "#1e293b", text: "#94a3b8", label: "Cancelled" },
 };
 
-const planColors = { base: "#6366f1", premium: "#a78bfa" };
+const planColors = {
+  base: "#84cc16",
+  basic: "#84cc16",
+  premium: "#ef4444",
+  elite: "#f59e0b",
+};
 
 const Sk = ({ w = "100%", h = 16, r = 8, style = {} }) => (
   <div
@@ -414,158 +421,136 @@ export default function BillingPage() {
             )}
           </div>
 
-          {(!activeSub || (activeSub && subscription?.plan === "base")) && (
+          {(!activeSub || (activeSub && (subscription?.plan === "base" || subscription?.plan === "basic" || subscription?.plan === "premium"))) && (
             <div className="billing-fade">
-              <p
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#64748b",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  marginBottom: 14,
-                }}
-              >
-                {activeSub ? "Upgrade Plan" : "Choose a Plan"}
-              </p>
+              <div style={{ display: "flex", alignItems: "center", justifyBetween: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
+                <p
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "#64748b",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    margin: 0,
+                  }}
+                >
+                  {activeSub ? "Upgrade Plan Tier" : "Choose a Smart Learning Plan"}
+                </p>
+              </div>
+
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))",
+                  gridTemplateColumns: "repeat(auto-fit,minmax(270px,1fr))",
                   gap: 16,
                 }}
               >
-                {[
-                  {
-                    id: "base",
-                    title: t("plans.base.title"),
-                    price: t("plans.base.price"),
-                    period: t("plans.base.period"),
-                    amount: 10000,
-                    features: Array.isArray(
-                      t("plans.base.features", { returnObjects: true }),
-                    )
-                      ? t("plans.base.features", { returnObjects: true })
-                      : [
-                          "Select one Class (Class 9 to 12)",
-                          "Access all subjects of that class",
-                          "Live Lessons and Resources",
-                          "AI Tutor & Quizzes",
-                          "Progress Tracking",
-                        ],
-                    color: "#6366f1",
-                    popular: false,
-                  },
-                  {
-                    id: "premium",
-                    title: t("plans.premium.title", {
-                      defaultValue: "Premium",
-                    }),
-                    price: t("plans.premium.price", { defaultValue: "₹500" }),
-                    period: t("plans.premium.period", { defaultValue: "year" }),
-                    amount: 50000,
-                    features: Array.isArray(
-                      t("plans.premium.features", {
-                        returnObjects: true,
-                        defaultValue: [
-                          "Everything in Base plan",
-                          "Live doubt-clearing sessions with instructors",
-                          "Personalized AI-powered study plan",
-                          "Priority instructor support",
-                        ],
-                      }),
-                    )
-                      ? t("plans.premium.features", {
-                          returnObjects: true,
-                          defaultValue: [
-                            "Everything in Base plan",
-                            "Live doubt-clearing sessions with instructors",
-                            "Personalized AI-powered study plan",
-                            "Priority instructor support",
-                          ],
-                        })
-                      : [
-                          "Everything in Base plan",
-                          "Live doubt-clearing sessions with instructors",
-                          "Personalized AI-powered study plan",
-                          "Priority instructor support",
-                        ],
-                    color: "#a78bfa",
-                    popular: true,
-                  },
-                ]
-                  .filter(
-                    (p) =>
-                      !activeSub ||
-                      (activeSub &&
-                        subscription?.plan === "base" &&
-                        p.id === "premium"),
-                  )
+                {SMART_PLANS
+                  .filter((p) => {
+                    if (!activeSub) return true;
+                    const cur = (subscription?.plan || "").toLowerCase();
+                    if (cur === "base" || cur === "basic") {
+                      return p.id === "premium" || p.id === "elite";
+                    }
+                    if (cur === "premium") {
+                      return p.id === "elite";
+                    }
+                    return false;
+                  })
                   .map((plan) => {
                     const isSelected = selectedPlan?.id === plan.id;
+                    const isPremiumCard = plan.id === "premium";
+                    const isEliteCard = plan.id === "elite";
                     return (
                       <div
                         key={plan.id}
-                        className={`plan-card${plan.popular ? " plan-card-premium" : ""}`}
+                        className={`plan-card${isPremiumCard ? " plan-card-premium" : ""}`}
                         style={
-                          plan.popular
+                          isEliteCard
                             ? {
                                 background: isSelected
-                                  ? "linear-gradient(135deg,#4f22a8,#2e1065)"
-                                  : "linear-gradient(135deg,#4c1d95,#1e1b4b)",
-                                border: `1px solid ${isSelected ? plan.color : "#7c3aed50"}`,
+                                  ? "linear-gradient(135deg,#5e320a,#2c1c0e)"
+                                  : "linear-gradient(135deg,#3d2305,#1e160a)",
+                                border: `1px solid ${isSelected ? "#f59e0b" : "#f59e0b50"}`,
                                 borderRadius: 20,
                                 padding: "24px",
                                 transition: "all 0.2s",
                                 position: "relative",
-                                cursor: "default",
-                                boxShadow: "0 10px 30px rgba(124,58,237,0.25)",
+                                boxShadow: "0 10px 30px rgba(245,158,11,0.15)",
+                              }
+                            : isPremiumCard
+                            ? {
+                                background: isSelected
+                                  ? "linear-gradient(135deg,#5a1424,#2d161d)"
+                                  : "linear-gradient(135deg,#3b111e,#1e1124)",
+                                border: `1px solid ${isSelected ? "#f43f5e" : "#f43f5e50"}`,
+                                borderRadius: 20,
+                                padding: "24px",
+                                transition: "all 0.2s",
+                                position: "relative",
+                                boxShadow: "0 10px 30px rgba(244,63,94,0.15)",
                               }
                             : {
                                 background: isSelected
-                                  ? `${plan.color}12`
-                                  : "#111827",
-                                border: `1px solid ${isSelected ? plan.color : "#1e293b"}`,
-                                borderRadius: 18,
-                                padding: "22px",
+                                  ? "linear-gradient(135deg,#233719,#1e291e)"
+                                  : "linear-gradient(135deg,#1c2e14,#0f172a)",
+                                border: `1px solid ${isSelected ? "#84cc16" : "#84cc1640"}`,
+                                borderRadius: 20,
+                                padding: "24px",
                                 transition: "all 0.2s",
                                 position: "relative",
-                                cursor: "default",
                               }
                         }
                       >
-                        {plan.popular && (
+                        {isPremiumCard && (
                           <span
                             style={{
                               position: "absolute",
                               top: 14,
                               right: 14,
                               fontSize: 10,
-                              fontWeight: 700,
+                              fontWeight: 800,
                               padding: "2px 8px",
                               borderRadius: 20,
                               background: "#fff",
-                              color: "#6d28d9",
+                              color: "#e11d48",
                             }}
                           >
-                            MOST POPULAR
+                            ⭐ MOST POPULAR
+                          </span>
+                        )}
+                        {isEliteCard && (
+                          <span
+                            style={{
+                              position: "absolute",
+                              top: 14,
+                              right: 14,
+                              fontSize: 10,
+                              fontWeight: 800,
+                              padding: "2px 8px",
+                              borderRadius: 20,
+                              background: "#f59e0b",
+                              color: "#0f172a",
+                            }}
+                          >
+                            👑 VIP ELITE
                           </span>
                         )}
                         <h3
                           style={{
-                            fontSize: plan.popular ? 20 : 18,
-                            fontWeight: 700,
+                            fontSize: 20,
+                            fontWeight: 800,
                             color: "#f1f5f9",
                           }}
                         >
-                          {plan.title}
+                          {plan.title} Plan
                         </h3>
                         <div style={{ marginTop: 8, marginBottom: 16 }}>
                           <span
                             style={{
-                              fontSize: plan.popular ? 34 : 30,
-                              fontWeight: 800,
-                              color: plan.popular ? "#fff" : plan.color,
+                              fontSize: 32,
+                              fontWeight: 900,
+                              color: isEliteCard ? "#fbbf24" : isPremiumCard ? "#f43f5e" : "#84cc16",
                             }}
                           >
                             {plan.price}
@@ -573,7 +558,7 @@ export default function BillingPage() {
                           <span
                             style={{
                               fontSize: 13,
-                              color: plan.popular ? "#c4b5fd" : "#64748b",
+                              color: "#94a3b8",
                             }}
                           >
                             /{plan.period}
@@ -587,24 +572,22 @@ export default function BillingPage() {
                             marginBottom: 20,
                           }}
                         >
-                          {(Array.isArray(plan.features)
-                            ? plan.features
-                            : []
-                          ).map((f) => (
+                          {plan.keyFeatures.map((f, i) => (
                             <div
-                              key={f}
+                              key={i}
                               style={{
                                 display: "flex",
                                 alignItems: "center",
                                 gap: 8,
-                                fontSize: 13,
-                                color: plan.popular ? "#e9d5ff" : "#94a3b8",
+                                fontSize: 12,
+                                color: "#cbd5e1",
                               }}
                             >
                               <span
                                 style={{
-                                  color: plan.popular ? "#4ade80" : "#34d399",
+                                  color: plan.color,
                                   flexShrink: 0,
+                                  fontWeight: 800,
                                 }}
                               >
                                 ✓
@@ -622,10 +605,10 @@ export default function BillingPage() {
                               width: "100%",
                               padding: "10px",
                               borderRadius: 10,
-                              background: plan.popular ? "#fff" : "#1e293b",
-                              border: `1px solid ${plan.popular ? "#e2e8f0" : "#334155"}`,
-                              color: plan.popular ? "#1e293b" : "#f1f5f9",
-                              fontSize: 14,
+                              background: "#0f172a",
+                              border: "1px solid #334155",
+                              color: "#f1f5f9",
+                              fontSize: 13,
                               outline: "none",
                               cursor: "pointer",
                             }}
@@ -648,18 +631,18 @@ export default function BillingPage() {
                             padding: "12px",
                             borderRadius: 12,
                             border: "none",
-                            background: plan.popular
-                              ? "#fff"
-                              : `linear-gradient(135deg,${plan.color},${plan.color}99)`,
-                            color: plan.popular ? "#6d28d9" : "#fff",
+                            background: isEliteCard
+                              ? "linear-gradient(135deg,#f59e0b,#d97706)"
+                              : isPremiumCard
+                              ? "linear-gradient(135deg,#f43f5e,#e11d48)"
+                              : "linear-gradient(135deg,#65a30d,#4d7c0f)",
+                            color: isEliteCard ? "#0f172a" : "#fff",
                             fontSize: 14,
-                            fontWeight: 700,
+                            fontWeight: 800,
                             cursor: "pointer",
                             opacity: orderLoading || paymentLoading ? 0.6 : 1,
                             transition: "opacity 0.2s",
-                            boxShadow: plan.popular
-                              ? "0 6px 20px rgba(255,255,255,0.15)"
-                              : `0 6px 20px ${plan.color}30`,
+                            boxShadow: `0 6px 20px ${plan.color}30`,
                           }}
                         >
                           {orderLoading || paymentLoading
@@ -675,9 +658,9 @@ export default function BillingPage() {
                               marginTop: 8,
                               padding: "10px",
                               borderRadius: 12,
-                              border: `1px dashed ${plan.popular ? "#a78bfa60" : "#334155"}`,
+                              border: `1px dashed ${plan.color}60`,
                               background: "transparent",
-                              color: plan.popular ? "#c4b5fd" : "#64748b",
+                              color: "#94a3b8",
                               fontSize: 12,
                               fontWeight: 600,
                               cursor: "pointer",

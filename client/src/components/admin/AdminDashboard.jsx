@@ -20,6 +20,8 @@ import AdminInstructors from "./AdminInstructors";
 import AdminCourses from "./AdminCourses";
 import AdminApplications from "./AdminApplications";
 import AdminSessions from "./AdminSessions";
+import AdminCounselling from "./AdminCounselling";
+import AdminScholarships from "./AdminScholarships";
 
 import AdminDevices from "./AdminDevices";
 import AdminBulkImport from "./AdminBulkImport";
@@ -261,6 +263,10 @@ export default function AdminDashboard() {
             instructors={instructors}
           />
         );
+      case "counselling":
+        return <AdminCounselling />;
+      case "scholarships":
+        return <AdminScholarships />;
       case "question-papers":
       case "question_bank":
         return <AdminQuestionPapers />;

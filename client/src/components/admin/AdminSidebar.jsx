@@ -18,6 +18,8 @@ import {
   ClipboardList,
   Bookmark,
   Flag,
+  Compass,
+  Award,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -99,6 +101,8 @@ const AdminSidebar = ({
     { id: "courses", label: t("adminSidebar.courses"), icon: BookOpen },
     { id: "notes", label: t("adminSidebar.notes", "Notes"), icon: FileText },
     { id: "sessions", label: t("adminSidebar.sessions"), icon: Calendar },
+    { id: "counselling", label: t("adminSidebar.counselling", "Counselling"), icon: Compass },
+    { id: "scholarships", label: t("adminSidebar.scholarships", "Scholarships"), icon: Award },
     {
       id: "mock-tests",
       label: t("adminSidebar.mockTests", "Mock Tests"),

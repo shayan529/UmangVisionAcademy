@@ -112,6 +112,15 @@ const Sidebar = ({
       ],
     },
     {
+      key: "advisory",
+      title: t("studentSidebar.counsellingAndAdvisory", "Advisory & Global Hub"),
+      items: [
+        { label: t("studentSidebar.careerCounselling", "Career Counselling"), to: "/student-dashboard/career-counselling", icon: "🧭", moduleKey: "career_counselling" },
+        { label: t("studentSidebar.internationalStudy", "International Study"), to: "/student-dashboard/international-study", icon: "🌍", moduleKey: "international_study" },
+        { label: t("studentSidebar.scholarships", "Scholarships"), to: "/student-dashboard/scholarships", icon: "🏆", moduleKey: "scholarships" },
+      ],
+    },
+    {
       key: "extras",
       title: t("studentSidebar.subscriptionsExtras", "Subscriptions & Extras"),
       items: [

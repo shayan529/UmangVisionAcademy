@@ -19,6 +19,7 @@ import InstructorStudentQueries from "./InstructorStudentQueries";
 import InstructorSettings from "./InstructorSettings";
 import InstructorMockTests from "./InstructorMockTests";
 import InstructorNotes from "./InstructorNotes";
+import InstructorMentorship from "./InstructorMentorship";
 import MyReels from "../reels/MyReels";
 import { createCourse } from "../../redux/slices/courseSlice";
 import { useTranslation } from "react-i18next";
@@ -278,6 +279,8 @@ export default function InstructorDashboard() {
         return <InstructorStudents />;
       case "sessions":
         return <InstructorSessions showToast={showToast} />;
+      case "mentorship":
+        return <InstructorMentorship />;
       case "analytics":
         return <InstructorAnalytics />;
       case "notes":

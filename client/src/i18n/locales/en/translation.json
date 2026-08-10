@@ -56,7 +56,14 @@
     "submitting": "Submitting…",
     "rated": "Rated",
     "rateCourse": "Rate Course",
-    "ratingLabels": ["", "Poor", "Fair", "Good", "Very Good", "Excellent"],
+    "ratingLabels": [
+      "",
+      "Poor",
+      "Fair",
+      "Good",
+      "Very Good",
+      "Excellent"
+    ],
     "select_course_type": "Course Type",
     "courseTypeAll": "All",
     "courseTypeClasses": "Classes",
@@ -233,10 +240,10 @@
     "floatingBadge": "AI-Powered Learning"
   },
   "plans": {
-    "flexiblePricing": "Flexible Pricing",
-    "heading": "Subscription Plans",
-    "subtitle": "Choose the perfect plan for learning and team training.",
-    "mostPopular": "Most Popular",
+    "flexiblePricing": "Transparent & Empowering Pricing",
+    "heading": "Smart Learning Plans",
+    "subtitle": "All-inclusive academic subscriptions designed for school curriculum mastery, competitive entrance readiness, 1-on-1 career counselling, and global higher-study pathways.",
+    "mostPopular": "MOST POPULAR",
     "loginToContinue": "Log in to continue",
     "base": {
       "title": "Academy Access Plan",
@@ -265,7 +272,33 @@
         "Priority instructor support",
         "Premium LMS resources and mentor collaboration"
       ]
-    }
+    },
+    "heroTag": "Transparent & Empowering Pricing",
+    "viewCards": "Plan Overview Cards",
+    "viewComparison": "Full 17-Feature Comparison Matrix",
+    "billedAnnually": "Billed annually • Full 365-day access",
+    "vipExclusive": "VIP EXCLUSIVE",
+    "includedIn": "Included in {{plan}}:",
+    "compareAllBtn": "📊 Compare all 17 features in full side-by-side table →",
+    "backToCardsBtn": "← Back to Plan Overview Cards",
+    "matrixTitle": "SMART LEARNING PLANS — Complete Comparison",
+    "matrixSubtitle": "Side-by-side breakdown of all 17 features, quotas, report card depth, and exclusive mentorship services.",
+    "featureCol": "Feature",
+    "basicCol": "📋 BASIC",
+    "premiumCol": "📋 PREMIUM ⭐",
+    "eliteCol": "📋 ELITE 👑",
+    "chooseBasic": "Choose Basic",
+    "choosePremium": "Choose Premium",
+    "chooseElite": "Choose Elite",
+    "faqTitle": "Frequently Asked Questions about Smart Learning Plans",
+    "faq1Q": "How does Class selection work?",
+    "faq1A": "When you activate your plan, you select your grade (e.g. Class 9, 10, 11, or 12). All syllabus subjects, live lessons, notes, and recorded classes for that grade are automatically unlocked for you.",
+    "faq2Q": "What is included in Elite Exclusive features?",
+    "faq2A": "Elite members get direct Higher-Study Scholarship Eligibility nomination (up to 100% college grant) and dedicated International Study Counselling with country guides, test prep, SOP review studio, and 1-on-1 global education advisors.",
+    "faq3Q": "Can I upgrade my plan mid-year?",
+    "faq3A": "Yes! You can easily upgrade from Basic to Premium or Elite anytime from your Student Dashboard Billing page.",
+    "faq4Q": "How do Career Counselling sessions work?",
+    "faq4A": "Basic plans include 2 sessions per year, while Premium & Elite plans include 5 sessions per year. You can book 1-on-1 video consultations with certified counsellors directly in your dashboard."
   },
   "courseCard": {
     "viewDemo": "View Details",
@@ -1088,7 +1121,11 @@
     "wallet": "Wallet",
     "purchaseHistory": "Purchase History",
     "references": "References",
-    "settings": "Settings"
+    "settings": "Settings",
+    "counsellingAndAdvisory": "Advisory & Global Hub",
+    "careerCounselling": "Career Counselling",
+    "internationalStudy": "International Study",
+    "scholarships": "Scholarships"
   },
   "studyNotes": {
     "title": "Class Notes",
@@ -1836,7 +1873,9 @@
     "devices": "Logged In Devices",
     "logout": "Logout",
     "payments": "Payments",
-    "mockTests": "Mock Tests"
+    "mockTests": "Mock Tests",
+    "counselling": "Counselling",
+    "scholarships": "Scholarships"
   },
   "adminOverview": {
     "totalRevenue": "Total Revenue",
@@ -1968,5 +2007,60 @@
   "studentSessions": {
     "title": "Live Sessions",
     "subtitle": "Join upcoming and live instructor sessions."
+  },
+  "careerCounselling": {
+    "title": "Career Counselling & Mentorship Hub",
+    "subtitle": "Personalized 1-on-1 advisory with certified psychologists, stream selectors, aptitude assessments, and 50+ career roadmaps.",
+    "quotaTitle": "Annual Career Advisory Quota",
+    "sessionsLeft": "Sessions Remaining this Year",
+    "bookConsultation": "Book 1-on-1 Counselling Session",
+    "aptitudeAssessment": "Stream Selector & Aptitude Assessment",
+    "careerRoadmaps": "50+ Career Roadmaps & Salary Insights",
+    "scheduledSlot": "Scheduled Slot",
+    "assignedCounsellor": "Assigned Counsellor",
+    "joinVideoCall": "Join Video Session"
+  },
+  "internationalStudy": {
+    "title": "International Study Guidance Hub",
+    "subtitle": "Your gateway to premier global universities across USA, UK, Canada, Europe, Australia, and Singapore.",
+    "eliteExclusiveBadge": "ELITE PLAN EXCLUSIVE",
+    "eliteBannerTitle": "Unlock International Study Advisory with Elite Plan",
+    "eliteBannerDesc": "Upgrade to the Elite Plan (₹1,000/yr) to access comprehensive global university shortlisting, IELTS/SAT prep, SOP review studio, and 1-on-1 study abroad counsellors.",
+    "upgradeBtn": "Upgrade to Elite Plan",
+    "countryExplorer": "Country & University Explorer",
+    "examPrep": "Standardized Exam Prep (IELTS / SAT / GRE)",
+    "sopStudio": "SOP & LOR Review Studio",
+    "advisorBooking": "Book 1-on-1 Global Advisor"
+  },
+  "scholarshipsPortal": {
+    "title": "Higher-Study Scholarships & Grants Hub",
+    "subtitle": "Elite student scholarship nominations for up to 100% college tuition grants and searchable global scholarship directory.",
+    "calculatorTitle": "Scholarship Eligibility Calculator",
+    "nominationTitle": "Apply for 100% Higher-Study Scholarship Grant",
+    "directoryTitle": "Global & National Scholarships Directory",
+    "applyNow": "Apply Now",
+    "awardAmount": "Award Amount",
+    "eligibility": "Eligibility Criteria"
+  },
+  "instructorMentorship": {
+    "title": "Mentorship & Advisory Desk",
+    "subtitle": "Conduct 1-on-1 career counselling, evaluate SOP drafts, set student academic targets, and launch video sessions.",
+    "upcomingSessions": "Upcoming Advisory Sessions",
+    "launchVideoCall": "Launch Video Consultation",
+    "sopReviewStudio": "SOP & Essay Draft Review Studio",
+    "actionPlanNotes": "Post-Session Action Plan Notes"
+  },
+  "adminCounselling": {
+    "title": "Counselling & Advisory Desk Management",
+    "subtitle": "Schedule, assign mentors, manage video meeting URLs, and oversee all 1-on-1 student career & international study consultations.",
+    "assignMentor": "Assign Expert Counsellor",
+    "meetingUrl": "Video Meeting URL",
+    "markDone": "Mark Done"
+  },
+  "adminScholarships": {
+    "title": "Higher-Study Scholarship Management Hub",
+    "subtitle": "Review Elite student scholarship nominations, evaluate financial justifications, grant awards, and manage the Global Scholarship Directory.",
+    "awardGrant": "Award Higher-Study Grant",
+    "addListing": "Add New Scholarship Listing"
   }
 }

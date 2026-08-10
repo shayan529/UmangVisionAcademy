@@ -1375,7 +1375,22 @@ function EnrolledStudentsSection({ students }) {
                     <p style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</p>
                     <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.email || s.phoneNumber || "—"}</p>
                   </div>
-                  {hasActivePlan && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 12, background: "#10b98120", color: "#10b981", border: "1px solid #10b98140", flexShrink: 0 }}>{sub.plan === "premium" ? "Premium" : "Base"}</span>}
+                  {hasActivePlan && (
+                    <span
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 800,
+                        padding: "2px 8px",
+                        borderRadius: 12,
+                        background: sub.plan === "elite" ? "#f59e0b20" : sub.plan === "premium" ? "#ef444420" : "#10b98120",
+                        color: sub.plan === "elite" ? "#fbbf24" : sub.plan === "premium" ? "#f87171" : "#10b981",
+                        border: `1px solid ${sub.plan === "elite" ? "#f59e0b40" : sub.plan === "premium" ? "#ef444440" : "#10b98140"}`,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {sub.plan === "elite" ? "Elite 👑" : sub.plan === "premium" ? "Premium ⭐" : "Basic"}
+                    </span>
+                  )}
                 </div>
               );
             })}

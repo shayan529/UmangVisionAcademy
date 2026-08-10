@@ -1,85 +1,33 @@
-import { useEffect, lazy, Suspense } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { fetchSubscription } from '../../redux/slices/billingSlice';
+import React, { useEffect, useState, lazy, Suspense } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { fetchSubscription } from "../../redux/slices/billingSlice";
+import { SMART_PLANS, SMART_PLAN_FEATURES } from "../../data/plansData";
+import {
+  Check,
+  Crown,
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  HelpCircle,
+  Zap,
+  Globe,
+  Compass,
+  Award,
+} from "lucide-react";
 
-const BillingPage = lazy(() => import('../../pages/BillingPage'));
+const BillingPage = lazy(() => import("../../pages/BillingPage"));
 
 const Plans = () => {
   const { t } = useTranslation();
-
-  const plans = [
-    {
-      id: 'base',
-      title: t('plans.base.title'),
-      price: t('plans.base.price'),
-      period: t('plans.base.period'),
-      amount: 10000, // ₹100.00
-      desc: t('plans.base.desc'),
-      features: Array.isArray(t('plans.base.features', { returnObjects: true }))
-        ? t('plans.base.features', { returnObjects: true })
-        : [
-            "Select one Class (Class 9 to 12)",
-            "Access all subjects of that class",
-            "Live Lessons and Resources",
-            "AI Tutor & Quizzes",
-            "Progress Tracking",
-          ],
-      button: t('plans.base.button'),
-      highlight: false,
-      color: '#6366f1',
-    },
-    {
-      id: 'premium',
-      title: t('plans.premium.title', { defaultValue: 'Premium' }),
-      price: t('plans.premium.price', { defaultValue: '₹500' }),
-      period: t('plans.premium.period', { defaultValue: 'year' }),
-      amount: 50000, // ₹500.00
-      desc: t('plans.premium.desc', {
-        defaultValue:
-          'Everything in Base, plus live support and deeper personalization for serious exam prep.',
-      }),
-      features: Array.isArray(
-        t('plans.premium.features', {
-          returnObjects: true,
-          defaultValue: [
-            'Everything in Base plan',
-            'Live doubt-clearing sessions with instructors',
-            'Personalized AI-powered study plan',
-            'Priority instructor support',
-            'Advanced mock test analytics & performance insights',
-          ],
-        }),
-      )
-        ? t('plans.premium.features', {
-            returnObjects: true,
-            defaultValue: [
-              'Everything in Base plan',
-              'Live doubt-clearing sessions with instructors',
-              'Personalized AI-powered study plan',
-              'Priority instructor support',
-              'Advanced mock test analytics & performance insights',
-            ],
-          })
-        : [
-            'Everything in Base plan',
-            'Live doubt-clearing sessions with instructors',
-            'Personalized AI-powered study plan',
-            'Priority instructor support',
-            'Advanced mock test analytics & performance insights',
-          ],
-      button: t('plans.premium.button', { defaultValue: 'Go Premium' }),
-      highlight: true,
-      color: '#a78bfa',
-    },
-  ];
-
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
   const { subscription } = useSelector((s) => s.billing);
+
+  const [viewMode, setViewMode] = useState("cards"); // 'cards' | 'comparison'
 
   useEffect(() => {
     if (user) {
@@ -87,9 +35,18 @@ const Plans = () => {
     }
   }, [user, dispatch]);
 
-  if (subscription?.status === 'active' || subscription?.status === 'cancelled') {
+  if (
+    location.pathname === "/plans" &&
+    (subscription?.status === "active" || subscription?.status === "cancelled")
+  ) {
     return (
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-400">Loading Billing Info...</div>}>
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-400">
+            Loading Billing Info...
+          </div>
+        }
+      >
         <BillingPage />
       </Suspense>
     );
@@ -97,105 +54,385 @@ const Plans = () => {
 
   const handlePlanClick = (plan) => {
     if (!user) {
-      // Not logged in — send to login, come back here after
-      navigate('/login', { state: { from: location.pathname } });
+      navigate("/login", { state: { from: location.pathname } });
       return;
     }
-    // Logged in — go to billing with the chosen plan
-    navigate('/student-dashboard/billing', { state: { plan } });
+    navigate("/student-dashboard/billing", { state: { plan } });
   };
 
   return (
-    <section className="px-6 md:px-10 py-24 bg-[#0B1120]">
-      <div className="max-w-7xl mx-auto">
-        {/* Heading */}
-        <div className="text-center mb-16">
-          <p className="text-indigo-400 font-medium mb-3">
-            {t('plans.flexiblePricing')}
+    <section className="px-4 sm:px-6 md:px-10 py-16 md:py-24 bg-[#0B1120] text-slate-100 min-h-screen">
+      <div className="max-w-7xl mx-auto space-y-16">
+        {/* ── Top Header ── */}
+        <div className="text-center max-w-3xl mx-auto space-y-4">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 via-indigo-500/20 to-purple-500/20 border border-white/10 text-amber-300 text-xs font-black uppercase tracking-widest">
+            <Sparkles size={14} className="text-amber-400" />
+            {t("plans.heroTag", "Transparent & Empowering Pricing")}
+          </div>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight">
+            {t("plans.heading", "Smart Learning Plans")}
+          </h1>
+          <p className="text-slate-400 text-sm sm:text-base md:text-lg leading-relaxed">
+            {t(
+              "plans.subtitle",
+              "All-inclusive academic subscriptions designed for school curriculum mastery, competitive entrance readiness, 1-on-1 career counselling, and global higher-study pathways."
+            )}
           </p>
-          <h2 className="text-5xl font-bold text-white">
-            {t('plans.heading')}
-          </h2>
-          <p className="text-slate-400 text-lg mt-5 max-w-2xl mx-auto">
-            {t('plans.subtitle')}
-          </p>
+
+          {/* Quick Toggle */}
+          <div className="inline-flex items-center p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl mt-4">
+            <button
+              onClick={() => setViewMode("cards")}
+              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                viewMode === "cards"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/25"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              {t("plans.viewCards", "Plan Overview Cards")}
+            </button>
+            <button
+              onClick={() => setViewMode("comparison")}
+              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                viewMode === "comparison"
+                  ? "bg-gradient-to-r from-rose-600 to-amber-600 text-white shadow-md"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              {t("plans.viewComparison", "Full 17-Feature Comparison Matrix")}
+            </button>
+          </div>
         </div>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-start">
-          {plans.map((plan, index) => (
-            <div
-              key={index}
-              className={`relative rounded-[32px] p-8 border transition duration-300 hover:-translate-y-2
-                ${plan.highlight
-                  ? 'bg-gradient-to-b from-indigo-600 to-purple-700 border-indigo-400 shadow-2xl shadow-indigo-500/20 md:scale-105'
-                  : 'bg-white/5 border-white/10 backdrop-blur-xl'
-                }`}
-            >
-              {plan.highlight && (
-                <div className="absolute top-5 right-5 bg-white text-indigo-700 px-4 py-1 rounded-full text-sm font-bold">
-                  {t('plans.mostPopular')}
-                </div>
-              )}
-
-              <h3
-                className={`text-3xl font-bold ${plan.highlight ? 'text-white' : 'text-white'
-                  }`}
-              >
-                {plan.title}
-              </h3>
-
-              <h2 className="text-5xl font-extrabold text-white mt-6">
-                {plan.price}
-                <span
-                  className={`text-xl font-medium ${plan.highlight ? 'text-slate-300' : 'text-slate-400'
+        {/* ── 3 Plan Cards Layout (Shown when viewMode === 'cards') ── */}
+        {viewMode === "cards" && (
+          <div className="space-y-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+              {SMART_PLANS.map((plan) => {
+                const isSelectedPlan = subscription?.plan === plan.id;
+                return (
+                  <div
+                    key={plan.id}
+                    className={`relative rounded-3xl p-6 sm:p-8 flex flex-col justify-between border transition-all duration-300 hover:-translate-y-2 shadow-2xl ${
+                      plan.popular
+                        ? "bg-gradient-to-b from-rose-950/60 via-slate-900 to-purple-950/40 border-rose-500/50 shadow-rose-500/10 md:scale-105"
+                        : plan.vip
+                        ? "bg-gradient-to-b from-amber-950/50 via-slate-900 to-slate-900 border-amber-500/50 shadow-amber-500/10"
+                        : "bg-slate-900/60 via-slate-900 to-slate-950 border-lime-500/30"
                     }`}
-                >
-                  /{plan.period}
-                </span>
-              </h2>
+                    style={{
+                      borderTop: `4px solid ${plan.color}`,
+                    }}
+                  >
+                    {plan.popular && (
+                      <div className="absolute -top-3.5 right-6 bg-gradient-to-r from-rose-500 to-pink-500 text-white px-3.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider shadow-lg">
+                        ⭐ {t("plans.mostPopular", "MOST POPULAR")}
+                      </div>
+                    )}
+                    {plan.vip && (
+                      <div className="absolute -top-3.5 right-6 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 px-3.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider shadow-lg">
+                        👑 {t("plans.vipExclusive", "VIP EXCLUSIVE")}
+                      </div>
+                    )}
 
-              <p
-                className={`mt-5 leading-relaxed ${plan.highlight ? 'text-slate-200' : 'text-slate-400'
-                  }`}
-              >
-                {plan.desc}
-              </p>
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <span
+                          className="text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider"
+                          style={{
+                            background: `${plan.color}20`,
+                            color: plan.color,
+                            border: `1px solid ${plan.color}40`,
+                          }}
+                        >
+                          {plan.badge}
+                        </span>
+                        <span className="text-2xl">{plan.icon}</span>
+                      </div>
 
-              <div className="mt-8 space-y-4">
-                {(Array.isArray(plan.features) ? plan.features : []).map((feature, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-sm shrink-0 ${plan.highlight
-                        ? 'bg-green-500/20 text-green-300'
-                        : 'bg-green-500/10 text-green-400'
-                        }`}
-                    >
-                      ✓
+                      <h3 className="text-2xl sm:text-3xl font-black text-white">
+                        {plan.title} Plan
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-2 min-h-[36px] leading-relaxed">
+                        {plan.tagline}
+                      </p>
+
+                      {/* Price */}
+                      <div className="mt-6 mb-6 pb-6 border-b border-white/10">
+                        <div className="flex items-baseline gap-1.5">
+                          <span
+                            className="text-4xl sm:text-5xl font-black tracking-tight"
+                            style={{ color: plan.popular ? "#fff" : plan.color }}
+                          >
+                            {plan.price}
+                          </span>
+                          <span className="text-sm font-bold text-slate-400">
+                            /{plan.period}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 font-semibold block mt-1">
+                          {t("plans.billedAnnually", "Billed annually • Full 365-day access")}
+                        </span>
+                      </div>
+
+                      {/* Feature Bullets */}
+                      <div className="space-y-3.5 mb-8">
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                          {t("plans.includedIn", { plan: plan.title, defaultValue: `Included in ${plan.title}:` })}
+                        </p>
+                        {plan.keyFeatures.map((feat, idx) => (
+                          <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-300">
+                            <div
+                              className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]"
+                              style={{
+                                background: `${plan.color}25`,
+                                color: plan.color,
+                              }}
+                            >
+                              ✓
+                            </div>
+                            <span className="leading-snug">{feat}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <p
-                      className={
-                        plan.highlight ? 'text-slate-100' : 'text-slate-300'
-                      }
-                    >
-                      {feature}
-                    </p>
-                  </div>
-                ))}
-              </div>
 
+                    {/* Action CTA */}
+                    <div>
+                      <button
+                        onClick={() => handlePlanClick(plan)}
+                        className="w-full py-4 rounded-2xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-xl"
+                        style={{
+                          background: plan.popular
+                            ? "linear-gradient(135deg, #f43f5e, #e11d48)"
+                            : plan.vip
+                            ? "linear-gradient(135deg, #f59e0b, #d97706)"
+                            : "linear-gradient(135deg, #65a30d, #4d7c0f)",
+                          color: plan.vip ? "#0f172a" : "#ffffff",
+                        }}
+                      >
+                        {user ? plan.buttonText : t("nav.login", "Log in to Subscribe")}
+                        <ArrowRight size={16} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Switch to Comparison CTA */}
+            <div className="text-center pt-4">
               <button
-                onClick={() => handlePlanClick(plan)}
-                className={`mt-10 w-full py-4 rounded-2xl font-semibold transition duration-300 cursor-pointer
-                  ${plan.highlight
-                    ? 'bg-white text-indigo-700 hover:bg-slate-100'
-                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                  }`}
+                onClick={() => setViewMode("comparison")}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs sm:text-sm font-bold text-indigo-400 hover:text-white transition shadow-lg cursor-pointer"
               >
-                {user ? plan.button : t('plans.loginToContinue')}
+                {t("plans.compareAllBtn", "📊 Compare all 17 features in full side-by-side table →")}
               </button>
             </div>
-          ))}
+          </div>
+        )}
+
+        {/* ── Complete SMART LEARNING PLANS Comparison Matrix (Shown when viewMode === 'comparison') ── */}
+        {viewMode === "comparison" && (
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl sm:text-3xl font-black text-white">
+                {t("plans.matrixTitle", "SMART LEARNING PLANS — Complete Comparison")}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-400">
+                {t(
+                  "plans.matrixSubtitle",
+                  "Side-by-side breakdown of all 17 features, quotas, report card depth, and exclusive mentorship services."
+                )}
+              </p>
+            </div>
+
+            <div className="overflow-hidden rounded-3xl border border-slate-700/80 bg-slate-900/90 shadow-2xl">
+              {/* Top Table Title Banner (Deep Burgundy Header) */}
+              <div className="bg-[#5b1419] py-4 px-6 text-center border-b border-red-900/60 shadow-inner">
+                <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-wider drop-shadow-md">
+                  SMART LEARNING PLANS
+                </h3>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-700 text-center">
+                      <th className="p-4 sm:p-5 bg-[#3a4128] text-slate-200 font-black italic text-left w-1/3 min-w-[200px]">
+                        {t("plans.featureCol", "Feature")}
+                      </th>
+                      <th className="p-4 sm:p-5 bg-[#4a5320] text-lime-200 font-black w-1/5 min-w-[150px] border-l border-slate-700/60">
+                        <div>{t("plans.basicCol", "📋 BASIC")}</div>
+                        <div className="text-base sm:text-lg font-extrabold text-white mt-0.5">₹ 100</div>
+                      </th>
+                      <th className="p-4 sm:p-5 bg-[#9e2a2b] text-rose-100 font-black w-1/5 min-w-[170px] border-l border-slate-700/60">
+                        <div>{t("plans.premiumCol", "📋 PREMIUM ⭐")}</div>
+                        <div className="text-base sm:text-lg font-extrabold text-white mt-0.5">₹ 500</div>
+                      </th>
+                      <th className="p-4 sm:p-5 bg-[#b85d19] text-amber-100 font-black w-1/5 min-w-[170px] border-l border-slate-700/60">
+                        <div>{t("plans.eliteCol", "📋 ELITE 👑")}</div>
+                        <div className="text-base sm:text-lg font-extrabold text-white mt-0.5">₹ 1,000</div>
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-slate-800 text-xs sm:text-sm font-medium">
+                    {SMART_PLAN_FEATURES.map((item, idx) => (
+                      <tr
+                        key={idx}
+                        className="hover:bg-slate-800/40 transition-colors"
+                      >
+                        {/* Feature Column */}
+                        <td className="p-3.5 sm:p-4 bg-[#232717] text-slate-200 font-bold border-r border-slate-800">
+                          <div className="flex items-center justify-between gap-2">
+                            <span>{item.feature}</span>
+                            {item.link && (
+                              <Link
+                                to={item.link}
+                                className="text-[10px] text-indigo-400 hover:underline shrink-0"
+                              >
+                                Explore →
+                              </Link>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-normal block mt-0.5">
+                            {item.desc}
+                          </span>
+                        </td>
+
+                        {/* Basic Column */}
+                        <td className="p-3.5 sm:p-4 bg-[#1f2617] text-center border-r border-slate-800">
+                          {item.basic === true ? (
+                            <span className="text-lime-400 font-bold text-base">✓</span>
+                          ) : item.basic === false ? (
+                            <span className="text-slate-600 font-bold text-base">—</span>
+                          ) : (
+                            <span className="text-slate-200 font-semibold">{item.basic}</span>
+                          )}
+                        </td>
+
+                        {/* Premium Column */}
+                        <td className="p-3.5 sm:p-4 bg-[#2d161d] text-center border-r border-slate-800">
+                          {item.premium === true ? (
+                            <span className="text-rose-400 font-bold text-base">✓</span>
+                          ) : item.premium === false ? (
+                            <span className="text-slate-600 font-bold text-base">—</span>
+                          ) : (
+                            <span className="text-rose-200 font-bold">{item.premium}</span>
+                          )}
+                        </td>
+
+                        {/* Elite Column */}
+                        <td className="p-3.5 sm:p-4 bg-[#2c1c0e] text-center">
+                          {item.elite === true ? (
+                            <span className="text-amber-400 font-bold text-base">✓</span>
+                          ) : item.elite === false ? (
+                            <span className="text-slate-600 font-bold text-base">—</span>
+                          ) : item.exclusive ? (
+                            <span className="text-amber-300 font-black text-xs bg-amber-500/20 border border-amber-500/40 px-2.5 py-1 rounded-full inline-block">
+                              {item.elite}
+                            </span>
+                          ) : (
+                            <span className="text-amber-200 font-bold">{item.elite}</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Bottom Actions Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 p-4 sm:p-6 bg-slate-950/80 border-t border-slate-800 gap-3 items-center">
+                <div className="text-xs text-slate-400 sm:col-span-1">
+                  {t("plans.selectPreferred", "Select your preferred learning plan to start learning today.")}
+                </div>
+                <button
+                  onClick={() => handlePlanClick(SMART_PLANS[0])}
+                  className="py-3 rounded-xl bg-lime-700 hover:bg-lime-600 text-white font-bold text-xs cursor-pointer"
+                >
+                  {t("plans.chooseBasic", "Choose Basic (₹100)")}
+                </button>
+                <button
+                  onClick={() => handlePlanClick(SMART_PLANS[1])}
+                  className="py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs cursor-pointer shadow-lg shadow-rose-600/20"
+                >
+                  {t("plans.choosePremium", "Choose Premium (₹500)")}
+                </button>
+                <button
+                  onClick={() => handlePlanClick(SMART_PLANS[2])}
+                  className="py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs cursor-pointer shadow-lg shadow-amber-500/20"
+                >
+                  {t("plans.chooseElite", "Choose Elite (₹1,000)")}
+                </button>
+              </div>
+            </div>
+
+            {/* Switch back to Cards CTA */}
+            <div className="text-center pt-2">
+              <button
+                onClick={() => setViewMode("cards")}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs sm:text-sm font-bold text-slate-300 hover:text-white transition shadow-lg cursor-pointer"
+              >
+                {t("plans.backToCardsBtn", "← Back to Plan Overview Cards")}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* FAQ Quick Section */}
+        <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-10">
+          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <HelpCircle className="text-indigo-400" size={22} />
+            {t("plans.faqTitle", "Frequently Asked Questions about Smart Learning Plans")}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs sm:text-sm text-slate-300">
+            <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
+              <h4 className="font-bold text-white mb-1">
+                {t("plans.faq1Q", "How does Class selection work?")}
+              </h4>
+              <p className="text-slate-400">
+                {t(
+                  "plans.faq1A",
+                  "When you activate your plan, you select your grade (e.g. Class 9, 10, 11, or 12). All syllabus subjects, live lessons, notes, and recorded classes for that grade are automatically unlocked for you."
+                )}
+              </p>
+            </div>
+            <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
+              <h4 className="font-bold text-white mb-1">
+                {t("plans.faq2Q", "What is included in Elite Exclusive features?")}
+              </h4>
+              <p className="text-slate-400">
+                {t(
+                  "plans.faq2A",
+                  "Elite members get direct Higher-Study Scholarship Eligibility nomination (up to 100% college grant) and dedicated International Study Counselling with country guides, test prep, SOP review studio, and 1-on-1 global education advisors."
+                )}
+              </p>
+            </div>
+            <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
+              <h4 className="font-bold text-white mb-1">
+                {t("plans.faq3Q", "Can I upgrade my plan mid-year?")}
+              </h4>
+              <p className="text-slate-400">
+                {t(
+                  "plans.faq3A",
+                  "Yes! You can easily upgrade from Basic to Premium or Elite anytime from your Student Dashboard Billing page."
+                )}
+              </p>
+            </div>
+            <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
+              <h4 className="font-bold text-white mb-1">
+                {t("plans.faq4Q", "How do Career Counselling sessions work?")}
+              </h4>
+              <p className="text-slate-400">
+                {t(
+                  "plans.faq4A",
+                  "Basic plans include 2 sessions per year, while Premium & Elite plans include 5 sessions per year. You can book 1-on-1 video consultations with certified counsellors directly in your dashboard."
+                )}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>

@@ -1236,9 +1236,9 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
     subscription.plan &&
     student.selectedClass;
 
-  // Premium plan includes instructor assistance by default for all plan courses.
-  // Base plan does NOT include assistance.
-  const isPremiumPlan = subscription.plan === "premium";
+  // Premium & Elite plans include instructor assistance by default for all plan courses.
+  // Basic plan does NOT include assistance.
+  const isPremiumPlan = subscription.plan === "premium" || subscription.plan === "elite";
 
   // ── Build assistance set ─────────────────────────────────────────────────
   // Start with the student's existing instructorAssistanceCourses, then seed

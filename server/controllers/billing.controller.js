@@ -32,16 +32,28 @@ const getRazorpayInstance = () => {
 };
 
 const PLANS = {
+  basic: {
+    id: "basic",
+    label: "Basic Plan",
+    amount: 10000, // ₹100 in paise
+    durationDays: 365,
+  },
   base: {
-    id: "base",
-    label: "Academy Access Plan",
-    amount: 10000,
+    id: "basic",
+    label: "Basic Plan",
+    amount: 10000, // backward-compatibility alias
     durationDays: 365,
   },
   premium: {
     id: "premium",
     label: "Premium Plan",
-    amount: 50000,
+    amount: 50000, // ₹500 in paise
+    durationDays: 365,
+  },
+  elite: {
+    id: "elite",
+    label: "Elite Plan",
+    amount: 100000, // ₹1,000 in paise
     durationDays: 365,
   },
 };

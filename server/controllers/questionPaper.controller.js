@@ -141,6 +141,8 @@ export const checkPYQAccess = async (req, res) => {
       className,
       subject,
       board,
+      subscription: user.subscription,
+      selectedClass: user.selectedClass,
     });
 
     res.json({ ...accessResult, price: accessResult.price ?? PYQ_PRICE });
