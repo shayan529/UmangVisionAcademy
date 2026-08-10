@@ -8,18 +8,6 @@ const IS_LOCAL =
     window.location.hostname.startsWith("192.168.") ||
     window.location.hostname.startsWith("10."));
 
-// Vercel hosts both frontend and backend on the SAME origin.
-// vercel.json rewrites: /api/* → server/server.js, /socket.io/* → server/server.js
-const IS_VERCEL =
-  typeof window !== "undefined" &&
-  (window.location.hostname.includes("vercel.app") ||
-    window.location.hostname.includes("umangvisionacademy.com"));
-
-// Fallback for when served from Render directly
-const IS_RENDER =
-  typeof window !== "undefined" &&
-  window.location.hostname.includes("onrender.com");
-
 const BACKEND_URLS = [
   "https://umangvisionacademy.onrender.com",
   "https://umangvisionacademy-42sz.onrender.com",
@@ -53,35 +41,17 @@ export const SOCKET_URL =
   import.meta.env.VITE_SOCKET_URL || getDefaultSocketUrl();
 
 // ── Socket.IO transport options ───────────────────────────────────────────────
-// Vercel serverless functions do NOT support the WebSocket protocol upgrade —
-// every request is a new HTTP invocation, so long-lived connections are killed.
-// Solution: use polling-only on Vercel (HTTP long-poll works fine through
-// serverless). On local dev, start with polling then upgrade to WS as usual.
-export const SOCKET_OPTIONS =
-  IS_VERCEL || IS_RENDER
-    ? {
-        // Polling only — no WebSocket upgrade attempted.
-        // This is reliable on Vercel serverless even though it's slightly less
-        // efficient than WebSockets (latency is ~200–500 ms per poll cycle).
-        transports: ["polling"],
-        upgrade: false,
-        reconnection: true,
-        reconnectionAttempts: Infinity,
-        reconnectionDelay: 2000,
-        reconnectionDelayMax: 10000,
-        timeout: 20000,
-        path: "/socket.io",
-      }
-    : {
-        // Local dev: start with polling and auto-upgrade to WS when available
-        transports: ["polling", "websocket"],
-        reconnection: true,
-        reconnectionAttempts: Infinity,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
-        timeout: 20000,
-        path: "/socket.io",
-      };
+// Use polling-only in production if the backend is hosted on Render or another
+// serverless-style host that may not support WebSocket upgrades reliably.
+export const SOCKET_OPTIONS = {
+  transports: ["polling", "websocket"],
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 2000,
+  reconnectionDelayMax: 10000,
+  timeout: 20000,
+  path: "/socket.io",
+};
 
 export const API_ENDPOINTS = {
   // Auth endpoints
