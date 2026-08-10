@@ -117,7 +117,7 @@ const Sidebar = ({
       items: [
         { label: t("studentSidebar.careerCounselling", "Career Counselling"), to: "/student-dashboard/career-counselling", icon: "🧭", moduleKey: "career_counselling" },
         { label: t("studentSidebar.internationalStudy", "International Study"), to: "/student-dashboard/international-study", icon: "🌍", moduleKey: "international_study" },
-        { label: t("studentSidebar.scholarships", "Scholarships"), to: "/student-dashboard/scholarships", icon: "🏆", moduleKey: "scholarships" },
+        { label: t("studentSidebar.scholarships", "Scholarships"), to: "/student-dashboard/scholarships", icon: "🎗️", moduleKey: "scholarships" },
       ],
     },
     {
