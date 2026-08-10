@@ -273,7 +273,7 @@ app.get("/api", (req, res) => {
   res.json({ message: "API is running" });
 });
 
-app.use("/", (req, res) => {
+app.get("/", (req, res) => {
   res.json({ message: "Welcome to the Umang Vision Academy API" });
 });
 app.use("/api/users", userRoutes);
