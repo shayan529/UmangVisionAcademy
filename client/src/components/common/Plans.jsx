@@ -296,7 +296,7 @@ const Plans = () => {
                     const eliteText = getCellText(item.elite, item.feature);
 
                     return (
-                      <tr key={idx} className="text-center bg-[#FFD700] text-[#1a1a1a]">
+                      <tr key={idx} className="text-center bg-white text-[#1a1a1a] border-b border-[#ccc]">
                         {/* S.No */}
                         <td className="border border-[#888] px-2 py-2.5 font-black text-xs text-center w-10">
                           {idx + 1}
