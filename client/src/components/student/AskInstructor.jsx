@@ -84,6 +84,20 @@ const isSameSender = (a, b) => {
   return idA && idB && idA === idB;
 };
 
+const getLastMessageText = (lastMsg) => {
+  if (!lastMsg) return "";
+  if (typeof lastMsg === "string") return lastMsg;
+  if (typeof lastMsg === "object") return lastMsg.text || "";
+  return String(lastMsg);
+};
+
+const getLastMessageTime = (conv) => {
+  if (conv?.lastMessageAt) return conv.lastMessageAt;
+  if (conv?.lastMessage?.at) return conv.lastMessage.at;
+  if (conv?.updatedAt) return conv.updatedAt;
+  return null;
+};
+
 // Modern Glass & Pulse CSS
 const CustomStyles = () => (
   <style>{`
@@ -341,7 +355,7 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
             </span>
           </div>
           <span className="text-[10px] text-zinc-400 font-medium shrink-0">
-            {fmtTime(conv.lastMessageAt)}
+            {fmtTime(getLastMessageTime(conv))}
           </span>
         </div>
 
@@ -355,7 +369,7 @@ const ThreadItem = ({ conv, isActive, onClick }) => {
         {/* Last Message Snippet */}
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs text-zinc-400 truncate group-hover:text-zinc-300 transition-colors">
-            {conv.lastMessage || "Click to open conversation"}
+            {getLastMessageText(conv.lastMessage) || "Click to open conversation"}
           </p>
           {unread > 0 && (
             <span className="shrink-0 min-w-5 h-5 px-1.5 rounded-full bg-emerald-500 text-white font-black text-[10px] flex items-center justify-center shadow-md shadow-emerald-500/30 animate-pulse">
