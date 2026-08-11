@@ -487,14 +487,14 @@ export default function CourseDemo() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const { course, loading, error } = useCourseDemo(id);
 
   // AI-synthesized details (What you'll learn, Requirements, Rich Description)
   const aiDetails = useMemo(() => {
-    return generateCourseAiDetails(course);
-  }, [course]);
+    return generateCourseAiDetails(course, i18n?.language || "en");
+  }, [course, i18n?.language]);
 
   const translatableTexts = useMemo(() => {
     if (!course) return [];
@@ -853,7 +853,7 @@ export default function CourseDemo() {
                 {(aiDetails.whatYouWillLearn || []).map((item, idx) => (
                   <div key={idx} className="flex items-start gap-2.5 leading-snug">
                     <Check size={16} className="text-emerald-400 shrink-0 mt-0.5" />
-                    <span>{tText(item)}</span>
+                    <span>{item}</span>
                   </div>
                 ))}
               </div>
@@ -1014,7 +1014,7 @@ export default function CourseDemo() {
               </h2>
               <ul className="list-disc list-inside flex flex-col gap-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
                 {(aiDetails.requirements || []).map((req, idx) => (
-                  <li key={idx}>{tText(req)}</li>
+                  <li key={idx}>{req}</li>
                 ))}
               </ul>
             </div>
@@ -1029,7 +1029,7 @@ export default function CourseDemo() {
                   !showFullDesc ? "max-h-48 overflow-hidden" : ""
                 }`}
               >
-                {tText(aiDetails.description)}
+                {aiDetails.description}
                 {!showFullDesc && (
                   <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#0b1120] to-transparent pointer-events-none" />
                 )}
@@ -1123,7 +1123,7 @@ export default function CourseDemo() {
                     !showFullBio ? "max-h-24 overflow-hidden" : ""
                   }`}
                 >
-                  {tText(aiDetails.instructorBio)}
+                  {aiDetails.instructorBio}
                   {!showFullBio && (
                     <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none" />
                   )}

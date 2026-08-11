@@ -1,69 +1,260 @@
 /**
  * courseAiDetails.js
  * Intelligent synthesis of course learning outcomes (What you'll learn),
- * prerequisites (Requirements), and comprehensive formatted descriptions.
+ * prerequisites (Requirements), and comprehensive formatted descriptions
+ * with native support for 7 languages (en, hi, gu, mr, ta, te, bn).
  */
 
-export function generateCourseAiDetails(course) {
-  if (!course) {
-    return {
-      whatYouWillLearn: [
-        "Master core principles and fundamental concepts with comprehensive video lessons.",
-        "Step-by-step problem solving methods for board and competitive exams.",
-        "Complete coverage of syllabus topics, previous year questions and test patterns.",
-        "Downloadable study notes, chapter summaries, and revision guides.",
-        "Build strong conceptual clarity to achieve top percentile marks.",
-        "Direct continuous doubt clearing with AI Tutor and faculty members.",
-      ],
-      requirements: [
-        "Basic foundational knowledge of prior class concepts.",
-        "A smartphone, tablet, or laptop with stable internet connection.",
-        "Notebook and stationery for practice exercises and notes.",
-      ],
-      description:
-        "Comprehensive curriculum designed to help students master all key topics with crystal clarity, expert problem-solving strategies, and continuous educator guidance.",
-      instructorName: "Lead Faculty",
-      instructorBio: "Expert educator at Umang Vision Academy.",
-    };
-  }
+export function generateCourseAiDetails(course, lang = "en") {
+  const normLang = (lang || "en").toLowerCase().slice(0, 2);
 
-  const title = course.title || "Comprehensive Course";
-  const subject = course.subject || course.category || "Academic Excellence";
-  const board = course.board || "CBSE / ICSE / State Board";
-  const category = course.category || "Class Curriculum";
-  const lessons = course.lessons || [];
-  const lessonTitles = lessons.slice(0, 5).map((l) => l.title).filter(Boolean);
+  const title = course?.title || "Comprehensive Course";
+  const subject = course?.subject || course?.category || "Academic Excellence";
+  const board = course?.board || "CBSE / ICSE / State Board";
+  const category = course?.category || "Class Curriculum";
+  const instructor = course?.instructor || {};
+  const instructorName =
+    instructor.name ||
+    (typeof instructor === "string" ? instructor : "Lead Faculty");
 
-  // 1. What You'll Learn (6-8 structured points)
-  let whatYouWillLearn = course.whatYouWillLearn;
+  // ── 1. WHAT YOU'LL LEARN ───────────────────────────────────────────────────
+  let whatYouWillLearn = course?.whatYouWillLearn;
   if (!Array.isArray(whatYouWillLearn) || whatYouWillLearn.length < 3) {
-    whatYouWillLearn = [
-      `Master core principles and fundamental concepts of ${subject} aligned with ${board} standards.`,
-      `Gain step-by-step problem solving skills and exam-oriented answering techniques for ${category}.`,
-      `In-depth conceptual clarity across key modules${lessonTitles.length > 0 ? ` including ${lessonTitles.slice(0, 2).join(" and ")}` : ""}.`,
-      `Learn time management strategies, memory retention tricks, and shortcut formulas for board examinations.`,
-      `Comprehensive coverage of previous years' questions (PYQs) and high-probability test patterns.`,
-      `Full access to structured study notes, chapter summaries, and interactive revision material.`,
-      `Develop strong analytical and critical thinking abilities for scoring top percentile in exams.`,
-      `Direct continuous doubt clearing with our AI Tutor and qualified faculty members.`
-    ];
+    switch (normLang) {
+      case "gu":
+        whatYouWillLearn = [
+          `${board} ધોરણો મુજબ ${subject} ના મૂળભૂત સિદ્ધાંતો અને વિભાવનાઓમાં નિપુણતા મેળવો.`,
+          `${category} માટે સ્ટેપ-બાય-સ્ટેપ સમસ્યા નિવારણ કૌશલ્ય અને પરીક્ષા-લક્ષી ઉત્તર આપવાની તકનીકો શીખો.`,
+          `${subject} સહિતના તમામ મહત્વપૂર્ણ વિષયો પર ઊંડાણપૂર્વક વૈચારિક સ્પષ્ટતા મેળવો.`,
+          `બોર્ડ પરીક્ષાઓ માટે સમય વ્યવસ્થાપન વ્યૂહરચનાઓ, યાદ રાખવાની સરળ ટિપ્સ અને શોર્ટકટ ફોર્મ્યુલા શીખો.`,
+          `પાછલા વર્ષોના પ્રશ્નો (PYQs) અને સંભવિત પરીક્ષા પેટર્નનું સંપૂર્ણ કવરેજ.`,
+          `માળખાગત અભ્યાસ નોંધો (Study Notes), પ્રકરણ સારાંશ અને પુનરાવર્તન સામગ્રીની સંપૂર્ણ ઍક્સેસ.`,
+          `પરીક્ષાઓમાં ઉચ્ચ પર્સેન્ટાઇલ મેળવવા માટે મજબૂત વિશ્લેષણાત્મક વિચાર ક્ષમતા વિકસાવો.`,
+          `અમારા AI ટ્યુટર અને અનુભવી ફેકલ્ટી સભ્યો સાથે સીધું સતત શંકા નિવારણ.`,
+        ];
+        break;
+      case "hi":
+        whatYouWillLearn = [
+          `${board} मानकों के अनुसार ${subject} के मुख्य सिद्धांतों और मूलभूत अवधारणाओं में महारत हासिल करें।`,
+          `${category} के लिए चरण-दर-चरण समस्या समाधान कौशल और परीक्षा-उन्मुख उत्तर देने की तकनीकें सीखें।`,
+          `${subject} सहित प्रमुख विषयों पर गहन वैचारिक स्पष्टता प्राप्त करें।`,
+          `बोर्ड परीक्षाओं के लिए समय प्रबंधन रणनीतियाँ, याद रखने की ट्रिक्स और शॉर्टकट सूत्र सीखें।`,
+          `पिछले वर्षों के प्रश्नों (PYQs) और संभावित परीक्षा पैटर्न का संपूर्ण कवरेज।`,
+          `संरचित अध्ययन नोट्स, अध्याय सारांश और इंटरैक्टिव रिवीजन सामग्री तक पूर्ण पहुंच।`,
+          `परीक्षाओं में शीर्ष पर्सेंटाइल प्राप्त करने के लिए विश्लेषणात्मक और तार्किक सोच का विकास करें।`,
+          `हमारे एआई ट्यूटर और अनुभवी शिक्षकों के साथ सीधे और निरंतर संदेह निवारण।`,
+        ];
+        break;
+      case "mr":
+        whatYouWillLearn = [
+          `${board} मानकांनुसार ${subject} च्या मूलभूत संकल्पनांवर आणि सिद्धांतांवर प्रभुत्व मिळवा.`,
+          `${category} साठी टप्प्याटप्प्याने समस्या सोडवण्याची कौशल्ये आणि परीक्षाभिमुख उत्तर तंत्रे शिका.`,
+          `${subject} सह महत्त्वाच्या घटकांवर सखोल वैचारिक स्पष्टता मिळवा.`,
+          `बोर्ड परीक्षांसाठी वेळ व्यवस्थापन रणनीती, स्मृती तंत्रे आणि शॉर्टकट सूत्रे शिका.`,
+          `मागील वर्षांच्या प्रश्नपत्रिका (PYQs) आणि उच्च संभाव्य परीक्षा पॅटर्नचे संपूर्ण कव्हरेज.`,
+          `अभ्यास नोट्स, धड्यांचे सारांश आणि रिव्हिजन मटेरियलचा पूर्ण प्रवेश.`,
+          `परीक्षेत उत्कृष्ट गुण मिळवण्यासाठी विश्लेषणात्मक विचार क्षमता विकसित करा.`,
+          `आमच्या एआय ट्यूटर आणि तज्ञ शिक्षकांसोबत त्वरित शंका निरसन.`,
+        ];
+        break;
+      case "ta":
+        whatYouWillLearn = [
+          `${board} தரநிலைகளுக்கு ஏற்ப ${subject} இன் அடிப்படைக் கருத்துகளில் தேர்ச்சி பெறுங்கள்.`,
+          `${category} க்கான படிப்படியான கணக்கு தீர்க்கும் திறன்கள் மற்றும் தேர்வு அணுகுமுறைகளை கற்றுக்கொள்ளுங்கள்.`,
+          `${subject} உள்ளிட்ட முக்கிய தலைப்புகளில் ஆழமான கருத்து தெளிவு பெறுங்கள்.`,
+          `தேர்வுகளுக்கான நேர மேலாண்மை உத்திகள், நினைவாற்றல் குறிப்புகள் மற்றும் குறுக்குவழி சூத்திரங்களை கற்றுக்கொள்ளுங்கள்.`,
+          `முந்தைய ஆண்டுகளின் வினாத்தாள்கள் (PYQs) மற்றும் மாதிரி வினாக்களின் முழுமையான கவரேஜ்.`,
+          `படிப்பு குறிப்புகள், அத்தியாய சுருக்கங்கள் மற்றும் திருத்தப் பொருட்களுக்கான முழு அணுகல்.`,
+          `தேர்வுகளில் அதிக மதிப்பெண்களைப் பெற வலுவான பகுப்பாய்வு சிந்தனையை வளர்த்துக் கொள்ளுங்கள்.`,
+          `எங்கள் AI ஆசிரியர் மற்றும் தகுதிவாய்ந்த ஆசிரியர்களுடன் நேரடி சந்தேகத் தீர்வு.`,
+        ];
+        break;
+      case "te":
+        whatYouWillLearn = [
+          `${board} ప్రమాణాలకు అనుగుణంగా ${subject} ప్రాథమిక అంశాలలో ప్రావీణ్యం పొందండి.`,
+          `${category} కోసం దశలవారీగా సమస్య పరిష్కార నైపుణ్యాలు మరియు పరీక్షా సమాధాన పద్ధతులను నేర్చుకోండి.`,
+          `${subject} తో సహా కీలక విభాగాలపై లోతైన భావనాత్మక స్పష్టతను పొందండి.`,
+          `పరీక్షల కోసం సమయ నిర్వహణ వ్యూహాలు, సులభ సూత్రాలను నేర్చుకోండి.`,
+          `మునుపటి సంవత్సరాల ప్రశ్నలు (PYQs) మరియు ముఖ్యమైన పరీక్షా విధానాల సమగ్ర కవరేజ్.`,
+          `స్టడీ నోట్స్, చాప్టర్ సారాంశాలు మరియు రివిజన్ మెటీరియల్ పూర్తి యాక్సెస్.`,
+          `పరీక్షలలో టాప్ మార్కులు సాధించడానికి విశ్లేషణాత్మక ఆలోచనా సామర్థ్యాన్ని పెంపొందించుకోండి.`,
+          `మా AI ట్యూటర్ మరియు అనుభవజ్ఞులైన ఫ్యాకల్టీతో నేరుగా సందేహ నివృత్తి.`,
+        ];
+        break;
+      case "bn":
+        whatYouWillLearn = [
+          `${board} মানদণ্ড অনুযায়ী ${subject}-এর মূল নীতি এবং মৌলিক ধারণাগুলিতে দক্ষতা অর্জন করুন।`,
+          `${category}-এর জন্য ধাপে ধাপে সমস্যা সমাধানের দক্ষতা এবং পরীক্ষা-ভিত্তিক উত্তর কৌশল শিখুন।`,
+          `${subject} সহ প্রধান অধ্যায়গুলিতে গভীর ধারণাগত স্পষ্টতা অর্জন করুন।`,
+          `বোর্ড পরীক্ষার জন্য সময় ব্যবস্থাপনা কৌশল, মনে রাখার টিপস এবং শর্টকাট সূত্র শিখুন।`,
+          `বিগত বছরের প্রশ্নপত্র (PYQs) এবং সম্ভাব্য পরীক্ষার প্যাটার্নের সম্পূর্ণ কভারেজ।`,
+          `নোটস, অধ্যায়ের সারাংশ এবং রিভিশন সামগ্রীতে সম্পূর্ণ অ্যাক্সেস।`,
+          `পরীক্ষায় শীর্ষ নম্বর পেতে শক্তিশালী বিশ্লেষণাত্মক চিন্তাভাবনা বিকাশ করুন।`,
+          `আমাদের এআই টিউটর এবং অভিজ্ঞ শিক্ষকদের সাথে সরাসরি সন্দেহ সমাধান।`,
+        ];
+        break;
+      default:
+        whatYouWillLearn = [
+          `Master core principles and fundamental concepts of ${subject} aligned with ${board} standards.`,
+          `Gain step-by-step problem solving skills and exam-oriented answering techniques for ${category}.`,
+          `In-depth conceptual clarity across key modules including ${subject}.`,
+          `Learn time management strategies, memory retention tricks, and shortcut formulas for board examinations.`,
+          `Comprehensive coverage of previous years' questions (PYQs) and high-probability test patterns.`,
+          `Full access to structured study notes, chapter summaries, and interactive revision material.`,
+          `Develop strong analytical and critical thinking abilities for scoring top percentile in exams.`,
+          `Direct continuous doubt clearing with our AI Tutor and qualified faculty members.`,
+        ];
+    }
   }
 
-  // 2. Requirements (3-4 structured bullet points)
-  let requirements = course.requirements;
+  // ── 2. REQUIREMENTS ────────────────────────────────────────────────────────
+  let requirements = course?.requirements;
   if (!Array.isArray(requirements) || requirements.length === 0) {
-    requirements = [
-      `Basic foundational knowledge of prior class ${subject} concepts.`,
-      `A smartphone, tablet, or laptop/PC with stable internet connection for video streaming.`,
-      `Notebook and stationery to take notes and practice exercise problems during lectures.`,
-      `Consistency and dedication to complete assignments, mock quizzes, and study modules.`
-    ];
+    switch (normLang) {
+      case "gu":
+        requirements = [
+          `પહેલાના ધોરણના ${subject} વિષયના પાયાના ખ્યાલોનું સામાન્ય જ્ઞાન.`,
+          `વિડિયો લેક્ચર્સ જોવા માટે સ્થિર ઇન્ટરનેટ કનેક્શન સાથે સ્માર્ટફોન, ટેબ્લેટ અથવા લેપટોપ/કમ્પ્યુટર.`,
+          `લેક્ચર્સ દરમિયાન નોંધ લેવા અને પ્રશ્નોની પ્રેક્ટિસ કરવા માટે નોટબુક અને સ્ટેશનરી.`,
+          `અસાઇનમેન્ટ્સ, મોક ક્વિઝ અને અભ્યાસ મોડ્યુલ્સ પૂર્ણ કરવા માટે નિયમિતતા અને સમર્પણ.`,
+        ];
+        break;
+      case "hi":
+        requirements = [
+          `पिछली कक्षा के ${subject} विषयों की मूलभूत समझ।`,
+          `वीडियो लेक्चर्स देखने के लिए स्थिर इंटरनेट कनेक्शन के साथ स्मार्टफोन, टैबलेट या लैपटॉप/कंप्यूटर।`,
+          `लेक्चर्स के दौरान नोट्स लेने और प्रश्नों का अभ्यास करने के लिए नोटबुक और पेन।`,
+          `असाइनमेंट, मॉक क्विज़ और अध्ययन मॉड्यूल पूरा करने के लिए निरंतरता और समर्पण।`,
+        ];
+        break;
+      case "mr":
+        requirements = [
+          `मागील इयत्तेतील ${subject} च्या मूलभूत संकल्पनांचे प्राथमिक ज्ञान.`,
+          `व्हिडिओ लेक्चर्स पाहण्यासाठी चांगल्या इंटरनेट कनेक्शनसह स्मार्टफोन, टॅबलेट किंवा लॅपटॉप.`,
+          `लेक्चर्स दरम्यान नोट्स काढण्यासाठी आणि प्रश्न सोडवण्यासाठी वही आणि पेन.` ,
+          `असाइनमेंट्स, मॉक टेस्ट आणि अभ्यासक्रम पूर्ण करण्यासाठी सातत्य आणि समर्पण.`,
+        ];
+        break;
+      case "ta":
+        requirements = [
+          `முந்தைய வகுப்பின் ${subject} பாடத்தின் அடிப்படைக் கருத்துகள் பற்றிய பொதுவான புரிதல்.`,
+          `வீடியோ விரிவுரைகளைப் பார்க்க நிலையான இணைய இணைப்புடன் கூடிய ஸ்மார்ட்போன், டேப்லெட் அல்லது லேப்டாப்.`,
+          `விரிவுரைகளின் போது குறிப்புகளை எடுக்கவும் பயிற்சி செய்யவும் நோட்டுப் புத்தகம்.`,
+          `பணிகள் மற்றும் மாதிரித் தேர்வுகளை முடிக்க அர்ப்பணிப்பு.`,
+        ];
+        break;
+      case "te":
+        requirements = [
+          `మునుపటి తరగతి ${subject} ప్రాథమిక అంశాలపై సాధారణ అవగాహన.`,
+          `వీడియో లెక్చర్స్ చూడటానికి స్థిరమైన ఇంటర్నెట్ కనెక్షన్ ఉన్న స్మార్ట్‌ఫోన్, టాబ్లెట్ లేదా ల్యాప్‌టాప్.`,
+          `నోట్స్ రాసుకోవడానికి మరియు ప్రాక్టీస్ చేయడానికి నోట్‌బుక్ మరియు పెన్.`,
+          `అసైన్‌మెంట్‌లు మరియు మాక్ టెస్ట్‌లను పూర్తి చేయడంలో క్రమశిక్షణ మరియు అంకితభావం.`,
+        ];
+        break;
+      case "bn":
+        requirements = [
+          `পূর্ববর্তী ক্লাসের ${subject} বিষয়ের মৌলিক ধারণার সাধারণ জ্ঞান।`,
+          `ভিডিও লেকচার দেখার জন্য স্থিতিশীল ইন্টারনেট সংযোগ সহ স্মার্টফোন, ট্যাবলেট বা ল্যাপটপ।`,
+          `লেকচারের সময় নোট নেওয়া এবং অনুশীলন করার জন্য নোটবুক এবং পেন।`,
+          `অ্যাসাইনমেন্ট এবং মক টেস্ট সম্পূর্ণ করার জন্য নিয়মিততা ও নিষ্ঠা।`,
+        ];
+        break;
+      default:
+        requirements = [
+          `Basic foundational knowledge of prior class ${subject} concepts.`,
+          `A smartphone, tablet, or laptop/PC with stable internet connection for video streaming.`,
+          `Notebook and stationery to take notes and practice exercise problems during lectures.`,
+          `Consistency and dedication to complete assignments, mock quizzes, and study modules.`,
+        ];
+    }
   }
 
-  // 3. Detailed Description (Rich multi-section formatted text)
-  let description = course.description;
+  // ── 3. DETAILED DESCRIPTION ────────────────────────────────────────────────
+  let description = course?.description;
   if (!description || description.trim().length < 80) {
-    description = `Welcome to ${title}, a masterclass meticulously designed to help students excel in ${subject} for ${category} (${board}).
+    switch (normLang) {
+      case "gu":
+        description = `${title} માં આપનું સ્વાગત છે! આ એક વિશિષ્ટ કોર્સ છે જે વિદ્યાર્થીઓને ${board} હેઠળ ${category} માં ${subject} વિષયમાં શ્રેષ્ઠ ગુણ મેળવવા માટે તૈયાર કરવામાં આવ્યો છે.
+
+ભલે તમે આગામી શાળા પરીક્ષાઓ, બોર્ડ પરીક્ષાઓ કે સ્પર્ધાત્મક પ્રવેશ પરીક્ષાઓની તૈયારી કરી રહ્યા હોવ, આ કોર્સ વાસ્તવિક ઉદાહરણો અને પરીક્ષા-સાબિત સમસ્યા નિવારણ પદ્ધતિઓ સાથે સંપૂર્ણ અને સરળ વિડિયો લેક્ચર્સ પ્રદાન કરે છે.
+
+આ કોર્સની મુખ્ય વિશેષતાઓ:
+• કોન્સેપ્ટ-આધારિત શિક્ષણ: અમે જટિલ સિદ્ધાંતોને સરળ અને દ્રશ્ય વિડિયો દ્વારા સરળતાથી સમજાવીએ છીએ.
+• પરીક્ષા લક્ષી તૈયારી: દરેક પ્રકરણમાં મહત્વપૂર્ણ પ્રશ્નો, પાછલા વર્ષોના બોર્ડ પ્રશ્નો અને વિગતવાર ઉકેલો શામેલ છે.
+• અભ્યાસ નોંધો (Study Notes): છેલ્લી ઘડીના પુનરાવર્તનને ઝડપી બનાવવા માટે ડાઉનલોડ કરવા યોગ્ય નોંધો અને સારાંશ.
+• 24/7 AI ટ્યુટર અને ફેકલ્ટી સપોર્ટ: મુશ્કેલ પ્રશ્નોમાં ક્યારેય અટકશો નહીં—તરત જ AI સ્પષ્ટતા અને ફેકલ્ટી માર્ગદર્શન મેળવો.
+
+આ કોર્સ કોના માટે છે:
+• વિદ્યાર્થીઓ જેઓ હાલમાં ${category} માં ${board} અભ્યાસક્રમ હેઠળ ${subject} ભણી રહ્યા છે.
+• જેઓ મજબૂત વિભાવનાત્મક પાયો બનાવવા અને પરીક્ષાઓમાં ટોચના ગુણ મેળવવા માંગે છે.
+• ઉત્તમ શિક્ષક નોંધો અને પ્રશ્ન બેંક સાથે સંપૂર્ણ રિવિઝન શોધી રહેલા વિદ્યાર્થીઓ.`;
+        break;
+      case "hi":
+        description = `${title} में आपका स्वागत है! यह कोर्स ${board} के तहत ${category} के लिए ${subject} विषय में उत्कृष्ट प्रदर्शन करने हेतु तैयार किया गया है।
+
+चाहे आप आगामी स्कूल परीक्षाओं, बोर्ड परीक्षाओं या प्रतियोगी प्रवेश परीक्षाओं की तैयारी कर रहे हों, यह कोर्स वास्तविक उदाहरणों और परीक्षा-सिद्ध समाधानों के साथ संपूर्ण, संरचित और समझने में आसान वीडियो व्याख्यान प्रदान करता है।
+
+इस कोर्स की मुख्य विशेषताएं:
+• कॉन्सेप्ट-आधारित शिक्षण: हम जटिल सिद्धांतों को सरल और दृश्य वीडियो व्याख्यानों में विभाजित करते हैं।
+• परीक्षा केंद्रित तैयारी: प्रत्येक अध्याय में महत्वपूर्ण प्रश्न, पिछले वर्षों के बोर्ड प्रश्न और विस्तृत समाधान शामिल हैं।
+• अध्ययन नोट्स (Study Notes): त्वरित पुनरीक्षण के लिए डाउनलोड करने योग्य नोट्स और सारांश।
+• 24/7 एआई ट्यूटर और शिक्षक सहायता: किसी भी कठिन प्रश्न में न अटकें—त्वरित एआई व्याख्या और शिक्षकों का मार्गदर्शन प्राप्त करें।
+
+यह कोर्स किसके लिए है:
+• वे छात्र जो वर्तमान में ${board} के तहत ${category} में ${subject} का अध्ययन कर रहे हैं।
+• जो अपनी बुनियादी अवधारणाओं को मजबूत करना और परीक्षाओं में उच्च अंक प्राप्त करना चाहते हैं।
+• विस्तृत अध्ययन नोट्स और प्रश्न बैंक के साथ व्यापक पुनरीक्षण करने वाले छात्र।`;
+        break;
+      case "mr":
+        description = `${title} मध्ये आपले स्वागत आहे! हा कोर्स ${board} अंतर्गत ${category} साठी ${subject} विषयात उत्कृष्ट गुण मिळवण्यासाठी डिझाइन केला गेला आहे.
+
+तुम्ही आगामी शालेय परीक्षा, बोर्ड परीक्षा किंवा स्पर्धा परीक्षांची तयारी करत असलात तरी, हा कोर्स सखोल आणि समजण्यास सोपे व्हिडिओ लेक्चर्स प्रदान करतो.
+
+या कोर्सची वैशिष्ट्ये:
+• संकल्पना-आधारित शिक्षण: गुंतागुंतीचे सिद्धांत सोप्या व्हिज्युअल स्पष्टीकरणांद्वारे समजवले जातात.
+• परीक्षाभिमुख तयारी: महत्त्वाचे प्रश्न, मागील वर्षांच्या प्रश्नपत्रिका आणि सविस्तर उत्तरे समाविष्ट आहेत.
+• अभ्यास नोट्स (Study Notes): जलद रिव्हिजनसाठी डाउनलोड करण्यायोग्य नोट्स.
+• 24/7 एआई ट्यूटर आणि शिक्षक सहाय्य: त्वरित शंका निवारण आणि तज्ञ मार्गदर्शन.
+
+हा कोर्स कोणासाठी आहे:
+• ${category} मध्ये ${board} अभ्यासक्रमांतर्गत ${subject} शिकणारे सर्व विद्यार्थी.
+• उत्कृष्ट गुण मिळवण्यासाठी संकल्पना स्पष्ट करू इच्छिणारे विद्यार्थी.`;
+        break;
+      case "ta":
+        description = `${title} க்கு வரவேற்கிறோம்! இந்த பாடநெறி ${board} பாடத்திட்டத்தின் கீழ் ${category} க்கான ${subject} பாடத்தில் மாணவர்கள் சிறந்து விளங்க வடிவமைக்கப்பட்டுள்ளது.
+
+பள்ளித் தேர்வுகள் அல்லது பொதுத் தேர்வுகளுக்கு நீங்கள் தயாராகிக் கொண்டிருந்தாலும், இந்த படிப்பு தெளிவான மற்றும் புரிந்துகொள்ள எளிதான வீடியோ விரிவுரைகளை வழங்குகிறது.
+
+பாடநெறியின் முக்கிய அம்சங்கள்:
+• அடிப்படைக் கருத்து விளக்கம்: சிக்கலான கருத்துகள் எளிமையான வீடியோக்கள் மூலம் கற்பிக்கப்படுகின்றன.
+• தேர்வு தயாரிப்பு: முக்கியமான கேள்விகள் மற்றும் முந்தைய ஆண்டுகளின் வினாக்களுக்கான தீர்வுகள்.
+• படிப்பு குறிப்புகள் (Study Notes): எளிதாக பதிவிறக்கம் செய்யக்கூடிய சுருக்கமான குறிப்புகள்.
+• 24/7 AI மற்றும் ஆசிரியர் ஆதரவு: உடனடி சந்தேகத் தீர்வு மற்றும் வழிகாட்டுதல்.`;
+        break;
+      case "te":
+        description = `${title} కు స్వాగతం! ఈ కోర్సు ${board} పరిధిలో ${category} కోసం ${subject} లో విద్యార్థులు అత్యుత్తమ ఫలితాలు సాధించేలా రూపొందించబడింది.
+
+పాఠశాల పరీక్షలు లేదా బోర్డు పరీక్షలకు సిద్ధమవుతున్న విద్యార్థులకు సులభంగా అర్థమయ్యే వీడియో పాఠాలను అందిస్తుంది.
+
+కోర్సు ముఖ్యాంశాలు:
+• కాన్సెప్ట్-ఆధారిత బోధన: సంక్లిష్ట భావనలను సులభమైన వీడియో వివరణలతో వివరిస్తాము.
+• పరీక్షల సన్నద్ధత: ముఖ్యమైన ప్రశ్నలు మరియు మునుపటి సంవత్సరాల బోర్డు ప్రశ్నల పరిష్కారాలు.
+• స్టడీ నోట్స్: వేగవంతమైన రివిజన్ కోసం డౌన్‌లోడ్ చేయదగిన నోట్స్.
+• 24/7 AI ట్యూటర్ & ఫ్యాకల్టీ సపోర్ట్: ప్రత్యక్ష సందేహ నివృత్తి.`;
+        break;
+      case "bn":
+        description = `${title}-এ স্বাগতম! এই কোর্সটি ${board}-এর অধীনে ${category}-এর জন্য ${subject} বিষয়ে শিক্ষার্থীদের সেরা ফলাফল নিশ্চিত করতে তৈরি করা হয়েছে।
+
+বিদ্যালয়ের পরীক্ষা বা বোর্ড পরীক্ষার প্রস্তুতি নেওয়া শিক্ষার্থীদের জন্য সহজবোধ্য ভিডিও লেকচার প্রদান করে।
+
+কোর্সের বৈশিষ্ট্যসমূহ:
+• ধারণা-ভিত্তিক শিক্ষা: সহজ ও স্পষ্ট ভিজ্যুয়াল ব্যাখ্যার মাধ্যমে জটিল তত্ত্বগুলি বোঝানো হয়।
+• পরীক্ষা-ভিত্তিক প্রস্তুতি: গুরুত্বপূর্ণ প্রশ্ন এবং বিগত বছরের প্রশ্নপত্রের সমাধান।
+• স্টাডি নোটস: দ্রুত রিভিশনের জন্য ডাউনলোডযোগ্য নোটস।
+• 24/7 এআই টিউটর ও শিক্ষক সহায়তা: তাৎক্ষণিক সন্দেহ নিরসন।`;
+        break;
+      default:
+        description = `Welcome to ${title}, a masterclass meticulously designed to help students excel in ${subject} for ${category} (${board}).
 
 Whether you are preparing for upcoming school assessments, board examinations, or competitive entrance tests, this course delivers complete, structured, and easy-to-understand video lessons with real-world examples and exam-proven problem solving frameworks.
 
@@ -77,14 +268,35 @@ Who this course is for:
 • Students currently in ${category} studying ${subject} under ${board} curriculum.
 • Learners who want to build crystal-clear foundational concepts and score high marks in exams.
 • Anyone looking for comprehensive, self-paced revision with top educator notes and problem banks.`;
+    }
   }
 
-  // 4. Instructor Bio & Stats
-  const instructor = course.instructor || {};
-  const instructorName = instructor.name || (typeof instructor === "string" ? instructor : "Senior Faculty");
-  const instructorBio =
-    instructor.bio ||
-    `Expert educator and lead faculty for ${subject} at Umang Vision Academy. Dedicated to simplifying complex concepts, mentoring students towards academic excellence, and delivering top board results.`;
+  // ── 4. INSTRUCTOR BIO ──────────────────────────────────────────────────────
+  let instructorBio = instructor.bio;
+  if (!instructorBio || instructorBio.trim().length < 20) {
+    switch (normLang) {
+      case "gu":
+        instructorBio = `ઉમંગ વિઝન એકેડેમીમાં ${subject} ના અગ્રણી અને નિષ્ણાત પ્રશિક્ષક. વિદ્યાર્થીઓને જટિલ વિષયો સરળતાથી સમજાવવા અને બોર્ડ પરીક્ષાઓમાં ટોચના પરિણામો અપાવવા માટે પ્રતિબદ્ધ.`;
+        break;
+      case "hi":
+        instructorBio = `उमंग विजन एकेडमी में ${subject} के प्रमुख और अनुभवी शिक्षक। छात्रों को जटिल अवधारणाओं को आसानी से समझाने और बोर्ड परीक्षाओं में शीर्ष परिणाम दिलाने के लिए समर्पित।`;
+        break;
+      case "mr":
+        instructorBio = `उमंग व्हिजन अ‍ॅकॅडमीमधील ${subject} चे तज्ञ मार्गदर्शक. संकल्पना सोप्या भाषेत समजावून सांगण्यात आणि विद्यार्थ्यांना उत्कृष्ट निकाल मिळवून देण्यात अग्रगण्य.`;
+        break;
+      case "ta":
+        instructorBio = `உமங் விஷன் அகாடமியின் ${subject} துறை மூத்த ஆசிரியர். மாணவர்களுக்கு எளிய முறையில் கருத்துகளைப் புரியவைத்து சிறந்த முடிவுகளைத் தருவதில் அர்ப்பணிப்புள்ளவர்.`;
+        break;
+      case "te":
+        instructorBio = `ఉమంగ్ విజన్ అకాడమీలో ${subject} సీనియర్ అధ్యాపకులు. కాన్సెప్ట్‌లను సరళంగా బోధించి పరీక్షలలో అత్యుత్తమ ఫలితాలు అందించడంలో నిపుణులు.`;
+        break;
+      case "bn":
+        instructorBio = `উমং ভিশন একাডেমির ${subject}-এর অভিজ্ঞ শিক্ষক। শিক্ষার্থীদের সহজ ভাষায় জটিল বিষয় বোঝাতে এবং বোর্ড পরীক্ষায় শীর্ষ ফলাফল অর্জনে নিবেদিতপ্রাণ।`;
+        break;
+      default:
+        instructorBio = `Expert educator and lead faculty for ${subject} at Umang Vision Academy. Dedicated to simplifying complex concepts, mentoring students towards academic excellence, and delivering top board results.`;
+    }
+  }
 
   return {
     whatYouWillLearn,
