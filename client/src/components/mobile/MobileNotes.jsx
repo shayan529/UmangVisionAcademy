@@ -59,8 +59,8 @@ const getFileMeta = (url = "") => {
   return {
     icon: FileText,
     label: "PDF",
-    color: "#fb7185",
-    badgeClass: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+    color: "#2dd4bf",
+    badgeClass: "bg-teal-500/10 text-teal-400 border-teal-500/20",
   };
 };
 
@@ -398,12 +398,6 @@ export default function MobileNotes() {
                   className="note-card group relative p-5 bg-[#111827]/90 border border-slate-800/90 hover:border-teal-500/50 rounded-2xl shadow-xl hover:shadow-teal-500/10 transition-all duration-300 flex flex-col justify-between gap-4 overflow-hidden min-h-[250px] h-full"
                   style={{ animationDelay: `${Math.min(i, 10) * 0.04}s` }}
                 >
-                  {/* Top Accent Strip */}
-                  <div
-                    className="absolute top-0 left-0 right-0 h-1 transition-all group-hover:h-1.5"
-                    style={{ background: meta.color }}
-                  />
-
                   <div className="flex-1 flex flex-col space-y-3 pt-1">
                     {/* Header Row: Icon & Subject Badge */}
                     <div className="flex items-start justify-between gap-3">
