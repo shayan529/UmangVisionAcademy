@@ -18,10 +18,10 @@ import {
   Gift,
 } from "lucide-react";
 
-// 5 High Quality Wide Panoramic Images of Indian Village Children
+// 5 High Quality Local Images of Children from public folder
 const carouselSlides = [
   {
-    url: "https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?auto=format&fit=crop&w=1600&q=80",
+    url: "/larm-rmah-AEaTUnvneik-unsplash.jpg",
     titleKey: "donate.carousel1Title",
     defaultTitle: "Bringing Free AI-Powered Education to Remote Village Classrooms",
     subtitleKey: "donate.carousel1Subtitle",
@@ -30,7 +30,7 @@ const carouselSlides = [
     defaultBadge: "Digital Education Initiative",
   },
   {
-    url: "https://images.unsplash.com/photo-1596495578065-6e0763fa1178?auto=format&fit=crop&w=1600&q=80",
+    url: "/sanjoy-sadhukhan-WhE7KK-HPmY-unsplash.jpg",
     titleKey: "donate.carousel2Title",
     defaultTitle: "Distributing Free Study Material, Books & Printed Notes",
     subtitleKey: "donate.carousel2Subtitle",
@@ -39,7 +39,7 @@ const carouselSlides = [
     defaultBadge: "Resource Distribution",
   },
   {
-    url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80",
+    url: "/shafin-ashraf-eCqiA4HvlIs-unsplash.jpg",
     titleKey: "donate.carousel3Title",
     defaultTitle: "Bridging the Opportunity Gap for Every Aspiring Village Learner",
     subtitleKey: "donate.carousel3Subtitle",
@@ -48,7 +48,7 @@ const carouselSlides = [
     defaultBadge: "Equal Opportunity",
   },
   {
-    url: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1600&q=80",
+    url: "/yannis-h-uaPaEM7MiQQ-unsplash.jpg",
     titleKey: "donate.carousel4Title",
     defaultTitle: "Sponsoring Exam Fees & Higher Education Coaching",
     subtitleKey: "donate.carousel4Subtitle",
@@ -57,7 +57,7 @@ const carouselSlides = [
     defaultBadge: "Scholarships & Exam Grants",
   },
   {
-    url: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1600&q=80",
+    url: "/nathan-dumlao-Xavq7lKj5j8-unsplash.jpg",
     titleKey: "donate.carousel5Title",
     defaultTitle: "Building Solar-Powered Digital Learning Hubs in Villages",
     subtitleKey: "donate.carousel5Subtitle",
