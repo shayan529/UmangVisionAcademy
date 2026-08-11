@@ -787,26 +787,45 @@ export default function CourseDemo() {
 
               {/* Udemy Badges Row */}
               <div className="flex items-center gap-2.5 flex-wrap text-xs pt-1">
-                <span className="px-2.5 py-1 rounded-md bg-amber-400 text-slate-950 font-black text-[11px] uppercase tracking-wider shadow-sm">
-                  Bestseller
-                </span>
+                {(course?.isBestseller || (studentsCount >= 5 && rawRating >= 4.0)) && (
+                  <span className="px-2.5 py-1 rounded-md bg-amber-400 text-slate-950 font-black text-[11px] uppercase tracking-wider shadow-sm">
+                    Bestseller
+                  </span>
+                )}
 
-                <div className="flex items-center gap-1 text-amber-400 font-bold">
-                  <span>{ratingVal}</span>
-                  <div className="flex items-center text-amber-400">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={13} className="fill-amber-400" />
-                    ))}
+                {reviewsCount > 0 ? (
+                  <div className="flex items-center gap-1 text-amber-400 font-bold">
+                    <span>{ratingVal}</span>
+                    <div className="flex items-center text-amber-400">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          size={13}
+                          className={
+                            i < Math.round(Number(ratingVal))
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-slate-600"
+                          }
+                        />
+                      ))}
+                    </div>
+                    <span className="text-indigo-400 hover:underline cursor-pointer ml-1">
+                      ({reviewsCount.toLocaleString()}{" "}
+                      {reviewsCount === 1 ? "rating" : "ratings"})
+                    </span>
                   </div>
-                </div>
+                ) : (
+                  <span className="text-slate-400 font-medium">
+                    (No ratings yet)
+                  </span>
+                )}
 
-                <span className="text-indigo-400 hover:underline cursor-pointer">
-                  ({reviewsCount.toLocaleString()} ratings)
-                </span>
-
-                <span className="text-slate-400 font-medium">
-                  {studentsCount.toLocaleString()} students
-                </span>
+                {studentsCount > 0 && (
+                  <span className="text-slate-400 font-medium">
+                    {studentsCount.toLocaleString()}{" "}
+                    {studentsCount === 1 ? "student" : "students"}
+                  </span>
+                )}
               </div>
 
               {/* Created by Instructor */}
@@ -1097,95 +1116,138 @@ export default function CourseDemo() {
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-1 text-xs">
+                <div className="flex flex-col gap-1 text-xs">
+                  {course?.instructor?.avgRating ? (
                     <div className="flex items-center gap-1.5 text-slate-300">
                       <Star size={13} className="fill-amber-400 text-amber-400" />
-                      <span>4.8 Instructor Rating</span>
+                      <span>
+                        {Number(course.instructor.avgRating).toFixed(1)} Instructor Rating
+                      </span>
                     </div>
+                  ) : null}
+                  {course?.instructor?.ratingCount ? (
                     <div className="flex items-center gap-1.5 text-slate-300">
                       <MessageSquare size={13} className="text-slate-400" />
-                      <span>{(reviewsCount * 2).toLocaleString()} Reviews</span>
+                      <span>
+                        {course.instructor.ratingCount.toLocaleString()} Reviews
+                      </span>
                     </div>
+                  ) : null}
+                  {studentsCount > 0 ? (
                     <div className="flex items-center gap-1.5 text-slate-300">
                       <Users size={13} className="text-slate-400" />
-                      <span>{(studentsCount * 3).toLocaleString()} Students</span>
+                      <span>{studentsCount.toLocaleString()} Students</span>
                     </div>
+                  ) : null}
+                  {(course?.instructor?.coursesCount || course?.instructor?.courses?.length) ? (
                     <div className="flex items-center gap-1.5 text-slate-300">
                       <GraduationCap size={13} className="text-slate-400" />
-                      <span>8 Courses</span>
+                      <span>
+                        {course.instructor.coursesCount || course.instructor.courses.length} Courses
+                      </span>
                     </div>
-                  </div>
+                  ) : null}
                 </div>
-
-                <div
-                  className={`text-xs sm:text-sm text-slate-300 leading-relaxed mt-2 whitespace-pre-line relative ${
-                    !showFullBio ? "max-h-24 overflow-hidden" : ""
-                  }`}
-                >
-                  {aiDetails.instructorBio}
-                  {!showFullBio && (
-                    <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none" />
-                  )}
-                </div>
-
-                <button
-                  onClick={() => setShowFullBio(!showFullBio)}
-                  className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 self-start cursor-pointer"
-                >
-                  <span>{showFullBio ? "Show less" : "Show more"}</span>
-                  {showFullBio ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                </button>
               </div>
+
+              <div
+                className={`text-xs sm:text-sm text-slate-300 leading-relaxed mt-2 whitespace-pre-line relative ${
+                  !showFullBio ? "max-h-24 overflow-hidden" : ""
+                }`}
+              >
+                {aiDetails.instructorBio}
+                {!showFullBio && (
+                  <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none" />
+                )}
+              </div>
+
+              <button
+                onClick={() => setShowFullBio(!showFullBio)}
+                className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 self-start cursor-pointer"
+              >
+                <span>{showFullBio ? "Show less" : "Show more"}</span>
+                {showFullBio ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
             </div>
+          </div>
 
-            {/* ── 2.7 Student Feedback & Reviews ── */}
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-white mb-4">
-                ★ {ratingVal} course rating • {reviewsCount.toLocaleString()} ratings
-              </h2>
+          {/* ── 2.7 Student Feedback & Reviews (Only shown if real reviews exist) ── */}
+          {(() => {
+            const realReviews = (course?.ratings || []).filter(
+              (r) => r && (r.review || r.comment || r.rating > 0)
+            );
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  {
-                    name: "Muhammad Aitisam",
-                    date: "7 days ago",
-                    comment:
-                      "Phenomenal course! The explanations are crystal clear and the study notes made revision effortless before my exams.",
-                  },
-                  {
-                    name: "Ananya Sharma",
-                    date: "2 weeks ago",
-                    comment:
-                      "Best coaching platform! The 1-on-1 doubt solving with faculty helped me crack all difficult problems.",
-                  },
-                ].map((rev, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-2"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-slate-700 text-white font-bold text-xs flex items-center justify-center">
-                        {rev.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-white">{rev.name}</p>
-                        <div className="flex items-center gap-1 text-amber-400">
-                          {[...Array(5)].map((_, i) => (
-                            <Star key={i} size={10} className="fill-amber-400" />
-                          ))}
-                          <span className="text-[10px] text-slate-500 ml-1">
-                            {rev.date}
-                          </span>
+            if (realReviews.length === 0) return null;
+
+            return (
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-white mb-4">
+                  ★ {ratingVal} course rating • {reviewsCount.toLocaleString()}{" "}
+                  {reviewsCount === 1 ? "rating" : "ratings"}
+                </h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {realReviews.map((rev, idx) => {
+                    const studentName = rev.user?.name || rev.userName || "Student";
+                    const reviewText = rev.review || rev.comment || "";
+                    const revRating = Number(rev.rating || 5);
+                    const reviewDate = rev.createdAt
+                      ? new Date(rev.createdAt).toLocaleDateString()
+                      : "";
+
+                    return (
+                      <div
+                        key={idx}
+                        className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-2"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          {rev.user?.avatarUrl ? (
+                            <img
+                              src={rev.user.avatarUrl}
+                              alt={studentName}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-slate-700 text-white font-bold text-xs flex items-center justify-center">
+                              {studentName.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-xs font-bold text-white">
+                              {studentName}
+                            </p>
+                            <div className="flex items-center gap-1 text-amber-400">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  size={10}
+                                  className={
+                                    i < Math.round(revRating)
+                                      ? "fill-amber-400 text-amber-400"
+                                      : "text-slate-600"
+                                  }
+                                />
+                              ))}
+                              {reviewDate && (
+                                <span className="text-[10px] text-slate-500 ml-1">
+                                  {reviewDate}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
+                        {reviewText && (
+                          <p className="text-xs text-slate-300 leading-relaxed">
+                            {reviewText}
+                          </p>
+                        )}
                       </div>
-                    </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      {rev.comment}
-                    </p>
-                  </div>
-                ))}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            );
+          })()}
           </div>
 
           {/* ── Right Desktop Sticky Purchase Sidebar ── */}
