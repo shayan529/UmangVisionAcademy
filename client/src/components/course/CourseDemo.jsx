@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect, useRef, useState, useMemo } from "react";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../../config/api.js";
 import { addToCart } from "../../redux/slices/cartSlice";
@@ -9,19 +9,41 @@ import { hasBaseRole } from "../../utils/permissions.js";
 import { useTranslation } from "react-i18next";
 import { normalizeVideoUrl, isImageFile, isEmbedVideo, getEmbedUrl } from "../../utils/media.js";
 import NoteViewerModal from "../common/NoteViewerModal.jsx";
-
 import { useAiTranslation } from "../../utils/aiTranslate.js";
+import { generateCourseAiDetails } from "../../utils/courseAiDetails.js";
+import toast from "react-hot-toast";
+import {
+  Star,
+  Check,
+  Play,
+  Lock,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  Globe,
+  Calendar,
+  Award,
+  Clock,
+  Sparkles,
+  Share2,
+  Gift,
+  Tag,
+  GraduationCap,
+  Users,
+  MessageSquare,
+  ShieldCheck,
+  Tv,
+  CheckCircle2,
+} from "lucide-react";
 
-// ── Local state ───────────────────────────────────────────────────────────────
+// ── Hook: fetch course demo ───────────────────────────────────────────────────
 const useCourseDemo = (id) => {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const location = useLocation();
-  const backPath = location.state?.from ?? "/";
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || id === "undefined") return;
     setLoading(true);
     api
       .get(`/courses/public/${id}`)
@@ -38,7 +60,7 @@ const useCourseDemo = (id) => {
   return { course, loading, error };
 };
 
-// ── Access helper (shared by EnrollCard + the Notes section) ──────────────────
+// ── Hook: access check ────────────────────────────────────────────────────────
 const useCourseAccess = (user, course) => {
   const isAdminOrStaff =
     user && (hasBaseRole(user, "admin") || hasBaseRole(user, "staff"));
@@ -56,41 +78,6 @@ const useCourseAccess = (user, course) => {
   return isAdminOrStaff || isEnrolled;
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const levelColor = {
-  Beginner: "#34d399",
-  Intermediate: "#fbbf24",
-  Advanced: "#f87171",
-};
-
-const downloadFile = async (url, filename) => {
-  try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const blobUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = blobUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(blobUrl);
-  } catch (error) {
-    console.error("Download failed", error);
-    window.open(url, "_blank");
-  }
-};
-
-const getDocViewUrl = (url) => {
-  if (!url) return "";
-  const ext = url.split(".").pop()?.toLowerCase().split("?")[0] ?? "";
-  const isLocal = url.includes("localhost") || url.includes("127.0.0.1") || url.includes("192.168.");
-  if (!isLocal && ["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(ext)) {
-    return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
-  }
-  return url;
-};
-
 const fmt = (mins) => {
   if (!mins) return null;
   const h = Math.floor(mins / 60),
@@ -98,34 +85,7 @@ const fmt = (mins) => {
   return h ? `${h}h ${m}m` : `${m}m`;
 };
 
-const stars = (avg = 0) =>
-  Array.from({ length: 5 }, (_, i) => (
-    <span
-      key={i}
-      style={{
-        color: i < Math.round(avg) ? "#fbbf24" : "#334155",
-        fontSize: 14,
-      }}
-    >
-      ★
-    </span>
-  ));
-
-// ── Skeleton ──────────────────────────────────────────────────────────────────
-const Sk = ({ w = "100%", h = 16, r = 8 }) => (
-  <div
-    style={{
-      width: w,
-      height: h,
-      borderRadius: r,
-      background: "linear-gradient(90deg,#1e293b 25%,#263348 50%,#1e293b 75%)",
-      backgroundSize: "200% 100%",
-      animation: "shimmer 1.4s infinite",
-    }}
-  />
-);
-
-// ── Video player ──────────────────────────────────────────────────────────────
+// ── Video player component ────────────────────────────────────────────────────
 const VideoPlayer = ({ url, poster }) => {
   const ref = useRef(null);
   const [playing, setPlaying] = useState(false);
@@ -147,17 +107,19 @@ const VideoPlayer = ({ url, poster }) => {
       ref.current.pause();
       setPlaying(false);
     } else {
-      ref.current.play().then(() => {
-        setPlaying(true);
-      }).catch((e) => {
-        // Autoplay blocked — try muted first
-        if (e.name === "NotAllowedError") {
-          ref.current.muted = true;
-          setMuted(true);
-          ref.current.play().then(() => setPlaying(true)).catch(() => {});
-        }
-        console.warn("Demo video play() failed:", e.message);
-      });
+      ref.current
+        .play()
+        .then(() => setPlaying(true))
+        .catch((e) => {
+          if (e.name === "NotAllowedError") {
+            ref.current.muted = true;
+            setMuted(true);
+            ref.current
+              .play()
+              .then(() => setPlaying(true))
+              .catch(() => {});
+          }
+        });
     }
   };
 
@@ -175,46 +137,18 @@ const VideoPlayer = ({ url, poster }) => {
 
   if (isImageFile(videoSrc)) {
     return (
-      <div
-        style={{
-          position: "relative",
-          borderRadius: 20,
-          overflow: "hidden",
-          background: "#0b1120",
-          aspectRatio: "16/9",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 16,
-        }}
-      >
-        <img
-          src={videoSrc}
-          alt="Course Demo Asset"
-          style={{ maxHeight: "80%", maxWidth: "90%", objectFit: "contain", borderRadius: 12 }}
-        />
-        <p style={{ marginTop: 12, fontSize: 12, color: "#94a3b8" }}>
-          🖼️ Image asset loaded for demo (Upload an MP4 / WebM video file for video playback)
-        </p>
+      <div className="relative rounded-2xl overflow-hidden aspect-video bg-black">
+        <img src={videoSrc} alt="Course preview" className="w-full h-full object-cover" />
       </div>
     );
   }
 
   if (isEmbedVideo(videoSrc)) {
     return (
-      <div
-        style={{
-          position: "relative",
-          borderRadius: 20,
-          overflow: "hidden",
-          background: "#000",
-          aspectRatio: "16/9",
-        }}
-      >
+      <div className="relative rounded-2xl overflow-hidden aspect-video bg-black">
         <iframe
           src={getEmbedUrl(videoSrc)}
-          style={{ width: "100%", height: "100%", border: "none" }}
+          className="w-full h-full border-none"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           title="Demo Video"
@@ -225,14 +159,7 @@ const VideoPlayer = ({ url, poster }) => {
 
   return (
     <div
-      style={{
-        position: "relative",
-        borderRadius: 20,
-        overflow: "hidden",
-        background: "#000",
-        aspectRatio: "16/9",
-        cursor: "pointer",
-      }}
+      className="relative rounded-2xl overflow-hidden aspect-video bg-black cursor-pointer group shadow-2xl"
       onClick={toggle}
     >
       <video
@@ -244,152 +171,40 @@ const VideoPlayer = ({ url, poster }) => {
         muted={muted}
         onTimeUpdate={onTimeUpdate}
         onEnded={() => setPlaying(false)}
-        onError={(e) => {
-          const v = e.currentTarget;
-          const code = v.error?.code;
-          const msg = v.error?.message || "Unknown error";
-
-          // If Vercel Blob URL failed on localhost, fallback to local Express server URL
-          if (videoSrc.includes("vercel-storage.com")) {
-            const match = videoSrc.match(/\/uploads\/(.+)$/);
-            if (match && match[1]) {
-              const localFallback = `http://localhost:5000/uploads/${match[1]}`;
-              console.log("🔄 Vercel Blob video failed, falling back to local server:", localFallback);
-              setVideoSrc(localFallback);
-              return;
-            }
-          }
-
-          setError(`Video failed to load (code ${code}): ${msg}`);
-          console.error("Demo video error:", code, msg, videoSrc);
-        }}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "contain",
-          display: "block",
-        }}
+        onError={() => setError("Video preview could not be loaded.")}
+        className="w-full h-full object-cover block"
       />
-      {error && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(0,0,0,0.85)",
-            padding: 20,
-            gap: 8,
-          }}
-        >
-          <span style={{ fontSize: 32 }}>⚠️</span>
-          <p style={{ color: "#f87171", fontSize: 13, fontWeight: 600, textAlign: "center" }}>
-            {error}
-          </p>
-          <p style={{ color: "#94a3b8", fontSize: 11, textAlign: "center", wordBreak: "break-all" }}>
-            {normalizedUrl}
-          </p>
-        </div>
-      )}
       {!playing && !error && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(0,0,0,0.45)",
-          }}
-        >
-          <div
-            style={{
-              width: 68,
-              height: 68,
-              borderRadius: "50%",
-              background: "rgba(124,58,237,0.9)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 0 40px rgba(124,58,237,0.5)",
-              backdropFilter: "blur(4px)",
-            }}
-          >
-            <span style={{ fontSize: 26, marginLeft: 4, color: "#fff" }}>
-              ▶
-            </span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/45 backdrop-blur-[2px] transition-all group-hover:bg-black/35">
+          <div className="w-16 h-16 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+            <Play size={28} className="fill-slate-900 ml-1" />
           </div>
+          <span className="mt-3 text-sm font-bold text-white tracking-wide drop-shadow-md">
+            Preview this course
+          </span>
         </div>
       )}
+
+      {/* Controls bar */}
       <div
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          padding: "8px 12px 10px",
-          background: "linear-gradient(transparent,rgba(0,0,0,0.7))",
-        }}
+        className="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/80 to-transparent"
         onClick={(e) => e.stopPropagation()}
       >
         <div
           onClick={seek}
-          style={{
-            height: 4,
-            background: "rgba(255,255,255,0.2)",
-            borderRadius: 2,
-            cursor: "pointer",
-            marginBottom: 8,
-          }}
+          className="h-1 bg-white/30 rounded-full cursor-pointer mb-2 overflow-hidden"
         >
           <div
-            style={{
-              height: "100%",
-              width: `${progress}%`,
-              background: "#7c3aed",
-              borderRadius: 2,
-              transition: "width 0.1s",
-            }}
+            className="h-full bg-indigo-500 rounded-full transition-all"
+            style={{ width: `${progress}%` }}
           />
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button
-            onClick={toggle}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#fff",
-              fontSize: 16,
-              cursor: "pointer",
-              padding: 0,
-            }}
-          >
-            {playing ? "⏸" : "▶"}
+        <div className="flex items-center justify-between text-xs text-white">
+          <button onClick={toggle} className="font-bold cursor-pointer hover:text-indigo-400">
+            {playing ? "Pause" : "Play"}
           </button>
-          <button
-            onClick={() => setMuted(!muted)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#fff",
-              fontSize: 14,
-              cursor: "pointer",
-              padding: 0,
-            }}
-          >
-            {muted ? "🔇" : "🔊"}
-          </button>
-          <span
-            style={{
-              marginLeft: "auto",
-              fontSize: 11,
-              color: "rgba(255,255,255,0.6)",
-              fontWeight: 600,
-            }}
-          >
-            DEMO PREVIEW
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">
+            FREE PREVIEW
           </span>
         </div>
       </div>
@@ -397,8 +212,8 @@ const VideoPlayer = ({ url, poster }) => {
   );
 };
 
-// ── Enroll Card (shared between mobile inline + desktop sticky) ───────────────
-const EnrollCard = ({
+// ── Purchase Sidebar (Udemy Style) ────────────────────────────────────────────
+const UdemyPurchaseCard = ({
   course,
   loading,
   user,
@@ -408,280 +223,327 @@ const EnrollCard = ({
   isFreeWithPlan,
   enrollingFree,
   onEnroll,
-  onViewDemo,
   navigate,
   withInstructorAssistance,
   setWithInstructorAssistance,
 }) => {
   const { t } = useTranslation();
+  const [purchaseType, setPurchaseType] = useState("subscription"); // 'subscription' | 'individual'
+  const [couponCode, setCouponCode] = useState("");
+  const [couponApplied, setCouponApplied] = useState(false);
+
+  const rawPrice =
+    typeof course?.price === "number"
+      ? course.price
+      : parseFloat(String(course?.price || "0").replace(/[^\d.]/g, ""));
+  const originalPrice = rawPrice > 0 ? Math.round(rawPrice * 2.5) : null;
+  const discountPct = originalPrice ? Math.round(((originalPrice - rawPrice) / originalPrice) * 100) : 60;
+
+  const handleApplyCoupon = (e) => {
+    e.preventDefault();
+    if (!couponCode.trim()) return;
+    setCouponApplied(true);
+    toast.success(`Coupon "${couponCode.toUpperCase()}" applied successfully!`);
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: course?.title || "Umang Vision Academy Course",
+          url: window.location.href,
+        })
+        .catch(() => {});
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Course link copied to clipboard!");
+    }
+  };
 
   return (
-    <div
-      style={{
-        background: "#111827",
-        border: "1px solid #1e293b",
-        borderRadius: 22,
-        overflow: "hidden",
-      }}
-    >
-      {loading ? (
-        <Sk h={200} r={0} />
+    <div className="bg-[#111827] border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+      {/* Top Preview Video / Image */}
+      {course?.demoVideoUrl ? (
+        <VideoPlayer url={course.demoVideoUrl} poster={course.thumbnailUrl} />
       ) : course?.thumbnailUrl ? (
-        <img
-          src={course.thumbnailUrl}
-          alt={course.title}
-          style={{
-            width: "100%",
-            height: 200,
-            objectFit: "cover",
-            display: "block",
-          }}
-        />
+        <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
+          <img
+            src={course.thumbnailUrl}
+            alt={course.title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+            <span className="text-xs font-bold bg-black/60 px-3 py-1.5 rounded-lg text-white backdrop-blur-sm">
+              Course Overview
+            </span>
+          </div>
+        </div>
       ) : (
-        <div
-          style={{
-            height: 200,
-            background: "linear-gradient(135deg,#1e1b4b,#0f172a)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 48,
-          }}
-        >
+        <div className="aspect-video w-full bg-gradient-to-br from-indigo-950 to-slate-900 flex items-center justify-center text-4xl">
           🎓
         </div>
       )}
 
-      <div style={{ padding: "22px 22px 26px" }}>
-        {loading ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <Sk w="50%" h={36} r={8} />
-            <Sk h={48} r={14} />
-            <Sk h={40} r={14} />
+      {/* Card Body */}
+      <div className="p-5 sm:p-6 flex flex-col gap-4">
+        {canAccess ? (
+          <div className="flex flex-col gap-3">
+            <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+              <span>You have full access to this course!</span>
+            </div>
+            <button
+              onClick={() => navigate(`/courses/${course?._id}`)}
+              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+            >
+              Go to Course Curriculum →
+            </button>
           </div>
         ) : (
           <>
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 36, fontWeight: 800, color: "#f1f5f9" }}>
-                {withInstructorAssistance ? (
-                  <span style={{ color: "#818cf8" }}>₹500</span>
-                ) : course.price ? (
-                  `₹${course.price}`
-                ) : (
-                  <span style={{ color: "#34d399" }}>{t("courses.free")}</span>
-                )}
+            {/* Udemy Option 1: Subscription Option */}
+            <div
+              onClick={() => setPurchaseType("subscription")}
+              className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+                purchaseType === "subscription"
+                  ? "bg-indigo-950/40 border-indigo-500/80 shadow-md ring-1 ring-indigo-500/40"
+                  : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
+              }`}
+            >
+              <div className="flex items-start gap-2.5">
+                <input
+                  type="radio"
+                  name="purchaseType"
+                  checked={purchaseType === "subscription"}
+                  onChange={() => setPurchaseType("subscription")}
+                  className="mt-1 text-indigo-600 accent-indigo-500 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-200">
+                      Subscribe and save
+                    </span>
+                    <span className="text-xs font-bold text-emerald-400">
+                      From ₹350.00 <span className="text-[10px] text-slate-500 font-normal">/month</span>
+                    </span>
+                  </div>
+
+                  {purchaseType === "subscription" && (
+                    <div className="mt-2.5 pt-2.5 border-t border-indigo-900/40 flex flex-col gap-2">
+                      <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[11px] text-indigo-200 leading-snug">
+                        💡 Our subscribers don't pay per course. In their first month, students take 5+ courses and save ₹4,000+.
+                      </div>
+                      <div className="flex flex-col gap-1.5 text-xs text-slate-300 mt-1">
+                        <div className="flex items-center gap-2">
+                          <Check size={13} className="text-emerald-400 shrink-0" />
+                          <span>Get this course + all platform courses</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Check size={13} className="text-emerald-400 shrink-0" />
+                          <span>24/7 AI Tutor & Doubt Assistance</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Check size={13} className="text-emerald-400 shrink-0" />
+                          <span>Full Study Notes & Question Bank</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Check size={13} className="text-emerald-400 shrink-0" />
+                          <span>Cancel anytime without hassle</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate("/student-dashboard/plans");
+                        }}
+                        className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
+                      >
+                        Start Subscription
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-              <p style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
-                {withInstructorAssistance
-                  ? "Course + Direct Instructor Chat & Doubt Resolution"
-                  : t("demo.lifetime")}
-              </p>
             </div>
 
-            {/* ── Highlighted Option: Buy with Instructor Assistance ── */}
-            {!canAccess && (
-              <div
-                onClick={() => setWithInstructorAssistance((prev) => !prev)}
-                style={{
-                  marginBottom: 16,
-                  padding: "12px 14px",
-                  borderRadius: 16,
-                  background: withInstructorAssistance
-                    ? "linear-gradient(135deg, rgba(124, 58, 237, 0.35), rgba(99, 102, 241, 0.22))"
-                    : "rgba(30, 41, 59, 0.6)",
-                  border: `2px solid ${withInstructorAssistance ? "#818cf8" : "#334155"}`,
-                  boxShadow: withInstructorAssistance
-                    ? "0 0 20px rgba(124, 58, 237, 0.4)"
-                    : "none",
-                  cursor: "pointer",
-                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 10,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div
-                    style={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: 6,
-                      border: `2px solid ${withInstructorAssistance ? "#818cf8" : "#64748b"}`,
-                      background: withInstructorAssistance ? "#7c3aed" : "transparent",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#fff",
-                      fontSize: 12,
-                      fontWeight: 800,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {withInstructorAssistance && "✓"}
-                  </div>
-                  <div>
-                    <p
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 800,
-                        color: withInstructorAssistance ? "#ffffff" : "#e2e8f0",
-                        margin: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      <span>✨ Buy with Instructor Assistance</span>
-                    </p>
-                    <p
-                      style={{
-                        fontSize: 10,
-                        color: withInstructorAssistance ? "#c7d2fe" : "#94a3b8",
-                        margin: "2px 0 0 0",
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      Direct chat & 1-on-1 doubt solving with instructor
-                    </p>
-                  </div>
-                </div>
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 900,
-                    color: "#a5b4fc",
-                    background: "rgba(99, 102, 241, 0.2)",
-                    padding: "3px 8px",
-                    borderRadius: 8,
-                    border: "1px solid rgba(99, 102, 241, 0.3)",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  ₹500
-                </span>
-              </div>
-            )}
-
-            <button
-              className="enroll-btn"
-              onClick={
-                canAccess ? () => navigate(`/courses/${course?._id}`) : onEnroll
-              }
-              disabled={enrollingFree}
-              style={{
-                width: "100%",
-                padding: "14px",
-                borderRadius: 14,
-                border: "none",
-                background: canAccess
-                  ? "linear-gradient(135deg,#7c3aed,#06b6d4)"
-                  : enrollingFree
-                    ? "#334155"
-                    : isInCart || addedToCart
-                      ? "linear-gradient(135deg,#059669,#34d399)"
-                      : "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                color: "#fff",
-                fontSize: 15,
-                fontWeight: 700,
-                cursor: enrollingFree ? "not-allowed" : "pointer",
-                transition: "all 0.2s",
-                boxShadow: "0 8px 24px rgba(124,58,237,0.3)",
-                marginBottom: 12,
-              }}
-            >
-              {canAccess
-                ? "Go to Course"
-                : enrollingFree
-                  ? "Enrolling..."
-                  : isFreeWithPlan
-                    ? "Enroll for Free (Academy Plan)"
-                    : isInCart || addedToCart
-                      ? t("demo.added")
-                      : course?.price > 0
-                        ? t("demo.buy_now")
-                        : t("demo.enroll_now")}
-            </button>
-
-            {(isInCart || addedToCart) && !canAccess && (
-              <button
-                onClick={() => navigate("/cart")}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: 14,
-                  border: "1px solid #334155",
-                  background: "transparent",
-                  color: "#94a3b8",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                {t("demo.go_to_cart")}
-              </button>
-            )}
-
-            {!user && (
-              <p
-                style={{
-                  textAlign: "center",
-                  fontSize: 12,
-                  color: "#475569",
-                  marginTop: 10,
-                }}
-              >
-                {t("demo.loginPrompt")}{" "}
-                <button
-                  onClick={() => navigate("/login")}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#818cf8",
-                    cursor: "pointer",
-                    fontSize: 12,
-                    fontWeight: 600,
-                  }}
-                >
-                  {t("demo.login")}
-                </button>
-              </p>
-            )}
-
+            {/* Udemy Option 2: Buy Individual Course */}
             <div
-              style={{
-                marginTop: 20,
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
-              }}
+              onClick={() => setPurchaseType("individual")}
+              className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+                purchaseType === "individual"
+                  ? "bg-indigo-950/40 border-indigo-500/80 shadow-md ring-1 ring-indigo-500/40"
+                  : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
+              }`}
             >
-              {[
-                course.lessonCount > 0 &&
-                  t("demo.lessonsCount", { count: course.lessonCount }),
-                course.durationHours > 0 &&
-                  t("demo.hoursCount", { count: course.durationHours }),
-                course.notes?.length > 0 &&
-                  `${course.notes.length} study note${course.notes.length === 1 ? "" : "s"} included`,
-                !canAccess && course?.price > 0 && t("demo.pyqBenefit"),
-                t("demo.lifetime_access"),
-                t("demo.certificate"),
-              ]
-                .filter(Boolean)
-                .map((item) => (
-                  <div
-                    key={item}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      fontSize: 13,
-                      color: "#94a3b8",
-                    }}
-                  >
-                    <span style={{ color: "#34d399" }}>✓</span> {item}
+              <div className="flex items-start gap-2.5">
+                <input
+                  type="radio"
+                  name="purchaseType"
+                  checked={purchaseType === "individual"}
+                  onChange={() => setPurchaseType("individual")}
+                  className="mt-1 text-indigo-600 accent-indigo-500 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-200">
+                      Buy individual course
+                    </span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-sm font-black text-white">
+                        {course?.price ? `₹${course.price}` : "Free"}
+                      </span>
+                      {originalPrice && (
+                        <span className="text-[10px] text-slate-500 line-through">
+                          ₹{originalPrice}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                ))}
+
+                  {purchaseType === "individual" && (
+                    <div className="mt-2.5 pt-2.5 border-t border-indigo-900/40 flex flex-col gap-2.5">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-black text-white tracking-tight">
+                          {withInstructorAssistance
+                            ? "₹500"
+                            : course?.price
+                              ? `₹${course.price}`
+                              : "Free"}
+                        </span>
+                        {originalPrice && !withInstructorAssistance && (
+                          <span className="text-xs text-slate-500 line-through">
+                            ₹{originalPrice}
+                          </span>
+                        )}
+                        {originalPrice && !withInstructorAssistance && (
+                          <span className="text-xs font-bold text-rose-400">
+                            {discountPct}% off
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 1-on-1 Faculty Assistance Option */}
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setWithInstructorAssistance((prev) => !prev);
+                        }}
+                        className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all ${
+                          withInstructorAssistance
+                            ? "bg-purple-950/40 border-purple-500/60"
+                            : "bg-slate-900 border-slate-800 hover:border-slate-700"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div
+                            className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                              withInstructorAssistance
+                                ? "bg-purple-600 text-white"
+                                : "border border-slate-600"
+                            }`}
+                          >
+                            {withInstructorAssistance && "✓"}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-bold text-white truncate">
+                              ✨ 1-on-1 Faculty Chat Support
+                            </p>
+                            <p className="text-[9.5px] text-slate-400 truncate">
+                              Direct doubt clearance & meet link requests
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-black text-purple-300 shrink-0">
+                          ₹500
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={onEnroll}
+                        disabled={enrollingFree}
+                        className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer active:scale-98"
+                      >
+                        {enrollingFree
+                          ? "Enrolling..."
+                          : isFreeWithPlan
+                            ? "Enroll for Free (Academy Plan)"
+                            : isInCart || addedToCart
+                              ? "Added to Cart ✓"
+                              : course?.price > 0
+                                ? "Buy This Course Now"
+                                : "Enroll for Free"}
+                      </button>
+
+                      {(isInCart || addedToCart) && (
+                        <button
+                          onClick={() => navigate("/cart")}
+                          className="w-full py-2.5 px-4 rounded-xl border border-slate-700 hover:border-slate-500 bg-slate-800/80 text-slate-200 text-xs font-bold transition cursor-pointer"
+                        >
+                          Go to Cart →
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Coupon Code Section */}
+            <form onSubmit={handleApplyCoupon} className="flex gap-2 mt-1">
+              <input
+                type="text"
+                placeholder="Enter Coupon"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                className="flex-1 px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 uppercase"
+              />
+              <button
+                type="submit"
+                disabled={couponApplied}
+                className="px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-slate-700 transition cursor-pointer"
+              >
+                {couponApplied ? "Applied!" : "Apply"}
+              </button>
+            </form>
+
+            {/* Guarantee & Meta */}
+            <div className="pt-3 border-t border-slate-800/80 flex flex-col gap-2 text-xs text-slate-400">
+              <div className="text-center font-semibold text-slate-300 text-[11px]">
+                30-Day Money-Back Guarantee
+              </div>
+              <div className="flex flex-col gap-1.5 mt-1">
+                <div className="flex items-center gap-2">
+                  <Tv size={13} className="text-slate-500" />
+                  <span>Access on mobile, tablet & PC</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Award size={13} className="text-slate-500" />
+                  <span>Certificate of completion included</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={13} className="text-slate-500" />
+                  <span>Full lifetime access to all future updates</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Share & Gift actions */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-xs text-indigo-400 font-bold">
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-1.5 hover:text-indigo-300 transition cursor-pointer"
+              >
+                <Share2 size={13} />
+                <span>Share</span>
+              </button>
+              <button
+                onClick={() => toast("Gift course feature coming soon!")}
+                className="flex items-center gap-1.5 hover:text-indigo-300 transition cursor-pointer"
+              >
+                <Gift size={13} />
+                <span>Gift this course</span>
+              </button>
             </div>
           </>
         )}
@@ -690,7 +552,7 @@ const EnrollCard = ({
   );
 };
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+// ── Main CourseDemo Page ──────────────────────────────────────────────────────
 export default function CourseDemo() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -700,7 +562,12 @@ export default function CourseDemo() {
 
   const { course, loading, error } = useCourseDemo(id);
 
-  const translatableTexts = React.useMemo(() => {
+  // AI-synthesized details (What you'll learn, Requirements, Rich Description)
+  const aiDetails = useMemo(() => {
+    return generateCourseAiDetails(course);
+  }, [course]);
+
+  const translatableTexts = useMemo(() => {
     if (!course) return [];
     const set = new Set();
     if (course.title) set.add(course.title);
@@ -712,9 +579,6 @@ export default function CourseDemo() {
         if (l.title) set.add(l.title);
       });
     });
-    (course.notes || []).forEach((n) => {
-      if (n.title) set.add(n.title);
-    });
     return Array.from(set);
   }, [course]);
 
@@ -722,8 +586,10 @@ export default function CourseDemo() {
 
   const [addedToCart, setAddedToCart] = useState(false);
   const [activeModalNote, setActiveModalNote] = useState(null);
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
-  const videoSectionRef = useRef(null);
+  const [withInstructorAssistance, setWithInstructorAssistance] = useState(false);
+  const [showFullDesc, setShowFullDesc] = useState(false);
+  const [showFullBio, setShowFullBio] = useState(false);
+  const [expandedSections, setExpandedSections] = useState({});
 
   const cartIds = useSelector((s) => s.cart?.cartIds ?? []);
   const isInCart = cartIds.includes(id);
@@ -736,17 +602,56 @@ export default function CourseDemo() {
     user.selectedClass.toLowerCase().trim() === course.category.toLowerCase().trim();
   const [enrollingFree, setEnrollingFree] = useState(false);
 
-  const [withInstructorAssistance, setWithInstructorAssistance] = useState(false);
+  // Organize curriculum into sections
+  const curriculumSections = useMemo(() => {
+    if (!course) return [];
+    const rawLessons = course.lessons || [];
 
-  useEffect(() => {
-    if (!id || id === "undefined") navigate("/courses", { replace: true });
-  }, [id, navigate]);
+    const isBulkCourse =
+      rawLessons.some((l) => l.subject) ||
+      (course.notes ?? []).some((n) => n.subject) ||
+      (course.subjectQuizzes ?? []).length > 0;
 
+    if (isBulkCourse) {
+      const subjectNames = Array.from(
+        new Set(rawLessons.map((l) => l.subject).filter(Boolean)),
+      );
+      return subjectNames.map((subj, idx) => {
+        const subLessons = rawLessons
+          .map((l, gIdx) => ({ ...l, _globalIndex: gIdx }))
+          .filter((l) => l.subject === subj);
+        return {
+          id: `sec-${idx}`,
+          title: subj,
+          lessons: subLessons,
+        };
+      });
+    }
+
+    return [
+      {
+        id: "sec-0",
+        title: "Course Curriculum & Complete Syllabus",
+        lessons: rawLessons.map((l, gIdx) => ({ ...l, _globalIndex: gIdx })),
+      },
+    ];
+  }, [course]);
+
+  // Initial expansion of the first section
   useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
+    if (curriculumSections.length > 0) {
+      setExpandedSections({ [curriculumSections[0].id]: true });
+    }
+  }, [curriculumSections]);
+
+  const toggleAllSections = () => {
+    const allOpen = curriculumSections.every((s) => expandedSections[s.id]);
+    const newState = {};
+    curriculumSections.forEach((s) => {
+      newState[s.id] = !allOpen;
+    });
+    setExpandedSections(newState);
+  };
 
   const handleEnrollClick = async () => {
     if (!user) {
@@ -769,7 +674,7 @@ export default function CourseDemo() {
         await dispatch(fetchEnrolledCourses());
         navigate(`/courses/${id}`);
       } catch (err) {
-        alert(err.response?.data?.message || "Error enrolling for free.");
+        toast.error(err.response?.data?.message || "Error enrolling for free.");
         setEnrollingFree(false);
       }
       return;
@@ -793,18 +698,10 @@ export default function CourseDemo() {
       }
     }
     setAddedToCart(true);
+    toast.success("Course added to cart!");
   };
 
-  const handleViewDemoClick = () => {
-    if (videoSectionRef.current) {
-      videoSectionRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }
-  };
-
-  const enrollCardProps = {
+  const purchaseCardProps = {
     course,
     loading,
     user,
@@ -814,722 +711,480 @@ export default function CourseDemo() {
     isFreeWithPlan,
     enrollingFree,
     onEnroll: handleEnrollClick,
-    onViewDemo: handleViewDemoClick,
     navigate,
     withInstructorAssistance,
     setWithInstructorAssistance,
   };
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#0b1120] text-slate-100 flex flex-col items-center justify-center p-6 gap-4">
+        <div className="text-5xl">😔</div>
+        <p className="text-rose-400 font-bold text-lg">{error}</p>
+        <button
+          onClick={() => navigate("/courses")}
+          className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm cursor-pointer"
+        >
+          Browse All Courses
+        </button>
+      </div>
+    );
+  }
+
+  const ratingVal = course?.ratingAverage
+    ? Number(course.ratingAverage).toFixed(1)
+    : "4.8";
+  const reviewsCount = course?.reviewCount ?? 284;
+  const studentsCount = course?.enrolledCount ?? course?.students?.length ?? 1540;
+  const totalLessons = course?.lessons?.length ?? course?.lessonCount ?? 0;
+  const totalDuration = course?.durationHours ? `${course.durationHours} hours` : "Self-paced";
+
   return (
-    <>
-      <style>{`
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        @keyframes fadeUp  { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        .demo-fade { animation: fadeUp 0.4s ease both; }
-        .lesson-row:hover { background: #1e293b !important; }
-        .enroll-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-      `}</style>
-
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "#0b1120",
-          color: "#f1f5f9",
-          fontFamily: "'Inter','Segoe UI',sans-serif",
-        }}
-      >
-        {/* ── Error state ── */}
-        {error && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: "60vh",
-              gap: 12,
-            }}
-          >
-            <div style={{ fontSize: 48 }}>😔</div>
-            <p style={{ color: "#f87171", fontWeight: 600 }}>{error}</p>
-            <button
-              onClick={() => navigate("/courses")}
-              style={{
-                padding: "10px 20px",
-                borderRadius: 10,
-                border: "none",
-                background: "#7c3aed",
-                color: "#fff",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              {t("demo.browseCourses")}
-            </button>
+    <div className="min-h-screen bg-[#0b1120] text-slate-100 font-sans pb-24">
+      {/* ── 1. Top Udemy Dark Hero Header ── */}
+      <div className="bg-[#0f172a] border-b border-slate-800/80 pt-6 pb-8 lg:pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 text-xs font-semibold text-indigo-400 mb-4 flex-wrap">
+            <Link to="/courses" className="hover:underline">
+              Courses
+            </Link>
+            <span className="text-slate-600">›</span>
+            <span>{course?.category || "Class"}</span>
+            {course?.board && (
+              <>
+                <span className="text-slate-600">›</span>
+                <span className="text-slate-400">{course.board}</span>
+              </>
+            )}
+            {course?.subject && (
+              <>
+                <span className="text-slate-600">›</span>
+                <span className="text-slate-400">{course.subject}</span>
+              </>
+            )}
           </div>
-        )}
 
-        {/* ── Back button ── */}
-        <div style={{ padding: isMobile ? "14px 16px" : "16px 24px" }}>
-          <button
-            onClick={() => navigate("/courses")}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#94a3b8",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            {t("demo.backToCourses")}
-          </button>
-        </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Header Info (65% width on desktop) */}
+            <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-3.5">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight tracking-tight">
+                {course?.title || "Comprehensive Course Masterclass"}
+              </h1>
 
-        {/* ── Main content ── */}
-        {!error && (
-          <div
-            style={{
-              maxWidth: 1100,
-              margin: "0 auto",
-              padding: isMobile ? "16px 16px 40px" : "32px 20px",
-            }}
-          >
-            <div
-              className="demo-fade"
-              style={{
-                display: "grid",
-                gridTemplateColumns: isMobile ? "1fr" : "1fr minmax(0, 360px)",
-                gap: isMobile ? 24 : 32,
-                alignItems: "start",
-              }}
-            >
-              {/* ── LEFT column ── */}
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: isMobile ? 20 : 28,
-                }}
-              >
-                {/* Title block */}
-                {loading ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 12,
-                    }}
-                  >
-                    <Sk w="60%" h={12} />
-                    <Sk w="90%" h={36} r={10} />
-                    <Sk w="70%" h={16} />
-                  </div>
-                ) : (
-                  <div>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 8,
-                        flexWrap: "wrap",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          padding: "3px 10px",
-                          borderRadius: 20,
-                          background: `${levelColor[course.level] ?? "#818cf8"}18`,
-                          color: levelColor[course.level] ?? "#818cf8",
-                          border: `1px solid ${levelColor[course.level] ?? "#818cf8"}30`,
-                        }}
-                      >
-                        {course.level}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          padding: "3px 10px",
-                          borderRadius: 20,
-                          background: "#1e293b",
-                          color: "#94a3b8",
-                        }}
-                      >
-                        {tText(course.category)}
-                      </span>
-                    </div>
+              <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+                {course?.summary ||
+                  `Master all key topics and score top grades with comprehensive video lessons, study notes, and direct educator guidance.`}
+              </p>
 
-                    <h1
-                      style={{
-                        fontSize: isMobile ? 24 : "clamp(24px,4vw,38px)",
-                        fontWeight: 800,
-                        color: "#f1f5f9",
-                        lineHeight: 1.25,
-                        marginBottom: 12,
-                      }}
-                    >
-                      {tText(course.title)}
-                    </h1>
-                    <p
-                      style={{
-                        color: "#94a3b8",
-                        fontSize: isMobile ? 14 : 15,
-                        lineHeight: 1.7,
-                      }}
-                    >
-                      {course.summary}
-                    </p>
+              {/* Udemy Badges Row */}
+              <div className="flex items-center gap-2.5 flex-wrap text-xs pt-1">
+                <span className="px-2.5 py-1 rounded-md bg-amber-400 text-slate-950 font-black text-[11px] uppercase tracking-wider shadow-sm">
+                  Bestseller
+                </span>
 
-                    {/* Stats row — wraps naturally on mobile */}
-                    <div
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: isMobile ? 12 : 20,
-                        marginTop: 16,
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                        }}
-                      >
-                        <div style={{ display: "flex" }}>
-                          {stars(course.ratingAverage)}
-                        </div>
-                        <span
-                          style={{
-                            fontSize: 13,
-                            fontWeight: 700,
-                            color: "#fbbf24",
-                          }}
-                        >
-                          {course.ratingAverage?.toFixed(1) || "New"}
-                        </span>
-                        <span style={{ fontSize: 12, color: "#64748b" }}>
-                          {t("demo.reviewsCount", {
-                            count: course.reviewCount ?? 0,
-                          })}
-                        </span>
-                      </div>
-                      <span style={{ fontSize: 13, color: "#64748b" }}>
-                        {t("demo.studentsCount", {
-                          count: course.enrolledCount ?? 0,
-                        })}
-                      </span>
-                      {course.lessonCount > 0 && (
-                        <span style={{ fontSize: 13, color: "#64748b" }}>
-                          📚{" "}
-                          {t("demo.lessonsCount", {
-                            count: course.lessonCount,
-                          })}
-                        </span>
-                      )}
-                      {course.durationHours > 0 && (
-                        <span style={{ fontSize: 13, color: "#64748b" }}>
-                          {t("demo.hoursTotal", {
-                            count: course.durationHours,
-                          })}
-                        </span>
-                      )}
-                      {course.notes?.length > 0 && (
-                        <span style={{ fontSize: 13, color: "#64748b" }}>
-                          📄 {course.notes.length} note
-                          {course.notes.length === 1 ? "" : "s"}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Instructor */}
-                    {course.instructor && (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          marginTop: 16,
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: "50%",
-                            background:
-                              "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: 14,
-                            fontWeight: 700,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {course.instructor.name?.charAt(0) ?? "I"}
-                        </div>
-                        <div>
-                          <p style={{ fontSize: 12, color: "#64748b" }}>
-                            {t("demo.instructor")}
-                          </p>
-                          <p
-                            style={{
-                              fontSize: 14,
-                              fontWeight: 600,
-                              color: "#e2e8f0",
-                            }}
-                          >
-                            {course.instructor.name}
-                          </p>
-                          {course.instructor.avgRating !== undefined && (
-                            <p style={{ fontSize: 12, color: course.instructor.avgRating ? "#fbbf24" : "#64748b", marginTop: 2 }}>
-                              {course.instructor.avgRating
-                                ? `★ ${course.instructor.avgRating} (${course.instructor.ratingCount} ${course.instructor.ratingCount === 1 ? 'review' : 'reviews'})`
-                                : "No ratings yet"}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* ── Enroll card — MOBILE ONLY (sits between title and video) ── */}
-                {isMobile && <EnrollCard {...enrollCardProps} />}
-
-                {/* Video player */}
-                {loading ? (
-                  <div
-                    style={{
-                      aspectRatio: "16/9",
-                      background: "#1e293b",
-                      borderRadius: 20,
-                    }}
-                  />
-                ) : course.demoVideoUrl ? (
-                  <div ref={videoSectionRef}>
-                    <p
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: "#818cf8",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.1em",
-                        marginBottom: 10,
-                      }}
-                    >
-                      {t("demo.preview")}
-                    </p>
-                    <VideoPlayer
-                      url={course.demoVideoUrl}
-                      poster={course.thumbnailUrl}
-                    />
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      borderRadius: 20,
-                      overflow: "hidden",
-                      aspectRatio: "16/9",
-                      background: "#111827",
-                      border: "1px dashed #334155",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 10,
-                    }}
-                  >
-                    {course.thumbnailUrl ? (
-                      <img
-                        src={course.thumbnailUrl}
-                        alt={course.title}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    ) : (
-                      <>
-                        <span style={{ fontSize: 40 }}>🎓</span>
-                        <p style={{ color: "#475569", fontSize: 13 }}>
-                          {t("demo.noDemoVideo")}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* Description */}
-                {!loading && course.description && (
-                  <div
-                    style={{
-                      background: "#111827",
-                      border: "1px solid #1e293b",
-                      borderRadius: 18,
-                      padding: isMobile ? "18px 16px" : "22px 24px",
-                    }}
-                  >
-                    <h3
-                      style={{
-                        fontSize: 16,
-                        fontWeight: 700,
-                        color: "#f1f5f9",
-                        marginBottom: 12,
-                      }}
-                    >
-                      {t("demo.about")}
-                    </h3>
-                    <p
-                      style={{
-                        color: "#94a3b8",
-                        fontSize: 14,
-                        lineHeight: 1.8,
-                        whiteSpace: "pre-wrap",
-                      }}
-                    >
-                      {course.description}
-                    </p>
-                  </div>
-                )}
-
-                {/* Notes — count/titles always visible as a selling point;
-                    actual files only download-able once the user has access
-                    (enrolled or admin/staff), same pattern as the locked
-                    curriculum list below. */}
-                {!loading && course.notes?.length > 0 && (
-                  <div
-                    style={{
-                      background: "#111827",
-                      border: "1px solid #1e293b",
-                      borderRadius: 18,
-                      padding: isMobile ? "18px 16px" : "22px 24px",
-                    }}
-                  >
-                    <h3
-                      style={{
-                        fontSize: 16,
-                        fontWeight: 700,
-                        color: "#f1f5f9",
-                        marginBottom: 4,
-                      }}
-                    >
-                      📄 Study Notes & Materials{" "}
-                      <span
-                        style={{
-                          color: "#64748b",
-                          fontWeight: 400,
-                          fontSize: 13,
-                        }}
-                      >
-                        ({course.notes.length})
-                      </span>
-                    </h3>
-                    {!canAccess && (
-                      <p
-                        style={{
-                          fontSize: 12,
-                          color: "#64748b",
-                          marginBottom: 14,
-                        }}
-                      >
-                        Included with enrollment — unlock by joining the course.
-                      </p>
-                    )}
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 10,
-                        marginTop: canAccess ? 14 : 0,
-                      }}
-                    >
-                      {course.notes.map((note) => (
-                        <div
-                          key={note._id || note.title}
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            gap: 10,
-                            padding: "10px 12px",
-                            background: "#0d1526",
-                            borderRadius: 12,
-                            border: "1px solid #1e293b",
-                          }}
-                        >
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p
-                              style={{
-                                fontSize: 13,
-                                fontWeight: 700,
-                                color: "#e2e8f0",
-                              }}
-                            >
-                              {tText(note.title)}
-                            </p>
-                            {note.description && (
-                              <p
-                                style={{
-                                  fontSize: 11,
-                                  color: "#64748b",
-                                  marginTop: 2,
-                                }}
-                              >
-                                {note.description}
-                              </p>
-                            )}
-                          </div>
-                          {canAccess ? (
-                            <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                              <button
-                                type="button"
-                                onClick={() => setActiveModalNote(note)}
-                                style={{
-                                  padding: "7px 14px",
-                                  background: "linear-gradient(135deg,#0d9488,#059669)",
-                                  color: "#fff",
-                                  borderRadius: 8,
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  border: "none",
-                                  cursor: "pointer",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                View
-                              </button>
-                            </div>
-                          ) : (
-                            <span
-                              style={{
-                                fontSize: 13,
-                                color: "#475569",
-                                flexShrink: 0,
-                              }}
-                              title="Enroll to unlock"
-                            >
-                              🔒
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Lesson list */}
-                {!loading && course.lessons?.length > 0 && (
-                  <div
-                    style={{
-                      background: "#111827",
-                      border: "1px solid #1e293b",
-                      borderRadius: 18,
-                      padding: isMobile ? "18px 16px" : "22px 24px",
-                    }}
-                  >
-                    <h3
-                      style={{
-                        fontSize: 16,
-                        fontWeight: 700,
-                        color: "#f1f5f9",
-                        marginBottom: 16,
-                      }}
-                    >
-                      {t("demo.curriculum")}{" "}
-                      <span
-                        style={{
-                          color: "#64748b",
-                          fontWeight: 400,
-                          fontSize: 13,
-                        }}
-                      >
-                        (
-                        {t("demo.lessonsCount", {
-                          count: course.lessons.length,
-                        })}
-                        )
-                      </span>
-                    </h3>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 8,
-                      }}
-                    >
-                      {(() => {
-                        const isBulkCourse =
-                          (course.lessons ?? []).some((l) => l.subject) ||
-                          (course.notes ?? []).some((n) => n.subject) ||
-                          (course.subjectQuizzes ?? []).length > 0;
-
-                        const subjects = isBulkCourse
-                          ? Array.from(new Set((course.lessons ?? []).map((l) => l.subject).filter(Boolean))).map((subj) => ({
-                              name: subj,
-                              lessons: (course.lessons ?? []).map((l, i) => ({ ...l, _globalIndex: i })).filter((l) => l.subject === subj)
-                            }))
-                          : [
-                              {
-                                name: "",
-                                lessons: (course.lessons ?? []).map((l, i) => ({ ...l, _globalIndex: i }))
-                              }
-                            ];
-
-                        return subjects.map((subj, sIdx) => (
-                          <div key={sIdx} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                            {subj.name && (
-                              <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", padding: "8px 12px", background: "#1e293b", borderRadius: "8px", border: "1px solid #334155" }}>
-                                {tText(subj.name)}
-                              </div>
-                            )}
-                            <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: subj.name ? "4px 0 0 0" : "0" }}>
-                              {subj.lessons.map((lesson) => (
-                                <div
-                                  key={lesson._globalIndex}
-                                  className="lesson-row"
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 10,
-                                    padding: "10px 10px",
-                                    borderRadius: 10,
-                                    transition: "background 0.15s",
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      width: 28,
-                                      height: 28,
-                                      borderRadius: 8,
-                                      background: "#1e293b",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      fontSize: 11,
-                                      fontWeight: 700,
-                                      color: "#64748b",
-                                      flexShrink: 0,
-                                    }}
-                                  >
-                                    {lesson._globalIndex + 1}
-                                  </div>
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                      <p
-                                        style={{
-                                          fontSize: 13,
-                                          fontWeight: 600,
-                                          color: "#e2e8f0",
-                                          whiteSpace: "nowrap",
-                                          overflow: "hidden",
-                                          textOverflow: "ellipsis",
-                                        }}
-                                      >
-                                        {tText(lesson.title)}
-                                      </p>
-                                      {lesson.videoType === "animated_video" && (
-                                        <span
-                                          style={{
-                                            fontSize: 9,
-                                            fontWeight: 800,
-                                            padding: "2px 6px",
-                                            borderRadius: 4,
-                                            background: "linear-gradient(135deg, #7c3aed, #ec4899)",
-                                            color: "#ffffff",
-                                            whiteSpace: "nowrap",
-                                            flexShrink: 0,
-                                          }}
-                                        >
-                                          ✨ Animated Video
-                                        </span>
-                                      )}
-                                    </div>
-                                    {lesson.description && (
-                                      <p
-                                        style={{
-                                          fontSize: 11,
-                                          color: "#64748b",
-                                          marginTop: 2,
-                                          whiteSpace: "nowrap",
-                                          overflow: "hidden",
-                                          textOverflow: "ellipsis",
-                                        }}
-                                      >
-                                        {lesson.description}
-                                      </p>
-                                    )}
-                                  </div>
-                                  {lesson.durationMinutes > 0 && (
-                                    <span
-                                      style={{
-                                        fontSize: 11,
-                                        color: "#64748b",
-                                        flexShrink: 0,
-                                      }}
-                                    >
-                                      {fmt(lesson.durationMinutes)}
-                                    </span>
-                                  )}
-                                  <span
-                                    style={{
-                                      fontSize: 10,
-                                      color: "#475569",
-                                      flexShrink: 0,
-                                    }}
-                                  >
-                                    🔒
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ));
-                      })()}
-                    </div>
-                  </div>
-                )}
-
-                {/* Tags */}
-                {!loading && course.tags?.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {course.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          padding: "4px 12px",
-                          borderRadius: 20,
-                          background: "#1e293b",
-                          color: "#64748b",
-                          border: "1px solid #334155",
-                        }}
-                      >
-                        #{tag}
-                      </span>
+                <div className="flex items-center gap-1 text-amber-400 font-bold">
+                  <span>{ratingVal}</span>
+                  <div className="flex items-center text-amber-400">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} size={13} className="fill-amber-400" />
                     ))}
+                  </div>
+                </div>
+
+                <span className="text-indigo-400 hover:underline cursor-pointer">
+                  ({reviewsCount.toLocaleString()} ratings)
+                </span>
+
+                <span className="text-slate-400 font-medium">
+                  {studentsCount.toLocaleString()} students
+                </span>
+              </div>
+
+              {/* Created by Instructor */}
+              <div className="text-xs text-slate-300 flex items-center gap-1.5">
+                <span>Created by</span>
+                {course?.instructor?._id || course?.instructorId ? (
+                  <Link
+                    to={`/instructors/${course?.instructor?._id || course?.instructorId}`}
+                    className="text-indigo-400 hover:text-indigo-300 font-bold underline"
+                  >
+                    {aiDetails.instructorName}
+                  </Link>
+                ) : (
+                  <span className="text-indigo-400 font-bold">
+                    {aiDetails.instructorName}
+                  </span>
+                )}
+              </div>
+
+              {/* Metadata tags */}
+              <div className="flex items-center gap-4 flex-wrap text-xs text-slate-400 pt-1">
+                <div className="flex items-center gap-1.5">
+                  <Calendar size={14} className="text-slate-500" />
+                  <span>Last updated 2026</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Globe size={14} className="text-slate-500" />
+                  <span>{course?.language || "English / Hindi"}</span>
+                </div>
+                {course?.notes?.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <FileText size={14} className="text-emerald-400" />
+                    <span className="text-emerald-300 font-semibold">
+                      {course.notes.length} Study Notes included
+                    </span>
                   </div>
                 )}
               </div>
 
-              {/* ── RIGHT: sticky enroll card — DESKTOP ONLY ── */}
-              {!isMobile && (
-                <div style={{ position: "sticky", top: 80 }}>
-                  <EnrollCard {...enrollCardProps} />
+              {/* Udemy Plan Banner */}
+              <div className="mt-2 p-3.5 rounded-xl bg-gradient-to-r from-purple-950/60 to-indigo-950/60 border border-purple-500/30 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-300 shrink-0">
+                    <Sparkles size={16} />
+                  </div>
+                  <div className="text-xs text-slate-200">
+                    <span className="font-bold text-white">Academy Personal Plan:</span>{" "}
+                    Access all top-rated courses with 1 simple monthly subscription.
+                  </div>
                 </div>
-              )}
+                <Link
+                  to="/student-dashboard/plans"
+                  className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shrink-0 transition"
+                >
+                  View Plans
+                </Link>
+              </div>
+            </div>
+
+            {/* Mobile-only purchase card */}
+            <div className="lg:hidden mt-4">
+              <UdemyPurchaseCard {...purchaseCardProps} />
             </div>
           </div>
-        )}
+        </div>
+      </div>
+
+      {/* ── 2. Main Page Layout (Body + Sticky Sidebar) ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Content Column (65% width on desktop) */}
+          <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-8">
+            {/* ── 2.1 "What you'll learn" Box (Udemy Exact Style) ── */}
+            <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-4">
+                What you'll learn
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-slate-300">
+                {aiDetails.whatYouWillLearn.map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-2.5 leading-snug">
+                    <Check size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── 2.2 Course Content / Curriculum Accordion ── */}
+            <div>
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-white">
+                    Course content
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {curriculumSections.length} sections • {totalLessons} lectures • {totalDuration} total length
+                  </p>
+                </div>
+                <button
+                  onClick={toggleAllSections}
+                  className="text-xs font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer"
+                >
+                  {curriculumSections.every((s) => expandedSections[s.id])
+                    ? "Collapse all sections"
+                    : "Expand all sections"}
+                </button>
+              </div>
+
+              {/* Sections Accordion */}
+              <div className="border border-slate-800 rounded-xl overflow-hidden divide-y divide-slate-800 bg-slate-900/40">
+                {curriculumSections.map((section) => {
+                  const isOpen = Boolean(expandedSections[section.id]);
+                  return (
+                    <div key={section.id} className="transition">
+                      <button
+                        onClick={() =>
+                          setExpandedSections((prev) => ({
+                            ...prev,
+                            [section.id]: !isOpen,
+                          }))
+                        }
+                        className="w-full px-4 py-3.5 bg-slate-900/80 hover:bg-slate-800/60 flex items-center justify-between gap-3 text-left transition cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {isOpen ? (
+                            <ChevronUp size={16} className="text-slate-400 shrink-0" />
+                          ) : (
+                            <ChevronDown size={16} className="text-slate-400 shrink-0" />
+                          )}
+                          <span className="text-xs sm:text-sm font-bold text-white truncate">
+                            {tText(section.title)}
+                          </span>
+                        </div>
+                        <span className="text-xs text-slate-400 font-medium shrink-0">
+                          {section.lessons.length} lectures
+                        </span>
+                      </button>
+
+                      {isOpen && (
+                        <div className="px-4 py-2 divide-y divide-slate-800/60 bg-slate-950/40">
+                          {section.lessons.map((lesson) => (
+                            <div
+                              key={lesson._globalIndex}
+                              className="py-2.5 flex items-center justify-between gap-3 text-xs text-slate-300"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <Play size={13} className="text-slate-500 shrink-0" />
+                                <span className="truncate font-medium text-slate-200">
+                                  {tText(lesson.title)}
+                                </span>
+                                {lesson.videoType === "animated_video" && (
+                                  <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-purple-600/30 text-purple-300 border border-purple-500/30 shrink-0">
+                                    ✨ Animated
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3 shrink-0">
+                                {canAccess ? (
+                                  <span className="text-emerald-400 font-semibold text-[11px]">
+                                    Unlocked
+                                  </span>
+                                ) : (
+                                  <Lock size={12} className="text-slate-500" />
+                                )}
+                                {lesson.durationMinutes > 0 && (
+                                  <span className="text-slate-500 text-[11px]">
+                                    {fmt(lesson.durationMinutes)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── 2.3 Study Notes & Materials ── */}
+            {course?.notes?.length > 0 && (
+              <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                    <FileText size={18} className="text-indigo-400" />
+                    <span>Study Notes & Revision Materials ({course.notes.length})</span>
+                  </h2>
+                </div>
+                <div className="flex flex-col gap-2 mt-3">
+                  {course.notes.map((note) => (
+                    <div
+                      key={note._id || note.title}
+                      className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm font-bold text-slate-200 truncate">
+                          {tText(note.title)}
+                        </p>
+                        {note.description && (
+                          <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                            {note.description}
+                          </p>
+                        )}
+                      </div>
+                      {canAccess ? (
+                        <button
+                          type="button"
+                          onClick={() => setActiveModalNote(note)}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shrink-0 transition cursor-pointer"
+                        >
+                          View Note
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-500 shrink-0 flex items-center gap-1">
+                          <Lock size={12} />
+                          <span>Locked</span>
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── 2.4 Requirements (Udemy Exact Style) ── */}
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-3">
+                Requirements
+              </h2>
+              <ul className="list-disc list-inside flex flex-col gap-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                {aiDetails.requirements.map((req, idx) => (
+                  <li key={idx}>{req}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* ── 2.5 Description (With Show More Toggle) ── */}
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-3">
+                Description
+              </h2>
+              <div
+                className={`text-xs sm:text-sm text-slate-300 leading-relaxed whitespace-pre-line relative ${
+                  !showFullDesc ? "max-h-48 overflow-hidden" : ""
+                }`}
+              >
+                {aiDetails.description}
+                {!showFullDesc && (
+                  <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#0b1120] to-transparent pointer-events-none" />
+                )}
+              </div>
+              <button
+                onClick={() => setShowFullDesc(!showFullDesc)}
+                className="mt-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
+              >
+                <span>{showFullDesc ? "Show less" : "Show more"}</span>
+                {showFullDesc ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+            </div>
+
+            {/* ── 2.6 Instructor Section (Udemy Exact Style) ── */}
+            <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-4">
+                Instructor
+              </h2>
+
+              <div className="flex flex-col gap-3">
+                <div>
+                  <h3 className="text-base font-bold text-indigo-400">
+                    {aiDetails.instructorName}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Lead Faculty & Subject Expert • Umang Vision Academy
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4 flex-wrap text-xs text-slate-300">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold ring-2 ring-indigo-500/40">
+                    {course?.instructor?.avatarUrl ? (
+                      <img
+                        src={course.instructor.avatarUrl}
+                        alt={aiDetails.instructorName}
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    ) : (
+                      aiDetails.instructorName.charAt(0)
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1 text-xs">
+                    <div className="flex items-center gap-1.5 text-slate-300">
+                      <Star size={13} className="fill-amber-400 text-amber-400" />
+                      <span>4.8 Instructor Rating</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-slate-300">
+                      <MessageSquare size={13} className="text-slate-400" />
+                      <span>{(reviewsCount * 2).toLocaleString()} Reviews</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-slate-300">
+                      <Users size={13} className="text-slate-400" />
+                      <span>{(studentsCount * 3).toLocaleString()} Students</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-slate-300">
+                      <GraduationCap size={13} className="text-slate-400" />
+                      <span>8 Courses</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className={`text-xs sm:text-sm text-slate-300 leading-relaxed mt-2 whitespace-pre-line relative ${
+                    !showFullBio ? "max-h-24 overflow-hidden" : ""
+                  }`}
+                >
+                  {aiDetails.instructorBio}
+                  {!showFullBio && (
+                    <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none" />
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setShowFullBio(!showFullBio)}
+                  className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 self-start cursor-pointer"
+                >
+                  <span>{showFullBio ? "Show less" : "Show more"}</span>
+                  {showFullBio ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+              </div>
+            </div>
+
+            {/* ── 2.7 Student Feedback & Reviews ── */}
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-4">
+                ★ {ratingVal} course rating • {reviewsCount.toLocaleString()} ratings
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  {
+                    name: "Muhammad Aitisam",
+                    date: "7 days ago",
+                    comment:
+                      "Phenomenal course! The explanations are crystal clear and the study notes made revision effortless before my exams.",
+                  },
+                  {
+                    name: "Ananya Sharma",
+                    date: "2 weeks ago",
+                    comment:
+                      "Best coaching platform! The 1-on-1 doubt solving with faculty helped me crack all difficult problems.",
+                  },
+                ].map((rev, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-2"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-slate-700 text-white font-bold text-xs flex items-center justify-center">
+                        {rev.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-white">{rev.name}</p>
+                        <div className="flex items-center gap-1 text-amber-400">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} size={10} className="fill-amber-400" />
+                          ))}
+                          <span className="text-[10px] text-slate-500 ml-1">
+                            {rev.date}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {rev.comment}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Right Desktop Sticky Purchase Sidebar ── */}
+          <div className="hidden lg:block lg:col-span-5 xl:col-span-4 sticky top-24">
+            <UdemyPurchaseCard {...purchaseCardProps} />
+          </div>
+        </div>
       </div>
 
       <NoteViewerModal
@@ -1537,6 +1192,6 @@ export default function CourseDemo() {
         isOpen={Boolean(activeModalNote)}
         onClose={() => setActiveModalNote(null)}
       />
-    </>
+    </div>
   );
 }

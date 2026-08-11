@@ -95,24 +95,15 @@ const CourseCard = ({ course }) => {
           </div>
         )}
 
-        {/* Floating Top-Left Badge (Udemy Style: Premium / Enrolled / Free) */}
-        <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 pointer-events-none">
-          {isEnrolled ? (
+        {/* Floating Top-Left Badge (Only show Enrolled if enrolled) */}
+        {isEnrolled && (
+          <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 pointer-events-none">
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-indigo-600/90 text-white text-[10px] sm:text-[11px] font-bold shadow-md backdrop-blur-md border border-indigo-400/30">
               <CheckCircle2 size={11} className="text-emerald-300" />
               <span>{t("exploreCourses.enrolled", "Enrolled")}</span>
             </span>
-          ) : rawPriceNum > 0 ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-gradient-to-r from-purple-600/90 to-indigo-600/90 text-white text-[10px] sm:text-[11px] font-extrabold shadow-md backdrop-blur-md border border-purple-400/30">
-              <Sparkles size={11} className="text-yellow-300 animate-pulse" />
-              <span>Premium</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-600/90 text-white text-[10px] sm:text-[11px] font-extrabold shadow-md backdrop-blur-md border border-emerald-400/30">
-              <span>Free</span>
-            </span>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Floating Top-Right Class / Board Badge */}
         {(course.category || course.board) && (
@@ -136,26 +127,22 @@ const CourseCard = ({ course }) => {
           </h3>
 
           {/* Instructor & View Instructor */}
-          <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
+          <div className="mt-1 flex items-center justify-between text-xs">
+            <span
+              className="text-slate-300 truncate max-w-[140px] sm:max-w-[160px] font-medium"
+              title={course.instructor}
+            >
+              {course.instructor || "Lead Instructor"}
+            </span>
             {course.instructorId ? (
               <Link
                 to={`/instructors/${course.instructorId}`}
                 onClick={(e) => e.stopPropagation()}
-                className="text-slate-400 hover:text-indigo-400 hover:underline truncate max-w-[170px]"
-                title={course.instructor}
+                className="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 hover:underline shrink-0 ml-1 cursor-pointer"
               >
-                {course.instructor || "Lead Instructor"}
+                {t("courseCard.viewInstructor", "View Instructor")}
               </Link>
-            ) : (
-              <span className="truncate max-w-[170px]">
-                {course.instructor || "Lead Instructor"}
-              </span>
-            )}
-            {course.board && course.category && (
-              <span className="text-[10px] font-semibold text-slate-500 shrink-0 ml-1">
-                {course.board}
-              </span>
-            )}
+            ) : null}
           </div>
 
           {/* Ratings & Badge Row (Udemy style) */}
