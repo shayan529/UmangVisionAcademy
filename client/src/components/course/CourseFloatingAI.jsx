@@ -25,7 +25,7 @@ const escapeHtml = (str) =>
 
 const inlineFormat = (line) =>
   escapeHtml(line)
-    .replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 rounded bg-black/30 text-cyan-300 text-[0.85em]">$1</code>')
+    .replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 rounded bg-black/30 text-teal-300 text-[0.85em]">$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-white">$1</strong>')
     .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em class="italic text-slate-300">$1</em>');
 
@@ -72,7 +72,7 @@ function TypingDots() {
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className="w-1.5 h-1.5 rounded-full bg-cyan-400 motion-safe:animate-bounce"
+          className="w-1.5 h-1.5 rounded-full bg-teal-400 motion-safe:animate-bounce"
           style={{ animationDelay: `${i * 0.12}s` }}
         />
       ))}
@@ -93,11 +93,11 @@ function CopyButton({ value }) {
           setTimeout(() => setCopied(false), 1500);
         } catch { }
       }}
-      className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-1 rounded-md text-slate-400 hover:text-cyan-300 hover:bg-white/10"
+      className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-1 rounded-md text-slate-400 hover:text-teal-300 hover:bg-white/10"
       title="Copy response"
       aria-label="Copy response"
     >
-      {copied ? <Check size={12} className="text-cyan-400" /> : <Copy size={12} />}
+      {copied ? <Check size={12} className="text-teal-400" /> : <Copy size={12} />}
     </button>
   );
 }
@@ -113,64 +113,66 @@ const getClientCoords = (e) => {
 };
 
 // ── RobotAvatar Helper ────────────────────────────────────────────────────────
+// Signature mark: a teal-to-amber "spark" gradient — the same warm/cool
+// pairing used on the composer's send button — ties the mascot to the action.
 function RobotAvatar({ size = "md", className = "" }) {
   if (size === "lg") {
     return (
       <div className={`relative flex items-center justify-center select-none ${className}`}>
         {/* Glow backdrop */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-500/40 via-indigo-500/40 to-purple-500/40 blur-xl animate-pulse" />
+        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-teal-500/40 via-emerald-500/30 to-amber-400/30 blur-xl animate-pulse" />
 
-        {/* 3D Holographic Futuristic Robot SVG */}
+        {/* Studio-lamp style bot: teal circuitry, warm amber core */}
         <div className="relative z-10 w-16 h-16 sm:w-36 sm:h-36 flex items-center justify-center">
-          <svg viewBox="0 0 120 120" className="w-full h-full filter drop-shadow-[0_0_20px_rgba(6,182,212,0.7)] drop-shadow-[0_8px_25px_rgba(168,85,247,0.5)]">
+          <svg viewBox="0 0 120 120" className="w-full h-full filter drop-shadow-[0_0_20px_rgba(20,184,166,0.65)] drop-shadow-[0_8px_25px_rgba(245,158,11,0.35)]">
             <defs>
               <linearGradient id="botGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#38bdf8" />
-                <stop offset="50%" stopColor="#818cf8" />
-                <stop offset="100%" stopColor="#c084fc" />
+                <stop offset="0%" stopColor="#2dd4bf" />
+                <stop offset="55%" stopColor="#34d399" />
+                <stop offset="100%" stopColor="#fbbf24" />
               </linearGradient>
               <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#1e293b" />
-                <stop offset="100%" stopColor="#0b1324" />
+                <stop offset="0%" stopColor="#132420" />
+                <stop offset="100%" stopColor="#070d0b" />
               </linearGradient>
               <linearGradient id="visorGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#06b6d4" />
-                <stop offset="50%" stopColor="#22d3ee" />
-                <stop offset="100%" stopColor="#38bdf8" />
+                <stop offset="0%" stopColor="#0d9488" />
+                <stop offset="50%" stopColor="#2dd4bf" />
+                <stop offset="100%" stopColor="#5eead4" />
               </linearGradient>
               <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#22d3ee" stopOpacity="1" />
-                <stop offset="100%" stopColor="#0891b2" stopOpacity="0.2" />
+                <stop offset="0%" stopColor="#fbbf24" stopOpacity="1" />
+                <stop offset="100%" stopColor="#b45309" stopOpacity="0.15" />
               </radialGradient>
             </defs>
 
             {/* Antenna & Signal Beacon */}
             <line x1="60" y1="20" x2="60" y2="35" stroke="url(#botGrad)" strokeWidth="3" strokeLinecap="round" />
-            <circle cx="60" cy="16" r="5" fill="#22d3ee" className="animate-ping" style={{ transformOrigin: "60px 16px" }} />
-            <circle cx="60" cy="16" r="4" fill="#67e8f9" />
+            <circle cx="60" cy="16" r="5" fill="#2dd4bf" className="animate-ping" style={{ transformOrigin: "60px 16px" }} />
+            <circle cx="60" cy="16" r="4" fill="#99f6e4" />
 
             {/* Robot Head Outer Shell */}
             <rect x="30" y="32" width="60" height="46" rx="16" fill="url(#bodyGrad)" stroke="url(#botGrad)" strokeWidth="2.5" />
 
             {/* Ear Caps */}
-            <rect x="22" y="46" width="8" height="18" rx="4" fill="#334155" stroke="#38bdf8" strokeWidth="1.5" />
-            <rect x="90" y="46" width="8" height="18" rx="4" fill="#334155" stroke="#38bdf8" strokeWidth="1.5" />
+            <rect x="22" y="46" width="8" height="18" rx="4" fill="#1c2e29" stroke="#2dd4bf" strokeWidth="1.5" />
+            <rect x="90" y="46" width="8" height="18" rx="4" fill="#1c2e29" stroke="#2dd4bf" strokeWidth="1.5" />
 
             {/* Visor Screen */}
-            <rect x="38" y="42" width="44" height="22" rx="10" fill="#090d16" stroke="#1e293b" strokeWidth="1.5" />
-            <rect x="40" y="44" width="40" height="18" rx="8" fill="url(#visorGrad)" opacity="0.18" />
+            <rect x="38" y="42" width="44" height="22" rx="10" fill="#050b09" stroke="#132420" strokeWidth="1.5" />
+            <rect x="40" y="44" width="40" height="18" rx="8" fill="url(#visorGrad)" opacity="0.2" />
 
             {/* Glowing Eyes */}
-            <circle cx="50" cy="53" r="4.5" fill="#22d3ee" className="animate-pulse" />
+            <circle cx="50" cy="53" r="4.5" fill="#2dd4bf" className="animate-pulse" />
             <circle cx="50" cy="53" r="2" fill="#ffffff" />
-            <circle cx="70" cy="53" r="4.5" fill="#22d3ee" className="animate-pulse" />
+            <circle cx="70" cy="53" r="4.5" fill="#2dd4bf" className="animate-pulse" />
             <circle cx="70" cy="53" r="2" fill="#ffffff" />
 
             {/* Mouth / Speaker Grill */}
-            <line x1="52" y1="67" x2="68" y2="67" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+            <line x1="52" y1="67" x2="68" y2="67" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
 
             {/* Robot Neck */}
-            <rect x="52" y="78" width="16" height="8" rx="2" fill="#334155" />
+            <rect x="52" y="78" width="16" height="8" rx="2" fill="#1c2e29" />
 
             {/* Robot Chest & Core Power Orb */}
             <path d="M 32 86 Q 60 82 88 86 L 82 108 Q 60 112 38 108 Z" fill="url(#bodyGrad)" stroke="url(#botGrad)" strokeWidth="2" />
@@ -180,17 +182,17 @@ function RobotAvatar({ size = "md", className = "" }) {
         </div>
 
         {/* Online Status Dot */}
-        <span className="absolute top-1 right-1 sm:top-2 sm:right-2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-cyan-300 ring-2 ring-[#0a1222] motion-safe:animate-ping pointer-events-none z-20" />
-        <span className="absolute top-1 right-1 sm:top-2 sm:right-2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-cyan-400 ring-2 ring-[#0a1222] pointer-events-none z-20" />
+        <span className="absolute top-1 right-1 sm:top-2 sm:right-2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-teal-300 ring-2 ring-[#070d0b] motion-safe:animate-ping pointer-events-none z-20" />
+        <span className="absolute top-1 right-1 sm:top-2 sm:right-2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-teal-400 ring-2 ring-[#070d0b] pointer-events-none z-20" />
       </div>
     );
   }
 
   // Small/Medium icon for header & message bubbles
   return (
-    <div className={`relative flex items-center justify-center rounded-full bg-gradient-to-tr from-cyan-400 to-purple-600 p-0.5 shadow-sm border border-cyan-300/80 ${className}`}>
-      <div className="w-full h-full rounded-full bg-[#0d172a] flex items-center justify-center">
-        <Bot className={`${size === "sm" ? "w-4 h-4" : "w-5 h-5"} text-cyan-300`} />
+    <div className={`relative flex items-center justify-center rounded-full bg-gradient-to-tr from-teal-400 to-amber-500 p-0.5 shadow-sm border border-teal-300/80 ${className}`}>
+      <div className="w-full h-full rounded-full bg-[#0a1310] flex items-center justify-center">
+        <Bot className={`${size === "sm" ? "w-4 h-4" : "w-5 h-5"} text-teal-300`} />
       </div>
     </div>
   );
@@ -388,8 +390,8 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
 12. Settings & Class Switch: Profile updates, class selection (Class 9, Class 10, Class 11, Class 12, Competitive Exams), and account settings.
 
 ` + (isHindi
-        ? `RULE: Answer the student clearly in Hindi or Hinglish based on their language. Be encouraging, educational, concise, and helpful.`
-        : `RULE: Always match the user's language (English, Hindi, Hinglish, etc.). Be encouraging, educational, clear, and guide them on platform features.`);
+          ? `RULE: Answer the student clearly in Hindi or Hinglish based on their language. Be encouraging, educational, concise, and helpful.`
+          : `RULE: Always match the user's language (English, Hindi, Hinglish, etc.). Be encouraging, educational, clear, and guide them on platform features.`);
       return context;
     }
 
@@ -720,7 +722,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
             left: `${popoverPos.left}px`,
             zIndex: 99999,
           }}
-          className="motion-safe:animate-popIn flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-400 via-cyan-400 to-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-cyan-500/30 border border-cyan-200/40 cursor-pointer hover:scale-105 transition-all select-none"
+          className="motion-safe:animate-popIn flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-400 via-emerald-400 to-amber-400 text-slate-950 text-xs font-extrabold shadow-lg shadow-teal-500/30 border border-teal-200/40 cursor-pointer hover:scale-105 transition-all select-none"
           onMouseDown={(e) => e.preventDefault()}
           onTouchStart={(e) => e.preventDefault()}
           onClick={() => {
@@ -739,7 +741,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
             window.getSelection()?.removeAllRanges();
           }}
         >
-          <Sparkles size={14} className="text-sky-100" />
+          <Sparkles size={14} className="text-slate-900" />
           <span>{isHindi ? "AI से पूछें" : "Ask AI"}</span>
         </div>
       )}
@@ -758,12 +760,12 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="hidden sm:flex relative flex-col items-start px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl sm:rounded-br-none bg-gradient-to-r from-[#0d1e38]/95 via-[#132d54]/95 to-[#1c1440]/95 border-2 border-cyan-400/70 shadow-[0_10px_35px_rgba(6,182,212,0.45)] backdrop-blur-md hover:scale-105 transition-all text-left group-hover:border-cyan-300 cursor-pointer"
+            className="hidden sm:flex relative flex-col items-start px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl sm:rounded-br-none bg-gradient-to-r from-[#081512]/95 via-[#0b1e17]/95 to-[#0e1a10]/95 border-2 border-teal-400/60 shadow-[0_10px_35px_rgba(20,184,166,0.4)] backdrop-blur-md hover:scale-105 transition-all text-left group-hover:border-teal-300 cursor-pointer"
             title="Click to open AI chat"
           >
             <div className="flex items-center gap-1.5 mb-0.5">
-              <Sparkles size={13} className="text-yellow-300 animate-pulse" />
-              <span className="text-xs font-black text-cyan-200 uppercase tracking-wider">
+              <Sparkles size={13} className="text-amber-300 animate-pulse" />
+              <span className="font-mono-catalog text-xs font-black text-teal-200 uppercase tracking-wider">
                 {isHindi ? "AI से पूछें" : "Ask AI"}
               </span>
             </div>
@@ -776,10 +778,10 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
             </span>
 
             {/* Pointer tail pointing right to avatar (desktop only) */}
-            <div className="hidden sm:block absolute -right-2 bottom-3 w-0 h-0 border-t-[7px] border-t-transparent border-l-[10px] border-l-cyan-400/80 border-b-[7px] border-b-transparent" />
+            <div className="hidden sm:block absolute -right-2 bottom-3 w-0 h-0 border-t-[7px] border-t-transparent border-l-[10px] border-l-teal-400/70 border-b-[7px] border-b-transparent" />
           </button>
 
-          {/* Holographic 3D Robot Avatar — visible on both mobile & desktop */}
+          {/* Studio-mascot avatar — visible on both mobile & desktop */}
           <button
             type="button"
             onClick={() => setIsOpen(true)}
@@ -797,28 +799,28 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
         <div
           ref={chatCardRef}
           style={chatPos ? { left: `${chatPos.x}px`, top: `${chatPos.y}px`, right: "auto", bottom: "auto" } : {}}
-          className={`fixed z-50 w-[calc(100vw-2rem)] sm:w-[390px] lg:w-[420px] h-[540px] max-h-[80vh] flex flex-col bg-[#0b1424] border border-cyan-500/40 rounded-3xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden transition-shadow ${!chatPos ? "bottom-20 right-4 sm:bottom-6 sm:right-6" : ""
-            } ${isDraggingChat ? "ring-2 ring-cyan-400 shadow-[0_30px_90px_rgba(6,182,212,0.4)]" : "motion-safe:animate-popIn"}`}
+          className={`fixed z-50 w-[calc(100vw-2rem)] sm:w-[390px] lg:w-[420px] h-[540px] max-h-[80vh] flex flex-col bg-[#080f0c] border border-teal-500/30 rounded-3xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden transition-shadow ${!chatPos ? "bottom-20 right-4 sm:bottom-6 sm:right-6" : ""
+            } ${isDraggingChat ? "ring-2 ring-teal-400 shadow-[0_30px_90px_rgba(20,184,166,0.35)]" : "motion-safe:animate-popIn"}`}
         >
           {/* Header */}
           <div
             onPointerDown={handleChatHeaderPointerDown}
             onTouchStart={handleChatHeaderPointerDown}
-            className="p-3.5 bg-gradient-to-r from-sky-950 via-indigo-950 to-purple-950 border-b border-cyan-400/30 flex items-center justify-between shrink-0 shadow-sm touch-none cursor-grab active:cursor-grabbing select-none"
+            className="p-3.5 bg-gradient-to-r from-[#04120f] via-[#062018] to-[#0a1a12] border-b border-teal-400/25 flex items-center justify-between shrink-0 shadow-sm touch-none cursor-grab active:cursor-grabbing select-none"
             title="Drag to move across page"
           >
             <div className="flex items-center gap-2.5 min-w-0 pointer-events-none">
               <RobotAvatar size="md" className="w-9 h-9 shrink-0" />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <GripHorizontal size={14} className="text-cyan-400/70 shrink-0" />
-                  <h3 className="text-xs sm:text-sm font-black text-white truncate tracking-wide">
+                  <GripHorizontal size={14} className="text-teal-400/70 shrink-0" />
+                  <h3 className="font-display text-xs sm:text-sm font-semibold text-white truncate tracking-wide">
                     {course
                       ? (isHindi ? "Ask AI · AI कोर्स गाइड" : "Ask AI · Course AI Guide")
                       : (isHindi ? "Ask AI · AI एकेडमी गाइड" : "Ask AI · Academy AI Guide")}
                   </h3>
                 </div>
-                <p className="text-[10px] sm:text-[11px] text-cyan-300/90 truncate font-medium">
+                <p className="text-[10px] sm:text-[11px] text-teal-300/80 truncate font-medium">
                   {activeLesson?.title
                     ? `${activeLesson.title}`
                     : course?.title
@@ -860,7 +862,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
                     },
                   ]);
                 }}
-                className="p-1.5 text-slate-300 hover:text-white active:bg-cyan-500/30 rounded-lg hover:bg-cyan-500/20 transition-colors cursor-pointer"
+                className="p-1.5 text-slate-300 hover:text-white active:bg-teal-500/30 rounded-lg hover:bg-teal-500/20 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50"
                 title={isHindi ? "चैट साफ़ करें" : "Clear chat"}
               >
                 <RefreshCw size={14} />
@@ -875,7 +877,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
                   e.stopPropagation();
                   setIsOpen(false);
                 }}
-                className="p-1.5 text-slate-300 hover:text-white active:bg-rose-500/30 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                className="p-1.5 text-slate-300 hover:text-white active:bg-rose-500/30 rounded-lg hover:bg-white/10 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50"
                 title={isHindi ? "बंद करें" : "Close chat"}
               >
                 <X size={16} />
@@ -885,17 +887,17 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
 
           {/* Active video / note badge banner */}
           {activeLesson && (
-            <div className="px-3.5 py-1.5 bg-[#0e1b33] border-b border-cyan-500/20 flex items-center justify-between text-[11px] text-slate-300 shrink-0">
+            <div className="px-3.5 py-1.5 bg-[#08130f] border-b border-teal-500/15 flex items-center justify-between text-[11px] text-slate-300 shrink-0">
               <div className="flex items-center gap-1.5 truncate">
                 {activeLesson.type === "video" ? (
-                  <Video size={13} className="text-cyan-400 shrink-0" />
+                  <Video size={13} className="text-teal-400 shrink-0" />
                 ) : (
-                  <FileText size={13} className="text-sky-400 shrink-0" />
+                  <FileText size={13} className="text-emerald-400 shrink-0" />
                 )}
                 <span className="truncate font-medium">{activeLesson.title}</span>
               </div>
               {currentVideoPct > 0 && (
-                <span className="text-[10px] text-cyan-300 font-mono shrink-0 ml-2">
+                <span className="font-mono-catalog text-[10px] text-teal-300 shrink-0 ml-2">
                   {Math.round(currentVideoPct)}%
                 </span>
               )}
@@ -903,7 +905,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
           )}
 
           {/* Messages list */}
-          <div className="flex-1 overflow-y-auto p-3.5 space-y-3.5 custom-scrollbar bg-[#09101d]">
+          <div className="flex-1 overflow-y-auto p-3.5 space-y-3.5 custom-scrollbar bg-[#060a08]">
             {chatMessages.map((msg) => (
               <div
                 key={msg.id}
@@ -914,14 +916,14 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
                 )}
                 <div
                   className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm shadow-sm relative ${msg.role === "user"
-                    ? "bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 text-white rounded-br-none"
-                    : "bg-[#13213a] text-slate-200 border border-cyan-500/25 rounded-bl-none"
+                    ? "bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-br-none"
+                    : "bg-[#0e1815] text-slate-200 border border-teal-500/20 rounded-bl-none"
                     }`}
                 >
                   {msg.role === "assistant" && !msg.content ? (
                     <div className="flex items-center gap-2">
                       <TypingDots />
-                      <span className="text-[11px] text-cyan-300/80 font-medium">
+                      <span className="text-[11px] text-teal-300/80 font-medium">
                         {isHindi ? "विश्लेषण कर रहा है..." : "Thinking..."}
                       </span>
                     </div>
@@ -942,13 +944,13 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
 
           {/* Quick prompts suggestions (if few messages) */}
           {chatMessages.length <= 2 && !isAiLoading && (
-            <div className="px-3 py-2 bg-[#0e192e] border-t border-cyan-500/20 flex flex-wrap gap-1.5 shrink-0">
+            <div className="px-3 py-2 bg-[#08130f] border-t border-teal-500/15 flex flex-wrap gap-1.5 shrink-0">
               {quickPrompts.map((qp, idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={() => handleSendMessage(qp)}
-                  className="text-[11px] bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 hover:border-cyan-400/60 text-cyan-300 px-2.5 py-1 rounded-full text-left transition-colors truncate max-w-full font-medium"
+                  className="text-[11px] bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 hover:border-teal-400/60 text-teal-300 px-2.5 py-1 rounded-full text-left transition-colors truncate max-w-full font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50"
                 >
                   ✨ {qp}
                 </button>
@@ -962,9 +964,9 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
               e.preventDefault();
               handleSendMessage();
             }}
-            className="p-3 bg-[#0d182b]/95 border-t border-cyan-500/25 shrink-0"
+            className="p-3 bg-[#070d0a]/95 border-t border-teal-500/20 shrink-0"
           >
-            <div className="flex items-end gap-2 bg-[#122340]/90 border border-cyan-500/40 rounded-2xl px-3.5 py-2 focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-400/40 shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all">
+            <div className="flex items-end gap-2 bg-[#0d1a16]/90 border border-teal-500/35 rounded-2xl px-3.5 py-2 focus-within:border-teal-400 focus-within:ring-2 focus-within:ring-teal-400/40 shadow-[0_0_15px_rgba(20,184,166,0.18)] transition-all">
               <textarea
                 ref={textareaRef}
                 rows={1}
@@ -982,7 +984,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
               <button
                 type="submit"
                 disabled={!inputQuery.trim() || isAiLoading}
-                className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-fuchsia-600 hover:from-cyan-300 hover:to-fuchsia-500 text-white flex items-center justify-center transition-all shadow-md shadow-cyan-500/30 disabled:opacity-30 disabled:cursor-not-allowed shrink-0 mb-0.5 hover:scale-105 active:scale-95"
+                className="w-8 h-8 rounded-full bg-gradient-to-r from-teal-400 via-emerald-500 to-amber-500 hover:from-teal-300 hover:to-amber-400 text-slate-950 flex items-center justify-center transition-all shadow-md shadow-teal-500/30 disabled:opacity-30 disabled:cursor-not-allowed shrink-0 mb-0.5 hover:scale-105 active:scale-95"
                 aria-label="Send message"
               >
                 <Send size={14} />
@@ -993,6 +995,15 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
       )}
 
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        .font-display {
+          font-family: 'Fraunces', ui-serif, Georgia, serif;
+        }
+        .font-mono-catalog {
+          font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+        }
+
         @keyframes cloudFloat {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
           50% { transform: translateY(-8px) rotate(1deg); }
@@ -1007,17 +1018,24 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
         }
         .motion-safe\\:animate-popIn { animation: popIn 0.15s ease-out; }
 
-        /* Light blue text selection styling across notes & course lessons */
+        @media (prefers-reduced-motion: reduce) {
+          .motion-safe\\:animate-cloudFloat,
+          .motion-safe\\:animate-popIn {
+            animation: none !important;
+          }
+        }
+
+        /* Light teal text selection styling across notes & course lessons */
         ::selection {
-          background-color: rgba(56, 189, 248, 0.45) !important;
+          background-color: rgba(45, 212, 191, 0.4) !important;
           color: inherit !important;
         }
         ::-moz-selection {
-          background-color: rgba(56, 189, 248, 0.45) !important;
+          background-color: rgba(45, 212, 191, 0.4) !important;
           color: inherit !important;
         }
         .pdf-text-layer span::selection {
-          background-color: rgba(56, 189, 248, 0.45) !important;
+          background-color: rgba(45, 212, 191, 0.4) !important;
           color: transparent !important;
         }
       `}</style>

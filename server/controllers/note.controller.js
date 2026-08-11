@@ -67,8 +67,17 @@ export const createNote = async (req, res) => {
     if (!fileUrl) {
       return res.status(400).json({ message: "fileUrl required" });
     }
-    if (!title) {
-      return res.status(400).json({ message: "title required" });
+
+    let finalTitle = title?.trim();
+    if (!finalTitle) {
+      const rawName = fileUrl.split("/").pop()?.split("?")[0] || "Untitled Note";
+      const cleanName = decodeURIComponent(rawName)
+        .replace(/\.[^/.]+$/, "")
+        .replace(/[-_]+/g, " ")
+        .trim();
+      finalTitle = cleanName
+        ? cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
+        : "Untitled Study Note";
     }
 
     if (courseId) {
@@ -81,8 +90,8 @@ export const createNote = async (req, res) => {
       }
 
       const newNote = {
-        title,
-        description,
+        title: finalTitle,
+        description: description || "",
         fileUrl,
         status: "pending",
         createdAt: new Date(),
@@ -115,8 +124,8 @@ export const createNote = async (req, res) => {
     }
 
     const note = await Note.create({
-      title,
-      description,
+      title: finalTitle,
+      description: description || "",
       fileUrl,
       instructor: noteInstructorId,
       instructorName: noteInstructorName,

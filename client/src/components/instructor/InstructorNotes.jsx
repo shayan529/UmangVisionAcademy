@@ -415,7 +415,11 @@ export default function InstructorNotes({ showToast }) {
           setUploadProgress(percentCompleted);
         },
       });
-      setForm((prev) => ({ ...prev, fileUrl: data.url }));
+      setForm((prev) => ({
+        ...prev,
+        fileUrl: data.url,
+        title: prev.title.trim() || cleanTitleFromFileName(file.name),
+      }));
       setUploadedFileName(file.name);
     } catch (error) {
       showToast?.("File upload failed");
@@ -434,18 +438,19 @@ export default function InstructorNotes({ showToast }) {
   };
 
   const handleCreate = async () => {
-    if (!form.title.trim()) {
-      showToast?.("Title is required");
-      return;
-    }
     if (!form.fileUrl) {
       showToast?.("A file is required");
       return;
     }
 
+    const payload = {
+      ...form,
+      title: form.title.trim() || cleanTitleFromFileName(uploadedFileName || form.fileUrl),
+    };
+
     try {
       setSaving(true);
-      const { data } = await api.post("/notes", form);
+      const { data } = await api.post("/notes", payload);
       setNotes([data, ...notes]);
       closeModal();
       showToast?.("Note uploaded successfully and is pending approval.");
@@ -894,7 +899,7 @@ export default function InstructorNotes({ showToast }) {
               )}
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-400">Title *</label>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-400">Title (Optional)</label>
                 <input
                   ref={titleInputRef}
                   type="text"
