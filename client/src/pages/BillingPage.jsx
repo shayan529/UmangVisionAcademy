@@ -572,7 +572,7 @@ export default function BillingPage() {
                             marginBottom: 20,
                           }}
                         >
-                          {plan.keyFeatures.map((f, i) => (
+                          {(plan.allFeatures || plan.keyFeatures || []).map((f, i) => (
                             <div
                               key={i}
                               style={{

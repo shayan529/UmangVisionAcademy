@@ -228,8 +228,7 @@ const UdemyPurchaseCard = ({
   setWithInstructorAssistance,
 }) => {
   const { t } = useTranslation();
-  const [couponCode, setCouponCode] = useState("");
-  const [couponApplied, setCouponApplied] = useState(false);
+
 
   const rawPrice =
     typeof course?.price === "number"
@@ -240,14 +239,7 @@ const UdemyPurchaseCard = ({
     ? Math.round(((originalPrice - rawPrice) / originalPrice) * 100)
     : 60;
 
-  const handleApplyCoupon = (e) => {
-    e.preventDefault();
-    if (!couponCode.trim()) return;
-    setCouponApplied(true);
-    toast.success(
-      t("courseDetails.couponSuccess", `Coupon "${couponCode.toUpperCase()}" applied!`),
-    );
-  };
+
 
   const handleShare = () => {
     if (navigator.share) {
@@ -400,25 +392,7 @@ const UdemyPurchaseCard = ({
               </button>
             )}
 
-            {/* Coupon Code Section */}
-            <form onSubmit={handleApplyCoupon} className="flex gap-2 mt-1">
-              <input
-                type="text"
-                placeholder={t("courseDetails.enterCoupon", "ENTER COUPON")}
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-                className="flex-1 px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 uppercase min-w-0"
-              />
-              <button
-                type="submit"
-                disabled={couponApplied}
-                className="px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-slate-700 transition cursor-pointer shrink-0"
-              >
-                {couponApplied
-                  ? t("courseDetails.applied", "Applied!")
-                  : t("courseDetails.apply", "Apply")}
-              </button>
-            </form>
+
 
             {/* Features list */}
             <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-1.5 text-xs text-slate-400">
