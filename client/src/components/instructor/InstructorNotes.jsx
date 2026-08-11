@@ -29,7 +29,7 @@ export default function InstructorNotes({ showToast }) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("All");
-  const [sortBy, setSortBy] = useState("sequential"); // 'sequential' | 'title' | 'newest' | 'oldest'
+  const [sortBy, setSortBy] = useState("title"); // Title A-Z default!
   const [isDragging, setIsDragging] = useState(false);
 
   // Helper to extract clean subject from title, courseTitle, or fallback
@@ -560,11 +560,11 @@ export default function InstructorNotes({ showToast }) {
               onChange={(e) => setSortBy(e.target.value)}
               className="bg-transparent text-xs font-bold text-white outline-none cursor-pointer"
             >
-              <option value="sequential" className="bg-slate-900 text-white">
-                Subject & Chapter (Sequential 1→2→3)
-              </option>
               <option value="title" className="bg-slate-900 text-white">
                 Title (A - Z)
+              </option>
+              <option value="sequential" className="bg-slate-900 text-white">
+                Subject & Chapter (Sequential 1→2→3)
               </option>
               <option value="newest" className="bg-slate-900 text-white">
                 Latest First

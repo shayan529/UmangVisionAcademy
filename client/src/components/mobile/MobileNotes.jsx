@@ -104,7 +104,7 @@ export default function MobileNotes() {
   const [loadingClassNotes, setLoadingClassNotes] = useState(false);
   const [filterTerm, setFilterTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("All");
-  const [sortBy, setSortBy] = useState("sequential"); // 'sequential' | 'title' | 'newest' | 'oldest'
+  const [sortBy, setSortBy] = useState("title"); // Title A-Z default!
   const [activeModalNote, setActiveModalNote] = useState(null);
 
   useEffect(() => {
@@ -263,7 +263,7 @@ export default function MobileNotes() {
             </div>
 
             {/* Sort Dropdown */}
-            <div className="relative shrink-0 flex items-center gap-2 bg-[#111827]/80 border border-slate-800 rounded-2xl px-3.5 py-2.5">
+            <div className="relative shrink-0 flex items-center gap-2 bg-[#111827]/80 border border-slate-800 rounded-2xl px-3.5 py-2.5 shadow-sm">
               <ArrowUpDown size={15} className="text-teal-400 shrink-0" />
               <span className="text-xs font-bold text-slate-400 shrink-0">Sort:</span>
               <select
@@ -271,11 +271,11 @@ export default function MobileNotes() {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="bg-transparent text-xs font-bold text-white outline-none cursor-pointer pr-2"
               >
-                <option value="sequential" className="bg-slate-900 text-white">
-                  Subject & Chapter (Sequential 1→2→3)
-                </option>
                 <option value="title" className="bg-slate-900 text-white">
                   Title (A - Z)
+                </option>
+                <option value="sequential" className="bg-slate-900 text-white">
+                  Subject & Chapter (Sequential 1→2→3)
                 </option>
                 <option value="newest" className="bg-slate-900 text-white">
                   Latest First
@@ -297,7 +297,7 @@ export default function MobileNotes() {
                 onClick={() => setSelectedSubject(tab.name)}
                 className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap border ${
                   selectedSubject === tab.name
-                    ? "bg-teal-500/20 text-teal-300 border-teal-500/40 shadow-lg shadow-teal-500/10"
+                    ? "bg-gradient-to-r from-teal-500/20 to-indigo-500/20 text-teal-300 border-teal-500/50 shadow-lg shadow-teal-500/10"
                     : "bg-[#111827]/60 text-slate-400 border-slate-800/80 hover:text-slate-200 hover:border-slate-700"
                 }`}
               >
@@ -390,11 +390,12 @@ export default function MobileNotes() {
             {processedNotes.map((note, i) => {
               const meta = getFileMeta(note.fileUrl);
               const FileIcon = meta.icon;
+              const subjectName = extractSubject(note);
 
               return (
                 <div
                   key={note._id}
-                  className="note-card group relative p-5 bg-[#111827]/90 border border-slate-800/90 hover:border-teal-500/40 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col justify-between gap-4 overflow-hidden min-h-[250px] h-full"
+                  className="note-card group relative p-5 bg-[#111827]/90 border border-slate-800/90 hover:border-teal-500/50 rounded-2xl shadow-xl hover:shadow-teal-500/10 transition-all duration-300 flex flex-col justify-between gap-4 overflow-hidden min-h-[250px] h-full"
                   style={{ animationDelay: `${Math.min(i, 10) * 0.04}s` }}
                 >
                   {/* Top Accent Strip */}
@@ -404,11 +405,14 @@ export default function MobileNotes() {
                   />
 
                   <div className="flex-1 flex flex-col space-y-3 pt-1">
-                    {/* Header Row: Icon */}
+                    {/* Header Row: Icon & Subject Badge */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
                         <FileIcon size={20} style={{ color: meta.color }} />
                       </div>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-teal-500/10 text-teal-300 border border-teal-500/20 uppercase tracking-wider truncate max-w-[120px]">
+                        {subjectName}
+                      </span>
                     </div>
 
                     {/* Note Title */}
