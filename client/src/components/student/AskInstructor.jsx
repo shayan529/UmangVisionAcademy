@@ -1171,11 +1171,12 @@ const AskInstructor = () => {
         ) : (
           <>
             {/* Main Chat Header */}
-            <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3.5 border-b border-[#1a244d] bg-[#0b1028] shrink-0">
-              <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+            <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3.5 border-b border-[#1a244d] bg-[#0b1028] shrink-0 gap-2">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                 <button
                   onClick={() => setView("threads")}
-                  className="md:hidden p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-[#101738] transition cursor-pointer shrink-0"
+                  className="md:hidden p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-[#101738] transition cursor-pointer shrink-0"
+                  aria-label="Back to conversations"
                 >
                   <ChevronLeft size={20} />
                 </button>
@@ -1184,32 +1185,34 @@ const AskInstructor = () => {
                     <img
                       src={instructor.avatarUrl}
                       alt={instructor.name}
-                      className="w-10 h-10 rounded-2xl object-cover ring-2 ring-emerald-500/60"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl object-cover ring-2 ring-emerald-500/60"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 flex items-center justify-center text-white font-bold text-sm ring-2 ring-emerald-500/60 shadow-sm">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 flex items-center justify-center text-white font-bold text-xs sm:text-sm ring-2 ring-emerald-500/60 shadow-sm">
                       {initialOf(instructor?.name)}
                     </div>
                   )}
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#101738] rounded-full shadow-xs" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-emerald-500 border-2 border-[#101738] rounded-full shadow-xs" />
                 </div>
-                <div className="min-w-0">
-                  <h3 className="text-xs sm:text-sm font-bold text-white truncate flex items-center gap-1.5 sm:gap-2">
-                    <span className="truncate">{instructor?.name}</span>
-                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 sm:px-2 py-0.2 rounded-md uppercase tracking-wider shrink-0">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13.5px] sm:text-base font-bold text-white truncate leading-tight">
+                      {instructor?.name || "Instructor"}
+                    </span>
+                    <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0">
                       FACULTY
                     </span>
-                  </h3>
-                  <p className="text-[11px] sm:text-xs text-zinc-400 truncate flex items-center gap-1 mt-0.5">
-                    <span className="text-emerald-400 font-medium truncate">
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-zinc-300 truncate flex items-center gap-1 mt-0.5 font-medium leading-tight">
+                    <span className="text-emerald-400 font-semibold truncate">
                       {activeConversation.course?.title || "General Query"}
                     </span>
                     {activeConversation.subject && (
                       <span className="text-zinc-400 shrink-0">
-                        · {activeConversation.subject}
+                        • {activeConversation.subject}
                       </span>
                     )}
-                  </p>
+                  </div>
                 </div>
               </div>
 
@@ -1223,9 +1226,9 @@ const AskInstructor = () => {
                     activeConversation?.assistanceDisabled
                   }
                   title="Request a 1-on-1 Google Meet link"
-                  className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold px-2.5 sm:px-3.5 py-2 rounded-xl transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
+                  className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
                 >
-                  <Video size={15} />
+                  <Video size={14} />
                   <span className="hidden sm:inline">
                     {isSubmittingCall
                       ? "Sending Request…"

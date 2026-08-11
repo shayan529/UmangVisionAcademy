@@ -692,7 +692,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
           onPointerDown={handleAvatarPointerDown}
           onTouchStart={handleAvatarPointerDown}
           style={avatarPos ? { left: `${avatarPos.x}px`, top: `${avatarPos.y}px`, right: "auto", bottom: "auto" } : {}}
-          className={`fixed z-50 flex items-center gap-2 sm:gap-3 select-none touch-none cursor-grab active:cursor-grabbing group motion-safe:animate-cloudFloat ${!avatarPos ? "bottom-20 right-4 sm:bottom-6 sm:right-6" : ""
+          className={`fixed z-50 flex items-center gap-2 sm:gap-3 select-none touch-none cursor-grab active:cursor-grabbing group motion-safe:animate-cloudFloat ${!avatarPos ? "bottom-28 right-3 sm:bottom-6 sm:right-6" : ""
             }`}
         >
           {/* Cloud Speech Bubble Comment ("Ask AI") */}
