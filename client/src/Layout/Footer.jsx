@@ -17,9 +17,6 @@ const Footer = () => {
               className="w-full h-full object-contain drop-shadow-md"
             />
           </div>
-          <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
-            Empowering students across India with AI-powered coaching, expert guidance, and comprehensive learning paths.
-          </p>
         </div>
 
         {/* Column 2: Platform Links */}
