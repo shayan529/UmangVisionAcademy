@@ -6,14 +6,13 @@ import {
   fetchMyApplication,
   submitApplication,
 } from '../../redux/slices/applicationsSlice';
-import { register, clearAuth } from '../../redux/slices/authSlice';
+import { clearAuth } from '../../redux/slices/authSlice';
 import { uploadFile } from '../../utils/uploadFile.js';
 import { hasBaseRole } from '../../utils/permissions';
 import { INDIA_STATES, getCitiesForState } from '../../data/indiaLocations';
 import { isFirebaseConfigured } from '../../config/firebase';
 import {
   sendFirebasePhoneOtp,
-  verifyFirebasePhoneOtp,
   clearRecaptcha,
 } from '../../services/firebasePhoneAuth';
 import api from '../../config/api';
@@ -57,12 +56,28 @@ const BecomeInstructorApplication = () => {
     pincode: '',
   });
 
-  // Teaching application state
+  // Expert Registration Form State
   const [formData, setFormData] = useState({
     name: user?.name || '',
+    designation: '',
+    organization: '',
+    qualification: '',
     expertise: '',
+    experienceYears: '',
+    professionalField: '',
     bio: '',
-    contentLink: '',
+    linkedinUrl: '',
+    topic: '',
+    sessionDescription: '',
+    targetGroup: 'Classes 11–12',
+    learningOutcome: '',
+    sessionDuration: '45 Minutes',
+    sessionFormat: 'Live Online Session',
+    whatsappNumber: user?.phoneNumber || '',
+    email: user?.email || '',
+    availability: '',
+    additionalInfo: '',
+    confirmed: false,
   });
 
   const [resumeFile, setResumeFile] = useState(null);
@@ -73,8 +88,13 @@ const BecomeInstructorApplication = () => {
 
   // Keep name synced if user logs in
   useEffect(() => {
-    if (user?.name) {
-      setFormData((prev) => ({ ...prev, name: user.name }));
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        name: prev.name || user.name || '',
+        whatsappNumber: prev.whatsappNumber || user.phoneNumber || '',
+        email: prev.email || user.email || '',
+      }));
     }
   }, [user]);
 
@@ -90,6 +110,7 @@ const BecomeInstructorApplication = () => {
     if (name === 'phoneNumber') {
       const cleanVal = value.replace(/\D/g, '').slice(0, 10);
       setAccountData((prev) => ({ ...prev, phoneNumber: cleanVal }));
+      setFormData((prev) => ({ ...prev, whatsappNumber: cleanVal }));
       if (phoneVerified || phoneOtpSent) {
         setPhoneVerified(false);
         setPhoneOtpSent(false);
@@ -103,8 +124,22 @@ const BecomeInstructorApplication = () => {
       if (name === 'state') {
         next.city = '';
       }
+      if (name === 'name') {
+        setFormData((f) => ({ ...f, name: value }));
+      }
+      if (name === 'email') {
+        setFormData((f) => ({ ...f, email: value }));
+      }
       return next;
     });
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
   };
 
   const normalizeIndianPhoneNumber = (phoneNumber) => {
@@ -119,7 +154,8 @@ const BecomeInstructorApplication = () => {
       e.preventDefault();
       e.stopPropagation();
     }
-    const normalizedPhoneNumber = normalizeIndianPhoneNumber(accountData.phoneNumber);
+    const targetPhone = accountData.phoneNumber || formData.whatsappNumber;
+    const normalizedPhoneNumber = normalizeIndianPhoneNumber(targetPhone);
 
     if (!normalizedPhoneNumber) {
       toast.error('Enter a valid 10-digit Indian mobile number.');
@@ -143,115 +179,96 @@ const BecomeInstructorApplication = () => {
         } catch (fbErr) {
           setOtpFallbackMode(true);
           setFirebaseConfirmationResult(null);
-          console.error('Firebase Phone Auth Error in Application Form:', fbErr);
+          console.error('Firebase Phone Auth Error:', fbErr);
         }
       } else {
         setOtpFallbackMode(true);
       }
 
-      toast.success(`OTP sent to ${normalizedPhoneNumber}!`);
       setPhoneOtpSent(true);
       setPhoneResendCooldown(30);
+      toast.success(`OTP sent to ${normalizedPhoneNumber}`);
       setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
     } catch (err) {
-      toast.error(err?.response?.data?.message || err?.message || 'Failed to send OTP');
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to send OTP.');
     } finally {
       setSendingPhoneOtp(false);
     }
   };
 
   const handlePhoneOtpChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return;
-    const updated = [...phoneOtpInputs];
-    updated[index] = value.slice(-1);
-    setPhoneOtpInputs(updated);
-    if (value && index < 5) phoneOtpRefs.current[index + 1]?.focus();
+    const char = value.slice(-1).replace(/\D/g, '');
+    const newInputs = [...phoneOtpInputs];
+    newInputs[index] = char;
+    setPhoneOtpInputs(newInputs);
+
+    if (char && index < 5) {
+      phoneOtpRefs.current[index + 1]?.focus();
+    }
   };
 
   const handlePhoneOtpKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !phoneOtpInputs[index] && index > 0)
+    if (e.key === 'Backspace' && !phoneOtpInputs[index] && index > 0) {
       phoneOtpRefs.current[index - 1]?.focus();
+    }
   };
 
   const handlePhoneOtpPaste = (e) => {
     e.preventDefault();
-    const pasted = e.clipboardData
-      .getData('text')
-      .replace(/\D/g, '')
-      .slice(0, 6);
-    const updated = [...phoneOtpInputs];
-    for (let i = 0; i < pasted.length; i++) updated[i] = pasted[i];
-    setPhoneOtpInputs(updated);
-    phoneOtpRefs.current[Math.min(pasted.length, 5)]?.focus();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!pasted) return;
+    const newInputs = ['', '', '', '', '', ''];
+    for (let i = 0; i < pasted.length; i++) {
+      newInputs[i] = pasted[i];
+    }
+    setPhoneOtpInputs(newInputs);
+    const focusIdx = Math.min(pasted.length, 5);
+    phoneOtpRefs.current[focusIdx]?.focus();
   };
 
-  const handleVerifyPhoneOtp = async (e) => {
-    if (e && typeof e.preventDefault === 'function') {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  const handleVerifyPhoneOtp = async () => {
     const code = phoneOtpInputs.join('');
-    const normalizedPhoneNumber = normalizeIndianPhoneNumber(accountData.phoneNumber);
-
-    if (code.length < 6) {
-      toast.error('Please enter complete 6-digit OTP');
+    if (code.length !== 6) {
+      toast.error('Enter the 6-digit OTP code.');
       return;
     }
 
-    if (!normalizedPhoneNumber) {
-      toast.error('Enter a valid 10-digit Indian mobile number.');
-      return;
-    }
+    const targetPhone = accountData.phoneNumber || formData.whatsappNumber;
+    const normalizedPhoneNumber = normalizeIndianPhoneNumber(targetPhone);
 
     setVerifyingPhone(true);
     try {
-      if (isFirebaseConfigured() && firebaseConfirmationResult) {
-        const { idToken } = await verifyFirebasePhoneOtp(
-          firebaseConfirmationResult,
-          code
-        );
-        await api.post('/auth/verify-firebase-token', {
-          firebaseToken: idToken,
-          phoneNumber: normalizedPhoneNumber,
-        });
-        setPhoneVerified(true);
-        setPhoneOtpSent(false);
-        toast.success('Phone verified ✓');
-        return;
+      if (firebaseConfirmationResult && !otpFallbackMode) {
+        await firebaseConfirmationResult.confirm(code);
       }
-
       await api.post('/auth/verify-phone-otp', {
         phoneNumber: normalizedPhoneNumber,
-        otp: code,
+        code,
       });
+
       setPhoneVerified(true);
-      setPhoneOtpSent(false);
-      toast.success('Phone verified ✓');
+      toast.success('Mobile number verified successfully!');
     } catch (err) {
-      console.error('Verification error:', err);
-      toast.error(
-        err?.response?.data?.message || err?.message || 'Invalid OTP code'
-      );
-      setPhoneOtpInputs(['', '', '', '', '', '']);
-      phoneOtpRefs.current[0]?.focus();
+      toast.error(err?.response?.data?.message || err?.message || 'Invalid OTP code.');
     } finally {
       setVerifyingPhone(false);
     }
   };
 
-  const handleFormChange = (e) =>
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-
   const handleResumeChange = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
-    const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-    if (!allowed.includes(file.type)) {
-      setResumeError(t('becomeInstructorApplication.onlyPdfJpgPng'));
+
+    const validExts = ['pdf', 'jpg', 'jpeg', 'png'];
+    const ext = file.name.split('.').pop()?.toLowerCase();
+
+    if (!validExts.includes(ext)) {
+      setResumeError('Only PDF, JPG, or PNG files are allowed.');
       return;
     }
+
     if (file.size > 5 * 1024 * 1024) {
-      setResumeError(t('becomeInstructorApplication.max5mb'));
+      setResumeError('File size must be under 5MB.');
       return;
     }
 
@@ -264,20 +281,20 @@ const BecomeInstructorApplication = () => {
       const data = await uploadFile({
         file,
         folder: '/instructor-resumes',
-        onUploadProgress: (event) =>
-          setResumeUploadProgress(
-            Math.round((event.loaded / event.total) * 100)
-          ),
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          setResumeUploadProgress(percent);
+        },
       });
+
       setResumeUrl(data.url);
-    } catch (uploadError) {
-      setResumeError(
-        uploadError.response?.data?.message ||
-        uploadError.message ||
-        'Upload failed. Please try again.'
-      );
+      toast.success('Resume uploaded successfully');
+    } catch (err) {
+      console.error(err);
+      setResumeError('Failed to upload file. Please try again.');
       setResumeFile(null);
-      setResumeUrl('');
     } finally {
       setResumeUploading(false);
     }
@@ -287,176 +304,145 @@ const BecomeInstructorApplication = () => {
     e.preventDefault();
 
     if (isStudent) {
-      toast.error(
-        t(
-          'becomeInstructor.studentCannotBecomeError',
-          'Students cannot become an instructor. Please create a fresh account.'
-        )
-      );
+      toast.error('Students cannot register as an expert guide. Please create a new account.');
       return;
     }
 
-    const { expertise, bio, contentLink } = formData;
-
-    // Unauthenticated user: register account first, then submit application
-    if (!isAuthenticated) {
-      const { name, email, password, phoneNumber, state, city, pincode } = accountData;
-
-      if (!name || !email || !password || !phoneNumber || !state || !city || !pincode) {
-        toast.error('Please fill in all account registration fields.');
-        return;
-      }
-      if (!phoneVerified) {
-        toast.error('Please verify your phone number via OTP before submitting.');
-        return;
-      }
-      if (!expertise || !bio || !contentLink) {
-        toast.error(t('becomeInstructorApplication.allFieldsRequired'));
-        return;
-      }
-      if (!resumeUrl) {
-        toast.error('Please upload your resume before submitting');
-        return;
-      }
-
-      try {
-        setSubmitting(true);
-        // Step 1: Register new user with role "instructor"
-        await dispatch(
-          register({
-            name,
-            email,
-            password,
-            phoneNumber,
-            state,
-            city,
-            pincode,
-            role: 'instructor',
-          })
-        ).unwrap();
-
-        // Step 2: Submit application
-        const payload = new FormData();
-        payload.append('name', name);
-        payload.append('expertise', expertise);
-        payload.append('bio', bio);
-        payload.append('contentLink', contentLink);
-        payload.append('resumeUrl', resumeUrl);
-
-        await dispatch(submitApplication(payload)).unwrap();
-        toast.success(t('becomeInstructorApplication.submitted'));
-        navigate('/instructor-application/status');
-      } catch (err) {
-        toast.error(
-          typeof err === 'string'
-            ? err
-            : err?.message || t('becomeInstructorApplication.failedSubmit')
-        );
-      } finally {
-        setSubmitting(false);
-      }
+    if (!formData.confirmed) {
+      toast.error('Please confirm that the information provided is correct.');
       return;
     }
 
-    // Authenticated non-student user: submit application directly
-    const nameToSubmit = formData.name || user?.name || accountData.name;
-    if (!nameToSubmit || !expertise || !bio || !contentLink) {
-      toast.error(t('becomeInstructorApplication.allFieldsRequired'));
-      return;
-    }
-    if (!resumeUrl) {
-      toast.error('Please upload your resume before submitting');
-      return;
+    // Required fields check
+    const requiredFields = [
+      { name: 'name', label: 'Full Name' },
+      { name: 'designation', label: 'Designation / Professional Role' },
+      { name: 'qualification', label: 'Highest Qualification' },
+      { name: 'expertise', label: 'Area of Expertise' },
+      { name: 'experienceYears', label: 'Years of Experience' },
+      { name: 'bio', label: 'Short Self-Introduction' },
+      { name: 'topic', label: 'Topic You Would Like to Guide Students On' },
+      { name: 'sessionDescription', label: 'Brief Description of Proposed Session' },
+      { name: 'expectedLearningOutcome', label: 'Expected Learning Outcome' },
+      { name: 'whatsappNumber', label: 'Mobile / WhatsApp Number' },
+      { name: 'email', label: 'Email Address' },
+    ];
+
+    for (const req of requiredFields) {
+      if (!formData[req.name]?.trim() && req.name !== 'expectedLearningOutcome') {
+        if (req.name === 'learningOutcome' && !formData.learningOutcome?.trim()) {
+          toast.error(`Please fill in "${req.label}".`);
+          return;
+        }
+        if (req.name !== 'learningOutcome' && !formData[req.name]?.trim()) {
+          toast.error(`Please fill in "${req.label}".`);
+          return;
+        }
+      }
     }
 
-    const payload = new FormData();
-    payload.append('name', nameToSubmit);
-    payload.append('expertise', expertise);
-    payload.append('bio', bio);
-    payload.append('contentLink', contentLink);
-    payload.append('resumeUrl', resumeUrl);
+    setSubmitting(true);
 
     try {
-      setSubmitting(true);
+      // 1. Unauthenticated: Create user account first
+      if (!isAuthenticated) {
+        if (!phoneVerified) {
+          toast.error('Please verify your phone number with OTP first.');
+          setSubmitting(false);
+          return;
+        }
+
+        const regRes = await api.post('/auth/register', {
+          name: accountData.name,
+          email: accountData.email,
+          password: accountData.password,
+          phoneNumber: accountData.phoneNumber,
+          state: accountData.state,
+          city: accountData.city,
+          pincode: accountData.pincode,
+          role: 'instructor',
+        });
+
+        // Set token
+        if (regRes.data?.token) {
+          localStorage.setItem('authToken', regRes.data.token);
+        }
+      }
+
+      // 2. Submit Expert Application
+      const payload = {
+        name: formData.name,
+        designation: formData.designation,
+        organization: formData.organization,
+        qualification: formData.qualification,
+        expertise: formData.expertise,
+        experienceYears: formData.experienceYears,
+        professionalField: formData.professionalField,
+        bio: formData.bio,
+        linkedinUrl: formData.linkedinUrl,
+        topic: formData.topic,
+        sessionDescription: formData.sessionDescription,
+        targetGroup: formData.targetGroup,
+        learningOutcome: formData.learningOutcome,
+        sessionDuration: formData.sessionDuration,
+        sessionFormat: formData.sessionFormat,
+        whatsappNumber: formData.whatsappNumber,
+        email: formData.email,
+        availability: formData.availability,
+        additionalInfo: formData.additionalInfo,
+        confirmed: formData.confirmed,
+        contentLink: formData.linkedinUrl || '',
+        resumeUrl,
+      };
+
       await dispatch(submitApplication(payload)).unwrap();
-      toast.success(t('becomeInstructorApplication.submitted'));
+      toast.success('Expert profile submitted successfully!');
       navigate('/instructor-application/status');
     } catch (err) {
-      toast.error(
-        typeof err === 'string'
-          ? err
-          : err?.message || t('becomeInstructorApplication.failedSubmit')
-      );
+      console.error(err);
+      toast.error(err?.message || 'Failed to submit expert profile. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
-
-  useEffect(() => {
-    if (isAuthenticated) dispatch(fetchMyApplication());
-  }, [isAuthenticated, dispatch]);
-
-  useEffect(() => {
-    if (myApplication)
-      navigate('/instructor-application/status', { replace: true });
-  }, [myApplication, navigate]);
 
   const availableCities = accountData.state
     ? getCitiesForState(accountData.state)
     : [];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-2xl px-4">
+    <div className="min-h-screen bg-[#0B1120] text-slate-100 py-12 lg:py-20 px-4 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div className="max-w-3xl mx-auto text-center space-y-3">
         <Link
           to="/become-instructor"
-          className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition mb-8 text-sm font-medium"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-400 hover:text-teal-300 transition mb-2"
         >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-          {t('becomeInstructorApplication.backToOverview')}
+          ← Back to Overview
         </Link>
-
-        <span className="inline-flex rounded-full bg-indigo-500/10 text-indigo-300 px-4 py-2 text-sm font-semibold tracking-wide mb-4 border border-indigo-500/20">
-          {t('becomeInstructorApplication.formBadge')}
+        <span className="block w-fit mx-auto rounded-full bg-teal-500/10 text-teal-300 px-4 py-1.5 text-xs font-bold uppercase tracking-wider border border-teal-500/20">
+          FREE STUDENT GUIDANCE INITIATIVE
         </span>
-        <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
-          {t('becomeInstructorApplication.titleStart')}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 ml-2">
-            {t('becomeInstructorApplication.titleHighlight')}
-          </span>
-        </h2>
-        <p className="text-slate-400 text-lg leading-7 max-w-xl">
-          {t('becomeInstructorApplication.description')}
+        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
+          REGISTER AS AN <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-emerald-400 to-indigo-400">EXPERT GUIDE</span>
+        </h1>
+        <p className="text-slate-400 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+          Share your professional experience, guide students in making informed career decisions, and conduct voluntary guidance sessions.
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl px-4">
-        <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-8 shadow-2xl shadow-indigo-500/10">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-3xl px-2 sm:px-4">
+        <div className="rounded-[32px] border border-slate-800 bg-[#111827]/95 p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
           
           {/* Warning block if user is logged in with a Student account */}
           {isStudent ? (
             <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-6 text-center space-y-4">
               <div className="text-3xl">⚠️</div>
               <h3 className="text-lg font-bold text-amber-200">
-                {t('becomeInstructorApplication.studentCannotApplyTitle', 'Student Accounts Cannot Apply')}
+                Student Accounts Cannot Register as Expert Guides
               </h3>
               <p className="text-sm text-slate-300 leading-relaxed max-w-md mx-auto">
-                {t(
-                  'becomeInstructor.studentCannotBecomeError',
-                  'Students cannot become an instructor. Please create a fresh account.'
-                )}
+                Student accounts cannot register as an expert guide. Please log out to register a new expert profile.
               </p>
               <div className="pt-2">
                 <button
@@ -464,24 +450,24 @@ const BecomeInstructorApplication = () => {
                   onClick={() => dispatch(clearAuth())}
                   className="rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-bold text-slate-950 transition hover:scale-105 shadow-lg shadow-amber-500/20 cursor-pointer"
                 >
-                  {t('becomeInstructorApplication.logoutAndRegisterFresh', 'Log Out & Register Fresh Account')}
+                  Log Out & Register Fresh Profile
                 </button>
               </div>
             </div>
           ) : (
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-8" onSubmit={handleSubmit}>
               
               {/* Account Registration Section (shown when NOT authenticated) */}
               {!isAuthenticated && (
-                <div className="space-y-5 pb-6 border-b border-white/10">
-                  <div className="flex items-center gap-2 text-indigo-400 font-bold text-base">
-                    <span>{t('becomeInstructorApplication.section1Title', '1. Create Your Account Credentials')}</span>
+                <div className="space-y-5 pb-8 border-b border-slate-800">
+                  <div className="flex items-center gap-2 text-teal-400 font-bold text-base">
+                    <span>1. Create Your Guide Account Credentials</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        {t('becomeInstructorApplication.fullNameLabel', 'Full Name')} <span className="text-red-400">*</span>
+                        Full Name <span className="text-red-400">*</span>
                       </span>
                       <input
                         type="text"
@@ -489,14 +475,14 @@ const BecomeInstructorApplication = () => {
                         required
                         value={accountData.name}
                         onChange={handleAccountChange}
-                        placeholder={t('becomeInstructorApplication.namePlaceholder', 'Dr. Rajesh Kumar')}
-                        className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                        placeholder="Dr. Rajesh Kumar"
+                        className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       />
                     </label>
 
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        {t('becomeInstructorApplication.emailLabel', 'Email Address')} <span className="text-red-400">*</span>
+                        Email Address <span className="text-red-400">*</span>
                       </span>
                       <input
                         type="email"
@@ -504,8 +490,8 @@ const BecomeInstructorApplication = () => {
                         required
                         value={accountData.email}
                         onChange={handleAccountChange}
-                        placeholder={t('becomeInstructorApplication.emailPlaceholder', 'instructor@example.com')}
-                        className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                        placeholder="expert@example.com"
+                        className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       />
                     </label>
                   </div>
@@ -513,7 +499,7 @@ const BecomeInstructorApplication = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block relative">
                       <span className="text-sm font-semibold text-slate-300">
-                        {t('becomeInstructorApplication.passwordLabel', 'Password')} <span className="text-red-400">*</span>
+                        Password <span className="text-red-400">*</span>
                       </span>
                       <div className="relative mt-2">
                         <input
@@ -523,8 +509,8 @@ const BecomeInstructorApplication = () => {
                           minLength={6}
                           value={accountData.password}
                           onChange={handleAccountChange}
-                          placeholder={t('becomeInstructorApplication.passwordPlaceholder', 'Min 6 characters')}
-                          className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 pr-10 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                          placeholder="Min 6 characters"
+                          className="w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 pr-10 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                         />
                         <button
                           type="button"
@@ -540,11 +526,11 @@ const BecomeInstructorApplication = () => {
                     <label className="block">
                       <div className="flex items-center justify-between text-sm font-semibold text-slate-300">
                         <span>
-                          {t('becomeInstructorApplication.phoneLabel', 'Phone Number')} <span className="text-red-400">*</span>
+                          Mobile / WhatsApp Number <span className="text-red-400">*</span>
                         </span>
                         {phoneVerified && (
                           <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400">
-                            <FiCheckCircle size={13} /> {t('becomeInstructorApplication.verified', 'Verified')}
+                            <FiCheckCircle size={13} /> Verified
                           </span>
                         )}
                       </div>
@@ -555,11 +541,11 @@ const BecomeInstructorApplication = () => {
                           required
                           value={accountData.phoneNumber}
                           onChange={handleAccountChange}
-                          placeholder={t('becomeInstructorApplication.phonePlaceholder', '10-digit mobile number')}
+                          placeholder="10-digit mobile number"
                           className={`w-full rounded-2xl border bg-slate-950/80 px-4 py-3.5 pr-28 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 transition ${
                             phoneVerified
                               ? 'border-emerald-500/50 focus:border-emerald-400 focus:ring-emerald-500/20'
-                              : 'border-white/10 focus:border-indigo-400 focus:ring-indigo-500/20'
+                              : 'border-slate-800 focus:border-teal-400 focus:ring-teal-500/20'
                           }`}
                         />
                         {!phoneVerified && (
@@ -570,13 +556,13 @@ const BecomeInstructorApplication = () => {
                               sendingPhoneOtp ||
                               accountData.phoneNumber.replace(/\D/g, '').length !== 10
                             }
-                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-3.5 py-1.5 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-teal-600 hover:bg-teal-500 px-3.5 py-1.5 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
                           >
                             {sendingPhoneOtp
-                              ? t('becomeInstructorApplication.sendingOtp', 'Sending...')
+                              ? 'Sending...'
                               : phoneOtpSent
-                              ? t('becomeInstructorApplication.resendOtp', 'Resend OTP')
-                              : t('becomeInstructorApplication.sendOtp', 'Send OTP')}
+                              ? 'Resend OTP'
+                              : 'Send OTP'}
                           </button>
                         )}
                       </div>
@@ -585,22 +571,22 @@ const BecomeInstructorApplication = () => {
 
                   {/* OTP Input Card */}
                   {phoneOtpSent && !phoneVerified && (
-                    <div className="rounded-2xl bg-indigo-500/10 border border-indigo-500/30 p-4 space-y-3">
+                    <div className="rounded-2xl bg-teal-500/10 border border-teal-500/30 p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-indigo-300">
-                          {t('becomeInstructorApplication.enterOtpPrompt', 'Enter 6-digit OTP sent to +91 {{phone}}', { phone: accountData.phoneNumber })}
+                        <span className="text-xs font-bold text-teal-300">
+                          Enter 6-digit OTP sent to +91 {accountData.phoneNumber}
                         </span>
                         {phoneResendCooldown > 0 ? (
                           <span className="text-xs text-slate-400 font-medium">
-                            {t('becomeInstructorApplication.resendIn', 'Resend in {{sec}}s', { sec: phoneResendCooldown })}
+                            Resend in {phoneResendCooldown}s
                           </span>
                         ) : (
                           <button
                             type="button"
                             onClick={handleSendPhoneOtp}
-                            className="text-xs font-bold text-indigo-400 hover:underline cursor-pointer"
+                            className="text-xs font-bold text-teal-400 hover:underline cursor-pointer"
                           >
-                            {t('becomeInstructorApplication.resendOtp', 'Resend OTP')}
+                            Resend OTP
                           </button>
                         )}
                       </div>
@@ -617,7 +603,7 @@ const BecomeInstructorApplication = () => {
                             onChange={(e) => handlePhoneOtpChange(idx, e.target.value)}
                             onKeyDown={(e) => handlePhoneOtpKeyDown(idx, e)}
                             onPaste={handlePhoneOtpPaste}
-                            className="w-10 h-12 text-center text-lg font-bold rounded-xl border border-white/20 bg-slate-950 text-white focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                            className="w-10 h-12 text-center text-lg font-bold rounded-xl border border-white/20 bg-slate-950 text-white focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                           />
                         ))}
                       </div>
@@ -626,11 +612,9 @@ const BecomeInstructorApplication = () => {
                         type="button"
                         onClick={handleVerifyPhoneOtp}
                         disabled={verifyingPhone || phoneOtpInputs.join('').length < 6}
-                        className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 py-2.5 text-xs font-bold text-slate-950 transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+                        className="w-full rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 py-2.5 text-xs font-bold text-slate-950 transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
                       >
-                        {verifyingPhone
-                          ? t('becomeInstructorApplication.verifyingOtp', 'Verifying OTP...')
-                          : t('becomeInstructorApplication.verifyOtpButton', 'Verify OTP Code')}
+                        {verifyingPhone ? 'Verifying OTP...' : 'Verify OTP Code'}
                       </button>
                     </div>
                   )}
@@ -638,16 +622,16 @@ const BecomeInstructorApplication = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        {t('becomeInstructorApplication.stateLabel', 'State')} <span className="text-red-400">*</span>
+                        State <span className="text-red-400">*</span>
                       </span>
                       <select
                         name="state"
                         required
                         value={accountData.state}
                         onChange={handleAccountChange}
-                        className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                        className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       >
-                        <option value="">{t('becomeInstructorApplication.selectState', 'Select State')}</option>
+                        <option value="">Select State</option>
                         {INDIA_STATES.map((s) => (
                           <option key={s} value={s} className="bg-slate-900">
                             {s}
@@ -658,7 +642,7 @@ const BecomeInstructorApplication = () => {
 
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        {t('becomeInstructorApplication.cityLabel', 'City')} <span className="text-red-400">*</span>
+                        City <span className="text-red-400">*</span>
                       </span>
                       <select
                         name="city"
@@ -666,9 +650,9 @@ const BecomeInstructorApplication = () => {
                         value={accountData.city}
                         onChange={handleAccountChange}
                         disabled={!accountData.state}
-                        className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition disabled:opacity-50"
+                        className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition disabled:opacity-50"
                       >
-                        <option value="">{t('becomeInstructorApplication.selectCity', 'Select City')}</option>
+                        <option value="">Select City</option>
                         {availableCities.map((c) => (
                           <option key={c} value={c} className="bg-slate-900">
                             {c}
@@ -679,7 +663,7 @@ const BecomeInstructorApplication = () => {
 
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        {t('becomeInstructorApplication.pincodeLabel', 'Pincode')} <span className="text-red-400">*</span>
+                        Pincode <span className="text-red-400">*</span>
                       </span>
                       <input
                         type="text"
@@ -687,26 +671,26 @@ const BecomeInstructorApplication = () => {
                         required
                         value={accountData.pincode}
                         onChange={handleAccountChange}
-                        placeholder={t('becomeInstructorApplication.pincodePlaceholder', '6-digit PIN')}
-                        className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                        placeholder="6-digit PIN"
+                        className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       />
                     </label>
                   </div>
                 </div>
               )}
 
-              {/* Application Details Section */}
-              <div className="space-y-5">
-                {!isAuthenticated && (
-                  <div className="flex items-center gap-2 text-indigo-400 font-bold text-base">
-                    <span>{t('becomeInstructorApplication.section2Title', '2. Teaching Application & Experience')}</span>
-                  </div>
-                )}
+              {/* EXPERT REGISTRATION FORM - PERSONAL & PROFESSIONAL DETAILS */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <h2 className="text-lg font-extrabold text-white flex items-center gap-2">
+                    <span className="text-teal-400 font-mono">2.</span> Personal & Professional Details
+                  </h2>
+                </div>
 
-                {isAuthenticated && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <label className="block">
                     <span className="text-sm font-semibold text-slate-300">
-                      {t('becomeInstructorApplication.fullNameLabel')}
+                      1. Full Name <span className="text-red-400">*</span>
                     </span>
                     <input
                       type="text"
@@ -714,150 +698,411 @@ const BecomeInstructorApplication = () => {
                       required
                       value={formData.name}
                       onChange={handleFormChange}
-                      placeholder={t('becomeInstructorApplication.namePlaceholder')}
-                      className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                      placeholder="e.g. Dr. Rajesh Kumar"
+                      className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                     />
                   </label>
-                )}
+
+                  <label className="block">
+                    <span className="text-sm font-semibold text-slate-300">
+                      2. Designation / Professional Role <span className="text-red-400">*</span>
+                    </span>
+                    <input
+                      type="text"
+                      name="designation"
+                      required
+                      value={formData.designation}
+                      onChange={handleFormChange}
+                      placeholder="e.g. Senior Lecturer / Career Counselor"
+                      className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <label className="block">
+                    <span className="text-sm font-semibold text-slate-300">
+                      3. Organization / Institution
+                    </span>
+                    <input
+                      type="text"
+                      name="organization"
+                      value={formData.organization}
+                      onChange={handleFormChange}
+                      placeholder="e.g. National Institute of Technology"
+                      className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-semibold text-slate-300">
+                      4. Highest Qualification <span className="text-red-400">*</span>
+                    </span>
+                    <input
+                      type="text"
+                      name="qualification"
+                      required
+                      value={formData.qualification}
+                      onChange={handleFormChange}
+                      placeholder="e.g. Ph.D. / M.Tech / M.Sc"
+                      className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <label className="block">
+                    <span className="text-sm font-semibold text-slate-300">
+                      5. Area of Expertise <span className="text-red-400">*</span>
+                    </span>
+                    <input
+                      type="text"
+                      name="expertise"
+                      required
+                      value={formData.expertise}
+                      onChange={handleFormChange}
+                      placeholder="e.g. Physics / Career Mentorship"
+                      className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-semibold text-slate-300">
+                      6. Years of Experience <span className="text-red-400">*</span>
+                    </span>
+                    <input
+                      type="text"
+                      name="experienceYears"
+                      required
+                      value={formData.experienceYears}
+                      onChange={handleFormChange}
+                      placeholder="e.g. 8+ Years"
+                      className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-semibold text-slate-300">
+                      7. Current Professional Field
+                    </span>
+                    <input
+                      type="text"
+                      name="professionalField"
+                      value={formData.professionalField}
+                      onChange={handleFormChange}
+                      placeholder="e.g. Education / Engineering"
+                      className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
+                    />
+                  </label>
+                </div>
 
                 <label className="block">
                   <span className="text-sm font-semibold text-slate-300">
-                    {t('becomeInstructorApplication.expertiseLabel')} <span className="text-red-400">*</span>
-                  </span>
-                  <input
-                    type="text"
-                    name="expertise"
-                    value={formData.expertise}
-                    required
-                    onChange={handleFormChange}
-                    placeholder={t(
-                      'becomeInstructorApplication.expertisePlaceholder'
-                    )}
-                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="text-sm font-semibold text-slate-300">
-                    {t('becomeInstructorApplication.bioLabel')} <span className="text-red-400">*</span>
+                    8. Short Self-Introduction <span className="text-red-400">*</span>
                   </span>
                   <textarea
-                    rows="4"
+                    rows="3"
                     name="bio"
-                    value={formData.bio}
                     required
+                    value={formData.bio}
                     onChange={handleFormChange}
-                    placeholder={t('becomeInstructorApplication.bioPlaceholder')}
-                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                    placeholder="Briefly tell us about your professional background, expertise, and experience."
+                    className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition leading-relaxed"
                   />
-                  <span className="text-xs text-slate-500 mt-1.5 block">
-                    *This will show on your instructor public profile
-                  </span>
                 </label>
 
                 <label className="block">
                   <span className="text-sm font-semibold text-slate-300">
-                    {t('becomeInstructorApplication.contentLinkLabel')} <span className="text-red-400">*</span>
+                    9. Professional Profile / LinkedIn Profile <span className="text-slate-500 font-normal">(Optional)</span>
                   </span>
                   <input
                     type="url"
-                    name="contentLink"
-                    value={formData.contentLink}
-                    required
+                    name="linkedinUrl"
+                    value={formData.linkedinUrl}
                     onChange={handleFormChange}
-                    placeholder={t('becomeInstructorApplication.urlPlaceholder')}
-                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                    placeholder="https://linkedin.com/in/username"
+                    className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                   />
                 </label>
 
-                <label className="block">
-                  <span className="text-sm font-semibold text-slate-300">
-                    {t('becomeInstructorApplication.resumeLabel')}
-                    <span className="text-red-400 ml-0.5">*</span>
-                    <span className="text-slate-500 font-normal">
-                      {` ${t('becomeInstructorApplication.resumeHint')}`}
+                {/* SESSION DETAILS */}
+                <div className="pt-4 border-t border-slate-800 space-y-4">
+                  <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                    <span className="text-teal-400 font-mono">3.</span> Proposed Student Guidance Session
+                  </h3>
+
+                  <label className="block">
+                    <span className="text-sm font-semibold text-slate-300">
+                      10. Topic You Would Like to Guide Students On <span className="text-red-400">*</span>
                     </span>
-                  </span>
-                  <div className="mt-2">
-                    <label className="flex flex-col items-center justify-center w-full rounded-2xl border border-dashed border-white/20 bg-slate-950/80 px-4 py-6 cursor-pointer hover:border-indigo-400/50 transition duration-200">
-                      <svg
-                        className="w-8 h-8 text-slate-500 mb-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    <input
+                      type="text"
+                      name="topic"
+                      required
+                      value={formData.topic}
+                      onChange={handleFormChange}
+                      placeholder="e.g. How to Prepare for JEE/NEET & Career Paths in Technology"
+                      className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-semibold text-slate-300">
+                      11. Brief Description of Your Proposed Session <span className="text-red-400">*</span>
+                    </span>
+                    <textarea
+                      rows="3"
+                      name="sessionDescription"
+                      required
+                      value={formData.sessionDescription}
+                      onChange={handleFormChange}
+                      placeholder="Describe the key topics, outline, and focus of your guidance session."
+                      className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition leading-relaxed"
+                    />
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <label className="block">
+                      <span className="text-sm font-semibold text-slate-300">
+                        12. Target Student Group <span className="text-red-400">*</span>
+                      </span>
+                      <select
+                        name="targetGroup"
+                        required
+                        value={formData.targetGroup}
+                        onChange={handleFormChange}
+                        className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.5"
-                          d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"
-                        />
-                      </svg>
-                      {resumeFile ? (
-                        <span className="text-sm text-indigo-300 font-medium">
-                          {resumeFile.name}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-slate-500">
-                          {t('becomeInstructorApplication.uploadPrompt')}
-                        </span>
-                      )}
+                        <option value="Classes 9–10">Classes 9–10</option>
+                        <option value="Classes 11–12">Classes 11–12</option>
+                        <option value="College / University Students">College / University Students</option>
+                        <option value="Competitive Exam Aspirants">Competitive Exam Aspirants</option>
+                        <option value="Job / Career Aspirants">Job / Career Aspirants</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </label>
+
+                    <label className="block">
+                      <span className="text-sm font-semibold text-slate-300">
+                        14. Preferred Session Duration <span className="text-red-400">*</span>
+                      </span>
+                      <select
+                        name="sessionDuration"
+                        required
+                        value={formData.sessionDuration}
+                        onChange={handleFormChange}
+                        className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
+                      >
+                        <option value="45 Minutes">45 Minutes</option>
+                        <option value="30 Minutes">30 Minutes</option>
+                        <option value="60 Minutes">60 Minutes</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </label>
+
+                    <label className="block">
+                      <span className="text-sm font-semibold text-slate-300">
+                        15. Preferred Session Format
+                      </span>
+                      <select
+                        name="sessionFormat"
+                        value={formData.sessionFormat}
+                        onChange={handleFormChange}
+                        className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
+                      >
+                        <option value="Live Online Session">Live Online Session</option>
+                        <option value="Webinar">Webinar</option>
+                        <option value="Interactive Q&A">Interactive Q&A</option>
+                        <option value="Expert Talk">Expert Talk</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <label className="block">
+                    <span className="text-sm font-semibold text-slate-300">
+                      13. Expected Learning Outcome for Students <span className="text-red-400">*</span>
+                    </span>
+                    <textarea
+                      rows="2"
+                      name="learningOutcome"
+                      required
+                      value={formData.learningOutcome}
+                      onChange={handleFormChange}
+                      placeholder="What key takeaways or skills will students gain after attending your session?"
+                      className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
+                    />
+                  </label>
+                </div>
+
+                {/* CONTACT & AVAILABILITY */}
+                <div className="pt-4 border-t border-slate-800 space-y-4">
+                  <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                    <span className="text-teal-400 font-mono">4.</span> Contact & Availability
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className="block">
+                      <span className="text-sm font-semibold text-slate-300">
+                        16. Mobile / WhatsApp Number <span className="text-red-400">*</span>
+                      </span>
                       <input
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={handleResumeChange}
-                        className="hidden"
+                        type="tel"
+                        name="whatsappNumber"
+                        required
+                        value={formData.whatsappNumber}
+                        onChange={handleFormChange}
+                        placeholder="10-digit WhatsApp number"
+                        className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       />
                     </label>
-                    {resumeUploading && (
-                      <div className="mt-3 rounded-2xl bg-slate-950/90 px-4 py-3">
-                        <div className="flex items-center justify-between text-xs text-slate-400">
-                          <span>Uploading resume</span>
-                          <span>{resumeUploadProgress}%</span>
-                        </div>
-                        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-900">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400"
-                            style={{ width: `${resumeUploadProgress}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                    {resumeUrl && !resumeUploading && (
-                      <div className="mt-3 flex items-center justify-between rounded-2xl bg-slate-950/90 px-4 py-3 text-sm text-slate-200">
-                        <span>Resume uploaded</span>
-                        <button
-                          type="button"
-                          className="text-indigo-300 hover:text-indigo-200"
-                          onClick={() => {
-                            setResumeFile(null);
-                            setResumeUrl('');
-                            setResumeUploadProgress(0);
-                          }}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    )}
-                    {resumeError && (
-                      <p className="mt-2 text-xs text-red-400">{resumeError}</p>
-                    )}
-                  </div>
-                </label>
-              </div>
 
-              <div className="pt-4">
-                <button
-                  type="submit"
-                  disabled={submitting || appLoading || authLoading || resumeUploading}
-                  className="w-full rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500 px-6 py-4 text-sm font-bold text-slate-950 transition hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-indigo-500/20 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
-                >
-                  {submitting || appLoading || authLoading || resumeUploading
-                    ? t('becomeInstructorApplication.submitting')
-                    : !isAuthenticated
-                    ? t('becomeInstructorApplication.createAccountAndSubmit', 'Create Account & Submit Application')
-                    : t('becomeInstructorApplication.submitButton')}
-                </button>
+                    <label className="block">
+                      <span className="text-sm font-semibold text-slate-300">
+                        17. Email Address <span className="text-red-400">*</span>
+                      </span>
+                      <input
+                        type="email"
+                        name="email"
+                        required
+                        value={formData.email}
+                        onChange={handleFormChange}
+                        placeholder="expert@example.com"
+                        className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className="block">
+                      <span className="text-sm font-semibold text-slate-300">
+                        18. Preferred Availability / Suitable Days
+                      </span>
+                      <input
+                        type="text"
+                        name="availability"
+                        value={formData.availability}
+                        onChange={handleFormChange}
+                        placeholder="e.g. Weekends / Saturdays 4 PM – 6 PM"
+                        className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="text-sm font-semibold text-slate-300">
+                        19. Any Additional Information
+                      </span>
+                      <input
+                        type="text"
+                        name="additionalInfo"
+                        value={formData.additionalInfo}
+                        onChange={handleFormChange}
+                        placeholder="Any additional notes or requirements"
+                        className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
+                      />
+                    </label>
+                  </div>
+
+                  {/* RESUME UPLOAD (OPTIONAL) */}
+                  <label className="block pt-2">
+                    <span className="text-sm font-semibold text-slate-300">
+                      Upload Resume / Curriculum Vitae <span className="text-slate-500 font-normal">(PDF / Image, Max 5MB)</span>
+                    </span>
+                    <div className="mt-2">
+                      <label className="flex flex-col items-center justify-center w-full rounded-2xl border border-dashed border-slate-800 bg-slate-950/80 px-4 py-5 cursor-pointer hover:border-teal-400/50 transition duration-200">
+                        <svg
+                          className="w-7 h-7 text-slate-500 mb-1.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="1.5"
+                            d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"
+                          />
+                        </svg>
+                        {resumeFile ? (
+                          <span className="text-sm text-teal-300 font-medium">
+                            {resumeFile.name}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-500">
+                            Click to upload resume file
+                          </span>
+                        )}
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={handleResumeChange}
+                          className="hidden"
+                        />
+                      </label>
+                      {resumeUploading && (
+                        <div className="mt-3 rounded-2xl bg-slate-950/90 px-4 py-3">
+                          <div className="flex items-center justify-between text-xs text-slate-400">
+                            <span>Uploading resume...</span>
+                            <span>{resumeUploadProgress}%</span>
+                          </div>
+                          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-900">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-400"
+                              style={{ width: `${resumeUploadProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {resumeUrl && !resumeUploading && (
+                        <div className="mt-3 flex items-center justify-between rounded-2xl bg-slate-950/90 px-4 py-3 text-xs text-slate-200">
+                          <span>✓ Resume uploaded successfully</span>
+                          <button
+                            type="button"
+                            className="text-teal-300 hover:text-teal-200 font-bold"
+                            onClick={() => {
+                              setResumeFile(null);
+                              setResumeUrl('');
+                              setResumeUploadProgress(0);
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      )}
+                      {resumeError && (
+                        <p className="mt-2 text-xs text-red-400">{resumeError}</p>
+                      )}
+                    </div>
+                  </label>
+                </div>
+
+                {/* CONFIRMATION CHECKBOX */}
+                <div className="pt-4 border-t border-slate-800">
+                  <label className="flex items-start gap-3 p-4 rounded-2xl bg-teal-500/10 border border-teal-500/30 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      name="confirmed"
+                      required
+                      checked={formData.confirmed}
+                      onChange={handleFormChange}
+                      className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-900 text-teal-400 focus:ring-teal-400 cursor-pointer"
+                    />
+                    <span className="text-xs sm:text-sm font-medium text-slate-200 leading-relaxed">
+                      I confirm that the information provided above is correct and that I am willing to contribute a <strong>FREE student guidance session</strong> on the selected topic.
+                    </span>
+                  </label>
+                </div>
+
+                <div className="pt-4">
+                  <button
+                    type="submit"
+                    disabled={submitting || appLoading || authLoading || resumeUploading || !formData.confirmed}
+                    className="w-full rounded-2xl bg-gradient-to-r from-teal-500 via-emerald-500 to-indigo-600 px-6 py-4 text-sm sm:text-base font-extrabold text-slate-950 transition hover:scale-[1.01] active:scale-[0.99] shadow-xl shadow-teal-500/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer uppercase tracking-wider"
+                  >
+                    {submitting || appLoading || authLoading || resumeUploading
+                      ? 'SUBMITTING PROFILE...'
+                      : '[ SUBMIT YOUR EXPERT PROFILE ]'}
+                  </button>
+                </div>
               </div>
             </form>
           )}

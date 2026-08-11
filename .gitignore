@@ -49,3 +49,5 @@ server/uploads/*
 !.env.example
 !.env*.example
 
+
+*.rar
