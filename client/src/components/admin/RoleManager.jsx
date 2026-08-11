@@ -583,13 +583,15 @@ const RoleModal = ({
           method: "PUT",
           body: JSON.stringify(payload),
         });
-        showToast?.("Role updated.");
+        localStorage.removeItem("auth_user_v2_ts");
+        showToast?.("Role updated successfully.");
       } else {
         await api(API_BASE, {
           method: "POST",
           body: JSON.stringify(payload),
         });
-        showToast?.("Role created.");
+        localStorage.removeItem("auth_user_v2_ts");
+        showToast?.("Role created successfully.");
       }
       onSaved();
     } catch (err) {

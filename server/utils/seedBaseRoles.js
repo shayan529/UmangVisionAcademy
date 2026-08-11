@@ -25,12 +25,13 @@ export const ensureBaseRoleDocs = async () => {
           {
             $set: {
               name,
-              description:      `System ${name} role`,
-              isSystem:         true,
-              // Always sync dashboardModules so new keys propagate on restart
+              description: `System ${name} role`,
+              isSystem: true,
+            },
+            $setOnInsert: {
+              permissions: [],
               dashboardModules: DASHBOARD_MODULES[name],
             },
-            $setOnInsert: { permissions: [] },
           },
           { upsert: true, new: true },
         );

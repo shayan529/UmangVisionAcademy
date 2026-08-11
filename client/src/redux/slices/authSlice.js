@@ -7,7 +7,7 @@ import api, { API_ENDPOINTS } from "../../config/api";
 // We only store the fields the UI actually needs for routing and display.
 const USER_CACHE_KEY = "auth_user_v2";
 const USER_CACHE_TS_KEY = "auth_user_v2_ts"; // timestamp of last successful /me fetch
-const ME_DEBOUNCE_MS = 5 * 60 * 1000; // 5 minutes — skip /me if cache is younger
+const ME_DEBOUNCE_MS = 15 * 1000; // 15 seconds — fast sync so role & module updates take effect immediately
 
 const SLIM_FIELDS = [
   "_id", "name", "email", "phoneNumber", "avatarUrl",
