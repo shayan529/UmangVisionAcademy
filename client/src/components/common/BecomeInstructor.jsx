@@ -9,138 +9,84 @@ import { hasBaseRole } from "../../utils/permissions";
 import {
   GraduationCap,
   Sparkles,
-  Award,
-  ArrowRight,
+  Rocket,
   CheckCircle2,
   Users,
   Video,
+  Award,
+  ArrowRight,
+  FileText,
+  UploadCloud,
   BookOpen,
-  Briefcase,
-  Compass,
-  FileCheck2,
-  Network,
-  Globe2,
-  Target,
-  HeartHandshake,
-  Lightbulb,
   Zap,
 } from "lucide-react";
 
-const guidanceTopics = [
+const steps = [
   {
-    title: "Career Guidance & Career Planning",
-    desc: "Help students navigate stream selection, long-term career roadmaps, and industry paths.",
-    icon: Compass,
-    color: "from-blue-500/20 to-indigo-500/20 text-blue-400 border-blue-500/30",
+    icon: FileText,
+    stepNum: "01",
+    titleKey: "becomeInstructor.steps.apply.title",
+    defaultTitle: "Apply & Submit Demo",
+    descriptionKey: "becomeInstructor.steps.apply.description",
+    defaultDesc: "Submit your bio, expertise, and sample lesson content so our academic review team can evaluate your teaching style.",
+    badgeColor: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
   },
   {
-    title: "Academic & Subject-Specific Guidance",
-    desc: "In-depth subject mentorship, key concept mastery, and academic excellence strategies.",
-    icon: BookOpen,
-    color: "from-indigo-500/20 to-purple-500/20 text-indigo-400 border-indigo-500/30",
+    icon: UploadCloud,
+    stepNum: "02",
+    titleKey: "becomeInstructor.steps.upload.title",
+    defaultTitle: "Start Creating Content",
+    descriptionKey: "becomeInstructor.steps.upload.description",
+    defaultDesc: "Use our AI-assisted course builder to record videos, generate practice quizzes, and organize subject modules.",
+    badgeColor: "text-purple-400 bg-purple-500/10 border-purple-500/20",
   },
   {
-    title: "Competitive & Entrance Examination Guidance",
-    desc: "Preparation roadmaps for JEE, NEET, CLAT, CAT, CUET, and other national entrance exams.",
-    icon: Target,
-    color: "from-purple-500/20 to-pink-500/20 text-purple-400 border-purple-500/30",
-  },
-  {
-    title: "Government Exams & Career Opportunities",
-    desc: "Insights into UPSC, SSC, Banking, Railways, State PSCs, and public sector opportunities.",
-    icon: Award,
-    color: "from-amber-500/20 to-orange-500/20 text-amber-400 border-amber-500/30",
-  },
-  {
-    title: "Upcoming Exams, Jobs & Career Opportunities",
-    desc: "Real-time updates on emerging vacancies, admission deadlines, and industry hiring trends.",
-    icon: Zap,
-    color: "from-emerald-500/20 to-teal-500/20 text-emerald-400 border-emerald-500/30",
-  },
-  {
-    title: "Emerging & New-Age Career Fields",
-    desc: "Guidance on AI, Data Science, Cyber Security, Design, Fintech, and modern digital careers.",
-    icon: Sparkles,
-    color: "from-cyan-500/20 to-blue-500/20 text-cyan-400 border-cyan-500/30",
-  },
-  {
-    title: "Skill Development & Career-Oriented Programs",
-    desc: "Practical soft skills, communication, coding, problem solving, and workplace readiness.",
-    icon: Briefcase,
-    color: "from-violet-500/20 to-indigo-500/20 text-violet-400 border-violet-500/30",
-  },
-  {
-    title: "Study Strategies & Examination Preparation",
-    desc: "Time management, memory retention, note-taking techniques, and stress management.",
-    icon: Lightbulb,
-    color: "from-yellow-500/20 to-amber-500/20 text-yellow-400 border-yellow-500/30",
-  },
-  {
-    title: "Higher Education & Admission Guidance",
-    desc: "College selection, university entrance, SOP writing, and scholarship application tips.",
-    icon: GraduationCap,
-    color: "from-rose-500/20 to-red-500/20 text-rose-400 border-rose-500/30",
-  },
-  {
-    title: "Industry Trends & Professional Opportunities",
-    desc: "Direct insights from industry veterans on modern corporate expectations and job markets.",
-    icon: Globe2,
-    color: "from-teal-500/20 to-emerald-500/20 text-teal-400 border-teal-500/30",
+    icon: Rocket,
+    stepNum: "03",
+    titleKey: "becomeInstructor.steps.teach.title",
+    defaultTitle: "Launch & Earn",
+    descriptionKey: "becomeInstructor.steps.teach.description",
+    defaultDesc: "Publish your course to thousands of enrolled students, host live doubt clearing sessions, and earn competitive payouts.",
+    badgeColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
   },
 ];
 
-const whoCanJoinList = [
-  "Teachers",
-  "Professors",
-  "Subject Experts",
-  "Career Counsellors",
-  "Competitive Exam Experts",
-  "Industry Professionals",
-  "Entrepreneurs",
-  "Skilled Professionals",
-  "Mentors",
-];
-
-const benefitsList = [
-  {
-    icon: Award,
-    title: "Professional Recognition",
-    desc: "Be recognized as a verified subject, career, examination, or industry expert in our national educational network.",
-    color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
-  },
+const instructorPerks = [
   {
     icon: Users,
-    title: "Expert Profile",
-    desc: "Showcase your professional expertise, experience, credentials, and areas of guidance on our official platform.",
-    color: "text-purple-400 bg-purple-500/10 border-purple-500/20",
+    titleKey: "becomeInstructor.perks.reachStudents.title",
+    descKey: "becomeInstructor.perks.reachStudents.desc",
+    defaultTitle: "Reach Thousands of Students",
+    defaultDesc: "Teach motivated learners across Class 9-12, competitive exams, and specialized skill tracks.",
+    color: "#818cf8",
   },
   {
-    icon: FileCheck2,
-    title: "Certificate of Appreciation",
-    desc: "Receive an official Certificate of Appreciation in recognition of your valuable voluntary contribution to student guidance.",
-    color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+    icon: Sparkles,
+    titleKey: "becomeInstructor.perks.aiBuilder.title",
+    descKey: "becomeInstructor.perks.aiBuilder.desc",
+    defaultTitle: "AI-Powered Course Builder",
+    defaultDesc: "Auto-generate practice quizzes, lesson notes, and student progress reports effortlessly.",
+    color: "#c084fc",
+  },
+  {
+    icon: Award,
+    titleKey: "becomeInstructor.perks.earnings.title",
+    descKey: "becomeInstructor.perks.earnings.desc",
+    defaultTitle: "Transparent & Timely Earnings",
+    defaultDesc: "Earn competitive revenues per enrollment with direct payouts and clear performance analytics.",
+    color: "#4ade80",
   },
   {
     icon: Video,
-    title: "Expert Session Opportunities",
-    desc: "Get scheduled opportunities to conduct live interactive sessions, webinars, keynote talks, and live Q&A with students.",
-    color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
-  },
-  {
-    icon: Network,
-    title: "Professional Networking",
-    desc: "Connect and collaborate with leading educators, certified mentors, industry leaders, and like-minded experts.",
-    color: "text-amber-400 bg-amber-500/10 border-amber-500/20",
-  },
-  {
-    icon: HeartHandshake,
-    title: "Future Collaboration Opportunities",
-    desc: "Explore potential partnerships for paid courses, specialized workshops, 1-on-1 mentorship initiatives, and academic programs.",
-    color: "text-rose-400 bg-rose-500/10 border-rose-500/20",
+    titleKey: "becomeInstructor.perks.streamingTools.title",
+    descKey: "becomeInstructor.perks.streamingTools.desc",
+    defaultTitle: "High-Quality Streaming Tools",
+    defaultDesc: "Host live video classes or publish self-paced HD video courses with automatic PDF material attachments.",
+    color: "#38bdf8",
   },
 ];
 
-export default function BecomeInstructor() {
+const BecomeInstructor = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -153,15 +99,19 @@ export default function BecomeInstructor() {
     if (isAuthenticated) dispatch(fetchMyApplication());
   }, [isAuthenticated, dispatch]);
 
+  // Already an instructor — navigate to instructor dashboard
   useEffect(() => {
     if (user?.role === "instructor")
       navigate("/instructor-dashboard", { replace: true });
   }, [user, navigate]);
 
-  const handleRegister = () => {
+  const handleBecomeInstructor = () => {
     if (isStudent) {
       toast.error(
-        "Students cannot register as an expert guide. Please log out and register with an expert/instructor account.",
+        t(
+          "becomeInstructor.studentCannotBecomeError",
+          "Students cannot become an instructor. Please create a fresh account."
+        )
       );
       return;
     }
@@ -170,288 +120,256 @@ export default function BecomeInstructor() {
   };
 
   const buttonLabel = loading
-    ? "Checking status…"
+    ? t("becomeInstructor.buttonChecking", "Checking status…")
     : myApplication
-      ? "View Application Status →"
-      : "Register as an Expert Guide →";
+    ? t("becomeInstructor.buttonStatus", "View Application Status →")
+    : t("becomeInstructor.buttonBecome", "Become an Instructor");
 
   return (
-    <div className="min-h-screen bg-[#0B1120] text-slate-100 relative overflow-x-clip py-14 lg:py-20 px-4 sm:px-6 lg:px-12 font-sans">
-      {/* Ambient Glows */}
+    <div className="min-h-screen bg-[#0B1120] text-slate-100 relative overflow-x-clip py-16 lg:py-24 px-6 md:px-10">
+      {/* Background Glow Accents (GPU Optimized) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-indigo-600/15 blur-[100px] rounded-full transform-gpu" />
-        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-purple-600/15 blur-[100px] rounded-full transform-gpu" />
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-indigo-600/15 blur-[90px] rounded-full transform-gpu" />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-cyan-600/15 blur-[90px] rounded-full transform-gpu" />
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-20 relative z-10">
-        {/* ── 1. HERO SECTION ── */}
-        <div className="grid gap-12 lg:grid-cols-12 items-center">
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-black uppercase tracking-wider">
-              <Sparkles size={14} className="text-amber-400" />
-              <span>Free Student Guidance Initiative</span>
+      <main className="max-w-7xl mx-auto space-y-20 relative z-10">
+
+        {/* ── HERO & APPLICATION CARD GRID ── */}
+        <div className="grid gap-12 lg:grid-cols-[1.2fr_0.8fr] items-center">
+          
+          {/* Left Hero Content */}
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider">
+              <GraduationCap size={16} />
+              {t("becomeInstructor.tag", "Teach on Umang Vision Academy")}
             </div>
 
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
-              BECOME A STUDENT GUIDE &{" "}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
+              {t("becomeInstructor.headlinePart1", "Share Your")}{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400">
-                EXPERT MENTOR
+                {t("becomeInstructor.headlinePart2", "Knowledge.")}
               </span>
             </h1>
 
-            <p className="text-lg sm:text-xl font-bold text-slate-200">
-              Share Your Knowledge. Guide Students. Shape Futures.
+            <p className="max-w-2xl text-slate-400 text-base md:text-lg leading-relaxed">
+              {t(
+                "becomeInstructor.subtitle",
+                "Join 300+ instructors building courses that reach thousands of learners. Submit your application, get verified fast, and start teaching with AI-supported tools."
+              )}
             </p>
 
-            <div className="space-y-3 text-slate-300 text-sm sm:text-base leading-relaxed">
-              <p>
-                Are you an educator, subject expert, career mentor, industry
-                professional, competitive-exam specialist, or skilled professional
-                with valuable knowledge and experience to share?
-              </p>
-              <p>
-                <strong className="text-white">AI Online Coaching</strong> invites
-                experts to become part of our{" "}
-                <span className="text-indigo-300 font-semibold">
-                  Free Student Guidance Initiative
-                </span>{" "}
-                and voluntarily conduct informative and interactive sessions for
-                students.
-              </p>
-              <p className="text-slate-400 text-xs sm:text-sm">
-                Your knowledge, experience, and practical guidance can help
-                students discover opportunities, make informed career decisions,
-                understand examinations, develop relevant skills, and plan their
-                academic and professional journey.
-              </p>
-            </div>
-
-            <div className="pt-2 flex flex-wrap gap-4 items-center">
-              <button
-                type="button"
-                onClick={handleRegister}
-                disabled={loading}
-                className="px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-black text-sm tracking-wide shadow-xl shadow-indigo-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-              >
-                {buttonLabel}
-              </button>
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-3 gap-4 pt-4 max-w-lg border-t border-slate-800">
+              <div>
+                <div className="text-2xl font-black text-white">300+</div>
+                <div className="text-xs text-slate-400 font-medium">Expert Educators</div>
+              </div>
+              <div>
+                <div className="text-2xl font-black text-indigo-400">10k+</div>
+                <div className="text-xs text-slate-400 font-medium">Enrolled Students</div>
+              </div>
+              <div>
+                <div className="text-2xl font-black text-cyan-400">24h</div>
+                <div className="text-xs text-slate-400 font-medium">Fast Approval</div>
+              </div>
             </div>
           </div>
 
-          {/* Hero Quick Card */}
-          <div className="lg:col-span-5 relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500 rounded-[32px] blur-xl opacity-30 group-hover:opacity-50 transition duration-500" />
-            <div className="relative rounded-3xl bg-[#111827] border border-slate-800 p-6 sm:p-8 space-y-6 shadow-2xl">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-                  <GraduationCap size={24} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-white">
-                    REGISTER AS AN EXPERT GUIDE
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    Join our volunteer mentoring network
-                  </p>
-                </div>
-              </div>
+          {/* Right Application CTA Card */}
+          <div className="relative group transform-gpu">
+            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-[36px] blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-500 pointer-events-none" />
 
-              <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2.5 text-xs text-slate-300">
-                <div className="font-bold text-white flex items-center gap-2">
-                  <CheckCircle2 size={15} className="text-emerald-400" />
-                  <span>Give Back • Share Experience</span>
+            <div className="relative rounded-[32px] border border-slate-800/90 bg-[#111827]/95 p-8 sm:p-10 shadow-2xl flex flex-col justify-between space-y-8 overflow-hidden transform-gpu">
+              <Rocket size={100} className="absolute -bottom-8 -right-8 text-indigo-500/10 pointer-events-none" />
+
+              <div className="space-y-4 relative z-10">
+                <div className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+                  <Zap size={13} className="text-amber-400 fill-amber-400" />
+                  {t("becomeInstructor.applyNow", "APPLY NOW")}
                 </div>
-                <div className="font-bold text-white flex items-center gap-2">
-                  <CheckCircle2 size={15} className="text-emerald-400" />
-                  <span>Inspire Students • Create Awareness</span>
-                </div>
-                <div className="font-bold text-white flex items-center gap-2">
-                  <CheckCircle2 size={15} className="text-emerald-400" />
-                  <span>Make a Real Difference</span>
-                </div>
-                <p className="text-[11px] text-slate-400 pt-1 border-t border-slate-800 leading-snug">
-                  These guidance sessions are 100% FREE for students. Experts
-                  volunteer their knowledge to help students explore brighter
-                  futures.
+
+                <h2 className="text-2xl sm:text-3xl font-black text-white leading-snug">
+                  {t("becomeInstructor.startJourney", "Start your instructor journey")}
+                </h2>
+
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  {t(
+                    "becomeInstructor.cardBody",
+                    "Fill in your expertise and sample content to get started. Our team will reach out within 24 hours with next steps."
+                  )}
                 </p>
               </div>
 
-              {isStudent && (
-                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs space-y-2">
-                  <p className="font-semibold">
-                    ⚠️ Logged in as a Student. Please log out to register as an
-                    Expert Guide.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      dispatch(clearAuth());
-                      navigate("/become-instructor/apply");
-                    }}
-                    className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 font-bold text-xs cursor-pointer"
-                  >
-                    Log Out & Register
-                  </button>
+              <div className="space-y-3 relative z-10 pt-2">
+                {isStudent && (
+                  <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 text-xs text-amber-300 font-medium space-y-2">
+                    <p className="leading-relaxed font-semibold">
+                      ⚠️ {t(
+                        "becomeInstructor.studentCannotBecomeError",
+                        "Students cannot become an instructor. Please create a fresh account."
+                      )}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        dispatch(clearAuth());
+                        navigate("/become-instructor/apply");
+                      }}
+                      className="inline-block px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Log Out & Register Fresh Account
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleBecomeInstructor}
+                  disabled={loading}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 px-6 py-4 text-sm font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-indigo-600/25 disabled:opacity-50 cursor-pointer"
+                >
+                  <span>{buttonLabel}</span>
+                  <ArrowRight size={16} />
+                </button>
+
+                <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
+                  <CheckCircle2 size={13} className="text-emerald-400" />
+                  <span>No upfront fees • Free onboarding</span>
                 </div>
-              )}
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── WHY TEACH WITH US (PERKS GRID) ── */}
+        <div className="space-y-8 pt-6 border-t border-slate-800/80">
+          <div className="text-center space-y-3 max-w-2xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              {t("becomeInstructor.whyChooseTitle", "Why Instructors Choose Umang Vision Academy")}
+            </h2>
+            <p className="text-slate-400 text-sm sm:text-base">
+              {t("becomeInstructor.whyChooseSubtitle", "Everything you need to build, market, and monetize high-impact online courses.")}
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {instructorPerks.map((perk, i) => {
+              const Icon = perk.icon;
+              return (
+                <div
+                  key={i}
+                  className="p-6 rounded-2xl border border-slate-800/80 bg-[#111827]/90 hover:-translate-y-1 hover:border-indigo-500/40 hover:shadow-lg transition-transform transition-colors duration-200 space-y-4 group transform-gpu"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                    <Icon size={24} style={{ color: perk.color }} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-base group-hover:text-indigo-300 transition-colors">
+                      {t(perk.titleKey, perk.defaultTitle)}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">
+                      {t(perk.descKey, perk.defaultDesc)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── HOW IT WORKS STEPS & READY BANNER ── */}
+        <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] items-stretch">
+          
+          {/* Steps Container */}
+          <div className="rounded-[32px] border border-slate-800/90 bg-[#111827]/90 p-8 sm:p-10 shadow-xl space-y-8 transform-gpu">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-2">
+                <Sparkles size={14} />
+                {t("becomeInstructor.howItWorks", "How it works")}
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-white">
+                {t("becomeInstructor.howItWorksHeading", "A simple process to launch your first course")}
+              </h2>
+              <p className="mt-2 text-slate-400 text-sm leading-relaxed">
+                {t(
+                  "becomeInstructor.howItWorksBody",
+                  "Apply with your expertise, get verified quickly, and publish your first course to start earning from day one."
+                )}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {steps.map((step) => {
+                const Icon = step.icon;
+                const title = t(step.titleKey, step.defaultTitle);
+                const desc = t(step.descriptionKey, step.defaultDesc);
+
+                return (
+                  <div
+                    key={step.stepNum}
+                    className="flex items-start gap-4 rounded-2xl border border-slate-800 bg-slate-900/80 p-5 hover:border-slate-700 transition-colors duration-200"
+                  >
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border ${step.badgeColor} font-black text-sm shadow-md`}>
+                      {step.stepNum}
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-base font-bold text-white flex items-center gap-2">
+                        <Icon size={16} className="text-indigo-400" />
+                        {title}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                        {desc}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right Final Ready Banner */}
+          <div className="rounded-[32px] border border-slate-800/90 bg-gradient-to-br from-slate-900 via-[#111827] to-indigo-950/40 p-8 sm:p-10 shadow-2xl flex flex-col justify-center items-center text-center relative overflow-hidden transform-gpu">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-2xl rounded-full pointer-events-none" />
+
+            <div className="space-y-6 max-w-md my-auto relative z-10">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mx-auto text-indigo-400 shadow-xl">
+                <Rocket size={32} />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-indigo-400">
+                  {t("becomeInstructor.readyToJoin", "Ready to join?")}
+                </p>
+                <h2 className="text-2xl sm:text-3xl font-black text-white">
+                  {t("becomeInstructor.applyToTeach", "Apply to teach today")}
+                </h2>
+              </div>
+
+              <p className="text-slate-400 text-sm leading-relaxed">
+                {t(
+                  "becomeInstructor.readyBody",
+                  "Are you ready to share your expertise and shape the future of learning? Submit your application and become part of our world-class coaching community."
+                )}
+              </p>
 
               <button
                 type="button"
-                onClick={handleRegister}
+                onClick={handleBecomeInstructor}
                 disabled={loading}
-                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 px-6 py-4 text-sm font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-indigo-600/25 disabled:opacity-50 cursor-pointer"
               >
                 <span>{buttonLabel}</span>
                 <ArrowRight size={16} />
               </button>
             </div>
           </div>
-        </div>
 
-        {/* ── 2. WHAT CAN YOU GUIDE STUDENTS ON? ── */}
-        <div className="space-y-8 pt-8 border-t border-slate-800/80">
-          <div className="text-center max-w-3xl mx-auto space-y-3">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
-              WHAT CAN YOU GUIDE STUDENTS ON?
-            </h2>
-            <p className="text-slate-400 text-sm sm:text-base">
-              Experts can conduct a FREE guidance session on diverse topics such
-              as:
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {guidanceTopics.map((topic, idx) => {
-              const Icon = topic.icon;
-              return (
-                <div
-                  key={idx}
-                  className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition flex flex-col gap-2.5 group"
-                >
-                  <div
-                    className={`w-10 h-10 rounded-xl bg-gradient-to-br ${topic.color} border flex items-center justify-center shrink-0`}
-                  >
-                    <Icon size={20} />
-                  </div>
-                  <h3 className="text-sm font-bold text-white group-hover:text-indigo-300 transition">
-                    {topic.title}
-                  </h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    {topic.desc}
-                  </p>
-                </div>
-              );
-            })}
-
-            {/* Any other topic box */}
-            <div className="p-5 rounded-2xl bg-indigo-950/30 border border-indigo-500/30 flex flex-col justify-center gap-2">
-              <div className="flex items-center gap-2 text-indigo-300 font-bold text-sm">
-                <Sparkles size={18} />
-                <span>Any Other Topic</span>
-              </div>
-              <p className="text-xs text-indigo-200/80 leading-relaxed">
-                Have a specialized topic in mind? You can propose any topic that
-                meaningfully benefits student learning and career clarity.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* ── 3. WHO CAN JOIN? ── */}
-        <div className="space-y-8 pt-8 border-t border-slate-800/80">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              WHO CAN JOIN?
-            </h2>
-            <p className="text-slate-400 text-sm">
-              We welcome dedicated professionals and mentors from all domains:
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-3 max-w-4xl mx-auto">
-            {whoCanJoinList.map((item, idx) => (
-              <div
-                key={idx}
-                className="px-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-indigo-500/50 text-xs sm:text-sm font-bold text-slate-200 hover:text-white transition shadow-sm flex items-center gap-2"
-              >
-                <span className="text-indigo-400 font-black">✦</span>
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── 4. WHY JOIN US? ── */}
-        <div className="rounded-3xl bg-gradient-to-br from-indigo-950/60 via-slate-900 to-purple-950/60 border border-indigo-500/30 p-8 sm:p-12 text-center space-y-6 shadow-2xl">
-          <h2 className="text-2xl sm:text-3xl font-black text-white">
-            WHY JOIN US?
-          </h2>
-          <p className="text-lg sm:text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-cyan-300">
-            Give Back • Share Experience • Inspire Students • Create Awareness • Make a Difference
-          </p>
-          <p className="max-w-3xl mx-auto text-slate-300 text-sm sm:text-base leading-relaxed">
-            These guidance sessions are FREE for students. Experts can contribute
-            their knowledge and experience to help students explore better
-            academic, career, examination, and skill-development opportunities.
-          </p>
-        </div>
-
-        {/* ── 5. BENEFITS OF JOINING OUR EXPERT GUIDE NETWORK ── */}
-        <div className="space-y-8 pt-8 border-t border-slate-800/80">
-          <div className="text-center max-w-3xl mx-auto space-y-3">
-            <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">
-              BECOME AN EXPERT GUIDE
-            </div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
-              Benefits of Joining Our Expert Guide Network
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {benefitsList.map((benefit, idx) => {
-              const Icon = benefit.icon;
-              return (
-                <div
-                  key={idx}
-                  className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition flex flex-col gap-3.5 group"
-                >
-                  <div
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center border shrink-0 ${benefit.color}`}
-                  >
-                    <Icon size={24} />
-                  </div>
-                  <h3 className="text-base font-bold text-white group-hover:text-indigo-300 transition">
-                    {benefit.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                    {benefit.desc}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── 6. FINAL BOTTOM CTA BANNER ── */}
-        <div className="p-8 sm:p-12 rounded-3xl bg-[#111827] border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
-          <div className="space-y-2 text-center md:text-left">
-            <h3 className="text-2xl font-black text-white">
-              Ready to guide students & shape futures?
-            </h3>
-            <p className="text-slate-400 text-xs sm:text-sm">
-              Register in just 3 minutes with your area of expertise.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleRegister}
-            disabled={loading}
-            className="px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-black text-sm shadow-xl shadow-indigo-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0"
-          >
-            {buttonLabel}
-          </button>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
-}
+};
+
+export default BecomeInstructor;

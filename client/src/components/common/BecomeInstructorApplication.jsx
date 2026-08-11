@@ -1,203 +1,160 @@
-import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { useTranslation } from "react-i18next";
+import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import {
   fetchMyApplication,
   submitApplication,
-} from "../../redux/slices/applicationsSlice";
-import { register } from "../../redux/slices/authSlice";
-import { hasBaseRole } from "../../utils/permissions";
-import { isFirebaseConfigured } from "../../config/firebase";
+} from '../../redux/slices/applicationsSlice';
+import { register, clearAuth } from '../../redux/slices/authSlice';
+import { uploadFile } from '../../utils/uploadFile.js';
+import { hasBaseRole } from '../../utils/permissions';
+import { INDIA_STATES, getCitiesForState } from '../../data/indiaLocations';
+import { isFirebaseConfigured } from '../../config/firebase';
 import {
   sendFirebasePhoneOtp,
   verifyFirebasePhoneOtp,
   clearRecaptcha,
-} from "../../services/firebasePhoneAuth";
-import api from "../../config/api";
-import { FiEye, FiEyeOff } from "react-icons/fi";
-import {
-  GraduationCap,
-  Sparkles,
-  Award,
-  CheckCircle2,
-  Phone,
-  Mail,
-  User,
-  Briefcase,
-  Building,
-  Clock,
-  BookOpen,
-  FileText,
-  Calendar,
-  Send,
-} from "lucide-react";
-import toast from "react-hot-toast";
+} from '../../services/firebasePhoneAuth';
+import api from '../../config/api';
+import { FiEye, FiEyeOff, FiCheckCircle } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
-const TARGET_GROUPS = [
-  "Classes 9–10",
-  "Classes 11–12",
-  "College / University Students",
-  "Competitive Exam Aspirants",
-  "Job / Career Aspirants",
-  "Other",
-];
-
-const SESSION_DURATIONS = ["45 Minutes", "60 Minutes", "90 Minutes", "Other"];
-
-const SESSION_FORMATS = [
-  "Live Online Session",
-  "Webinar",
-  "Interactive Q&A",
-  "Expert Talk",
-];
-
-export default function BecomeInstructorApplication() {
+const BecomeInstructorApplication = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const { loading: appLoading, myApplication } = useSelector(
-    (state) => state.applications,
+    (state) => state.applications
   );
   const { isAuthenticated, user, loading: authLoading } = useSelector(
-    (state) => state.auth,
+    (state) => state.auth
   );
   const isStudent = hasBaseRole(user, "student");
 
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Phone OTP Verification States (For unauthenticated users)
+  // Phone OTP Verification States
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false);
   const [verifyingPhone, setVerifyingPhone] = useState(false);
   const [phoneResendCooldown, setPhoneResendCooldown] = useState(0);
-  const [phoneOtpInputs, setPhoneOtpInputs] = useState([
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-  ]);
-  const [firebaseConfirmationResult, setFirebaseConfirmationResult] =
-    useState(null);
+  const [phoneOtpInputs, setPhoneOtpInputs] = useState(['', '', '', '', '', '']);
+  const [firebaseConfirmationResult, setFirebaseConfirmationResult] = useState(null);
+  const [otpFallbackMode, setOtpFallbackMode] = useState(false);
   const phoneOtpRefs = useRef([]);
 
   // Account creation state (for unauthenticated users)
   const [accountData, setAccountData] = useState({
-    password: "",
-    phoneNumber: "",
-    email: "",
+    name: '',
+    email: '',
+    password: '',
+    phoneNumber: '',
+    state: '',
+    city: '',
+    pincode: '',
   });
 
-  // Expert Registration Form (19 Fields)
+  // Teaching application state
   const [formData, setFormData] = useState({
-    // 1. Personal & Professional Details
-    name: user?.name || "",
-    designation: "",
-    organization: "",
-    highestQualification: "",
-    expertise: "",
-    yearsOfExperience: "",
-    professionalField: "",
-    bio: "", // Short Self-Introduction
-    linkedinProfile: "",
-
-    // 2. Proposed Guidance Session Details
-    guidanceTopic: "",
-    sessionDescription: "",
-    targetGroup: "Classes 9–10",
-    learningOutcome: "",
-    preferredDuration: "45 Minutes",
-    preferredFormat: "Live Online Session",
-    phoneNumber: user?.phone || "",
-    email: user?.email || "",
-    availabilityDays: "",
-    additionalInfo: "",
-
-    // 3. Confirmation
-    confirmedContribution: false,
+    name: user?.name || '',
+    expertise: '',
+    bio: '',
+    contentLink: '',
   });
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      dispatch(fetchMyApplication());
-    }
-  }, [isAuthenticated, dispatch]);
+  const [resumeFile, setResumeFile] = useState(null);
+  const [resumeUrl, setResumeUrl] = useState('');
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const [resumeUploadProgress, setResumeUploadProgress] = useState(0);
+  const [resumeError, setResumeError] = useState('');
 
+  // Keep name synced if user logs in
   useEffect(() => {
-    if (myApplication) {
-      navigate("/instructor-application/status");
-    }
-  }, [myApplication, navigate]);
-
-  useEffect(() => {
-    if (user) {
-      setFormData((prev) => ({
-        ...prev,
-        name: prev.name || user.name || "",
-        email: prev.email || user.email || "",
-        phoneNumber: prev.phoneNumber || user.phone || "",
-      }));
+    if (user?.name) {
+      setFormData((prev) => ({ ...prev, name: user.name }));
     }
   }, [user]);
 
+  // Phone OTP resend timer
   useEffect(() => {
     if (phoneResendCooldown <= 0) return;
     const timer = setTimeout(() => setPhoneResendCooldown((c) => c - 1), 1000);
     return () => clearTimeout(timer);
   }, [phoneResendCooldown]);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+  const handleAccountChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'phoneNumber') {
+      const cleanVal = value.replace(/\D/g, '').slice(0, 10);
+      setAccountData((prev) => ({ ...prev, phoneNumber: cleanVal }));
+      if (phoneVerified || phoneOtpSent) {
+        setPhoneVerified(false);
+        setPhoneOtpSent(false);
+        setPhoneOtpInputs(['', '', '', '', '', '']);
+      }
+      return;
+    }
+
+    setAccountData((prev) => {
+      const next = { ...prev, [name]: value };
+      if (name === 'state') {
+        next.city = '';
+      }
+      return next;
+    });
   };
 
   const normalizeIndianPhoneNumber = (phoneNumber) => {
-    const digits = (phoneNumber || "").replace(/\D/g, "");
+    const digits = (phoneNumber || '').replace(/\D/g, '');
     if (/^\d{10}$/.test(digits)) return `+91${digits}`;
     if (/^91\d{10}$/.test(digits)) return `+${digits}`;
     return null;
   };
 
   const handleSendPhoneOtp = async (e) => {
-    if (e && typeof e.preventDefault === "function") e.preventDefault();
-    const phoneToVerify = formData.phoneNumber || accountData.phoneNumber;
-    const normalized = normalizeIndianPhoneNumber(phoneToVerify);
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const normalizedPhoneNumber = normalizeIndianPhoneNumber(accountData.phoneNumber);
 
-    if (!normalized) {
-      toast.error("Please enter a valid 10-digit mobile number.");
+    if (!normalizedPhoneNumber) {
+      toast.error('Enter a valid 10-digit Indian mobile number.');
       return;
     }
 
-    clearRecaptcha("recaptcha-container");
+    clearRecaptcha('recaptcha-container');
     setFirebaseConfirmationResult(null);
+    setOtpFallbackMode(false);
     setSendingPhoneOtp(true);
 
     try {
-      await api.post("/auth/send-phone-otp", { phoneNumber: normalized });
+      await api.post('/auth/send-phone-otp', {
+        phoneNumber: normalizedPhoneNumber,
+      });
+
       if (isFirebaseConfigured()) {
         try {
-          const confirmation = await sendFirebasePhoneOtp(normalized);
+          const confirmation = await sendFirebasePhoneOtp(normalizedPhoneNumber);
           setFirebaseConfirmationResult(confirmation);
         } catch (fbErr) {
-          console.error("Firebase Phone Auth Error:", fbErr);
+          setOtpFallbackMode(true);
+          setFirebaseConfirmationResult(null);
+          console.error('Firebase Phone Auth Error in Application Form:', fbErr);
         }
+      } else {
+        setOtpFallbackMode(true);
       }
-      toast.success(`OTP sent to ${normalized}!`);
+
+      toast.success(`OTP sent to ${normalizedPhoneNumber}!`);
       setPhoneOtpSent(true);
       setPhoneResendCooldown(30);
       setTimeout(() => phoneOtpRefs.current[0]?.focus(), 100);
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message || err?.message || "Failed to send OTP",
-      );
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to send OTP');
     } finally {
       setSendingPhoneOtp(false);
     }
@@ -211,14 +168,38 @@ export default function BecomeInstructorApplication() {
     if (value && index < 5) phoneOtpRefs.current[index + 1]?.focus();
   };
 
+  const handlePhoneOtpKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !phoneOtpInputs[index] && index > 0)
+      phoneOtpRefs.current[index - 1]?.focus();
+  };
+
+  const handlePhoneOtpPaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData
+      .getData('text')
+      .replace(/\D/g, '')
+      .slice(0, 6);
+    const updated = [...phoneOtpInputs];
+    for (let i = 0; i < pasted.length; i++) updated[i] = pasted[i];
+    setPhoneOtpInputs(updated);
+    phoneOtpRefs.current[Math.min(pasted.length, 5)]?.focus();
+  };
+
   const handleVerifyPhoneOtp = async (e) => {
-    if (e && typeof e.preventDefault === "function") e.preventDefault();
-    const code = phoneOtpInputs.join("");
-    const phoneToVerify = formData.phoneNumber || accountData.phoneNumber;
-    const normalized = normalizeIndianPhoneNumber(phoneToVerify);
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const code = phoneOtpInputs.join('');
+    const normalizedPhoneNumber = normalizeIndianPhoneNumber(accountData.phoneNumber);
 
     if (code.length < 6) {
-      toast.error("Please enter complete 6-digit OTP");
+      toast.error('Please enter complete 6-digit OTP');
+      return;
+    }
+
+    if (!normalizedPhoneNumber) {
+      toast.error('Enter a valid 10-digit Indian mobile number.');
       return;
     }
 
@@ -227,626 +208,664 @@ export default function BecomeInstructorApplication() {
       if (isFirebaseConfigured() && firebaseConfirmationResult) {
         const { idToken } = await verifyFirebasePhoneOtp(
           firebaseConfirmationResult,
-          code,
+          code
         );
-        await api.post("/auth/verify-firebase-token", {
+        await api.post('/auth/verify-firebase-token', {
           firebaseToken: idToken,
-          phoneNumber: normalized,
+          phoneNumber: normalizedPhoneNumber,
         });
-      } else {
-        await api.post("/auth/verify-phone-otp", {
-          phoneNumber: normalized,
-          otp: code,
-        });
+        setPhoneVerified(true);
+        setPhoneOtpSent(false);
+        toast.success('Phone verified ✓');
+        return;
       }
+
+      await api.post('/auth/verify-phone-otp', {
+        phoneNumber: normalizedPhoneNumber,
+        otp: code,
+      });
       setPhoneVerified(true);
       setPhoneOtpSent(false);
-      toast.success("Phone verified ✓");
+      toast.success('Phone verified ✓');
     } catch (err) {
+      console.error('Verification error:', err);
       toast.error(
-        err?.response?.data?.message || err?.message || "Invalid OTP code",
+        err?.response?.data?.message || err?.message || 'Invalid OTP code'
       );
-      setPhoneOtpInputs(["", "", "", "", "", ""]);
+      setPhoneOtpInputs(['', '', '', '', '', '']);
+      phoneOtpRefs.current[0]?.focus();
     } finally {
       setVerifyingPhone(false);
+    }
+  };
+
+  const handleFormChange = (e) =>
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleResumeChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowed.includes(file.type)) {
+      setResumeError(t('becomeInstructorApplication.onlyPdfJpgPng'));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setResumeError(t('becomeInstructorApplication.max5mb'));
+      return;
+    }
+
+    setResumeError('');
+    setResumeFile(file);
+    setResumeUploading(true);
+    setResumeUploadProgress(0);
+
+    try {
+      const data = await uploadFile({
+        file,
+        folder: '/instructor-resumes',
+        onUploadProgress: (event) =>
+          setResumeUploadProgress(
+            Math.round((event.loaded / event.total) * 100)
+          ),
+      });
+      setResumeUrl(data.url);
+    } catch (uploadError) {
+      setResumeError(
+        uploadError.response?.data?.message ||
+        uploadError.message ||
+        'Upload failed. Please try again.'
+      );
+      setResumeFile(null);
+      setResumeUrl('');
+    } finally {
+      setResumeUploading(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.name.trim()) return toast.error("Full Name is required.");
-    if (!formData.designation.trim())
-      return toast.error("Designation / Professional Role is required.");
-    if (!formData.highestQualification.trim())
-      return toast.error("Highest Qualification is required.");
-    if (!formData.expertise.trim())
-      return toast.error("Area of Expertise is required.");
-    if (!formData.yearsOfExperience.trim())
-      return toast.error("Years of Experience is required.");
-    if (!formData.bio.trim())
-      return toast.error("Short Self-Introduction is required.");
-    if (!formData.guidanceTopic.trim())
-      return toast.error("Topic You Would Like to Guide Students On is required.");
-    if (!formData.sessionDescription.trim())
-      return toast.error("Brief Description of Your Proposed Session is required.");
-    if (!formData.learningOutcome.trim())
-      return toast.error("Expected Learning Outcome is required.");
-    if (!formData.phoneNumber.trim())
-      return toast.error("Mobile / WhatsApp Number is required.");
-    if (!formData.email.trim())
-      return toast.error("Email Address is required.");
-    if (!formData.confirmedContribution) {
-      return toast.error(
-        "Please confirm your willingness to contribute a FREE student guidance session.",
-      );
-    }
-
     if (isStudent) {
       toast.error(
-        "Students cannot register as an expert guide. Please log out and register with an expert/instructor account.",
+        t(
+          'becomeInstructor.studentCannotBecomeError',
+          'Students cannot become an instructor. Please create a fresh account.'
+        )
       );
       return;
     }
 
-    setSubmitting(true);
+    const { expertise, bio, contentLink } = formData;
 
-    try {
-      // 1. If not authenticated, register account first
-      if (!isAuthenticated) {
-        if (!phoneVerified) {
-          toast.error("Please verify your phone number via OTP first.");
-          setSubmitting(false);
-          return;
-        }
-        if (!accountData.password || accountData.password.length < 6) {
-          toast.error("Please choose a password with at least 6 characters.");
-          setSubmitting(false);
-          return;
-        }
+    // Unauthenticated user: register account first, then submit application
+    if (!isAuthenticated) {
+      const { name, email, password, phoneNumber, state, city, pincode } = accountData;
 
-        await dispatch(
-          register({
-            name: formData.name,
-            email: formData.email,
-            password: accountData.password,
-            phoneNumber: normalizeIndianPhoneNumber(formData.phoneNumber),
-            role: "instructor",
-          }),
-        ).unwrap();
+      if (!name || !email || !password || !phoneNumber || !state || !city || !pincode) {
+        toast.error('Please fill in all account registration fields.');
+        return;
+      }
+      if (!phoneVerified) {
+        toast.error('Please verify your phone number via OTP before submitting.');
+        return;
+      }
+      if (!expertise || !bio || !contentLink) {
+        toast.error(t('becomeInstructorApplication.allFieldsRequired'));
+        return;
+      }
+      if (!resumeUrl) {
+        toast.error('Please upload your resume before submitting');
+        return;
       }
 
-      // 2. Submit application details
-      await dispatch(
-        submitApplication({
-          name: formData.name,
-          designation: formData.designation,
-          organization: formData.organization,
-          highestQualification: formData.highestQualification,
-          expertise: formData.expertise,
-          yearsOfExperience: formData.yearsOfExperience,
-          professionalField: formData.professionalField,
-          bio: formData.bio,
-          linkedinProfile: formData.linkedinProfile,
-          guidanceTopic: formData.guidanceTopic,
-          sessionDescription: formData.sessionDescription,
-          targetGroup: formData.targetGroup,
-          learningOutcome: formData.learningOutcome,
-          preferredDuration: formData.preferredDuration,
-          preferredFormat: formData.preferredFormat,
-          availabilityDays: formData.availabilityDays,
-          additionalInfo: formData.additionalInfo,
-          confirmedContribution: formData.confirmedContribution,
-        }),
-      ).unwrap();
+      try {
+        setSubmitting(true);
+        // Step 1: Register new user with role "instructor"
+        await dispatch(
+          register({
+            name,
+            email,
+            password,
+            phoneNumber,
+            state,
+            city,
+            pincode,
+            role: 'instructor',
+          })
+        ).unwrap();
 
-      toast.success("Expert Profile submitted successfully!");
-      navigate("/instructor-application/status");
+        // Step 2: Submit application
+        const payload = new FormData();
+        payload.append('name', name);
+        payload.append('expertise', expertise);
+        payload.append('bio', bio);
+        payload.append('contentLink', contentLink);
+        payload.append('resumeUrl', resumeUrl);
+
+        await dispatch(submitApplication(payload)).unwrap();
+        toast.success(t('becomeInstructorApplication.submitted'));
+        navigate('/instructor-application/status');
+      } catch (err) {
+        toast.error(
+          typeof err === 'string'
+            ? err
+            : err?.message || t('becomeInstructorApplication.failedSubmit')
+        );
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // Authenticated non-student user: submit application directly
+    const nameToSubmit = formData.name || user?.name || accountData.name;
+    if (!nameToSubmit || !expertise || !bio || !contentLink) {
+      toast.error(t('becomeInstructorApplication.allFieldsRequired'));
+      return;
+    }
+    if (!resumeUrl) {
+      toast.error('Please upload your resume before submitting');
+      return;
+    }
+
+    const payload = new FormData();
+    payload.append('name', nameToSubmit);
+    payload.append('expertise', expertise);
+    payload.append('bio', bio);
+    payload.append('contentLink', contentLink);
+    payload.append('resumeUrl', resumeUrl);
+
+    try {
+      setSubmitting(true);
+      await dispatch(submitApplication(payload)).unwrap();
+      toast.success(t('becomeInstructorApplication.submitted'));
+      navigate('/instructor-application/status');
     } catch (err) {
       toast.error(
-        err?.message ||
-          err?.response?.data?.message ||
-          "Failed to submit application",
+        typeof err === 'string'
+          ? err
+          : err?.message || t('becomeInstructorApplication.failedSubmit')
       );
     } finally {
       setSubmitting(false);
     }
   };
 
+  useEffect(() => {
+    if (isAuthenticated) dispatch(fetchMyApplication());
+  }, [isAuthenticated, dispatch]);
+
+  useEffect(() => {
+    if (myApplication)
+      navigate('/instructor-application/status', { replace: true });
+  }, [myApplication, navigate]);
+
+  const availableCities = accountData.state
+    ? getCitiesForState(accountData.state)
+    : [];
+
   return (
-    <div className="min-h-screen bg-[#0B1120] text-slate-100 py-12 px-4 sm:px-6 lg:px-8 font-sans">
-      <div id="recaptcha-container" />
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-black uppercase tracking-wider">
-            <Sparkles size={14} className="text-amber-400" />
-            <span>Free Student Guidance Initiative</span>
-          </div>
-
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-            REGISTER AS AN EXPERT GUIDE
-          </h1>
-
-          <p className="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto">
-            Interested in guiding students? Register with us and share your area
-            of expertise.
-          </p>
-        </div>
-
-        {/* Main Registration Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-3xl bg-[#111827] border border-slate-800 p-6 sm:p-10 shadow-2xl space-y-8"
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-2xl px-4">
+        <Link
+          to="/become-instructor"
+          className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition mb-8 text-sm font-medium"
         >
-          {/* ── SECTION 1: PERSONAL & PROFESSIONAL DETAILS ── */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800">
-              <User size={20} className="text-indigo-400" />
-              <h2 className="text-lg font-bold text-white uppercase tracking-wider">
-                1. Personal & Professional Details
-              </h2>
-            </div>
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          {t('becomeInstructorApplication.backToOverview')}
+        </Link>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* 1. Full Name */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Full Name <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="e.g. Dr. Rajesh Sharma"
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
+        <span className="inline-flex rounded-full bg-indigo-500/10 text-indigo-300 px-4 py-2 text-sm font-semibold tracking-wide mb-4 border border-indigo-500/20">
+          {t('becomeInstructorApplication.formBadge')}
+        </span>
+        <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
+          {t('becomeInstructorApplication.titleStart')}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 ml-2">
+            {t('becomeInstructorApplication.titleHighlight')}
+          </span>
+        </h2>
+        <p className="text-slate-400 text-lg leading-7 max-w-xl">
+          {t('becomeInstructorApplication.description')}
+        </p>
+      </div>
 
-              {/* 2. Designation / Professional Role */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Designation / Professional Role <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="designation"
-                  value={formData.designation}
-                  onChange={handleChange}
-                  placeholder="e.g. Senior Faculty / Career Mentor / Software Architect"
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-
-              {/* 3. Organization / Institution */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Organization / Institution
-                </label>
-                <input
-                  type="text"
-                  name="organization"
-                  value={formData.organization}
-                  onChange={handleChange}
-                  placeholder="e.g. Delhi University / Tech Mahindra / Independent"
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              {/* 4. Highest Qualification */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Highest Qualification <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="highestQualification"
-                  value={formData.highestQualification}
-                  onChange={handleChange}
-                  placeholder="e.g. Ph.D / M.Tech / MBA / M.Sc / B.Ed"
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-
-              {/* 5. Area of Expertise */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Area of Expertise <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="expertise"
-                  value={formData.expertise}
-                  onChange={handleChange}
-                  placeholder="e.g. Physics & Mathematics, UPSC Prep, AI & Data Science"
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-
-              {/* 6. Years of Experience */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Years of Experience <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="yearsOfExperience"
-                  value={formData.yearsOfExperience}
-                  onChange={handleChange}
-                  placeholder="e.g. 8+ Years"
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-
-              {/* 7. Current Professional Field */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Current Professional Field
-                </label>
-                <input
-                  type="text"
-                  name="professionalField"
-                  value={formData.professionalField}
-                  onChange={handleChange}
-                  placeholder="e.g. Higher Education, Corporate Leadership, Medical, Civil Services"
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              {/* 9. Professional Profile / LinkedIn Profile (Optional) */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Professional Profile / LinkedIn Profile (Optional)
-                </label>
-                <input
-                  type="url"
-                  name="linkedinProfile"
-                  value={formData.linkedinProfile}
-                  onChange={handleChange}
-                  placeholder="https://linkedin.com/in/username"
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-            </div>
-
-            {/* 8. Short Self-Introduction */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300">
-                Short Self-Introduction <span className="text-rose-400">*</span>
-              </label>
-              <p className="text-[11px] text-slate-400">
-                Briefly tell us about your professional background, expertise, and
-                experience.
-              </p>
-              <textarea
-                name="bio"
-                value={formData.bio}
-                onChange={handleChange}
-                rows={3}
-                placeholder="Share a concise overview of your teaching or mentoring background..."
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 leading-relaxed"
-                required
-              />
-            </div>
-          </div>
-
-          {/* ── SECTION 2: PROPOSED GUIDANCE SESSION DETAILS ── */}
-          <div className="space-y-6 pt-4 border-t border-slate-800">
-            <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800">
-              <BookOpen size={20} className="text-purple-400" />
-              <h2 className="text-lg font-bold text-white uppercase tracking-wider">
-                2. Proposed Guidance Session Details
-              </h2>
-            </div>
-
-            {/* 10. Topic You Would Like to Guide Students On */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300">
-                Topic You Would Like to Guide Students On{" "}
-                <span className="text-rose-400">*</span>
-              </label>
-              <input
-                type="text"
-                name="guidanceTopic"
-                value={formData.guidanceTopic}
-                onChange={handleChange}
-                placeholder="e.g. Cracking NEET 2026: Physics Problem-Solving & High-Yield Strategy"
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                required
-              />
-            </div>
-
-            {/* 11. Brief Description of Your Proposed Session */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300">
-                Brief Description of Your Proposed Session{" "}
-                <span className="text-rose-400">*</span>
-              </label>
-              <textarea
-                name="sessionDescription"
-                value={formData.sessionDescription}
-                onChange={handleChange}
-                rows={3}
-                placeholder="What core concepts, exam tactics, or career pathways will this session cover?"
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 leading-relaxed"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {/* 12. Target Student Group */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Target Student Group <span className="text-rose-400">*</span>
-                </label>
-                <select
-                  name="targetGroup"
-                  value={formData.targetGroup}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                >
-                  {TARGET_GROUPS.map((g, idx) => (
-                    <option key={idx} value={g}>
-                      {g}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 14. Preferred Session Duration */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Preferred Session Duration <span className="text-rose-400">*</span>
-                </label>
-                <select
-                  name="preferredDuration"
-                  value={formData.preferredDuration}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                >
-                  {SESSION_DURATIONS.map((d, idx) => (
-                    <option key={idx} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 15. Preferred Session Format */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Preferred Session Format
-                </label>
-                <select
-                  name="preferredFormat"
-                  value={formData.preferredFormat}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                >
-                  {SESSION_FORMATS.map((f, idx) => (
-                    <option key={idx} value={f}>
-                      {f}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* 13. Expected Learning Outcome for Students */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300">
-                Expected Learning Outcome for Students{" "}
-                <span className="text-rose-400">*</span>
-              </label>
-              <textarea
-                name="learningOutcome"
-                value={formData.learningOutcome}
-                onChange={handleChange}
-                rows={2}
-                placeholder="e.g. Students will be able to solve complex mechanics problems with 3 shortcut methods and master time allocation."
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 leading-relaxed"
-                required
-              />
-            </div>
-          </div>
-
-          {/* ── SECTION 3: CONTACT & AVAILABILITY ── */}
-          <div className="space-y-6 pt-4 border-t border-slate-800">
-            <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800">
-              <Mail size={20} className="text-cyan-400" />
-              <h2 className="text-lg font-bold text-white uppercase tracking-wider">
-                3. Contact & Availability
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* 16. Mobile / WhatsApp Number */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Mobile / WhatsApp Number <span className="text-rose-400">*</span>
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="tel"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleChange}
-                    placeholder="10-digit Indian Mobile"
-                    className="flex-1 px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                    required
-                  />
-                  {!isAuthenticated && !phoneVerified && (
-                    <button
-                      type="button"
-                      onClick={handleSendPhoneOtp}
-                      disabled={sendingPhoneOtp || phoneResendCooldown > 0}
-                      className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-xs text-white shrink-0 cursor-pointer disabled:opacity-50"
-                    >
-                      {sendingPhoneOtp
-                        ? "Sending…"
-                        : phoneResendCooldown > 0
-                          ? `Resend (${phoneResendCooldown}s)`
-                          : "Send OTP"}
-                    </button>
-                  )}
-                  {phoneVerified && (
-                    <span className="px-3 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center gap-1 shrink-0">
-                      <CheckCircle2 size={15} /> Verified
-                    </span>
-                  )}
-                </div>
-
-                {/* OTP input row if unauthenticated */}
-                {!isAuthenticated && phoneOtpSent && !phoneVerified && (
-                  <div className="p-3 rounded-xl bg-slate-900 border border-indigo-500/40 space-y-2 mt-2">
-                    <p className="text-[11px] text-slate-400">
-                      Enter the 6-digit OTP sent to your phone:
-                    </p>
-                    <div className="flex gap-1.5 justify-between max-w-xs">
-                      {phoneOtpInputs.map((digit, idx) => (
-                        <input
-                          key={idx}
-                          ref={(el) => (phoneOtpRefs.current[idx] = el)}
-                          type="text"
-                          maxLength={1}
-                          value={digit}
-                          onChange={(e) =>
-                            handlePhoneOtpChange(idx, e.target.value)
-                          }
-                          className="w-9 h-10 text-center bg-slate-950 border border-slate-700 rounded-lg text-white font-black text-base focus:border-indigo-500 focus:outline-none"
-                        />
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleVerifyPhoneOtp}
-                      disabled={verifyingPhone}
-                      className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-bold text-xs text-white cursor-pointer"
-                    >
-                      {verifyingPhone ? "Verifying…" : "Confirm OTP"}
-                    </button>
-                  </div>
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl px-4">
+        <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-8 shadow-2xl shadow-indigo-500/10">
+          
+          {/* Warning block if user is logged in with a Student account */}
+          {isStudent ? (
+            <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-6 text-center space-y-4">
+              <div className="text-3xl">⚠️</div>
+              <h3 className="text-lg font-bold text-amber-200">
+                {t('becomeInstructorApplication.studentCannotApplyTitle', 'Student Accounts Cannot Apply')}
+              </h3>
+              <p className="text-sm text-slate-300 leading-relaxed max-w-md mx-auto">
+                {t(
+                  'becomeInstructor.studentCannotBecomeError',
+                  'Students cannot become an instructor. Please create a fresh account.'
                 )}
+              </p>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => dispatch(clearAuth())}
+                  className="rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-bold text-slate-950 transition hover:scale-105 shadow-lg shadow-amber-500/20 cursor-pointer"
+                >
+                  {t('becomeInstructorApplication.logoutAndRegisterFresh', 'Log Out & Register Fresh Account')}
+                </button>
               </div>
-
-              {/* 17. Email Address */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Email Address <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="your.email@domain.com"
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-
-              {/* Account Password (if unauthenticated) */}
+            </div>
+          ) : (
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              
+              {/* Account Registration Section (shown when NOT authenticated) */}
               {!isAuthenticated && (
-                <div className="space-y-1.5 md:col-span-2">
-                  <label className="text-xs font-bold text-slate-300">
-                    Create Password for Your Expert Account{" "}
-                    <span className="text-rose-400">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={accountData.password}
-                      onChange={(e) =>
-                        setAccountData((prev) => ({
-                          ...prev,
-                          password: e.target.value,
-                        }))
-                      }
-                      placeholder="Minimum 6 characters"
-                      className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-3.5 text-slate-400 hover:text-white"
-                    >
-                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                    </button>
+                <div className="space-y-5 pb-6 border-b border-white/10">
+                  <div className="flex items-center gap-2 text-indigo-400 font-bold text-base">
+                    <span>{t('becomeInstructorApplication.section1Title', '1. Create Your Account Credentials')}</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className="block">
+                      <span className="text-sm font-semibold text-slate-300">
+                        {t('becomeInstructorApplication.fullNameLabel', 'Full Name')} <span className="text-red-400">*</span>
+                      </span>
+                      <input
+                        type="text"
+                        name="name"
+                        required
+                        value={accountData.name}
+                        onChange={handleAccountChange}
+                        placeholder={t('becomeInstructorApplication.namePlaceholder', 'Dr. Rajesh Kumar')}
+                        className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="text-sm font-semibold text-slate-300">
+                        {t('becomeInstructorApplication.emailLabel', 'Email Address')} <span className="text-red-400">*</span>
+                      </span>
+                      <input
+                        type="email"
+                        name="email"
+                        required
+                        value={accountData.email}
+                        onChange={handleAccountChange}
+                        placeholder={t('becomeInstructorApplication.emailPlaceholder', 'instructor@example.com')}
+                        className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className="block relative">
+                      <span className="text-sm font-semibold text-slate-300">
+                        {t('becomeInstructorApplication.passwordLabel', 'Password')} <span className="text-red-400">*</span>
+                      </span>
+                      <div className="relative mt-2">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          name="password"
+                          required
+                          minLength={6}
+                          value={accountData.password}
+                          onChange={handleAccountChange}
+                          placeholder={t('becomeInstructorApplication.passwordPlaceholder', 'Min 6 characters')}
+                          className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 pr-10 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                        >
+                          {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                        </button>
+                      </div>
+                    </label>
+
+                    {/* Phone Number Field with OTP Verification */}
+                    <label className="block">
+                      <div className="flex items-center justify-between text-sm font-semibold text-slate-300">
+                        <span>
+                          {t('becomeInstructorApplication.phoneLabel', 'Phone Number')} <span className="text-red-400">*</span>
+                        </span>
+                        {phoneVerified && (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400">
+                            <FiCheckCircle size={13} /> {t('becomeInstructorApplication.verified', 'Verified')}
+                          </span>
+                        )}
+                      </div>
+                      <div className="relative mt-2">
+                        <input
+                          type="tel"
+                          name="phoneNumber"
+                          required
+                          value={accountData.phoneNumber}
+                          onChange={handleAccountChange}
+                          placeholder={t('becomeInstructorApplication.phonePlaceholder', '10-digit mobile number')}
+                          className={`w-full rounded-2xl border bg-slate-950/80 px-4 py-3.5 pr-28 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 transition ${
+                            phoneVerified
+                              ? 'border-emerald-500/50 focus:border-emerald-400 focus:ring-emerald-500/20'
+                              : 'border-white/10 focus:border-indigo-400 focus:ring-indigo-500/20'
+                          }`}
+                        />
+                        {!phoneVerified && (
+                          <button
+                            type="button"
+                            onClick={handleSendPhoneOtp}
+                            disabled={
+                              sendingPhoneOtp ||
+                              accountData.phoneNumber.replace(/\D/g, '').length !== 10
+                            }
+                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-3.5 py-1.5 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
+                          >
+                            {sendingPhoneOtp
+                              ? t('becomeInstructorApplication.sendingOtp', 'Sending...')
+                              : phoneOtpSent
+                              ? t('becomeInstructorApplication.resendOtp', 'Resend OTP')
+                              : t('becomeInstructorApplication.sendOtp', 'Send OTP')}
+                          </button>
+                        )}
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* OTP Input Card */}
+                  {phoneOtpSent && !phoneVerified && (
+                    <div className="rounded-2xl bg-indigo-500/10 border border-indigo-500/30 p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-indigo-300">
+                          {t('becomeInstructorApplication.enterOtpPrompt', 'Enter 6-digit OTP sent to +91 {{phone}}', { phone: accountData.phoneNumber })}
+                        </span>
+                        {phoneResendCooldown > 0 ? (
+                          <span className="text-xs text-slate-400 font-medium">
+                            {t('becomeInstructorApplication.resendIn', 'Resend in {{sec}}s', { sec: phoneResendCooldown })}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleSendPhoneOtp}
+                            className="text-xs font-bold text-indigo-400 hover:underline cursor-pointer"
+                          >
+                            {t('becomeInstructorApplication.resendOtp', 'Resend OTP')}
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 justify-center py-1">
+                        {phoneOtpInputs.map((digit, idx) => (
+                          <input
+                            key={idx}
+                            ref={(el) => (phoneOtpRefs.current[idx] = el)}
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handlePhoneOtpChange(idx, e.target.value)}
+                            onKeyDown={(e) => handlePhoneOtpKeyDown(idx, e)}
+                            onPaste={handlePhoneOtpPaste}
+                            className="w-10 h-12 text-center text-lg font-bold rounded-xl border border-white/20 bg-slate-950 text-white focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                          />
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleVerifyPhoneOtp}
+                        disabled={verifyingPhone || phoneOtpInputs.join('').length < 6}
+                        className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 py-2.5 text-xs font-bold text-slate-950 transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+                      >
+                        {verifyingPhone
+                          ? t('becomeInstructorApplication.verifyingOtp', 'Verifying OTP...')
+                          : t('becomeInstructorApplication.verifyOtpButton', 'Verify OTP Code')}
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <label className="block">
+                      <span className="text-sm font-semibold text-slate-300">
+                        {t('becomeInstructorApplication.stateLabel', 'State')} <span className="text-red-400">*</span>
+                      </span>
+                      <select
+                        name="state"
+                        required
+                        value={accountData.state}
+                        onChange={handleAccountChange}
+                        className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                      >
+                        <option value="">{t('becomeInstructorApplication.selectState', 'Select State')}</option>
+                        {INDIA_STATES.map((s) => (
+                          <option key={s} value={s} className="bg-slate-900">
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="block">
+                      <span className="text-sm font-semibold text-slate-300">
+                        {t('becomeInstructorApplication.cityLabel', 'City')} <span className="text-red-400">*</span>
+                      </span>
+                      <select
+                        name="city"
+                        required
+                        value={accountData.city}
+                        onChange={handleAccountChange}
+                        disabled={!accountData.state}
+                        className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition disabled:opacity-50"
+                      >
+                        <option value="">{t('becomeInstructorApplication.selectCity', 'Select City')}</option>
+                        {availableCities.map((c) => (
+                          <option key={c} value={c} className="bg-slate-900">
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="block">
+                      <span className="text-sm font-semibold text-slate-300">
+                        {t('becomeInstructorApplication.pincodeLabel', 'Pincode')} <span className="text-red-400">*</span>
+                      </span>
+                      <input
+                        type="text"
+                        name="pincode"
+                        required
+                        value={accountData.pincode}
+                        onChange={handleAccountChange}
+                        placeholder={t('becomeInstructorApplication.pincodePlaceholder', '6-digit PIN')}
+                        className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                      />
+                    </label>
                   </div>
                 </div>
               )}
 
-              {/* 18. Preferred Availability / Suitable Days */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Preferred Availability / Suitable Days
+              {/* Application Details Section */}
+              <div className="space-y-5">
+                {!isAuthenticated && (
+                  <div className="flex items-center gap-2 text-indigo-400 font-bold text-base">
+                    <span>{t('becomeInstructorApplication.section2Title', '2. Teaching Application & Experience')}</span>
+                  </div>
+                )}
+
+                {isAuthenticated && (
+                  <label className="block">
+                    <span className="text-sm font-semibold text-slate-300">
+                      {t('becomeInstructorApplication.fullNameLabel')}
+                    </span>
+                    <input
+                      type="text"
+                      name="name"
+                      required
+                      value={formData.name}
+                      onChange={handleFormChange}
+                      placeholder={t('becomeInstructorApplication.namePlaceholder')}
+                      className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                    />
+                  </label>
+                )}
+
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-300">
+                    {t('becomeInstructorApplication.expertiseLabel')} <span className="text-red-400">*</span>
+                  </span>
+                  <input
+                    type="text"
+                    name="expertise"
+                    value={formData.expertise}
+                    required
+                    onChange={handleFormChange}
+                    placeholder={t(
+                      'becomeInstructorApplication.expertisePlaceholder'
+                    )}
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                  />
                 </label>
-                <input
-                  type="text"
-                  name="availabilityDays"
-                  value={formData.availabilityDays}
-                  onChange={handleChange}
-                  placeholder="e.g. Weekends (Saturday/Sunday evenings)"
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                />
+
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-300">
+                    {t('becomeInstructorApplication.bioLabel')} <span className="text-red-400">*</span>
+                  </span>
+                  <textarea
+                    rows="4"
+                    name="bio"
+                    value={formData.bio}
+                    required
+                    onChange={handleFormChange}
+                    placeholder={t('becomeInstructorApplication.bioPlaceholder')}
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                  />
+                  <span className="text-xs text-slate-500 mt-1.5 block">
+                    *This will show on your instructor public profile
+                  </span>
+                </label>
+
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-300">
+                    {t('becomeInstructorApplication.contentLinkLabel')} <span className="text-red-400">*</span>
+                  </span>
+                  <input
+                    type="url"
+                    name="contentLink"
+                    value={formData.contentLink}
+                    required
+                    onChange={handleFormChange}
+                    placeholder={t('becomeInstructorApplication.urlPlaceholder')}
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-300">
+                    {t('becomeInstructorApplication.resumeLabel')}
+                    <span className="text-red-400 ml-0.5">*</span>
+                    <span className="text-slate-500 font-normal">
+                      {` ${t('becomeInstructorApplication.resumeHint')}`}
+                    </span>
+                  </span>
+                  <div className="mt-2">
+                    <label className="flex flex-col items-center justify-center w-full rounded-2xl border border-dashed border-white/20 bg-slate-950/80 px-4 py-6 cursor-pointer hover:border-indigo-400/50 transition duration-200">
+                      <svg
+                        className="w-8 h-8 text-slate-500 mb-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1.5"
+                          d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"
+                        />
+                      </svg>
+                      {resumeFile ? (
+                        <span className="text-sm text-indigo-300 font-medium">
+                          {resumeFile.name}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-slate-500">
+                          {t('becomeInstructorApplication.uploadPrompt')}
+                        </span>
+                      )}
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={handleResumeChange}
+                        className="hidden"
+                      />
+                    </label>
+                    {resumeUploading && (
+                      <div className="mt-3 rounded-2xl bg-slate-950/90 px-4 py-3">
+                        <div className="flex items-center justify-between text-xs text-slate-400">
+                          <span>Uploading resume</span>
+                          <span>{resumeUploadProgress}%</span>
+                        </div>
+                        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-900">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400"
+                            style={{ width: `${resumeUploadProgress}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {resumeUrl && !resumeUploading && (
+                      <div className="mt-3 flex items-center justify-between rounded-2xl bg-slate-950/90 px-4 py-3 text-sm text-slate-200">
+                        <span>Resume uploaded</span>
+                        <button
+                          type="button"
+                          className="text-indigo-300 hover:text-indigo-200"
+                          onClick={() => {
+                            setResumeFile(null);
+                            setResumeUrl('');
+                            setResumeUploadProgress(0);
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                    {resumeError && (
+                      <p className="mt-2 text-xs text-red-400">{resumeError}</p>
+                    )}
+                  </div>
+                </label>
               </div>
 
-              {/* 19. Any Additional Information */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">
-                  Any Additional Information
-                </label>
-                <input
-                  type="text"
-                  name="additionalInfo"
-                  value={formData.additionalInfo}
-                  onChange={handleChange}
-                  placeholder="e.g. Previous guest talks, publications, or special equipment"
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                />
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={submitting || appLoading || authLoading || resumeUploading}
+                  className="w-full rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500 px-6 py-4 text-sm font-bold text-slate-950 transition hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-indigo-500/20 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                >
+                  {submitting || appLoading || authLoading || resumeUploading
+                    ? t('becomeInstructorApplication.submitting')
+                    : !isAuthenticated
+                    ? t('becomeInstructorApplication.createAccountAndSubmit', 'Create Account & Submit Application')
+                    : t('becomeInstructorApplication.submitButton')}
+                </button>
               </div>
-            </div>
-          </div>
-
-          {/* ── SECTION 4: CONFIRMATION & SUBMIT ── */}
-          <div className="space-y-6 pt-4 border-t border-slate-800">
-            <label className="flex items-start gap-3 p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/30 cursor-pointer">
-              <input
-                type="checkbox"
-                name="confirmedContribution"
-                checked={formData.confirmedContribution}
-                onChange={handleChange}
-                className="mt-1 text-indigo-600 accent-indigo-500 w-4 h-4 rounded cursor-pointer"
-                required
-              />
-              <span className="text-xs text-slate-200 leading-relaxed">
-                I confirm that the information provided above is correct and
-                that I am willing to contribute a{" "}
-                <strong className="text-white">FREE student guidance session</strong>{" "}
-                on the selected topic.
-              </span>
-            </label>
-
-            <button
-              type="submit"
-              disabled={submitting || appLoading || authLoading}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-black text-sm uppercase tracking-wider shadow-xl shadow-indigo-600/30 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              <Send size={16} />
-              <span>
-                {submitting ? "Submitting Profile…" : "SUBMIT YOUR EXPERT PROFILE"}
-              </span>
-            </button>
-          </div>
-        </form>
+            </form>
+          )}
+        </div>
       </div>
+      <div id="recaptcha-container"></div>
     </div>
   );
-}
+};
+
+export default BecomeInstructorApplication;
