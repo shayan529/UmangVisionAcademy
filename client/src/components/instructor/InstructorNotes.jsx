@@ -615,23 +615,12 @@ export default function InstructorNotes({ showToast }) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredNotes.map((note) => {
             const st = STATUS_STYLE[note.status] || STATUS_STYLE.pending;
-            const isSelected = selectedNoteIds.includes(note._id);
             return (
               <div
                 key={note._id}
-                className={`flex flex-col gap-3 rounded-2xl border p-5 transition-all ${
-                  isSelected
-                    ? "border-emerald-500/50 bg-emerald-950/20 shadow-lg"
-                    : "border-slate-800 bg-slate-950 hover:border-slate-700"
-                }`}
+                className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-5 transition-colors hover:border-slate-700"
               >
                 <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleNoteSelection(note._id)}
-                    className="mt-1 h-4 w-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer shrink-0"
-                  />
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-600/10 text-violet-400">
                     <FileText size={20} />
                   </div>
