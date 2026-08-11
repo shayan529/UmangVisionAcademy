@@ -59,6 +59,7 @@ const Faq = retryLazy(() => import("./pages/Faq"));
 const CartPage = retryLazy(() => import("./pages/CartPage"));
 const InstructorDetails = retryLazy(() => import("./pages/InstructorDetails"));
 const BillingPage = retryLazy(() => import("./pages/BillingPage"));
+const Donate = retryLazy(() => import("./pages/Donate"));
 
 const Community = retryLazy(() => import("./components/common/Community"));
 const BecomeInstructor = retryLazy(() => import("./components/common/BecomeInstructor"));
@@ -368,6 +369,8 @@ function App() {
           <Route path="contact" element={<Contact />} />
           <Route path="help-center" element={<HelpCenter />} />
           <Route path="faq" element={<Faq />} />
+          <Route path="donate" element={<Donate />} />
+          <Route path="charity" element={<Donate />} />
           <Route path="cart" element={<CartPage />} />
           <Route path="instructor-details" element={<InstructorDetails />} />
           <Route
