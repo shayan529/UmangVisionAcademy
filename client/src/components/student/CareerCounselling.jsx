@@ -140,12 +140,14 @@ export default function CareerCounselling() {
   const handleBookSession = (e) => {
     e.preventDefault();
     if (!hasPlan) {
-      toast.error("Please subscribe to a Smart Learning Plan to book career counselling.");
+      toast.error("🔒 Subscribe to a Smart Learning Plan (Basic, Premium, or Elite) to unlock Career Counselling sessions.");
       navigate("/plans");
       return;
     }
     if (remainingSessions <= 0) {
-      toast.error("You have used your allocated annual counselling sessions. Please upgrade or renew your plan.");
+      const upgradeTo = isBasic ? "Premium or Elite" : "Elite";
+      toast.error(`⬆️ You've used all your sessions. Upgrade to ${upgradeTo} Plan to get more Career Counselling sessions.`);
+      navigate("/plans");
       return;
     }
     if (!selectedCounsellor || !selectedSlot) {
@@ -406,14 +408,44 @@ export default function CareerCounselling() {
               </div>
 
               <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={bookingLoading}
-                  className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm shadow-xl shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  <Video size={18} />
-                  {bookingLoading ? "Scheduling Session..." : "Confirm 1-on-1 Video Session"}
-                </button>
+                {!hasPlan || remainingSessions <= 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const upgradeTo = !hasPlan
+                        ? "Basic, Premium, or Elite"
+                        : isBasic
+                        ? "Premium or Elite"
+                        : "Elite";
+                      toast(
+                        `⬆️ Upgrade to ${upgradeTo} Plan to unlock Career Counselling sessions.`,
+                        {
+                          icon: "🔒",
+                          style: {
+                            background: "#1e1b4b",
+                            color: "#a5b4fc",
+                            border: "1px solid #4338ca",
+                            fontWeight: 600,
+                          },
+                        }
+                      );
+                      navigate("/plans");
+                    }}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <span className="text-base">⬆️</span>
+                    Upgrade Plan
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={bookingLoading}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm shadow-xl shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <Video size={18} />
+                    {bookingLoading ? "Scheduling Session..." : "Confirm 1-on-1 Video Session"}
+                  </button>
+                )}
               </div>
             </form>
           </div>
