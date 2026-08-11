@@ -47,7 +47,7 @@ const Footer = () => {
               to="/donate"
               className="text-emerald-400 font-bold hover:text-emerald-300 transition-colors duration-200 flex items-center gap-1"
             >
-              <span>Donate & Charity</span>
+              <span>{t("nav.donateCharity", "Donate & Charity")}</span>
               <span>💖</span>
             </Link>
           </div>

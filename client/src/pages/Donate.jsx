@@ -15,45 +15,49 @@ import {
   ChevronRight,
   TrendingUp,
   Globe,
-  ArrowRight,
-  FileText,
-  DollarSign,
   Gift,
-  Smile,
-  Zap,
-  HelpCircle,
 } from "lucide-react";
 
 // 5 High Quality Carousel Images of Village Children Studying
 const carouselSlides = [
   {
     url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=80",
-    title: "Bringing Free AI-Powered Education to Remote Village Classrooms",
-    subtitle: "Empowering rural children with digital learning tools and interactive AI coaching.",
+    titleKey: "donate.carousel1Title",
+    defaultTitle: "Bringing Free AI-Powered Education to Remote Village Classrooms",
+    subtitleKey: "donate.carousel1Subtitle",
+    defaultSubtitle: "Empowering rural children with digital learning tools and interactive AI coaching.",
     badge: "Digital Education Initiative",
   },
   {
     url: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1200&q=80",
-    title: "Distributing Free Study Material, Books & Printed Notes",
-    subtitle: "Hand-delivering NCERT guides, formula sheets, and stationery to underprivileged students.",
+    titleKey: "donate.carousel2Title",
+    defaultTitle: "Distributing Free Study Material, Books & Printed Notes",
+    subtitleKey: "donate.carousel2Subtitle",
+    defaultSubtitle: "Hand-delivering NCERT guides, formula sheets, and stationery to underprivileged students.",
     badge: "Resource Distribution",
   },
   {
     url: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1200&q=80",
-    title: "Bridging the Opportunity Gap for Every Aspiring Village Learner",
-    subtitle: "Ensuring no child drops out of school due to financial hardship or lack of guidance.",
+    titleKey: "donate.carousel3Title",
+    defaultTitle: "Bridging the Opportunity Gap for Every Aspiring Village Learner",
+    subtitleKey: "donate.carousel3Subtitle",
+    defaultSubtitle: "Ensuring no child drops out of school due to financial hardship or lack of guidance.",
     badge: "Equal Opportunity",
   },
   {
     url: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1200&q=80",
-    title: "Sponsoring Exam Fees & Higher Education Coaching",
-    subtitle: "Funding JEE, NEET, and Board Examination fees for meritorious village youth.",
+    titleKey: "donate.carousel4Title",
+    defaultTitle: "Sponsoring Exam Fees & Higher Education Coaching",
+    subtitleKey: "donate.carousel4Subtitle",
+    defaultSubtitle: "Funding JEE, NEET, and Board Examination fees for meritorious village youth.",
     badge: "Scholarships & Exam Grants",
   },
   {
     url: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=1200&q=80",
-    title: "Building Solar-Powered Digital Learning Hubs in Villages",
-    subtitle: "Equipping rural communities with tablets, power backups, and internet connectivity.",
+    titleKey: "donate.carousel5Title",
+    defaultTitle: "Building Solar-Powered Digital Learning Hubs in Villages",
+    subtitleKey: "donate.carousel5Subtitle",
+    defaultSubtitle: "Equipping rural communities with tablets, power backups, and internet connectivity.",
     badge: "Smart Village Centers",
   },
 ];
@@ -88,38 +92,50 @@ const donationTiers = [
 const objectives = [
   {
     icon: Sparkles,
-    title: "Free AI Coaching & Digital Content",
-    desc: "We provide 100% free access to our AI Tutor, video lectures, and practice quizzes to children in remote villages with no local coaching centers.",
+    titleKey: "donate.obj1Title",
+    defaultTitle: "Free AI Coaching & Digital Content",
+    descKey: "donate.obj1Desc",
+    defaultDesc: "We provide 100% free access to our AI Tutor, video lectures, and practice quizzes to children in remote villages with no local coaching centers.",
     color: "#38bdf8",
   },
   {
     icon: BookOpen,
-    title: "Distribution of Printed Books & Notes",
-    desc: "We print and hand-deliver NCERT revision notes, formula booklets, and essential school supplies directly to rural village doorsteps.",
+    titleKey: "donate.obj2Title",
+    defaultTitle: "Distribution of Printed Books & Notes",
+    descKey: "donate.obj2Desc",
+    defaultDesc: "We print and hand-deliver NCERT revision notes, formula booklets, and essential school supplies directly to rural village doorsteps.",
     color: "#4ade80",
   },
   {
     icon: Award,
-    title: "Exam Registration Fee Sponsorship",
-    desc: "We cover registration fees for JEE, NEET, and State Board entrance examinations for talented students from low-income families.",
+    titleKey: "donate.obj3Title",
+    defaultTitle: "Exam Registration Fee Sponsorship",
+    descKey: "donate.obj3Desc",
+    defaultDesc: "We cover registration fees for JEE, NEET, and State Board entrance examinations for talented students from low-income families.",
     color: "#facc15",
   },
   {
     icon: Globe,
-    title: "Rural Village Digital Learning Centers",
-    desc: "We establish community digital learning hubs equipped with tablets and solar power in village panchayats so children can study uninterrupted.",
+    titleKey: "donate.obj4Title",
+    defaultTitle: "Rural Village Digital Learning Centers",
+    descKey: "donate.obj4Desc",
+    defaultDesc: "We establish community digital learning hubs equipped with tablets and solar power in village panchayats so children can study uninterrupted.",
     color: "#c084fc",
   },
   {
     icon: Users,
-    title: "Volunteer Expert Career Mentorship",
-    desc: "We connect educators, counsellors, and industry experts with rural youth for free guidance on career options and competitive exam strategies.",
+    titleKey: "donate.obj5Title",
+    defaultTitle: "Volunteer Expert Career Mentorship",
+    descKey: "donate.obj5Desc",
+    defaultDesc: "We connect educators, counsellors, and industry experts with rural youth for free guidance on career options and competitive exam strategies.",
     color: "#fb7185",
   },
   {
     icon: Heart,
-    title: "Nutritional & Wellness Support",
-    desc: "We partner with local village schools to offer healthy snacks and study kits during exam preparation months.",
+    titleKey: "donate.obj6Title",
+    defaultTitle: "Nutritional & Wellness Support",
+    descKey: "donate.obj6Desc",
+    defaultDesc: "We partner with local village schools to offer healthy snacks and study kits during exam preparation months.",
     color: "#2dd4bf",
   },
 ];
@@ -209,7 +225,6 @@ const Donate = () => {
 
     setIsSubmitting(true);
 
-    // Simulate Payment Gateway Process
     setTimeout(() => {
       setIsSubmitting(false);
       const donationData = {
@@ -233,8 +248,11 @@ const Donate = () => {
   return (
     <div className="min-h-screen bg-[#0B1120] text-slate-100 relative overflow-x-clip py-8 lg:py-16">
       <SEO
-        title="Donation & Charity - Empower Rural Students"
-        description="Support Umang Vision Academy's Free Student Guidance & Rural Education Initiative. Donate to provide free AI coaching, books, exam fees, and digital tools to underprivileged village children across India."
+        title={t("donate.seoTitle", "Donation & Charity - Empower Rural Students")}
+        description={t(
+          "donate.seoDesc",
+          "Support Umang Vision Academy's Free Student Guidance & Rural Education Initiative. Donate to provide free AI coaching, books, exam fees, and digital tools to underprivileged village children across India."
+        )}
       />
 
       {/* Background Glow Effects */}
@@ -250,16 +268,19 @@ const Donate = () => {
           <div className="text-center space-y-3 max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider">
               <Heart size={14} className="text-rose-400 fill-rose-400 animate-pulse" />
-              <span>FREE STUDENT EDUCATION & CHARITY INITIATIVE</span>
+              <span>{t("donate.badge", "FREE STUDENT EDUCATION & CHARITY INITIATIVE")}</span>
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-              EMPOWER RURAL CHILDREN THROUGH{" "}
+              {t("donate.titlePart1", "EMPOWER RURAL CHILDREN THROUGH")}{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-400 to-amber-400">
-                EDUCATION & CHARITY
+                {t("donate.titlePart2", "EDUCATION & CHARITY")}
               </span>
             </h1>
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-              Your contribution brings free AI coaching, printed books, exam fee grants, and digital learning devices to underprivileged children in remote Indian villages.
+              {t(
+                "donate.heroSubtitle",
+                "Your contribution brings free AI coaching, printed books, exam fee grants, and digital learning devices to underprivileged children in remote Indian villages."
+              )}
             </p>
           </div>
 
@@ -279,7 +300,7 @@ const Donate = () => {
                 {/* Background Image */}
                 <img
                   src={slide.url}
-                  alt={slide.title}
+                  alt={t(slide.titleKey, slide.defaultTitle)}
                   className="w-full h-full object-cover transform scale-105 group-hover:scale-100 transition-transform duration-1000"
                 />
                 
@@ -292,10 +313,10 @@ const Donate = () => {
                     ✦ {slide.badge}
                   </span>
                   <h2 className="text-xl sm:text-3xl md:text-4xl font-black text-white leading-tight drop-shadow-md">
-                    {slide.title}
+                    {t(slide.titleKey, slide.defaultTitle)}
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-300 line-clamp-2 max-w-2xl leading-relaxed">
-                    {slide.subtitle}
+                    {t(slide.subtitleKey, slide.defaultSubtitle)}
                   </p>
                 </div>
               </div>
@@ -340,19 +361,27 @@ const Donate = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 sm:p-8 rounded-[28px] border border-slate-800 bg-[#111827]/90 shadow-2xl backdrop-blur-xl">
           <div className="text-center space-y-1 p-2">
             <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-white">15,000+</div>
-            <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Village Children Supported</div>
+            <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+              {t("donate.studentsCount", "Village Children Supported")}
+            </div>
           </div>
           <div className="text-center space-y-1 p-2 border-l border-slate-800">
             <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-emerald-400">120+</div>
-            <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Rural Villages Reached</div>
+            <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+              {t("donate.villagesCount", "Rural Villages Reached")}
+            </div>
           </div>
           <div className="text-center space-y-1 p-2 border-l border-slate-800">
             <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-amber-400">100%</div>
-            <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Direct Impact (₹0 Admin Fee)</div>
+            <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+              {t("donate.directImpact", "Direct Impact (₹0 Admin Fee)")}
+            </div>
           </div>
           <div className="text-center space-y-1 p-2 border-l border-slate-800">
             <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-teal-400">80G</div>
-            <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Tax Exemption Certified</div>
+            <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+              {t("donate.taxCert", "Tax Exemption Certified")}
+            </div>
           </div>
         </div>
 
@@ -360,13 +389,16 @@ const Donate = () => {
         <section className="space-y-10">
           <div className="text-center space-y-3 max-w-2xl mx-auto">
             <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-3.5 py-1 rounded-full border border-emerald-500/20">
-              OUR CHARITY MISSION
+              {t("donate.missionBadge", "OUR CHARITY MISSION")}
             </span>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
-              Our Core Charity & Education Objectives
+              {t("donate.missionTitle", "Our Core Charity & Education Objectives")}
             </h2>
             <p className="text-slate-400 text-sm sm:text-base">
-              Every rupee donated is directly deployed to break the cycle of poverty through high-impact educational initiatives.
+              {t(
+                "donate.missionSubtitle",
+                "Every rupee donated is directly deployed to break the cycle of poverty through high-impact educational initiatives."
+              )}
             </p>
           </div>
 
@@ -383,10 +415,10 @@ const Donate = () => {
                   </div>
                   <div className="space-y-2">
                     <h3 className="font-extrabold text-white text-base group-hover:text-emerald-300 transition-colors">
-                      {obj.title}
+                      {t(obj.titleKey, obj.defaultTitle)}
                     </h3>
                     <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                      {obj.desc}
+                      {t(obj.descKey, obj.defaultDesc)}
                     </p>
                   </div>
                 </div>
@@ -403,13 +435,13 @@ const Donate = () => {
             <div className="space-y-2 border-b border-slate-800 pb-6">
               <div className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
                 <Gift size={14} className="text-emerald-400" />
-                <span>MAKE A DIFFERENCE TODAY</span>
+                <span>{t("donate.formBadge", "MAKE A DIFFERENCE TODAY")}</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-white">
-                Choose Your Contribution
+                {t("donate.formTitle", "Choose Your Contribution")}
               </h2>
               <p className="text-slate-400 text-xs sm:text-sm">
-                Select an impact tier or specify a custom amount to sponsor rural children.
+                {t("donate.formSubtitle", "Select an impact tier or specify a custom amount to sponsor rural children.")}
               </p>
             </div>
 
@@ -424,7 +456,7 @@ const Donate = () => {
                     : "text-slate-400 hover:text-white"
                 }`}
               >
-                Give One-Time
+                {t("donate.oneTime", "Give One-Time")}
               </button>
               <button
                 type="button"
@@ -435,7 +467,7 @@ const Donate = () => {
                     : "text-slate-400 hover:text-white"
                 }`}
               >
-                Give Monthly (Recurring)
+                {t("donate.monthly", "Give Monthly (Recurring)")}
               </button>
             </div>
 
@@ -472,7 +504,7 @@ const Donate = () => {
             {/* Custom Amount Input */}
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-slate-300">
-                Or Enter Custom Amount (₹)
+                {t("donate.customAmountLabel", "Or Enter Custom Amount (₹)")}
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
@@ -491,7 +523,9 @@ const Donate = () => {
 
             {/* Donor Personal Information Form */}
             <form onSubmit={handleDonateSubmit} className="space-y-4 pt-4 border-t border-slate-800">
-              <h3 className="text-sm font-extrabold text-white">Donor Details (For 80G Tax Exemption Receipt)</h3>
+              <h3 className="text-sm font-extrabold text-white">
+                {t("donate.donorDetailsTitle", "Donor Details (For 80G Tax Exemption Receipt)")}
+              </h3>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input
@@ -500,7 +534,7 @@ const Donate = () => {
                   required
                   value={donorForm.fullName}
                   onChange={handleFormChange}
-                  placeholder="Full Name *"
+                  placeholder={t("donate.fullNamePlaceholder", "Full Name *")}
                   className="w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition"
                 />
                 <input
@@ -509,7 +543,7 @@ const Donate = () => {
                   required
                   value={donorForm.email}
                   onChange={handleFormChange}
-                  placeholder="Email Address *"
+                  placeholder={t("donate.emailPlaceholder", "Email Address *")}
                   className="w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition"
                 />
               </div>
@@ -521,7 +555,7 @@ const Donate = () => {
                   required
                   value={donorForm.phone}
                   onChange={handleFormChange}
-                  placeholder="10-digit WhatsApp Mobile *"
+                  placeholder={t("donate.phonePlaceholder", "10-digit WhatsApp Mobile *")}
                   className="w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition"
                 />
                 <input
@@ -529,7 +563,7 @@ const Donate = () => {
                   name="panNumber"
                   value={donorForm.panNumber}
                   onChange={handleFormChange}
-                  placeholder="PAN Card No. (Optional for Tax Receipt)"
+                  placeholder={t("donate.panPlaceholder", "PAN Card No. (Optional for Tax Receipt)")}
                   className="w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3 text-sm text-white uppercase placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition"
                 />
               </div>
@@ -541,7 +575,10 @@ const Donate = () => {
               >
                 {isSubmitting
                   ? "PROCESSING DONATION..."
-                  : `PROCEED TO DONATE ₹${effectiveAmount.toLocaleString()} (${frequency === "monthly" ? "MONTHLY" : "ONE-TIME"})`}
+                  : t("donate.submitButton", "PROCEED TO DONATE ₹{{amount}} ({{freq}})", {
+                      amount: effectiveAmount.toLocaleString(),
+                      freq: frequency === "monthly" ? "MONTHLY" : "ONE-TIME",
+                    })}
               </button>
             </form>
           </div>
@@ -556,14 +593,17 @@ const Donate = () => {
               </div>
               <div className="space-y-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/20 px-2.5 py-0.5 rounded">
-                  TAX BENEFIT CERTIFIED
+                  {t("donate.taxBenefitBadge", "TAX BENEFIT CERTIFIED")}
                 </span>
                 <h3 className="text-xl font-extrabold text-white">
-                  50% Tax Exemption Under Section 80G
+                  {t("donate.taxBenefitTitle", "50% Tax Exemption Under Section 80G")}
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                All monetary contributions made to Umang Vision Academy's Charity Trust are eligible for 50% deduction under Section 80G of the Income Tax Act. Instant 80G receipts are emailed after donation.
+                {t(
+                  "donate.taxBenefitDesc",
+                  "All monetary contributions made to Umang Vision Academy's Charity Trust are eligible for 50% deduction under Section 80G of the Income Tax Act. Instant 80G receipts are emailed after donation."
+                )}
               </p>
             </div>
 
@@ -571,21 +611,21 @@ const Donate = () => {
             <div className="rounded-[32px] border border-slate-800 bg-[#111827]/90 p-6 sm:p-8 shadow-xl space-y-5">
               <h3 className="text-base font-extrabold text-white flex items-center gap-2">
                 <CheckCircle2 size={18} className="text-emerald-400" />
-                Our 100% Transparency Commitment
+                {t("donate.transparencyTitle", "Our 100% Transparency Commitment")}
               </h3>
               
               <ul className="space-y-3.5 text-xs sm:text-sm text-slate-300">
                 <li className="flex items-start gap-2.5">
                   <span className="text-emerald-400 font-bold text-base">•</span>
-                  <span><strong>Zero Admin Fee Deduction:</strong> 100% of your donation directly goes towards student study materials, exam fees, and digital tools.</span>
+                  <span>{t("donate.transparency1", "Zero Admin Fee Deduction: 100% of your donation directly goes towards student study materials, exam fees, and digital tools.")}</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-emerald-400 font-bold text-base">•</span>
-                  <span><strong>Quarterly Impact Reports:</strong> Donors receive photos, video clips, and academic progress cards of village students supported by their funds.</span>
+                  <span>{t("donate.transparency2", "Quarterly Impact Reports: Donors receive photos, video clips, and academic progress cards of village students supported by their funds.")}</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-emerald-400 font-bold text-base">•</span>
-                  <span><strong>Third-Party Audited:</strong> Annual financial statements and audits are published transparently on our portal.</span>
+                  <span>{t("donate.transparency3", "Third-Party Audited: Annual financial statements and audits are published transparently on our portal.")}</span>
                 </li>
               </ul>
             </div>
@@ -593,18 +633,18 @@ const Donate = () => {
             {/* Inspiring Testimonials */}
             <div className="space-y-4 pt-2">
               <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-400">
-                Stories of Impact
+                {t("donate.storiesTitle", "Stories of Impact")}
               </h3>
-              {testimonials.map((t, i) => (
+              {testimonials.map((test, i) => (
                 <div key={i} className="p-5 rounded-2xl border border-slate-800 bg-slate-950/80 space-y-3">
                   <p className="text-xs sm:text-sm text-slate-300 italic leading-relaxed">
-                    "{t.quote}"
+                    "{test.quote}"
                   </p>
                   <div className="flex items-center gap-3 pt-1 border-t border-slate-800">
-                    <img src={t.img} alt={t.name} className="w-9 h-9 rounded-full object-cover border border-slate-700" />
+                    <img src={test.img} alt={test.name} className="w-9 h-9 rounded-full object-cover border border-slate-700" />
                     <div>
-                      <div className="text-xs font-bold text-white">{t.name}</div>
-                      <div className="text-[10px] text-emerald-400">{t.role}</div>
+                      <div className="text-xs font-bold text-white">{test.name}</div>
+                      <div className="text-[10px] text-emerald-400">{test.role}</div>
                     </div>
                   </div>
                 </div>
@@ -626,11 +666,13 @@ const Donate = () => {
 
             <div className="space-y-1">
               <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-400">
-                DONATION ACKNOWLEDGEMENT
+                {t("donate.receiptTitle", "DONATION ACKNOWLEDGEMENT")}
               </span>
-              <h3 className="text-2xl font-black text-white">Thank You, {lastDonation.name}!</h3>
+              <h3 className="text-2xl font-black text-white">
+                {t("donate.receiptThanks", "Thank You, {{name}}!", { name: lastDonation.name })}
+              </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Your generous contribution of <strong className="text-emerald-400">₹{lastDonation.amount.toLocaleString()}</strong> will bring education & hope to village children.
+                {t("donate.receiptSubtitle", "Your generous contribution of ₹{{amount}} will bring education & hope to village children.", { amount: lastDonation.amount.toLocaleString() })}
               </p>
             </div>
 
@@ -658,14 +700,14 @@ const Donate = () => {
                 }}
                 className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-extrabold text-white transition cursor-pointer shadow-lg"
               >
-                Download Official 80G Tax Receipt (PDF)
+                {t("donate.receiptDownload", "Download Official 80G Tax Receipt (PDF)")}
               </button>
               <button
                 type="button"
                 onClick={() => setShowReceiptModal(false)}
                 className="w-full py-2.5 rounded-xl border border-slate-800 bg-slate-900 text-xs font-bold text-slate-400 hover:text-white transition cursor-pointer"
               >
-                Close Window
+                {t("donate.receiptClose", "Close Window")}
               </button>
             </div>
           </div>

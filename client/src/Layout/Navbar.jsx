@@ -346,7 +346,7 @@ button.btn-red:hover,
               to="/donate"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-amber-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold hover:bg-emerald-500/30 hover:scale-105 transition-all shadow-md"
             >
-              <span>Donate</span>
+              <span>{t("nav.donate", "Donate")}</span>
               <span>💖</span>
             </Link>
           </div>
