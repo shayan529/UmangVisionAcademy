@@ -7,7 +7,6 @@ import {
   FileImage,
   File,
   Layers,
-  Download,
   Lock,
   Sparkles,
   Eye,
@@ -19,24 +18,6 @@ import {
 import api from "../../config/api";
 import { useTranslation } from "react-i18next";
 import NoteViewerModal from "../common/NoteViewerModal";
-
-const downloadFile = async (url, filename) => {
-  try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const blobUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = blobUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(blobUrl);
-  } catch (error) {
-    console.error("Download failed", error);
-    window.open(url, "_blank");
-  }
-};
 
 const getDocViewUrl = (url) => {
   if (!url) return "";
@@ -387,7 +368,7 @@ export default function MobileNotes() {
                 <p className="text-xs text-slate-400 leading-relaxed">
                   {t(
                     "studyNotes.loginRequiredSubtitle",
-                    "Log in with your student account to view and download study materials."
+                    "Log in with your student account to view study materials."
                   )}
                 </p>
               </div>
@@ -503,24 +484,14 @@ export default function MobileNotes() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div>
                       <button
                         type="button"
                         onClick={() => setActiveModalNote(note)}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white transition text-xs font-bold shadow-md shadow-teal-600/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#10151c]"
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white transition text-xs font-bold shadow-md shadow-teal-600/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#10151c]"
                       >
                         <Eye size={14} />
                         {t("studyNotes.view", "View")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          downloadFile(note.fileUrl, `${note.title || "note"}.${meta.label.toLowerCase()}`)
-                        }
-                        title={t("studyNotes.download", "Download")}
-                        className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.08] text-slate-300 hover:text-teal-300 hover:border-teal-500/40 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/60"
-                      >
-                        <Download size={14} />
                       </button>
                     </div>
                   </div>
