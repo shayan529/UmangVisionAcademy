@@ -239,112 +239,122 @@ const Plans = () => {
           })}
         </div>
 
-        {/* ── 2. Tick Mark Comparison Table Matrix (Exact Reference Styling) ── */}
-        <div className="space-y-6 pt-10">
+        {/* ── 2. Tick Mark Comparison Table Matrix ── */}
+        <div className="space-y-6 pt-8">
           {/* Outer Table Container */}
-          <div className="overflow-hidden rounded-2xl border-2 border-[#555] shadow-2xl bg-black">
-            {/* Top Main Dark Burgundy Title Bar */}
-            <div className="bg-[#4e1b20] py-3 px-6 text-center border-b-2 border-[#555]">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-wider uppercase drop-shadow-md">
-                {t("plans.heading", "SMART LEARNING PLANS")}
+          <div className="overflow-hidden rounded-3xl border border-slate-800 shadow-2xl bg-slate-900/80 backdrop-blur-xl">
+            {/* Top Main Title Bar */}
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 py-3.5 px-6 text-center border-b border-slate-800">
+              <h2 className="text-base sm:text-lg font-black text-white tracking-widest uppercase drop-shadow-sm flex items-center justify-center gap-2">
+                <Sparkles size={16} className="text-amber-400" />
+                {t("plans.heading", "SMART LEARNING PLANS COMPARISON")}
               </h2>
             </div>
 
             {/* Scrollable Table Viewport */}
             <div className="overflow-x-auto">
-              <table className="w-full text-center border-collapse text-xs sm:text-sm font-sans min-w-[680px]">
+              <table className="w-full text-center border-collapse text-xs font-sans min-w-[620px]">
                 <thead>
                   {/* Table Column Headers */}
-                  <tr className="text-center font-black">
-                    {/* Feature Column Header (Dark Khaki) */}
-                    <th className="bg-[#3d4224] text-[#e8eccb] py-3 px-4 border border-[#555] w-[28%] text-left italic font-bold">
+                  <tr className="border-b border-slate-800 text-xs">
+                    {/* Feature Column Header */}
+                    <th className="bg-slate-900/90 text-slate-400 py-3 px-4 w-[34%] text-left font-bold uppercase tracking-wider">
                       {t("plans.featureCol", "Feature")}
                     </th>
 
                     {/* Basic Plan Header */}
-                    <th className="bg-[#787c80] text-black py-3 px-3 border border-[#555] w-[24%]">
+                    <th className="bg-lime-950/20 text-lime-400 py-3 px-3 border-l border-slate-800/80 w-[22%]">
                       <div className="flex items-center justify-center gap-1 font-black text-xs sm:text-sm">
-                        <span>🗹 BASIC</span>
+                        <span>📋 BASIC</span>
                       </div>
-                      <div className="font-extrabold text-xs sm:text-sm mt-0.5">
-                        ₹ 100
+                      <div className="font-extrabold text-xs text-lime-300/80 mt-0.5">
+                        ₹100 / year
                       </div>
                     </th>
 
                     {/* Premium Plan Header */}
-                    <th className="bg-[#943b3d] text-black py-3 px-3 border border-[#555] w-[24%]">
-                      <div className="flex items-center justify-center gap-1 font-black text-xs sm:text-sm">
-                        <span>🗹 PREMIUM ⭐️</span>
+                    <th className="bg-rose-950/30 text-rose-300 py-3 px-3 border-l border-slate-800/80 w-[22%] relative">
+                      <div className="flex items-center justify-center gap-1 font-black text-xs sm:text-sm text-rose-400">
+                        <span>⭐ PREMIUM</span>
                       </div>
-                      <div className="font-extrabold text-xs sm:text-sm mt-0.5">
-                        ₹ 500
+                      <div className="font-extrabold text-xs text-rose-300/80 mt-0.5">
+                        ₹500 / year
                       </div>
                     </th>
 
                     {/* Elite Plan Header */}
-                    <th className="bg-[#b35c1e] text-black py-3 px-3 border border-[#555] w-[24%]">
-                      <div className="flex items-center justify-center gap-1 font-black text-xs sm:text-sm">
-                        <span>🗹 ELITE 👑</span>
+                    <th className="bg-amber-950/30 text-amber-300 py-3 px-3 border-l border-slate-800/80 w-[22%]">
+                      <div className="flex items-center justify-center gap-1 font-black text-xs sm:text-sm text-amber-400">
+                        <span>👑 ELITE</span>
                       </div>
-                      <div className="font-extrabold text-xs sm:text-sm mt-0.5">
-                        ₹ 1,000
+                      <div className="font-extrabold text-xs text-amber-300/80 mt-0.5">
+                        ₹1,000 / year
                       </div>
                     </th>
                   </tr>
                 </thead>
 
-                <tbody>
+                <tbody className="divide-y divide-slate-800/60">
                   {TICK_COMPARISON_MATRIX.map((row, idx) => (
-                    <tr key={idx} className="border-b border-[#555]">
-                      {/* 1. Feature Name (Soft Sage/Khaki Cell) */}
-                      <td className="bg-[#d2d9b6] text-[#242b12] font-bold py-2.5 px-3.5 text-left border border-[#555] leading-snug">
+                    <tr
+                      key={idx}
+                      className="hover:bg-slate-800/30 transition-colors text-xs"
+                    >
+                      {/* 1. Feature Name */}
+                      <td className="bg-slate-900/60 text-slate-200 font-medium py-2.5 px-4 text-left leading-snug">
                         {row.link ? (
                           <Link
                             to={row.link}
-                            className="hover:underline text-[#1e240f] flex items-center justify-between"
+                            className="hover:text-indigo-300 hover:underline flex items-center justify-between group"
                           >
                             <span>{row.nameKey ? t(row.nameKey, row.feature) : row.feature}</span>
-                            <span className="text-[10px] text-emerald-800">↗</span>
+                            <span className="text-[10px] text-indigo-400 opacity-60 group-hover:opacity-100">↗</span>
                           </Link>
                         ) : (
                           <span>{row.nameKey ? t(row.nameKey, row.feature) : row.feature}</span>
                         )}
                       </td>
 
-                      {/* 2. Basic Cell (Soft Light Green) */}
-                      <td className="bg-[#dce8d5] text-[#1e2b18] font-black py-2.5 px-3 border border-[#555]">
+                      {/* 2. Basic Cell */}
+                      <td className="bg-lime-950/10 text-slate-300 py-2.5 px-3 border-l border-slate-800/60 font-semibold">
                         {row.basic === "✓" ? (
-                          <span className="text-base text-[#193b12]">✓</span>
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-lime-500/15 text-lime-400 font-bold text-xs">
+                            ✓
+                          </span>
                         ) : row.basic === "—" ? (
-                          <span className="text-slate-600 font-bold">—</span>
+                          <span className="text-slate-600">—</span>
                         ) : (
-                          <span className="text-xs">{row.basic}</span>
+                          <span className="text-slate-300 text-xs">{row.basic}</span>
                         )}
                       </td>
 
-                      {/* 3. Premium Cell (Soft Light Coral/Pink) */}
-                      <td className="bg-[#f5c2c4] text-[#3d1114] font-black py-2.5 px-3 border border-[#555]">
+                      {/* 3. Premium Cell */}
+                      <td className="bg-rose-950/15 text-slate-300 py-2.5 px-3 border-l border-slate-800/60 font-semibold">
                         {row.premium === "✓" ? (
-                          <span className="text-base text-[#611016]">✓</span>
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-500/15 text-rose-400 font-bold text-xs">
+                            ✓
+                          </span>
                         ) : row.premium === "—" ? (
-                          <span className="text-slate-600 font-bold">—</span>
+                          <span className="text-slate-600">—</span>
                         ) : (
-                          <span className="text-xs">{row.premium}</span>
+                          <span className="text-rose-200 text-xs">{row.premium}</span>
                         )}
                       </td>
 
-                      {/* 4. Elite Cell (Soft Light Orange/Amber) */}
-                      <td className="bg-[#f7c899] text-[#381c06] font-black py-2.5 px-3 border border-[#555]">
+                      {/* 4. Elite Cell */}
+                      <td className="bg-amber-950/15 text-slate-300 py-2.5 px-3 border-l border-slate-800/60 font-semibold">
                         {row.elite === "✓" ? (
-                          <span className="text-base text-[#692d04]">✓</span>
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/15 text-amber-400 font-bold text-xs">
+                            ✓
+                          </span>
                         ) : row.elite === "—" ? (
-                          <span className="text-slate-600 font-bold">—</span>
+                          <span className="text-slate-600">—</span>
                         ) : row.elite.includes("EXCLUSIVE") ? (
-                          <span className="text-xs font-black text-[#5c2400]">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black">
                             ✓ EXCLUSIVE
                           </span>
                         ) : (
-                          <span className="text-xs">{row.elite}</span>
+                          <span className="text-amber-200 text-xs">{row.elite}</span>
                         )}
                       </td>
                     </tr>
@@ -354,22 +364,22 @@ const Plans = () => {
             </div>
 
             {/* Bottom Plan Action Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 p-4 sm:p-5 bg-[#1a1a1a] border-t-2 border-[#555] gap-3 items-center">
+            <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 bg-slate-950/90 border-t border-slate-800 gap-3 items-center">
               <button
                 onClick={() => handlePlanClick(SMART_PLANS[0])}
-                className="py-3 rounded-xl bg-lime-700 hover:bg-lime-600 text-white font-bold text-xs cursor-pointer transition shadow-md"
+                className="py-2.5 px-4 rounded-xl bg-lime-600 hover:bg-lime-500 text-white font-bold text-xs cursor-pointer transition shadow-md shadow-lime-900/20 active:scale-[0.98]"
               >
                 {t("plans.chooseBasicWithPrice", "Choose Basic (₹100)")}
               </button>
               <button
                 onClick={() => handlePlanClick(SMART_PLANS[1])}
-                className="py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs cursor-pointer transition shadow-md"
+                className="py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs cursor-pointer transition shadow-md shadow-rose-900/20 active:scale-[0.98]"
               >
                 {t("plans.choosePremiumWithPrice", "Choose Premium (₹500)")}
               </button>
               <button
                 onClick={() => handlePlanClick(SMART_PLANS[2])}
-                className="py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs cursor-pointer transition shadow-md"
+                className="py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs cursor-pointer transition shadow-md shadow-amber-900/20 active:scale-[0.98]"
               >
                 {t("plans.chooseEliteWithPrice", "Unlock Elite (₹1,000)")}
               </button>
