@@ -285,16 +285,16 @@ const UdemyPurchaseCard = ({
       )}
 
       {/* Card Body */}
-      <div className="p-5 sm:p-6 flex flex-col gap-4">
+      <div className="p-3.5 sm:p-5 flex flex-col gap-3.5">
         {canAccess ? (
           <div className="flex flex-col gap-3">
-            <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2">
               <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
               <span>You have full access to this course!</span>
             </div>
             <button
               onClick={() => navigate(`/courses/${course?._id}`)}
-              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
             >
               Go to Course Curriculum →
             </button>
@@ -304,7 +304,7 @@ const UdemyPurchaseCard = ({
             {/* Udemy Option 1: Subscription Option */}
             <div
               onClick={() => setPurchaseType("subscription")}
-              className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+              className={`p-3 rounded-xl border transition-all cursor-pointer ${
                 purchaseType === "subscription"
                   ? "bg-indigo-950/40 border-indigo-500/80 shadow-md ring-1 ring-indigo-500/40"
                   : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
@@ -316,21 +316,21 @@ const UdemyPurchaseCard = ({
                   name="purchaseType"
                   checked={purchaseType === "subscription"}
                   onChange={() => setPurchaseType("subscription")}
-                  className="mt-1 text-indigo-600 accent-indigo-500 cursor-pointer"
+                  className="mt-0.5 text-indigo-600 accent-indigo-500 cursor-pointer shrink-0"
                 />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
                     <span className="text-xs font-bold text-slate-200">
                       Subscribe and save
                     </span>
-                    <span className="text-xs font-bold text-emerald-400">
-                      From ₹350.00 <span className="text-[10px] text-slate-500 font-normal">/month</span>
+                    <span className="text-xs font-bold text-emerald-400 shrink-0">
+                      From ₹350.00 <span className="text-[10px] text-slate-500 font-normal">/mo</span>
                     </span>
                   </div>
 
                   {purchaseType === "subscription" && (
                     <div className="mt-2.5 pt-2.5 border-t border-indigo-900/40 flex flex-col gap-2">
-                      <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[11px] text-indigo-200 leading-snug">
+                      <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[10.5px] text-indigo-200 leading-snug">
                         💡 Our subscribers don't pay per course. In their first month, students take 5+ courses and save ₹4,000+.
                       </div>
                       <div className="flex flex-col gap-1.5 text-xs text-slate-300 mt-1">
@@ -357,7 +357,7 @@ const UdemyPurchaseCard = ({
                           e.stopPropagation();
                           navigate("/student-dashboard/plans");
                         }}
-                        className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
+                        className="w-full mt-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all cursor-pointer active:scale-98"
                       >
                         Start Subscription
                       </button>
@@ -370,7 +370,7 @@ const UdemyPurchaseCard = ({
             {/* Udemy Option 2: Buy Individual Course */}
             <div
               onClick={() => setPurchaseType("individual")}
-              className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+              className={`p-3 rounded-xl border transition-all cursor-pointer ${
                 purchaseType === "individual"
                   ? "bg-indigo-950/40 border-indigo-500/80 shadow-md ring-1 ring-indigo-500/40"
                   : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
@@ -382,14 +382,14 @@ const UdemyPurchaseCard = ({
                   name="purchaseType"
                   checked={purchaseType === "individual"}
                   onChange={() => setPurchaseType("individual")}
-                  className="mt-1 text-indigo-600 accent-indigo-500 cursor-pointer"
+                  className="mt-0.5 text-indigo-600 accent-indigo-500 cursor-pointer shrink-0"
                 />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
                     <span className="text-xs font-bold text-slate-200">
                       Buy individual course
                     </span>
-                    <div className="flex items-baseline gap-1.5">
+                    <div className="flex items-baseline gap-1.5 shrink-0">
                       <span className="text-sm font-black text-white">
                         {course?.price ? `₹${course.price}` : "Free"}
                       </span>
@@ -403,7 +403,7 @@ const UdemyPurchaseCard = ({
 
                   {purchaseType === "individual" && (
                     <div className="mt-2.5 pt-2.5 border-t border-indigo-900/40 flex flex-col gap-2.5">
-                      <div className="flex items-baseline gap-2">
+                      <div className="flex items-baseline gap-2 flex-wrap">
                         <span className="text-2xl font-black text-white tracking-tight">
                           {withInstructorAssistance
                             ? "₹500"
@@ -435,7 +435,7 @@ const UdemyPurchaseCard = ({
                             : "bg-slate-900 border-slate-800 hover:border-slate-700"
                         }`}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
                           <div
                             className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold shrink-0 ${
                               withInstructorAssistance
@@ -445,16 +445,16 @@ const UdemyPurchaseCard = ({
                           >
                             {withInstructorAssistance && "✓"}
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-bold text-white truncate">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[11px] font-bold text-white leading-tight truncate">
                               ✨ 1-on-1 Faculty Chat Support
                             </p>
-                            <p className="text-[9.5px] text-slate-400 truncate">
+                            <p className="text-[9.5px] text-slate-400 leading-tight truncate mt-0.5">
                               Direct doubt clearance & meet link requests
                             </p>
                           </div>
                         </div>
-                        <span className="text-xs font-black text-purple-300 shrink-0">
+                        <span className="text-xs font-black text-purple-300 shrink-0 ml-1">
                           ₹500
                         </span>
                       </div>
@@ -462,7 +462,7 @@ const UdemyPurchaseCard = ({
                       <button
                         onClick={onEnroll}
                         disabled={enrollingFree}
-                        className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer active:scale-98"
+                        className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer active:scale-98"
                       >
                         {enrollingFree
                           ? "Enrolling..."
@@ -496,33 +496,30 @@ const UdemyPurchaseCard = ({
                 placeholder="Enter Coupon"
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value)}
-                className="flex-1 px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 uppercase"
+                className="flex-1 px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 uppercase min-w-0"
               />
               <button
                 type="submit"
                 disabled={couponApplied}
-                className="px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-slate-700 transition cursor-pointer"
+                className="px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-slate-700 transition cursor-pointer shrink-0"
               >
                 {couponApplied ? "Applied!" : "Apply"}
               </button>
             </form>
 
             {/* Guarantee & Meta */}
-            <div className="pt-3 border-t border-slate-800/80 flex flex-col gap-2 text-xs text-slate-400">
-              <div className="text-center font-semibold text-slate-300 text-[11px]">
-                30-Day Money-Back Guarantee
-              </div>
-              <div className="flex flex-col gap-1.5 mt-1">
+            <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-1.5 text-xs text-slate-400">
+              <div className="flex flex-col gap-1.5 mt-0.5">
                 <div className="flex items-center gap-2">
-                  <Tv size={13} className="text-slate-500" />
+                  <Tv size={13} className="text-slate-500 shrink-0" />
                   <span>Access on mobile, tablet & PC</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Award size={13} className="text-slate-500" />
+                  <Award size={13} className="text-slate-500 shrink-0" />
                   <span>Certificate of completion included</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <ShieldCheck size={13} className="text-slate-500" />
+                  <ShieldCheck size={13} className="text-slate-500 shrink-0" />
                   <span>Full lifetime access to all future updates</span>
                 </div>
               </div>
