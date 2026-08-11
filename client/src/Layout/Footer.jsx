@@ -1,69 +1,114 @@
 import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next"; // add this
+import { useTranslation } from "react-i18next";
 
 const Footer = () => {
-  const { t } = useTranslation(); // add this
+  const { t } = useTranslation();
 
   return (
-    <footer className="hidden md:block px-6 md:px-5 py-5 border-t border-slate-800 bg-slate-950">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-10 w-full">
-        {/* Logo Section */}
-        <div className="flex flex-col items-start gap-4 m-10">
-          <div className="w-36 h-36 md:w-48 md:h-48 p-3 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 shadow-2xl">
-            <img src="/Logo.png" alt="Logo" className="w-full h-full object-contain drop-shadow-lg" />
+    <footer className="w-full bg-slate-950 border-t border-slate-800/80 text-slate-300 py-12 px-6 sm:px-8 lg:px-12">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 lg:gap-14 items-start">
+        
+        {/* Column 1: Logo Section */}
+        <div className="flex flex-col items-start gap-4">
+          <div className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 p-2.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 shadow-2xl transition-transform hover:scale-105">
+            <img
+              src="/Logo.png"
+              alt="Umang Vision Academy Logo"
+              className="w-full h-full object-contain drop-shadow-md"
+            />
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
+            Empowering students across India with AI-powered coaching, expert guidance, and comprehensive learning paths.
+          </p>
+        </div>
+
+        {/* Column 2: Platform Links */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-extrabold text-white tracking-wider uppercase border-b border-indigo-500/30 pb-2 inline-block">
+            {t("footer.platform", "Platform")}
+          </h3>
+          <div className="flex flex-col space-y-2.5 text-sm font-medium text-slate-400">
+            <Link
+              to="/courses"
+              className="hover:text-indigo-400 transition-colors duration-200"
+            >
+              {t("footer.courses", "Courses")}
+            </Link>
+            <Link
+              to="/about-us"
+              className="hover:text-indigo-400 transition-colors duration-200"
+            >
+              {t("footer.aboutUs", "About Us")}
+            </Link>
+            <Link
+              to="/become-instructor"
+              className="hover:text-indigo-400 transition-colors duration-200"
+            >
+              Become an Expert Guide
+            </Link>
           </div>
         </div>
 
-        {/* Right Side Links */}
-        <div className="flex flex-col sm:flex-row gap-12 md:gap-20">
-          <div className="m-10">
-            <h3 className="font-bold mb-5">{t("footer.platform")}</h3>
-            <div className="space-y-3 text-white">
-              <Link to="/courses" className="block hover:text-white transition">
-                {t("footer.courses")}
-              </Link>
-              <Link
-                to="/about-us"
-                className="block hover:text-white transition"
-              >
-                {t("footer.aboutUs")}
-              </Link>
-            </div>
-          </div>
-
-          <div className="m-10">
-            <h3 className="font-bold mb-5">{t("footer.support")}</h3>
-            <div className="space-y-3 text-white">
-              <Link to="/contact" className="block hover:text-white transition">
-                {t("footer.contact")}
-              </Link>
-              <Link
-                to="/help-center"
-                className="block hover:text-white transition"
-              >
-                {t("footer.helpCenter")}
-              </Link>
-              <Link to="/faq" className="block hover:text-white transition">
-                {t("footer.faq")}
-              </Link>
-            </div>
-          </div>
-
-          <div className="m-10">
-            <h3 className="font-bold mb-5">{t("footer.legal", "Legal")}</h3>
-            <div className="space-y-3 text-white">
-              <Link to="/privacy" className="block hover:text-white transition">
-                {t("footer.privacyPolicy", "Privacy Policy")}
-              </Link>
-              <Link to="/terms" className="block hover:text-white transition">
-                {t("footer.termsOfService", "Terms of Service")}
-              </Link>
-              <Link to="/refund-policy" className="block hover:text-white transition">
-                {t("footer.refundPolicy", "Refund Policy")}
-              </Link>
-            </div>
+        {/* Column 3: Support Links */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-extrabold text-white tracking-wider uppercase border-b border-indigo-500/30 pb-2 inline-block">
+            {t("footer.support", "Support")}
+          </h3>
+          <div className="flex flex-col space-y-2.5 text-sm font-medium text-slate-400">
+            <Link
+              to="/contact"
+              className="hover:text-indigo-400 transition-colors duration-200"
+            >
+              {t("footer.contact", "Contact Us")}
+            </Link>
+            <Link
+              to="/help-center"
+              className="hover:text-indigo-400 transition-colors duration-200"
+            >
+              {t("footer.helpCenter", "Help Center")}
+            </Link>
+            <Link
+              to="/faq"
+              className="hover:text-indigo-400 transition-colors duration-200"
+            >
+              {t("footer.faq", "FAQ")}
+            </Link>
           </div>
         </div>
+
+        {/* Column 4: Legal Links */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-extrabold text-white tracking-wider uppercase border-b border-indigo-500/30 pb-2 inline-block">
+            {t("footer.legal", "Legal")}
+          </h3>
+          <div className="flex flex-col space-y-2.5 text-sm font-medium text-slate-400">
+            <Link
+              to="/privacy"
+              className="hover:text-indigo-400 transition-colors duration-200"
+            >
+              {t("footer.privacyPolicy", "Privacy Policy")}
+            </Link>
+            <Link
+              to="/terms"
+              className="hover:text-indigo-400 transition-colors duration-200"
+            >
+              {t("footer.termsOfService", "Terms of Service")}
+            </Link>
+            <Link
+              to="/refund-policy"
+              className="hover:text-indigo-400 transition-colors duration-200"
+            >
+              {t("footer.refundPolicy", "Refund Policy")}
+            </Link>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Bottom Copyright Divider */}
+      <div className="max-w-7xl mx-auto mt-12 pt-6 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+        <p>© {new Date().getFullYear()} Umang Vision Academy. All rights reserved.</p>
+        <p className="text-slate-500">Free Student Guidance Initiative</p>
       </div>
     </footer>
   );
