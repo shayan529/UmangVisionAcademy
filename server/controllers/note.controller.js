@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import Note from "../models/note.model.js";
 import Course from "../models/courses.model.js";
 import { hasBaseRole, hasPermissionGrant } from "../utils/userRoles.js";
-import { cacheResponse, deleteKeys } from "../utils/redisClient.js";
+import { cacheResponse, deleteKeys, invalidateCache } from "../utils/redisClient.js";
 
 // ── Notes exist in two places today ─────────────────────────────────────────
 // 1. The standalone `Note` collection — created via POST /notes (the
@@ -283,6 +283,7 @@ export const approveNote = async (req, res) => {
     note.status = "approved";
     note.rejectedReason = undefined;
     await note.save();
+    await invalidateNoteCaches();
     res.json(shapeStandaloneNote(note));
   } catch (err) {
     console.error("approveNote", err);
@@ -309,6 +310,7 @@ export const rejectNote = async (req, res) => {
     note.status = "rejected";
     note.rejectedReason = reason || "";
     await note.save();
+    await invalidateNoteCaches();
     res.json(shapeStandaloneNote(note));
   } catch (err) {
     console.error("rejectNote", err);
@@ -335,6 +337,7 @@ export const unapproveNote = async (req, res) => {
     note.status = "pending";
     note.rejectedReason = undefined;
     await note.save();
+    await invalidateNoteCaches();
     res.json(shapeStandaloneNote(note));
   } catch (err) {
     console.error("unapproveNote", err);
@@ -384,6 +387,7 @@ export const deleteNote = async (req, res) => {
     }
 
     await Note.findByIdAndDelete(req.params.id);
+    await invalidateNoteCaches();
     res.json({ message: "Note deleted successfully" });
   } catch (err) {
     console.error("deleteNote", err);
