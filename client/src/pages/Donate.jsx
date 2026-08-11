@@ -39,7 +39,7 @@ const carouselSlides = [
     defaultBadge: "Resource Distribution",
   },
   {
-    url: "/shafin-ashraf-eCqiA4HvlIs-unsplash.jpg",
+    url: "/wietse-jongsma-gGKY2DAYbZ8-unsplash.jpg",
     titleKey: "donate.carousel3Title",
     defaultTitle: "Bridging the Opportunity Gap for Every Aspiring Village Learner",
     subtitleKey: "donate.carousel3Subtitle",
@@ -153,24 +153,9 @@ const objectives = [
   },
 ];
 
-const testimonials = [
-  {
-    quote: "Without Umang Vision Academy's free notes & AI tutor support, I couldn't afford coaching in my village. Now I scored 94% in my Board exams!",
-    name: "Priya Sharma",
-    role: "Class 12 Student, MP Village",
-    img: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=200&q=80",
-  },
-  {
-    quote: "The digital tablet center set up in our village panchayat brought hope to 60+ children who had no school teachers nearby. Thank you donors!",
-    name: "Ramesh Patel",
-    role: "Village Sarpanch, Gujarat",
-    img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
-  },
-];
-
 const Donate = () => {
   const { t } = useTranslation();
-  
+
   // Carousel State
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -283,9 +268,8 @@ const Donate = () => {
         {carouselSlides.map((slide, idx) => (
           <div
             key={idx}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              idx === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
-            }`}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+              }`}
           >
             {/* Full-Bleed Background Image */}
             <img
@@ -350,9 +334,8 @@ const Donate = () => {
               key={idx}
               type="button"
               onClick={() => setCurrentSlide(idx)}
-              className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
-                idx === currentSlide ? "w-7 bg-emerald-400" : "w-2.5 bg-white/40 hover:bg-white"
-              }`}
+              className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${idx === currentSlide ? "w-7 bg-emerald-400" : "w-2.5 bg-white/40 hover:bg-white"
+                }`}
               aria-label={`Go to slide ${idx + 1}`}
             />
           ))}
@@ -434,7 +417,7 @@ const Donate = () => {
 
         {/* ── 4. INTERACTIVE DONATION FORM & TIERS ── */}
         <section id="donate-form" className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] items-start">
-          
+
           {/* Left: Donation Tiers & Form */}
           <div className="rounded-[32px] border border-slate-800 bg-[#111827]/95 p-6 sm:p-10 shadow-2xl space-y-8">
             <div className="space-y-2 border-b border-slate-800 pb-6">
@@ -455,22 +438,20 @@ const Donate = () => {
               <button
                 type="button"
                 onClick={() => setFrequency("one-time")}
-                className={`flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all cursor-pointer ${
-                  frequency === "one-time"
+                className={`flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all cursor-pointer ${frequency === "one-time"
                     ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md"
                     : "text-slate-400 hover:text-white"
-                }`}
+                  }`}
               >
                 {t("donate.oneTime", "Give One-Time")}
               </button>
               <button
                 type="button"
                 onClick={() => setFrequency("monthly")}
-                className={`flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all cursor-pointer ${
-                  frequency === "monthly"
+                className={`flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all cursor-pointer ${frequency === "monthly"
                     ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md"
                     : "text-slate-400 hover:text-white"
-                }`}
+                  }`}
               >
                 {t("donate.monthly", "Give Monthly (Recurring)")}
               </button>
@@ -486,11 +467,10 @@ const Donate = () => {
                     setSelectedAmount(tier.amount);
                     setCustomAmount("");
                   }}
-                  className={`p-4 rounded-2xl border text-left transition-all relative cursor-pointer ${
-                    selectedAmount === tier.amount && !customAmount
+                  className={`p-4 rounded-2xl border text-left transition-all relative cursor-pointer ${selectedAmount === tier.amount && !customAmount
                       ? "border-emerald-500 bg-emerald-500/15 shadow-lg shadow-emerald-500/10"
                       : "border-slate-800 bg-slate-900/80 hover:border-slate-700"
-                  }`}
+                    }`}
                 >
                   {tier.popular && (
                     <span className="absolute -top-2.5 right-3 bg-amber-500 text-slate-950 text-[10px] font-black uppercase px-2 py-0.5 rounded-md shadow-sm">
@@ -531,7 +511,7 @@ const Donate = () => {
               <h3 className="text-sm font-extrabold text-white">
                 {t("donate.donorDetailsTitle", "Donor Details (For 80G Tax Exemption Receipt)")}
               </h3>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -581,16 +561,16 @@ const Donate = () => {
                 {isSubmitting
                   ? "PROCESSING DONATION..."
                   : t("donate.submitButton", "PROCEED TO DONATE ₹{{amount}} ({{freq}})", {
-                      amount: effectiveAmount.toLocaleString(),
-                      freq: frequency === "monthly" ? "MONTHLY" : "ONE-TIME",
-                    })}
+                    amount: effectiveAmount.toLocaleString(),
+                    freq: frequency === "monthly" ? "MONTHLY" : "ONE-TIME",
+                  })}
               </button>
             </form>
           </div>
 
           {/* Right: Trust, 80G Certificate & Transparency */}
           <div className="space-y-6">
-            
+
             {/* 80G Tax Benefit Banner */}
             <div className="rounded-[32px] border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-xl space-y-4">
               <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-md">
@@ -601,13 +581,13 @@ const Donate = () => {
                   {t("donate.taxBenefitBadge", "TAX BENEFIT CERTIFIED")}
                 </span>
                 <h3 className="text-xl font-extrabold text-white">
-                  {t("donate.taxBenefitTitle", "50% Tax Exemption Under Section 80G")}
+                  {t("donate.taxBenefitTitle", "Tax Exemption Under Section 80G")}
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
                 {t(
                   "donate.taxBenefitDesc",
-                  "All monetary contributions made to Umang Vision Academy's Charity Trust are eligible for 50% deduction under Section 80G of the Income Tax Act. Instant 80G receipts are emailed after donation."
+                  "All monetary contributions made to Umang Vision Academy's Charity Trust are eligible for tax deduction under Section 80G of the Income Tax Act. Instant 80G receipts are emailed after donation."
                 )}
               </p>
             </div>
@@ -618,7 +598,7 @@ const Donate = () => {
                 <CheckCircle2 size={18} className="text-emerald-400" />
                 {t("donate.transparencyTitle", "Our 100% Transparency Commitment")}
               </h3>
-              
+
               <ul className="space-y-3.5 text-xs sm:text-sm text-slate-300">
                 <li className="flex items-start gap-2.5">
                   <span className="text-emerald-400 font-bold text-base">•</span>
@@ -633,27 +613,6 @@ const Donate = () => {
                   <span>{t("donate.transparency3", "Third-Party Audited: Annual financial statements and audits are published transparently on our portal.")}</span>
                 </li>
               </ul>
-            </div>
-
-            {/* Inspiring Testimonials */}
-            <div className="space-y-4 pt-2">
-              <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-400">
-                {t("donate.storiesTitle", "Stories of Impact")}
-              </h3>
-              {testimonials.map((test, i) => (
-                <div key={i} className="p-5 rounded-2xl border border-slate-800 bg-slate-950/80 space-y-3">
-                  <p className="text-xs sm:text-sm text-slate-300 italic leading-relaxed">
-                    "{test.quote}"
-                  </p>
-                  <div className="flex items-center gap-3 pt-1 border-t border-slate-800">
-                    <img src={test.img} alt={test.name} className="w-9 h-9 rounded-full object-cover border border-slate-700" />
-                    <div>
-                      <div className="text-xs font-bold text-white">{test.name}</div>
-                      <div className="text-[10px] text-emerald-400">{test.role}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
 
           </div>
