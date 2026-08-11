@@ -716,6 +716,15 @@ export default function CourseDemo() {
     setWithInstructorAssistance,
   };
 
+  if (loading && !course) {
+    return (
+      <div className="min-h-screen bg-[#0b1120] text-slate-100 font-sans p-6 flex flex-col items-center justify-center">
+        <div className="w-12 h-12 rounded-full border-3 border-indigo-500/30 border-t-indigo-500 animate-spin mb-4" />
+        <p className="text-sm font-semibold text-slate-400">Loading course details...</p>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="min-h-screen bg-[#0b1120] text-slate-100 flex flex-col items-center justify-center p-6 gap-4">
@@ -731,11 +740,10 @@ export default function CourseDemo() {
     );
   }
 
-  const ratingVal = course?.ratingAverage
-    ? Number(course.ratingAverage).toFixed(1)
-    : "4.8";
-  const reviewsCount = course?.reviewCount ?? 284;
-  const studentsCount = course?.enrolledCount ?? course?.students?.length ?? 1540;
+  const rawRating = course?.ratingAverage ?? course?.rating ?? 0;
+  const ratingVal = Number(rawRating || 0).toFixed(1);
+  const reviewsCount = course?.reviewCount ?? course?.reviews ?? 0;
+  const studentsCount = course?.enrolledCount ?? course?.students?.length ?? 0;
   const totalLessons = course?.lessons?.length ?? course?.lessonCount ?? 0;
   const totalDuration = course?.durationHours ? `${course.durationHours} hours` : "Self-paced";
 
@@ -877,7 +885,7 @@ export default function CourseDemo() {
                 What you'll learn
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-slate-300">
-                {aiDetails.whatYouWillLearn.map((item, idx) => (
+                {(aiDetails.whatYouWillLearn || []).map((item, idx) => (
                   <div key={idx} className="flex items-start gap-2.5 leading-snug">
                     <Check size={16} className="text-emerald-400 shrink-0 mt-0.5" />
                     <span>{item}</span>
@@ -1030,7 +1038,7 @@ export default function CourseDemo() {
                 Requirements
               </h2>
               <ul className="list-disc list-inside flex flex-col gap-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                {aiDetails.requirements.map((req, idx) => (
+                {(aiDetails.requirements || []).map((req, idx) => (
                   <li key={idx}>{req}</li>
                 ))}
               </ul>

@@ -26,11 +26,8 @@ const CourseCard = ({ course }) => {
   const canEnroll =
     hasBaseRole(user, "student") || hasBaseRole(user, "instructor");
 
-  const ratingVal = course.rating
-    ? Number(course.rating).toFixed(1)
-    : course.ratingAverage
-      ? Number(course.ratingAverage).toFixed(1)
-      : "4.8";
+  const rawRating = course.rating ?? course.ratingAverage ?? 0;
+  const ratingVal = Number(rawRating || 0).toFixed(1);
 
   const reviewsCount = course.reviews ?? course.reviewCount ?? 0;
   const isEnrolled = Boolean(course.enrolled);

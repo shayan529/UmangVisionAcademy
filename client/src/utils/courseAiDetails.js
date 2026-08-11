@@ -5,7 +5,27 @@
  */
 
 export function generateCourseAiDetails(course) {
-  if (!course) return {};
+  if (!course) {
+    return {
+      whatYouWillLearn: [
+        "Master core principles and fundamental concepts with comprehensive video lessons.",
+        "Step-by-step problem solving methods for board and competitive exams.",
+        "Complete coverage of syllabus topics, previous year questions and test patterns.",
+        "Downloadable study notes, chapter summaries, and revision guides.",
+        "Build strong conceptual clarity to achieve top percentile marks.",
+        "Direct continuous doubt clearing with AI Tutor and faculty members.",
+      ],
+      requirements: [
+        "Basic foundational knowledge of prior class concepts.",
+        "A smartphone, tablet, or laptop with stable internet connection.",
+        "Notebook and stationery for practice exercises and notes.",
+      ],
+      description:
+        "Comprehensive curriculum designed to help students master all key topics with crystal clarity, expert problem-solving strategies, and continuous educator guidance.",
+      instructorName: "Lead Faculty",
+      instructorBio: "Expert educator at Umang Vision Academy.",
+    };
+  }
 
   const title = course.title || "Comprehensive Course";
   const subject = course.subject || course.category || "Academic Excellence";
