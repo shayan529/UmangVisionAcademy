@@ -770,7 +770,7 @@ const Courses = () => {
           </div>
         ) : filteredCourses.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {filteredCourses.slice(0, visibleCourseCount).map((course, i) => {
                 const completed = isCompleted(course);
                 const enrolled = isEnrolled(course);
