@@ -1124,11 +1124,11 @@ export default function InstructorStudentQueries({ showToast }) {
         ) : (
           <>
             {/* Header */}
-            <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3.5 border-b border-[#1a244d] bg-[#0b1028] shrink-0 gap-2">
+            <div className="flex items-center justify-between px-2.5 sm:px-5 py-2.5 sm:py-3.5 border-b border-[#1a244d] bg-[#0b1028] shrink-0 gap-2">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                 <button
                   onClick={() => setMobileView("list")}
-                  className="md:hidden p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-[#101738] transition cursor-pointer shrink-0"
+                  className="md:hidden p-1 rounded-xl text-zinc-400 hover:text-white hover:bg-[#101738] transition cursor-pointer shrink-0"
                   aria-label="Back to queries list"
                 >
                   <ChevronLeft size={20} />
@@ -1146,9 +1146,9 @@ export default function InstructorStudentQueries({ showToast }) {
                     </div>
                   )}
                 </div>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 pr-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[13.5px] sm:text-base font-bold text-white truncate leading-tight">
+                    <span className="text-sm sm:text-base font-extrabold text-white truncate leading-tight">
                       {student?.name || "Student"}
                     </span>
                     {activeConversation.isBlocked && (
@@ -1157,13 +1157,13 @@ export default function InstructorStudentQueries({ showToast }) {
                       </span>
                     )}
                   </div>
-                  <div className="text-[11px] sm:text-xs text-zinc-300 truncate flex items-center gap-1 mt-0.5 font-medium leading-tight">
-                    <span className="text-emerald-400 font-semibold truncate">
+                  <div className="text-xs text-zinc-300 font-medium leading-tight mt-0.5 truncate">
+                    <span className="text-emerald-400 font-semibold">
                       {activeConversation.course?.title || "Class Query"}
                     </span>
                     {activeConversation.subject && (
-                      <span className="text-zinc-400 shrink-0">
-                        • {activeConversation.subject}
+                      <span className="text-zinc-400 font-normal">
+                        {" "}• {activeConversation.subject}
                       </span>
                     )}
                   </div>
@@ -1175,11 +1175,10 @@ export default function InstructorStudentQueries({ showToast }) {
                 <button
                   onClick={() => setMeetModalOpen(true)}
                   title="Share Google Meet or Zoom link"
-                  className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
+                  className="w-9 h-9 sm:w-auto sm:px-3.5 sm:py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold flex items-center justify-center transition-all shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer shrink-0"
                 >
-                  <Video size={14} />
-                  <span className="hidden sm:inline">Share Meet Link</span>
-                  <span className="inline sm:hidden">Meet</span>
+                  <Video size={16} />
+                  <span className="hidden sm:inline ml-1.5">Share Meet Link</span>
                 </button>
 
                 <div className="relative">

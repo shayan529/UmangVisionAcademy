@@ -701,7 +701,13 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
     ];
   }, [activeLesson, isHindi]);
 
-  if (isNoteModalOpen) return null;
+  const isChatRoute = typeof window !== "undefined" && (
+    window.location.pathname.includes("ask") ||
+    window.location.pathname.includes("chat") ||
+    window.location.pathname.includes("queries")
+  );
+
+  if (isNoteModalOpen || isChatRoute) return null;
 
   return (
     <>
