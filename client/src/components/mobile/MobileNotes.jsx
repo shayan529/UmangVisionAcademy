@@ -474,9 +474,14 @@ export default function MobileNotes() {
 
                   <div className="px-5 pb-5 pt-3 border-t border-dashed border-white/[0.08] space-y-3">
                     <div className="flex items-center justify-between gap-2 text-[11px]">
-                      <span className="flex items-center gap-1 font-semibold text-slate-300 truncate max-w-[55%]">
+                      <span
+                        className="flex items-center gap-1 font-semibold text-slate-300 flex-1 min-w-0"
+                        title={note.instructorName || t("studyNotes.instructor", "Instructor")}
+                      >
                         <User size={12} className="text-slate-500 shrink-0" />
-                        {note.instructorName || t("studyNotes.instructor", "Instructor")}
+                        <span className="truncate">
+                          {note.instructorName || t("studyNotes.instructor", "Instructor")}
+                        </span>
                       </span>
                       <span className="stamp font-mono-catalog flex items-center gap-1 shrink-0 text-slate-500 border border-white/10 rounded px-1.5 py-0.5">
                         <Calendar size={11} />

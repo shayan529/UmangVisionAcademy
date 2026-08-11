@@ -32,7 +32,11 @@ const shapeStandaloneNote = (note) => ({
   status: note.status,
   rejectedReason: note.rejectedReason || "",
   instructor: note.instructor,
-  instructorName: note.instructorName,
+  instructorName:
+    (typeof note.instructor === "object" && note.instructor?.name) ||
+    note.instructorName ||
+    (typeof note.instructor === "object" && note.instructor?.email) ||
+    "Instructor",
   courseId: null,
   courseTitle: null,
   source: "standalone",
@@ -48,7 +52,10 @@ const shapeCourseNote = (note, course) => ({
   rejectedReason: note.rejectedReason || "",
   instructor: course.instructor,
   instructorName:
-    course.instructor?.name || course.instructor?.email || "Instructor",
+    (typeof course.instructor === "object" && course.instructor?.name) ||
+    course.instructorName ||
+    course.instructor?.email ||
+    "Instructor",
   courseId: course._id,
   courseTitle: course.title,
   source: "course",
