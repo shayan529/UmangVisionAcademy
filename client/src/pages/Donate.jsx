@@ -18,10 +18,10 @@ import {
   Gift,
 } from "lucide-react";
 
-// 5 High Quality Carousel Images of Village Children Studying
+// 5 High Quality Wide Panoramic Images of Indian Village Children
 const carouselSlides = [
   {
-    url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=80",
+    url: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1600&q=80",
     titleKey: "donate.carousel1Title",
     defaultTitle: "Bringing Free AI-Powered Education to Remote Village Classrooms",
     subtitleKey: "donate.carousel1Subtitle",
@@ -29,7 +29,7 @@ const carouselSlides = [
     badge: "Digital Education Initiative",
   },
   {
-    url: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1200&q=80",
+    url: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1600&q=80",
     titleKey: "donate.carousel2Title",
     defaultTitle: "Distributing Free Study Material, Books & Printed Notes",
     subtitleKey: "donate.carousel2Subtitle",
@@ -37,7 +37,7 @@ const carouselSlides = [
     badge: "Resource Distribution",
   },
   {
-    url: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1200&q=80",
+    url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80",
     titleKey: "donate.carousel3Title",
     defaultTitle: "Bridging the Opportunity Gap for Every Aspiring Village Learner",
     subtitleKey: "donate.carousel3Subtitle",
@@ -45,7 +45,7 @@ const carouselSlides = [
     badge: "Equal Opportunity",
   },
   {
-    url: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1200&q=80",
+    url: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1600&q=80",
     titleKey: "donate.carousel4Title",
     defaultTitle: "Sponsoring Exam Fees & Higher Education Coaching",
     subtitleKey: "donate.carousel4Subtitle",
@@ -53,7 +53,7 @@ const carouselSlides = [
     badge: "Scholarships & Exam Grants",
   },
   {
-    url: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=1200&q=80",
+    url: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1600&q=80",
     titleKey: "donate.carousel5Title",
     defaultTitle: "Building Solar-Powered Digital Learning Hubs in Villages",
     subtitleKey: "donate.carousel5Subtitle",
@@ -286,7 +286,7 @@ const Donate = () => {
 
           {/* 5-Image Interactive Carousel Box */}
           <div
-            className="relative rounded-[32px] border border-slate-800 bg-slate-900/90 overflow-hidden shadow-2xl group h-[380px] sm:h-[460px] md:h-[520px]"
+            className="relative rounded-[28px] border border-slate-800 bg-slate-900/90 overflow-hidden shadow-2xl group h-[250px] sm:h-[320px] md:h-[380px] lg:h-[420px] w-full"
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
           >
