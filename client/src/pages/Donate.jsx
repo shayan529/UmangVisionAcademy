@@ -21,20 +21,22 @@ import {
 // 5 High Quality Wide Panoramic Images of Indian Village Children
 const carouselSlides = [
   {
-    url: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1600&q=80",
+    url: "https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?auto=format&fit=crop&w=1600&q=80",
     titleKey: "donate.carousel1Title",
     defaultTitle: "Bringing Free AI-Powered Education to Remote Village Classrooms",
     subtitleKey: "donate.carousel1Subtitle",
     defaultSubtitle: "Empowering rural children with digital learning tools and interactive AI coaching.",
-    badge: "Digital Education Initiative",
+    badgeKey: "donate.carousel1Badge",
+    defaultBadge: "Digital Education Initiative",
   },
   {
-    url: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1600&q=80",
+    url: "https://images.unsplash.com/photo-1596495578065-6e0763fa1178?auto=format&fit=crop&w=1600&q=80",
     titleKey: "donate.carousel2Title",
     defaultTitle: "Distributing Free Study Material, Books & Printed Notes",
     subtitleKey: "donate.carousel2Subtitle",
     defaultSubtitle: "Hand-delivering NCERT guides, formula sheets, and stationery to underprivileged students.",
-    badge: "Resource Distribution",
+    badgeKey: "donate.carousel2Badge",
+    defaultBadge: "Resource Distribution",
   },
   {
     url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80",
@@ -42,7 +44,8 @@ const carouselSlides = [
     defaultTitle: "Bridging the Opportunity Gap for Every Aspiring Village Learner",
     subtitleKey: "donate.carousel3Subtitle",
     defaultSubtitle: "Ensuring no child drops out of school due to financial hardship or lack of guidance.",
-    badge: "Equal Opportunity",
+    badgeKey: "donate.carousel3Badge",
+    defaultBadge: "Equal Opportunity",
   },
   {
     url: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1600&q=80",
@@ -50,41 +53,51 @@ const carouselSlides = [
     defaultTitle: "Sponsoring Exam Fees & Higher Education Coaching",
     subtitleKey: "donate.carousel4Subtitle",
     defaultSubtitle: "Funding JEE, NEET, and Board Examination fees for meritorious village youth.",
-    badge: "Scholarships & Exam Grants",
+    badgeKey: "donate.carousel4Badge",
+    defaultBadge: "Scholarships & Exam Grants",
   },
   {
-    url: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1600&q=80",
+    url: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1600&q=80",
     titleKey: "donate.carousel5Title",
     defaultTitle: "Building Solar-Powered Digital Learning Hubs in Villages",
     subtitleKey: "donate.carousel5Subtitle",
     defaultSubtitle: "Equipping rural communities with tablets, power backups, and internet connectivity.",
-    badge: "Smart Village Centers",
+    badgeKey: "donate.carousel5Badge",
+    defaultBadge: "Smart Village Centers",
   },
 ];
 
 const donationTiers = [
   {
     amount: 500,
-    title: "Sponsor 2 Village Students",
-    impact: "Provides 1 month of free AI Coaching, digital notes & practice quizzes for 2 rural students.",
+    titleKey: "donate.tier1Title",
+    defaultTitle: "Sponsor 2 Village Students",
+    impactKey: "donate.tier1Impact",
+    defaultImpact: "Provides 1 month of free AI Coaching, digital notes & practice quizzes for 2 rural students.",
     popular: false,
   },
   {
     amount: 1500,
-    title: "Study Material Kit",
-    impact: "Sponsors printed NCERT books, question banks & stationery supplies for a Board aspirant.",
+    titleKey: "donate.tier2Title",
+    defaultTitle: "Study Material Kit",
+    impactKey: "donate.tier2Impact",
+    defaultImpact: "Sponsors printed NCERT books, question banks & stationery supplies for a Board aspirant.",
     popular: true,
   },
   {
     amount: 5000,
-    title: "Full Year Scholarship",
-    impact: "Covers complete 1-year coaching, test series & competitive exam registration fees.",
+    titleKey: "donate.tier3Title",
+    defaultTitle: "Full Year Scholarship",
+    impactKey: "donate.tier3Impact",
+    defaultImpact: "Covers complete 1-year coaching, test series & competitive exam registration fees.",
     popular: false,
   },
   {
     amount: 10000,
-    title: "Village Digital Hub",
-    impact: "Equips a remote village learning center with a tablet device & high-speed internet.",
+    titleKey: "donate.tier4Title",
+    defaultTitle: "Village Digital Hub",
+    impactKey: "donate.tier4Impact",
+    defaultImpact: "Equips a remote village learning center with a tablet device & high-speed internet.",
     popular: false,
   },
 ];
@@ -288,7 +301,7 @@ const Donate = () => {
             <div className="absolute bottom-6 left-16 right-16 sm:bottom-8 sm:left-24 lg:left-28 z-20 space-y-3 max-w-2xl">
               <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-extrabold uppercase tracking-wider backdrop-blur-md">
                 <Heart size={13} className="text-rose-400 fill-rose-400 animate-pulse" />
-                <span>{t("donate.badge", "FREE STUDENT EDUCATION & CHARITY INITIATIVE")}</span>
+                <span>{t(slide.badgeKey || "donate.badge", slide.defaultBadge || "FREE STUDENT EDUCATION & CHARITY INITIATIVE")}</span>
               </div>
 
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
@@ -304,7 +317,7 @@ const Donate = () => {
                   href="#donate-form"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm transition-transform hover:scale-105 shadow-xl shadow-emerald-500/30 uppercase tracking-wider cursor-pointer"
                 >
-                  <span>Donate Now</span>
+                  <span>{t("donate.donateNowBtn", "Donate Now")}</span>
                   <Heart size={15} className="fill-slate-950" />
                 </a>
               </div>
@@ -481,13 +494,13 @@ const Donate = () => {
                 >
                   {tier.popular && (
                     <span className="absolute -top-2.5 right-3 bg-amber-500 text-slate-950 text-[10px] font-black uppercase px-2 py-0.5 rounded-md shadow-sm">
-                      MOST POPULAR
+                      {t("donate.mostPopular", "MOST POPULAR")}
                     </span>
                   )}
                   <div className="text-xl font-black text-white">₹{tier.amount.toLocaleString()}</div>
-                  <div className="text-xs font-bold text-emerald-400 mt-0.5">{tier.title}</div>
+                  <div className="text-xs font-bold text-emerald-400 mt-0.5">{t(tier.titleKey, tier.defaultTitle)}</div>
                   <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-tight">
-                    {tier.impact}
+                    {t(tier.impactKey, tier.defaultImpact)}
                   </p>
                 </button>
               ))}
