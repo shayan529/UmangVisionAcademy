@@ -123,6 +123,76 @@ export const createNote = async (req, res) => {
   }
 };
 
+export const bulkCreateNotes = async (req, res) => {
+  try {
+    const { notes } = req.body;
+    if (!Array.isArray(notes) || notes.length === 0) {
+      return res.status(400).json({ message: "An array of notes is required" });
+    }
+
+    const createdNotes = [];
+    let defaultInstructorId = req.user._id;
+    let defaultInstructorName = req.user.name || req.user.email || "Instructor";
+
+    for (const item of notes) {
+      const { title, description, fileUrl, instructorId, courseId } = item;
+      if (!fileUrl || !title) continue;
+
+      if (courseId && mongoose.Types.ObjectId.isValid(courseId)) {
+        const course = await Course.findById(courseId).populate("instructor");
+        if (course) {
+          const newNote = {
+            title,
+            description: description || "",
+            fileUrl,
+            status: "pending",
+            createdAt: new Date(),
+          };
+          course.notes = course.notes || [];
+          course.notes.push(newNote);
+          await course.save();
+          const pushedNote = course.notes[course.notes.length - 1];
+          createdNotes.push(shapeCourseNote(pushedNote, course));
+          await invalidateNoteCaches(course._id);
+          continue;
+        }
+      }
+
+      let finalInstId = defaultInstructorId;
+      let finalInstName = defaultInstructorName;
+
+      if (instructorId && hasBaseRole(req.user, "admin")) {
+        const User = mongoose.model("User");
+        const assignedInstructor = await User.findById(instructorId);
+        if (assignedInstructor) {
+          finalInstId = assignedInstructor._id;
+          finalInstName = assignedInstructor.name || assignedInstructor.email || "Instructor";
+        }
+      }
+
+      const note = await Note.create({
+        title,
+        description: description || "",
+        fileUrl,
+        instructor: finalInstId,
+        instructorName: finalInstName,
+        status: "pending",
+      });
+      createdNotes.push(shapeStandaloneNote(note));
+    }
+
+    await invalidateNoteCaches();
+    return res.json({
+      success: true,
+      message: `Successfully uploaded ${createdNotes.length} notes`,
+      notes: createdNotes,
+    });
+  } catch (err) {
+    console.error("bulkCreateNotes", err);
+    res.status(500).json({ message: err.message || "Failed to bulk upload notes" });
+  }
+};
+
 export const listNotes = async (req, res) => {
   try {
     // ── Admin / moderator: full moderation queue across both note sources ──

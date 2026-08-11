@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createNote,
+  bulkCreateNotes,
   listNotes,
   approveNote,
   rejectNote,
@@ -25,6 +26,7 @@ const router = express.Router();
 // only covers the cookie case.
 router.get("/", optionalAuth, listNotes);
 router.post("/", protect, instructorOnly, createNote);
+router.post("/bulk", protect, instructorOnly, bulkCreateNotes);
 router.put(
   "/:id/approve",
   protect,

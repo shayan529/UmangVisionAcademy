@@ -5,7 +5,7 @@ import { fetchAllCoursesAdmin, fetchCourses } from "../../redux/slices/courseSli
 import api from "../../config/api";
 import { Toast } from "./InstructorUi";
 import { uploadFile } from "../../utils/uploadFile";
-import { FileText, Plus, X, Upload, Search, Check, XCircle } from "lucide-react";
+import { FileText, Plus, X, Upload, Search, Check, XCircle, FolderPlus, Trash2, Layers, Loader2 } from "lucide-react";
 
 const STATUS_STYLE = {
   approved: { bg: "bg-green-950", text: "text-green-400", border: "border-green-800", label: "Approved" },
@@ -66,6 +66,154 @@ export default function InstructorNotes({ showToast }) {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedFileName, setUploadedFileName] = useState("");
+
+  // ── Bulk Upload State ──
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkFiles, setBulkFiles] = useState([]);
+  const [bulkCourseId, setBulkCourseId] = useState("");
+  const [bulkInstructorId, setBulkInstructorId] = useState("");
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [isBulkDragging, setIsBulkDragging] = useState(false);
+  const bulkFileInputRef = useRef(null);
+
+  const cleanTitleFromFileName = (name) => {
+    if (!name) return "Study Note";
+    let base = name.replace(/\.[^/.]+$/, "");
+    base = base.replace(/[-_]+/g, " ").trim();
+    return base.charAt(0).toUpperCase() + base.slice(1);
+  };
+
+  const handleBulkFilesSelect = (selectedFiles) => {
+    if (!selectedFiles || selectedFiles.length === 0) return;
+    const fileList = Array.from(selectedFiles);
+    const validPdfFiles = fileList.filter(
+      (f) => f.name?.toLowerCase().endsWith(".pdf") || f.type === "application/pdf"
+    );
+
+    if (validPdfFiles.length === 0) {
+      showToast?.("Only PDF files are allowed for study notes.");
+      return;
+    }
+
+    if (validPdfFiles.length < fileList.length) {
+      showToast?.(`Selected ${validPdfFiles.length} valid PDF files (non-PDF files were skipped).`);
+    }
+
+    const newItems = validPdfFiles.map((file) => ({
+      id: Math.random().toString(36).substring(2, 9),
+      file,
+      title: cleanTitleFromFileName(file.name),
+      description: "",
+      fileUrl: "",
+      status: "idle",
+      progress: 0,
+      errorMsg: "",
+    }));
+
+    setBulkFiles((prev) => [...prev, ...newItems]);
+  };
+
+  const removeBulkFile = (id) => {
+    setBulkFiles((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const updateBulkFileField = (id, field, value) => {
+    setBulkFiles((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const closeBulkModal = () => {
+    if (bulkUploading) return;
+    setShowBulkModal(false);
+    setBulkFiles([]);
+    setBulkCourseId("");
+    setBulkInstructorId("");
+  };
+
+  const handleBulkSubmit = async () => {
+    if (bulkFiles.length === 0) {
+      showToast?.("Please add at least one PDF file to upload.");
+      return;
+    }
+
+    const missingTitle = bulkFiles.some((f) => !f.title.trim());
+    if (missingTitle) {
+      showToast?.("All notes must have a title.");
+      return;
+    }
+
+    try {
+      setBulkUploading(true);
+      const batchPayload = [];
+
+      for (let i = 0; i < bulkFiles.length; i++) {
+        const item = bulkFiles[i];
+        let url = item.fileUrl;
+
+        if (!url && item.file) {
+          setBulkFiles((prev) =>
+            prev.map((f, idx) => (idx === i ? { ...f, status: "uploading", progress: 0 } : f))
+          );
+          try {
+            const uploadRes = await uploadFile({
+              file: item.file,
+              folder: "/notes",
+              onUploadProgress: (pe) => {
+                const percent = Math.round((pe.loaded * 100) / pe.total);
+                setBulkFiles((prev) =>
+                  prev.map((f, idx) => (idx === i ? { ...f, progress: percent } : f))
+                );
+              },
+            });
+            url = uploadRes.url;
+            setBulkFiles((prev) =>
+              prev.map((f, idx) =>
+                idx === i ? { ...f, status: "ready", fileUrl: url, progress: 100 } : f
+              )
+            );
+          } catch (err) {
+            setBulkFiles((prev) =>
+              prev.map((f, idx) =>
+                idx === i ? { ...f, status: "error", errorMsg: "Upload failed" } : f
+              )
+            );
+            continue;
+          }
+        }
+
+        if (url) {
+          batchPayload.push({
+            title: item.title.trim(),
+            description: item.description.trim(),
+            fileUrl: url,
+            courseId: bulkCourseId || undefined,
+            instructorId: bulkInstructorId || undefined,
+          });
+        }
+      }
+
+      if (batchPayload.length === 0) {
+        showToast?.("No files were successfully uploaded.");
+        setBulkUploading(false);
+        return;
+      }
+
+      const { data } = await api.post("/notes/bulk", { notes: batchPayload });
+      if (data.success && data.notes) {
+        setNotes((prev) => [...data.notes, ...prev]);
+        showToast?.(`Successfully bulk uploaded ${data.notes.length} study notes!`);
+        closeBulkModal();
+      } else {
+        showToast?.("Failed to save bulk notes");
+      }
+    } catch (err) {
+      console.error("Bulk upload error:", err);
+      showToast?.(err.response?.data?.message || "Failed to bulk upload notes");
+    } finally {
+      setBulkUploading(false);
+    }
+  };
 
   useEffect(() => {
     fetchNotes();
@@ -261,8 +409,14 @@ export default function InstructorNotes({ showToast }) {
           </div>
 
           <button
+            onClick={() => setShowBulkModal(true)}
+            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-500 active:bg-emerald-700 cursor-pointer shadow-md"
+          >
+            <FolderPlus size={18} /> Bulk Upload
+          </button>
+          <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-500 active:bg-violet-700"
+            className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-500 active:bg-violet-700 cursor-pointer shadow-md"
           >
             <Plus size={18} /> Upload Note
           </button>
@@ -568,6 +722,252 @@ export default function InstructorNotes({ showToast }) {
                   className="flex-1 rounded-lg bg-violet-600 py-3 font-bold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {saving ? "Saving..." : "Upload"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Bulk Upload Modal ── */}
+      {showBulkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={closeBulkModal} />
+
+          <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl overflow-hidden z-10">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <FolderPlus size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-100">Bulk Upload Study Notes</h3>
+                  <p className="text-xs text-slate-400">Select multiple PDF files, edit note details, and upload in batch.</p>
+                </div>
+              </div>
+              <button
+                onClick={closeBulkModal}
+                disabled={bulkUploading}
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-6">
+              {/* Optional Global Course / Instructor Assignment */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+                    Assign All to Course (Optional)
+                  </label>
+                  <select
+                    value={bulkCourseId}
+                    onChange={(e) => setBulkCourseId(e.target.value)}
+                    disabled={bulkUploading}
+                    className="w-full rounded-xl border border-slate-800 bg-slate-900/80 p-3 text-xs text-slate-200 outline-none focus:border-emerald-500"
+                  >
+                    <option value="">Standalone Notes (No specific course)</option>
+                    {courses.map((c) => (
+                      <option key={c._id} value={c._id}>
+                        {c.title} ({c.category || "Class"})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {isAdmin && (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+                      Assigned Instructor (Admin)
+                    </label>
+                    <select
+                      value={bulkInstructorId}
+                      onChange={(e) => setBulkInstructorId(e.target.value)}
+                      disabled={bulkUploading}
+                      className="w-full rounded-xl border border-slate-800 bg-slate-900/80 p-3 text-xs text-slate-200 outline-none focus:border-emerald-500"
+                    >
+                      <option value="">Default (Me)</option>
+                      {instructors.map((inst) => (
+                        <option key={inst._id} value={inst._id}>
+                          {inst.name || inst.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* Multi-File Upload Dropzone */}
+              <input
+                ref={bulkFileInputRef}
+                type="file"
+                multiple
+                accept=".pdf,application/pdf"
+                onChange={(e) => {
+                  handleBulkFilesSelect(e.target.files);
+                  e.target.value = "";
+                }}
+                className="hidden"
+              />
+
+              <div
+                onClick={() => !bulkUploading && bulkFileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (!bulkUploading) setIsBulkDragging(true);
+                }}
+                onDragLeave={() => setIsBulkDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsBulkDragging(false);
+                  if (!bulkUploading) handleBulkFilesSelect(e.dataTransfer.files);
+                }}
+                className={`rounded-2xl border-2 border-dashed p-8 text-center transition-colors cursor-pointer ${
+                  isBulkDragging
+                    ? "border-emerald-500 bg-emerald-500/10"
+                    : "border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:bg-slate-900/80"
+                }`}
+              >
+                <Upload size={28} className="mx-auto mb-3 text-emerald-400" />
+                <div className="text-sm font-bold text-slate-200">
+                  Click to select multiple PDF files, or drag & drop here
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  Select 2, 5, 10+ PDF files to batch upload simultaneously
+                </div>
+              </div>
+
+              {/* Staged File List */}
+              {bulkFiles.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <span>Selected Files ({bulkFiles.length})</span>
+                    {!bulkUploading && (
+                      <button
+                        onClick={() => setBulkFiles([])}
+                        className="text-red-400 hover:underline cursor-pointer"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
+                    {bulkFiles.map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 space-y-3 relative group"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-950/60 text-red-400 border border-red-900/50 shrink-0 font-extrabold text-xs">
+                              PDF
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <input
+                                type="text"
+                                value={item.title}
+                                onChange={(e) => updateBulkFileField(item.id, "title", e.target.value)}
+                                disabled={bulkUploading}
+                                placeholder="Note Title (Required)"
+                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white font-bold outline-none focus:border-emerald-500"
+                              />
+                              <span className="text-[10px] text-slate-500 block truncate mt-1">
+                                File: {item.file?.name} ({(item.file?.size / (1024 * 1024)).toFixed(2)} MB)
+                              </span>
+                            </div>
+                          </div>
+
+                          {!bulkUploading && (
+                            <button
+                              onClick={() => removeBulkFile(item.id)}
+                              className="text-slate-500 hover:text-red-400 p-1 rounded-lg transition-colors cursor-pointer shrink-0"
+                              title="Remove file"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Optional Description */}
+                        <div>
+                          <input
+                            type="text"
+                            value={item.description}
+                            onChange={(e) => updateBulkFileField(item.id, "description", e.target.value)}
+                            disabled={bulkUploading}
+                            placeholder="Optional description (e.g. Chapter 1 revision summary)"
+                            className="w-full bg-slate-950/60 border border-slate-800/80 rounded-lg px-3 py-1.5 text-[11px] text-slate-300 outline-none focus:border-emerald-500"
+                          />
+                        </div>
+
+                        {/* Upload Progress Bar */}
+                        {item.status === "uploading" && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-[10px] font-semibold text-emerald-400">
+                              <span>Uploading file…</span>
+                              <span>{item.progress}%</span>
+                            </div>
+                            <div className="h-1.5 w-full rounded-full bg-slate-800">
+                              <div
+                                className="h-full rounded-full bg-emerald-400 transition-all duration-200"
+                                style={{ width: `${item.progress}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {item.status === "ready" && (
+                          <div className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                            <Check size={12} /> Ready for batch save
+                          </div>
+                        )}
+
+                        {item.status === "error" && (
+                          <div className="text-[10px] font-bold text-red-400 flex items-center gap-1">
+                            <XCircle size={12} /> {item.errorMsg || "Upload error"}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between border-t border-slate-800 p-4 bg-slate-950">
+              <span className="text-xs text-slate-400">
+                {bulkFiles.length} file{bulkFiles.length !== 1 ? "s" : ""} selected
+              </span>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={closeBulkModal}
+                  disabled={bulkUploading}
+                  className="rounded-xl border border-slate-800 bg-transparent px-5 py-2.5 text-xs font-bold text-slate-300 hover:bg-slate-900 transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkSubmit}
+                  disabled={bulkUploading || bulkFiles.length === 0}
+                  className="rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2 shadow-lg shadow-emerald-600/20"
+                >
+                  {bulkUploading ? (
+                    <>
+                      <Loader2 size={15} className="animate-spin" />
+                      <span>Batch Uploading…</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={15} />
+                      <span>Upload All ({bulkFiles.length} Notes)</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
