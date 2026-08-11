@@ -228,7 +228,6 @@ const UdemyPurchaseCard = ({
   setWithInstructorAssistance,
 }) => {
   const { t } = useTranslation();
-  const [purchaseType, setPurchaseType] = useState("subscription"); // 'subscription' | 'individual'
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
 
@@ -237,13 +236,17 @@ const UdemyPurchaseCard = ({
       ? course.price
       : parseFloat(String(course?.price || "0").replace(/[^\d.]/g, ""));
   const originalPrice = rawPrice > 0 ? Math.round(rawPrice * 2.5) : null;
-  const discountPct = originalPrice ? Math.round(((originalPrice - rawPrice) / originalPrice) * 100) : 60;
+  const discountPct = originalPrice
+    ? Math.round(((originalPrice - rawPrice) / originalPrice) * 100)
+    : 60;
 
   const handleApplyCoupon = (e) => {
     e.preventDefault();
     if (!couponCode.trim()) return;
     setCouponApplied(true);
-    toast.success(`Coupon "${couponCode.toUpperCase()}" applied successfully!`);
+    toast.success(
+      t("courseDetails.couponSuccess", `Coupon "${couponCode.toUpperCase()}" applied!`),
+    );
   };
 
   const handleShare = () => {
@@ -256,7 +259,7 @@ const UdemyPurchaseCard = ({
         .catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
-      toast.success("Course link copied to clipboard!");
+      toast.success(t("courseDetails.linkCopied", "Course link copied to clipboard!"));
     }
   };
 
@@ -274,7 +277,7 @@ const UdemyPurchaseCard = ({
           />
           <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
             <span className="text-xs font-bold bg-black/60 px-3 py-1.5 rounded-lg text-white backdrop-blur-sm">
-              Course Overview
+              {t("courseDetails.courseOverview", "Course Overview")}
             </span>
           </div>
         </div>
@@ -290,210 +293,118 @@ const UdemyPurchaseCard = ({
           <div className="flex flex-col gap-3">
             <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2">
               <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-              <span>You have full access to this course!</span>
+              <span>
+                {t(
+                  "courseDetails.fullAccess",
+                  "You have full access to this course!",
+                )}
+              </span>
             </div>
             <button
               onClick={() => navigate(`/courses/${course?._id}`)}
               className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
             >
-              Go to Course Curriculum →
+              {t(
+                "courseDetails.goToCurriculum",
+                "Go to Course Curriculum →",
+              )}
             </button>
           </div>
         ) : (
           <>
-            {/* Udemy Option 1: Subscription Option */}
-            <div
-              onClick={() => setPurchaseType("subscription")}
-              className={`p-3 rounded-xl border transition-all cursor-pointer ${
-                purchaseType === "subscription"
-                  ? "bg-indigo-950/40 border-indigo-500/80 shadow-md ring-1 ring-indigo-500/40"
-                  : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
-              }`}
-            >
-              <div className="flex items-start gap-2.5">
-                <input
-                  type="radio"
-                  name="purchaseType"
-                  checked={purchaseType === "subscription"}
-                  onChange={() => setPurchaseType("subscription")}
-                  className="mt-0.5 text-indigo-600 accent-indigo-500 cursor-pointer shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
-                    <span className="text-xs font-bold text-slate-200">
-                      Subscribe and save
-                    </span>
-                    <span className="text-xs font-bold text-emerald-400 shrink-0">
-                      From ₹350.00 <span className="text-[10px] text-slate-500 font-normal">/mo</span>
-                    </span>
-                  </div>
-
-                  {purchaseType === "subscription" && (
-                    <div className="mt-2.5 pt-2.5 border-t border-indigo-900/40 flex flex-col gap-2">
-                      <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[10.5px] text-indigo-200 leading-snug">
-                        💡 Our subscribers don't pay per course. In their first month, students take 5+ courses and save ₹4,000+.
-                      </div>
-                      <div className="flex flex-col gap-1.5 text-xs text-slate-300 mt-1">
-                        <div className="flex items-center gap-2">
-                          <Check size={13} className="text-emerald-400 shrink-0" />
-                          <span>Get this course + all platform courses</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Check size={13} className="text-emerald-400 shrink-0" />
-                          <span>24/7 AI Tutor & Doubt Assistance</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Check size={13} className="text-emerald-400 shrink-0" />
-                          <span>Full Study Notes & Question Bank</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Check size={13} className="text-emerald-400 shrink-0" />
-                          <span>Cancel anytime without hassle</span>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate("/student-dashboard/plans");
-                        }}
-                        className="w-full mt-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all cursor-pointer active:scale-98"
-                      >
-                        Start Subscription
-                      </button>
-                    </div>
-                  )}
-                </div>
+            {/* Price Row with Discount */}
+            <div className="flex items-baseline justify-between gap-2 flex-wrap pt-1">
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  {withInstructorAssistance
+                    ? "₹500"
+                    : course?.price
+                      ? `₹${course.price}`
+                      : t("courses.free", "Free")}
+                </span>
+                {originalPrice && !withInstructorAssistance && (
+                  <span className="text-xs sm:text-sm text-slate-500 line-through font-medium">
+                    ₹{originalPrice.toLocaleString()}
+                  </span>
+                )}
+                {originalPrice && !withInstructorAssistance && (
+                  <span className="text-xs font-extrabold text-rose-400 bg-rose-500/10 border border-rose-500/30 px-1.5 py-0.5 rounded">
+                    {discountPct}% off
+                  </span>
+                )}
               </div>
             </div>
 
-            {/* Udemy Option 2: Buy Individual Course */}
+            {/* 1-on-1 Faculty Assistance Option */}
             <div
-              onClick={() => setPurchaseType("individual")}
-              className={`p-3 rounded-xl border transition-all cursor-pointer ${
-                purchaseType === "individual"
-                  ? "bg-indigo-950/40 border-indigo-500/80 shadow-md ring-1 ring-indigo-500/40"
-                  : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
+              onClick={() => setWithInstructorAssistance((prev) => !prev)}
+              className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all ${
+                withInstructorAssistance
+                  ? "bg-purple-950/40 border-purple-500/60 shadow-md ring-1 ring-purple-500/40"
+                  : "bg-slate-900 border-slate-800 hover:border-slate-700"
               }`}
             >
-              <div className="flex items-start gap-2.5">
-                <input
-                  type="radio"
-                  name="purchaseType"
-                  checked={purchaseType === "individual"}
-                  onChange={() => setPurchaseType("individual")}
-                  className="mt-0.5 text-indigo-600 accent-indigo-500 cursor-pointer shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
-                    <span className="text-xs font-bold text-slate-200">
-                      Buy individual course
-                    </span>
-                    <div className="flex items-baseline gap-1.5 shrink-0">
-                      <span className="text-sm font-black text-white">
-                        {course?.price ? `₹${course.price}` : "Free"}
-                      </span>
-                      {originalPrice && (
-                        <span className="text-[10px] text-slate-500 line-through">
-                          ₹{originalPrice}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {purchaseType === "individual" && (
-                    <div className="mt-2.5 pt-2.5 border-t border-indigo-900/40 flex flex-col gap-2.5">
-                      <div className="flex items-baseline gap-2 flex-wrap">
-                        <span className="text-2xl font-black text-white tracking-tight">
-                          {withInstructorAssistance
-                            ? "₹500"
-                            : course?.price
-                              ? `₹${course.price}`
-                              : "Free"}
-                        </span>
-                        {originalPrice && !withInstructorAssistance && (
-                          <span className="text-xs text-slate-500 line-through">
-                            ₹{originalPrice}
-                          </span>
-                        )}
-                        {originalPrice && !withInstructorAssistance && (
-                          <span className="text-xs font-bold text-rose-400">
-                            {discountPct}% off
-                          </span>
-                        )}
-                      </div>
-
-                      {/* 1-on-1 Faculty Assistance Option */}
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setWithInstructorAssistance((prev) => !prev);
-                        }}
-                        className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all ${
-                          withInstructorAssistance
-                            ? "bg-purple-950/40 border-purple-500/60"
-                            : "bg-slate-900 border-slate-800 hover:border-slate-700"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <div
-                            className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                              withInstructorAssistance
-                                ? "bg-purple-600 text-white"
-                                : "border border-slate-600"
-                            }`}
-                          >
-                            {withInstructorAssistance && "✓"}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[11px] font-bold text-white leading-tight truncate">
-                              ✨ 1-on-1 Faculty Chat Support
-                            </p>
-                            <p className="text-[9.5px] text-slate-400 leading-tight truncate mt-0.5">
-                              Direct doubt clearance & meet link requests
-                            </p>
-                          </div>
-                        </div>
-                        <span className="text-xs font-black text-purple-300 shrink-0 ml-1">
-                          ₹500
-                        </span>
-                      </div>
-
-                      <button
-                        onClick={onEnroll}
-                        disabled={enrollingFree}
-                        className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer active:scale-98"
-                      >
-                        {enrollingFree
-                          ? "Enrolling..."
-                          : isFreeWithPlan
-                            ? "Enroll for Free (Academy Plan)"
-                            : isInCart || addedToCart
-                              ? "Added to Cart ✓"
-                              : course?.price > 0
-                                ? "Buy This Course Now"
-                                : "Enroll for Free"}
-                      </button>
-
-                      {(isInCart || addedToCart) && (
-                        <button
-                          onClick={() => navigate("/cart")}
-                          className="w-full py-2.5 px-4 rounded-xl border border-slate-700 hover:border-slate-500 bg-slate-800/80 text-slate-200 text-xs font-bold transition cursor-pointer"
-                        >
-                          Go to Cart →
-                        </button>
-                      )}
-                    </div>
-                  )}
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div
+                  className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                    withInstructorAssistance
+                      ? "bg-purple-600 text-white"
+                      : "border border-slate-600"
+                  }`}
+                >
+                  {withInstructorAssistance && "✓"}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-bold text-white leading-tight truncate">
+                    ✨ {t("courseDetails.facultySupport", "1-on-1 Faculty Chat Support")}
+                  </p>
+                  <p className="text-[9.5px] text-slate-400 leading-tight truncate mt-0.5">
+                    {t(
+                      "courseDetails.facultySupportDesc",
+                      "Direct doubt clearance & meet link requests",
+                    )}
+                  </p>
                 </div>
               </div>
+              <span className="text-xs font-black text-purple-300 shrink-0 ml-1">
+                ₹500
+              </span>
             </div>
+
+            {/* Buy / Enroll Button */}
+            <button
+              onClick={onEnroll}
+              disabled={enrollingFree}
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer active:scale-98"
+            >
+              {enrollingFree
+                ? t("courseDetails.enrolling", "Enrolling...")
+                : isFreeWithPlan
+                  ? t(
+                      "courseDetails.enrollFreePlan",
+                      "Enroll for Free (Academy Plan)",
+                    )
+                  : isInCart || addedToCart
+                    ? t("courseDetails.addedToCart", "Added to Cart ✓")
+                    : course?.price > 0
+                      ? t("courseDetails.buyNow", "Buy This Course Now")
+                      : t("courseDetails.enrollFree", "Enroll for Free")}
+            </button>
+
+            {(isInCart || addedToCart) && (
+              <button
+                onClick={() => navigate("/cart")}
+                className="w-full py-2 px-4 rounded-xl border border-slate-700 hover:border-slate-500 bg-slate-800/80 text-slate-200 text-xs font-bold transition cursor-pointer"
+              >
+                {t("courseDetails.goToCart", "Go to Cart →")}
+              </button>
+            )}
 
             {/* Coupon Code Section */}
             <form onSubmit={handleApplyCoupon} className="flex gap-2 mt-1">
               <input
                 type="text"
-                placeholder="Enter Coupon"
+                placeholder={t("courseDetails.enterCoupon", "ENTER COUPON")}
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value)}
                 className="flex-1 px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 uppercase min-w-0"
@@ -503,24 +414,41 @@ const UdemyPurchaseCard = ({
                 disabled={couponApplied}
                 className="px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-slate-700 transition cursor-pointer shrink-0"
               >
-                {couponApplied ? "Applied!" : "Apply"}
+                {couponApplied
+                  ? t("courseDetails.applied", "Applied!")
+                  : t("courseDetails.apply", "Apply")}
               </button>
             </form>
 
-            {/* Guarantee & Meta */}
+            {/* Features list */}
             <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-1.5 text-xs text-slate-400">
               <div className="flex flex-col gap-1.5 mt-0.5">
                 <div className="flex items-center gap-2">
                   <Tv size={13} className="text-slate-500 shrink-0" />
-                  <span>Access on mobile, tablet & PC</span>
+                  <span>
+                    {t(
+                      "courseDetails.accessMobile",
+                      "Access on mobile, tablet & PC",
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Award size={13} className="text-slate-500 shrink-0" />
-                  <span>Certificate of completion included</span>
+                  <span>
+                    {t(
+                      "courseDetails.certificateIncluded",
+                      "Certificate of completion included",
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <ShieldCheck size={13} className="text-slate-500 shrink-0" />
-                  <span>Full lifetime access to all future updates</span>
+                  <span>
+                    {t(
+                      "courseDetails.lifetimeAccess",
+                      "Full lifetime access to all future updates",
+                    )}
+                  </span>
                 </div>
               </div>
             </div>
@@ -532,14 +460,18 @@ const UdemyPurchaseCard = ({
                 className="flex items-center gap-1.5 hover:text-indigo-300 transition cursor-pointer"
               >
                 <Share2 size={13} />
-                <span>Share</span>
+                <span>{t("courseDetails.share", "Share")}</span>
               </button>
               <button
-                onClick={() => toast("Gift course feature coming soon!")}
+                onClick={() =>
+                  toast(
+                    t("courseDetails.giftSoon", "Gift course feature coming soon!"),
+                  )
+                }
                 className="flex items-center gap-1.5 hover:text-indigo-300 transition cursor-pointer"
               >
                 <Gift size={13} />
-                <span>Gift this course</span>
+                <span>{t("courseDetails.giftCourse", "Gift this course")}</span>
               </button>
             </div>
           </>
@@ -717,7 +649,9 @@ export default function CourseDemo() {
     return (
       <div className="min-h-screen bg-[#0b1120] text-slate-100 font-sans p-6 flex flex-col items-center justify-center">
         <div className="w-12 h-12 rounded-full border-3 border-indigo-500/30 border-t-indigo-500 animate-spin mb-4" />
-        <p className="text-sm font-semibold text-slate-400">Loading course details...</p>
+        <p className="text-sm font-semibold text-slate-400">
+          {t("courseDetails.loading", "Loading course details...")}
+        </p>
       </div>
     );
   }
@@ -731,7 +665,7 @@ export default function CourseDemo() {
           onClick={() => navigate("/courses")}
           className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm cursor-pointer"
         >
-          Browse All Courses
+          {t("courses.all", "Browse All Courses")}
         </button>
       </div>
     );
@@ -752,20 +686,20 @@ export default function CourseDemo() {
           {/* Breadcrumbs */}
           <div className="flex items-center gap-2 text-xs font-semibold text-indigo-400 mb-4 flex-wrap">
             <Link to="/courses" className="hover:underline">
-              Courses
+              {t("courseDetails.courses", "Courses")}
             </Link>
             <span className="text-slate-600">›</span>
-            <span>{course?.category || "Class"}</span>
+            <span>{tText(course?.category || "Class")}</span>
             {course?.board && (
               <>
                 <span className="text-slate-600">›</span>
-                <span className="text-slate-400">{course.board}</span>
+                <span className="text-slate-400">{tText(course.board)}</span>
               </>
             )}
             {course?.subject && (
               <>
                 <span className="text-slate-600">›</span>
-                <span className="text-slate-400">{course.subject}</span>
+                <span className="text-slate-400">{tText(course.subject)}</span>
               </>
             )}
           </div>
@@ -774,19 +708,21 @@ export default function CourseDemo() {
             {/* Left Header Info (65% width on desktop) */}
             <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-3.5">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight tracking-tight">
-                {course?.title || "Comprehensive Course Masterclass"}
+                {tText(course?.title || "Comprehensive Course Masterclass")}
               </h1>
 
               <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-                {course?.summary ||
-                  `Master all key topics and score top grades with comprehensive video lessons, study notes, and direct educator guidance.`}
+                {tText(
+                  course?.summary ||
+                    `Master all key topics and score top grades with comprehensive video lessons, study notes, and direct educator guidance.`,
+                )}
               </p>
 
               {/* Udemy Badges Row */}
               <div className="flex items-center gap-2.5 flex-wrap text-xs pt-1">
                 {(course?.isBestseller || (studentsCount >= 5 && rawRating >= 4.0)) && (
                   <span className="px-2.5 py-1 rounded-md bg-amber-400 text-slate-950 font-black text-[11px] uppercase tracking-wider shadow-sm">
-                    Bestseller
+                    {t("courseDetails.bestseller", "Bestseller")}
                   </span>
                 )}
 
@@ -808,26 +744,30 @@ export default function CourseDemo() {
                     </div>
                     <span className="text-indigo-400 hover:underline cursor-pointer ml-1">
                       ({reviewsCount.toLocaleString()}{" "}
-                      {reviewsCount === 1 ? "rating" : "ratings"})
+                      {reviewsCount === 1
+                        ? t("courseDetails.rating", "rating")
+                        : t("courseDetails.ratings", "ratings")})
                     </span>
                   </div>
                 ) : (
                   <span className="text-slate-400 font-medium">
-                    (No ratings yet)
+                    ({t("courseDetails.noRatingsYet", "No ratings yet")})
                   </span>
                 )}
 
                 {studentsCount > 0 && (
                   <span className="text-slate-400 font-medium">
                     {studentsCount.toLocaleString()}{" "}
-                    {studentsCount === 1 ? "student" : "students"}
+                    {studentsCount === 1
+                      ? t("courseDetails.student", "student")
+                      : t("courseDetails.students", "students")}
                   </span>
                 )}
               </div>
 
               {/* Created by Instructor */}
               <div className="text-xs text-slate-300 flex items-center gap-1.5">
-                <span>Created by</span>
+                <span>{t("courseDetails.createdBy", "Created by")}</span>
                 {course?.instructor?._id || course?.instructorId ? (
                   <Link
                     to={`/instructors/${course?.instructor?._id || course?.instructorId}`}
@@ -846,7 +786,7 @@ export default function CourseDemo() {
               <div className="flex items-center gap-4 flex-wrap text-xs text-slate-400 pt-1">
                 <div className="flex items-center gap-1.5">
                   <Calendar size={14} className="text-slate-500" />
-                  <span>Last updated 2026</span>
+                  <span>{t("courseDetails.lastUpdated", "Last updated")} 2026</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Globe size={14} className="text-slate-500" />
@@ -856,7 +796,11 @@ export default function CourseDemo() {
                   <div className="flex items-center gap-1.5">
                     <FileText size={14} className="text-emerald-400" />
                     <span className="text-emerald-300 font-semibold">
-                      {course.notes.length} Study Notes included
+                      {course.notes.length}{" "}
+                      {t(
+                        "courseDetails.studyNotesIncluded",
+                        "Study Notes included",
+                      )}
                     </span>
                   </div>
                 )}
@@ -869,15 +813,20 @@ export default function CourseDemo() {
                     <Sparkles size={16} />
                   </div>
                   <div className="text-xs text-slate-200">
-                    <span className="font-bold text-white">Academy Personal Plan:</span>{" "}
-                    Access all top-rated courses with 1 simple monthly subscription.
+                    <span className="font-bold text-white">
+                      {t("courseDetails.academyPlanTitle", "Academy Personal Plan:")}
+                    </span>{" "}
+                    {t(
+                      "courseDetails.academyPlanDesc",
+                      "Access all top-rated courses with 1 simple monthly subscription.",
+                    )}
                   </div>
                 </div>
                 <Link
-                  to="/student-dashboard/plans"
-                  className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shrink-0 transition"
+                  to="/plans"
+                  className="px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shrink-0 transition"
                 >
-                  View Plans
+                  {t("courseDetails.viewPlans", "View Plans")}
                 </Link>
               </div>
             </div>
@@ -898,13 +847,13 @@ export default function CourseDemo() {
             {/* ── 2.1 "What you'll learn" Box (Udemy Exact Style) ── */}
             <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
               <h2 className="text-lg sm:text-xl font-bold text-white mb-4">
-                What you'll learn
+                {t("courseDetails.whatYouWillLearn", "What you'll learn")}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-slate-300">
                 {(aiDetails.whatYouWillLearn || []).map((item, idx) => (
                   <div key={idx} className="flex items-start gap-2.5 leading-snug">
                     <Check size={16} className="text-emerald-400 shrink-0 mt-0.5" />
-                    <span>{item}</span>
+                    <span>{tText(item)}</span>
                   </div>
                 ))}
               </div>
@@ -915,10 +864,13 @@ export default function CourseDemo() {
               <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                 <div>
                   <h2 className="text-lg sm:text-xl font-bold text-white">
-                    Course content
+                    {t("courseDetails.courseContent", "Course content")}
                   </h2>
                   <p className="text-xs text-slate-400 mt-1">
-                    {curriculumSections.length} sections • {totalLessons} lectures • {totalDuration} total length
+                    {curriculumSections.length}{" "}
+                    {t("courseDetails.sections", "sections")} • {totalLessons}{" "}
+                    {t("courseDetails.lectures", "lectures")} • {totalDuration}{" "}
+                    {t("courseDetails.totalLength", "total length")}
                   </p>
                 </div>
                 <button
@@ -926,8 +878,8 @@ export default function CourseDemo() {
                   className="text-xs font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer"
                 >
                   {curriculumSections.every((s) => expandedSections[s.id])
-                    ? "Collapse all sections"
-                    : "Expand all sections"}
+                    ? t("courseDetails.collapseAll", "Collapse all sections")
+                    : t("courseDetails.expandAll", "Expand all sections")}
                 </button>
               </div>
 
@@ -957,7 +909,8 @@ export default function CourseDemo() {
                           </span>
                         </div>
                         <span className="text-xs text-slate-400 font-medium shrink-0">
-                          {section.lessons.length} lectures
+                          {section.lessons.length}{" "}
+                          {t("courseDetails.lectures", "lectures")}
                         </span>
                       </button>
 
@@ -982,7 +935,7 @@ export default function CourseDemo() {
                               <div className="flex items-center gap-3 shrink-0">
                                 {canAccess ? (
                                   <span className="text-emerald-400 font-semibold text-[11px]">
-                                    Unlocked
+                                    {t("courseDetails.unlocked", "Unlocked")}
                                   </span>
                                 ) : (
                                   <Lock size={12} className="text-slate-500" />
@@ -1009,7 +962,13 @@ export default function CourseDemo() {
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
                     <FileText size={18} className="text-indigo-400" />
-                    <span>Study Notes & Revision Materials ({course.notes.length})</span>
+                    <span>
+                      {t(
+                        "courseDetails.studyNotesTitle",
+                        "Study Notes & Revision Materials",
+                      )}{" "}
+                      ({course.notes.length})
+                    </span>
                   </h2>
                 </div>
                 <div className="flex flex-col gap-2 mt-3">
@@ -1024,7 +983,7 @@ export default function CourseDemo() {
                         </p>
                         {note.description && (
                           <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                            {note.description}
+                            {tText(note.description)}
                           </p>
                         )}
                       </div>
@@ -1034,12 +993,12 @@ export default function CourseDemo() {
                           onClick={() => setActiveModalNote(note)}
                           className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shrink-0 transition cursor-pointer"
                         >
-                          View Note
+                          {t("courseDetails.viewNote", "View Note")}
                         </button>
                       ) : (
                         <span className="text-xs text-slate-500 shrink-0 flex items-center gap-1">
                           <Lock size={12} />
-                          <span>Locked</span>
+                          <span>{t("courseDetails.locked", "Locked")}</span>
                         </span>
                       )}
                     </div>
@@ -1051,11 +1010,11 @@ export default function CourseDemo() {
             {/* ── 2.4 Requirements (Udemy Exact Style) ── */}
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-white mb-3">
-                Requirements
+                {t("courseDetails.requirements", "Requirements")}
               </h2>
               <ul className="list-disc list-inside flex flex-col gap-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
                 {(aiDetails.requirements || []).map((req, idx) => (
-                  <li key={idx}>{req}</li>
+                  <li key={idx}>{tText(req)}</li>
                 ))}
               </ul>
             </div>
@@ -1063,14 +1022,14 @@ export default function CourseDemo() {
             {/* ── 2.5 Description (With Show More Toggle) ── */}
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-white mb-3">
-                Description
+                {t("courseDetails.description", "Description")}
               </h2>
               <div
                 className={`text-xs sm:text-sm text-slate-300 leading-relaxed whitespace-pre-line relative ${
                   !showFullDesc ? "max-h-48 overflow-hidden" : ""
                 }`}
               >
-                {aiDetails.description}
+                {tText(aiDetails.description)}
                 {!showFullDesc && (
                   <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#0b1120] to-transparent pointer-events-none" />
                 )}
@@ -1079,7 +1038,11 @@ export default function CourseDemo() {
                 onClick={() => setShowFullDesc(!showFullDesc)}
                 className="mt-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
               >
-                <span>{showFullDesc ? "Show less" : "Show more"}</span>
+                <span>
+                  {showFullDesc
+                    ? t("courseDetails.showLess", "Show less")
+                    : t("courseDetails.showMore", "Show more")}
+                </span>
                 {showFullDesc ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </button>
             </div>
@@ -1087,7 +1050,7 @@ export default function CourseDemo() {
             {/* ── 2.6 Instructor Section (Udemy Exact Style) ── */}
             <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
               <h2 className="text-lg sm:text-xl font-bold text-white mb-4">
-                Instructor
+                {t("courseDetails.instructor", "Instructor")}
               </h2>
 
               <div className="flex flex-col gap-3">
@@ -1113,138 +1076,155 @@ export default function CourseDemo() {
                     )}
                   </div>
 
-                <div className="flex flex-col gap-1 text-xs">
-                  {course?.instructor?.avgRating ? (
-                    <div className="flex items-center gap-1.5 text-slate-300">
-                      <Star size={13} className="fill-amber-400 text-amber-400" />
-                      <span>
-                        {Number(course.instructor.avgRating).toFixed(1)} Instructor Rating
-                      </span>
-                    </div>
-                  ) : null}
-                  {course?.instructor?.ratingCount ? (
-                    <div className="flex items-center gap-1.5 text-slate-300">
-                      <MessageSquare size={13} className="text-slate-400" />
-                      <span>
-                        {course.instructor.ratingCount.toLocaleString()} Reviews
-                      </span>
-                    </div>
-                  ) : null}
-                  {studentsCount > 0 ? (
-                    <div className="flex items-center gap-1.5 text-slate-300">
-                      <Users size={13} className="text-slate-400" />
-                      <span>{studentsCount.toLocaleString()} Students</span>
-                    </div>
-                  ) : null}
-                  {(course?.instructor?.coursesCount || course?.instructor?.courses?.length) ? (
-                    <div className="flex items-center gap-1.5 text-slate-300">
-                      <GraduationCap size={13} className="text-slate-400" />
-                      <span>
-                        {course.instructor.coursesCount || course.instructor.courses.length} Courses
-                      </span>
-                    </div>
-                  ) : null}
+                  <div className="flex flex-col gap-1 text-xs">
+                    {course?.instructor?.avgRating ? (
+                      <div className="flex items-center gap-1.5 text-slate-300">
+                        <Star size={13} className="fill-amber-400 text-amber-400" />
+                        <span>
+                          {Number(course.instructor.avgRating).toFixed(1)}{" "}
+                          {t("courseDetails.instructorRating", "Instructor Rating")}
+                        </span>
+                      </div>
+                    ) : null}
+                    {course?.instructor?.ratingCount ? (
+                      <div className="flex items-center gap-1.5 text-slate-300">
+                        <MessageSquare size={13} className="text-slate-400" />
+                        <span>
+                          {course.instructor.ratingCount.toLocaleString()}{" "}
+                          {t("courseDetails.reviews", "Reviews")}
+                        </span>
+                      </div>
+                    ) : null}
+                    {studentsCount > 0 ? (
+                      <div className="flex items-center gap-1.5 text-slate-300">
+                        <Users size={13} className="text-slate-400" />
+                        <span>
+                          {studentsCount.toLocaleString()}{" "}
+                          {t("courseDetails.students", "Students")}
+                        </span>
+                      </div>
+                    ) : null}
+                    {course?.instructor?.coursesCount ||
+                    course?.instructor?.courses?.length ? (
+                      <div className="flex items-center gap-1.5 text-slate-300">
+                        <GraduationCap size={13} className="text-slate-400" />
+                        <span>
+                          {course.instructor.coursesCount ||
+                            course.instructor.courses.length}{" "}
+                          {t("courseDetails.coursesCount", "Courses")}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
 
-              <div
-                className={`text-xs sm:text-sm text-slate-300 leading-relaxed mt-2 whitespace-pre-line relative ${
-                  !showFullBio ? "max-h-24 overflow-hidden" : ""
-                }`}
-              >
-                {aiDetails.instructorBio}
-                {!showFullBio && (
-                  <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none" />
-                )}
-              </div>
+                <div
+                  className={`text-xs sm:text-sm text-slate-300 leading-relaxed mt-2 whitespace-pre-line relative ${
+                    !showFullBio ? "max-h-24 overflow-hidden" : ""
+                  }`}
+                >
+                  {tText(aiDetails.instructorBio)}
+                  {!showFullBio && (
+                    <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none" />
+                  )}
+                </div>
 
-              <button
-                onClick={() => setShowFullBio(!showFullBio)}
-                className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 self-start cursor-pointer"
-              >
-                <span>{showFullBio ? "Show less" : "Show more"}</span>
-                {showFullBio ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              </button>
+                <button
+                  onClick={() => setShowFullBio(!showFullBio)}
+                  className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 self-start cursor-pointer"
+                >
+                  <span>
+                    {showFullBio
+                      ? t("courseDetails.showLess", "Show less")
+                      : t("courseDetails.showMore", "Show more")}
+                  </span>
+                  {showFullBio ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* ── 2.7 Student Feedback & Reviews (Only shown if real reviews exist) ── */}
-          {(() => {
-            const realReviews = (course?.ratings || []).filter(
-              (r) => r && (r.review || r.comment || r.rating > 0)
-            );
+            {/* ── 2.7 Student Feedback & Reviews (Only shown if real reviews exist) ── */}
+            {(() => {
+              const realReviews = (course?.ratings || []).filter(
+                (r) => r && (r.review || r.comment || r.rating > 0),
+              );
 
-            if (realReviews.length === 0) return null;
+              if (realReviews.length === 0) return null;
 
-            return (
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-white mb-4">
-                  ★ {ratingVal} course rating • {reviewsCount.toLocaleString()}{" "}
-                  {reviewsCount === 1 ? "rating" : "ratings"}
-                </h2>
+              return (
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-white mb-4">
+                    ★ {ratingVal}{" "}
+                    {t("courseDetails.courseRating", "course rating")} •{" "}
+                    {reviewsCount.toLocaleString()}{" "}
+                    {reviewsCount === 1
+                      ? t("courseDetails.rating", "rating")
+                      : t("courseDetails.ratings", "ratings")}
+                  </h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {realReviews.map((rev, idx) => {
-                    const studentName = rev.user?.name || rev.userName || "Student";
-                    const reviewText = rev.review || rev.comment || "";
-                    const revRating = Number(rev.rating || 5);
-                    const reviewDate = rev.createdAt
-                      ? new Date(rev.createdAt).toLocaleDateString()
-                      : "";
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {realReviews.map((rev, idx) => {
+                      const studentName =
+                        rev.user?.name || rev.userName || "Student";
+                      const reviewText = rev.review || rev.comment || "";
+                      const revRating = Number(rev.rating || 5);
+                      const reviewDate = rev.createdAt
+                        ? new Date(rev.createdAt).toLocaleDateString()
+                        : "";
 
-                    return (
-                      <div
-                        key={idx}
-                        className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-2"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          {rev.user?.avatarUrl ? (
-                            <img
-                              src={rev.user.avatarUrl}
-                              alt={studentName}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-slate-700 text-white font-bold text-xs flex items-center justify-center">
-                              {studentName.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <div>
-                            <p className="text-xs font-bold text-white">
-                              {studentName}
-                            </p>
-                            <div className="flex items-center gap-1 text-amber-400">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  size={10}
-                                  className={
-                                    i < Math.round(revRating)
-                                      ? "fill-amber-400 text-amber-400"
-                                      : "text-slate-600"
-                                  }
-                                />
-                              ))}
-                              {reviewDate && (
-                                <span className="text-[10px] text-slate-500 ml-1">
-                                  {reviewDate}
-                                </span>
-                              )}
+                      return (
+                        <div
+                          key={idx}
+                          className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-2"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            {rev.user?.avatarUrl ? (
+                              <img
+                                src={rev.user.avatarUrl}
+                                alt={studentName}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-slate-700 text-white font-bold text-xs flex items-center justify-center">
+                                {studentName.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-xs font-bold text-white">
+                                {studentName}
+                              </p>
+                              <div className="flex items-center gap-1 text-amber-400">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    size={10}
+                                    className={
+                                      i < Math.round(revRating)
+                                        ? "fill-amber-400 text-amber-400"
+                                        : "text-slate-600"
+                                    }
+                                  />
+                                ))}
+                                {reviewDate && (
+                                  <span className="text-[10px] text-slate-500 ml-1">
+                                    {reviewDate}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
+                          {reviewText && (
+                            <p className="text-xs text-slate-300 leading-relaxed">
+                              {tText(reviewText)}
+                            </p>
+                          )}
                         </div>
-                        {reviewText && (
-                          <p className="text-xs text-slate-300 leading-relaxed">
-                            {reviewText}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
-          })()}
+              );
+            })()}
           </div>
 
           {/* ── Right Desktop Sticky Purchase Sidebar ── */}
