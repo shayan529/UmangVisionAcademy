@@ -192,22 +192,6 @@ const Contact = () => {
               </div>
             </div>
 
-            {/* Card 3: Location & Academy HQ */}
-            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl shadow-xl">
-              <div className="flex items-center gap-3">
-                <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                  <MapPin size={22} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-base">Academy Head Office</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Gujarat, India</p>
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-slate-300 leading-relaxed">
-                Umang Vision Academy — Empowering students nationwide with AI-driven smart learning and certified mentorship.
-              </p>
-            </div>
-
             {/* Help & FAQ Quick Prompt */}
             <div className="rounded-3xl border border-indigo-500/20 bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-slate-900/60 p-5 backdrop-blur-xl flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
