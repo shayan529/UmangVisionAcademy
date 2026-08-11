@@ -958,14 +958,24 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
     [avatarPos]
   );
 
-  // Close on Escape
+  // Manage modal open state and body class
   useEffect(() => {
     if (!isOpen) return;
+    document.body.classList.add("note-viewer-open");
+    window.__isNoteViewerModalOpen = true;
+    window.dispatchEvent(new CustomEvent("note-viewer-modal-toggle", { detail: { open: true } }));
+
     const handleKey = (e) => {
       if (e.key === "Escape") onClose?.();
     };
     document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
+
+    return () => {
+      document.body.classList.remove("note-viewer-open");
+      window.__isNoteViewerModalOpen = false;
+      window.dispatchEvent(new CustomEvent("note-viewer-modal-toggle", { detail: { open: false } }));
+      document.removeEventListener("keydown", handleKey);
+    };
   }, [isOpen, onClose]);
 
   // Highlight-to-ask: works because the PDF text layer (and any plain DOM
@@ -1150,7 +1160,8 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/95 p-2 sm:p-4 md:p-6 motion-safe:animate-fadeIn"
+      data-note-modal="true"
+      className="note-viewer-modal fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/95 p-2 sm:p-4 md:p-6 motion-safe:animate-fadeIn"
       role="dialog"
       aria-modal="true"
       aria-label={note.title}

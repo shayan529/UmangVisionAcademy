@@ -14,7 +14,22 @@ import { fetchSubscription } from "../../redux/slices/billingSlice";
 import { fetchProfile, updateProfile } from "../../redux/slices/settingsSlice";
 import api from "../../config/api";
 import { useState } from "react";
-import { X } from "lucide-react";
+import {
+  X,
+  Menu,
+  ArrowRight,
+  ArrowUpRight,
+  BookOpen,
+  TrendingUp,
+  Trophy,
+  FileText,
+  BookMarked,
+  GraduationCap,
+  KeyRound,
+  Zap,
+  UserRound,
+  Loader2,
+} from "lucide-react";
 import { setSelectedClass } from "../../redux/slices/authSlice";
 import CourseFloatingAI from "../course/CourseFloatingAI.jsx";
 
@@ -45,27 +60,19 @@ const formatActivityTime = (dateStr, t) => {
 };
 
 const activityMeta = {
-  quiz: { icon: "📝", color: "#818cf8", label: "Quiz" },
-  lesson: { icon: "📖", color: "#22d3ee", label: "Lesson" },
-  course: { icon: "🎓", color: "#f472b6", label: "Course" },
-  login: { icon: "🔑", color: "#34d399", label: "Login" },
-  default: { icon: "⚡", color: "#fb923c", label: "Activity" },
+  quiz: { icon: FileText, color: "#818cf8", label: "Quiz" },
+  lesson: { icon: BookOpen, color: "#22d3ee", label: "Lesson" },
+  course: { icon: GraduationCap, color: "#f472b6", label: "Course" },
+  login: { icon: KeyRound, color: "#34d399", label: "Login" },
+  default: { icon: Zap, color: "#fb923c", label: "Activity" },
 };
 
 const getActivityMeta = (type = "") =>
   activityMeta[type.toLowerCase()] ?? activityMeta.default;
 
-const Skeleton = ({ w = "100%", h = 18, radius = 8, style = {} }) => (
+const Skeleton = ({ className = "" }) => (
   <div
-    style={{
-      width: w,
-      height: h,
-      borderRadius: radius,
-      background: "linear-gradient(90deg,#1e293b 25%,#263348 50%,#1e293b 75%)",
-      backgroundSize: "200% 100%",
-      animation: "shimmer 1.4s infinite",
-      ...style,
-    }}
+    className={`rounded-lg bg-gradient-to-r from-slate-800 via-slate-700/60 to-slate-800 bg-[length:200%_100%] animate-shimmer ${className}`}
   />
 );
 
@@ -93,7 +100,12 @@ const isStudentDetailsEmpty = (profile) => {
 
 const SESSION_KEY = "student_details_prompted";
 
-// ── Student Details Modal (cream theme) ───────────────────────────────────────
+// ── Student Details Modal ──────────────────────────────────────────────────────
+const inputCls =
+  "w-full rounded-xl border border-slate-700 bg-slate-900/60 px-3.5 py-2.5 text-[13px] text-slate-100 outline-none transition-colors placeholder:text-slate-600 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-400/15";
+const labelCls =
+  "text-[11px] font-semibold uppercase tracking-wider text-slate-400";
+
 const StudentDetailsFormModal = ({
   open,
   form,
@@ -106,27 +118,35 @@ const StudentDetailsFormModal = ({
   isAutoPrompt = false,
 }) => {
   const { t } = useTranslation();
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => e.key === "Escape" && !saving && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, saving, onClose]);
+
   if (!open) return null;
 
   const fields = [
     {
       key: "fatherName",
-      label: t("studentSettings.fatherName", "Father's Name"),
+      label: t("studentSettings.fatherName", "Father's name"),
       placeholder: t("studentSettings.fatherNamePlaceholder", "Enter father's name"),
     },
     {
       key: "motherName",
-      label: t("studentSettings.motherName", "Mother's Name"),
+      label: t("studentSettings.motherName", "Mother's name"),
       placeholder: t("studentSettings.motherNamePlaceholder", "Enter mother's name"),
     },
     {
       key: "fatherMobileNumber",
-      label: t("studentSettings.parentMobile", "Parent's Mobile"),
+      label: t("studentSettings.parentMobile", "Parent's mobile"),
       placeholder: t("studentSettings.parentMobilePlaceholder", "e.g. 9876543210"),
     },
     {
       key: "socialMediaAccount",
-      label: t("studentSettings.socialMediaAccount", "Social Media Account"),
+      label: t("studentSettings.socialMediaAccount", "Social media account"),
       placeholder: t("studentSettings.socialMediaPlaceholder", "Instagram / Facebook URL"),
     },
     {
@@ -142,194 +162,79 @@ const StudentDetailsFormModal = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      style={{
-        background: "rgba(10,14,26,0.75)",
-        backdropFilter: "blur(6px)",
-        zIndex: 9999,
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="student-details-title"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget && !saving) onClose();
       }}
     >
-      <div
-        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
-        style={{
-          background: "#fdf8f0",
-          borderRadius: 20,
-          border: "1px solid #e8d9c0",
-        }}
-      >
+      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-800 bg-[#0d1424] shadow-2xl shadow-black/50">
         {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            padding: "24px 24px 16px",
-            borderBottom: "1px solid #e8d9c0",
-            background: "#faf3e8",
-            borderRadius: "20px 20px 0 0",
-            position: "sticky",
-            top: 0,
-            zIndex: 1,
-          }}
-        >
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-800 bg-slate-900/60 px-6 py-5">
           <div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                marginBottom: 4,
-              }}
-            >
-              <span style={{ fontSize: 22 }}>📋</span>
+            <div className="mb-1.5 flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-400">
+                <UserRound size={16} strokeWidth={2.25} />
+              </span>
               <h3
-                style={{
-                  fontSize: 18,
-                  fontWeight: 800,
-                  color: "#3b2a14",
-                  margin: 0,
-                }}
+                id="student-details-title"
+                className="text-[17px] font-bold text-slate-50"
               >
-                {t("studentDetailsModal.title", "Student Details")}
+                {t("studentDetailsModal.title", "Student details")}
               </h3>
             </div>
-            <p
-              style={{
-                fontSize: 13,
-                color: "#8a6a3a",
-                margin: 0,
-                lineHeight: 1.5,
-              }}
-            >
+            <p className="text-[13px] leading-relaxed text-slate-400">
               {isAutoPrompt
-                ? t("studentDetailsModal.completeProfile", "Complete your profile to help us serve you better.")
-                : t("studentDetailsModal.fieldsOptional", "All fields are optional. You can update them anytime.")}
+                ? t(
+                  "studentDetailsModal.completeProfile",
+                  "Complete your profile to help us serve you better.",
+                )
+                : t(
+                  "studentDetailsModal.fieldsOptional",
+                  "All fields are optional. You can update them anytime.",
+                )}
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            style={{
-              background: "#ede3d4",
-              border: "none",
-              borderRadius: 10,
-              width: 32,
-              height: 32,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              color: "#8a6a3a",
-              flexShrink: 0,
-              marginLeft: 12,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#e0d0bb";
-              e.currentTarget.style.color = "#3b2a14";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#ede3d4";
-              e.currentTarget.style.color = "#8a6a3a";
-            }}
+            aria-label={t("studentSettings.cancel", "Cancel")}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-700 text-slate-400 transition-colors hover:border-slate-600 hover:bg-slate-800 hover:text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400"
           >
             <X size={15} />
           </button>
         </div>
 
         {/* Body */}
-        <div
-          style={{
-            padding: "20px 24px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-          }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: 14,
-            }}
-          >
+        <div className="flex flex-col gap-5 overflow-y-auto px-6 py-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {fields.map(({ key, label, placeholder }) => (
-              <div
-                key={key}
-                style={{ display: "flex", flexDirection: "column", gap: 5 }}
-              >
-                <label
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                    color: "#8a6a3a",
-                  }}
-                >
+              <div key={key} className="flex flex-col gap-1.5">
+                <label className={labelCls} htmlFor={`sdf-${key}`}>
                   {label}
                 </label>
                 <input
+                  id={`sdf-${key}`}
                   value={form[key] ?? ""}
                   onChange={(e) => onChange(key, e.target.value)}
                   placeholder={placeholder}
-                  style={{
-                    background: "#fff8ed",
-                    border: "1px solid #d9c4a0",
-                    borderRadius: 10,
-                    padding: "9px 12px",
-                    fontSize: 13,
-                    color: "#3b2a14",
-                    outline: "none",
-                    width: "100%",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.border = "1px solid #c49a4a";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(196,154,74,0.15)";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.border = "1px solid #d9c4a0";
-                    e.target.style.boxShadow = "none";
-                  }}
+                  className={inputCls}
                 />
               </div>
             ))}
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-            <label
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: "#8a6a3a",
-              }}
-            >
+          <div className="flex flex-col gap-1.5">
+            <label className={labelCls} htmlFor="sdf-reference">
               {t("studentSettings.reference", "Reference")}
             </label>
             <select
+              id="sdf-reference"
               value={form.reference ?? ""}
               onChange={(e) => onChange("reference", e.target.value)}
-              style={{
-                background: "#fff8ed",
-                border: "1px solid #d9c4a0",
-                borderRadius: 10,
-                padding: "9px 12px",
-                fontSize: 13,
-                color: "#3b2a14",
-                outline: "none",
-                width: "100%",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                e.target.style.border = "1px solid #c49a4a";
-                e.target.style.boxShadow = "0 0 0 3px rgba(196,154,74,0.15)";
-              }}
-              onBlur={(e) => {
-                e.target.style.border = "1px solid #d9c4a0";
-                e.target.style.boxShadow = "none";
-              }}
+              className={inputCls}
             >
               <option value="">
                 {referencesLoading
@@ -347,77 +252,31 @@ const StudentDetailsFormModal = ({
             </select>
           </div>
 
-          {/* Address full-width */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-            <label
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: "#8a6a3a",
-              }}
-            >
-              {t("studentSettings.fullAddress", "Full Address")}
+          <div className="flex flex-col gap-1.5">
+            <label className={labelCls} htmlFor="sdf-address">
+              {t("studentSettings.fullAddress", "Full address")}
             </label>
             <textarea
+              id="sdf-address"
               rows={3}
               value={form.fullAddress ?? ""}
               onChange={(e) => onChange("fullAddress", e.target.value)}
-              placeholder={t("studentSettings.fullAddressPlaceholder", "House no., street, city, state, pincode")}
-              style={{
-                background: "#fff8ed",
-                border: "1px solid #d9c4a0",
-                borderRadius: 10,
-                padding: "9px 12px",
-                fontSize: 13,
-                color: "#3b2a14",
-                outline: "none",
-                resize: "none",
-                width: "100%",
-                boxSizing: "border-box",
-                fontFamily: "inherit",
-              }}
-              onFocus={(e) => {
-                e.target.style.border = "1px solid #c49a4a";
-                e.target.style.boxShadow = "0 0 0 3px rgba(196,154,74,0.15)";
-              }}
-              onBlur={(e) => {
-                e.target.style.border = "1px solid #d9c4a0";
-                e.target.style.boxShadow = "none";
-              }}
+              placeholder={t(
+                "studentSettings.fullAddressPlaceholder",
+                "House no., street, city, state, pincode",
+              )}
+              className={`${inputCls} resize-none font-sans`}
             />
           </div>
         </div>
 
         {/* Footer */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 10,
-            padding: "14px 24px 22px",
-            borderTop: "1px solid #e8d9c0",
-            position: "sticky",
-            bottom: 0,
-            background: "#fdf8f0",
-            borderRadius: "0 0 20px 20px",
-          }}
-        >
+        <div className="flex shrink-0 justify-end gap-3 border-t border-slate-800 bg-[#0d1424] px-6 py-4">
           <button
             type="button"
             onClick={onClose}
             disabled={saving}
-            style={{
-              background: "transparent",
-              border: "1px solid #d9c4a0",
-              borderRadius: 10,
-              padding: "9px 18px",
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#8a6a3a",
-              cursor: saving ? "not-allowed" : "pointer",
-            }}
+            className="rounded-xl border border-slate-700 px-4 py-2.5 text-[13px] font-semibold text-slate-300 transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isAutoPrompt
               ? t("studentDetailsModal.skipForNow", "Skip for now")
@@ -427,41 +286,17 @@ const StudentDetailsFormModal = ({
             type="button"
             onClick={onSubmit}
             disabled={saving}
-            style={{
-              background: "linear-gradient(135deg, #c49a4a, #a67c35)",
-              border: "none",
-              borderRadius: 10,
-              padding: "9px 22px",
-              fontSize: 13,
-              fontWeight: 700,
-              color: "#fff",
-              cursor: saving ? "not-allowed" : "pointer",
-              opacity: saving ? 0.7 : 1,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              boxShadow: "0 4px 14px rgba(196,154,74,0.35)",
-            }}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-5 py-2.5 text-[13px] font-bold text-white shadow-lg shadow-indigo-500/25 transition-transform hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {saving && (
-              <span
-                style={{
-                  width: 13,
-                  height: 13,
-                  borderRadius: "50%",
-                  border: "2px solid rgba(255,255,255,0.3)",
-                  borderTopColor: "#fff",
-                  animation: "spin 0.7s linear infinite",
-                  display: "inline-block",
-                }}
-              />
-            )}
-            {saving ? t("studentDetailsModal.saving", "Saving...") : t("studentDetailsModal.saveDetails", "Save Details")}
+            {saving && <Loader2 size={14} className="animate-spin" />}
+            {saving
+              ? t("studentDetailsModal.saving", "Saving...")
+              : t("studentDetailsModal.saveDetails", "Save details")}
           </button>
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 };
 
@@ -601,152 +436,87 @@ export const DashboardHome = () => {
   return (
     <>
       <style>{`
-        @keyframes shimmer {
-          0%   { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .animate-shimmer { animation: shimmer 1.4s infinite; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .dash-section { animation: fadeUp .4s cubic-bezier(.22,.61,.36,1) both; }
+        .dash-section:nth-child(2) { animation-delay: .05s; }
+        .dash-section:nth-child(3) { animation-delay: .1s; }
+        .dash-section:nth-child(4) { animation-delay: .15s; }
+        .progress-fill { transition: width .8s cubic-bezier(.4,0,.2,1); }
+        @media (prefers-reduced-motion: reduce) {
+          .dash-section, .progress-fill, .animate-shimmer { animation: none !important; transition: none !important; }
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(14px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .dash-section { animation: fadeUp 0.35s ease both; }
-        .dash-section:nth-child(2) { animation-delay: 0.05s; }
-        .dash-section:nth-child(3) { animation-delay: 0.1s; }
-        .dash-section:nth-child(4) { animation-delay: 0.15s; }
-        .activity-row:hover { background: #1e293b !important; }
-        .progress-bar-fill { transition: width 0.9s cubic-bezier(.4,0,.2,1); }
       `}</style>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+      <div className="flex flex-col gap-7">
         {/* ── Hero ── */}
-        <section
-          className="dash-section"
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 16,
-          }}
-        >
-          <div>
-            <p
-              style={{
-                color: "#818cf8",
-                fontWeight: 500,
-                fontSize: 14,
-                marginBottom: 6,
-              }}
-            >
-              {t("studentDashboard.welcomeBack", { name: username })}
-            </p>
-            <h1
-              style={{
-                fontSize: "clamp(28px,4vw,42px)",
-                fontWeight: 800,
-                color: "#f1f5f9",
-                lineHeight: 1.2,
-              }}
-            >
-              {t("studentDashboard.studentDashboardTitle")}
-            </h1>
-            <p
-              style={{
-                color: "#64748b",
-                marginTop: 10,
-                maxWidth: 500,
-                lineHeight: 1.7,
-                fontSize: 14,
-              }}
-            >
-              {t("studentDashboard.heroDescription")}
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={() => {
-                setIsAutoPrompt(false);
-                setShowStudentDetailsModal(true);
-              }}
-              style={{
-                background: "#1e293b",
-                color: "#e2e8f0",
-                border: "1px solid #334155",
-                borderRadius: 14,
-                padding: "12px 16px",
-                fontWeight: 700,
-                fontSize: 13,
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {t("studentDashboard.addCompleteDetails")}
-            </button>
-            <Link
-              to="my-courses"
-              style={{ color: "inherit", textDecoration: "none" }}
-            >
+        <section className="dash-section relative overflow-hidden rounded-2xl border border-slate-800 bg-[#0d1424] px-6 py-7 sm:px-8 sm:py-9">
+          <div
+            className="pointer-events-none absolute -top-24 right-[-10%] h-64 w-64 rounded-full opacity-25 blur-3xl"
+            style={{ background: "radial-gradient(circle, #7c3aed, transparent 70%)" }}
+          />
+          <div
+            className="pointer-events-none absolute -bottom-24 left-[10%] h-56 w-56 rounded-full opacity-20 blur-3xl"
+            style={{ background: "radial-gradient(circle, #06b6d4, transparent 70%)" }}
+          />
+          <div className="relative flex flex-wrap items-start justify-between gap-6">
+            <div className="max-w-xl">
+              <p className="mb-2 text-sm font-semibold tracking-wide text-indigo-400">
+                {t("studentDashboard.welcomeBack", { name: username })}
+              </p>
+              <h1 className="text-[clamp(26px,4vw,40px)] font-extrabold leading-tight text-slate-50">
+                {t("studentDashboard.studentDashboardTitle")}
+              </h1>
+              <p className="mt-3 max-w-md text-[14px] leading-relaxed text-slate-400">
+                {t("studentDashboard.heroDescription")}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2.5">
               <button
-                style={{
-                  background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 14,
-                  padding: "12px 24px",
-                  fontWeight: 700,
-                  fontSize: 14,
-                  cursor: "pointer",
-                  boxShadow: "0 8px 24px rgba(124,58,237,.35)",
-                  whiteSpace: "nowrap",
+                type="button"
+                onClick={() => {
+                  setIsAutoPrompt(false);
+                  setShowStudentDetailsModal(true);
                 }}
+                className="whitespace-nowrap rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-[13px] font-bold text-slate-200 transition-colors hover:border-slate-600 hover:bg-slate-800"
               >
-                {t("studentDashboard.continueLearning")}
+                {t("studentDashboard.addCompleteDetails")}
               </button>
-            </Link>
+              <Link to="my-courses" className="no-underline">
+                <button className="group flex items-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition-transform hover:-translate-y-0.5">
+                  {t("studentDashboard.continueLearning")}
+                  <ArrowRight
+                    size={15}
+                    className="transition-transform group-hover:translate-x-0.5"
+                  />
+                </button>
+              </Link>
+            </div>
           </div>
         </section>
 
         {/* ── Stat cards ── */}
-        <div
-          className="dash-section"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
-            gap: 14,
-          }}
-        >
+        <div className="dash-section grid grid-cols-1 gap-3.5 sm:grid-cols-3">
           <StatCard
             loading={coursesLoading}
+            icon={BookMarked}
+            iconColor="#818cf8"
             value={enrolledCourses.length || "—"}
             label={t("studentDashboard.enrolledCourses")}
-            color="#818cf8"
           />
           <StatCard
             loading={coursesLoading}
+            icon={TrendingUp}
+            iconColor="#22d3ee"
             value={enrolledCourses.length ? `${overallProgress}%` : "—"}
             label={t("studentDashboard.overallProgress")}
-            color="#22d3ee"
             extra={
               enrolledCourses.length > 0 && (
-                <div
-                  style={{
-                    marginTop: 10,
-                    height: 4,
-                    borderRadius: 4,
-                    background: "#1e293b",
-                    overflow: "hidden",
-                  }}
-                >
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-800">
                   <div
-                    className="progress-bar-fill"
-                    style={{
-                      height: "100%",
-                      width: `${overallProgress}%`,
-                      background: "linear-gradient(90deg,#22d3ee,#818cf8)",
-                      borderRadius: 4,
-                    }}
+                    className="progress-fill h-full rounded-full bg-gradient-to-r from-cyan-400 to-indigo-400"
+                    style={{ width: `${overallProgress}%` }}
                   />
                 </div>
               )
@@ -754,163 +524,80 @@ export const DashboardHome = () => {
           />
           <StatCard
             loading={studentsLoading}
+            icon={Trophy}
+            iconColor="#f472b6"
             value={rank ? `#${rank}` : "—"}
             label={t("studentDashboard.leaderboardRank")}
-            color="#f472b6"
           />
         </div>
 
         {/* ── Activity ── */}
-        <div
-          className="dash-section"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))",
-            gap: 14,
-          }}
-        >
-          <div
-            style={{
-              background: "#111827",
-              border: "1px solid #1e293b",
-              borderRadius: 18,
-              padding: "22px 24px",
-              display: "flex",
-              flexDirection: "column",
-              gap: 16,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9" }}>
+        <div className="dash-section grid grid-cols-1 gap-3.5">
+          <div className="rounded-2xl border border-slate-800 bg-[#0d1424] p-5 sm:p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-[15px] font-bold text-slate-100">
                 {t("studentDashboard.recentActivity")}
               </h3>
               <Link
                 to="my-courses"
-                style={{
-                  fontSize: 12,
-                  color: "#818cf8",
-                  textDecoration: "none",
-                  fontWeight: 600,
-                }}
+                className="flex items-center gap-1 text-xs font-semibold text-indigo-400 no-underline transition-colors hover:text-indigo-300"
               >
                 {t("studentDashboard.viewAll")}
+                <ArrowUpRight size={13} />
               </Link>
             </div>
 
             {activityLoading ? (
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 12 }}
-              >
+              <div className="flex flex-col gap-3">
                 {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    style={{ display: "flex", gap: 12, alignItems: "center" }}
-                  >
-                    <Skeleton w={36} h={36} radius={10} />
-                    <div
-                      style={{
-                        flex: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 6,
-                      }}
-                    >
-                      <Skeleton w="70%" h={13} />
-                      <Skeleton w="40%" h={11} />
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-9 w-9 shrink-0 !rounded-xl" />
+                    <div className="flex flex-1 flex-col gap-1.5">
+                      <Skeleton className="h-3.5 w-2/3" />
+                      <Skeleton className="h-2.5 w-1/3" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : recentActivity.length === 0 ? (
-              <div
-                style={{
-                  color: "#475569",
-                  fontSize: 13,
-                  textAlign: "center",
-                  paddingTop: 24,
-                }}
-              >
-                No recent activity yet.
-                <br />
-                Start a course to see your progress here.
+              <div className="flex flex-col items-center gap-2 py-10 text-center">
+                <Zap size={20} className="text-slate-700" />
+                <p className="text-[13px] text-slate-500">
+                  No recent activity yet.
+                  <br />
+                  Start a course to see your progress here.
+                </p>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <div className="flex flex-col divide-y divide-slate-800/70">
                 {recentActivity.map((item, i) => {
                   const meta = getActivityMeta(item.type);
+                  const Icon = meta.icon;
                   return (
                     <div
                       key={item._id ?? item.id ?? i}
-                      className="activity-row"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 12,
-                        padding: "8px 10px",
-                        borderRadius: 10,
-                        transition: "background .15s",
-                        cursor: "default",
-                      }}
+                      className="flex items-center gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-slate-800/40"
                     >
                       <div
-                        style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: 10,
-                          background: `${meta.color}18`,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 16,
-                          flexShrink: 0,
-                        }}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                        style={{ background: `${meta.color}18`, color: meta.color }}
                       >
-                        {meta.icon}
+                        <Icon size={16} strokeWidth={2.25} />
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p
-                          style={{
-                            fontSize: 13,
-                            fontWeight: 600,
-                            color: "#e2e8f0",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-semibold text-slate-200">
                           {item.title ??
                             item.description ??
                             item.action ??
                             meta.label}
                         </p>
                         {item.courseName && (
-                          <p
-                            style={{
-                              fontSize: 11,
-                              color: "#64748b",
-                              marginTop: 2,
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
+                          <p className="mt-0.5 truncate text-[11px] text-slate-500">
                             {item.courseName}
                           </p>
                         )}
                       </div>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          color: "#475569",
-                          flexShrink: 0,
-                        }}
-                      >
+                      <span className="shrink-0 text-[11px] text-slate-500">
                         {formatActivityTime(
                           item.createdAt ?? item.timestamp ?? item.date,
                           t,
@@ -927,49 +614,27 @@ export const DashboardHome = () => {
         {/* ── Course progress strip ── */}
         {(coursesLoading || enrolledCourses.length > 0) && (
           <section className="dash-section">
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 14,
-              }}
-            >
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9" }}>
+            <div className="mb-3.5 flex items-center justify-between">
+              <h3 className="text-[15px] font-bold text-slate-100">
                 {t("studentDashboard.courseProgress")}
               </h3>
               <Link
                 to="my-courses"
-                style={{
-                  fontSize: 12,
-                  color: "#818cf8",
-                  textDecoration: "none",
-                  fontWeight: 600,
-                }}
+                className="flex items-center gap-1 text-xs font-semibold text-indigo-400 no-underline transition-colors hover:text-indigo-300"
               >
                 {t("studentDashboard.seeAll")}
+                <ArrowUpRight size={13} />
               </Link>
             </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))",
-                gap: 12,
-              }}
-            >
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {coursesLoading
                 ? [...Array(3)].map((_, i) => (
                   <div
                     key={i}
-                    style={{
-                      background: "#111827",
-                      border: "1px solid #1e293b",
-                      borderRadius: 14,
-                      padding: "16px 18px",
-                    }}
+                    className="rounded-2xl border border-slate-800 bg-[#0d1424] p-4"
                   >
-                    <Skeleton w="65%" h={13} style={{ marginBottom: 10 }} />
-                    <Skeleton w="100%" h={6} radius={4} />
+                    <Skeleton className="mb-3 h-3.5 w-2/3" />
+                    <Skeleton className="h-1.5 w-full" />
                   </div>
                 ))
                 : enrolledCourses
@@ -1004,26 +669,25 @@ export const DashboardHome = () => {
 };
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-const StatCard = ({ loading, value, label, color, extra }) => (
-  <div
-    style={{
-      background: "#111827",
-      border: "1px solid #1e293b",
-      borderRadius: 18,
-      padding: "22px 24px",
-    }}
-  >
+const StatCard = ({ loading, icon: Icon, iconColor, value, label, extra }) => (
+  <div className="rounded-2xl border border-slate-800 bg-[#0d1424] p-5 transition-colors hover:border-slate-700">
     {loading ? (
       <>
-        <Skeleton w="50%" h={34} radius={8} />
-        <Skeleton w="70%" h={12} radius={6} style={{ marginTop: 10 }} />
+        <Skeleton className="h-8 w-1/2" />
+        <Skeleton className="mt-2.5 h-3 w-2/3" />
       </>
     ) : (
       <>
-        <div style={{ fontSize: 34, fontWeight: 800, color }}>{value}</div>
-        <div style={{ color: "#64748b", marginTop: 6, fontSize: 13 }}>
-          {label}
+        <div
+          className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl"
+          style={{ background: `${iconColor}18`, color: iconColor }}
+        >
+          <Icon size={17} strokeWidth={2.25} />
         </div>
+        <div className="text-[30px] font-extrabold leading-none text-slate-50">
+          {value}
+        </div>
+        <div className="mt-2 text-[13px] text-slate-500">{label}</div>
         {extra}
       </>
     )}
@@ -1037,54 +701,23 @@ const CourseProgressCard = ({ course }) => {
     progress === 100 ? "#34d399" : progress > 50 ? "#22d3ee" : "#818cf8";
 
   return (
-    <div
-      style={{
-        background: "#111827",
-        border: "1px solid #1e293b",
-        borderRadius: 14,
-        padding: "16px 18px",
-      }}
-    >
-      <p
-        style={{
-          fontSize: 13,
-          fontWeight: 600,
-          color: "#e2e8f0",
-          marginBottom: 10,
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}
-      >
+    <div className="rounded-2xl border border-slate-800 bg-[#0d1424] p-4 transition-colors hover:border-slate-700">
+      <p className="mb-3 truncate text-[13px] font-semibold text-slate-200">
         {title}
       </p>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div
-          style={{
-            flex: 1,
-            height: 6,
-            borderRadius: 4,
-            background: "#1e293b",
-            overflow: "hidden",
-          }}
-        >
+      <div className="flex items-center gap-2.5">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-800">
           <div
-            className="progress-bar-fill"
+            className="progress-fill h-full rounded-full"
             style={{
-              height: "100%",
               width: `${progress}%`,
               background: `linear-gradient(90deg,${accent},${accent}99)`,
-              borderRadius: 4,
             }}
           />
         </div>
         <span
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: accent,
-            flexShrink: 0,
-          }}
+          className="shrink-0 text-xs font-bold"
+          style={{ color: accent }}
         >
           {progress}%
         </span>
@@ -1206,7 +839,7 @@ const StudentDashboard = () => {
         setMobileOpen={setMobileOpen}
       />
 
-      <div className="flex-1 min-w-0  flex flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
         <main
           className="flex-1 px-4 py-4 md:px-7 md:py-6"
           onClick={() => {
@@ -1221,46 +854,39 @@ const StudentDashboard = () => {
                 window.dispatchEvent(new CustomEvent("dashboard-sidebar-open"));
                 setMobileOpen(true);
               }}
-              className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:border-white/20"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-slate-700"
             >
+              <Menu size={15} />
               {t("studentDashboard.menu")}
             </button>
-            <h2 className="text-lg font-semibold text-white flex-1 text-center truncate">
+            <h2 className="flex-1 truncate text-center text-[15px] font-bold text-white">
               {pageTitle}
             </h2>
             {unreadCount > 0 && (
-              <span
-                style={{
-                  background: "#7c3aed",
-                  color: "#fff",
-                  borderRadius: 99,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  padding: "2px 8px",
-                  flexShrink: 0,
-                }}
-              >
+              <span className="shrink-0 rounded-full bg-indigo-500 px-2 py-0.5 text-[11px] font-bold text-white">
                 {unreadCount}
               </span>
             )}
           </div>
 
-          <div className="flex-1 overflow-x-clip min-w-0 flex flex-col min-h-0">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-clip">
             <Outlet />
           </div>
         </main>
       </div>
+
       {user?.subscription?.status === "active" && !user?.selectedClass && (
-        <div className="fixed inset-0 z-[9999] bg-[#070b13]/90 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl animate-fadeIn">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-3xl mx-auto mb-5">
-              🎓
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#070b13]/90 p-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-900 p-6 text-center shadow-2xl sm:p-8">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-400">
+              <GraduationCap size={28} strokeWidth={2} />
             </div>
-            <h3 className="text-xl sm:text-2xl font-extrabold text-white">
-              Choose Your Class
+            <h3 className="text-xl font-extrabold text-white sm:text-2xl">
+              Choose your class
             </h3>
-            <p className="text-slate-400 text-sm mt-2 mb-6">
-              Your Academy Access Plan is active! Select a class below to unlock all courses of that class.
+            <p className="mt-2 mb-6 text-sm text-slate-400">
+              Your Academy Access Plan is active! Select a class below to
+              unlock all courses of that class.
             </p>
             <div className="flex flex-col gap-3">
               {["Class 9", "Class 10", "Class 11", "Class 12"].map((cls) => (
@@ -1268,20 +894,22 @@ const StudentDashboard = () => {
                   key={cls}
                   onClick={() => handleSelectClass(cls)}
                   disabled={selectingClass}
-                  className="w-full bg-slate-800/50 hover:bg-indigo-600 hover:text-white transition-all duration-200 border border-slate-700/60 rounded-2xl py-3.5 text-slate-200 text-sm font-bold cursor-pointer disabled:opacity-50"
+                  className="w-full cursor-pointer rounded-2xl border border-slate-700/60 bg-slate-800/50 py-3.5 text-sm font-bold text-slate-200 transition-all duration-200 hover:bg-indigo-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {cls}
                 </button>
               ))}
             </div>
             {selectingClass && (
-              <p className="text-xs text-indigo-400 mt-4 animate-pulse">
+              <p className="mt-4 flex items-center justify-center gap-2 text-xs text-indigo-400">
+                <Loader2 size={13} className="animate-spin" />
                 Unlocking your courses...
               </p>
             )}
           </div>
         </div>
       )}
+
       {/* Floating AI Robot Assistant visible across Student Dashboard */}
       <CourseFloatingAI />
     </div>

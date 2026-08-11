@@ -251,14 +251,65 @@ export default function CourseFloatingAI({
     }
   }, [course, isHindi, chatMessages.length]);
 
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+
+  useEffect(() => {
+    const updateModalState = () => {
+      const active = Boolean(
+        window.__isNoteViewerModalOpen ||
+        document.body.classList.contains("note-viewer-open") ||
+        document.querySelector('[data-note-modal]')
+      );
+      setIsNoteModalOpen(active);
+    };
+
+    updateModalState();
+    window.addEventListener("note-viewer-modal-toggle", updateModalState);
+    const observer = new MutationObserver(updateModalState);
+    observer.observe(document.body, { attributes: true, childList: true, subtree: true });
+
+    return () => {
+      window.removeEventListener("note-viewer-modal-toggle", updateModalState);
+      observer.disconnect();
+    };
+  }, []);
+
   // Text selection listener for highlight-to-ask
   useEffect(() => {
     const handleSelectionChange = () => {
+      // If note viewer modal is open or selection is inside note viewer, let the note viewer handle it
+      if (
+        window.__isNoteViewerModalOpen ||
+        document.body.classList.contains("note-viewer-open") ||
+        document.querySelector('[data-note-modal]')
+      ) {
+        setPopoverPos(null);
+        return;
+      }
+
       const selection = window.getSelection();
       if (!selection || selection.isCollapsed) {
         setPopoverPos(null);
         return;
       }
+
+      try {
+        const anchorEl =
+          selection.anchorNode?.nodeType === 1
+            ? selection.anchorNode
+            : selection.anchorNode?.parentElement;
+        if (
+          anchorEl?.closest?.(
+            '[data-note-modal], .note-viewer-modal, [role="dialog"]',
+          )
+        ) {
+          setPopoverPos(null);
+          return;
+        }
+      } catch {
+        /* ignore */
+      }
+
       const text = selection.toString().trim();
       if (text.length > 1) {
         try {
@@ -649,6 +700,8 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
       `Explain the key concepts of this lesson`,
     ];
   }, [activeLesson, isHindi]);
+
+  if (isNoteModalOpen) return null;
 
   return (
     <>
