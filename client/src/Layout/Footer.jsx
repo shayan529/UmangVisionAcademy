@@ -8,13 +8,21 @@ const Footer = () => {
     <footer className="hidden md:block px-6 md:px-5 py-5 border-t border-slate-800 bg-slate-950">
       <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-10 w-full">
         {/* Logo Section */}
-        <div className="flex items-start gap-4">
-          <div className="w-9 h-9 md:w-11 md:h-11 rounded-2xl flex items-center justify-center">
-            <img src="/Logo.png" alt="Logo" />
+        <div className="flex items-center gap-4 m-10">
+          <div className="w-16 h-16 md:w-20 md:h-20 p-1.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 shadow-lg">
+            <img src="/Logo.png" alt="Logo" className="w-full h-full object-contain drop-shadow-md" />
           </div>
-          <h2 className="text-2xl font-bold">
-            Umang Vision <span className="shimmer-txt"> Academy</span>
-          </h2>
+          <div className="flex flex-col justify-center leading-tight text-left">
+            <span className="text-lg md:text-xl lg:text-2xl font-black text-white tracking-wider uppercase">
+              Umang
+            </span>
+            <span className="text-lg md:text-xl lg:text-2xl font-black text-indigo-400 tracking-wider uppercase">
+              Vision
+            </span>
+            <span className="shimmer-txt text-lg md:text-xl lg:text-2xl font-black tracking-wider uppercase">
+              Academy
+            </span>
+          </div>
         </div>
 
         {/* Right Side Links */}
