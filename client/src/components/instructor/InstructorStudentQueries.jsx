@@ -803,7 +803,7 @@ export default function InstructorStudentQueries({ showToast }) {
   }, [messages, user]);
 
   return (
-    <div className="flex h-[calc(100dvh-9rem)] md:h-[calc(100vh-5.5rem)] w-full bg-[#080b18] rounded-2xl md:rounded-3xl overflow-hidden border border-[#1a244d] shadow-2xl relative text-zinc-100 font-sans">
+    <div className="flex h-[calc(100dvh-6rem)] md:h-[calc(100vh-5.5rem)] w-full bg-[#080b18] rounded-2xl md:rounded-3xl overflow-hidden border border-[#1a244d] shadow-2xl relative text-zinc-100 font-sans">
       <CustomStyles />
 
       {/* Lightbox Modal */}
@@ -1106,11 +1106,11 @@ export default function InstructorStudentQueries({ showToast }) {
         ) : (
           <>
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#1a244d] bg-[#0b1028] shrink-0">
-              <div className="flex items-center gap-3.5 min-w-0">
+            <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3.5 border-b border-[#1a244d] bg-[#0b1028] shrink-0">
+              <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
                 <button
                   onClick={() => setMobileView("list")}
-                  className="md:hidden p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-[#101738] transition cursor-pointer"
+                  className="md:hidden p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-[#101738] transition cursor-pointer shrink-0"
                 >
                   <ChevronLeft size={20} />
                 </button>
@@ -1128,20 +1128,20 @@ export default function InstructorStudentQueries({ showToast }) {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-white truncate flex items-center gap-2">
-                    {student?.name || "Student"}
+                  <h3 className="text-xs sm:text-sm font-bold text-white truncate flex items-center gap-1.5 sm:gap-2">
+                    <span className="truncate">{student?.name || "Student"}</span>
                     {activeConversation.isBlocked && (
-                      <span className="text-[10px] font-bold text-rose-400 bg-rose-500/15 border border-rose-500/30 px-2 py-0.2 rounded-md">
+                      <span className="text-[10px] font-bold text-rose-400 bg-rose-500/15 border border-rose-500/30 px-1.5 sm:px-2 py-0.2 rounded-md shrink-0">
                         Blocked
                       </span>
                     )}
                   </h3>
-                  <p className="text-xs text-zinc-400 truncate flex items-center gap-1.5 mt-0.5">
-                    <span className="text-emerald-400 font-medium">
+                  <p className="text-[11px] sm:text-xs text-zinc-400 truncate flex items-center gap-1 mt-0.5">
+                    <span className="text-emerald-400 font-medium truncate">
                       {activeConversation.course?.title || "Class Query"}
                     </span>
                     {activeConversation.subject && (
-                      <span className="text-zinc-400">
+                      <span className="text-zinc-400 shrink-0">
                         · {activeConversation.subject}
                       </span>
                     )}
@@ -1150,14 +1150,15 @@ export default function InstructorStudentQueries({ showToast }) {
               </div>
 
               {/* Action Toolbar */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <button
                   onClick={() => setMeetModalOpen(true)}
                   title="Share Google Meet or Zoom link"
-                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
+                  className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold px-2.5 sm:px-3.5 py-2 rounded-xl transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
                 >
                   <Video size={15} />
-                  <span>Share Meet Link</span>
+                  <span className="hidden sm:inline">Share Meet Link</span>
+                  <span className="inline sm:hidden">Meet</span>
                 </button>
 
                 <div className="relative">
