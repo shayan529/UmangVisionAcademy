@@ -2,6 +2,7 @@ import express from "express";
 import {
   createNote,
   bulkCreateNotes,
+  bulkActionNotes,
   listNotes,
   approveNote,
   rejectNote,
@@ -27,6 +28,7 @@ const router = express.Router();
 router.get("/", optionalAuth, listNotes);
 router.post("/", protect, instructorOnly, createNote);
 router.post("/bulk", protect, instructorOnly, bulkCreateNotes);
+router.post("/bulk-action", protect, instructorOnly, bulkActionNotes);
 router.put(
   "/:id/approve",
   protect,

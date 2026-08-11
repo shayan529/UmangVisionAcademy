@@ -215,6 +215,91 @@ export default function InstructorNotes({ showToast }) {
     }
   };
 
+  // ── Batch Selection & Actions ──
+  const [selectedNoteIds, setSelectedNoteIds] = useState([]);
+  const [bulkActioning, setBulkActioning] = useState(false);
+
+  const isAllSelected =
+    filteredNotes.length > 0 &&
+    filteredNotes.every((n) => selectedNoteIds.includes(n._id));
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedNoteIds([]);
+    } else {
+      setSelectedNoteIds(filteredNotes.map((n) => n._id));
+    }
+  };
+
+  const toggleNoteSelection = (id) => {
+    setSelectedNoteIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleBatchAction = async (action) => {
+    if (selectedNoteIds.length === 0) return;
+
+    let reason = "";
+    if (action === "reject") {
+      reason = window.prompt("Reason for rejecting selected notes:");
+      if (reason === null) return;
+    }
+
+    if (
+      action === "delete" &&
+      !window.confirm(`Are you sure you want to delete ${selectedNoteIds.length} selected note(s)?`)
+    ) {
+      return;
+    }
+
+    try {
+      setBulkActioning(true);
+      const targetNotes = notes
+        .filter((n) => selectedNoteIds.includes(n._id))
+        .map((n) => ({
+          _id: n._id,
+          source: n.source || "standalone",
+          courseId: n.courseId || undefined,
+        }));
+
+      const { data } = await api.post("/notes/bulk-action", {
+        action,
+        notes: targetNotes,
+        reason,
+      });
+
+      showToast?.(data.message || `Bulk ${action} successful`);
+
+      if (action === "delete") {
+        setNotes((prev) => prev.filter((n) => !selectedNoteIds.includes(n._id)));
+      } else if (action === "approve") {
+        setNotes((prev) =>
+          prev.map((n) =>
+            selectedNoteIds.includes(n._id)
+              ? { ...n, status: "approved", rejectedReason: "" }
+              : n
+          )
+        );
+      } else if (action === "reject") {
+        setNotes((prev) =>
+          prev.map((n) =>
+            selectedNoteIds.includes(n._id)
+              ? { ...n, status: "rejected", rejectedReason: reason || "" }
+              : n
+          )
+        );
+      }
+
+      setSelectedNoteIds([]);
+    } catch (err) {
+      console.error("Bulk action failed", err);
+      showToast?.(err.response?.data?.message || `Failed to perform bulk ${action}`);
+    } finally {
+      setBulkActioning(false);
+    }
+  };
+
   useEffect(() => {
     fetchNotes();
     if (isAdmin && users.length === 0) {
@@ -423,6 +508,81 @@ export default function InstructorNotes({ showToast }) {
         </div>
       </div>
 
+      {/* Selection Control & Bulk Action Bar */}
+      {!loading && filteredNotes.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/80 px-4 py-2.5 shadow-sm">
+            <label className="flex items-center gap-2.5 text-xs font-bold text-slate-300 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={isAllSelected}
+                onChange={handleToggleSelectAll}
+                className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
+              />
+              <span>Select All Visible ({filteredNotes.length})</span>
+            </label>
+
+            {selectedNoteIds.length > 0 && (
+              <span className="text-xs font-semibold text-emerald-400">
+                {selectedNoteIds.length} of {filteredNotes.length} selected
+              </span>
+            )}
+          </div>
+
+          {selectedNoteIds.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-violet-500/30 bg-gradient-to-r from-violet-950/80 via-slate-900 to-emerald-950/60 p-4 shadow-xl backdrop-blur-xl animate-fade-in">
+              <div className="flex items-center gap-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-600 text-xs font-extrabold text-white">
+                  {selectedNoteIds.length}
+                </span>
+                <div>
+                  <span className="text-xs font-bold text-slate-100 block">
+                    {selectedNoteIds.length} Note{selectedNoteIds.length !== 1 ? "s" : ""} Selected
+                  </span>
+                  <span className="text-[10px] text-slate-400">
+                    Apply bulk actions across all selected items
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {isAdmin && (
+                  <>
+                    <button
+                      onClick={() => handleBatchAction("approve")}
+                      disabled={bulkActioning}
+                      className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50 cursor-pointer shadow-md"
+                    >
+                      <Check size={14} /> Approve All ({selectedNoteIds.length})
+                    </button>
+                    <button
+                      onClick={() => handleBatchAction("reject")}
+                      disabled={bulkActioning}
+                      className="flex items-center gap-1.5 rounded-xl bg-amber-600 px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-amber-500 disabled:opacity-50 cursor-pointer shadow-md"
+                    >
+                      <XCircle size={14} /> Reject All ({selectedNoteIds.length})
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => handleBatchAction("delete")}
+                  disabled={bulkActioning}
+                  className="flex items-center gap-1.5 rounded-xl bg-red-600 px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-red-500 disabled:opacity-50 cursor-pointer shadow-md"
+                >
+                  <Trash2 size={14} /> Delete All ({selectedNoteIds.length})
+                </button>
+                <button
+                  onClick={() => setSelectedNoteIds([])}
+                  className="rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 cursor-pointer"
+                >
+                  Deselect All
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Body */}
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -455,16 +615,27 @@ export default function InstructorNotes({ showToast }) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredNotes.map((note) => {
             const st = STATUS_STYLE[note.status] || STATUS_STYLE.pending;
+            const isSelected = selectedNoteIds.includes(note._id);
             return (
               <div
                 key={note._id}
-                className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-5 transition-colors hover:border-slate-700"
+                className={`flex flex-col gap-3 rounded-2xl border p-5 transition-all ${
+                  isSelected
+                    ? "border-emerald-500/50 bg-emerald-950/20 shadow-lg"
+                    : "border-slate-800 bg-slate-950 hover:border-slate-700"
+                }`}
               >
                 <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleNoteSelection(note._id)}
+                    className="mt-1 h-4 w-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer shrink-0"
+                  />
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-600/10 text-violet-400">
                     <FileText size={20} />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <h4 className="truncate text-[15px] font-bold text-slate-100">{note.title}</h4>
                     <span className="text-[11px] text-slate-500">
                       {new Date(note.createdAt).toLocaleDateString()}

@@ -193,6 +193,68 @@ export const bulkCreateNotes = async (req, res) => {
   }
 };
 
+export const bulkActionNotes = async (req, res) => {
+  try {
+    const { action, notes, reason } = req.body || {};
+    if (!action || !Array.isArray(notes) || notes.length === 0) {
+      return res.status(400).json({ message: "Action and array of target notes required" });
+    }
+
+    let processedCount = 0;
+
+    for (const item of notes) {
+      const noteId = typeof item === "string" ? item : item._id || item.id;
+      const source = typeof item === "object" ? item.source : "standalone";
+      const courseId = typeof item === "object" ? item.courseId : undefined;
+
+      if (!noteId || !mongoose.Types.ObjectId.isValid(noteId)) continue;
+
+      if (action === "approve") {
+        if (source === "course" && courseId) {
+          await updateCourseNoteStatus(courseId, noteId, { status: "approved", rejectedReason: "" });
+          await invalidateNoteCaches(courseId);
+        } else {
+          await Note.findByIdAndUpdate(noteId, { status: "approved", rejectedReason: "" });
+        }
+        processedCount++;
+      } else if (action === "reject") {
+        if (source === "course" && courseId) {
+          await updateCourseNoteStatus(courseId, noteId, { status: "rejected", rejectedReason: reason || "" });
+          await invalidateNoteCaches(courseId);
+        } else {
+          await Note.findByIdAndUpdate(noteId, { status: "rejected", rejectedReason: reason || "" });
+        }
+        processedCount++;
+      } else if (action === "delete") {
+        if (source === "course" && courseId) {
+          const course = await Course.findById(courseId);
+          if (course) {
+            const noteSub = course.notes.id(noteId);
+            if (noteSub) {
+              noteSub.deleteOne();
+              await course.save();
+              await invalidateNoteCaches(courseId);
+            }
+          }
+        } else {
+          await Note.findByIdAndDelete(noteId);
+        }
+        processedCount++;
+      }
+    }
+
+    await invalidateNoteCaches();
+    return res.json({
+      success: true,
+      message: `Bulk ${action} completed for ${processedCount} note(s)`,
+      processedCount,
+    });
+  } catch (err) {
+    console.error("bulkActionNotes", err);
+    res.status(500).json({ message: err.message || "Failed to perform bulk action" });
+  }
+};
+
 export const listNotes = async (req, res) => {
   try {
     // ── Admin / moderator: full moderation queue across both note sources ──
