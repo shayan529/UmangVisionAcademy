@@ -352,7 +352,13 @@
       "questionBank10Years": "10-वर्षीय संपूर्ण प्रश्न संच संग्रह",
       "intlStudyCounselling": "आंतरराष्ट्रीय अभ्यास समुपदेशन आणि सहाय्य (विशेष)",
       "scholarshipEligibility": "उच्च-शिक्षण शिष्यवृत्ती पात्रता* (विशेष)",
-      "vipMentorFastTrack": "व्हीआयपी प्राधान्य मार्गदर्शक आणि जलद शंका निवारण"
+      "vipMentorFastTrack": "व्हीआयपी प्राधान्य मार्गदर्शक आणि जलद शंका निवारण",
+      "recordedVideos": "रेकॉर्ड केलेल्या व्हिडिओ व्याख्याने",
+      "studyContent": "लिखित अभ्यास सामग्री",
+      "animationVideos": "ॲनिमेशन व्हिडिओ",
+      "questionBank3Years": "3-वर्षीय कोर्स आणि वर्ग-निहाय प्रश्नपेढी",
+      "doubtClearing": "AI प्रशिक्षक शंका-निराकरण सत्रे",
+      "lmsResources": "प्रीमियम LMS संसाधने आणि मेंटर सहयोग"
     },
     "explore": "पहा →",
     "selectPreferred": "आजच शिकणे सुरू करण्यासाठी आपली पसंतीची शिक्षण योजना निवडा.",
@@ -443,7 +449,11 @@
         "name": "उच्च-शिक्षण शिष्यवृत्ती पात्रता*",
         "desc": "100% पर्यंत महाविद्यालयीन शिक्षण शुल्क अनुदान आणि जागतिक शिष्यवृत्तीसाठी थेट नामांकन"
       }
-    }
+    },
+    "viewLessFeatures": "कमी वैशिष्ट्ये पहा",
+    "viewMoreFeatures": "{{count}} अधिक वैशिष्ट्ये पहा",
+    "featuresCount": "वैशिष्ट्ये",
+    "signIn": "साइन इन करा →"
   },
   "courseCard": {
     "viewDemo": "तपशील पहा",
@@ -1668,39 +1678,14 @@
     "menu": "☰ मेनू"
   },
   "instructorHome": {
-    "welcomeBack": "परतावा पर स्वागत है, {{name}}",
-    "dashboardTitle": "शिक्षक डॅशबोर्ड",
-    "totalCourses": "कुल अभ्यासक्रम",
-    "totalStudents": "कुल विद्यार्थी",
-    "instructorRating": "शिक्षक रेटिंग",
-    "activeCourses": "सक्रिय अभ्यासक्रम",
-    "studentQueries": "विद्यार्थ्यांचे प्रश्न",
-    "unreadBadge": "{{count}} नवीन",
-    "noStudentQueries": "सध्या कोणतेही विद्यार्थी प्रश्न नाहीत",
-    "noQueriesDesc": "जेव्हा विद्यार्थी प्रश्न विचारतील, तेव्हा ते थेट सूचनांसह येथे दिसतील.",
-    "openQueriesDesk": "प्रश्न डेस्क उघडा",
+    "studentQueries": "विद्यार्थी शंका",
+    "noStudentQueries": "सध्या कोणतीही शंका नाही",
+    "noQueriesDesc": "जेव्हा नोंदणीकृत विद्यार्थी शंका विचारतील, तेव्हा त्या थेट सूचनांसह येथे दिसतील.",
+    "unreadQueriesCount": "{{count}} न वाचलेले",
     "reply": "उत्तर द्या",
-    "soundOn": "ध्वनी चालू",
-    "soundMuted": "म्यूट",
-    "soundOnTooltip": "सूचना ध्वनी सक्रिय (म्यूट करण्यासाठी क्लिक करा)",
-    "soundOffTooltip": "सूचना ध्वनी म्यूट (सक्रिय करण्यासाठी क्लिक करा)",
-    "soundEnabledToast": "सूचना ध्वनी सक्षम 🔔",
-    "soundMutedToast": "सूचना ध्वनी म्यूट 🔕",
-    "noMessagesYet": "नवीन शंका थ्रेड सुरू झाला",
-    "viewAll": "सर्व पहा",
-    "loadingCourses": "अभ्यासक्रम लोड हो रहे हैं...",
-    "noCourses": "अभी कोणतेही सक्रिय अभ्यासक्रम नाही है।",
-    "studentsRevenue": "{{count}} विद्यार्थी · ₹{{revenue}}",
-    "avgCompletion": "{{value}}% औसत पूर्णता",
-    "upcomingSessions": "आगामी सत्र",
-    "manage": "प्रबंधित करा",
-    "loadingSessions": "सत्र लोड हो रहे हैं...",
-    "noUpcomingSessions": "कोणतेही आगामी सत्र नाही है।",
-    "dateTbd": "तिथि तय नाही",
-    "joiningSession": "सत्र से जुड़ रहे हैं...",
-    "sessionLinkCopied": "सत्र लिंक कॉपी हो गया",
-    "join": "जुड़ें",
-    "link": "लिंक"
+    "soundEnabled": "ध्वनी चालू",
+    "soundMuted": "ध्वनी बंद",
+    "testSound": "ध्वनी चाचणी"
   },
   "instructorAnalytics": {
     "totalRevenue": "कुल आय",
@@ -2286,15 +2271,5 @@
     "messageDeleted": "संदेश हटवला",
     "copyText": "मजकूर क्लिपबोर्डवर कॉपी केला",
     "attachMedia": "मीडिया किंवा कागदपत्र जोडा"
-  },
-  "instructorHome": {
-    "studentQueries": "विद्यार्थी शंका",
-    "noStudentQueries": "सध्या कोणतीही शंका नाही",
-    "noQueriesDesc": "जेव्हा नोंदणीकृत विद्यार्थी शंका विचारतील, तेव्हा त्या थेट सूचनांसह येथे दिसतील.",
-    "unreadQueriesCount": "{{count}} न वाचलेले",
-    "reply": "उत्तर द्या",
-    "soundEnabled": "ध्वनी चालू",
-    "soundMuted": "ध्वनी बंद",
-    "testSound": "ध्वनी चाचणी"
   }
 }

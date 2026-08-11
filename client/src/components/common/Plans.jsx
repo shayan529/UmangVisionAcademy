@@ -138,10 +138,10 @@ const Plans = () => {
 
                   {/* Title & Tagline */}
                   <h3 className="text-2xl sm:text-3xl font-black text-white">
-                    {plan.label}
+                    {t(plan.labelKey, plan.label)}
                   </h3>
                   <p className="text-xs text-slate-400 mt-2 min-h-[36px] leading-relaxed">
-                    {plan.tagline}
+                    {t(plan.taglineKey, plan.tagline)}
                   </p>
 
                   {/* Price */}
@@ -154,38 +154,42 @@ const Plans = () => {
                         {plan.price}
                       </span>
                       <span className="text-sm font-bold text-slate-400">
-                        /{plan.period}
+                        /{t(plan.periodKey, plan.period)}
                       </span>
                     </div>
                     <span className="text-[11px] text-slate-500 font-semibold block mt-1">
-                      Billed annually • Full 365-day access
+                      {t("plans.billedAnnually", "Billed annually • Full 365-day access")}
                     </span>
                   </div>
 
                   {/* Feature Bullets List with View More */}
                   <div className="space-y-3 mb-6">
                     <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      INCLUDED IN {plan.title.toUpperCase()} PLAN ({features.length} FEATURES):
+                      {t("plans.includedIn", "Included in {{plan}}:", { plan: t(plan.labelKey, plan.label) })} ({features.length} {t("plans.featuresCount", "FEATURES")}):
                     </p>
 
                     <div className="space-y-2.5">
-                      {visibleFeatures.map((feat, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-start gap-2.5 text-xs text-slate-300 leading-snug"
-                        >
+                      {visibleFeatures.map((feat, idx) => {
+                        const featureKey = plan.featureKeys?.[idx];
+                        const featureText = featureKey ? t(featureKey, feat) : feat;
+                        return (
                           <div
-                            className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]"
-                            style={{
-                              background: `${plan.color}25`,
-                              color: plan.color,
-                            }}
+                            key={idx}
+                            className="flex items-start gap-2.5 text-xs text-slate-300 leading-snug"
                           >
-                            ✓
+                            <div
+                              className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]"
+                              style={{
+                                background: `${plan.color}25`,
+                                color: plan.color,
+                              }}
+                            >
+                              ✓
+                            </div>
+                            <span>{featureText}</span>
                           </div>
-                          <span>{feat}</span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* View More / View Less Button */}
@@ -198,12 +202,12 @@ const Plans = () => {
                       >
                         {isExpanded ? (
                           <>
-                            <span>View less features</span>
+                            <span>{t("plans.viewLessFeatures", "View less features")}</span>
                             <ChevronUp size={14} />
                           </>
                         ) : (
                           <>
-                            <span>View {remainingCount} more features</span>
+                            <span>{t("plans.viewMoreFeatures", "View {{count}} more features", { count: remainingCount })}</span>
                             <ChevronDown size={14} />
                           </>
                         )}
@@ -226,7 +230,7 @@ const Plans = () => {
                       color: plan.vip ? "#0f172a" : "#ffffff",
                     }}
                   >
-                    {user ? plan.buttonText : "Sign In →"}
+                    {user ? t(plan.buttonKey, plan.buttonText) : t("plans.signIn", "Sign In →")}
                     <ArrowRight size={16} />
                   </button>
                 </div>
@@ -242,7 +246,7 @@ const Plans = () => {
             {/* Top Main Dark Burgundy Title Bar */}
             <div className="bg-[#4e1b20] py-3 px-6 text-center border-b-2 border-[#555]">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-wider uppercase drop-shadow-md">
-                SMART LEARNING PLANS
+                {t("plans.heading", "SMART LEARNING PLANS")}
               </h2>
             </div>
 
@@ -254,7 +258,7 @@ const Plans = () => {
                   <tr className="text-center font-black">
                     {/* Feature Column Header (Dark Khaki) */}
                     <th className="bg-[#3d4224] text-[#e8eccb] py-3 px-4 border border-[#555] w-[28%] text-left italic font-bold">
-                      Feature
+                      {t("plans.featureCol", "Feature")}
                     </th>
 
                     {/* Basic Plan Header */}
@@ -299,11 +303,11 @@ const Plans = () => {
                             to={row.link}
                             className="hover:underline text-[#1e240f] flex items-center justify-between"
                           >
-                            <span>{row.feature}</span>
+                            <span>{row.nameKey ? t(row.nameKey, row.feature) : row.feature}</span>
                             <span className="text-[10px] text-emerald-800">↗</span>
                           </Link>
                         ) : (
-                          <span>{row.feature}</span>
+                          <span>{row.nameKey ? t(row.nameKey, row.feature) : row.feature}</span>
                         )}
                       </td>
 
@@ -355,19 +359,19 @@ const Plans = () => {
                 onClick={() => handlePlanClick(SMART_PLANS[0])}
                 className="py-3 rounded-xl bg-lime-700 hover:bg-lime-600 text-white font-bold text-xs cursor-pointer transition shadow-md"
               >
-                Choose Basic (₹100)
+                {t("plans.chooseBasicWithPrice", "Choose Basic (₹100)")}
               </button>
               <button
                 onClick={() => handlePlanClick(SMART_PLANS[1])}
                 className="py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs cursor-pointer transition shadow-md"
               >
-                Choose Premium (₹500)
+                {t("plans.choosePremiumWithPrice", "Choose Premium (₹500)")}
               </button>
               <button
                 onClick={() => handlePlanClick(SMART_PLANS[2])}
                 className="py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs cursor-pointer transition shadow-md"
               >
-                Unlock Elite (₹1,000)
+                {t("plans.chooseEliteWithPrice", "Unlock Elite (₹1,000)")}
               </button>
             </div>
           </div>
@@ -377,49 +381,39 @@ const Plans = () => {
         <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-10">
           <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
             <HelpCircle className="text-indigo-400" size={22} />
-            Frequently Asked Questions about Smart Learning Plans
+            {t("plans.faqTitle", "Frequently Asked Questions about Smart Learning Plans")}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs sm:text-sm text-slate-300">
             <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
               <h4 className="font-bold text-white mb-1">
-                How does Class selection work?
+                {t("plans.faq1Q", "How does Class selection work?")}
               </h4>
               <p className="text-slate-400">
-                When you activate your plan, you select your grade (e.g. Class 9,
-                10, 11, or 12). All syllabus subjects, live lessons, notes, and
-                recorded classes for that grade are automatically unlocked for
-                you.
+                {t("plans.faq1A", "When you activate your plan, you select your grade (e.g. Class 9, 10, 11, or 12). All syllabus subjects, live lessons, notes, and recorded classes for that grade are automatically unlocked for you.")}
               </p>
             </div>
             <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
               <h4 className="font-bold text-white mb-1">
-                What is included in Elite Exclusive features?
+                {t("plans.faq2Q", "What is included in Elite Exclusive features?")}
               </h4>
               <p className="text-slate-400">
-                Elite members get direct Higher-Study Scholarship Eligibility
-                nomination (up to 100% college grant) and dedicated
-                International Study Counselling with country guides, test prep,
-                SOP review studio, and 1-on-1 global education advisors.
+                {t("plans.faq2A", "Elite members get direct Higher-Study Scholarship Eligibility nomination (up to 100% college grant) and dedicated International Study Counselling with country guides, test prep, SOP review studio, and 1-on-1 global education advisors.")}
               </p>
             </div>
             <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
               <h4 className="font-bold text-white mb-1">
-                Can I upgrade my plan mid-year?
+                {t("plans.faq3Q", "Can I upgrade my plan mid-year?")}
               </h4>
               <p className="text-slate-400">
-                Yes! You can easily upgrade from Basic to Premium or Elite
-                anytime from your Student Dashboard Billing page.
+                {t("plans.faq3A", "Yes! You can easily upgrade from Basic to Premium or Elite anytime from your Student Dashboard Billing page.")}
               </p>
             </div>
             <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
               <h4 className="font-bold text-white mb-1">
-                How do Career Counselling sessions work?
+                {t("plans.faq4Q", "How do Career Counselling sessions work?")}
               </h4>
               <p className="text-slate-400">
-                Basic plans include 2 sessions per year, while Premium & Elite
-                plans include 5 sessions per year. You can book 1-on-1 video
-                consultations with certified counsellors directly in your
-                dashboard.
+                {t("plans.faq4A", "Basic plans include 2 sessions per year, while Premium & Elite plans include 5 sessions per year. You can book 1-on-1 video consultations with certified counsellors directly in your dashboard.")}
               </p>
             </div>
           </div>

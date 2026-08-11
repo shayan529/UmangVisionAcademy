@@ -352,7 +352,13 @@
       "questionBank10Years": "১০ বছরের সম্পূর্ণ প্রশ্ন ব্যাংক সংরক্ষণাগার",
       "intlStudyCounselling": "আন্তর্জাতিক স্টাডি কাউন্সেলিং এবং সমর্থন (একচেটিয়া)",
       "scholarshipEligibility": "উচ্চশিক্ষা স্কলারশিপের যোগ্যতা* (একচেটিয়া)",
-      "vipMentorFastTrack": "ভিআইপি অগ্রাধিকার মেন্টর এবং দ্রুত সন্দেহ সমাধান"
+      "vipMentorFastTrack": "ভিআইপি অগ্রাধিকার মেন্টর এবং দ্রুত সন্দেহ সমাধান",
+      "recordedVideos": "রেকর্ড করা ভিডিও বক্তৃতা",
+      "studyContent": "লিখিত অধ্যয়ন উপকরণ",
+      "animationVideos": "অ্যানিমেশন ভিডিও",
+      "questionBank3Years": "৩-বছরের কোর্স এবং ক্লাস-ভিত্তিক প্রশ্ন ব্যাংক",
+      "doubtClearing": "AI প্রশিক্ষক সন্দেহ-সমাধান সেশন",
+      "lmsResources": "প্রিমিয়াম LMS সম্পদ ও মেন্টর সহযোগিতা"
     },
     "explore": "দেখুন →",
     "selectPreferred": "আজই শেখা শুরু করতে আপনার পছন্দের লার্নিং প্ল্যান নির্বাচন করুন।",
@@ -443,7 +449,11 @@
         "name": "উচ্চশিক্ষা স্কলারশিপের যোগ্যতা*",
         "desc": "১০০% পর্যন্ত কলেজ টিউশন অনুদান এবং বৈশ্বিক স্কলারশিপের জন্য সরাসরি মনোনয়ন"
       }
-    }
+    },
+    "viewLessFeatures": "কম বৈশিষ্ট্য দেখুন",
+    "viewMoreFeatures": "আরও {{count}} বৈশিষ্ট্য দেখুন",
+    "featuresCount": "বৈশিষ্ট্যসমূহ",
+    "signIn": "সাইন ইন করুন →"
   },
   "courseCard": {
     "viewDemo": "বিবরণ দেখুন",
@@ -1669,26 +1679,14 @@
     "menu": "☰ মেনূ"
   },
   "instructorHome": {
-    "welcomeBack": "রিফান্ড পর স্঵াগত , {{name}}",
-    "dashboardTitle": "শিক্ষক ডৈশবোর্ড",
-    "totalCourses": "কুল কোর্স",
-    "totalStudents": "কুল ছাত্র",
-    "instructorRating": "শিক্ষক রেটিং",
-    "activeCourses": "সক্রিয কোর্স",
-    "viewAll": "সমস্ত দেখুন",
-    "loadingCourses": "কোর্স লোড হো রহে ं...",
-    "noCourses": "অভী কোনো সক্রিয কোর্স না ৤",
-    "studentsRevenue": "{{count}} ছাত্র · ₹{{revenue}}",
-    "avgCompletion": "{{value}}% ঔসত পূর্ণতা",
-    "upcomingSessions": "আগামী সেশন",
-    "manage": "প্রবंধিত করুন",
-    "loadingSessions": "সেশন লোড হো রহে ं...",
-    "noUpcomingSessions": "কোনো আগামী সেশন না ৤",
-    "dateTbd": "তিথি তয না",
-    "joiningSession": "সেশন সে জুড় রহে ं...",
-    "sessionLinkCopied": "সেশন লিंক ক৉পী হো গযা",
-    "join": "জুড়েं",
-    "link": "লিंক"
+    "studentQueries": "ছাত্রদের প্রশ্নাবলী",
+    "noStudentQueries": "এই মুহূর্তে কোনো ছাত্রের প্রশ্ন নেই",
+    "noQueriesDesc": "ভর্তি হওয়া ছাত্ররা প্রশ্ন জমা দিলে, তা এখানে লাইভ নোটিফিকেশন সহ দেখা যাবে।",
+    "unreadQueriesCount": "{{count}}টি অপঠিত",
+    "reply": "উত্তর দিন",
+    "soundEnabled": "শব্দ চালু",
+    "soundMuted": "শব্দ বন্ধ",
+    "testSound": "শব্দ পরীক্ষা"
   },
   "instructorAnalytics": {
     "totalRevenue": "কুল আয",
@@ -2271,15 +2269,5 @@
     "typing": "টাইপ করছেন…",
     "messageDeleted": "বার্তা মুছে ফেলা হয়েছে",
     "copyText": "টেক্সট কপি করা হয়েছে"
-  },
-  "instructorHome": {
-    "studentQueries": "ছাত্রদের প্রশ্নাবলী",
-    "noStudentQueries": "এই মুহূর্তে কোনো ছাত্রের প্রশ্ন নেই",
-    "noQueriesDesc": "ভর্তি হওয়া ছাত্ররা প্রশ্ন জমা দিলে, তা এখানে লাইভ নোটিফিকেশন সহ দেখা যাবে।",
-    "unreadQueriesCount": "{{count}}টি অপঠিত",
-    "reply": "উত্তর দিন",
-    "soundEnabled": "শব্দ চালু",
-    "soundMuted": "শব্দ বন্ধ",
-    "testSound": "শব্দ পরীক্ষা"
   }
 }

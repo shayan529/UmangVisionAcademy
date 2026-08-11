@@ -352,7 +352,13 @@
       "questionBank10Years": "10-ஆண்டு முழுமையான வினா வங்கி காப்பகம்",
       "intlStudyCounselling": "சர்வதேச படிப்பு வழிகாட்டுதல் & ஆதரவு (பிரத்தியேகமானது)",
       "scholarshipEligibility": "உயர்கல்வி உதவித்தொகை தகுதி* (பிரத்தியேகமானது)",
-      "vipMentorFastTrack": "விஐபி முன்னுரிமை வழிகாட்டி & விரைவான சந்தேகத் தீர்வு"
+      "vipMentorFastTrack": "விஐபி முன்னுரிமை வழிகாட்டி & விரைவான சந்தேகத் தீர்வு",
+      "recordedVideos": "பதிவு செய்யப்பட்ட வீடியோ விரிவுரைகள்",
+      "studyContent": "எழுத்துரு படிப்பு உள்ளடக்கம்",
+      "animationVideos": "அனிமேஷன் வீடியோக்கள்",
+      "questionBank3Years": "3 ஆண்டு படிப்பு & வகுப்பு வாரியான கேள்வி வங்கி",
+      "doubtClearing": "AI ஆசிரியர் சந்தேக-தெளிவு அமர்வுகள்",
+      "lmsResources": "பிரீமியம் LMS வளங்கள் & வழிகாட்டி ஒத்துழைப்பு"
     },
     "explore": "ஆராய்க →",
     "selectPreferred": "இன்றே கற்கத் தொடங்க உங்களுக்கு விருப்பமான கற்றல் திட்டத்தைத் தேர்வுசெய்யவும்.",
@@ -443,7 +449,11 @@
         "name": "உயர்கல்வி உதவித்தொகை தகுதி*",
         "desc": "100% வரை கல்லூரி கல்விக் கட்டண மானியங்கள் மற்றும் உலகளாவிய உதவித்தொகைக்கான நேரடி பரிந்துரை"
       }
-    }
+    },
+    "viewLessFeatures": "குறைந்த அம்சங்களைப் பார்க்கவும்",
+    "viewMoreFeatures": "{{count}} மேலும் அம்சங்களைப் பார்க்கவும்",
+    "featuresCount": "அம்சங்கள்",
+    "signIn": "உள்நுழையவும் →"
   },
   "courseCard": {
     "viewDemo": "விவரங்களைக் காண்க",
@@ -1669,26 +1679,14 @@
     "menu": "☰ மேநூ"
   },
   "instructorHome": {
-    "welcomeBack": "திரும்பப்பெறுதல் பர ஸ்வாகத ஹை, {{name}}",
-    "dashboardTitle": "ஆசிரியர் ஡ைஸவாரியம்",
-    "totalCourses": "குல பாடநெறி",
-    "totalStudents": "குல மாணவர்",
-    "instructorRating": "ஆசிரியர் ரேடிंக",
-    "activeCourses": "ஸக்ரிய பாடநெறி",
-    "viewAll": "ஸபீ காண்க",
-    "loadingCourses": "பாடநெறி லோ஡ ஹோ ரஹே ஹைं...",
-    "noCourses": "அபீ கோஈ ஸக்ரிய பாடநெறி நஹீं ஹை௤",
-    "studentsRevenue": "{{count}} மாணவர் · ₹{{revenue}}",
-    "avgCompletion": "{{value}}% ஔஸத பூர்ணதா",
-    "upcomingSessions": "ஆகாமீ அமர்வு",
-    "manage": "ப்ரபं஧ித செய்க",
-    "loadingSessions": "அமர்வு லோ஡ ஹோ ரஹே ஹைं...",
-    "noUpcomingSessions": "கோஈ ஆகாமீ அமர்வு நஹீं ஹை௤",
-    "dateTbd": "தி஥ி தய நஹீं",
-    "joiningSession": "அமர்வு ஸே யு஡஼ ரஹே ஹைं...",
-    "sessionLinkCopied": "அமர்வு லிंக க௉பீ ஹோ கயா",
-    "join": "யு஡஼ேं",
-    "link": "லிंக"
+    "studentQueries": "மாணவர் கேள்விகள்",
+    "noStudentQueries": "இப்போது மாணவர் கேள்விகள் இல்லை",
+    "noQueriesDesc": "பதிவுசெய்த மாணவர்கள் கேள்விகளைச் சமர்ப்பிக்கும் போது, அவை நேரடி அறிவிப்புகளுடன் இங்கே தோன்றும்.",
+    "unreadQueriesCount": "{{count}} படிக்காதவை",
+    "reply": "பதிலளிக்கவும்",
+    "soundEnabled": "ஒலி இயக்கம்",
+    "soundMuted": "ஒலி முடக்கம்",
+    "testSound": "ஒலி சோதனை"
   },
   "instructorAnalytics": {
     "totalRevenue": "குல ஆய",
@@ -2271,15 +2269,5 @@
     "typing": "தட்டச்சு செய்கிறார்…",
     "messageDeleted": "செய்தி நீக்கப்பட்டது",
     "copyText": "உரை நகலெடுக்கப்பட்டது"
-  },
-  "instructorHome": {
-    "studentQueries": "மாணவர் கேள்விகள்",
-    "noStudentQueries": "இப்போது மாணவர் கேள்விகள் இல்லை",
-    "noQueriesDesc": "பதிவுசெய்த மாணவர்கள் கேள்விகளைச் சமர்ப்பிக்கும் போது, அவை நேரடி அறிவிப்புகளுடன் இங்கே தோன்றும்.",
-    "unreadQueriesCount": "{{count}} படிக்காதவை",
-    "reply": "பதிலளிக்கவும்",
-    "soundEnabled": "ஒலி இயக்கம்",
-    "soundMuted": "ஒலி முடக்கம்",
-    "testSound": "ஒலி சோதனை"
   }
 }

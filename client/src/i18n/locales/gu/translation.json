@@ -352,7 +352,13 @@
       "questionBank10Years": "10-વર્ષીય સંપૂર્ણ પ્રશ્ન બેંક સંગ્રહ",
       "intlStudyCounselling": "આંતરરાષ્ટ્રીય અભ્યાસ કાઉન્સેલિંગ અને સપોર્ટ (વિશેષ)",
       "scholarshipEligibility": "ઉચ્ચ અભ્યાસ શિષ્યવૃત્તિ પાત્રતા* (વિશેષ)",
-      "vipMentorFastTrack": "વીઆઈપી પ્રાથમિકતા માર્ગદર્શક અને ઝડપી શંકા નિવારણ"
+      "vipMentorFastTrack": "વીઆઈપી પ્રાથમિકતા માર્ગદર્શક અને ઝડપી શંકા નિવારણ",
+      "recordedVideos": "રેકોર્ડ કરેલ વિડીઓ લેક્ચર",
+      "studyContent": "લેખિત અભ્યાસ સામગ્રી",
+      "animationVideos": "એનિમેશન વિડીઓ",
+      "questionBank3Years": "3-વર્ષ કોર્સ અને ક્લાસ-વાઇઝ પ્રશ્ન બેંક",
+      "doubtClearing": "AI ઇન્સ્ટ્રક્ટર ડાઉટ-ક્લિયરિંગ સત્ર",
+      "lmsResources": "પ્રીમિયમ LMS સ્ત્રોત અને મેન્ટર સહયોગ"
     },
     "explore": "જુઓ →",
     "selectPreferred": "આજે જ શીખવાનું શરૂ કરવા માટે તમારી પસંદગીની લર્નિંગ પ્લાન પસંદ કરો.",
@@ -443,7 +449,11 @@
         "name": "ઉચ્ચ-અભ્યાસ શિષ્યવૃત્તિ પાત્રતા*",
         "desc": "100% સુધીની કોલેજ ટ્યુશન ગ્રાન્ટ અને વૈશ્વિક શિષ્યવૃત્તિ માટે સીધું નામાંકન"
       }
-    }
+    },
+    "viewLessFeatures": "ઓછી સુવિધાઓ જુઓ",
+    "viewMoreFeatures": "{{count}} વધુ સુવિધાઓ જુઓ",
+    "featuresCount": "સુવિધાઓ",
+    "signIn": "સાઇન ઇન કરો →"
   },
   "courseCard": {
     "viewDemo": "વિગતો જુઓ",
@@ -1669,26 +1679,14 @@
     "menu": "☰ મેનૂ"
   },
   "instructorHome": {
-    "welcomeBack": "રીફંડ પર સ્વાગત હૈ, {{name}}",
-    "dashboardTitle": "શિક્ષક ડૈશબોર્ડ",
-    "totalCourses": "કુલ અભ્યાસક્રમ",
-    "totalStudents": "કુલ વિદ્યાર્થી",
-    "instructorRating": "શિક્ષક રેટિंગ",
-    "activeCourses": "સક્રિય અભ્યાસક્રમ",
-    "viewAll": "બધા જુઓ",
-    "loadingCourses": "અભ્યાસક્રમ લોડ હો રહે હૈं...",
-    "noCourses": "અભી કોઈ સક્રિય અભ્યાસક્રમ નહીं હૈ૤",
-    "studentsRevenue": "{{count}} વિદ્યાર્થી · ₹{{revenue}}",
-    "avgCompletion": "{{value}}% ઔસત પૂર્ણતા",
-    "upcomingSessions": "આગામી સત્ર",
-    "manage": "પ્રબंધિત કરો",
-    "loadingSessions": "સત્ર લોડ હો રહે હૈं...",
-    "noUpcomingSessions": "કોઈ આગામી સત્ર નહીं હૈ૤",
-    "dateTbd": "તિથિ તય નહીं",
-    "joiningSession": "સત્ર સે જુડ઼ રહે હૈं...",
-    "sessionLinkCopied": "સત્ર લિंક કૉપી હો ગયા",
-    "join": "જુડ઼ેं",
-    "link": "લિंક"
+    "studentQueries": "વિદ્યાર્થી પ્રશ્નો",
+    "noStudentQueries": "હાલમાં કોઈ વિદ્યાર્થી પ્રશ્નો નથી",
+    "noQueriesDesc": "જ્યારે નોંધાયેલા વિદ્યાર્થીઓ પ્રશ્નો સબમિટ કરશે, ત્યારે તેઓ લાઇવ સૂચનાઓ સાથે અહીં દેખાશે.",
+    "unreadQueriesCount": "{{count}} ન વંચાયેલ",
+    "reply": "જવાબ આપો",
+    "soundEnabled": "અવાજ ચાલુ",
+    "soundMuted": "અવાજ બંધ",
+    "testSound": "અવાજ પરીક્ષણ"
   },
   "instructorAnalytics": {
     "totalRevenue": "કુલ આય",
@@ -2271,15 +2269,5 @@
     "typing": "ટાઇપ કરી રહ્યા છે…",
     "messageDeleted": "સંદેશ ડિલીટ થયો",
     "copyText": "ટેક્સ્ટ કોપી થઈ ગયું"
-  },
-  "instructorHome": {
-    "studentQueries": "વિદ્યાર્થી પ્રશ્નો",
-    "noStudentQueries": "હાલમાં કોઈ વિદ્યાર્થી પ્રશ્નો નથી",
-    "noQueriesDesc": "જ્યારે નોંધાયેલા વિદ્યાર્થીઓ પ્રશ્નો સબમિટ કરશે, ત્યારે તેઓ લાઇવ સૂચનાઓ સાથે અહીં દેખાશે.",
-    "unreadQueriesCount": "{{count}} ન વંચાયેલ",
-    "reply": "જવાબ આપો",
-    "soundEnabled": "અવાજ ચાલુ",
-    "soundMuted": "અવાજ બંધ",
-    "testSound": "અવાજ પરીક્ષણ"
   }
 }
