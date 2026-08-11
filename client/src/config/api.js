@@ -113,10 +113,13 @@ export const API_ENDPOINTS = {
     DELETE_MESSAGE: (id, mid) =>
       `/instructor-chat/conversations/${id}/messages/${mid}`,
     CALL_REQUESTS: "/instructor-chat/call-requests",
+    REQUEST_CALL: (id) => "/instructor-chat/call-requests",
     CALL_REQUEST: (id) => `/instructor-chat/call-requests/${id}`,
     CALL_REQUEST_APPROVE: (id) =>
       `/instructor-chat/call-requests/${id}/approve`,
+    APPROVE_CALL: (id) => `/instructor-chat/call-requests/${id}/approve`,
     CALL_REQUEST_REJECT: (id) => `/instructor-chat/call-requests/${id}/reject`,
+    REJECT_CALL: (id) => `/instructor-chat/call-requests/${id}/reject`,
     ADMIN_REPORTS: "/instructor-chat/admin/reports",
     ADMIN_REPORT_MESSAGES: (id) =>
       `/instructor-chat/admin/reports/${id}/messages`,

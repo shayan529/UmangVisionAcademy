@@ -655,11 +655,17 @@ const AskInstructor = () => {
 
   // 8. Delete Message
   const handleDeleteMsg = async (messageId) => {
+    if (!activeConversation?._id) return;
     try {
-      await dispatch(deleteMessage(messageId)).unwrap();
+      await dispatch(
+        deleteMessage({
+          conversationId: activeConversation._id,
+          messageId,
+        }),
+      ).unwrap();
       toast.success("Message deleted");
     } catch (err) {
-      toast.error("Failed to delete message");
+      toast.error(err || "Failed to delete message");
     }
   };
 
@@ -689,17 +695,18 @@ const AskInstructor = () => {
     setIsSubmittingCall(true);
     try {
       const res = await api.post(
-        API_ENDPOINTS.INSTRUCTOR_CHAT.REQUEST_CALL(activeConversation._id),
+        API_ENDPOINTS.INSTRUCTOR_CHAT.CALL_REQUESTS,
         {
-          topic: `Doubt resolution for ${activeConversation.course?.title || "class lesson"}`,
+          conversationId: activeConversation._id,
+          message: `Doubt resolution for ${activeConversation.course?.title || "class lesson"}`,
         },
       );
-      setActiveCallRequest(res.data.data);
+      setActiveCallRequest(res.data);
       toast.success(
         "Google Meet video session requested! Awaiting instructor approval.",
       );
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to request call");
+      toast.error(err?.response?.data?.message || err?.message || "Failed to request call");
     } finally {
       setIsSubmittingCall(false);
     }
@@ -790,7 +797,7 @@ const AskInstructor = () => {
 
   // ── RENDER ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-[calc(100dvh-6rem)] md:h-[calc(100vh-5.5rem)] w-full bg-[#080b18] rounded-2xl md:rounded-3xl overflow-hidden border border-[#1a244d] shadow-2xl relative text-zinc-100 font-sans">
+    <div className="flex h-[calc(100dvh-13.5rem)] sm:h-[calc(100dvh-10rem)] md:h-[calc(100vh-5.5rem)] w-full bg-[#080b18] rounded-2xl md:rounded-3xl overflow-hidden border border-[#1a244d] shadow-2xl relative text-zinc-100 font-sans mb-16 md:mb-0">
       <CustomStyles />
 
       {/* Lightbox Modal */}
@@ -1410,8 +1417,8 @@ const AskInstructor = () => {
             )}
 
             {/* Modern Input Dock */}
-            <div className="p-3.5 sm:p-4 border-t border-[#1a244d] bg-[#0b1028] shrink-0">
-              <div className="flex items-end gap-2 bg-[#101738] border border-[#223068] focus-within:border-emerald-500/80 rounded-2xl px-3 py-2 transition-all shadow-inner">
+            <div className="p-2 sm:p-4 border-t border-[#1a244d] bg-[#0b1028] shrink-0">
+              <div className="flex items-end gap-1.5 sm:gap-2 bg-[#101738] border border-[#223068] focus-within:border-emerald-500/80 rounded-2xl px-2.5 sm:px-3 py-1.5 sm:py-2 transition-all shadow-inner">
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -1430,10 +1437,10 @@ const AskInstructor = () => {
                     activeConversation?.assistanceDisabled ||
                     activeConversation?.isBlocked
                   }
-                  className="p-2.5 rounded-xl text-zinc-400 hover:text-emerald-400 hover:bg-[#182352] disabled:opacity-40 disabled:cursor-not-allowed transition shrink-0 cursor-pointer"
+                  className="p-2 sm:p-2.5 rounded-xl text-zinc-400 hover:text-emerald-400 hover:bg-[#182352] disabled:opacity-40 disabled:cursor-not-allowed transition shrink-0 cursor-pointer"
                   title="Attach media or document"
                 >
-                  <Paperclip size={18} />
+                  <Paperclip size={16} />
                 </button>
                 <textarea
                   value={text}
@@ -1450,12 +1457,12 @@ const AskInstructor = () => {
                   }}
                   placeholder={
                     activeConversation?.assistanceDisabled
-                      ? "Instructor assistance is turned OFF for this course."
-                      : "Type your question… (Press Enter to send, Shift+Enter for new line)"
+                      ? "Instructor assistance is turned OFF."
+                      : "Type your question… (Enter to send)"
                   }
                   rows={1}
-                  className="flex-1 bg-transparent text-zinc-100 text-sm py-2 outline-none resize-none max-h-32 overflow-y-auto pro-chat-scroll placeholder:text-zinc-500 leading-relaxed disabled:opacity-50"
-                  style={{ minHeight: 40 }}
+                  className="flex-1 bg-transparent text-zinc-100 text-xs sm:text-sm py-1.5 sm:py-2 outline-none resize-none max-h-24 sm:max-h-32 overflow-y-auto pro-chat-scroll placeholder:text-zinc-500 leading-relaxed disabled:opacity-50"
+                  style={{ minHeight: 36 }}
                 />
                 <button
                   onClick={() => sendMessage()}
@@ -1466,12 +1473,12 @@ const AskInstructor = () => {
                     activeConversation?.assistanceDisabled ||
                     activeConversation?.isBlocked
                   }
-                  className="p-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all shrink-0 shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer"
+                  className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all shrink-0 shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer"
                 >
                   {uploading || sending ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <Send size={16} />
+                    <Send size={15} />
                   )}
                 </button>
               </div>

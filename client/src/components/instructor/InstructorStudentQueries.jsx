@@ -656,11 +656,17 @@ export default function InstructorStudentQueries({ showToast }) {
 
   // 8. Delete Message
   const handleDeleteMsg = async (messageId) => {
+    if (!activeConversation?._id) return;
     try {
-      await dispatch(deleteMessage(messageId)).unwrap();
+      await dispatch(
+        deleteMessage({
+          conversationId: activeConversation._id,
+          messageId,
+        }),
+      ).unwrap();
       toast.success("Message deleted");
     } catch (err) {
-      toast.error("Failed to delete message");
+      toast.error(err || "Failed to delete message");
     }
   };
 
@@ -672,21 +678,33 @@ export default function InstructorStudentQueries({ showToast }) {
     }
     setSubmittingMeetLink(true);
     try {
-      await api.post(
-        API_ENDPOINTS.INSTRUCTOR_CHAT.APPROVE_CALL(activeConversation._id),
-        {
-          meetingLink: meetingLinkInput.trim(),
-          response:
-            "Here is the Google Meet link for our interactive doubt resolution session.",
-        },
-      );
+      if (activeMeetRequest?._id) {
+        await api.put(
+          API_ENDPOINTS.INSTRUCTOR_CHAT.CALL_REQUEST_APPROVE(
+            activeMeetRequest._id,
+          ),
+          {
+            meetingLink: meetingLinkInput.trim(),
+            response:
+              "Here is the Google Meet link for our interactive doubt resolution session.",
+          },
+        );
+      } else if (activeConversation?._id) {
+        if (socketRef.current) {
+          socketRef.current.emit("ic:message", {
+            conversationId: activeConversation._id,
+            text: `Please join the Google Meet session:\n${meetingLinkInput.trim()}`,
+            media: [],
+          });
+        }
+      }
       toast.success("Meeting link sent to student!");
       setMeetModalOpen(false);
       setMeetingLinkInput("");
       setActiveMeetRequest(null);
     } catch (err) {
       toast.error(
-        err?.response?.data?.message || "Failed to share meeting link",
+        err?.response?.data?.message || err?.message || "Failed to share meeting link",
       );
     } finally {
       setSubmittingMeetLink(false);
@@ -803,7 +821,7 @@ export default function InstructorStudentQueries({ showToast }) {
   }, [messages, user]);
 
   return (
-    <div className="flex h-[calc(100dvh-6rem)] md:h-[calc(100vh-5.5rem)] w-full bg-[#080b18] rounded-2xl md:rounded-3xl overflow-hidden border border-[#1a244d] shadow-2xl relative text-zinc-100 font-sans">
+    <div className="flex h-[calc(100dvh-9.5rem)] sm:h-[calc(100dvh-8rem)] md:h-[calc(100vh-5.5rem)] w-full bg-[#080b18] rounded-2xl md:rounded-3xl overflow-hidden border border-[#1a244d] shadow-2xl relative text-zinc-100 font-sans">
       <CustomStyles />
 
       {/* Lightbox Modal */}
@@ -1275,8 +1293,8 @@ export default function InstructorStudentQueries({ showToast }) {
             )}
 
             {/* Input Dock */}
-            <div className="p-3.5 sm:p-4 border-t border-[#1a244d] bg-[#0b1028] shrink-0">
-              <div className="flex items-end gap-2 bg-[#101738] border border-[#223068] focus-within:border-emerald-500/80 rounded-2xl px-3 py-2 transition-all shadow-inner">
+            <div className="p-2 sm:p-4 border-t border-[#1a244d] bg-[#0b1028] shrink-0">
+              <div className="flex items-end gap-1.5 sm:gap-2 bg-[#101738] border border-[#223068] focus-within:border-emerald-500/80 rounded-2xl px-2.5 sm:px-3 py-1.5 sm:py-2 transition-all shadow-inner">
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -1289,10 +1307,10 @@ export default function InstructorStudentQueries({ showToast }) {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={activeConversation?.isBlocked}
-                  className="p-2.5 rounded-xl text-zinc-400 hover:text-emerald-400 hover:bg-[#182352] disabled:opacity-40 disabled:cursor-not-allowed transition shrink-0 cursor-pointer"
+                  className="p-2 sm:p-2.5 rounded-xl text-zinc-400 hover:text-emerald-400 hover:bg-[#182352] disabled:opacity-40 disabled:cursor-not-allowed transition shrink-0 cursor-pointer"
                   title="Attach solution document or image"
                 >
-                  <Paperclip size={18} />
+                  <Paperclip size={16} />
                 </button>
                 <textarea
                   value={text}
@@ -1304,10 +1322,10 @@ export default function InstructorStudentQueries({ showToast }) {
                       handleSendMessage();
                     }
                   }}
-                  placeholder="Type your response to the student… (Press Enter to send, Shift+Enter for new line)"
+                  placeholder="Type your response to the student… (Enter to send)"
                   rows={1}
-                  className="flex-1 bg-transparent text-zinc-100 text-sm py-2 outline-none resize-none max-h-32 overflow-y-auto pro-chat-scroll placeholder:text-zinc-500 leading-relaxed disabled:opacity-50"
-                  style={{ minHeight: 40 }}
+                  className="flex-1 bg-transparent text-zinc-100 text-xs sm:text-sm py-1.5 sm:py-2 outline-none resize-none max-h-24 sm:max-h-32 overflow-y-auto pro-chat-scroll placeholder:text-zinc-500 leading-relaxed disabled:opacity-50"
+                  style={{ minHeight: 36 }}
                 />
                 <button
                   onClick={() => handleSendMessage()}
@@ -1317,12 +1335,12 @@ export default function InstructorStudentQueries({ showToast }) {
                     uploading ||
                     activeConversation?.isBlocked
                   }
-                  className="p-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all shrink-0 shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer"
+                  className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all shrink-0 shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer"
                 >
                   {uploading || sending ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <Send size={16} />
+                    <Send size={15} />
                   )}
                 </button>
               </div>

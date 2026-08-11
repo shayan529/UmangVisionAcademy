@@ -99,8 +99,18 @@ export const archiveConversation = createAsyncThunk(
 /** Soft-delete one message */
 export const deleteMessage = createAsyncThunk(
   "instructorChat/deleteMessage",
-  async ({ conversationId, messageId }, { rejectWithValue }) => {
+  async (arg, { getState, rejectWithValue }) => {
     try {
+      const state = getState().instructorChat;
+      const conversationId =
+        (typeof arg === "object" ? arg?.conversationId : null) ||
+        state.activeConversation?._id;
+      const messageId = typeof arg === "object" ? arg?.messageId : arg;
+
+      if (!conversationId || !messageId) {
+        return rejectWithValue("Conversation ID and message ID are required");
+      }
+
       await api.delete(
         API_ENDPOINTS.INSTRUCTOR_CHAT.DELETE_MESSAGE(conversationId, messageId),
       );

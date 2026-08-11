@@ -699,7 +699,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="relative flex flex-col items-start px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl sm:rounded-br-none bg-gradient-to-r from-[#0d1e38]/95 via-[#132d54]/95 to-[#1c1440]/95 border-2 border-cyan-400/70 shadow-[0_10px_35px_rgba(6,182,212,0.45)] backdrop-blur-md hover:scale-105 transition-all text-left group-hover:border-cyan-300 cursor-pointer"
+            className="hidden sm:flex relative flex-col items-start px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl sm:rounded-br-none bg-gradient-to-r from-[#0d1e38]/95 via-[#132d54]/95 to-[#1c1440]/95 border-2 border-cyan-400/70 shadow-[0_10px_35px_rgba(6,182,212,0.45)] backdrop-blur-md hover:scale-105 transition-all text-left group-hover:border-cyan-300 cursor-pointer"
             title="Click to open AI chat"
           >
             <div className="flex items-center gap-1.5 mb-0.5">
