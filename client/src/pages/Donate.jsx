@@ -281,37 +281,32 @@ const Donate = () => {
               className="w-full h-full object-cover transform scale-105 group-hover:scale-100 transition-transform duration-1000"
             />
 
-            {/* Dark Cinematic Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/60 to-[#0B1120]/30" />
+            {/* Subtle Gradient - Keeps Photo Bright & Makes Text Readable Without Box */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120]/95 via-[#0B1120]/40 to-transparent" />
 
-            {/* Full-Page Hero Content Overlay */}
-            <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10 lg:p-14 px-14 sm:px-24 lg:px-28 z-20">
-              <div className="max-w-3xl space-y-3 sm:space-y-4">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-extrabold uppercase tracking-wider backdrop-blur-md">
-                  <Heart size={14} className="text-rose-400 fill-rose-400 animate-pulse" />
-                  <span>{t("donate.badge", "FREE STUDENT EDUCATION & CHARITY INITIATIVE")}</span>
-                </div>
+            {/* Direct Text Overlay - NO BACKGROUND BOX */}
+            <div className="absolute bottom-6 left-16 right-16 sm:bottom-8 sm:left-24 lg:left-28 z-20 space-y-3 max-w-2xl">
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-extrabold uppercase tracking-wider backdrop-blur-md">
+                <Heart size={13} className="text-rose-400 fill-rose-400 animate-pulse" />
+                <span>{t("donate.badge", "FREE STUDENT EDUCATION & CHARITY INITIATIVE")}</span>
+              </div>
 
-                <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white leading-tight drop-shadow-2xl">
-                  {t(slide.titleKey, slide.defaultTitle)}
-                </h1>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+                {t(slide.titleKey, slide.defaultTitle)}
+              </h1>
 
-                <p className="text-xs sm:text-base text-slate-200 line-clamp-2 max-w-2xl leading-relaxed drop-shadow-md">
-                  {t(slide.subtitleKey, slide.defaultSubtitle)}
-                </p>
+              <p className="text-xs sm:text-sm text-slate-200 line-clamp-2 leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                {t(slide.subtitleKey, slide.defaultSubtitle)}
+              </p>
 
-                <div className="pt-2 flex flex-wrap items-center gap-3 sm:gap-4">
-                  <a
-                    href="#donate-form"
-                    className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm transition-transform hover:scale-105 shadow-xl shadow-emerald-500/30 uppercase tracking-wider cursor-pointer"
-                  >
-                    <span>Donate Now</span>
-                    <Heart size={16} className="fill-slate-950" />
-                  </a>
-                  <span className="text-[11px] sm:text-xs font-semibold text-slate-300 backdrop-blur-md px-3.5 py-2 rounded-xl bg-slate-950/70 border border-white/10">
-                    ✦ 50% Tax Exemption (Section 80G Certified)
-                  </span>
-                </div>
+              <div className="pt-1.5 flex flex-wrap items-center gap-3">
+                <a
+                  href="#donate-form"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm transition-transform hover:scale-105 shadow-xl shadow-emerald-500/30 uppercase tracking-wider cursor-pointer"
+                >
+                  <span>Donate Now</span>
+                  <Heart size={15} className="fill-slate-950" />
+                </a>
               </div>
             </div>
           </div>
