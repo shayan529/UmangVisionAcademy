@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import SEO from "../components/common/SEO";
 import { hasBaseRole } from "../utils/permissions";
 import {
@@ -51,7 +52,7 @@ const Skeleton = ({ className = "" }) => (
   <div className={`animate-pulse rounded-xl bg-white/[0.06] ${className}`} />
 );
 
-const SuccessOverlay = ({ count, purchasedCourses = [], onClose, onGoToDashboard }) => {
+const SuccessOverlay = ({ count, purchasedCourses = [], onClose, onGoToDashboard, t }) => {
   const displayCount = Math.max(count, purchasedCourses.length, 1);
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/85 backdrop-blur-md px-4 modal-bg">
@@ -74,17 +75,13 @@ const SuccessOverlay = ({ count, purchasedCourses = [], onClose, onGoToDashboard
         {/* Header text */}
         <div className="space-y-2.5 relative z-10">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-[0.14em] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-            Purchase Successful
+            {t("cart.purchaseSuccessful", "Purchase Successful")}
           </span>
           <h2 className="text-2xl md:text-[28px] font-black text-white tracking-tight">
-            You're enrolled
+            {t("cart.youreEnrolled", "You're enrolled")}
           </h2>
           <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
-            You now have access to{" "}
-            <span className="font-bold text-emerald-300">
-              {displayCount} course{displayCount !== 1 ? "s" : ""}
-            </span>
-            . Jump in whenever you're ready.
+            {t(count !== 1 ? "cart.enrolledDesc_plural" : "cart.enrolledDesc", count !== 1 ? `You now have access to ${count} courses. Jump in whenever you're ready.` : `You now have access to ${count} course. Jump in whenever you're ready.`, { count })}
           </p>
         </div>
 
@@ -112,7 +109,7 @@ const SuccessOverlay = ({ count, purchasedCourses = [], onClose, onGoToDashboard
                   </p>
                 </div>
                 <span className="text-[10px] font-bold text-emerald-400 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 shrink-0">
-                  Enrolled
+                  {t("cart.enrolled", "Enrolled")}
                 </span>
               </div>
             ))}
@@ -125,7 +122,7 @@ const SuccessOverlay = ({ count, purchasedCourses = [], onClose, onGoToDashboard
             onClick={onClose}
             className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-sm tracking-wide shadow-[0_0_25px_rgba(16,185,129,0.35)] hover:shadow-[0_0_35px_rgba(16,185,129,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
-            <span>Go to My Courses</span>
+            <span>{t("cart.goToCourses", "Go to My Courses")}</span>
             <ArrowRight size={18} />
           </button>
 
@@ -133,7 +130,7 @@ const SuccessOverlay = ({ count, purchasedCourses = [], onClose, onGoToDashboard
             onClick={onGoToDashboard}
             className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-500 hover:text-white hover:bg-white/[0.05] transition-colors"
           >
-            Go to Student Dashboard
+            {t("cart.goToDashboard", "Go to Student Dashboard")}
           </button>
         </div>
       </div>
@@ -148,6 +145,7 @@ const WalletConfirmModal = ({
   onConfirm,
   onCancel,
   loading,
+  t,
 }) => {
   const insufficient = balance < total;
   return (
@@ -162,19 +160,19 @@ const WalletConfirmModal = ({
             <Wallet size={20} className="text-violet-400" />
           </div>
           <div>
-            <h3 className="text-white font-bold text-base leading-tight">Pay with Wallet</h3>
-            <p className="text-slate-500 text-xs mt-0.5">Instant, no redirect</p>
+            <h3 className="text-white font-bold text-base leading-tight">{t("cart.payWithWallet", "Pay with Wallet")}</h3>
+            <p className="text-slate-500 text-xs mt-0.5">{t("cart.instantNoRedirect", "Instant, no redirect")}</p>
           </div>
         </div>
 
         {/* Balance vs total */}
         <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4 space-y-3">
           <div className="flex justify-between text-sm">
-            <span className="text-slate-400">Order total</span>
+            <span className="text-slate-400">{t("cart.orderTotal", "Order total")}</span>
             <span className="text-white font-bold">{fmt(total)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-slate-400">Wallet balance</span>
+            <span className="text-slate-400">{t("cart.walletBalance", "Wallet balance")}</span>
             <span
               className={`font-bold ${insufficient ? "text-red-400" : "text-emerald-400"}`}
             >
@@ -183,7 +181,7 @@ const WalletConfirmModal = ({
           </div>
           {!insufficient && (
             <div className="flex justify-between text-sm border-t border-white/[0.07] pt-3">
-              <span className="text-slate-400">Balance after</span>
+              <span className="text-slate-400">{t("cart.balanceAfter", "Balance after")}</span>
               <span className="text-slate-300 font-bold">
                 {fmt(balance - total)}
               </span>
@@ -196,8 +194,7 @@ const WalletConfirmModal = ({
           <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
             <AlertCircle size={16} className="shrink-0 mt-0.5" />
             <span>
-              You need {fmt(total - balance)} more. Add money to your wallet
-              first.
+              {t("cart.insufficientBalance", "You need {{amount}} more. Add money to your wallet first.", { amount: fmt(total - balance) })}
             </span>
           </div>
         )}
@@ -208,7 +205,7 @@ const WalletConfirmModal = ({
             onClick={onCancel}
             className="flex-1 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-white/20 text-sm font-semibold transition-colors"
           >
-            Cancel
+            {t("cart.cancel", "Cancel")}
           </button>
           <button
             onClick={onConfirm}
@@ -226,17 +223,17 @@ const WalletConfirmModal = ({
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
-                <Loader2 size={15} className="animate-spin" /> Paying…
+                <Loader2 size={15} className="animate-spin" /> {t("cart.paying", "Paying…")}
               </span>
             ) : (
-              `Confirm ${fmt(total)}`
+              t("cart.confirm", "Confirm {{amount}}", { amount: fmt(total) })
             )}
           </button>
         </div>
 
         {insufficient && (
           <p className="text-center text-xs text-slate-600">
-            Go to Wallet → Add Money to top up your balance.
+            {t("cart.goToWallet", "Go to Wallet → Add Money to top up your balance.")}
           </p>
         )}
       </div>
@@ -248,6 +245,7 @@ const WalletConfirmModal = ({
 export default function CartPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useSelector((s) => s.auth);
 
   const {
@@ -322,7 +320,7 @@ export default function CartPage() {
     setTimeout(() => {
       dispatch(removeFromCart(id));
       setRemovingId(null);
-      toast.success("Removed from cart");
+      toast.success(t("cart.removedFromCart", "Removed from cart"));
     }, 280);
   };
 
@@ -427,6 +425,7 @@ export default function CartPage() {
           count={enrolledIds.length > 0 ? enrolledIds.length : (lastPurchasedCourses.length || 1)}
           purchasedCourses={lastPurchasedCourses}
           onClose={handleSuccessClose}
+          t={t}
           onGoToDashboard={() => {
             dispatch(resetCheckout());
             navigate("/student-dashboard");
@@ -439,6 +438,7 @@ export default function CartPage() {
           total={total}
           balance={walletBalance}
           loading={walletPayLoading}
+          t={t}
           onConfirm={handleWalletCheckout}
           onCancel={() => setShowWalletConfirm(false)}
         />
@@ -451,12 +451,12 @@ export default function CartPage() {
           className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-sm font-semibold transition-colors shrink-0"
         >
           <ArrowLeft size={15} />
-          <span>Back</span>
+          <span>{t("cart.back", "Back")}</span>
         </button>
         <div className="w-px h-4 bg-white/10" />
         <div className="flex items-center gap-2 min-w-0">
           <ShoppingCart size={15} className="text-emerald-300 shrink-0" />
-          <span className="font-bold text-white text-sm truncate">Your Cart</span>
+          <span className="font-bold text-white text-sm truncate">{t("cart.title", "Your Cart")}</span>
           {cartItems.length > 0 && (
             <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-400/10 text-emerald-300 border border-emerald-400/20 shrink-0">
               {cartItems.length}
@@ -532,26 +532,26 @@ export default function CartPage() {
               {/* Hero Copy */}
               <div className="space-y-2 relative z-10">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-[0.14em] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                  Ready for your next step?
+                  {t("cart.emptyTag", "Ready for your next step?")}
                 </span>
                 <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-                  Your cart is empty
+                  {t("cart.emptyTitle", "Your cart is empty")}
                 </h2>
                 <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
-                  Explore top courses and competitive exam prep to start building your skills today.
+                  {t("cart.emptyDesc", "Explore top courses and competitive exam prep to start building your skills today.")}
                 </p>
               </div>
 
               {/* Feature Pills */}
               <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold text-slate-300 pt-1">
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
-                  ⚡ Instant Access
+                  ⚡ {t("cart.instantAccess", "Instant Access")}
                 </span>
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
-                  📜 Certified
+                  📜 {t("cart.certified", "Certified")}
                 </span>
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
-                  💬 AI Tutor
+                  💬 {t("cart.aiTutor", "AI Tutor")}
                 </span>
               </div>
 
@@ -561,7 +561,7 @@ export default function CartPage() {
                 className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-sm tracking-wide shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:shadow-[0_0_35px_rgba(16,185,129,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
               >
                 <Plus size={18} />
-                <span>Explore All Courses</span>
+                <span>{t("cart.exploreCourses", "Explore All Courses")}</span>
               </button>
             </div>
 
@@ -572,17 +572,17 @@ export default function CartPage() {
                   <div>
                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
                       <BookOpen size={18} className="text-emerald-400" />
-                      <span>Popular Courses You Might Like</span>
+                      <span>{t("cart.popularCourses", "Popular Courses You Might Like")}</span>
                     </h3>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      Handpicked recommendations to get you started quickly
+                      {t("cart.popularDesc", "Handpicked recommendations to get you started quickly")}
                     </p>
                   </div>
                   <button
                     onClick={() => navigate("/courses")}
                     className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
                   >
-                    View all <ArrowRight size={13} />
+                    {t("cart.viewAll", "View all")} <ArrowRight size={13} />
                   </button>
                 </div>
 
@@ -616,7 +616,7 @@ export default function CartPage() {
                             {course.title}
                           </h4>
                           <p className="text-xs text-slate-400 mt-0.5 truncate">
-                            by {instructorName(course.instructor)}
+                            {t("cart.by", "by")} {instructorName(course.instructor)}
                           </p>
                         </div>
                       </div>
@@ -629,7 +629,7 @@ export default function CartPage() {
                           onClick={() => handleAdd(course._id ?? course.id)}
                           className="inline-flex items-center gap-1 rounded-xl bg-emerald-400/10 border border-emerald-400/20 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-400/20 transition-colors"
                         >
-                          <Plus size={13} /> Add to Cart
+                          <Plus size={13} /> {t("cart.addToCart", "Add to Cart")}
                         </button>
                       </div>
                     </div>
@@ -643,8 +643,7 @@ export default function CartPage() {
             {/* ── LEFT: cart items ── */}
             <div className="space-y-4">
               <p className="text-slate-500 text-sm font-medium">
-                {cartItems.length} course{cartItems.length !== 1 ? "s" : ""} in
-                your cart
+                {t(cartItems.length !== 1 ? "cart.coursesInCart_plural" : "cart.coursesInCart", `${cartItems.length} course${cartItems.length !== 1 ? 's' : ''} in your cart`, { count: cartItems.length })}
               </p>
 
               {cartItems.map((item, idx) => (
@@ -688,8 +687,8 @@ export default function CartPage() {
                           {item.title}
                         </h3>
                         <p className="text-slate-500 text-sm mt-1">
-                          by {instructorName(item.instructor)}
-                        </p>
+                            {t("cart.by", "by")} {instructorName(item.instructor)}
+                          </p>
                         <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-500">
                           <span className="flex items-center gap-1">
                             <Star
@@ -701,7 +700,7 @@ export default function CartPage() {
                           <span className="w-1 h-1 rounded-full bg-slate-700" />
                           <span className="flex items-center gap-1">
                             <Users size={11} /> {item.students?.length ?? 0}{" "}
-                            students
+                            {t("cart.students", "students")}
                           </span>
                           <span className="w-1 h-1 rounded-full bg-slate-700" />
                           <span className="flex items-center gap-1">
@@ -720,7 +719,7 @@ export default function CartPage() {
                           onClick={() => handleRemove(item._id ?? item.id)}
                           className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-300 transition-colors px-3 py-1.5 rounded-lg border border-red-500/20 bg-red-500/[0.06] hover:bg-red-500/[0.12]"
                         >
-                          <Trash2 size={13} /> Remove
+                          <Trash2 size={13} /> {t("cart.remove", "Remove")}
                         </button>
                       </div>
                     </div>
@@ -733,7 +732,7 @@ export default function CartPage() {
                   onClick={() => setShowBrowser(true)}
                   className="w-full rounded-2xl border border-dashed border-white/[0.1] py-5 text-slate-500 hover:border-emerald-400/30 hover:text-emerald-400 hover:bg-emerald-400/[0.02] transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                 >
-                  <Plus size={16} /> Add another course
+                  <Plus size={16} /> {t("cart.addAnother", "Add another course")}
                 </button>
               )}
             </div>
@@ -744,7 +743,7 @@ export default function CartPage() {
               <div className="h-[3px] bg-gradient-to-r from-emerald-400 via-teal-400 to-violet-400" />
 
               <div className="p-6 flex flex-col gap-5">
-                <h2 className="text-xl font-black text-white">Order Summary</h2>
+                <h2 className="text-xl font-black text-white">{t("cart.orderSummary", "Order Summary")}</h2>
 
                 <div className="space-y-2">
                   {cartItems.map((item) => (
@@ -763,7 +762,7 @@ export default function CartPage() {
                 </div>
 
                 <div className="flex justify-between items-center border-t border-white/[0.07] pt-4">
-                  <span className="font-bold text-white text-base">Total</span>
+                  <span className="font-bold text-white text-base">{t("cart.total", "Total")}</span>
                   <span className="text-2xl font-black text-emerald-300">
                     {fmt(total)}
                   </span>
@@ -788,7 +787,7 @@ export default function CartPage() {
                         hasEnoughBalance ? "text-violet-300" : "text-red-300"
                       }
                     >
-                      Wallet Balance
+                      {t("cart.walletBalance", "Wallet Balance")}
                     </span>
                   </div>
                   <span
@@ -800,7 +799,7 @@ export default function CartPage() {
 
                 <div className="space-y-2.5">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    Choose a payment method
+                    {t("cart.choosePayment", "Choose a payment method")}
                   </p>
 
                   {/* ── Pay with Wallet CTA ── */}
@@ -823,8 +822,8 @@ export default function CartPage() {
                   >
                     <Wallet size={16} />
                     {hasEnoughBalance
-                      ? `Pay ${fmt(total)} from Wallet`
-                      : `Add ${fmt(total - walletBalance)} more to Wallet`}
+                      ? t("cart.payFromWallet", "Pay {{amount}} from Wallet", { amount: fmt(total) })
+                      : t("cart.addToWallet", "Add {{amount}} more to Wallet", { amount: fmt(total - walletBalance) })}
                   </button>
 
                   {/* Low balance nudge */}
@@ -833,14 +832,14 @@ export default function CartPage() {
                       onClick={() => navigate("/student-dashboard/wallet")}
                       className="w-full text-xs text-violet-400 hover:text-violet-300 transition-colors text-center underline underline-offset-2"
                     >
-                      + Top up wallet →
+                      {t("cart.topUpWallet", "+ Top up wallet →")}
                     </button>
                   )}
 
                   {/* Divider */}
                   <div className="flex items-center gap-3 py-1">
                     <div className="flex-1 h-px bg-white/[0.06]" />
-                    <span className="text-slate-600 text-xs">or</span>
+                    <span className="text-slate-600 text-xs">{t("cart.or", "or")}</span>
                     <div className="flex-1 h-px bg-white/[0.06]" />
                   </div>
 
@@ -857,11 +856,11 @@ export default function CartPage() {
                   >
                     {orderLoading || paymentLoading ? (
                       <>
-                        <Loader2 size={17} className="animate-spin" /> Processing…
+                        <Loader2 size={17} className="animate-spin" /> {t("cart.processing", "Processing…")}
                       </>
                     ) : (
                       <>
-                        <ArrowRight size={17} /> Pay {fmt(total)} with Razorpay
+                        <ArrowRight size={17} /> {t("cart.payWithRazorpay", "Pay {{amount}} with Razorpay", { amount: fmt(total) })}
                       </>
                     )}
                   </button>
@@ -875,16 +874,15 @@ export default function CartPage() {
                   />
                   <div>
                     <span className="font-semibold text-emerald-300">
-                      7-Day Money Back Guarantee
+                      {t("cart.moneyBack", "7-Day Money Back Guarantee")}
                     </span>
                     <p className="text-slate-400 mt-0.5 leading-relaxed">
-                      Not satisfied? Request a refund within 7 days (credited
-                      directly to your platform Wallet). Read our{" "}
+                      {t("cart.moneyBackDesc", "Not satisfied? Request a refund within 7 days (credited directly to your platform Wallet). Read our")}{" "}
                       <Link
                         to="/refund-policy"
                         className="text-emerald-400 underline hover:text-emerald-300 font-medium"
                       >
-                        Refund Policy
+                        {t("cart.refundPolicy", "Refund Policy")}
                       </Link>
                       .
                     </p>
@@ -893,8 +891,8 @@ export default function CartPage() {
 
                 <p className="text-center text-xs text-slate-600">
                   {total > 0
-                    ? "Secure 256-Bit SSL Encrypted Checkout"
-                    : "No payment required for free courses"}
+                    ? t("cart.sslSecure", "Secure 256-Bit SSL Encrypted Checkout")
+                    : t("cart.freeCourses", "No payment required for free courses")}
                 </p>
               </div>
             </div>
@@ -910,7 +908,7 @@ export default function CartPage() {
         >
           <div className="modal-card w-full max-w-xl max-h-[85vh] flex flex-col rounded-[28px] border border-white/[0.09] bg-[#0b1120] shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-6 pt-6 pb-4 shrink-0 border-b border-white/[0.06]">
-              <h3 className="text-lg font-bold">Browse Courses</h3>
+              <h3 className="text-lg font-bold">{t("cart.browseCourses", "Browse Courses")}</h3>
               <button
                 onClick={() => setShowBrowser(false)}
                 className="p-1.5 rounded-lg hover:bg-white/[0.06] text-slate-400 hover:text-white transition-colors"
@@ -925,7 +923,7 @@ export default function CartPage() {
                   autoFocus
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search courses or instructors…"
+                  placeholder={t("cart.searchPlaceholder", "Search courses or instructors…")}
                   className="bg-transparent flex-1 outline-none text-sm text-white placeholder-slate-500"
                 />
                 {search && (
@@ -957,8 +955,8 @@ export default function CartPage() {
                   <BookOpen size={32} className="mx-auto mb-3 opacity-40" />
                   <p className="text-sm">
                     {search
-                      ? "No courses match."
-                      : "All courses are in your cart!"}
+                      ? t("cart.noCoursesMatch", "No courses match.")
+                      : t("cart.allInCart", "All courses are in your cart!")}
                   </p>
                 </div>
               ) : (
@@ -983,7 +981,7 @@ export default function CartPage() {
                         {course.title}
                       </p>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        by {instructorName(course.instructor)}
+                        {t("cart.by", "by")} {instructorName(course.instructor)}
                       </p>
                       <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500">
                         <span className="flex items-center gap-1">
@@ -1008,7 +1006,7 @@ export default function CartPage() {
                         onClick={() => handleAdd(course._id ?? course.id)}
                         className="mt-1.5 inline-flex items-center gap-1 rounded-lg bg-emerald-400/10 border border-emerald-400/20 px-2.5 py-1 text-[11px] font-bold text-emerald-300 hover:bg-emerald-400/20 transition-colors"
                       >
-                        <Plus size={11} /> Add
+                        <Plus size={11} /> {t("cart.add", "Add")}
                       </button>
                     </div>
                   </div>
