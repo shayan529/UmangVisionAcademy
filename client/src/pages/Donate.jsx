@@ -261,9 +261,9 @@ const Donate = () => {
         <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-amber-600/15 blur-[120px] rounded-full transform-gpu" />
       </div>
 
-      {/* ── 1. FULL PAGE SIZE HERO 5-IMAGE SLIDING CAROUSEL (Edge-To-Edge) ── */}
+      {/* ── 1. FULL PAGE HERO 5-IMAGE SLIDING CAROUSEL (100% Visible on Landing) ── */}
       <section
-        className="relative w-full h-[520px] sm:h-[620px] md:h-[720px] lg:h-[800px] min-h-[75vh] overflow-hidden bg-slate-950 group z-10"
+        className="relative w-full h-[calc(100vh-80px)] min-h-[480px] max-h-[600px] overflow-hidden bg-slate-950 group z-10"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
@@ -282,33 +282,33 @@ const Donate = () => {
             />
 
             {/* Dark Cinematic Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/50 to-[#0B1120]/30" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/60 to-[#0B1120]/30" />
 
             {/* Full-Page Hero Content Overlay */}
-            <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-12 lg:p-20 z-20">
-              <div className="max-w-4xl space-y-4">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs sm:text-sm font-extrabold uppercase tracking-wider backdrop-blur-md">
+            <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10 lg:p-14 z-20">
+              <div className="max-w-3xl space-y-3 sm:space-y-4">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-extrabold uppercase tracking-wider backdrop-blur-md">
                   <Heart size={14} className="text-rose-400 fill-rose-400 animate-pulse" />
                   <span>{t("donate.badge", "FREE STUDENT EDUCATION & CHARITY INITIATIVE")}</span>
                 </div>
 
-                <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-tight drop-shadow-2xl">
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white leading-tight drop-shadow-2xl">
                   {t(slide.titleKey, slide.defaultTitle)}
                 </h1>
 
-                <p className="text-sm sm:text-lg md:text-xl text-slate-200 line-clamp-3 max-w-3xl leading-relaxed drop-shadow-md">
+                <p className="text-xs sm:text-base text-slate-200 line-clamp-2 max-w-2xl leading-relaxed drop-shadow-md">
                   {t(slide.subtitleKey, slide.defaultSubtitle)}
                 </p>
 
-                <div className="pt-4 flex flex-wrap items-center gap-4">
+                <div className="pt-2 flex flex-wrap items-center gap-3 sm:gap-4">
                   <a
                     href="#donate-form"
-                    className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-black text-sm sm:text-base transition-transform hover:scale-105 shadow-2xl shadow-emerald-500/30 uppercase tracking-wider cursor-pointer"
+                    className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm transition-transform hover:scale-105 shadow-xl shadow-emerald-500/30 uppercase tracking-wider cursor-pointer"
                   >
                     <span>Donate Now</span>
-                    <Heart size={18} className="fill-slate-950" />
+                    <Heart size={16} className="fill-slate-950" />
                   </a>
-                  <span className="text-xs sm:text-sm font-semibold text-slate-300 backdrop-blur-md px-4 py-2 rounded-xl bg-slate-950/60 border border-white/10">
+                  <span className="text-[11px] sm:text-xs font-semibold text-slate-300 backdrop-blur-md px-3.5 py-2 rounded-xl bg-slate-950/70 border border-white/10">
                     ✦ 50% Tax Exemption (Section 80G Certified)
                   </span>
                 </div>
@@ -322,28 +322,28 @@ const Donate = () => {
           type="button"
           onClick={handlePrevSlide}
           aria-label="Previous Slide"
-          className="absolute left-6 top-1/2 -translate-y-1/2 z-30 h-14 w-14 rounded-full bg-slate-950/70 border border-white/20 text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl backdrop-blur-md cursor-pointer"
+          className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-30 h-11 w-11 sm:h-13 sm:w-13 rounded-full bg-slate-950/70 border border-white/20 text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl backdrop-blur-md cursor-pointer"
         >
-          <ChevronLeft size={28} />
+          <ChevronLeft size={24} />
         </button>
         <button
           type="button"
           onClick={handleNextSlide}
           aria-label="Next Slide"
-          className="absolute right-6 top-1/2 -translate-y-1/2 z-30 h-14 w-14 rounded-full bg-slate-950/70 border border-white/20 text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl backdrop-blur-md cursor-pointer"
+          className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-30 h-11 w-11 sm:h-13 sm:w-13 rounded-full bg-slate-950/70 border border-white/20 text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl backdrop-blur-md cursor-pointer"
         >
-          <ChevronRight size={28} />
+          <ChevronRight size={24} />
         </button>
 
-        {/* Slide Position Indicator Dots */}
-        <div className="absolute top-8 right-8 z-30 flex items-center gap-2 bg-slate-950/70 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+        {/* Slide Position Indicator Dots (Top Right) */}
+        <div className="absolute top-5 right-5 sm:top-6 sm:right-8 z-30 flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/15 shadow-xl">
           {carouselSlides.map((_, idx) => (
             <button
               key={idx}
               type="button"
               onClick={() => setCurrentSlide(idx)}
-              className={`h-3 rounded-full transition-all duration-300 cursor-pointer ${
-                idx === currentSlide ? "w-8 bg-emerald-400" : "w-3 bg-white/40 hover:bg-white"
+              className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
+                idx === currentSlide ? "w-7 bg-emerald-400" : "w-2.5 bg-white/40 hover:bg-white"
               }`}
               aria-label={`Go to slide ${idx + 1}`}
             />
