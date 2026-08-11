@@ -2212,5 +2212,15 @@
     "typing": "ટાઇપ કરી રહ્યા છે…",
     "messageDeleted": "સંદેશ ડિલીટ થયો",
     "copyText": "ટેક્સ્ટ કોપી થઈ ગયું"
+  },
+  "instructorHome": {
+    "studentQueries": "વિદ્યાર્થી પ્રશ્નો",
+    "noStudentQueries": "હાલમાં કોઈ વિદ્યાર્થી પ્રશ્નો નથી",
+    "noQueriesDesc": "જ્યારે નોંધાયેલા વિદ્યાર્થીઓ પ્રશ્નો સબમિટ કરશે, ત્યારે તેઓ લાઇવ સૂચનાઓ સાથે અહીં દેખાશે.",
+    "unreadQueriesCount": "{{count}} ન વંચાયેલ",
+    "reply": "જવાબ આપો",
+    "soundEnabled": "અવાજ ચાલુ",
+    "soundMuted": "અવાજ બંધ",
+    "testSound": "અવાજ પરીક્ષણ"
   }
 }

@@ -1,26 +1,51 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react";
+import { Volume2, VolumeX } from "lucide-react";
+import {
+  isNotificationSoundEnabled,
+  toggleNotificationSound,
+  testNotificationSound,
+} from "../../utils/notificationSound";
 
 const initialNotifs = [
-  { icon: "📚", bg: "#EEEDFE", text: 'New lesson added to "Full Stack Web Development"',       time: "5 min ago",  read: false },
-  { icon: "🏆", bg: "#E1F5EE", text: "You ranked up to #6 on the Leaderboard!",                time: "18 min ago", read: false },
-  { icon: "🤖", bg: "#FBEAF0", text: "Your AI Tutor session summary is ready to review",       time: "1 hr ago",   read: false },
-  { icon: "💬", bg: "#FAEEDA", text: "Someone replied to your post in the React community",    time: "2 hr ago",   read: false },
-  { icon: "✅", bg: "#E1F5EE", text: 'You completed "JavaScript Closures" — great work!',      time: "Yesterday",  read: true  },
-  { icon: "📅", bg: "#EEEDFE", text: "Reminder: Live Q&A session starts in 1 hour",           time: "Yesterday",  read: true  },
-  { icon: "🎓", bg: "#FBEAF0", text: 'Certificate issued for "UI/UX Design Fundamentals"',    time: "2 days ago", read: true  },
-]
+  { icon: "📚", bg: "#EEEDFE", text: 'New lesson added to "Full Stack Web Development"', time: "5 min ago", read: false },
+  { icon: "🏆", bg: "#E1F5EE", text: "You ranked up to #6 on the Leaderboard!", time: "18 min ago", read: false },
+  { icon: "🤖", bg: "#FBEAF0", text: "Your AI Tutor session summary is ready to review", time: "1 hr ago", read: false },
+  { icon: "💬", bg: "#FAEEDA", text: "Someone replied to your post in the React community", time: "2 hr ago", read: false },
+  { icon: "✅", bg: "#E1F5EE", text: 'You completed "JavaScript Closures" — great work!', time: "Yesterday", read: true },
+  { icon: "📅", bg: "#EEEDFE", text: "Reminder: Live Q&A session starts in 1 hour", time: "Yesterday", read: true },
+  { icon: "🎓", bg: "#FBEAF0", text: 'Certificate issued for "UI/UX Design Fundamentals"', time: "2 days ago", read: true },
+];
 
 const StudentNotifications = () => {
-  const [notifs, setNotifs] = useState(initialNotifs)
+  const [notifs, setNotifs] = useState(initialNotifs);
+  const [soundEnabled, setSoundEnabled] = useState(isNotificationSoundEnabled());
 
-  const unread   = notifs.filter((n) => !n.read).length
-  const markAll  = () => setNotifs(notifs.map((n) => ({ ...n, read: true })))
-  const markOne  = (i) => setNotifs(notifs.map((n, idx) => idx === i ? { ...n, read: true } : n))
-  const deleteOne = (i) => setNotifs(notifs.filter((_, idx) => idx !== i))
+  useEffect(() => {
+    const handleSoundChange = (e) => {
+      if (e.detail?.enabled !== undefined) {
+        setSoundEnabled(e.detail.enabled);
+      }
+    };
+    window.addEventListener("notification-sound-change", handleSoundChange);
+    return () =>
+      window.removeEventListener("notification-sound-change", handleSoundChange);
+  }, []);
+
+  const handleToggleSound = () => {
+    const next = toggleNotificationSound();
+    setSoundEnabled(next);
+    if (next) {
+      testNotificationSound();
+    }
+  };
+
+  const unread = notifs.filter((n) => !n.read).length;
+  const markAll = () => setNotifs(notifs.map((n) => ({ ...n, read: true })));
+  const markOne = (i) => setNotifs(notifs.map((n, idx) => (idx === i ? { ...n, read: true } : n)));
+  const deleteOne = (i) => setNotifs(notifs.filter((_, idx) => idx !== i));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <div>
@@ -36,14 +61,53 @@ const StudentNotifications = () => {
             {unread > 0 ? `You have ${unread} new notification${unread > 1 ? "s" : ""}` : "You're all caught up!"}
           </p>
         </div>
-        {unread > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button
-            onClick={markAll}
-            style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid #334155", background: "#1e293b", color: "#cbd5e1", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+            onClick={handleToggleSound}
+            style={{
+              background: soundEnabled ? "rgba(124,58,237,0.12)" : "#1e293b",
+              border: soundEnabled
+                ? "1px solid rgba(167,139,250,0.4)"
+                : "1px solid #334155",
+              color: soundEnabled ? "#c084fc" : "#94a3b8",
+              borderRadius: 10,
+              padding: "7px 12px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+            title={
+              soundEnabled
+                ? "Notification Sound Active (Click to mute)"
+                : "Notification Sound Muted (Click to enable)"
+            }
           >
-            Mark all read
+            {soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+            <span>{soundEnabled ? "Sound On" : "Muted"}</span>
           </button>
-        )}
+
+          {unread > 0 && (
+            <button
+              onClick={markAll}
+              style={{
+                padding: "8px 16px",
+                borderRadius: 10,
+                border: "1px solid #334155",
+                background: "#1e293b",
+                color: "#cbd5e1",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Mark all read
+            </button>
+          )}
+        </div>
       </div>
 
       {/* List */}
@@ -97,8 +161,8 @@ const StudentNotifications = () => {
                 onClick={() => deleteOne(i)}
                 title="Dismiss"
                 style={{ background: "transparent", border: "none", color: "#475569", fontSize: 15, cursor: "pointer", padding: "2px 4px", lineHeight: 1, borderRadius: 6, transition: "color 0.15s" }}
-                onMouseEnter={(e) => e.currentTarget.style.color = "#f87171"}
-                onMouseLeave={(e) => e.currentTarget.style.color = "#475569"}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
               >
                 ✕
               </button>
@@ -107,7 +171,7 @@ const StudentNotifications = () => {
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default StudentNotifications
+export default StudentNotifications;

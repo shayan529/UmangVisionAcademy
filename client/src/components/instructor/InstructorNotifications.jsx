@@ -1,10 +1,36 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, SectionHeader, Btn } from "./InstructorUi";
 import { useTranslation } from "react-i18next";
+import { Volume2, VolumeX } from "lucide-react";
+import {
+  isNotificationSoundEnabled,
+  toggleNotificationSound,
+  testNotificationSound,
+} from "../../utils/notificationSound";
 
 const InstructorNotifications = ({ notifs, setNotifs }) => {
   const { t } = useTranslation();
+  const [soundEnabled, setSoundEnabled] = useState(isNotificationSoundEnabled());
   const unread = notifs.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    const handleSoundChange = (e) => {
+      if (e.detail?.enabled !== undefined) {
+        setSoundEnabled(e.detail.enabled);
+      }
+    };
+    window.addEventListener("notification-sound-change", handleSoundChange);
+    return () =>
+      window.removeEventListener("notification-sound-change", handleSoundChange);
+  }, []);
+
+  const handleToggleSound = () => {
+    const next = toggleNotificationSound();
+    setSoundEnabled(next);
+    if (next) {
+      testNotificationSound();
+    }
+  };
 
   const markAll = () => setNotifs(notifs.map((n) => ({ ...n, read: true })));
   const markOne = (i) =>
@@ -19,11 +45,41 @@ const InstructorNotifications = ({ notifs, setNotifs }) => {
             : t("instructorNotifications.title")
         }
         action={
-          unread > 0 ? (
-            <Btn variant="ghost" style={{ fontSize: 12 }} onClick={markAll}>
-              {t("instructorNotifications.markAllRead")}
-            </Btn>
-          ) : null
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              onClick={handleToggleSound}
+              style={{
+                background: soundEnabled ? "rgba(16,185,129,0.12)" : "#1e293b",
+                border: soundEnabled
+                  ? "1px solid rgba(16,185,129,0.35)"
+                  : "1px solid #334155",
+                color: soundEnabled ? "#34d399" : "#94a3b8",
+                borderRadius: 8,
+                padding: "5px 9px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              title={
+                soundEnabled
+                  ? "Notification Sound Active (Click to mute)"
+                  : "Notification Sound Muted (Click to enable)"
+              }
+            >
+              {soundEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
+              <span>{soundEnabled ? "Sound On" : "Muted"}</span>
+            </button>
+
+            {unread > 0 && (
+              <Btn variant="ghost" style={{ fontSize: 12 }} onClick={markAll}>
+                {t("instructorNotifications.markAllRead")}
+              </Btn>
+            )}
+          </div>
         }
       />
       {notifs.map((n, i) => (

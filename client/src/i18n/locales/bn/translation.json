@@ -2212,5 +2212,15 @@
     "typing": "টাইপ করছেন…",
     "messageDeleted": "বার্তা মুছে ফেলা হয়েছে",
     "copyText": "টেক্সট কপি করা হয়েছে"
+  },
+  "instructorHome": {
+    "studentQueries": "ছাত্রদের প্রশ্নাবলী",
+    "noStudentQueries": "এই মুহূর্তে কোনো ছাত্রের প্রশ্ন নেই",
+    "noQueriesDesc": "ভর্তি হওয়া ছাত্ররা প্রশ্ন জমা দিলে, তা এখানে লাইভ নোটিফিকেশন সহ দেখা যাবে।",
+    "unreadQueriesCount": "{{count}}টি অপঠিত",
+    "reply": "উত্তর দিন",
+    "soundEnabled": "শব্দ চালু",
+    "soundMuted": "শব্দ বন্ধ",
+    "testSound": "শব্দ পরীক্ষা"
   }
 }

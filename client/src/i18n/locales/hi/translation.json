@@ -1615,6 +1615,19 @@
     "totalStudents": "कुल विद्यार्थी",
     "instructorRating": "शिक्षक रेटिंग",
     "activeCourses": "सक्रिय पाठ्यक्रम",
+    "studentQueries": "विद्यार्थी प्रश्न",
+    "unreadBadge": "{{count}} नए",
+    "noStudentQueries": "अभी कोई विद्यार्थी प्रश्न नहीं है",
+    "noQueriesDesc": "जब नामांकित विद्यार्थी प्रश्न पूछेंगे, तो वे यहाँ लाइव सूचनाओं के साथ दिखाई देंगे।",
+    "openQueriesDesk": "प्रश्न डेस्क खोलें",
+    "reply": "उत्तर दें",
+    "soundOn": "ध्वनि चालू",
+    "soundMuted": "म्यूट",
+    "soundOnTooltip": "सूचना ध्वनि सक्रिय (म्यूट करने के लिए क्लिक करें)",
+    "soundOffTooltip": "सूचना ध्वनि म्यूट (सक्रिय करने के लिए क्लिक करें)",
+    "soundEnabledToast": "सूचना ध्वनि सक्षम 🔔",
+    "soundMutedToast": "सूचना ध्वनि म्यूट 🔕",
+    "noMessagesYet": "नया संशय थ्रेड शुरू हुआ",
     "viewAll": "सभी देखें",
     "loadingCourses": "पाठ्यक्रम लोड हो रहे हैं...",
     "noCourses": "अभी कोई सक्रिय पाठ्यक्रम नहीं है।",
@@ -2214,5 +2227,15 @@
     "messageDeleted": "संदेश हटा दिया गया",
     "copyText": "टेक्स्ट क्लिपबोर्ड पर कॉपी हो गया",
     "attachMedia": "मीडिया या दस्तावेज़ संलग्न करें"
+  },
+  "instructorHome": {
+    "studentQueries": "छात्र प्रश्न",
+    "noStudentQueries": "अभी कोई छात्र प्रश्न नहीं हैं",
+    "noQueriesDesc": "जब नामांकित छात्र प्रश्न जमा करेंगे, वे लाइव नोटिफिकेशन के साथ यहां दिखाई देंगे।",
+    "unreadQueriesCount": "{{count}} अपठित",
+    "reply": "उत्तर दें",
+    "soundEnabled": "ध्वनि चालू",
+    "soundMuted": "ध्वनि बंद",
+    "testSound": "ध्वनि परीक्षण"
   }
 }

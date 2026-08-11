@@ -1617,6 +1617,19 @@
     "totalStudents": "Total Students",
     "instructorRating": "Instructor Rating",
     "activeCourses": "Active Courses",
+    "studentQueries": "Student Queries",
+    "unreadBadge": "{{count}} new",
+    "noStudentQueries": "No student queries right now",
+    "noQueriesDesc": "When enrolled students submit questions or ask for assistance, they'll appear here with live notifications.",
+    "openQueriesDesk": "Open Queries Desk",
+    "reply": "Reply",
+    "soundOn": "Sound On",
+    "soundMuted": "Muted",
+    "soundOnTooltip": "Notification Sound Alert Active (Click to mute)",
+    "soundOffTooltip": "Notification Sound Muted (Click to enable)",
+    "soundEnabledToast": "Notification sound enabled 🔔",
+    "soundMutedToast": "Notification sound muted 🔕",
+    "noMessagesYet": "New doubt thread started",
     "viewAll": "View All",
     "loadingCourses": "Loading courses...",
     "noCourses": "No active courses right now.",
@@ -2216,5 +2229,15 @@
     "messageDeleted": "Message deleted",
     "copyText": "Text copied to clipboard",
     "attachMedia": "Attach media or document"
+  },
+  "instructorHome": {
+    "studentQueries": "Student Queries",
+    "noStudentQueries": "No student queries right now",
+    "noQueriesDesc": "When enrolled students submit questions or ask for assistance, they'll appear here with live notifications.",
+    "unreadQueriesCount": "{{count}} Unread",
+    "reply": "Reply",
+    "soundEnabled": "Sound On",
+    "soundMuted": "Muted",
+    "testSound": "Test Sound"
   }
 }

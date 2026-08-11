@@ -147,28 +147,53 @@ const instructorChatSlice = createSlice({
     /** Append a message that arrived over the socket */
     socketMessageReceived(state, { payload }) {
       const { message, conversationId } = payload;
-      if (
-        state.activeConversation?._id?.toString() === conversationId?.toString()
-      ) {
+      const isActiveThread =
+        state.activeConversation?._id?.toString() === conversationId?.toString();
+
+      if (isActiveThread) {
         // Deduplicate by _id (sender echo + broadcast can both arrive)
         const exists = state.messages.some(
           (m) => m._id?.toString() === message._id?.toString(),
         );
         if (!exists) state.messages.push(message);
+        if (state.activeConversation) {
+          state.activeConversation.instructorUnread = 0;
+          state.activeConversation.studentUnread = 0;
+        }
       }
-      // Update lastMessage in thread list
-      state.conversations = state.conversations.map((c) =>
-        c._id?.toString() === conversationId?.toString()
-          ? {
-              ...c,
-              lastMessage: {
-                text: message.text,
-                at: message.createdAt,
-                senderRole: message.senderRole,
-              },
-              updatedAt: message.createdAt,
-            }
-          : c,
+
+      // Update lastMessage and unread count in thread list
+      state.conversations = state.conversations.map((c) => {
+        if (c._id?.toString() !== conversationId?.toString()) return c;
+
+        const isStudentMsg = message.senderRole === "student";
+        const isInstructorMsg = message.senderRole === "instructor";
+
+        return {
+          ...c,
+          lastMessage: {
+            text: message.text,
+            at: message.createdAt,
+            senderRole: message.senderRole,
+          },
+          // If this thread is actively open, keep unread at 0
+          instructorUnread: isActiveThread
+            ? 0
+            : isStudentMsg
+              ? (c.instructorUnread ?? 0) + 1
+              : c.instructorUnread ?? 0,
+          studentUnread: isActiveThread
+            ? 0
+            : isInstructorMsg
+              ? (c.studentUnread ?? 0) + 1
+              : c.studentUnread ?? 0,
+          updatedAt: message.createdAt,
+        };
+      });
+
+      state.unreadCount = state.conversations.reduce(
+        (sum, c) => sum + (c.studentUnread ?? 0) + (c.instructorUnread ?? 0),
+        0,
       );
     },
 
@@ -183,11 +208,45 @@ const instructorChatSlice = createSlice({
       if (
         state.activeConversation?._id?.toString() === conversationId?.toString()
       ) {
-        // Visual read-receipt — no state change needed beyond clearing unread
-        state.activeConversation = state.activeConversation
-          ? { ...state.activeConversation, instructorUnread: 0, studentUnread: 0 }
-          : state.activeConversation;
+        state.activeConversation = {
+          ...state.activeConversation,
+          instructorUnread: 0,
+          studentUnread: 0,
+        };
       }
+      state.conversations = state.conversations.map((c) =>
+        c._id?.toString() === conversationId?.toString()
+          ? { ...c, instructorUnread: 0, studentUnread: 0 }
+          : c,
+      );
+      state.unreadCount = state.conversations.reduce(
+        (sum, c) => sum + (c.studentUnread ?? 0) + (c.instructorUnread ?? 0),
+        0,
+      );
+    },
+
+    /** Explicitly mark a conversation as read */
+    markConversationRead(state, { payload: conversationId }) {
+      if (!conversationId) return;
+      state.conversations = state.conversations.map((c) =>
+        c._id?.toString() === conversationId?.toString()
+          ? { ...c, instructorUnread: 0, studentUnread: 0 }
+          : c,
+      );
+      if (
+        state.activeConversation?._id?.toString() ===
+        conversationId?.toString()
+      ) {
+        state.activeConversation = {
+          ...state.activeConversation,
+          instructorUnread: 0,
+          studentUnread: 0,
+        };
+      }
+      state.unreadCount = state.conversations.reduce(
+        (sum, c) => sum + (c.studentUnread ?? 0) + (c.instructorUnread ?? 0),
+        0,
+      );
     },
 
     /** Replace a soft-deleted message with a tombstone */
@@ -199,9 +258,27 @@ const instructorChatSlice = createSlice({
       );
     },
 
-    /** Set the active conversation without a network fetch (from socket history) */
+    /** Set the active conversation without a network fetch (from socket history or list click) */
     setActiveConversation(state, { payload }) {
-      state.activeConversation = payload;
+      if (!payload) {
+        state.activeConversation = null;
+        return;
+      }
+      state.activeConversation = {
+        ...payload,
+        instructorUnread: 0,
+        studentUnread: 0,
+      };
+      // Immediately clear unread status in the thread list
+      state.conversations = state.conversations.map((c) =>
+        c._id?.toString() === payload._id?.toString()
+          ? { ...c, instructorUnread: 0, studentUnread: 0 }
+          : c,
+      );
+      state.unreadCount = state.conversations.reduce(
+        (sum, c) => sum + (c.studentUnread ?? 0) + (c.instructorUnread ?? 0),
+        0,
+      );
     },
 
     /** Bulk-replace messages (e.g. from ic:history socket event) */
@@ -228,9 +305,6 @@ const instructorChatSlice = createSlice({
     /** Compute total unread from conversation list */
     recomputeUnread(state) {
       state.unreadCount = state.conversations.reduce((sum, c) => {
-        // Populated after fetchConversations — each conv carries studentUnread
-        // or instructorUnread depending on who's viewing; we sum both since
-        // the reducer doesn't know the current user's role.
         return sum + (c.studentUnread ?? 0) + (c.instructorUnread ?? 0);
       }, 0);
     },
@@ -347,6 +421,7 @@ export const {
   socketMessageReceived,
   socketTypingReceived,
   socketReadReceived,
+  markConversationRead,
   markMessageDeleted,
   setActiveConversation,
   setMessages,

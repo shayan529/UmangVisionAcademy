@@ -15,11 +15,13 @@ import {
   socketMessageReceived,
   socketTypingReceived,
   socketReadReceived,
+  markConversationRead,
   setMessages,
   setActiveConversation,
   clearTyping,
   resetChat,
 } from "../../redux/slices/instructorChatSlice.js";
+import { playNotificationSound } from "../../utils/notificationSound.js";
 import {
   Paperclip,
   Send,
@@ -327,7 +329,8 @@ const Bubble = ({
 // ── Thread item in left list ──────────────────────────────────────────────────
 const ThreadItem = ({ conv, isActive, onClick }) => {
   const instructor = conv.instructor;
-  const unread = conv.studentUnread ?? 0;
+  // If active, unread is 0 so blinking badge disappears
+  const unread = isActive ? 0 : (conv.studentUnread ?? 0);
 
   return (
     <button
@@ -472,6 +475,13 @@ const AskInstructor = () => {
 
     socket.on("ic:message", (msg) => {
       dispatch(socketMessageReceived(msg));
+      // Play notification chime when instructor replies
+      if (
+        msg.message?.senderRole === "instructor" ||
+        msg.message?.sender?._id?.toString() !== user?._id?.toString()
+      ) {
+        playNotificationSound("message");
+      }
       if (activeConversation?._id === msg.conversationId) {
         socket.emit("ic:read", { conversationId: msg.conversationId });
       }
@@ -495,6 +505,7 @@ const AskInstructor = () => {
       if (data.status === "approved" && data.meetingLink) {
         setApprovedMeeting(data);
         setActiveCallRequest(null);
+        playNotificationSound("success");
         toast.success("Instructor approved your Google Meet request!", {
           duration: 5000,
         });
@@ -526,6 +537,7 @@ const AskInstructor = () => {
   // 4. Handle Conversation Selection
   const openThread = (conv) => {
     dispatch(setActiveConversation(conv));
+    dispatch(markConversationRead(conv._id));
     setView("chat");
     if (socketRef.current) {
       socketRef.current.emit("ic:join", {

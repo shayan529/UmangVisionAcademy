@@ -12,11 +12,13 @@ import {
   socketMessageReceived,
   socketTypingReceived,
   socketReadReceived,
+  markConversationRead,
   setMessages,
   setActiveConversation,
   clearTyping,
   resetChat,
 } from "../../redux/slices/instructorChatSlice.js";
+import { playNotificationSound } from "../../utils/notificationSound.js";
 import {
   Paperclip,
   Send,
@@ -320,7 +322,8 @@ const Bubble = ({
 // ── Thread item in left list ──────────────────────────────────────────────────
 const ThreadItem = ({ conv, isActive, onClick }) => {
   const student = conv.student;
-  const unread = conv.instructorUnread ?? 0;
+  // If this conversation is currently open and active, unread is 0 so the blinking badge immediately disappears
+  const unread = isActive ? 0 : (conv.instructorUnread ?? 0);
 
   return (
     <button
@@ -478,6 +481,13 @@ export default function InstructorStudentQueries({ showToast }) {
 
     socket.on("ic:message", (msg) => {
       dispatch(socketMessageReceived(msg));
+      // Play notification chime for incoming student message
+      if (
+        msg.message?.senderRole === "student" ||
+        msg.message?.sender?._id?.toString() !== user?._id?.toString()
+      ) {
+        playNotificationSound("query");
+      }
       if (activeConversation?._id === msg.conversationId) {
         socket.emit("ic:read", { conversationId: msg.conversationId });
       }
@@ -500,6 +510,7 @@ export default function InstructorStudentQueries({ showToast }) {
     socket.on("webrtc:call-request", (data) => {
       setActiveMeetRequest(data);
       setMeetModalOpen(true);
+      playNotificationSound("chime");
       toast(
         (t) => (
           <div className="flex items-center gap-3">
@@ -532,6 +543,7 @@ export default function InstructorStudentQueries({ showToast }) {
   // 4. Select / Open Conversation
   const openConversation = (conv) => {
     dispatch(setActiveConversation(conv));
+    dispatch(markConversationRead(conv._id));
     setMobileView("chat");
     setActionMenuOpen(false);
 
