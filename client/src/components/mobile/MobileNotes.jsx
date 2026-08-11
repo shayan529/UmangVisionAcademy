@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -14,6 +14,9 @@ import {
   User,
   Calendar,
   Zap,
+  ArrowUpDown,
+  Filter,
+  Layers,
 } from "lucide-react";
 import api from "../../config/api";
 import { useTranslation } from "react-i18next";
@@ -100,6 +103,8 @@ export default function MobileNotes() {
   const [classNotes, setClassNotes] = useState([]);
   const [loadingClassNotes, setLoadingClassNotes] = useState(false);
   const [filterTerm, setFilterTerm] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("All");
+  const [sortBy, setSortBy] = useState("sequential"); // 'sequential' | 'title' | 'newest' | 'oldest'
   const [activeModalNote, setActiveModalNote] = useState(null);
 
   useEffect(() => {
@@ -119,14 +124,72 @@ export default function MobileNotes() {
     }
   };
 
-  const filteredNotes = classNotes.filter((note) => {
-    const term = filterTerm.toLowerCase();
-    return (
-      note.title?.toLowerCase().includes(term) ||
-      note.description?.toLowerCase().includes(term) ||
-      note.instructorName?.toLowerCase().includes(term)
+  // Helper to extract clean subject from title, courseTitle, or fallback
+  const extractSubject = (note) => {
+    if (note.courseTitle) return note.courseTitle;
+    const title = note.title || "";
+    const match = title.match(
+      /(Chemistry|Physics|Maths|Mathematics|Biology|English|Hindi|Science|Computer|Social|Accounts|Economics|GST|History|Geography|Civics|Botany|Zoology)/i
     );
-  });
+    if (match) {
+      const found = match[1];
+      if (/math/i.test(found)) return "Mathematics";
+      return found.charAt(0).toUpperCase() + found.slice(1).toLowerCase();
+    }
+    return "General Study";
+  };
+
+  // Compute subject tabs with counts
+  const subjectTabs = useMemo(() => {
+    const counts = { All: classNotes.length };
+    classNotes.forEach((note) => {
+      const subj = extractSubject(note);
+      counts[subj] = (counts[subj] || 0) + 1;
+    });
+    return Object.keys(counts).map((subj) => ({
+      name: subj,
+      count: counts[subj],
+    }));
+  }, [classNotes]);
+
+  // Filter & Natural Sort Engine (Sequential 1 -> 2 -> 3)
+  const processedNotes = useMemo(() => {
+    let result = classNotes.filter((note) => {
+      const term = filterTerm.toLowerCase();
+      const matchesTerm =
+        note.title?.toLowerCase().includes(term) ||
+        note.description?.toLowerCase().includes(term) ||
+        note.instructorName?.toLowerCase().includes(term);
+
+      const subj = extractSubject(note);
+      const matchesSubject =
+        selectedSubject === "All" || subj.toLowerCase() === selectedSubject.toLowerCase();
+
+      return matchesTerm && matchesSubject;
+    });
+
+    const naturalCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
+    result.sort((a, b) => {
+      if (sortBy === "sequential") {
+        const subjA = extractSubject(a);
+        const subjB = extractSubject(b);
+        const subjCompare = naturalCollator.compare(subjA, subjB);
+        if (subjCompare !== 0) return subjCompare;
+        return naturalCollator.compare(a.title || "", b.title || "");
+      }
+      if (sortBy === "title") {
+        return naturalCollator.compare(a.title || "", b.title || "");
+      }
+      if (sortBy === "oldest") {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+      // 'newest'
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+
+    return result;
+  }, [classNotes, filterTerm, selectedSubject, sortBy]);
 
   return (
     <div className="w-full text-slate-100 p-4 md:p-6 lg:p-8 space-y-6">
@@ -179,23 +242,77 @@ export default function MobileNotes() {
           )}
         </div>
 
-        {/* Search Input */}
+        {/* Search Input & Sort Selector */}
         {!requireLogin && (
-          <div className="relative">
-            <Search
-              size={16}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-            />
-            <input
-              type="text"
-              placeholder={t(
-                "studyNotes.searchPlaceholder",
-                "Search notes by title, topic, or instructor name…"
-              )}
-              value={filterTerm}
-              onChange={(e) => setFilterTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-3.5 text-xs md:text-sm bg-[#111827]/80 text-slate-100 placeholder-slate-500 border border-slate-800 rounded-2xl focus:outline-none focus:border-teal-500/60 focus:ring-2 focus:ring-teal-500/20 transition shadow-inner"
-            />
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search
+                size={16}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+              />
+              <input
+                type="text"
+                placeholder={t(
+                  "studyNotes.searchPlaceholder",
+                  "Search notes by title, topic, or instructor name…"
+                )}
+                value={filterTerm}
+                onChange={(e) => setFilterTerm(e.target.value)}
+                className="w-full pl-11 pr-4 py-3.5 text-xs md:text-sm bg-[#111827]/80 text-slate-100 placeholder-slate-500 border border-slate-800 rounded-2xl focus:outline-none focus:border-teal-500/60 focus:ring-2 focus:ring-teal-500/20 transition shadow-inner"
+              />
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="relative shrink-0 flex items-center gap-2 bg-[#111827]/80 border border-slate-800 rounded-2xl px-3.5 py-2.5">
+              <ArrowUpDown size={15} className="text-teal-400 shrink-0" />
+              <span className="text-xs font-bold text-slate-400 shrink-0">Sort:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-transparent text-xs font-bold text-white outline-none cursor-pointer pr-2"
+              >
+                <option value="sequential" className="bg-slate-900 text-white">
+                  Subject & Chapter (Sequential 1→2→3)
+                </option>
+                <option value="title" className="bg-slate-900 text-white">
+                  Title (A - Z)
+                </option>
+                <option value="newest" className="bg-slate-900 text-white">
+                  Latest First
+                </option>
+                <option value="oldest" className="bg-slate-900 text-white">
+                  Oldest First
+                </option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* Subject Filter Pills */}
+        {!requireLogin && classNotes.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {subjectTabs.map((tab) => (
+              <button
+                key={tab.name}
+                onClick={() => setSelectedSubject(tab.name)}
+                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap border ${
+                  selectedSubject === tab.name
+                    ? "bg-teal-500/20 text-teal-300 border-teal-500/40 shadow-lg shadow-teal-500/10"
+                    : "bg-[#111827]/60 text-slate-400 border-slate-800/80 hover:text-slate-200 hover:border-slate-700"
+                }`}
+              >
+                <span>{tab.name}</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-extrabold ${
+                    selectedSubject === tab.name
+                      ? "bg-teal-500/30 text-teal-200"
+                      : "bg-slate-800 text-slate-400"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -254,23 +371,23 @@ export default function MobileNotes() {
               </p>
             </div>
           </div>
-        ) : filteredNotes.length === 0 ? (
+        ) : processedNotes.length === 0 ? (
           /* NO SEARCH MATCH */
           <div className="flex min-h-[360px] items-center justify-center py-8">
             <div className="py-12 px-6 text-center border border-dashed border-slate-800 rounded-3xl bg-[#111827]/60 max-w-md w-full space-y-3">
               <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 shadow-md">
                 <Search size={26} />
               </div>
-              <h3 className="text-sm font-bold text-white">No Notes Match Your Search</h3>
+              <h3 className="text-sm font-bold text-white">No Notes Match Your Filters</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Try searching with a different keyword or clear the search field.
+                Try selecting a different subject tab or clearing your search query.
               </p>
             </div>
           </div>
         ) : (
           /* NOTES CARDS GRID */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
-            {filteredNotes.map((note, i) => {
+            {processedNotes.map((note, i) => {
               const meta = getFileMeta(note.fileUrl);
               const FileIcon = meta.icon;
 

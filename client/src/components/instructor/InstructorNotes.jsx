@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchUsers } from "../../redux/slices/usersSlice";
 import { fetchAllCoursesAdmin, fetchCourses } from "../../redux/slices/courseSlice";
 import api from "../../config/api";
 import { Toast } from "./InstructorUi";
 import { uploadFile } from "../../utils/uploadFile";
-import { FileText, Plus, X, Upload, Search, Check, XCircle, FolderPlus, Trash2, Layers, Loader2 } from "lucide-react";
+import { FileText, Plus, X, Upload, Search, Check, XCircle, FolderPlus, Trash2, Layers, Loader2, ArrowUpDown } from "lucide-react";
 
 const STATUS_STYLE = {
   approved: { bg: "bg-green-950", text: "text-green-400", border: "border-green-800", label: "Approved" },
@@ -28,17 +28,76 @@ export default function InstructorNotes({ showToast }) {
   const [saving, setSaving] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("All");
+  const [sortBy, setSortBy] = useState("sequential"); // 'sequential' | 'title' | 'newest' | 'oldest'
   const [isDragging, setIsDragging] = useState(false);
 
-  const filteredNotes = notes.filter((n) => {
-    const matchesStatus = statusFilter === "all" || n.status === statusFilter;
-    const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      n.title?.toLowerCase().includes(q) ||
-      n.description?.toLowerCase().includes(q) ||
-      n.courseTitle?.toLowerCase().includes(q);
-    return matchesStatus && matchesSearch;
-  });
+  // Helper to extract clean subject from title, courseTitle, or fallback
+  const extractSubject = (note) => {
+    if (note.courseTitle) return note.courseTitle;
+    const title = note.title || "";
+    const match = title.match(
+      /(Chemistry|Physics|Maths|Mathematics|Biology|English|Hindi|Science|Computer|Social|Accounts|Economics|GST|History|Geography|Civics|Botany|Zoology)/i
+    );
+    if (match) {
+      const found = match[1];
+      if (/math/i.test(found)) return "Mathematics";
+      return found.charAt(0).toUpperCase() + found.slice(1).toLowerCase();
+    }
+    return "General Study";
+  };
+
+  // Compute subject tabs with counts
+  const subjectTabs = useMemo(() => {
+    const counts = { All: notes.length };
+    notes.forEach((note) => {
+      const subj = extractSubject(note);
+      counts[subj] = (counts[subj] || 0) + 1;
+    });
+    return Object.keys(counts).map((subj) => ({
+      name: subj,
+      count: counts[subj],
+    }));
+  }, [notes]);
+
+  const filteredNotes = useMemo(() => {
+    let result = notes.filter((n) => {
+      const matchesStatus = statusFilter === "all" || n.status === statusFilter;
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        n.title?.toLowerCase().includes(q) ||
+        n.description?.toLowerCase().includes(q) ||
+        n.courseTitle?.toLowerCase().includes(q);
+
+      const subj = extractSubject(n);
+      const matchesSubject =
+        selectedSubject === "All" || subj.toLowerCase() === selectedSubject.toLowerCase();
+
+      return matchesStatus && matchesSearch && matchesSubject;
+    });
+
+    const naturalCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
+    result.sort((a, b) => {
+      if (sortBy === "sequential") {
+        const subjA = extractSubject(a);
+        const subjB = extractSubject(b);
+        const subjCompare = naturalCollator.compare(subjA, subjB);
+        if (subjCompare !== 0) return subjCompare;
+        return naturalCollator.compare(a.title || "", b.title || "");
+      }
+      if (sortBy === "title") {
+        return naturalCollator.compare(a.title || "", b.title || "");
+      }
+      if (sortBy === "oldest") {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+      // 'newest'
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+
+    return result;
+  }, [notes, statusFilter, searchQuery, selectedSubject, sortBy]);
 
   const [form, setForm] = useState({ title: "", description: "", fileUrl: "", instructorId: "", courseId: "" });
 
@@ -493,6 +552,29 @@ export default function InstructorNotes({ showToast }) {
             ))}
           </div>
 
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs font-bold text-slate-300">
+            <ArrowUpDown size={14} className="text-emerald-400 shrink-0" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="bg-transparent text-xs font-bold text-white outline-none cursor-pointer"
+            >
+              <option value="sequential" className="bg-slate-900 text-white">
+                Subject & Chapter (Sequential 1→2→3)
+              </option>
+              <option value="title" className="bg-slate-900 text-white">
+                Title (A - Z)
+              </option>
+              <option value="newest" className="bg-slate-900 text-white">
+                Latest First
+              </option>
+              <option value="oldest" className="bg-slate-900 text-white">
+                Oldest First
+              </option>
+            </select>
+          </div>
+
           <button
             onClick={() => setShowBulkModal(true)}
             className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-500 active:bg-emerald-700 cursor-pointer shadow-md"
@@ -507,6 +589,34 @@ export default function InstructorNotes({ showToast }) {
           </button>
         </div>
       </div>
+
+      {/* Subject Filter Pills */}
+      {notes.length > 0 && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {subjectTabs.map((tab) => (
+            <button
+              key={tab.name}
+              onClick={() => setSelectedSubject(tab.name)}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap border ${
+                selectedSubject === tab.name
+                  ? "bg-violet-600/20 text-violet-300 border-violet-500/40 shadow-sm"
+                  : "bg-slate-950/60 text-slate-400 border-slate-800/80 hover:text-slate-200 hover:border-slate-700"
+              }`}
+            >
+              <span>{tab.name}</span>
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold ${
+                  selectedSubject === tab.name
+                    ? "bg-violet-500/30 text-violet-200"
+                    : "bg-slate-800 text-slate-400"
+                }`}
+              >
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Selection Control & Bulk Action Bar */}
       {!loading && filteredNotes.length > 0 && (
