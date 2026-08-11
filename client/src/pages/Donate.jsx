@@ -285,7 +285,7 @@ const Donate = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/60 to-[#0B1120]/30" />
 
             {/* Full-Page Hero Content Overlay */}
-            <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10 lg:p-14 z-20">
+            <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10 lg:p-14 px-14 sm:px-24 lg:px-28 z-20">
               <div className="max-w-3xl space-y-3 sm:space-y-4">
                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-extrabold uppercase tracking-wider backdrop-blur-md">
                   <Heart size={14} className="text-rose-400 fill-rose-400 animate-pulse" />
@@ -317,12 +317,12 @@ const Donate = () => {
           </div>
         ))}
 
-        {/* Slider Navigation Buttons */}
+        {/* Slider Navigation Buttons (Positioned lower & clear of badge) */}
         <button
           type="button"
           onClick={handlePrevSlide}
           aria-label="Previous Slide"
-          className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-30 h-11 w-11 sm:h-13 sm:w-13 rounded-full bg-slate-950/70 border border-white/20 text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl backdrop-blur-md cursor-pointer"
+          className="absolute left-4 sm:left-6 top-[60%] -translate-y-1/2 z-30 h-11 w-11 sm:h-13 sm:w-13 rounded-full bg-slate-950/80 border border-white/25 text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl backdrop-blur-md cursor-pointer"
         >
           <ChevronLeft size={24} />
         </button>
@@ -330,7 +330,7 @@ const Donate = () => {
           type="button"
           onClick={handleNextSlide}
           aria-label="Next Slide"
-          className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-30 h-11 w-11 sm:h-13 sm:w-13 rounded-full bg-slate-950/70 border border-white/20 text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl backdrop-blur-md cursor-pointer"
+          className="absolute right-4 sm:right-6 top-[60%] -translate-y-1/2 z-30 h-11 w-11 sm:h-13 sm:w-13 rounded-full bg-slate-950/80 border border-white/25 text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl backdrop-blur-md cursor-pointer"
         >
           <ChevronRight size={24} />
         </button>
