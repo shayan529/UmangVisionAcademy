@@ -222,34 +222,59 @@ const Hero = () => {
       </div>
 
       {/* ══════════════════════ DESKTOP LAYOUT (>= md) ══════════════════════ */}
-      <div className="relative hidden md:block max-w-7xl mx-auto px-6 md:px-12 py-20 min-h-screen">
-        <div className="flex flex-col xl:flex-row items-start justify-between gap-14">
+      <div className="relative hidden md:block max-w-[1400px] mx-auto px-6 md:px-12 xl:px-16 py-24 min-h-screen">
+        <style>{`
+          @keyframes heroFadeUp {
+            from { opacity: 0; transform: translateY(22px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          .hero-fade { animation: heroFadeUp .7s cubic-bezier(.22,.61,.36,1) both; }
+          @media (prefers-reduced-motion: reduce) {
+            .hero-fade { animation: none; }
+          }
+        `}</style>
+        <div className="flex flex-col xl:flex-row items-start justify-between gap-16 xl:gap-20">
           {/* LEFT SIDE */}
-          <div className="flex-1 space-y-8 max-w-4xl">
+          <div className="flex-1 space-y-10 max-w-4xl">
             {/* TAG */}
-            <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-sm shadow-lg shadow-slate-950/20">
-              <span className="h-2 w-2 rounded-full bg-emerald-300" />
+            <div
+              className="hero-fade inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-sm shadow-lg shadow-slate-950/20"
+              style={{ animationDelay: "0ms" }}
+            >
+              <span className="h-2 w-2 rounded-full bg-emerald-300 animate-pulse" />
               {t("hero.tag")}
             </div>
 
             {/* HEADING */}
             <div className="space-y-6">
               <h1 className="font-black tracking-tight">
-                <span className="block text-5xl md:text-6xl xl:text-7xl leading-tight text-white">
+                <span
+                  className="hero-fade block text-5xl md:text-6xl xl:text-7xl leading-tight text-white"
+                  style={{ animationDelay: "90ms" }}
+                >
                   {t("hero.headingLine1")}
                 </span>
-                <span className="block text-2xl md:text-3xl xl:text-4xl leading-snug text-emerald-300 mt-3 tracking-normal">
+                <span
+                  className="hero-fade block text-2xl md:text-3xl xl:text-4xl leading-snug text-emerald-300 mt-3 tracking-normal"
+                  style={{ animationDelay: "180ms" }}
+                >
                   {t("hero.headingLine2")}
                 </span>
               </h1>
 
-              <p className="max-w-2xl text-slate-200 text-lg md:text-md leading-8">
+              <p
+                className="hero-fade max-w-2xl text-slate-200 text-lg md:text-md leading-8"
+                style={{ animationDelay: "270ms" }}
+              >
                 {t("hero.text")}
               </p>
             </div>
 
             {/* BUTTONS */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div
+              className="hero-fade flex flex-col sm:flex-row gap-4"
+              style={{ animationDelay: "360ms" }}
+            >
               <Link to="/my-courses" className="w-full sm:w-auto">
                 <button className="w-full sm:w-auto inline-flex cursor-pointer items-center justify-center rounded-full bg-emerald-300 px-8 py-4 text-slate-950 font-semibold shadow-2xl shadow-emerald-300/25 transition duration-300 hover:scale-[1.02] hover:bg-emerald-200">
                   {t("hero.startLearning")}
@@ -265,31 +290,31 @@ const Hero = () => {
           </div>
 
           {/* RIGHT SIDE BENEFITS */}
-          {/* <div className="grid w-full xl:w-[320px] gap-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm hover:bg-white/10 transition duration-300">
-              <div className="text-2xl mb-2">🤖</div>
-              <p className="text-sm font-bold text-emerald-300">{t("hero.benefit1Title")}</p>
-              <p className="mt-1 text-xs text-slate-300 leading-relaxed">
-                {t("hero.benefit1Desc")}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm hover:bg-white/10 transition duration-300">
-              <div className="text-2xl mb-2">🤝</div>
-              <p className="text-sm font-bold text-indigo-300">{t("hero.benefit2Title")}</p>
-              <p className="mt-1 text-xs text-slate-300 leading-relaxed">
-                {t("hero.benefit2Desc")}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm hover:bg-white/10 transition duration-300">
-              <div className="text-2xl mb-2">⚡</div>
-              <p className="text-sm font-bold text-amber-300">{t("hero.benefit3Title")}</p>
-              <p className="mt-1 text-xs text-slate-300 leading-relaxed">
-                {t("hero.benefit3Desc")}
-              </p>
-            </div>
-          </div> */}
+          <div className="grid w-full shrink-0 gap-5 xl:w-[360px]">
+            {benefits.map((b, idx) => {
+              const accent = ["#6ee7b7", "#a5b4fc", "#fcd34d"][idx % 3];
+              return (
+                <div
+                  key={idx}
+                  className="hero-fade group rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:bg-white/10 hover:shadow-xl hover:shadow-black/20"
+                  style={{ animationDelay: `${420 + idx * 130}ms` }}
+                >
+                  <div
+                    className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl text-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
+                    style={{ background: `${accent}22` }}
+                  >
+                    {b.icon}
+                  </div>
+                  <p className="text-sm font-bold" style={{ color: accent }}>
+                    {b.title}
+                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-slate-300">
+                    {b.desc}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
