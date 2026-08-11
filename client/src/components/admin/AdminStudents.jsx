@@ -1662,7 +1662,7 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
                               </h4>
                               {isViaPlan && (
                                 <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/30 text-[10px] font-bold text-emerald-300 shrink-0">
-                                  📋 {isPremiumPlan ? "Premium Plan" : "Base Plan"}
+                                  📋 {isPremiumPlan ? "Premium Plan" : "Basic Plan"}
                                 </span>
                               )}
                             </div>
@@ -1708,7 +1708,7 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
                               }`}
                             title={
                               isViaPlan && !isPremiumPlan
-                                ? "Base plan doesn't include assistance by default, but admin can enable it manually"
+                                ? "Basic plan doesn't include assistance by default, but admin can enable it manually"
                                 : "Toggle whether student can ask instructor doubts for this course"
                             }
                           >

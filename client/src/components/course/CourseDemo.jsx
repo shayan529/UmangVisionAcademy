@@ -788,11 +788,11 @@ export default function CourseDemo() {
                   </div>
                   <div className="text-xs text-slate-200">
                     <span className="font-bold text-white">
-                      {t("courseDetails.academyPlanTitle", "Academy Personal Plan:")}
+                      {t("courseDetails.academyPlanTitle", "Smart Basic Plan:")}
                     </span>{" "}
                     {t(
                       "courseDetails.academyPlanDesc",
-                      "Access all top-rated courses with 1 simple monthly subscription.",
+                      "Access all top-rated courses with 1 simple yearly subscription.",
                     )}
                   </div>
                 </div>

@@ -1502,7 +1502,7 @@ function ApprovedCoursesView({ courses }) {
                             <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.email || "—"}{s.phoneNumber ? ` · ${s.phoneNumber}` : ""}</p>
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
-                            {hasActivePlan && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 12, background: "#10b98120", color: "#10b981", border: "1px solid #10b98140" }}>{sub.plan === "premium" ? "Premium" : "Base Plan"}</span>}
+                            {hasActivePlan && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 12, background: "#10b98120", color: "#10b981", border: "1px solid #10b98140" }}>{sub.plan === "premium" ? "Premium" : sub.plan === "elite" ? "Elite" : "Basic Plan"}</span>}
                             <span style={{ fontSize: 10, color: "#475569" }}>View details</span>
                           </div>
                         </div>
