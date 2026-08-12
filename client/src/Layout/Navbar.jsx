@@ -18,7 +18,6 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [boardOpen, setBoardOpen] = useState(false);
 
   const isInstructorDashboard = pathname.startsWith("/instructor-dashboard");
   const isDashboardRoute =
@@ -45,7 +44,6 @@ const Navbar = () => {
         ? "/instructor-dashboard"
         : "/student-dashboard";
 
-  const dropdownRef = useRef(null);
   const languageRef = useRef(null);
   const mobileLangRef = useRef(null);
   const topBarRef = useRef(null);
@@ -58,9 +56,6 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setBoardOpen(false);
-      }
       if (languageRef.current && !languageRef.current.contains(event.target)) {
         setLangDropdownOpen(false);
       }
@@ -372,56 +367,11 @@ button.btn-red:hover,
 
           {/* ── Desktop right section ── */}
           <div className="hidden xl:flex items-center gap-1.5 2xl:gap-3 shrink-0">
-            {(!user || hasStudentRole) && (
-              <div ref={dropdownRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBoardOpen((prev) => !prev);
-                    setLangDropdownOpen(false);
-                    setRolesDropdownOpen(false);
-                  }}
-                  className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-3 xl:px-4 py-1.5 xl:py-2 text-xs xl:text-sm font-semibold text-slate-200 hover:bg-slate-800 transition cursor-pointer whitespace-nowrap shrink-0"
-                >
-                  {t("nav.board")}
-                  <ChevronDown
-                    size={16}
-                    className={`transition-transform ${boardOpen ? "rotate-180" : ""}`}
-                  />
-                </button>
-                {boardOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
-                    <Link
-                      to="/boards/cbse"
-                      onClick={() => setBoardOpen(false)}
-                      className="block px-4 py-3 text-sm text-slate-200 hover:bg-slate-800"
-                    >
-                      CBSE
-                    </Link>
-                    <Link
-                      to="/boards/mp-board"
-                      onClick={() => setBoardOpen(false)}
-                      className="block px-4 py-3 text-sm text-slate-200 hover:bg-slate-800"
-                    >
-                      MP Board
-                    </Link>
-                    <Link
-                      to="/boards/icse"
-                      onClick={() => setBoardOpen(false)}
-                      className="block px-4 py-3 text-sm text-slate-200 hover:bg-slate-800"
-                    >
-                      ICSE
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
             <div ref={languageRef} className="relative">
               <button
                 type="button"
                 onClick={() => {
                   setLangDropdownOpen((prev) => !prev);
-                  setBoardOpen(false);
                   setRolesDropdownOpen(false);
                 }}
                 className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-2.5 xl:px-3.5 py-1.5 xl:py-2 text-xs xl:text-sm font-semibold text-slate-200 hover:bg-slate-800 transition whitespace-nowrap shrink-0 cursor-pointer"

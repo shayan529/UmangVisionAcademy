@@ -119,7 +119,6 @@ const CourseDemo = retryLazy(() => import("./components/course/CourseDemo"));
 const AboutUs = retryLazy(() => import("./pages/AboutUs"));
 const QuestionBank = retryLazy(() => import("./components/common/QuestionBank"));
 const Blogs = retryLazy(() => import("./components/common/Blogs"));
-const BoardCourses = retryLazy(() => import("./components/Boards/BoardCourses"));
 const CoursePage = retryLazy(() => import("./components/course/CoursePage"));
 const ProgressPage = retryLazy(() => import("./components/student/ProgressPage"));
 const PurchaseHistory = retryLazy(() => import("./components/student/PurchaseHistory"));
@@ -363,7 +362,6 @@ function App() {
           <Route path="question-bank" element={<QuestionBank />} />
           <Route path="blogs" element={<Blogs />} />
           <Route path="courses/:id" element={<CoursePage />} />
-          <Route path="boards/:board" element={<BoardCourses />} />
           <Route path="instructors/:id" element={<InstructorAboutPage />} />
           <Route path="plans" element={<Plans />} />
           <Route path="contact" element={<Contact />} />
