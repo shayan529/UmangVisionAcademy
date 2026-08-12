@@ -51,36 +51,33 @@ const initialOf = (name) => name?.trim()?.charAt(0)?.toUpperCase() || "?";
 // ── Avatar Component with Fallback ───────────────────────────────────────────
 const UserAvatar = ({ user, role, size = "md" }) => {
   const sizeClasses = {
-    sm: "w-8 h-8 text-xs",
-    md: "w-11 h-11 text-sm",
-    lg: "w-14 h-14 text-base",
-  }[size] || "w-11 h-11 text-sm";
+    sm: "w-8 h-8 text-xs rounded-xl",
+    md: "w-10 h-10 text-xs rounded-xl",
+    lg: "w-12 h-12 text-sm rounded-2xl",
+  }[size] || "w-10 h-10 text-xs rounded-xl";
 
   const isInstructor = role === "instructor" || user?.role === "instructor";
-  const bgGradient = isInstructor
-    ? "from-emerald-600 via-teal-600 to-indigo-700"
-    : "from-indigo-600 via-purple-600 to-pink-600";
 
   return (
     <div
-      className={`relative shrink-0 rounded-2xl bg-gradient-to-tr ${bgGradient} p-0.5 shadow-md flex items-center justify-center`}
+      className={`relative shrink-0 ${sizeClasses} flex items-center justify-center font-bold overflow-hidden border ${
+        isInstructor
+          ? "bg-slate-800 border-indigo-500/30 text-indigo-300"
+          : "bg-slate-800 border-slate-700 text-slate-200"
+      }`}
     >
-      <div
-        className={`${sizeClasses} rounded-[14px] bg-slate-950 flex items-center justify-center font-black text-white overflow-hidden`}
-      >
-        {user?.avatarUrl ? (
-          <img
-            src={user.avatarUrl}
-            alt={user.name || "User"}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.target.style.display = "none";
-            }}
-          />
-        ) : (
-          <span>{initialOf(user?.name)}</span>
-        )}
-      </div>
+      {user?.avatarUrl ? (
+        <img
+          src={user.avatarUrl}
+          alt={user.name || "User"}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.target.style.display = "none";
+          }}
+        />
+      ) : (
+        <span>{initialOf(user?.name)}</span>
+      )}
     </div>
   );
 };
@@ -107,7 +104,7 @@ export default function AdminReports() {
   // Level 3 Chat State
   const [activeMessages, setActiveMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const messagesEndRef = useRef(null);
+  const chatScrollContainerRef = useRef(null);
 
   // Take Action Modal State
   const [actionModalOpen, setActionModalOpen] = useState(false);
@@ -161,8 +158,8 @@ export default function AdminReports() {
   };
 
   useEffect(() => {
-    if (selectedConversation && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (selectedConversation && chatScrollContainerRef.current) {
+      chatScrollContainerRef.current.scrollTop = chatScrollContainerRef.current.scrollHeight;
     }
   }, [activeMessages, selectedConversation]);
 
@@ -1046,14 +1043,17 @@ export default function AdminReports() {
           )}
 
           {/* Chat Messages Transcript Box */}
-          <div className="bg-[#0b101b] border border-slate-800 rounded-3xl p-5 shadow-2xl space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar">
-            <div className="text-center py-2 text-[11px] text-slate-500 border-b border-white/5 font-semibold">
-              ── Message History Begins ──
+          <div
+            ref={chatScrollContainerRef}
+            className="bg-[#0b101b] border border-slate-800 rounded-3xl p-5 shadow-2xl space-y-3.5 max-h-[560px] overflow-y-auto"
+          >
+            <div className="text-center py-2 text-[11px] text-slate-500 border-b border-slate-800 font-semibold">
+              ── Message History ──
             </div>
 
             {loadingMessages ? (
               <div className="text-center py-16 text-slate-400">
-                <RefreshCw size={24} className="animate-spin mx-auto mb-2 text-indigo-500" />
+                <RefreshCw size={24} className="animate-spin mx-auto mb-2 text-slate-500" />
                 <p className="text-xs">Loading message transcript...</p>
               </div>
             ) : activeMessages.length === 0 ? (
@@ -1071,32 +1071,36 @@ export default function AdminReports() {
                 return (
                   <div
                     key={msg._id || idx}
-                    className={`flex gap-3 ${
+                    className={`flex items-start gap-2.5 ${
                       isStudent ? "justify-start" : "justify-end"
                     }`}
                   >
                     {isStudent && (
-                      <UserAvatar user={msg.sender || selectedConversation.student} role="student" size="sm" />
+                      <UserAvatar
+                        user={msg.sender || selectedConversation.student}
+                        role="student"
+                        size="sm"
+                      />
                     )}
 
                     <div
-                      className={`max-w-[80%] rounded-2xl p-4 text-xs sm:text-sm space-y-1.5 shadow-md ${
+                      className={`max-w-[78%] sm:max-w-[72%] rounded-2xl p-3 sm:p-3.5 text-xs sm:text-sm space-y-1 shadow-sm ${
                         isStudent
-                          ? "bg-slate-900 border border-indigo-500/30 text-slate-100 rounded-tl-none"
-                          : "bg-gradient-to-r from-emerald-950/80 via-teal-950/80 to-slate-900 border border-emerald-500/40 text-slate-100 rounded-tr-none"
+                          ? "bg-slate-900 border border-slate-800 text-slate-100 rounded-tl-sm"
+                          : "bg-slate-800 border border-slate-700 text-slate-100 rounded-tr-sm"
                       }`}
                     >
                       {/* Message Header */}
-                      <div className="flex items-center justify-between gap-3 text-[11px] pb-1 border-b border-white/5">
-                        <span className="font-bold flex items-center gap-1">
+                      <div className="flex items-center justify-between gap-3 text-[11px] pb-1 border-b border-slate-700/40">
+                        <span className="font-semibold text-slate-300 flex items-center gap-1">
                           <span
                             className={
-                              isStudent ? "text-indigo-400" : "text-emerald-400"
+                              isStudent ? "text-slate-200" : "text-indigo-300"
                             }
                           >
                             {senderName}
                           </span>
-                          <span className="text-[10px] text-slate-500 uppercase">
+                          <span className="text-[10px] text-slate-500 uppercase font-normal">
                             ({msg.senderRole})
                           </span>
                         </span>
@@ -1106,7 +1110,7 @@ export default function AdminReports() {
                       </div>
 
                       {/* Message Content */}
-                      <p className="leading-relaxed whitespace-pre-wrap">
+                      <p className="leading-relaxed whitespace-pre-wrap text-slate-200 text-xs sm:text-[13px] pt-0.5">
                         {msg.deleted ? (
                           <span className="italic text-slate-500">
                             [This message was deleted by user]
@@ -1125,13 +1129,13 @@ export default function AdminReports() {
                               href={med.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/40 hover:bg-black/60 border border-white/10 text-slate-200 text-xs font-semibold transition"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition"
                             >
-                              <FileText size={13} className="text-indigo-400" />
+                              <FileText size={13} className="text-slate-400" />
                               <span className="max-w-[140px] truncate">
                                 {med.filename || "Attachment"}
                               </span>
-                              <ExternalLink size={11} className="text-slate-400" />
+                              <ExternalLink size={11} className="text-slate-500" />
                             </a>
                           ))}
                         </div>
@@ -1149,7 +1153,6 @@ export default function AdminReports() {
                 );
               })
             )}
-            <div ref={messagesEndRef} />
           </div>
         </div>
       )}

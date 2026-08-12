@@ -81,8 +81,9 @@ function RejectModal({ course, onClose, onConfirm, loading }) {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.7)",
-        zIndex: 200,
+        background: "rgba(0,0,0,0.75)",
+        backdropFilter: "blur(4px)",
+        zIndex: 9999,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -424,8 +425,8 @@ function LessonPreviewModal({ lesson, lessonIndex, onClose }) {
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 300,
-        background: "rgba(0,0,0,0.82)",
+        zIndex: 9999,
+        background: "rgba(0,0,0,0.85)",
         backdropFilter: "blur(6px)",
         display: "flex",
         alignItems: "center",
@@ -724,8 +725,9 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, onEdit
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.65)",
-        zIndex: 150,
+        background: "rgba(0,0,0,0.75)",
+        backdropFilter: "blur(4px)",
+        zIndex: 9999,
         display: "flex",
         justifyContent: "flex-end",
       }}
@@ -1928,9 +1930,9 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
             style={{
               position: "fixed",
               inset: 0,
-              background: "rgba(0,0,0,0.8)",
-              backdropFilter: "blur(4px)",
-              zIndex: 250,
+              background: "rgba(0,0,0,0.85)",
+              backdropFilter: "blur(6px)",
+              zIndex: 9999,
               display: "flex",
               justifyContent: "flex-end",
             }}
