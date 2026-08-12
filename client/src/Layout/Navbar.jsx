@@ -5,7 +5,11 @@ import { logoutUser, clearAuth } from "../redux/slices/authSlice";
 import toast from "react-hot-toast";
 import { ChevronDown, ShoppingCart } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from "../utils/permissions";
+import {
+  getCustomRole,
+  hasCustomRole as checkHasCustomRole,
+  hasBaseRole,
+} from "../utils/permissions";
 
 const Navbar = () => {
   const { user, loading } = useSelector((state) => state.auth);
@@ -199,7 +203,10 @@ const Navbar = () => {
     }
     const customRole = getCustomRole(user);
     if (customRole) {
-      dashboardOptions.push({ name: customRole.name, path: "/staff-dashboard" });
+      dashboardOptions.push({
+        name: customRole.name,
+        path: "/staff-dashboard",
+      });
     }
   }
 
@@ -522,7 +529,9 @@ button.btn-red:hover,
                 <button
                   onClick={() => {
                     dispatch(clearAuth());
-                    toast.success(t("nav.logoutSuccess", "Logged out successfully"));
+                    toast.success(
+                      t("nav.logoutSuccess", "Logged out successfully"),
+                    );
                     navigate("/", { replace: true });
                     dispatch(logoutUser()).catch(() => {});
                   }}
@@ -743,7 +752,9 @@ button.btn-red:hover,
                   onClick={() => {
                     closeMobile();
                     dispatch(clearAuth());
-                    toast.success(t("nav.logoutSuccess", "Logged out successfully"));
+                    toast.success(
+                      t("nav.logoutSuccess", "Logged out successfully"),
+                    );
                     navigate("/", { replace: true });
                     dispatch(logoutUser()).catch(() => {});
                   }}

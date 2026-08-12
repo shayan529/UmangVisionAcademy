@@ -932,24 +932,68 @@ export const listAdminReports = async (req, res) => {
     if (!isAdminOrStaff(req.user))
       return res.status(403).json({ message: "Admin access required" });
 
-    const filter = {
-      $or: [{ isReported: true }, { isBlocked: true }],
-    };
+    const { status, instructorId, studentId } = req.query;
+
+    const filter = {};
+    if (status === "reported") {
+      filter.isReported = true;
+    } else if (status === "blocked") {
+      filter.isBlocked = true;
+    } else if (status === "archived") {
+      filter.archived = true;
+    }
+
+    if (instructorId && Types.ObjectId.isValid(instructorId)) {
+      filter.instructor = instructorId;
+    }
+    if (studentId && Types.ObjectId.isValid(studentId)) {
+      filter.student = studentId;
+    }
 
     const conversations = await Conversation.find(filter)
       .sort({ updatedAt: -1 })
-      .select("-messages")
-      .populate("student", "_id name avatarUrl email isSuspended suspendReason")
+      .select("-messages.readBy")
+      .populate(
+        "student",
+        "_id name avatarUrl email phone isSuspended suspendReason",
+      )
       .populate(
         "instructor",
-        "_id name avatarUrl email isSuspended suspendReason",
+        "_id name avatarUrl email phone isSuspended suspendReason",
       )
-      .populate("course", "_id title")
+      .populate("course", "_id title category board thumbnailUrl price")
       .populate("reportedBy", "_id name role")
       .populate("blockedBy", "_id name role")
       .lean();
 
-    res.json({ reports: conversations, total: conversations.length });
+    // Attach message counts and light-weight message summaries
+    const formattedConversations = conversations.map((conv) => ({
+      ...conv,
+      messagesCount: Array.isArray(conv.messages) ? conv.messages.length : 0,
+      messages: undefined, // keep list payload super fast
+    }));
+
+    const totalConversations = await Conversation.countDocuments();
+    const pendingReports = await Conversation.countDocuments({
+      isReported: true,
+    });
+    const blockedChats = await Conversation.countDocuments({
+      isBlocked: true,
+    });
+    const archivedChats = await Conversation.countDocuments({
+      archived: true,
+    });
+
+    res.json({
+      reports: formattedConversations,
+      total: formattedConversations.length,
+      stats: {
+        totalConversations,
+        pendingReports,
+        blockedChats,
+        archivedChats,
+      },
+    });
   } catch (err) {
     console.error("[instructorChat] listAdminReports:", err);
     res.status(500).json({ message: err.message });
@@ -967,10 +1011,18 @@ export const getAdminReportMessages = async (req, res) => {
       return res.status(400).json({ message: "Invalid conversation id" });
 
     const conv = await Conversation.findById(id)
-      .populate("student", "_id name avatarUrl email isSuspended")
-      .populate("instructor", "_id name avatarUrl email isSuspended")
-      .populate("course", "_id title")
-      .populate("messages.sender", "_id name avatarUrl role")
+      .populate(
+        "student",
+        "_id name avatarUrl email phone isSuspended suspendReason",
+      )
+      .populate(
+        "instructor",
+        "_id name avatarUrl email phone isSuspended suspendReason",
+      )
+      .populate("course", "_id title category board thumbnailUrl price")
+      .populate("messages.sender", "_id name avatarUrl role email")
+      .populate("reportedBy", "_id name role")
+      .populate("blockedBy", "_id name role")
       .lean();
 
     if (!conv)
