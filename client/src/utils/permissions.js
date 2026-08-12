@@ -177,26 +177,37 @@ export const hasPermission = (user, moduleName, actionName = "view") => {
     }
   }
 
-  const customRole = getCustomRole(user);
-  if (customRole && Array.isArray(customRole.permissions)) {
-    return Boolean(
-      customRole.permissions.some(
-        (p) => p.module === moduleName && p.actions?.includes(actionName),
-      ),
+  // 1. Check explicit permissions on role object or user doc
+  const rolePermissions =
+    (user.role && typeof user.role === "object" && Array.isArray(user.role.permissions)
+      ? user.role.permissions
+      : null) ||
+    (Array.isArray(user.permissions) ? user.permissions : null) ||
+    (Array.isArray(user.basePermissions) ? user.basePermissions : null) ||
+    (getCustomRole(user)?.permissions);
+
+  if (Array.isArray(rolePermissions) && rolePermissions.length > 0) {
+    const match = rolePermissions.some(
+      (p) =>
+        p.module === moduleName &&
+        Array.isArray(p.actions) &&
+        p.actions.includes(actionName),
     );
+    if (match) return true;
   }
 
-  if (hasBaseRole(user, "staff")) {
-    if (Array.isArray(user.basePermissions) && user.basePermissions.length > 0) {
-      return Boolean(
-        user.basePermissions.some(
-          (p) => p.module === moduleName && p.actions?.includes(actionName),
-        ),
-      );
+  // 2. Staff / custom role fallback: Allow view/access for modules present in dashboardModules
+  if (hasBaseRole(user, "staff") || hasCustomRole(user)) {
+    if (actionName === "view" || actionName === "access") {
+      const mods = user.dashboardModules ?? user.role?.dashboardModules;
+      if (
+        mods == null ||
+        (Array.isArray(mods) &&
+          (mods.includes(moduleName) || mods.includes("all")))
+      ) {
+        return true;
+      }
     }
-    // No basePermissions set — staff has no access by default.
-    // An admin must explicitly assign permissions via the Roles & Permissions UI.
-    return false;
   }
 
   return false;

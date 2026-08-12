@@ -134,6 +134,7 @@ export const hydrateUserRoles = async (user) => {
 
     plain.role = roleDoc || "student";
     plain.dashboardModules = roleDoc?.dashboardModules ?? null;
+    plain.basePermissions = roleDoc?.permissions ?? [];
   } catch (err) {
     console.error("[Roles] hydrateUserRoles failed to fetch role doc:", err);
     plain.role = "student";
@@ -270,24 +271,37 @@ export const hasPermissionGrant = (user, moduleName, actionName = "view") => {
     }
   }
 
-  if (hasBaseRole(user, "staff")) {
-    if (Array.isArray(user?.basePermissions) && user.basePermissions.length > 0) {
-      return Boolean(
-        user.basePermissions.some(
-          (p) => p.module === moduleName && p.actions?.includes(actionName),
-        ),
-      );
-    }
-    // No basePermissions set — staff has no access by default.
-    return false;
+  // 1. Check explicit permissions array
+  const rolePermissions =
+    (user?.role && typeof user.role === "object" && Array.isArray(user.role.permissions)
+      ? user.role.permissions
+      : null) ||
+    (Array.isArray(user?.permissions) ? user.permissions : null) ||
+    (Array.isArray(user?.basePermissions) ? user.basePermissions : null);
+
+  if (Array.isArray(rolePermissions) && rolePermissions.length > 0) {
+    const match = rolePermissions.some(
+      (p) =>
+        p.module === moduleName &&
+        Array.isArray(p.actions) &&
+        p.actions.includes(actionName),
+    );
+    if (match) return true;
   }
 
-  const role = user?.role;
-  if (!role || typeof role === "string") return false;
+  // 2. Staff / custom role fallback: Allow view/access for modules in dashboardModules
+  if (hasBaseRole(user, "staff") || isRoleObjectId(user?.role) || (user?.role && typeof user.role === "object")) {
+    if (actionName === "view" || actionName === "access") {
+      const mods = user?.dashboardModules ?? user?.role?.dashboardModules;
+      if (
+        mods == null ||
+        (Array.isArray(mods) &&
+          (mods.includes(moduleName) || mods.includes("all")))
+      ) {
+        return true;
+      }
+    }
+  }
 
-  return Boolean(
-    role.permissions?.some(
-      (p) => p.module === moduleName && p.actions?.includes(actionName),
-    ),
-  );
+  return false;
 };

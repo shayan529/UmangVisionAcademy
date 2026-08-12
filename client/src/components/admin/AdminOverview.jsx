@@ -127,14 +127,34 @@ const ACTION_LABELS = {
 
 const getGrantedPermissions = (user) => {
   const grouped = new Map();
-  const customRole = getCustomRole(user);
-  if (customRole) {
-    (customRole.permissions || []).forEach((permission) => {
+  const permissionsList =
+    (user?.role && typeof user.role === "object" && Array.isArray(user.role.permissions)
+      ? user.role.permissions
+      : null) ||
+    (Array.isArray(user?.permissions) ? user.permissions : null) ||
+    (Array.isArray(user?.basePermissions) ? user.basePermissions : null) ||
+    (getCustomRole(user)?.permissions);
+
+  if (Array.isArray(permissionsList)) {
+    permissionsList.forEach((permission) => {
       const current = grouped.get(permission.module) || new Set();
       (permission.actions || []).forEach((action) => current.add(action));
       grouped.set(permission.module, current);
     });
   }
+
+  // Also include modules granted via dashboardModules as "view"
+  const dashMods = user?.dashboardModules ?? user?.role?.dashboardModules;
+  if (Array.isArray(dashMods)) {
+    dashMods.forEach((mod) => {
+      if (mod && mod !== "overview") {
+        const current = grouped.get(mod) || new Set();
+        current.add("view");
+        grouped.set(mod, current);
+      }
+    });
+  }
+
   return [...grouped.entries()].map(([module, actions]) => ({
     module,
     actions: [...actions],
@@ -235,8 +255,6 @@ const AdminOverview = ({
         </div>
       )}
 
-      {(canViewUsers || canViewCourses) && (
-        <>
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -255,8 +273,6 @@ const AdminOverview = ({
           accentColorClass="text-pink-400"
         />
       </div>
-
-
 
       {/* Detail Rows (Top Instructors + Recent Courses) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -358,8 +374,6 @@ const AdminOverview = ({
           </div>
         </div>
       </div>
-        </>
-      )}
     </div>
   );
 };
