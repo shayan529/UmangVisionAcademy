@@ -1,5 +1,20 @@
 import React, { useState } from "react";
-import { Star, Trophy, Medal, Award, ChevronUp, ChevronDown, X, Phone, MapPin, BookOpen, Users, TrendingUp, Calendar, Link as LinkIcon } from "lucide-react";
+import {
+  Star,
+  Trophy,
+  Medal,
+  Award,
+  ChevronUp,
+  ChevronDown,
+  X,
+  Phone,
+  MapPin,
+  BookOpen,
+  Users,
+  TrendingUp,
+  Calendar,
+  Link as LinkIcon,
+} from "lucide-react";
 
 /* ─── helpers ─────────────────────────────────────────── */
 const fmt = (n) => (n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : `₹${n}`);
@@ -40,9 +55,12 @@ const Av = ({ name = "?", size = 30 }) => (
 
 /* ─── Rank badge ──────────────────────────────────────── */
 const Rank = ({ r }) => {
-  if (r === 1) return <Trophy size={16} className="text-amber-500 fill-amber-500" />;
-  if (r === 2) return <Medal size={16} className="text-slate-400 fill-slate-400" />;
-  if (r === 3) return <Award size={16} className="text-amber-700 fill-amber-700" />;
+  if (r === 1)
+    return <Trophy size={16} className="text-amber-500 fill-amber-500" />;
+  if (r === 2)
+    return <Medal size={16} className="text-slate-400 fill-slate-400" />;
+  if (r === 3)
+    return <Award size={16} className="text-amber-700 fill-amber-700" />;
   return (
     <span className="text-sm font-bold text-slate-500 min-w-[16px] text-center">
       #{r}
@@ -80,9 +98,12 @@ const AdminLeaderboard = ({
         }`}
       >
         {label}
-        {active && (
-          sortDir === "desc" ? <ChevronDown size={11} /> : <ChevronUp size={11} />
-        )}
+        {active &&
+          (sortDir === "desc" ? (
+            <ChevronDown size={11} />
+          ) : (
+            <ChevronUp size={11} />
+          ))}
       </button>
     );
   };
@@ -204,7 +225,10 @@ const AdminLeaderboard = ({
 
                     {/* Rating */}
                     <div className="hidden md:flex items-center justify-center gap-1">
-                      <Star size={11} className="text-amber-500 fill-amber-500 shrink-0" />
+                      <Star
+                        size={11}
+                        className="text-amber-500 fill-amber-500 shrink-0"
+                      />
                       <span className="text-xs font-extrabold text-amber-500">
                         {inst.avg || "—"}
                       </span>
@@ -234,7 +258,10 @@ const AdminLeaderboard = ({
                       )}
                       {sortBy === "rating" && (
                         <div className="flex items-center justify-end gap-1">
-                          <Star size={11} className="text-amber-500 fill-amber-500 shrink-0" />
+                          <Star
+                            size={11}
+                            className="text-amber-500 fill-amber-500 shrink-0"
+                          />
                           <span className="text-xs font-extrabold text-amber-500">
                             {inst.avg || "—"}
                           </span>
@@ -244,8 +271,11 @@ const AdminLeaderboard = ({
 
                     {/* View Details Column */}
                     <div className="flex items-center justify-center">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setSelectedInstructor(inst); }}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedInstructor(inst);
+                        }}
                         className="px-2.5 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 border border-indigo-500/20 transition-all shadow-sm whitespace-nowrap"
                         title="View Full Details"
                       >
@@ -280,7 +310,9 @@ const AdminLeaderboard = ({
           >
             {/* Header */}
             <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800/80 bg-slate-900/50 shrink-0">
-              <h3 className="text-base font-bold text-white">Instructor Details</h3>
+              <h3 className="text-base font-bold text-white">
+                Instructor Details
+              </h3>
               <button
                 onClick={() => setSelectedInstructor(null)}
                 className="text-slate-400 hover:text-white transition p-1 rounded-lg hover:bg-slate-800"
@@ -291,7 +323,6 @@ const AdminLeaderboard = ({
 
             {/* Scrollable body */}
             <div className="overflow-y-auto p-6 flex flex-col gap-6">
-
               {/* Profile row */}
               <div className="flex items-center gap-4">
                 <Av name={selectedInstructor.name} size={56} />
@@ -313,56 +344,87 @@ const AdminLeaderboard = ({
               {/* Bio */}
               {selectedInstructor.bio && (
                 <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-4">
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Bio</p>
-                  <p className="text-sm text-slate-300 leading-relaxed">{selectedInstructor.bio}</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">
+                    Bio
+                  </p>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    {selectedInstructor.bio}
+                  </p>
                 </div>
               )}
 
               {/* Key metrics */}
               <div>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-3">Performance</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-3">
+                  Performance
+                </p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="bg-slate-800/40 p-3.5 rounded-xl border border-slate-700/30 flex flex-col gap-1">
                     <div className="flex items-center gap-1.5 text-emerald-500">
                       <TrendingUp size={13} />
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Revenue</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        Revenue
+                      </span>
                     </div>
-                    <p className="text-lg font-extrabold text-emerald-400">{fmt(selectedInstructor.rev)}</p>
+                    <p className="text-lg font-extrabold text-emerald-400">
+                      {fmt(selectedInstructor.rev)}
+                    </p>
                   </div>
                   <div className="bg-slate-800/40 p-3.5 rounded-xl border border-slate-700/30 flex flex-col gap-1">
                     <div className="flex items-center gap-1.5">
                       <Users size={13} className="text-sky-400" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Students</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        Students
+                      </span>
                     </div>
-                    <p className="text-lg font-bold text-slate-200">{selectedInstructor.stu || 0}</p>
+                    <p className="text-lg font-bold text-slate-200">
+                      {selectedInstructor.stu || 0}
+                    </p>
                   </div>
                   <div className="bg-slate-800/40 p-3.5 rounded-xl border border-slate-700/30 flex flex-col gap-1">
                     <div className="flex items-center gap-1.5">
                       <BookOpen size={13} className="text-violet-400" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Courses</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        Courses
+                      </span>
                     </div>
-                    <p className="text-lg font-bold text-slate-200">{selectedInstructor.mc?.length || 0}</p>
+                    <p className="text-lg font-bold text-slate-200">
+                      {selectedInstructor.mc?.length || 0}
+                    </p>
                   </div>
                   <div className="bg-slate-800/40 p-3.5 rounded-xl border border-slate-700/30 flex flex-col gap-1">
                     <div className="flex items-center gap-1.5">
-                      <Star size={13} className="text-amber-500 fill-amber-500" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Avg Rating</span>
+                      <Star
+                        size={13}
+                        className="text-amber-500 fill-amber-500"
+                      />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        Avg Rating
+                      </span>
                     </div>
-                    <p className="text-lg font-extrabold text-amber-400">{selectedInstructor.avg || "—"}</p>
+                    <p className="text-lg font-extrabold text-amber-400">
+                      {selectedInstructor.avg || "—"}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Contact & Location */}
               <div>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-3">Contact & Location</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-3">
+                  Contact & Location
+                </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {selectedInstructor.phoneNumber && (
                     <div className="flex items-center gap-3 bg-slate-800/30 border border-slate-700/30 rounded-xl px-4 py-3">
                       <Phone size={14} className="text-slate-400 shrink-0" />
                       <div>
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Phone</p>
-                        <p className="text-sm text-slate-200 font-medium">{selectedInstructor.phoneNumber}</p>
+                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
+                          Phone
+                        </p>
+                        <p className="text-sm text-slate-200 font-medium">
+                          {selectedInstructor.phoneNumber}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -370,20 +432,33 @@ const AdminLeaderboard = ({
                     <div className="flex items-center gap-3 bg-slate-800/30 border border-slate-700/30 rounded-xl px-4 py-3">
                       <MapPin size={14} className="text-slate-400 shrink-0" />
                       <div>
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Location</p>
+                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
+                          Location
+                        </p>
                         <p className="text-sm text-slate-200 font-medium">
-                          {[selectedInstructor.city, selectedInstructor.state].filter(Boolean).join(", ")}
-                          {selectedInstructor.pincode ? ` — ${selectedInstructor.pincode}` : ""}
+                          {[selectedInstructor.city, selectedInstructor.state]
+                            .filter(Boolean)
+                            .join(", ")}
+                          {selectedInstructor.pincode
+                            ? ` — ${selectedInstructor.pincode}`
+                            : ""}
                         </p>
                       </div>
                     </div>
                   )}
                   {selectedInstructor.fullAddress && (
                     <div className="flex items-start gap-3 bg-slate-800/30 border border-slate-700/30 rounded-xl px-4 py-3 sm:col-span-2">
-                      <MapPin size={14} className="text-slate-400 shrink-0 mt-0.5" />
+                      <MapPin
+                        size={14}
+                        className="text-slate-400 shrink-0 mt-0.5"
+                      />
                       <div>
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Full Address</p>
-                        <p className="text-sm text-slate-200 font-medium">{selectedInstructor.fullAddress}</p>
+                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
+                          Full Address
+                        </p>
+                        <p className="text-sm text-slate-200 font-medium">
+                          {selectedInstructor.fullAddress}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -391,7 +466,9 @@ const AdminLeaderboard = ({
                     <div className="flex items-center gap-3 bg-slate-800/30 border border-slate-700/30 rounded-xl px-4 py-3">
                       <LinkIcon size={14} className="text-slate-400 shrink-0" />
                       <div>
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Social</p>
+                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
+                          Social
+                        </p>
                         <a
                           href={selectedInstructor.socialMediaAccount}
                           target="_blank"
@@ -406,10 +483,18 @@ const AdminLeaderboard = ({
                   <div className="flex items-center gap-3 bg-slate-800/30 border border-slate-700/30 rounded-xl px-4 py-3">
                     <Calendar size={14} className="text-slate-400 shrink-0" />
                     <div>
-                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Joined</p>
+                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
+                        Joined
+                      </p>
                       <p className="text-sm text-slate-200 font-medium">
                         {selectedInstructor.createdAt
-                          ? new Date(selectedInstructor.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+                          ? new Date(
+                              selectedInstructor.createdAt,
+                            ).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })
                           : "—"}
                       </p>
                     </div>
@@ -430,13 +515,20 @@ const AdminLeaderboard = ({
                         className="flex items-center justify-between gap-3 bg-slate-800/30 border border-slate-700/30 rounded-xl px-4 py-2.5"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <BookOpen size={12} className="text-violet-400 shrink-0" />
-                          <p className="text-sm text-slate-200 truncate">{course.title || "Untitled"}</p>
+                          <BookOpen
+                            size={12}
+                            className="text-violet-400 shrink-0"
+                          />
+                          <p className="text-sm text-slate-200 truncate">
+                            {course.title || "Untitled"}
+                          </p>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
                           <span className="text-[11px] text-slate-400 flex items-center gap-1">
                             <Users size={10} />
-                            {course.students?.length || 0}
+                            {course.studentsCount ??
+                              course.students?.length ??
+                              0}
                           </span>
                           {course.price > 0 && (
                             <span className="text-[11px] text-emerald-400 font-semibold">
@@ -449,7 +541,6 @@ const AdminLeaderboard = ({
                   </div>
                 </div>
               )}
-
             </div>
           </div>
         </div>

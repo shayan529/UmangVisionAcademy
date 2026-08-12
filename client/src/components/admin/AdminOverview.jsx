@@ -325,13 +325,16 @@ const AdminOverview = ({
                     </p>
                     <p className="text-[10px] text-slate-400 mt-0.5 truncate">
                       By {c.instructor?.name || 'Anonymous'} ·{' '}
-                      {c.students?.length || 0} students
+                      {c.studentsCount ?? c.students?.length ?? 0} students
                     </p>
                   </div>
                 </div>
                 <div className="shrink-0 flex flex-col items-end">
                   <span className="text-xs font-extrabold text-emerald-400">
-                    {fmt((c.price || 0) * (c.students?.length || 0))}
+                    {fmt(
+                      (c.price || 0) *
+                        (c.studentsCount ?? c.students?.length ?? 0),
+                    )}
                   </span>
                   {c.rating && (
                     <div className="flex items-center gap-0.5 mt-0.5">

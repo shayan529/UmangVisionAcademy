@@ -433,14 +433,51 @@ export const getCourseByIdPublic = async (req, res) => {
 // ── getAllCoursesAdmin — returns ALL courses for admin review ─────────────────
 export const getAllCoursesAdmin = async (req, res) => {
   try {
-    const courses = await Course.find({})
-      .populate("instructor", "name email")
-      .populate(
-        "students",
-        "name email avatarUrl phoneNumber subscription selectedClass",
-      )
-      .sort({ createdAt: -1 })
-      .lean();
+    const courses = await Course.aggregate([
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "instructor",
+          foreignField: "_id",
+          as: "instructor",
+        },
+      },
+      {
+        $unwind: {
+          path: "$instructor",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          title: 1,
+          summary: 1,
+          category: 1,
+          board: 1,
+          language: 1,
+          level: 1,
+          price: 1,
+          approvalStatus: 1,
+          published: 1,
+          createdAt: 1,
+          tags: 1,
+          durationHours: 1,
+          ratingAverage: 1,
+          reviewCount: 1,
+          thumbnailUrl: 1,
+          demoVideoUrl: 1,
+          instructor: {
+            _id: "$instructor._id",
+            name: "$instructor.name",
+            email: "$instructor.email",
+          },
+          studentsCount: { $size: { $ifNull: ["$students", []] } },
+          lessonCount: { $size: { $ifNull: ["$lessons", []] } },
+          noteCount: { $size: { $ifNull: ["$notes", []] } },
+        },
+      },
+    ]);
     res.json(courses);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -897,7 +934,10 @@ export const enrollCourses = async (req, res) => {
 
 export const getCourseById = async (req, res) => {
   try {
-    const cacheKey = `course:detail:${req.params.id}`;
+    const includeStudents = req.query.includeStudents === "true";
+    const cacheKey = `course:detail:${req.params.id}${
+      includeStudents ? ":students" : ""
+    }`;
     const cached = await getJson(cacheKey);
     if (cached) {
       // Apply note status filtering dynamically for non-owners/non-admins
@@ -913,10 +953,18 @@ export const getCourseById = async (req, res) => {
       return res.json(cached);
     }
 
-    const course = await Course.findById(req.params.id)
+    let courseQuery = Course.findById(req.params.id)
       .populate("instructor", "name email")
-      .populate("ratings.user", "name")
-      .lean();
+      .populate("ratings.user", "name");
+
+    if (includeStudents) {
+      courseQuery = courseQuery.populate(
+        "students",
+        "name email avatarUrl phoneNumber subscription selectedClass",
+      );
+    }
+
+    const course = await courseQuery.lean();
     if (!course) return res.status(404).json({ message: "Course not found" });
 
     const ratingData = await computeInstructorRating(course.instructor?._id);
@@ -925,12 +973,11 @@ export const getCourseById = async (req, res) => {
       course.instructor.ratingCount = ratingData.ratingCount;
     }
 
-    // Include student count without loading all user documents into memory
     course.studentCount = Array.isArray(course.students)
       ? course.students.length
       : 0;
+    course.studentsCount = course.studentCount;
 
-    // Cache the base course details for 60 seconds
     await setJson(cacheKey, course, 60);
 
     const isOwner =

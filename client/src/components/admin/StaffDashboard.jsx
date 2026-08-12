@@ -476,11 +476,12 @@ export default function StaffDashboard() {
   }, [tab, refreshUsersAndCourses]);
 
   const totalRevenue = courses.reduce(
-    (s, c) => s + (c.price || 0) * (c.students?.length || 0),
+    (s, c) =>
+      s + (c.price || 0) * (c.studentsCount ?? c.students?.length ?? 0),
     0,
   );
   const totalEnrollments = courses.reduce(
-    (s, c) => s + (c.students?.length || 0),
+    (s, c) => s + (c.studentsCount ?? c.students?.length ?? 0),
     0,
   );
 
@@ -489,10 +490,14 @@ export default function StaffDashboard() {
       (c) => c.instructor?._id === inst._id || c.instructor === inst._id,
     );
     const rev = mc.reduce(
-      (s, c) => s + (c.price || 0) * (c.students?.length || 0),
+      (s, c) =>
+        s + (c.price || 0) * (c.studentsCount ?? c.students?.length ?? 0),
       0,
     );
-    const stu = mc.reduce((s, c) => s + (c.students?.length || 0), 0);
+    const stu = mc.reduce(
+      (s, c) => s + (c.studentsCount ?? c.students?.length ?? 0),
+      0,
+    );
     const avg = mc.length
       ? (mc.reduce((s, c) => s + (c.rating || 4.2), 0) / mc.length).toFixed(1)
       : "—";

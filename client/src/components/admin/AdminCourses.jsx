@@ -36,7 +36,11 @@ import api from "../../config/api.js";
 import { fetchAllCoursesAdmin } from "../../redux/slices/courseSlice";
 import InstructorCourses from "../instructor/InstructorCourses.jsx";
 import { Toast } from "../instructor/InstructorUi.jsx";
-import { normalizeVideoUrl, isEmbedVideo, getEmbedUrl } from "../../utils/media.js";
+import {
+  normalizeVideoUrl,
+  isEmbedVideo,
+  getEmbedUrl,
+} from "../../utils/media.js";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -240,7 +244,7 @@ function IKVideoPlayer({ src }) {
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
             setStatus("playing");
-            video.play().catch(() => { });
+            video.play().catch(() => {});
           });
           hls.on(Hls.Events.ERROR, (_, data) => {
             if (data.fatal) {
@@ -617,21 +621,69 @@ function LessonPreviewModal({ lesson, lessonIndex, onClose }) {
                   }}
                 />
                 {hasText && (
-                  <div style={{ marginTop: 14, fontSize: 13, color: "#94a3b8", lineHeight: 1.7, whiteSpace: "pre-wrap", background: "#060d1f", borderRadius: 10, padding: "14px 16px", border: "1px solid #1e293b" }}>
-                    <p style={{ fontSize: 11, color: "#475569", marginBottom: 8, fontWeight: 600 }}>Lesson Notes:</p>
+                  <div
+                    style={{
+                      marginTop: 14,
+                      fontSize: 13,
+                      color: "#94a3b8",
+                      lineHeight: 1.7,
+                      whiteSpace: "pre-wrap",
+                      background: "#060d1f",
+                      borderRadius: 10,
+                      padding: "14px 16px",
+                      border: "1px solid #1e293b",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: 11,
+                        color: "#475569",
+                        marginBottom: 8,
+                        fontWeight: 600,
+                      }}
+                    >
+                      Lesson Notes:
+                    </p>
                     {lesson.content}
                   </div>
                 )}
               </>
             ) : hasText ? (
-              <div style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.9, whiteSpace: "pre-wrap", background: "#060d1f", borderRadius: 12, padding: "18px 20px", border: "1px solid #1e293b" }}>
+              <div
+                style={{
+                  fontSize: 14,
+                  color: "#94a3b8",
+                  lineHeight: 1.9,
+                  whiteSpace: "pre-wrap",
+                  background: "#060d1f",
+                  borderRadius: 12,
+                  padding: "18px 20px",
+                  border: "1px solid #1e293b",
+                }}
+              >
                 {lesson.content}
               </div>
             ) : (
-              <div style={{ height: 160, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, background: "#060d1f", borderRadius: 12, border: "1px dashed #1e3a5f" }}>
+              <div
+                style={{
+                  height: 160,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10,
+                  background: "#060d1f",
+                  borderRadius: 12,
+                  border: "1px dashed #1e3a5f",
+                }}
+              >
                 <span style={{ fontSize: 36 }}>📄</span>
-                <p style={{ fontSize: 13, color: "#475569", fontWeight: 600 }}>No content attached</p>
-                <p style={{ fontSize: 11, color: "#334155" }}>The instructor has not added content for this lesson yet.</p>
+                <p style={{ fontSize: 13, color: "#475569", fontWeight: 600 }}>
+                  No content attached
+                </p>
+                <p style={{ fontSize: 11, color: "#334155" }}>
+                  The instructor has not added content for this lesson yet.
+                </p>
               </div>
             )}
           </div>
@@ -680,7 +732,15 @@ function LessonPreviewModal({ lesson, lessonIndex, onClose }) {
 }
 
 // ── Course detail drawer ──────────────────────────────────────────────────────
-function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, onEdit, actioning }) {
+function CourseDrawer({
+  course,
+  onClose,
+  onApprove,
+  onReject,
+  onUnreject,
+  onEdit,
+  actioning,
+}) {
   const st = STATUS_CONFIG[course.approvalStatus ?? "draft"];
   const [previewLesson, setPreviewLesson] = useState(null);
   const [previewIndex, setPreviewIndex] = useState(null);
@@ -705,17 +765,27 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, onEdit
         new Set([
           ...(course.lessons ?? []).map((l) => l.subject).filter(Boolean),
           ...(course.notes ?? []).map((n) => n.subject).filter(Boolean),
-        ])
+        ]),
       ).map((subj) => ({
         name: subj,
-        lessons: (course.lessons ?? []).map((l, i) => ({ ...l, _globalIndex: i })).filter((l) => l.subject === subj),
-        notes: (course.notes ?? []).map((n, i) => ({ ...n, _globalIndex: i })).filter((n) => n.subject === subj),
+        lessons: (course.lessons ?? [])
+          .map((l, i) => ({ ...l, _globalIndex: i }))
+          .filter((l) => l.subject === subj),
+        notes: (course.notes ?? [])
+          .map((n, i) => ({ ...n, _globalIndex: i }))
+          .filter((n) => n.subject === subj),
       }))
     : [
         {
           name: "",
-          lessons: (course.lessons ?? []).map((l, i) => ({ ...l, _globalIndex: i })),
-          notes: (course.notes ?? []).map((n, i) => ({ ...n, _globalIndex: i })),
+          lessons: (course.lessons ?? []).map((l, i) => ({
+            ...l,
+            _globalIndex: i,
+          })),
+          notes: (course.notes ?? []).map((n, i) => ({
+            ...n,
+            _globalIndex: i,
+          })),
         },
       ];
 
@@ -869,7 +939,10 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, onEdit
           {[
             { label: "Price", value: fmt(course.price ?? 0) },
             { label: "Lessons", value: course.lessons?.length ?? 0 },
-            { label: "Students", value: course.students?.length ?? 0 },
+            {
+              label: "Students",
+              value: course.studentsCount ?? course.students?.length ?? 0,
+            },
           ].map(({ label, value }) => (
             <div
               key={label}
@@ -965,49 +1038,70 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, onEdit
                 marginBottom: 8,
               }}
             >
-              Curriculum ({course.lessons?.length ?? 0} lessons, {course.notes?.length ?? 0} notes)
+              Curriculum ({course.lessons?.length ?? 0} lessons,{" "}
+              {course.notes?.length ?? 0} notes)
             </p>
             {course.notes?.length > 0 && (
-              <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10, lineHeight: 1.5 }}>
-                Notes are reviewed with this course and are approved when the course is approved.
+              <p
+                style={{
+                  fontSize: 12,
+                  color: "#94a3b8",
+                  marginBottom: 10,
+                  lineHeight: 1.5,
+                }}
+              >
+                Notes are reviewed with this course and are approved when the
+                course is approved.
               </p>
             )}
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {subjects.map((subj, sIdx) => (
-                <div key={sIdx} style={{ display: "flex", flexDirection: "column" }}>
+                <div
+                  key={sIdx}
+                  style={{ display: "flex", flexDirection: "column" }}
+                >
                   {subj.name && (
-                    <div style={{
-                      padding: "8px 14px",
-                      background: "#1e293b",
-                      borderRadius: (subj.lessons.length > 0 || subj.notes.length > 0) ? "10px 10px 0 0" : "10px",
-                      color: "#f1f5f9",
-                      fontWeight: 700,
-                      fontSize: 13,
-                      border: "1px solid #334155",
-                      borderBottom: "none"
-                    }}>
+                    <div
+                      style={{
+                        padding: "8px 14px",
+                        background: "#1e293b",
+                        borderRadius:
+                          subj.lessons.length > 0 || subj.notes.length > 0
+                            ? "10px 10px 0 0"
+                            : "10px",
+                        color: "#f1f5f9",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        border: "1px solid #334155",
+                        borderBottom: "none",
+                      }}
+                    >
                       {subj.name}
                     </div>
                   )}
-                  
-                  <div style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                    padding: subj.name ? "10px" : "0",
-                    background: subj.name ? "#111827" : "transparent",
-                    border: subj.name ? "1px solid #1e293b" : "none",
-                    borderTop: "none",
-                    borderRadius: subj.name ? "0 0 10px 10px" : "0"
-                  }}>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      padding: subj.name ? "10px" : "0",
+                      background: subj.name ? "#111827" : "transparent",
+                      border: subj.name ? "1px solid #1e293b" : "none",
+                      borderTop: "none",
+                      borderRadius: subj.name ? "0 0 10px 10px" : "0",
+                    }}
+                  >
                     {/* Lessons */}
                     {subj.lessons.map((l) => {
                       const isVideo = l.type !== "text";
-                      const hasContent = isVideo ? !!l.videoUrl : !!(l.content || l.pdfUrl);
+                      const hasContent = isVideo
+                        ? !!l.videoUrl
+                        : !!(l.content || l.pdfUrl);
                       return (
                         <div
-                          key={"l"+l._globalIndex}
+                          key={"l" + l._globalIndex}
                           onClick={() => openPreview(l, l._globalIndex)}
                           style={{
                             display: "flex",
@@ -1023,48 +1117,79 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, onEdit
                             transition: "all 0.15s",
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "rgba(14,165,233,0.07)";
-                            e.currentTarget.style.borderColor = "rgba(56,189,248,0.25)";
+                            e.currentTarget.style.background =
+                              "rgba(14,165,233,0.07)";
+                            e.currentTarget.style.borderColor =
+                              "rgba(56,189,248,0.25)";
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.background = "#111827";
                             e.currentTarget.style.borderColor = "#1e293b";
                           }}
                         >
-                          <span style={{ color: "#64748b", fontSize: 10, fontWeight: 700, flexShrink: 0, width: 16, textAlign: "center" }}>
+                          <span
+                            style={{
+                              color: "#64748b",
+                              fontSize: 10,
+                              fontWeight: 700,
+                              flexShrink: 0,
+                              width: 16,
+                              textAlign: "center",
+                            }}
+                          >
                             {l._globalIndex + 1}
                           </span>
                           <span style={{ fontSize: 14, flexShrink: 0 }}>
                             {isVideo ? "🎬" : "📝"}
                           </span>
-                          <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>
+                          <span
+                            style={{
+                              flex: 1,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              fontWeight: 500,
+                            }}
+                          >
                             {l.title}
                           </span>
-                          <span style={{
-                            fontSize: 10,
-                            fontWeight: 600,
-                            padding: "2px 8px",
-                            borderRadius: 20,
-                            flexShrink: 0,
-                            background: hasContent ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
-                            color: hasContent ? "#4ade80" : "#f87171",
-                            border: `1px solid ${hasContent ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
-                          }}>
-                            {hasContent ? (isVideo ? "Has video" : (l.pdfUrl ? "Has PDF" : "Has text")) : "No content"}
+                          <span
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 600,
+                              padding: "2px 8px",
+                              borderRadius: 20,
+                              flexShrink: 0,
+                              background: hasContent
+                                ? "rgba(34,197,94,0.1)"
+                                : "rgba(239,68,68,0.1)",
+                              color: hasContent ? "#4ade80" : "#f87171",
+                              border: `1px solid ${hasContent ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
+                            }}
+                          >
+                            {hasContent
+                              ? isVideo
+                                ? "Has video"
+                                : l.pdfUrl
+                                  ? "Has PDF"
+                                  : "Has text"
+                              : "No content"}
                           </span>
-                          <div style={{
-                            flexShrink: 0,
-                            width: 26,
-                            height: 26,
-                            borderRadius: 6,
-                            background: "rgba(14,165,233,0.12)",
-                            border: "1px solid rgba(56,189,248,0.2)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: 11,
-                            color: "#38bdf8",
-                          }}>
+                          <div
+                            style={{
+                              flexShrink: 0,
+                              width: 26,
+                              height: 26,
+                              borderRadius: 6,
+                              background: "rgba(14,165,233,0.12)",
+                              border: "1px solid rgba(56,189,248,0.2)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: 11,
+                              color: "#38bdf8",
+                            }}
+                          >
                             {isVideo ? "▶" : "👁"}
                           </div>
                         </div>
@@ -1093,7 +1218,7 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, onEdit
                     )}
                     {subj.notes.map((n) => (
                       <div
-                        key={"n"+n._globalIndex}
+                        key={"n" + n._globalIndex}
                         style={{
                           display: "flex",
                           alignItems: "flex-start",
@@ -1106,62 +1231,104 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, onEdit
                           color: "#e2e8f0",
                         }}
                       >
-                        <span style={{ color: "#64748b", fontSize: 10, fontWeight: 700, flexShrink: 0, width: 16, textAlign: "center", marginTop: 2 }}>
+                        <span
+                          style={{
+                            color: "#64748b",
+                            fontSize: 10,
+                            fontWeight: 700,
+                            flexShrink: 0,
+                            width: 16,
+                            textAlign: "center",
+                            marginTop: 2,
+                          }}
+                        >
                           {n._globalIndex + 1}
                         </span>
-                        <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>
+                        <span
+                          style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}
+                        >
                           📄
                         </span>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <p
+                            style={{
+                              fontWeight: 600,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
                             {n.title || "Untitled note"}
                           </p>
                           {n.description && (
-                            <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 2, lineHeight: 1.5 }}>
+                            <p
+                              style={{
+                                fontSize: 11,
+                                color: "#94a3b8",
+                                marginTop: 2,
+                                lineHeight: 1.5,
+                              }}
+                            >
                               {n.description}
                             </p>
                           )}
                         </div>
-                        <span style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          padding: "3px 8px",
-                          borderRadius: 20,
-                          flexShrink: 0,
-                          background: n.status === "approved" ? "rgba(34,197,94,0.1)" : "rgba(234,179,8,0.1)",
-                          color: n.status === "approved" ? "#4ade80" : "#fbbf24",
-                          border: `1px solid ${n.status === "approved" ? "rgba(34,197,94,0.2)" : "rgba(234,179,8,0.2)"}`,
-                          whiteSpace: "nowrap",
-                        }}>
-                          {n.status === "approved" ? "Approved" : "Pending with course"}
-                        </span>
-                        {n.fileUrl ? (
-                          <a href={n.fileUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} style={{
+                        <span
+                          style={{
                             fontSize: 10,
                             fontWeight: 700,
-                            padding: "3px 10px",
+                            padding: "3px 8px",
                             borderRadius: 20,
                             flexShrink: 0,
-                            background: "rgba(56,189,248,0.1)",
-                            color: "#38bdf8",
-                            border: "1px solid rgba(56,189,248,0.25)",
-                            textDecoration: "none",
+                            background:
+                              n.status === "approved"
+                                ? "rgba(34,197,94,0.1)"
+                                : "rgba(234,179,8,0.1)",
+                            color:
+                              n.status === "approved" ? "#4ade80" : "#fbbf24",
+                            border: `1px solid ${n.status === "approved" ? "rgba(34,197,94,0.2)" : "rgba(234,179,8,0.2)"}`,
                             whiteSpace: "nowrap",
-                          }}>
+                          }}
+                        >
+                          {n.status === "approved"
+                            ? "Approved"
+                            : "Pending with course"}
+                        </span>
+                        {n.fileUrl ? (
+                          <a
+                            href={n.fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 700,
+                              padding: "3px 10px",
+                              borderRadius: 20,
+                              flexShrink: 0,
+                              background: "rgba(56,189,248,0.1)",
+                              color: "#38bdf8",
+                              border: "1px solid rgba(56,189,248,0.25)",
+                              textDecoration: "none",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
                             View file ↗
                           </a>
                         ) : (
-                          <span style={{
-                            fontSize: 10,
-                            fontWeight: 600,
-                            padding: "3px 10px",
-                            borderRadius: 20,
-                            flexShrink: 0,
-                            background: "rgba(239,68,68,0.1)",
-                            color: "#f87171",
-                            border: "1px solid rgba(239,68,68,0.2)",
-                            whiteSpace: "nowrap",
-                          }}>
+                          <span
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 600,
+                              padding: "3px 10px",
+                              borderRadius: 20,
+                              flexShrink: 0,
+                              background: "rgba(239,68,68,0.1)",
+                              color: "#f87171",
+                              border: "1px solid rgba(239,68,68,0.2)",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
                             No file
                           </span>
                         )}
@@ -1316,7 +1483,14 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, onEdit
               borderTop: "1px solid #1e293b",
             }}
           >
-            <p style={{ fontSize: 12, color: "#64748b", textAlign: "center", marginBottom: 12 }}>
+            <p
+              style={{
+                fontSize: 12,
+                color: "#64748b",
+                textAlign: "center",
+                marginBottom: 12,
+              }}
+            >
               Instructor will be able to edit and resubmit.
             </p>
             {onUnreject && (
@@ -1409,7 +1583,8 @@ function StudentQuickViewModal({ student, onClose }) {
                 )}
               </div>
               <p className="text-xs text-slate-400 truncate mt-0.5">
-                {s.email || "No email"} {s.phoneNumber ? `· ${s.phoneNumber}` : ""}
+                {s.email || "No email"}{" "}
+                {s.phoneNumber ? `· ${s.phoneNumber}` : ""}
               </p>
             </div>
           </div>
@@ -1447,7 +1622,10 @@ function StudentQuickViewModal({ student, onClose }) {
               </p>
               <p className="text-base font-extrabold text-amber-400 mt-1 flex items-center gap-1">
                 <Coins size={14} />
-                {coins} <span className="text-[11px] text-slate-400 font-medium">(₹{(coins / 25).toFixed(2)})</span>
+                {coins}{" "}
+                <span className="text-[11px] text-slate-400 font-medium">
+                  (₹{(coins / 25).toFixed(2)})
+                </span>
               </p>
             </div>
             <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800">
@@ -1463,7 +1641,13 @@ function StudentQuickViewModal({ student, onClose }) {
                 Joined Date
               </p>
               <p className="text-xs font-bold text-slate-200 mt-1">
-                {s.createdAt ? new Date(s.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+                {s.createdAt
+                  ? new Date(s.createdAt).toLocaleDateString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : "—"}
               </p>
             </div>
           </div>
@@ -1476,21 +1660,36 @@ function StudentQuickViewModal({ student, onClose }) {
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-900/40 border border-slate-800/80">
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Email Address</p>
-                <p className="text-xs font-semibold text-slate-200 break-words mt-0.5">{s.email || "—"}</p>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">
+                  Email Address
+                </p>
+                <p className="text-xs font-semibold text-slate-200 break-words mt-0.5">
+                  {s.email || "—"}
+                </p>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Phone Number</p>
-                <p className="text-xs font-semibold text-slate-200 mt-0.5">{s.phoneNumber || "—"}</p>
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Father's Name</p>
-                <p className="text-xs font-semibold text-slate-200 mt-0.5">{s.fatherName || "—"}</p>
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Location</p>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">
+                  Phone Number
+                </p>
                 <p className="text-xs font-semibold text-slate-200 mt-0.5">
-                  {[s.city, s.state, s.pincode].filter(Boolean).join(", ") || "—"}
+                  {s.phoneNumber || "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">
+                  Father's Name
+                </p>
+                <p className="text-xs font-semibold text-slate-200 mt-0.5">
+                  {s.fatherName || "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">
+                  Location
+                </p>
+                <p className="text-xs font-semibold text-slate-200 mt-0.5">
+                  {[s.city, s.state, s.pincode].filter(Boolean).join(", ") ||
+                    "—"}
                 </p>
               </div>
             </div>
@@ -1505,9 +1704,18 @@ function StudentQuickViewModal({ student, onClose }) {
               </h4>
               <div className="p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between flex-wrap gap-3">
                 <div>
-                  <p className="text-sm font-extrabold text-white capitalize">{sub.plan} Plan ({sub.interval || "Annual"})</p>
+                  <p className="text-sm font-extrabold text-white capitalize">
+                    {sub.plan} Plan ({sub.interval || "Annual"})
+                  </p>
                   <p className="text-xs text-emerald-300/80 mt-0.5">
-                    Valid until: {sub.expiresAt ? new Date(sub.expiresAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "Active"}
+                    Valid until:{" "}
+                    {sub.expiresAt
+                      ? new Date(sub.expiresAt).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "Active"}
                   </p>
                 </div>
                 <span className="px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-extrabold">
@@ -1528,7 +1736,10 @@ function StudentQuickViewModal({ student, onClose }) {
             {enrolledCourses.length > 0 ? (
               <div className="grid grid-cols-1 gap-2 max-h-56 overflow-y-auto pr-1">
                 {enrolledCourses.map((c, idx) => {
-                  const courseObj = typeof c === "object" ? c : { _id: c, title: "Course " + (idx + 1) };
+                  const courseObj =
+                    typeof c === "object"
+                      ? c
+                      : { _id: c, title: "Course " + (idx + 1) };
                   return (
                     <div
                       key={courseObj._id || idx}
@@ -1536,15 +1747,23 @@ function StudentQuickViewModal({ student, onClose }) {
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         {courseObj.thumbnailUrl ? (
-                          <img src={courseObj.thumbnailUrl} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" />
+                          <img
+                            src={courseObj.thumbnailUrl}
+                            alt=""
+                            className="w-8 h-8 rounded-lg object-cover shrink-0"
+                          />
                         ) : (
                           <div className="w-8 h-8 rounded-lg bg-indigo-950 border border-indigo-800/60 flex items-center justify-center text-indigo-400 shrink-0">
                             <BookOpen size={13} />
                           </div>
                         )}
                         <div className="min-w-0">
-                          <p className="font-bold text-white truncate">{courseObj.title || "Course"}</p>
-                          <p className="text-[10px] text-slate-400 truncate">{courseObj.category || "Class & Subject"}</p>
+                          <p className="font-bold text-white truncate">
+                            {courseObj.title || "Course"}
+                          </p>
+                          <p className="text-[10px] text-slate-400 truncate">
+                            {courseObj.category || "Class & Subject"}
+                          </p>
                         </div>
                       </div>
                       <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 font-bold shrink-0">
@@ -1573,39 +1792,153 @@ function StudentQuickViewModal({ student, onClose }) {
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 
 // ── Enrolled Students Section (used inside CourseDrawer) ──────────────────────
-function EnrolledStudentsSection({ students }) {
+function EnrolledStudentsSection({ students, loading }) {
   const [expanded, setExpanded] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  if (!students || students.length === 0) return null;
+  const studentObjects = Array.isArray(students)
+    ? students.filter((s) => s && typeof s === "object")
+    : [];
+
+  if (!studentObjects.length) {
+    if (loading) {
+      return (
+        <div
+          style={{
+            padding: 14,
+            borderRadius: 12,
+            background: "#111827",
+            border: "1px solid #1e293b",
+            color: "#94a3b8",
+            fontSize: 13,
+          }}
+        >
+          Loading enrolled students…
+        </div>
+      );
+    }
+    return null;
+  }
+
   return (
     <>
       <div>
-        <button onClick={() => setExpanded(!expanded)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#111827", border: "1px solid #1e293b", borderRadius: 10, padding: "12px 14px", fontSize: 11, fontWeight: 700, color: "#f1f5f9", textTransform: "uppercase", letterSpacing: "0.08em", cursor: "pointer" }}>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: "#111827",
+            border: "1px solid #1e293b",
+            borderRadius: 10,
+            padding: "12px 14px",
+            fontSize: 11,
+            fontWeight: 700,
+            color: "#f1f5f9",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            cursor: "pointer",
+          }}
+        >
           <span>Enrolled Students ({students.length})</span>
           <span style={{ fontSize: 14 }}>{expanded ? "▼" : "▶"}</span>
         </button>
         {expanded && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              marginTop: 10,
+            }}
+          >
             {students.map((s) => {
               const sub = s.subscription || {};
               const hasActivePlan = sub.status === "active" && sub.plan;
               return (
-                <div key={s._id} onClick={() => setSelectedStudent(s)} style={{ background: "#111827", border: "1px solid #1e293b", borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#334155"; e.currentTarget.style.background = "#1e293b"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#1e293b"; e.currentTarget.style.background = "#111827"; }}
+                <div
+                  key={s._id}
+                  onClick={() => setSelectedStudent(s)}
+                  style={{
+                    background: "#111827",
+                    border: "1px solid #1e293b",
+                    borderRadius: 10,
+                    padding: "10px 12px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "#334155";
+                    e.currentTarget.style.background = "#1e293b";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "#1e293b";
+                    e.currentTarget.style.background = "#111827";
+                  }}
                 >
-                  {s.avatarUrl
-                    ? <img src={s.avatarUrl} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
-                    : <div style={{ width: 36, height: 36, borderRadius: 8, background: "#1e293b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#64748b" }}>{s.name?.slice(0, 2).toUpperCase() || "?"}</div>
-                  }
+                  {s.avatarUrl ? (
+                    <img
+                      src={s.avatarUrl}
+                      alt=""
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 8,
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 8,
+                        background: "#1e293b",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "#64748b",
+                      }}
+                    >
+                      {s.name?.slice(0, 2).toUpperCase() || "?"}
+                    </div>
+                  )}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</p>
-                    <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.email || s.phoneNumber || "—"}</p>
+                    <p
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: "#f1f5f9",
+                        margin: 0,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {s.name}
+                    </p>
+                    <p
+                      style={{
+                        fontSize: 11,
+                        color: "#64748b",
+                        margin: "2px 0 0",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {s.email || s.phoneNumber || "—"}
+                    </p>
                   </div>
                   {hasActivePlan && (
                     <span
@@ -1614,13 +1947,27 @@ function EnrolledStudentsSection({ students }) {
                         fontWeight: 800,
                         padding: "2px 8px",
                         borderRadius: 12,
-                        background: sub.plan === "elite" ? "#f59e0b20" : sub.plan === "premium" ? "#ef444420" : "#10b98120",
-                        color: sub.plan === "elite" ? "#fbbf24" : sub.plan === "premium" ? "#f87171" : "#10b981",
+                        background:
+                          sub.plan === "elite"
+                            ? "#f59e0b20"
+                            : sub.plan === "premium"
+                              ? "#ef444420"
+                              : "#10b98120",
+                        color:
+                          sub.plan === "elite"
+                            ? "#fbbf24"
+                            : sub.plan === "premium"
+                              ? "#f87171"
+                              : "#10b981",
                         border: `1px solid ${sub.plan === "elite" ? "#f59e0b40" : sub.plan === "premium" ? "#ef444440" : "#10b98140"}`,
                         flexShrink: 0,
                       }}
                     >
-                      {sub.plan === "elite" ? "Elite 👑" : sub.plan === "premium" ? "Premium ⭐" : "Basic"}
+                      {sub.plan === "elite"
+                        ? "Elite 👑"
+                        : sub.plan === "premium"
+                          ? "Premium ⭐"
+                          : "Basic"}
                     </span>
                   )}
                 </div>
@@ -1629,7 +1976,12 @@ function EnrolledStudentsSection({ students }) {
           </div>
         )}
       </div>
-      {selectedStudent && <StudentQuickViewModal student={selectedStudent} onClose={() => setSelectedStudent(null)} />}
+      {selectedStudent && (
+        <StudentQuickViewModal
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+        />
+      )}
     </>
   );
 }
@@ -1651,15 +2003,19 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
       c.title?.toLowerCase().includes(search.toLowerCase()) ||
       c.instructor?.name?.toLowerCase().includes(search.toLowerCase()) ||
       c.category?.toLowerCase().includes(search.toLowerCase()) ||
-      c.board?.toLowerCase().includes(search.toLowerCase())
+      c.board?.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const filteredStudents = (selectedCourse?.students || []).filter(
+  const selectedStudentObjects = Array.isArray(selectedCourse?.students)
+    ? selectedCourse.students.filter((s) => s && typeof s === "object")
+    : [];
+
+  const filteredStudents = selectedStudentObjects.filter(
     (s) =>
       !studentSearch ||
       s.name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
       s.email?.toLowerCase().includes(studentSearch.toLowerCase()) ||
-      s.phoneNumber?.includes(studentSearch)
+      s.phoneNumber?.includes(studentSearch),
   );
 
   // Group lessons and notes by subject/chapter
@@ -1678,6 +2034,35 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
     });
     return Object.values(map);
   }, [selectedCourse]);
+
+  useEffect(() => {
+    let active = true;
+    const courseId = selectedCourse?._id;
+    const hasStudentObjects =
+      Array.isArray(selectedCourse?.students) &&
+      selectedCourse.students.length > 0 &&
+      typeof selectedCourse.students[0] === "object";
+
+    if (!courseId || hasStudentObjects) return;
+
+    setSelectedCourseLoading(true);
+    api
+      .get(`/courses/${courseId}`, { params: { includeStudents: true } })
+      .then((res) => {
+        if (!active) return;
+        if (res.data) setSelectedCourse(res.data);
+      })
+      .catch(() => {
+        // ignore; render minimal course details until the user closes the drawer
+      })
+      .finally(() => {
+        if (active) setSelectedCourseLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [selectedCourse?._id]);
 
   return (
     <>
@@ -1705,7 +2090,9 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
           Approved Courses
         </h2>
         <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>
-          {approved.length} published course{approved.length !== 1 ? "s" : ""} — click any course or "View Full Details" to inspect comprehensive curriculum, lessons, notes, and enrolled students
+          {approved.length} published course{approved.length !== 1 ? "s" : ""} —
+          click any course or "View Full Details" to inspect comprehensive
+          curriculum, lessons, notes, and enrolled students
         </p>
       </div>
 
@@ -1731,14 +2118,17 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
       {filtered.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 0" }}>
           <p style={{ fontSize: 32, margin: "0 0 10px" }}>📭</p>
-          <p style={{ color: "#64748b", fontWeight: 600 }}>No approved courses found.</p>
+          <p style={{ color: "#64748b", fontWeight: 600 }}>
+            No approved courses found.
+          </p>
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
           {filtered.map((course) => {
-            const studentCount = course.students?.length || 0;
-            const lessonCount = course.lessons?.length || 0;
-            const noteCount = course.notes?.length || 0;
+            const studentCount =
+              course.studentsCount ?? course.students?.length ?? 0;
+            const lessonCount = course.lessons?.length ?? 0;
+            const noteCount = course.notes?.length ?? 0;
             return (
               <div
                 key={course._id}
@@ -1800,7 +2190,14 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                     )}
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        flexWrap: "wrap",
+                      }}
+                    >
                       <p
                         style={{
                           fontSize: 15,
@@ -1839,20 +2236,43 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                       }}
                     >
                       <span>
-                        Instructor: <strong style={{ color: "#e2e8f0" }}>{course.instructor?.name || "Umang Academy"}</strong>
+                        Instructor:{" "}
+                        <strong style={{ color: "#e2e8f0" }}>
+                          {course.instructor?.name || "Umang Academy"}
+                        </strong>
                       </span>
                       {course.category && (
-                        <span style={{ background: "#1e293b", padding: "1px 8px", borderRadius: 6, fontSize: 11 }}>
+                        <span
+                          style={{
+                            background: "#1e293b",
+                            padding: "1px 8px",
+                            borderRadius: 6,
+                            fontSize: 11,
+                          }}
+                        >
                           {course.category}
                         </span>
                       )}
                       {course.board && (
-                        <span style={{ background: "#1e293b", padding: "1px 8px", borderRadius: 6, fontSize: 11 }}>
+                        <span
+                          style={{
+                            background: "#1e293b",
+                            padding: "1px 8px",
+                            borderRadius: 6,
+                            fontSize: 11,
+                          }}
+                        >
                           {course.board}
                         </span>
                       )}
-                      <span>{lessonCount} lesson{lessonCount !== 1 ? "s" : ""}</span>
-                      {noteCount > 0 && <span>{noteCount} note{noteCount !== 1 ? "s" : ""}</span>}
+                      <span>
+                        {lessonCount} lesson{lessonCount !== 1 ? "s" : ""}
+                      </span>
+                      {noteCount > 0 && (
+                        <span>
+                          {noteCount} note{noteCount !== 1 ? "s" : ""}
+                        </span>
+                      )}
                       <span style={{ color: "#10b981", fontWeight: 700 }}>
                         {studentCount} student{studentCount !== 1 ? "s" : ""}
                       </span>
@@ -1864,7 +2284,14 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                 </div>
 
                 {/* Actions */}
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    flexShrink: 0,
+                  }}
+                >
                   <button
                     onClick={() => {
                       setSelectedCourse(course);
@@ -1985,7 +2412,14 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                   }}
                 >
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        marginBottom: 6,
+                      }}
+                    >
                       <span
                         style={{
                           fontSize: 10,
@@ -2026,13 +2460,32 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                     >
                       {selectedCourse.title}
                     </h3>
-                    <p style={{ fontSize: 12, color: "#64748b", margin: "4px 0 0" }}>
-                      Instructor: <strong style={{ color: "#cbd5e1" }}>{selectedCourse.instructor?.name || "Umang Vision Academy"}</strong>
-                      {selectedCourse.instructor?.email ? ` (${selectedCourse.instructor.email})` : ""}
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: "#64748b",
+                        margin: "4px 0 0",
+                      }}
+                    >
+                      Instructor:{" "}
+                      <strong style={{ color: "#cbd5e1" }}>
+                        {selectedCourse.instructor?.name ||
+                          "Umang Vision Academy"}
+                      </strong>
+                      {selectedCourse.instructor?.email
+                        ? ` (${selectedCourse.instructor.email})`
+                        : ""}
                     </p>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      flexShrink: 0,
+                    }}
+                  >
                     {onEditCourse && (
                       <button
                         onClick={() => {
@@ -2076,7 +2529,14 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                 </div>
 
                 {/* Tabs Bar */}
-                <div style={{ display: "flex", gap: 8, borderTop: "1px solid #1e293b", paddingTop: 12 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    borderTop: "1px solid #1e293b",
+                    paddingTop: 12,
+                  }}
+                >
                   <button
                     onClick={() => setActiveTab("overview")}
                     style={{
@@ -2086,7 +2546,8 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                       fontWeight: 700,
                       cursor: "pointer",
                       border: "none",
-                      background: activeTab === "overview" ? "#4f46e5" : "#1e293b",
+                      background:
+                        activeTab === "overview" ? "#4f46e5" : "#1e293b",
                       color: activeTab === "overview" ? "#fff" : "#94a3b8",
                       transition: "all 0.15s",
                     }}
@@ -2102,18 +2563,32 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                       fontWeight: 700,
                       cursor: "pointer",
                       border: "none",
-                      background: activeTab === "students" ? "#059669" : "#1e293b",
+                      background:
+                        activeTab === "students" ? "#059669" : "#1e293b",
                       color: activeTab === "students" ? "#fff" : "#94a3b8",
                       transition: "all 0.15s",
                     }}
                   >
-                    👥 Enrolled Students ({selectedCourse.students?.length || 0})
+                    👥 Enrolled Students (
+                    {selectedCourse.studentsCount ??
+                      selectedCourse.students?.length ??
+                      0}
+                    )
                   </button>
                 </div>
               </div>
 
               {/* Drawer Content */}
-              <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 20 }}>
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: "auto",
+                  padding: "20px 24px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 20,
+                }}
+              >
                 {activeTab === "overview" && (
                   <>
                     {/* Thumbnail banner */}
@@ -2147,13 +2622,44 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                     )}
 
                     {/* Stats Metrics Grid */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 10 }}>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(110px, 1fr))",
+                        gap: 10,
+                      }}
+                    >
                       {[
-                        { label: "Price", value: selectedCourse.price > 0 ? `₹${selectedCourse.price}` : "Free" },
-                        { label: "Lessons", value: selectedCourse.lessons?.length ?? 0 },
-                        { label: "Notes", value: selectedCourse.notes?.length ?? 0 },
-                        { label: "Enrolled", value: selectedCourse.students?.length ?? 0 },
-                        { label: "Class", value: selectedCourse.className || selectedCourse.level || "—" },
+                        {
+                          label: "Price",
+                          value:
+                            selectedCourse.price > 0
+                              ? `₹${selectedCourse.price}`
+                              : "Free",
+                        },
+                        {
+                          label: "Lessons",
+                          value: selectedCourse.lessons?.length ?? 0,
+                        },
+                        {
+                          label: "Notes",
+                          value: selectedCourse.notes?.length ?? 0,
+                        },
+                        {
+                          label: "Enrolled",
+                          value:
+                            selectedCourse.studentsCount ??
+                            selectedCourse.students?.length ??
+                            0,
+                        },
+                        {
+                          label: "Class",
+                          value:
+                            selectedCourse.className ||
+                            selectedCourse.level ||
+                            "—",
+                        },
                         { label: "Board", value: selectedCourse.board || "—" },
                       ].map(({ label, value }) => (
                         <div
@@ -2166,26 +2672,81 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                             textAlign: "center",
                           }}
                         >
-                          <div style={{ fontSize: 15, fontWeight: 800, color: "#f1f5f9" }}>{value}</div>
-                          <div style={{ fontSize: 10, color: "#64748b", marginTop: 2, textTransform: "uppercase", fontWeight: 700 }}>{label}</div>
+                          <div
+                            style={{
+                              fontSize: 15,
+                              fontWeight: 800,
+                              color: "#f1f5f9",
+                            }}
+                          >
+                            {value}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: 10,
+                              color: "#64748b",
+                              marginTop: 2,
+                              textTransform: "uppercase",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {label}
+                          </div>
                         </div>
                       ))}
                     </div>
 
                     {/* Description */}
                     <div>
-                      <p style={{ fontSize: 11, fontWeight: 700, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
+                      <p
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: "#818cf8",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.08em",
+                          marginBottom: 6,
+                        }}
+                      >
                         Course Description &amp; Summary
                       </p>
-                      <div style={{ background: "#111827", border: "1px solid #1e293b", borderRadius: 12, padding: "14px 16px", color: "#cbd5e1", fontSize: 13, lineHeight: 1.7 }}>
-                        {selectedCourse.description || selectedCourse.summary || "No description provided."}
+                      <div
+                        style={{
+                          background: "#111827",
+                          border: "1px solid #1e293b",
+                          borderRadius: 12,
+                          padding: "14px 16px",
+                          color: "#cbd5e1",
+                          fontSize: 13,
+                          lineHeight: 1.7,
+                        }}
+                      >
+                        {selectedCourse.description ||
+                          selectedCourse.summary ||
+                          "No description provided."}
                       </div>
                     </div>
 
                     {/* Demo Video Preview */}
                     {selectedCourse.demoVideoUrl && (
-                      <div style={{ background: "#111827", border: "1px solid #1e293b", borderRadius: 12, padding: "14px 16px" }}>
-                        <p style={{ fontSize: 11, fontWeight: 700, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+                      <div
+                        style={{
+                          background: "#111827",
+                          border: "1px solid #1e293b",
+                          borderRadius: 12,
+                          padding: "14px 16px",
+                        }}
+                      >
+                        <p
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: "#818cf8",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.08em",
+                            marginBottom: 8,
+                          }}
+                        >
                           🎬 Demo Preview Video
                         </p>
                         <a
@@ -2213,19 +2774,42 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
 
                     {/* Curriculum Sections */}
                     <div>
-                      <p style={{ fontSize: 11, fontWeight: 700, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>
-                        Curriculum ({selectedCourse.lessons?.length ?? 0} lessons, {selectedCourse.notes?.length ?? 0} notes)
+                      <p
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: "#818cf8",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.08em",
+                          marginBottom: 10,
+                        }}
+                      >
+                        Curriculum ({selectedCourse.lessons?.length ?? 0}{" "}
+                        lessons, {selectedCourse.notes?.length ?? 0} notes)
                       </p>
 
-                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 12,
+                        }}
+                      >
                         {subjects.map((subj, sIdx) => (
-                          <div key={sIdx} style={{ display: "flex", flexDirection: "column" }}>
+                          <div
+                            key={sIdx}
+                            style={{ display: "flex", flexDirection: "column" }}
+                          >
                             {subj.name && (
                               <div
                                 style={{
                                   padding: "8px 14px",
                                   background: "#1e293b",
-                                  borderRadius: subj.lessons.length > 0 || subj.notes.length > 0 ? "10px 10px 0 0" : "10px",
+                                  borderRadius:
+                                    subj.lessons.length > 0 ||
+                                    subj.notes.length > 0
+                                      ? "10px 10px 0 0"
+                                      : "10px",
                                   color: "#f1f5f9",
                                   fontWeight: 700,
                                   fontSize: 13,
@@ -2243,15 +2827,21 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                                 flexDirection: "column",
                                 gap: 6,
                                 padding: subj.name ? "10px" : "0",
-                                background: subj.name ? "#111827" : "transparent",
-                                border: subj.name ? "1px solid #1e293b" : "none",
+                                background: subj.name
+                                  ? "#111827"
+                                  : "transparent",
+                                border: subj.name
+                                  ? "1px solid #1e293b"
+                                  : "none",
                                 borderTop: "none",
                                 borderRadius: subj.name ? "0 0 10px 10px" : "0",
                               }}
                             >
                               {subj.lessons.map((l) => {
                                 const isVideo = l.type !== "text";
-                                const hasContent = isVideo ? !!l.videoUrl : !!(l.content || l.pdfUrl);
+                                const hasContent = isVideo
+                                  ? !!l.videoUrl
+                                  : !!(l.content || l.pdfUrl);
                                 return (
                                   <div
                                     key={"l" + l._globalIndex}
@@ -2273,11 +2863,29 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                                       transition: "all 0.15s",
                                     }}
                                   >
-                                    <span style={{ color: "#64748b", fontSize: 10, fontWeight: 700, width: 16, textAlign: "center" }}>
+                                    <span
+                                      style={{
+                                        color: "#64748b",
+                                        fontSize: 10,
+                                        fontWeight: 700,
+                                        width: 16,
+                                        textAlign: "center",
+                                      }}
+                                    >
                                       {l._globalIndex + 1}
                                     </span>
-                                    <span style={{ fontSize: 14 }}>{isVideo ? "🎬" : "📝"}</span>
-                                    <span style={{ flex: 1, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    <span style={{ fontSize: 14 }}>
+                                      {isVideo ? "🎬" : "📝"}
+                                    </span>
+                                    <span
+                                      style={{
+                                        flex: 1,
+                                        fontWeight: 600,
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                      }}
+                                    >
                                       {l.title}
                                     </span>
                                     <span
@@ -2286,12 +2894,22 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                                         fontWeight: 600,
                                         padding: "2px 8px",
                                         borderRadius: 20,
-                                        background: hasContent ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
-                                        color: hasContent ? "#4ade80" : "#f87171",
+                                        background: hasContent
+                                          ? "rgba(34,197,94,0.1)"
+                                          : "rgba(239,68,68,0.1)",
+                                        color: hasContent
+                                          ? "#4ade80"
+                                          : "#f87171",
                                         border: `1px solid ${hasContent ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
                                       }}
                                     >
-                                      {hasContent ? (isVideo ? "Has video" : l.pdfUrl ? "Has PDF" : "Has text") : "No content"}
+                                      {hasContent
+                                        ? isVideo
+                                          ? "Has video"
+                                          : l.pdfUrl
+                                            ? "Has PDF"
+                                            : "Has text"
+                                        : "No content"}
                                     </span>
                                     <div
                                       style={{
@@ -2299,7 +2917,8 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                                         height: 26,
                                         borderRadius: 6,
                                         background: "rgba(14,165,233,0.12)",
-                                        border: "1px solid rgba(56,189,248,0.2)",
+                                        border:
+                                          "1px solid rgba(56,189,248,0.2)",
                                         display: "flex",
                                         alignItems: "center",
                                         justifyContent: "center",
@@ -2328,15 +2947,41 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                                     color: "#e2e8f0",
                                   }}
                                 >
-                                  <span style={{ color: "#64748b", fontSize: 10, fontWeight: 700, width: 16, textAlign: "center" }}>
+                                  <span
+                                    style={{
+                                      color: "#64748b",
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                      width: 16,
+                                      textAlign: "center",
+                                    }}
+                                  >
                                     {n._globalIndex + 1}
                                   </span>
                                   <span style={{ fontSize: 14 }}>📄</span>
                                   <div style={{ flex: 1, minWidth: 0 }}>
-                                    <p style={{ fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    <p
+                                      style={{
+                                        fontWeight: 600,
+                                        margin: 0,
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                      }}
+                                    >
                                       {n.title || "Note"}
                                     </p>
-                                    {n.description && <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0" }}>{n.description}</p>}
+                                    {n.description && (
+                                      <p
+                                        style={{
+                                          fontSize: 11,
+                                          color: "#64748b",
+                                          margin: "2px 0 0",
+                                        }}
+                                      >
+                                        {n.description}
+                                      </p>
+                                    )}
                                   </div>
                                   {n.fileUrl ? (
                                     <a
@@ -2351,14 +2996,19 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                                         borderRadius: 20,
                                         background: "rgba(56,189,248,0.1)",
                                         color: "#38bdf8",
-                                        border: "1px solid rgba(56,189,248,0.25)",
+                                        border:
+                                          "1px solid rgba(56,189,248,0.25)",
                                         textDecoration: "none",
                                       }}
                                     >
                                       View file ↗
                                     </a>
                                   ) : (
-                                    <span style={{ fontSize: 10, color: "#64748b" }}>No file attached</span>
+                                    <span
+                                      style={{ fontSize: 10, color: "#64748b" }}
+                                    >
+                                      No file attached
+                                    </span>
                                   )}
                                 </div>
                               ))}
@@ -2371,7 +3021,13 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                 )}
 
                 {activeTab === "students" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 14,
+                    }}
+                  >
                     <input
                       value={studentSearch}
                       onChange={(e) => setStudentSearch(e.target.value)}
@@ -2391,17 +3047,34 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
 
                     {filteredStudents.length === 0 ? (
                       <div style={{ textAlign: "center", padding: "50px 0" }}>
-                        <p style={{ color: "#64748b", fontWeight: 600, fontSize: 13 }}>
-                          {(selectedCourse.students?.length ?? 0) === 0
-                            ? "No students enrolled in this course yet."
-                            : "No students match your search filter."}
+                        <p
+                          style={{
+                            color: "#64748b",
+                            fontWeight: 600,
+                            fontSize: 13,
+                          }}
+                        >
+                          {selectedCourseLoading
+                            ? "Loading enrolled students..."
+                            : (selectedStudentObjects.length ?? 0) === 0
+                              ? selectedCourse.studentsCount > 0
+                                ? "No students match your search filter."
+                                : "No students enrolled in this course yet."
+                              : "No students match your search filter."}
                         </p>
                       </div>
                     ) : (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 8,
+                        }}
+                      >
                         {filteredStudents.map((s) => {
                           const sub = s.subscription || {};
-                          const hasActivePlan = sub.status === "active" && sub.plan;
+                          const hasActivePlan =
+                            sub.status === "active" && sub.plan;
                           return (
                             <div
                               key={s._id}
@@ -2466,7 +3139,7 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                                     margin: 0,
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap"
+                                    whiteSpace: "nowrap",
                                   }}
                                 >
                                   {s.name}
@@ -2478,7 +3151,7 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                                     margin: "2px 0 0",
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap"
+                                    whiteSpace: "nowrap",
                                   }}
                                 >
                                   {s.email || "—"}
@@ -2509,11 +3182,17 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                                     {sub.plan === "premium"
                                       ? "Premium ⭐"
                                       : sub.plan === "elite"
-                                      ? "Elite 👑"
-                                      : "Basic Plan"}
+                                        ? "Elite 👑"
+                                        : "Basic Plan"}
                                   </span>
                                 )}
-                                <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 700 }}>
+                                <span
+                                  style={{
+                                    fontSize: 11,
+                                    color: "#818cf8",
+                                    fontWeight: 700,
+                                  }}
+                                >
                                   View Full Profile →
                                 </span>
                               </div>
@@ -2527,7 +3206,7 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
 
       {/* Lesson Preview Modal */}
@@ -2660,21 +3339,66 @@ export default function AdminCourses({
 
       {/* Mode Switcher */}
       <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 12,
+          marginBottom: 24,
+          padding: 4,
+          background: "#0b1120",
+          borderRadius: 12,
+          border: "1px solid #1e293b",
+          width: "100%",
+          maxWidth: "100%",
+        }}
+      >
+        <button
+          onClick={() => {
+            setMode("approved");
+            setEditingCourse(null);
+          }}
           style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 12,
-            marginBottom: 24,
-            padding: 4,
-            background: "#0b1120",
-            borderRadius: 12,
-            border: "1px solid #1e293b",
-            width: "100%",
-            maxWidth: "100%",
+            padding: "8px 18px",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: "pointer",
+            border: "none",
+            background:
+              mode === "approved"
+                ? "linear-gradient(135deg,#0891b2,#0e7490)"
+                : "transparent",
+            color: mode === "approved" ? "#fff" : "#94a3b8",
+            transition: "all 0.2s",
           }}
         >
+          Approved Courses
+        </button>
+        <button
+          onClick={() => {
+            setMode("review");
+            setEditingCourse(null);
+          }}
+          style={{
+            padding: "8px 18px",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: "pointer",
+            border: "none",
+            background:
+              mode === "review"
+                ? "linear-gradient(135deg,#7c3aed,#db2777)"
+                : "transparent",
+            color: mode === "review" ? "#fff" : "#94a3b8",
+            transition: "all 0.2s",
+          }}
+        >
+          Review Submissions
+        </button>
+        {canManage && (
           <button
-            onClick={() => { setMode("approved"); setEditingCourse(null); }}
+            onClick={() => setMode("manage")}
             style={{
               padding: "8px 18px",
               borderRadius: 10,
@@ -2682,48 +3406,18 @@ export default function AdminCourses({
               fontWeight: 700,
               cursor: "pointer",
               border: "none",
-              background: mode === "approved" ? "linear-gradient(135deg,#0891b2,#0e7490)" : "transparent",
-              color: mode === "approved" ? "#fff" : "#94a3b8",
+              background:
+                mode === "manage"
+                  ? "linear-gradient(135deg,#7c3aed,#db2777)"
+                  : "transparent",
+              color: mode === "manage" ? "#fff" : "#94a3b8",
               transition: "all 0.2s",
             }}
           >
-            Approved Courses
+            Manage &amp; Edit Courses
           </button>
-          <button
-            onClick={() => { setMode("review"); setEditingCourse(null); }}
-            style={{
-              padding: "8px 18px",
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              border: "none",
-              background: mode === "review" ? "linear-gradient(135deg,#7c3aed,#db2777)" : "transparent",
-              color: mode === "review" ? "#fff" : "#94a3b8",
-              transition: "all 0.2s",
-            }}
-          >
-            Review Submissions
-          </button>
-          {canManage && (
-            <button
-              onClick={() => setMode("manage")}
-              style={{
-                padding: "8px 18px",
-                borderRadius: 10,
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: "pointer",
-                border: "none",
-                background: mode === "manage" ? "linear-gradient(135deg,#7c3aed,#db2777)" : "transparent",
-                color: mode === "manage" ? "#fff" : "#94a3b8",
-                transition: "all 0.2s",
-              }}
-            >
-              Manage &amp; Edit Courses
-            </button>
-          )}
-        </div>
+        )}
+      </div>
 
       {mode === "approved" && (
         <ApprovedCoursesView
@@ -2740,7 +3434,14 @@ export default function AdminCourses({
 
       {canManage && mode === "manage" ? (
         <div>
-          <div style={{ display: "flex", alignItems: "center", justifyBetween: "space-between", marginBottom: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyBetween: "space-between",
+              marginBottom: 16,
+            }}
+          >
             <button
               onClick={() => {
                 setMode("review");
@@ -2774,419 +3475,438 @@ export default function AdminCourses({
         </div>
       ) : mode === "review" ? (
         <>
-
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 12,
-          marginBottom: 20,
-        }}
-      >
-        <div>
-          <p
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.14em",
-              color: "#818cf8",
-              textTransform: "uppercase",
-              marginBottom: 4,
-            }}
-          >
-            Course Management
-          </p>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: "#f1f5f9" }}>
-            Review Courses
-          </h2>
-          <p style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>
-            Approve or reject instructor submissions before they go live.
-          </p>
-        </div>
-        {counts.pending > 0 && (
+          {/* Header */}
           <div
             style={{
               display: "flex",
-              alignItems: "center",
-              gap: 8,
-              background: "#1c1a00",
-              border: "1px solid #854d0e",
-              borderRadius: 12,
-              padding: "10px 16px",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 12,
+              marginBottom: 20,
             }}
           >
-            <span style={{ fontSize: 20 }}>⏳</span>
             <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#fbbf24" }}>
-                {counts.pending}
-              </div>
-              <div style={{ fontSize: 11, color: "#92400e" }}>
-                awaiting review
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Status filter tabs */}
-      <div
-        className="no-scrollbar"
-        style={{
-          display: "flex",
-          gap: 8,
-          overflowX: "auto",
-          paddingBottom: 4,
-          marginBottom: 16,
-          maxWidth: "100%",
-        }}
-      >
-        {[
-          { key: "pending", label: `Pending (${counts.pending})` },
-          { key: "approved", label: `Approved (${counts.approved})` },
-          { key: "rejected", label: `Rejected (${counts.rejected})` },
-          { key: "draft", label: `Draft (${counts.draft})` },
-          { key: "all", label: `All (${counts.all})` },
-        ].map(({ key, label }) => {
-          const st = STATUS_CONFIG[key] ?? STATUS_CONFIG.draft;
-          const active = filterStatus === key;
-          return (
-            <button
-              key={key}
-              onClick={() => setFilterStatus(key)}
-              style={{
-                padding: "7px 16px",
-                borderRadius: 20,
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-                border: active ? `1px solid ${st.border}` : "1px solid #1e293b",
-                background: active ? st.bg : "transparent",
-                color: active ? st.text : "#64748b",
-                transition: "all 0.15s",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-              }}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Search */}
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Search by course title or instructor name…"
-        style={{
-          width: "100%",
-          padding: "9px 14px",
-          background: "#111827",
-          border: "1px solid #1e293b",
-          borderRadius: 10,
-          color: "#f1f5f9",
-          fontSize: 13,
-          outline: "none",
-          marginBottom: 14,
-          boxSizing: "border-box",
-        }}
-      />
-
-      {error && (
-        <div
-          style={{
-            background: "#2d0a0a",
-            border: "1px solid #7f1d1d",
-            borderRadius: 12,
-            padding: "12px 16px",
-            color: "#f87171",
-            fontSize: 13,
-            marginBottom: 14,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          ⚠️ {error}
-          <button
-            onClick={onRetry}
-            style={{
-              background: "none",
-              border: "1px solid #7f1d1d",
-              borderRadius: 8,
-              padding: "4px 12px",
-              color: "#f87171",
-              cursor: "pointer",
-              fontSize: 12,
-            }}
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
-      {/* Course list */}
-      {loading && courses.length === 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {[...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              style={{
-                height: 72,
-                background: "#111827",
-                borderRadius: 14,
-                animation: "pulse 1.4s infinite",
-              }}
-            />
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 0" }}>
-          <div style={{ fontSize: 40, marginBottom: 10 }}>📭</div>
-          <p style={{ color: "#64748b", fontWeight: 600 }}>
-            {counts.pending === 0 && filterStatus === "pending"
-              ? "No courses pending review 🎉"
-              : "No courses match this filter."}
-          </p>
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {filtered.map((course) => {
-            const st = STATUS_CONFIG[course.approvalStatus ?? "draft"];
-            return (
-              <div
-                key={course._id}
-                className="ac-row"
-                onClick={() => setSelected(course)}
+              <p
                 style={{
-                  background: "#111827",
-                  border: "1px solid #1e293b",
-                  borderRadius: 14,
-                  padding: "14px 16px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 12,
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                  animation: "fadeIn 0.2s ease",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  color: "#818cf8",
+                  textTransform: "uppercase",
+                  marginBottom: 4,
                 }}
               >
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 12, width: "100%" }}>
+                Course Management
+              </p>
+              <h2 style={{ fontSize: 22, fontWeight: 800, color: "#f1f5f9" }}>
+                Review Courses
+              </h2>
+              <p style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>
+                Approve or reject instructor submissions before they go live.
+              </p>
+            </div>
+            {counts.pending > 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  background: "#1c1a00",
+                  border: "1px solid #854d0e",
+                  borderRadius: 12,
+                  padding: "10px 16px",
+                }}
+              >
+                <span style={{ fontSize: 20 }}>⏳</span>
+                <div>
                   <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 10,
-                      background: "#1e293b",
-                      flexShrink: 0,
-                      overflow: "hidden",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 20,
-                    }}
+                    style={{ fontSize: 18, fontWeight: 800, color: "#fbbf24" }}
                   >
-                    {course.thumbnailUrl ? (
-                      <img
-                        src={course.thumbnailUrl}
-                        alt=""
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                        onError={(e) => {
-                          e.target.style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      "📚"
-                    )}
+                    {counts.pending}
                   </div>
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 8,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <p
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 700,
-                          color: "#f1f5f9",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          flex: 1,
-                          minWidth: 0,
-                        }}
-                        title={course.title}
-                      >
-                        {course.title}
-                      </p>
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          padding: "2px 8px",
-                          borderRadius: 20,
-                          background: st.bg,
-                          color: st.text,
-                          border: `1px solid ${st.border}`,
-                          flexShrink: 0,
-                        }}
-                      >
-                        {st.icon} {st.label}
-                      </span>
-                    </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 10,
-                        marginTop: 4,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <span style={{ fontSize: 11, color: "#64748b" }}>
-                        👤 {course.instructor?.name ?? "Unknown"}
-                      </span>
-                      {course.category && (
-                        <span style={{ fontSize: 11, color: "#64748b" }}>
-                          {course.category}
-                        </span>
-                      )}
-                      <span style={{ fontSize: 11, color: "#64748b" }}>
-                        📚 {course.lessons?.length ?? 0} lessons
-                      </span>
-                      {course.price > 0 && (
-                        <span style={{ fontSize: 11, color: "#64748b" }}>
-                          ₹{course.price}
-                        </span>
-                      )}
-                    </div>
+                  <div style={{ fontSize: 11, color: "#92400e" }}>
+                    awaiting review
                   </div>
-
-                  <span style={{ color: "#334155", fontSize: 16, flexShrink: 0, alignSelf: "center" }}>
-                    ›
-                  </span>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 8,
-                    width: "100%",
-                    paddingTop: 8,
-                    borderTop: "1px solid #1e293b",
-                    justifyContent: "flex-end",
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {canEdit && (
-                    <button
-                      onClick={(e) => handleStartEdit(course, e)}
-                      style={{
-                        padding: "7px 14px",
-                        borderRadius: 8,
-                        border: "1px solid #475569",
-                        background: "#1e293b",
-                        color: "#e2e8f0",
-                        fontSize: 11,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      ✏️ Edit
-                    </button>
-                  )}
-                  {canApprove && course.approvalStatus === "pending" && (
-                    <>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setRejectTarget(course);
-                        }}
-                        disabled={actioning}
-                        style={{
-                          flex: 1,
-                          maxWidth: 120,
-                          padding: "7px 14px",
-                          borderRadius: 8,
-                          border: "1px solid #7f1d1d",
-                          background: "#2d0a0a",
-                          color: "#f87171",
-                          fontSize: 11,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          textAlign: "center",
-                        }}
-                      >
-                        Reject
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleApprove(course._id);
-                        }}
-                        disabled={actioning}
-                        style={{
-                          flex: 1,
-                          maxWidth: 140,
-                          padding: "7px 16px",
-                          borderRadius: 8,
-                          border: "none",
-                          background: "linear-gradient(135deg,#16a34a,#15803d)",
-                          color: "#fff",
-                          fontSize: 11,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          textAlign: "center",
-                        }}
-                      >
-                        Approve
-                      </button>
-                    </>
-                  )}
                 </div>
               </div>
-            );
-          })}
-        </div>
-      )}
+            )}
+          </div>
 
-      {selected && (
-        <CourseDrawer
-          course={courses.find((c) => c._id === selected._id) ?? selected}
-          onClose={() => setSelected(null)}
-          onApprove={canApprove ? handleApprove : undefined}
-          onReject={canApprove ? (c) => setRejectTarget(c) : undefined}
-          onUnreject={canApprove ? handleUnreject : undefined}
-          onEdit={canEdit ? handleStartEdit : undefined}
-          actioning={actioning}
-        />
-      )}
+          {/* Status filter tabs */}
+          <div
+            className="no-scrollbar"
+            style={{
+              display: "flex",
+              gap: 8,
+              overflowX: "auto",
+              paddingBottom: 4,
+              marginBottom: 16,
+              maxWidth: "100%",
+            }}
+          >
+            {[
+              { key: "pending", label: `Pending (${counts.pending})` },
+              { key: "approved", label: `Approved (${counts.approved})` },
+              { key: "rejected", label: `Rejected (${counts.rejected})` },
+              { key: "draft", label: `Draft (${counts.draft})` },
+              { key: "all", label: `All (${counts.all})` },
+            ].map(({ key, label }) => {
+              const st = STATUS_CONFIG[key] ?? STATUS_CONFIG.draft;
+              const active = filterStatus === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setFilterStatus(key)}
+                  style={{
+                    padding: "7px 16px",
+                    borderRadius: 20,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    border: active
+                      ? `1px solid ${st.border}`
+                      : "1px solid #1e293b",
+                    background: active ? st.bg : "transparent",
+                    color: active ? st.text : "#64748b",
+                    transition: "all 0.15s",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
 
-      {canApprove && rejectTarget && (
-        <RejectModal
-          course={rejectTarget}
-          onClose={() => setRejectTarget(null)}
-          onConfirm={handleRejectConfirm}
-          loading={actioning}
-        />
-      )}
-      </> ) : null}
+          {/* Search */}
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search by course title or instructor name…"
+            style={{
+              width: "100%",
+              padding: "9px 14px",
+              background: "#111827",
+              border: "1px solid #1e293b",
+              borderRadius: 10,
+              color: "#f1f5f9",
+              fontSize: 13,
+              outline: "none",
+              marginBottom: 14,
+              boxSizing: "border-box",
+            }}
+          />
+
+          {error && (
+            <div
+              style={{
+                background: "#2d0a0a",
+                border: "1px solid #7f1d1d",
+                borderRadius: 12,
+                padding: "12px 16px",
+                color: "#f87171",
+                fontSize: 13,
+                marginBottom: 14,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              ⚠️ {error}
+              <button
+                onClick={onRetry}
+                style={{
+                  background: "none",
+                  border: "1px solid #7f1d1d",
+                  borderRadius: 8,
+                  padding: "4px 12px",
+                  color: "#f87171",
+                  cursor: "pointer",
+                  fontSize: 12,
+                }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Course list */}
+          {loading && courses.length === 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    height: 72,
+                    background: "#111827",
+                    borderRadius: 14,
+                    animation: "pulse 1.4s infinite",
+                  }}
+                />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 0" }}>
+              <div style={{ fontSize: 40, marginBottom: 10 }}>📭</div>
+              <p style={{ color: "#64748b", fontWeight: 600 }}>
+                {counts.pending === 0 && filterStatus === "pending"
+                  ? "No courses pending review 🎉"
+                  : "No courses match this filter."}
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {filtered.map((course) => {
+                const st = STATUS_CONFIG[course.approvalStatus ?? "draft"];
+                return (
+                  <div
+                    key={course._id}
+                    className="ac-row"
+                    onClick={() => setSelected(course)}
+                    style={{
+                      background: "#111827",
+                      border: "1px solid #1e293b",
+                      borderRadius: 14,
+                      padding: "14px 16px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 12,
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                      animation: "fadeIn 0.2s ease",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 12,
+                        width: "100%",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 10,
+                          background: "#1e293b",
+                          flexShrink: 0,
+                          overflow: "hidden",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 20,
+                        }}
+                      >
+                        {course.thumbnailUrl ? (
+                          <img
+                            src={course.thumbnailUrl}
+                            alt=""
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          "📚"
+                        )}
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 8,
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <p
+                            style={{
+                              fontSize: 14,
+                              fontWeight: 700,
+                              color: "#f1f5f9",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              flex: 1,
+                              minWidth: 0,
+                            }}
+                            title={course.title}
+                          >
+                            {course.title}
+                          </p>
+                          <span
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 700,
+                              padding: "2px 8px",
+                              borderRadius: 20,
+                              background: st.bg,
+                              color: st.text,
+                              border: `1px solid ${st.border}`,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {st.icon} {st.label}
+                          </span>
+                        </div>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 10,
+                            marginTop: 4,
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <span style={{ fontSize: 11, color: "#64748b" }}>
+                            👤 {course.instructor?.name ?? "Unknown"}
+                          </span>
+                          {course.category && (
+                            <span style={{ fontSize: 11, color: "#64748b" }}>
+                              {course.category}
+                            </span>
+                          )}
+                          <span style={{ fontSize: 11, color: "#64748b" }}>
+                            📚 {course.lessons?.length ?? 0} lessons
+                          </span>
+                          {course.price > 0 && (
+                            <span style={{ fontSize: 11, color: "#64748b" }}>
+                              ₹{course.price}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <span
+                        style={{
+                          color: "#334155",
+                          fontSize: 16,
+                          flexShrink: 0,
+                          alignSelf: "center",
+                        }}
+                      >
+                        ›
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 8,
+                        width: "100%",
+                        paddingTop: 8,
+                        borderTop: "1px solid #1e293b",
+                        justifyContent: "flex-end",
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {canEdit && (
+                        <button
+                          onClick={(e) => handleStartEdit(course, e)}
+                          style={{
+                            padding: "7px 14px",
+                            borderRadius: 8,
+                            border: "1px solid #475569",
+                            background: "#1e293b",
+                            color: "#e2e8f0",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
+                          ✏️ Edit
+                        </button>
+                      )}
+                      {canApprove && course.approvalStatus === "pending" && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setRejectTarget(course);
+                            }}
+                            disabled={actioning}
+                            style={{
+                              flex: 1,
+                              maxWidth: 120,
+                              padding: "7px 14px",
+                              borderRadius: 8,
+                              border: "1px solid #7f1d1d",
+                              background: "#2d0a0a",
+                              color: "#f87171",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              textAlign: "center",
+                            }}
+                          >
+                            Reject
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleApprove(course._id);
+                            }}
+                            disabled={actioning}
+                            style={{
+                              flex: 1,
+                              maxWidth: 140,
+                              padding: "7px 16px",
+                              borderRadius: 8,
+                              border: "none",
+                              background:
+                                "linear-gradient(135deg,#16a34a,#15803d)",
+                              color: "#fff",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              textAlign: "center",
+                            }}
+                          >
+                            Approve
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {selected && (
+            <CourseDrawer
+              course={courses.find((c) => c._id === selected._id) ?? selected}
+              onClose={() => setSelected(null)}
+              onApprove={canApprove ? handleApprove : undefined}
+              onReject={canApprove ? (c) => setRejectTarget(c) : undefined}
+              onUnreject={canApprove ? handleUnreject : undefined}
+              onEdit={canEdit ? handleStartEdit : undefined}
+              actioning={actioning}
+            />
+          )}
+
+          {canApprove && rejectTarget && (
+            <RejectModal
+              course={rejectTarget}
+              onClose={() => setRejectTarget(null)}
+              onConfirm={handleRejectConfirm}
+              loading={actioning}
+            />
+          )}
+        </>
+      ) : null}
       <Toast msg={toastMsg} />
     </>
   );

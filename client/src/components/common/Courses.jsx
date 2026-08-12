@@ -471,36 +471,6 @@ const Courses = () => {
               )}
             </div>
           </div>
-
-          {/* Course type toggle */}
-          <div className="shrink-0">
-            <div className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-800 bg-[#0f172a]/90 backdrop-blur-md max-w-full overflow-x-auto no-scrollbar shadow-lg">
-              {[
-                { key: TYPE_ALL, label: t("courses.courseTypeAll", "All") },
-                {
-                  key: TYPE_CLASSES,
-                  label: t("courses.courseTypeClasses", "Classes"),
-                },
-                {
-                  key: TYPE_COMPETITIVE,
-                  label: t("courses.courseTypeCompetitive", "Competitive Exam"),
-                },
-              ].map((opt) => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => handleCourseTypeChange(opt.key)}
-                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap shrink-0 cursor-pointer ${
-                    selectedCourseType === opt.key
-                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/30"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Error banner */}
@@ -515,6 +485,36 @@ const Courses = () => {
             </button>
           </div>
         )}
+
+        {/* Top-level course type filters */}
+        <div className="mb-4">
+          <div className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-800 bg-[#0f172a]/90 backdrop-blur-md max-w-full overflow-x-auto no-scrollbar shadow-lg">
+            {[
+              { key: TYPE_ALL, label: t("courses.courseTypeAll", "All") },
+              {
+                key: TYPE_CLASSES,
+                label: t("courses.courseTypeClasses", "Classes"),
+              },
+              {
+                key: TYPE_COMPETITIVE,
+                label: t("courses.courseTypeCompetitive", "Competitive Exam"),
+              },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => handleCourseTypeChange(opt.key)}
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap shrink-0 cursor-pointer ${
+                  selectedCourseType === opt.key
+                    ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Filters Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 p-3.5 sm:p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm shadow-inner">

@@ -888,7 +888,7 @@ const AssignCoursesModal = ({
                           {c.price ? `₹${c.price}` : "Free"}
                         </span>
                         <span>•</span>
-                        <span>{c.students?.length || 0} students</span>
+                        <span>{c.studentsCount ?? c.students?.length ?? 0} students</span>
                       </div>
                     </div>
                   </div>
@@ -1171,7 +1171,8 @@ const InstructorDetailsModal = ({ instructor, onClose, onEdit, onAssignCourses, 
 
   const courses = instructor.mc || [];
   const totalRevenue = courses.reduce(
-    (sum, c) => sum + (c.price || 0) * (c.students?.length || 0),
+    (sum, c) =>
+      sum + (c.price || 0) * (c.studentsCount ?? c.students?.length ?? 0),
     0,
   );
 
@@ -1334,10 +1335,13 @@ const InstructorDetailsModal = ({ instructor, onClose, onEdit, onAssignCourses, 
                   <span className="flex items-center gap-3 flex-none text-xs text-slate-400">
                     <span className="flex items-center gap-1">
                       <Users size={12} />
-                      {c.students?.length || 0}
+                      {c.studentsCount ?? c.students?.length ?? 0}
                     </span>
                     <span className="flex items-center gap-1 font-semibold text-emerald-400">
-                      {fmt((c.price || 0) * (c.students?.length || 0))}
+                      {fmt(
+                        (c.price || 0) *
+                          (c.studentsCount ?? c.students?.length ?? 0),
+                      )}
                     </span>
                   </span>
                 </li>
@@ -1711,7 +1715,10 @@ const AdminInstructors = ({
                         </span>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="font-semibold text-emerald-400 text-[10px]">
-                            {fmt((c.price || 0) * (c.students?.length || 0))}
+                            {fmt(
+                              (c.price || 0) *
+                                (c.studentsCount ?? c.students?.length ?? 0),
+                            )}
                           </span>
                           {canEdit && (
                             <button
