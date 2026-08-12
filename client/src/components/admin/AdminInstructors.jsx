@@ -24,6 +24,7 @@ import {
   Save,
   Loader2,
   AlertCircle,
+  Key,
 } from "lucide-react";
 import api from "../../config/api.js";
 import { INDIA_CITIES_BY_STATE } from "../../data/indiaLocations";
@@ -636,7 +637,7 @@ const EditInstructorModal = ({ instructor, onClose, onSaved }) => {
   );
 };
 
-/* ─── Assign Courses Modal ────────────────────────────── */
+/* ─── Manage Courses (Assign & Unassign) Modal ─────────── */
 const AssignCoursesModal = ({
   instructor,
   courses = [],
@@ -645,7 +646,7 @@ const AssignCoursesModal = ({
   onAssigned,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("assigned"); // "assigned" | "available"
   const [selectedCourseIds, setSelectedCourseIds] = useState(() => {
     return (courses || [])
       .filter((c) => {
@@ -668,37 +669,51 @@ const AssignCoursesModal = ({
       .map((c) => c._id);
   }, [courses, instructor._id]);
 
-  const filteredCourses = (courses || []).filter((c) => {
+  // Currently assigned to this instructor
+  const assignedCoursesList = useMemo(() => {
+    return (courses || []).filter((c) => selectedCourseIds.includes(c._id));
+  }, [courses, selectedCourseIds]);
+
+  // Available to be assigned
+  const availableCoursesList = useMemo(() => {
+    return (courses || []).filter((c) => !selectedCourseIds.includes(c._id));
+  }, [courses, selectedCourseIds]);
+
+  const filteredAssigned = useMemo(() => {
+    if (!searchQuery.trim()) return assignedCoursesList;
     const q = searchQuery.toLowerCase();
-    const titleMatch = c.title?.toLowerCase().includes(q);
-    const categoryMatch = c.category?.toLowerCase().includes(q);
-    if (!titleMatch && !categoryMatch) return false;
-
-    const rawInstId =
-      typeof c.instructor === "object" ? c.instructor?._id : c.instructor;
-    const isTargetInst = String(rawInstId || "") === String(instructor._id);
-    const hasInstructor = Boolean(rawInstId);
-
-    if (statusFilter === "unassigned") return !hasInstructor;
-    if (statusFilter === "assigned") return hasInstructor && !isTargetInst;
-    if (statusFilter === "this_instructor") return isTargetInst;
-    return true;
-  });
-
-  const toggleCourse = (courseId) => {
-    setSelectedCourseIds((prev) =>
-      prev.includes(courseId)
-        ? prev.filter((id) => id !== courseId)
-        : [...prev, courseId],
+    return assignedCoursesList.filter(
+      (c) =>
+        c.title?.toLowerCase().includes(q) ||
+        c.category?.toLowerCase().includes(q),
     );
+  }, [assignedCoursesList, searchQuery]);
+
+  const filteredAvailable = useMemo(() => {
+    if (!searchQuery.trim()) return availableCoursesList;
+    const q = searchQuery.toLowerCase();
+    return availableCoursesList.filter(
+      (c) =>
+        c.title?.toLowerCase().includes(q) ||
+        c.category?.toLowerCase().includes(q),
+    );
+  }, [availableCoursesList, searchQuery]);
+
+  const handleUnassignCourse = (courseId) => {
+    setSelectedCourseIds((prev) => prev.filter((id) => id !== courseId));
   };
 
-  const handleSelectAll = () => {
-    setSelectedCourseIds(filteredCourses.map((c) => c._id));
+  const handleAssignCourse = (courseId) => {
+    setSelectedCourseIds((prev) => [...prev, courseId]);
   };
 
-  const handleDeselectAll = () => {
+  const handleUnassignAll = () => {
     setSelectedCourseIds([]);
+  };
+
+  const handleAssignAllFiltered = () => {
+    const toAdd = filteredAvailable.map((c) => c._id);
+    setSelectedCourseIds((prev) => Array.from(new Set([...prev, ...toAdd])));
   };
 
   const handleSubmit = async () => {
@@ -720,7 +735,7 @@ const AssignCoursesModal = ({
       onClose();
     } catch (err) {
       setError(
-        err.response?.data?.message || err.message || "Failed to assign courses.",
+        err.response?.data?.message || err.message || "Failed to update course assignments.",
       );
     } finally {
       setSaving(false);
@@ -729,11 +744,11 @@ const AssignCoursesModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl overflow-hidden"
+        className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl overflow-hidden font-sans text-slate-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -742,97 +757,99 @@ const AssignCoursesModal = ({
             <Av name={instructor.name} src={instructor.avatarUrl} size={42} />
             <div className="min-w-0">
               <h3 className="text-base font-extrabold text-white truncate">
-                Assign Available Courses
+                Manage Instructor Courses
               </h3>
               <p className="text-xs text-indigo-400 font-semibold truncate">
-                Instructor: {instructor.name} ({selectedCourseIds.length} course{selectedCourseIds.length !== 1 ? "s" : ""} selected)
+                {instructor.name} ({selectedCourseIds.length} course{selectedCourseIds.length !== 1 ? "s" : ""} currently assigned)
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="flex-none p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="flex-none p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Toolbar, Filter & Search */}
-        <div className="p-4 border-b border-slate-800/80 bg-slate-900/40 flex flex-col gap-3 flex-none">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="relative w-full sm:w-72">
-              <Search
-                size={14}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
-              />
-              <input
-                type="text"
-                className="w-full bg-slate-900/80 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 transition duration-150"
-                placeholder="Search available courses..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end text-xs">
+        {/* Tab & Search Strip */}
+        <div className="p-4 border-b border-slate-800 bg-slate-900/40 flex flex-col gap-3 flex-none">
+          {/* Main Tabs */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-1.5 p-1 bg-slate-900 rounded-xl border border-slate-800">
               <button
                 type="button"
-                onClick={handleSelectAll}
-                className="flex-1 sm:flex-initial px-2.5 py-1.5 rounded-lg font-semibold text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 transition text-center"
+                onClick={() => setActiveTab("assigned")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  activeTab === "assigned"
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
               >
-                Select All Filtered
+                <BookOpen size={13} />
+                <span>Assigned Courses ({selectedCourseIds.length})</span>
               </button>
+
               <button
                 type="button"
-                onClick={handleDeselectAll}
-                className="flex-1 sm:flex-initial px-2.5 py-1.5 rounded-lg font-semibold text-slate-400 bg-slate-800/60 hover:bg-slate-800 transition text-center"
+                onClick={() => setActiveTab("available")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  activeTab === "available"
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
               >
-                Deselect All
+                <BookPlus size={13} />
+                <span>Available to Assign ({availableCoursesList.length})</span>
               </button>
             </div>
+
+            {activeTab === "assigned" && selectedCourseIds.length > 0 && (
+              <button
+                type="button"
+                onClick={handleUnassignAll}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition"
+              >
+                ✕ Unassign All Courses
+              </button>
+            )}
+
+            {activeTab === "available" && filteredAvailable.length > 0 && (
+              <button
+                type="button"
+                onClick={handleAssignAllFiltered}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 transition"
+              >
+                + Assign All Filtered ({filteredAvailable.length})
+              </button>
+            )}
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-            <button
-              type="button"
-              onClick={() => setStatusFilter("all")}
-              className={`px-2.5 py-1 rounded-lg font-semibold transition ${statusFilter === "all"
-                ? "bg-indigo-600 text-white"
-                : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
-                }`}
-            >
-              All ({courses.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter("unassigned")}
-              className={`px-2.5 py-1 rounded-lg font-semibold transition ${statusFilter === "unassigned"
-                ? "bg-slate-700 text-white"
-                : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
-                }`}
-            >
-              Unassigned
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter("this_instructor")}
-              className={`px-2.5 py-1 rounded-lg font-semibold transition ${statusFilter === "this_instructor"
-                ? "bg-emerald-600 text-white"
-                : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
-                }`}
-            >
-              {instructor.name}'s
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter("assigned")}
-              className={`px-2.5 py-1 rounded-lg font-semibold transition ${statusFilter === "assigned"
-                ? "bg-amber-600 text-white"
-                : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white"
-                }`}
-            >
-              Other Instructors'
-            </button>
+          {/* Search Box */}
+          <div className="relative w-full">
+            <Search
+              size={14}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+            />
+            <input
+              type="text"
+              className="w-full bg-slate-900/80 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 transition duration-150"
+              placeholder={
+                activeTab === "assigned"
+                  ? "Search assigned courses to unassign..."
+                  : "Search available courses to assign..."
+              }
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -846,84 +863,22 @@ const AssignCoursesModal = ({
 
         {/* Course List */}
         <div className="p-5 overflow-y-auto flex-1 flex flex-col gap-2.5">
-          {filteredCourses.length > 0 ? (
-            filteredCourses.map((c) => {
-              const isChecked = selectedCourseIds.includes(c._id);
-              const rawInstId =
-                typeof c.instructor === "object"
-                  ? c.instructor?._id
-                  : c.instructor;
-              const isOriginallyCurrentInst =
-                String(rawInstId || "") === String(instructor._id);
-
-              let assignedName = "";
-              if (typeof c.instructor === "object" && c.instructor?.name) {
-                assignedName = c.instructor.name;
-              } else if (rawInstId) {
-                const found = (instructors || []).find(
-                  (i) => String(i._id) === String(rawInstId),
-                );
-                if (found) assignedName = found.name;
-              }
-
-              let statusBadge = null;
-              if (isChecked) {
-                if (isOriginallyCurrentInst) {
-                  statusBadge = (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                      ✓ Assigned to this instructor
-                    </span>
-                  );
-                } else {
-                  statusBadge = (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-indigo-500/10 border border-indigo-500/30 text-indigo-300">
-                      + Will assign to {instructor.name}
-                    </span>
-                  );
-                }
-              } else {
-                if (isOriginallyCurrentInst) {
-                  statusBadge = (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-500/10 border border-red-500/20 text-red-400">
-                      ✕ Will unassign
-                    </span>
-                  );
-                } else if (assignedName) {
-                  statusBadge = (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 border border-amber-500/20 text-amber-300 truncate max-w-[150px]">
-                      Assigned: {assignedName}
-                    </span>
-                  );
-                } else {
-                  statusBadge = (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-800 border border-slate-700 text-slate-400">
-                      Unassigned
-                    </span>
-                  );
-                }
-              }
-
-              return (
+          {activeTab === "assigned" ? (
+            filteredAssigned.length > 0 ? (
+              filteredAssigned.map((c) => (
                 <div
                   key={c._id}
-                  onClick={() => toggleCourse(c._id)}
-                  className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition cursor-pointer select-none ${isChecked
-                    ? "bg-indigo-500/10 border-indigo-500/40 text-white"
-                    : "bg-slate-900/30 border-slate-800/80 hover:border-slate-700/80 text-slate-300"
-                    }`}
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl border border-indigo-500/30 bg-indigo-950/20 text-white transition hover:bg-indigo-950/30"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => { }}
-                      className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 flex-none"
-                    />
+                    <div className="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+                      <BookOpen size={16} />
+                    </div>
                     <div className="min-w-0">
                       <p className="text-xs font-bold truncate">{c.title}</p>
-                      <div className="flex flex-wrap items-center gap-2 mt-1 text-[10px] text-slate-400">
+                      <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-slate-400">
                         {c.category && (
-                          <span className="bg-slate-800 px-2 py-0.5 rounded text-slate-300 font-medium">
+                          <span className="bg-slate-800 px-2 py-0.2 rounded text-slate-300 font-medium">
                             {c.category}
                           </span>
                         )}
@@ -932,19 +887,95 @@ const AssignCoursesModal = ({
                         <span className="font-semibold text-emerald-400">
                           {c.price ? `₹${c.price}` : "Free"}
                         </span>
+                        <span>•</span>
+                        <span>{c.students?.length || 0} students</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 flex-none text-[10px]">
-                    {statusBadge}
+                  <button
+                    type="button"
+                    onClick={() => handleUnassignCourse(c._id)}
+                    className="w-full sm:w-auto px-3 py-1.5 rounded-xl text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition flex items-center justify-center gap-1.5 shrink-0"
+                  >
+                    <Trash2 size={13} />
+                    <span>Unassign</span>
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="py-12 text-center text-slate-500 text-xs space-y-2">
+                <BookOpen size={28} className="mx-auto text-slate-600 mb-1" />
+                <p className="font-semibold text-slate-400">No courses assigned to this instructor</p>
+                <p>Switch to "Available to Assign" tab to assign learning programs.</p>
+              </div>
+            )
+          ) : filteredAvailable.length > 0 ? (
+            filteredAvailable.map((c) => {
+              const rawInstId =
+                typeof c.instructor === "object"
+                  ? c.instructor?._id
+                  : c.instructor;
+              let currentInstName = "";
+              if (typeof c.instructor === "object" && c.instructor?.name) {
+                currentInstName = c.instructor.name;
+              } else if (rawInstId) {
+                const found = (instructors || []).find(
+                  (i) => String(i._id) === String(rawInstId),
+                );
+                if (found) currentInstName = found.name;
+              }
+
+              return (
+                <div
+                  key={c._id}
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl border border-slate-800 bg-slate-900/40 hover:border-slate-700 text-slate-300 transition"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 shrink-0">
+                      <BookOpen size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-white truncate">
+                        {c.title}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-slate-400">
+                        {c.category && (
+                          <span className="bg-slate-800 px-2 py-0.2 rounded text-slate-300 font-medium">
+                            {c.category}
+                          </span>
+                        )}
+                        <span>{c.level || "Beginner"}</span>
+                        <span>•</span>
+                        <span className="font-semibold text-emerald-400">
+                          {c.price ? `₹${c.price}` : "Free"}
+                        </span>
+                        {currentInstName && (
+                          <>
+                            <span>•</span>
+                            <span className="text-amber-400/90 text-[10px]">
+                              Assigned to: {currentInstName}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleAssignCourse(c._id)}
+                    className="w-full sm:w-auto px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition flex items-center justify-center gap-1.5 shrink-0"
+                  >
+                    <BookPlus size={13} />
+                    <span>Assign</span>
+                  </button>
                 </div>
               );
             })
           ) : (
             <div className="py-12 text-center text-slate-500 text-xs">
-              No available courses found matching your search or status filter.
+              No available courses found matching your search.
             </div>
           )}
         </div>
@@ -952,7 +983,7 @@ const AssignCoursesModal = ({
         {/* Footer */}
         <div className="p-4 border-t border-slate-800 bg-slate-950/95 flex flex-col sm:flex-row items-center justify-between gap-3 flex-none">
           <p className="text-xs text-slate-400 text-center sm:text-left">
-            <span className="font-bold text-white">{selectedCourseIds.length}</span> course{selectedCourseIds.length !== 1 ? "s" : ""} assigned to {instructor.name}
+            <span className="font-bold text-white">{selectedCourseIds.length}</span> course{selectedCourseIds.length !== 1 ? "s" : ""} will be assigned to {instructor.name}
           </p>
           <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
             <button
@@ -967,7 +998,7 @@ const AssignCoursesModal = ({
               type="button"
               onClick={handleSubmit}
               disabled={saving}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition disabled:opacity-60"
+              className="flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition disabled:opacity-60 shadow-lg shadow-indigo-600/30"
             >
               {saving ? (
                 <>
@@ -988,8 +1019,154 @@ const AssignCoursesModal = ({
   );
 };
 
-/* ─── Instructor Details Modal ───────────────────────── */
-const InstructorDetailsModal = ({ instructor, onClose, onEdit, onAssignCourses }) => {
+/* ─── Change Password Modal ──────────────────────────── */
+const ChangePasswordModal = ({ user, onClose, onPasswordChanged }) => {
+  const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  const handleGeneratePassword = () => {
+    const chars =
+      "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
+    let pass = "";
+    for (let i = 0; i < 10; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewPassword(pass);
+    setShowPassword(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.trim().length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      await api.put(`/users/${user._id}`, { password: newPassword.trim() });
+      setSuccess(true);
+      if (onPasswordChanged) await onPasswordChanged();
+      setTimeout(() => {
+        onClose();
+      }, 900);
+    } catch (err) {
+      setError(
+        err.response?.data?.message || err.message || "Failed to update password.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl p-6 space-y-4 font-sans text-slate-100"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <Key size={18} />
+            </div>
+            <div>
+              <h3 className="text-sm font-extrabold text-white">
+                Change Password
+              </h3>
+              <p className="text-xs text-slate-400">
+                {user.name} ({user.email || user.phoneNumber || "User"})
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white p-1 rounded-xl hover:bg-slate-800 transition"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {success ? (
+          <div className="py-6 text-center space-y-2">
+            <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 mx-auto flex items-center justify-center">
+              <CheckCircle2 size={24} />
+            </div>
+            <h4 className="text-sm font-bold text-white">Password Updated Successfully</h4>
+            <p className="text-xs text-slate-400">The new credentials are active immediately.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-slate-300">
+                  New Password
+                </label>
+                <button
+                  type="button"
+                  onClick={handleGeneratePassword}
+                  className="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition"
+                >
+                  ⚡ Generate Random
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password (min. 6 chars)"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 pr-10"
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                >
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs flex items-center gap-2">
+                <AlertCircle size={14} className="shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving || !newPassword}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-500 disabled:opacity-50 transition shadow-lg shadow-amber-600/30"
+              >
+                {saving ? "Updating..." : "Set New Password"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const InstructorDetailsModal = ({ instructor, onClose, onEdit, onAssignCourses, onChangePassword }) => {
   if (!instructor) return null;
 
   const courses = instructor.mc || [];
@@ -1021,13 +1198,22 @@ const InstructorDetailsModal = ({ instructor, onClose, onEdit, onAssignCourses }
             </div>
           </div>
           <div className="flex items-center gap-2 flex-none">
+            {onChangePassword && (
+              <button
+                onClick={onChangePassword}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition"
+              >
+                <Key size={14} />
+                Password
+              </button>
+            )}
             {onAssignCourses && (
               <button
                 onClick={onAssignCourses}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition"
               >
                 <BookPlus size={14} />
-                Assign Courses
+                Manage Courses
               </button>
             )}
             {onEdit && (
@@ -1464,61 +1650,58 @@ const AdminInstructors = ({
             <p className="text-xs font-semibold">{importSuccess}</p>
             {importStats && (
               <p className="text-[11px] text-emerald-200/90 mt-1">
-                Inserted: {importStats.inserted} · Skipped:{" "}
-                {importStats.skipped}
+                Inserted: {importStats.inserted || importStats.insertedCount || 0} · Skipped:{" "}
+                {importStats.skipped || importStats.skippedCount || 0}
               </p>
             )}
           </div>
         </div>
       )}
 
-      {importStats?.skippedRows?.length > 0 && (
-        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-200">
-          <p className="font-semibold mb-2">Skipped rows</p>
-          <ul className="space-y-1">
-            {importStats.skippedRows.map((item, index) => (
-              <li key={`${item.row}-${index}`}>
-                Row {item.row}: {item.reason}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Column header hint (desktop only, matches the card layout below) */}
-      {filtI.length > 0 && (
-        <div className="hidden md:flex items-center justify-between px-5 text-[10px] font-bold uppercase tracking-wider text-slate-600">
-          <span>Instructor / Performance</span>
-          <span>Actions</span>
-        </div>
-      )}
-
-      {/* Grid listing */}
-      <div className="flex flex-col gap-4">
+      {/* Instructor Cards List */}
+      <div className="grid grid-cols-1 gap-3">
         {filtI.map((inst) => (
           <div
             key={inst._id}
-            className="flex flex-col md:flex-row justify-between items-start gap-4 p-4 md:p-5 bg-slate-900/35 border border-slate-800/80 rounded-2xl transition duration-150 hover:border-slate-700/60"
+            className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4.5 bg-slate-900/30 border border-slate-800/80 rounded-2xl transition duration-150 hover:border-slate-700/60 hover:bg-slate-900/50"
           >
-            {/* Left section: profile and courses preview */}
-            <div className="flex gap-4 items-start min-w-0 flex-1 w-full">
-              <Av name={inst.name} src={inst.avatarUrl} size={42} />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-slate-200 truncate">
-                  {inst.name}
-                </p>
-                <p className="text-[10px] text-slate-500 truncate mt-0.5 mb-3">
-                  {inst.email}
-                </p>
-
-                {/* Badge row */}
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full">
+            <div className="flex items-start sm:items-center gap-4 min-w-0 flex-1">
+              <Av name={inst.name} src={inst.avatarUrl} size={48} />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-bold text-white truncate">
+                    {inst.name}
+                  </h3>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full">
                     {inst.role || "instructor"}
                   </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
+                  {inst.email && (
+                    <span className="flex items-center gap-1.5 truncate">
+                      <Mail size={12} className="text-slate-500 shrink-0" />
+                      <span className="truncate">{inst.email}</span>
+                    </span>
+                  )}
+                  {inst.phoneNumber && (
+                    <span className="flex items-center gap-1.5">
+                      <Phone size={12} className="text-slate-500 shrink-0" />
+                      <span>{inst.phoneNumber}</span>
+                    </span>
+                  )}
+                  {inst.specialization && (
+                    <span className="flex items-center gap-1.5 text-slate-300 font-medium">
+                      <Award size={12} className="text-indigo-400 shrink-0" />
+                      <span>{inst.specialization}</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Metrics Badges */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
                   <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
-                    {inst.mc?.length || 0} course
-                    {inst.mc?.length !== 1 ? "s" : ""}
+                    {inst.mc?.length || 0} course{inst.mc?.length !== 1 ? "s" : ""}
                   </span>
                   <span className="text-[9px] font-bold uppercase tracking-wider bg-sky-500/10 border border-sky-500/20 text-sky-400 px-2 py-0.5 rounded-full">
                     {inst.stu || 0} student{inst.stu !== 1 ? "s" : ""}
@@ -1528,29 +1711,55 @@ const AdminInstructors = ({
                   </span>
                 </div>
 
-                {/* Mini course list */}
+                {/* Mini course list with direct unassign option */}
                 {inst.mc && inst.mc.length > 0 && (
-                  <div className="border-t border-slate-800/60 pt-3 flex flex-col gap-1.5">
-                    {inst.mc.slice(0, 2).map((c) => (
+                  <div className="border-t border-slate-800/60 pt-2.5 mt-2 flex flex-col gap-1.5">
+                    {inst.mc.slice(0, 3).map((c) => (
                       <div
                         key={c._id}
-                        className="flex items-center justify-between gap-4 text-[10px] text-slate-400"
+                        className="flex items-center justify-between gap-3 text-[11px] text-slate-400 bg-slate-950/40 border border-slate-800/60 px-2.5 py-1 rounded-xl"
                       >
-                        <span className="truncate flex items-center gap-1.5 font-medium">
+                        <span className="truncate flex items-center gap-1.5 font-medium text-slate-300">
                           <BookOpen
-                            size={10}
-                            className="text-slate-600 shrink-0"
+                            size={12}
+                            className="text-slate-500 shrink-0"
                           />
-                          {c.title || "Untitled Course"}
+                          <span className="truncate">{c.title || "Untitled Course"}</span>
                         </span>
-                        <span className="shrink-0 font-semibold text-emerald-500">
-                          {fmt((c.price || 0) * (c.students?.length || 0))}
-                        </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="font-semibold text-emerald-400 text-[10px]">
+                            {fmt((c.price || 0) * (c.students?.length || 0))}
+                          </span>
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (window.confirm(`Unassign "${c.title}" from ${inst.name}?`)) {
+                                  try {
+                                    await api.put("/courses/assign-instructor", {
+                                      instructorId: inst._id,
+                                      courseIds: (inst.mc || []).filter((item) => item._id !== c._id).map((item) => item._id),
+                                      unassignedCourseIds: [c._id],
+                                    });
+                                    if (refreshUsers) await refreshUsers();
+                                  } catch (err) {
+                                    alert(err.response?.data?.message || "Failed to unassign course.");
+                                  }
+                                }
+                              }}
+                              title="Unassign course from instructor"
+                              className="p-1 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition"
+                            >
+                              <X size={12} />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
-                    {inst.mc.length > 2 && (
-                      <span className="text-[9px] text-slate-600 font-medium pl-4 mt-0.5">
-                        +{inst.mc.length - 2} more learning programs
+                    {inst.mc.length > 3 && (
+                      <span className="text-[10px] text-slate-500 font-semibold pl-2">
+                        +{inst.mc.length - 3} more assigned courses
                       </span>
                     )}
                   </div>
@@ -1558,7 +1767,7 @@ const AdminInstructors = ({
               </div>
             </div>
 
-            {/* Divider before actions — visible on both mobile (top) and desktop (left) */}
+            {/* Actions Grid */}
             <div className="grid grid-cols-2 sm:flex sm:items-center md:items-end justify-between md:justify-start gap-2 shrink-0 w-full md:w-auto border-t md:border-t-0 md:border-l border-slate-800/60 pt-3 md:pt-0 md:pl-5">
               {/* Details button */}
               <button
@@ -1569,42 +1778,57 @@ const AdminInstructors = ({
                 Details
               </button>
 
-              {/* Assign Courses button */}
+              {/* Assign / Unassign Courses button */}
               {canEdit && (
                 <button
                   onClick={() => setAssigningCoursesInstructor(inst)}
                   className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/30 transition duration-150"
                 >
                   <BookPlus size={12} />
-                  Assign Courses
+                  Courses
+                </button>
+              )}
+
+              {/* Password button */}
+              {canEdit && (
+                <button
+                  onClick={() => setPasswordInstructor(inst)}
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition duration-150"
+                >
+                  <Key size={12} />
+                  Password
                 </button>
               )}
 
               {/* Edit button */}
-              {canEdit && <button
-                onClick={() => setEditingInstructor(inst)}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/20 hover:bg-sky-500/20 hover:border-sky-500/30 transition duration-150"
-              >
-                <Pencil size={12} />
-                Edit
-              </button>}
+              {canEdit && (
+                <button
+                  onClick={() => setEditingInstructor(inst)}
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/20 hover:bg-sky-500/20 hover:border-sky-500/30 transition duration-150"
+                >
+                  <Pencil size={12} />
+                  Edit
+                </button>
+              )}
 
               {/* Remove button */}
-              {canDelete && <button
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      `Are you sure you want to remove instructor "${inst.name}"?`,
-                    )
-                  ) {
-                    deleteUser(inst._id, "instructor");
-                  }
-                }}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/30 transition duration-150"
-              >
-                <Trash2 size={12} />
-                Remove
-              </button>}
+              {canDelete && (
+                <button
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Are you sure you want to remove instructor "${inst.name}"?`,
+                      )
+                    ) {
+                      deleteUser(inst._id, "instructor");
+                    }
+                  }}
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/30 transition duration-150"
+                >
+                  <Trash2 size={12} />
+                  Remove
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -1626,20 +1850,28 @@ const AdminInstructors = ({
         <InstructorDetailsModal
           instructor={selectedInstructor}
           onClose={() => setSelectedInstructor(null)}
+          onChangePassword={
+            canEdit
+              ? () => {
+                  setPasswordInstructor(selectedInstructor);
+                  setSelectedInstructor(null);
+                }
+              : null
+          }
           onAssignCourses={
             canEdit
               ? () => {
-                setAssigningCoursesInstructor(selectedInstructor);
-                setSelectedInstructor(null);
-              }
+                  setAssigningCoursesInstructor(selectedInstructor);
+                  setSelectedInstructor(null);
+                }
               : null
           }
           onEdit={
             canEdit
               ? () => {
-                setEditingInstructor(selectedInstructor);
-                setSelectedInstructor(null);
-              }
+                  setEditingInstructor(selectedInstructor);
+                  setSelectedInstructor(null);
+                }
               : null
           }
         />
@@ -1652,6 +1884,14 @@ const AdminInstructors = ({
           instructors={enrichedInstructors}
           onClose={() => setAssigningCoursesInstructor(null)}
           onAssigned={handleMutationSuccess}
+        />
+      )}
+
+      {passwordInstructor && (
+        <ChangePasswordModal
+          user={passwordInstructor}
+          onClose={() => setPasswordInstructor(null)}
+          onPasswordChanged={handleMutationSuccess}
         />
       )}
 

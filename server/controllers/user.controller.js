@@ -915,11 +915,27 @@ export const updateUser = async (req, res) => {
       delete updates.referredBy;
     }
 
-    const user = await User.findByIdAndUpdate(req.params.id, updates, {
-      new: true,
-      runValidators: true,
-    }).select("-password");
+    const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Handle password update with hashing
+    if (updates.password) {
+      if (typeof updates.password !== "string" || updates.password.trim().length < 6) {
+        return res
+          .status(400)
+          .json({ message: "Password must be at least 6 characters long." });
+      }
+      user.password = updates.password.trim();
+      delete updates.password;
+    }
+
+    // Apply remaining updates
+    Object.keys(updates).forEach((key) => {
+      user[key] = updates[key];
+    });
+
+    await user.save();
+    await deleteKey(`user:${user._id}`);
     res.json(await hydrateUserRoles(user));
   } catch (error) {
     res.status(400).json({ message: error.message });

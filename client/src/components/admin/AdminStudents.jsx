@@ -30,6 +30,7 @@ import {
   CheckCircle2,
   Users,
   FileSpreadsheet,
+  Key,
 } from "lucide-react";
 import api from "../../config/api.js";
 import { INDIA_CITIES_BY_STATE } from "../../data/indiaLocations";
@@ -772,7 +773,7 @@ const EditStudentModal = ({ student, onClose, onSaved }) => {
 };
 
 /* ─── Student Details Modal ──────────────────────────── */
-const StudentDetailsModal = ({ student, courses = [], onClose, onEdit, refreshUsers }) => {
+const StudentDetailsModal = ({ student, courses = [], onClose, onEdit, onChangePassword, refreshUsers }) => {
   const [showCourseManager, setShowCourseManager] = useState(false);
   if (!student) return null;
 
@@ -877,6 +878,15 @@ const StudentDetailsModal = ({ student, courses = [], onClose, onEdit, refreshUs
             </div>
           </div>
           <div className="flex items-center gap-2 flex-none">
+            {onChangePassword && (
+              <button
+                onClick={onChangePassword}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition"
+              >
+                <Key size={14} />
+                Password
+              </button>
+            )}
             {onEdit && (
               <button
                 onClick={onEdit}
@@ -1886,12 +1896,161 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
   );
 };
 
+/* ─── Change Password Modal ──────────────────────────── */
+const ChangePasswordModal = ({ user, onClose, onPasswordChanged }) => {
+  const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  const handleGeneratePassword = () => {
+    const chars =
+      "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
+    let pass = "";
+    for (let i = 0; i < 10; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewPassword(pass);
+    setShowPassword(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.trim().length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      await api.put(`/users/${user._id}`, { password: newPassword.trim() });
+      setSuccess(true);
+      if (onPasswordChanged) await onPasswordChanged();
+      setTimeout(() => {
+        onClose();
+      }, 900);
+    } catch (err) {
+      setError(
+        err.response?.data?.message || err.message || "Failed to update password.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl p-6 space-y-4 font-sans text-slate-100"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <Key size={18} />
+            </div>
+            <div>
+              <h3 className="text-sm font-extrabold text-white">
+                Change Password
+              </h3>
+              <p className="text-xs text-slate-400">
+                {user.name} ({user.email || user.phoneNumber || "User"})
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white p-1 rounded-xl hover:bg-slate-800 transition"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {success ? (
+          <div className="py-6 text-center space-y-2">
+            <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 mx-auto flex items-center justify-center">
+              <CheckCircle2 size={24} />
+            </div>
+            <h4 className="text-sm font-bold text-white">Password Updated Successfully</h4>
+            <p className="text-xs text-slate-400">The new credentials are active immediately.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-slate-300">
+                  New Password
+                </label>
+                <button
+                  type="button"
+                  onClick={handleGeneratePassword}
+                  className="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition"
+                >
+                  ⚡ Generate Random
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password (min. 6 chars)"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 pr-10"
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                >
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs flex items-center gap-2">
+                <AlertCircle size={14} className="shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving || !newPassword}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-500 disabled:opacity-50 transition shadow-lg shadow-amber-600/30"
+              >
+                {saving ? "Updating..." : "Set New Password"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>,
+    document.body,
+  );
+};
+
 /* ─── Action button used in each student row ──────────── */
 const RowAction = ({ icon: Icon, label, onClick, tone = "slate" }) => {
   const tones = {
     slate: "text-slate-300 bg-slate-800/60 border-slate-700 hover:bg-slate-800 hover:border-slate-600",
     indigo: "text-indigo-300 bg-indigo-500/10 border-indigo-500/25 hover:bg-indigo-500/20 hover:border-indigo-500/40",
     emerald: "text-emerald-300 bg-emerald-500/10 border-emerald-500/25 hover:bg-emerald-500/20 hover:border-emerald-500/40",
+    amber: "text-amber-300 bg-amber-500/10 border-amber-500/25 hover:bg-amber-500/20 hover:border-amber-500/40",
     sky: "text-sky-300 bg-sky-500/10 border-sky-500/25 hover:bg-sky-500/20 hover:border-sky-500/40",
     red: "text-red-300 bg-red-500/10 border-red-500/25 hover:bg-red-500/20 hover:border-red-500/40",
   };
@@ -1947,6 +2106,7 @@ const AdminStudents = ({
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [editingStudent, setEditingStudent] = useState(null);
   const [assigningStudent, setAssigningStudent] = useState(null);
+  const [passwordStudent, setPasswordStudent] = useState(null);
   const [addingStudent, setAddingStudent] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [bulkImportFile, setBulkImportFile] = useState(null);
@@ -2187,7 +2347,10 @@ const AdminStudents = ({
               <div className="flex flex-wrap items-center gap-1.5 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-800/60 lg:pl-3 lg:border-l">
                 <RowAction icon={Eye} label="Details" tone="indigo" onClick={() => setSelectedStudent(s)} />
                 {canEdit && (
-                  <RowAction icon={BookPlus} label="Assign" tone="emerald" onClick={() => setAssigningStudent(s)} />
+                  <RowAction icon={BookPlus} label="Courses" tone="emerald" onClick={() => setAssigningStudent(s)} />
+                )}
+                {canEdit && (
+                  <RowAction icon={Key} label="Password" tone="amber" onClick={() => setPasswordStudent(s)} />
                 )}
                 {canEdit && (
                   <RowAction icon={Pencil} label="Edit" tone="sky" onClick={() => setEditingStudent(s)} />
@@ -2232,14 +2395,30 @@ const AdminStudents = ({
           courses={courses}
           onClose={() => setSelectedStudent(null)}
           refreshUsers={refreshUsers}
+          onChangePassword={
+            canEdit
+              ? () => {
+                  setPasswordStudent(selectedStudent);
+                  setSelectedStudent(null);
+                }
+              : null
+          }
           onEdit={
             canEdit
               ? () => {
-                setEditingStudent(selectedStudent);
-                setSelectedStudent(null);
-              }
+                  setEditingStudent(selectedStudent);
+                  setSelectedStudent(null);
+                }
               : null
           }
+        />
+      )}
+
+      {passwordStudent && (
+        <ChangePasswordModal
+          user={passwordStudent}
+          onClose={() => setPasswordStudent(null)}
+          onPasswordChanged={handleMutationSuccess}
         />
       )}
 
