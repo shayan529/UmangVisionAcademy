@@ -1617,25 +1617,7 @@ const AdminInstructors = ({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/30 p-4 text-xs text-slate-300">
-        <p className="font-semibold text-slate-200 mb-2">Expected columns</p>
-        <div className="flex flex-wrap gap-1.5">
-          {["name", "email", "phoneNumber", "password", "city", "state", "pincode"].map(
-            (col) => (
-              <span
-                key={col}
-                className="font-mono text-[11px] bg-slate-900 border border-slate-800 text-slate-300 rounded-md px-2 py-1"
-              >
-                {col}
-              </span>
-            ),
-          )}
-        </div>
-        <p className="text-slate-500 mt-2.5">
-          Specialization and bio aren't part of bulk import — add those
-          afterward via Edit if needed.
-        </p>
-      </div>
+
 
       {importError && (
         <div className="flex items-start gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-red-300">
