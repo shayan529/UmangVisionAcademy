@@ -1,7 +1,14 @@
 import mongoose from "mongoose";
-import Role, { PERMISSION_MODULES, DASHBOARD_MODULES } from "../models/role.model.js";
+import Role, {
+  PERMISSION_MODULES,
+  DASHBOARD_MODULES,
+} from "../models/role.model.js";
 import User from "../models/user.model.js";
-import { hydrateUserRoles, isBaseRole, isRoleObjectId } from "../utils/userRoles.js";
+import {
+  hydrateUserRoles,
+  isBaseRole,
+  isRoleObjectId,
+} from "../utils/userRoles.js";
 import { deleteKey, deleteKeys } from "../utils/redisClient.js";
 import { userLRU } from "../utils/lruCache.js";
 
@@ -34,16 +41,16 @@ export const createRole = async (req, res) => {
 
     const existing = await Role.findOne({ name: name.trim() });
     if (existing) {
-      return res.status(400).json({ message: "A role with this name already exists" });
+      return res
+        .status(400)
+        .json({ message: "A role with this name already exists" });
     }
 
     const role = await Role.create({
       name: name.trim(),
       description: description?.trim() || "",
       permissions: permissions || [],
-      ...(Array.isArray(dashboardModules) && dashboardModules.length > 0
-        ? { dashboardModules }
-        : {}),
+      ...(dashboardModules !== undefined ? { dashboardModules } : {}),
     });
 
     res.status(201).json(role);
@@ -67,10 +74,9 @@ export const updateRole = async (req, res) => {
     if (description !== undefined) role.description = description.trim();
     if (permissions) role.permissions = permissions;
     if (dashboardModules !== undefined) {
-      role.dashboardModules =
-        Array.isArray(dashboardModules) && dashboardModules.length > 0
-          ? dashboardModules
-          : undefined;
+      role.dashboardModules = Array.isArray(dashboardModules)
+        ? dashboardModules
+        : undefined;
     }
 
     await role.save();
@@ -92,7 +98,9 @@ export const updateRole = async (req, res) => {
     const affectedUsers = await User.find(userQuery).select("_id").lean();
 
     if (affectedUsers.length > 0) {
-      const userCacheKeys = affectedUsers.map((u) => `user:${u._id.toString()}`);
+      const userCacheKeys = affectedUsers.map(
+        (u) => `user:${u._id.toString()}`,
+      );
       await deleteKeys(userCacheKeys);
       // Also bust the in-process LRU so the change takes effect on the
       // very next request without waiting for LRU TTL to expire.

@@ -67,28 +67,32 @@ const CourseCard = ({ course }) => {
       {/* ── 1. Thumbnail with Floating Badges (Udemy Aspect Ratio) ── */}
       <div className="relative w-full aspect-[16/10] shrink-0 bg-slate-800/80 overflow-hidden">
         {!imgError && getOptimizedImageUrl(course.image) ? (
-          <img
-            src={getOptimizedImageUrl(course.image)}
-            alt={course.title}
-            loading="lazy"
-            onLoad={() => setImgLoaded(true)}
-            onError={() => setImgError(true)}
-            className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${
-              imgLoaded ? "opacity-100" : "opacity-0"
-            }`}
-          />
-        ) : null}
-
-        {/* Shimmer Placeholder */}
-        {(!imgLoaded || imgError) && (
-          <div className="absolute inset-0 bg-slate-800 flex items-center justify-center">
-            {imgError ? (
-              <div className="w-10 h-10 text-slate-600 flex items-center justify-center font-bold text-lg">
-                📚
+          <>
+            <img
+              src={getOptimizedImageUrl(course.image)}
+              alt={course.title}
+              loading="lazy"
+              decoding="async"
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgError(true)}
+              className={`w-full h-full object-cover transition-opacity duration-300 group-hover:scale-105 ${
+                imgLoaded ? "opacity-100" : "opacity-0"
+              }`}
+            />
+            {!imgLoaded && (
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-indigo-950/40 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-full border-2 border-indigo-500/20 border-t-indigo-500/60 animate-spin" />
               </div>
-            ) : (
-              <div className="absolute inset-0 -translate-x-full animate-shimmer-sweep bg-gradient-to-r from-transparent via-slate-600/25 to-transparent" />
             )}
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-950/50 flex flex-col items-center justify-center p-3 text-center">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-xl shadow-inner">
+              🎓
+            </div>
+            <span className="text-[11px] font-semibold text-slate-400 mt-1.5 line-clamp-1">
+              {course.category || course.board || "Umang Vision Academy"}
+            </span>
           </div>
         )}
 

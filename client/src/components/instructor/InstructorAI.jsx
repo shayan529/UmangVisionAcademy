@@ -542,7 +542,7 @@ export default function AITutor() {
         dispatch({ type: "aiTutor/setMessages", payload: persisted.messages });
       } else if (initialActiveId) {
         const restoredSession = persisted.sessions.find(
-          (s) => s.id === restoredActiveId,
+          (s) => s.id === initialActiveId,
         );
         dispatch({
           type: "aiTutor/setMessages",

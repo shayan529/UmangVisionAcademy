@@ -437,18 +437,14 @@ function useIsMobile() {
   return isMobile;
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
-export default function AITutor() {
+// ── Desktop component ────────────────────────────────────────────────────────
+function AITutorDesktop() {
   const dispatch = useDispatch();
   const { messages, input, streaming, error, mode } = useSelector(
     (s) => s.aiTutor,
   );
   const { t: translate, i18n } = useTranslation();
-  const isMobile = useIsMobile();
-
-  if (isMobile) {
-    return <MobileChat />;
-  }
+  const isMobile = false;
 
   const [dark, setDark] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -547,7 +543,7 @@ export default function AITutor() {
         dispatch({ type: "aiTutor/setMessages", payload: persisted.messages });
       } else if (initialActiveId) {
         const restoredSession = persisted.sessions.find(
-          (s) => s.id === restoredActiveId,
+          (s) => s.id === initialActiveId,
         );
         dispatch({
           type: "aiTutor/setMessages",
@@ -1828,4 +1824,13 @@ export default function AITutor() {
       </div>
     </div>
   );
+}
+
+// ── Main Export (mounts either MobileChat or AITutorDesktop without breaking hook rules) ──
+export default function AITutor() {
+  const isMobile = useIsMobile();
+  if (isMobile) {
+    return <MobileChat />;
+  }
+  return <AITutorDesktop />;
 }

@@ -87,8 +87,8 @@ const Courses = () => {
 
   useEffect(() => {
     dispatch(fetchPublishedCourses());
-    if (user) dispatch(fetchEnrolledCourses());
-  }, [dispatch, user]);
+    if (user?._id) dispatch(fetchEnrolledCourses());
+  }, [dispatch, user?._id]);
 
   const handleCourseTypeChange = (type) => {
     setSelectedCourseType(type);

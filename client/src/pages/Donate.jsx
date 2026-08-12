@@ -439,8 +439,8 @@ const Donate = () => {
                 type="button"
                 onClick={() => setFrequency("one-time")}
                 className={`flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all cursor-pointer ${frequency === "one-time"
-                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md"
-                    : "text-slate-400 hover:text-white"
+                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md"
+                  : "text-slate-400 hover:text-white"
                   }`}
               >
                 {t("donate.oneTime", "Give One-Time")}
@@ -449,8 +449,8 @@ const Donate = () => {
                 type="button"
                 onClick={() => setFrequency("monthly")}
                 className={`flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all cursor-pointer ${frequency === "monthly"
-                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md"
-                    : "text-slate-400 hover:text-white"
+                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md"
+                  : "text-slate-400 hover:text-white"
                   }`}
               >
                 {t("donate.monthly", "Give Monthly (Recurring)")}
@@ -468,8 +468,8 @@ const Donate = () => {
                     setCustomAmount("");
                   }}
                   className={`p-4 rounded-2xl border text-left transition-all relative cursor-pointer ${selectedAmount === tier.amount && !customAmount
-                      ? "border-emerald-500 bg-emerald-500/15 shadow-lg shadow-emerald-500/10"
-                      : "border-slate-800 bg-slate-900/80 hover:border-slate-700"
+                    ? "border-emerald-500 bg-emerald-500/15 shadow-lg shadow-emerald-500/10"
+                    : "border-slate-800 bg-slate-900/80 hover:border-slate-700"
                     }`}
                 >
                   {tier.popular && (

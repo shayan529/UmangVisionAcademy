@@ -34,6 +34,16 @@ export const fetchPublishedCourses = createAsyncThunk(
       return rejectWithValue(err.response?.data?.message || err.message);
     }
   },
+  {
+    condition: (params, { getState }) => {
+      const { loading } = getState().courses || {};
+      // If currently fetching without custom query params, skip duplicate fetch
+      if (loading && (!params || Object.keys(params).length === 0)) {
+        return false;
+      }
+      return true;
+    },
+  },
 );
 
 export const fetchEnrolledCourses = createAsyncThunk(

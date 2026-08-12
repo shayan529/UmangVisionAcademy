@@ -207,8 +207,8 @@ const Courses = () => {
 
   useEffect(() => {
     dispatch(fetchPublishedCourses());
-    if (user) dispatch(fetchEnrolledCourses());
-  }, [dispatch, user]);
+    if (user?._id) dispatch(fetchEnrolledCourses());
+  }, [dispatch, user?._id]);
 
   // When switching course type, reset the filters that no longer apply so
   // stale selections don't silently zero-out results.
