@@ -1389,6 +1389,7 @@ const AdminInstructors = ({
   const [editingInstructor, setEditingInstructor] = useState(null);
   const [addingInstructor, setAddingInstructor] = useState(false);
   const [assigningCoursesInstructor, setAssigningCoursesInstructor] = useState(null);
+  const [passwordInstructor, setPasswordInstructor] = useState(null);
 
   // ── Header stat pills ──────────────────────────────────────────────────
   const totalCoursesTaught = useMemo(
