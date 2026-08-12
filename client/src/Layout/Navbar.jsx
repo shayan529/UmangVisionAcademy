@@ -359,13 +359,15 @@ button.btn-red:hover,
               </Link>
             )}
 
-            <Link
-              to="/donate"
-              className="inline-flex items-center gap-1 px-2.5 py-1 2xl:px-3 2xl:py-1.5 rounded-full bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-amber-500/20 border border-emerald-500/40 text-emerald-300 text-[11px] 2xl:text-xs font-bold hover:bg-emerald-500/30 hover:scale-105 transition-all shadow-md whitespace-nowrap shrink-0"
-            >
-              <span>{t("nav.donate", "Donate")}</span>
-              <span>💖</span>
-            </Link>
+            {!user && (
+              <Link
+                to="/donate"
+                className="inline-flex items-center gap-1 px-2.5 py-1 2xl:px-3 2xl:py-1.5 rounded-full bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-amber-500/20 border border-emerald-500/40 text-emerald-300 text-[11px] 2xl:text-xs font-bold hover:bg-emerald-500/30 hover:scale-105 transition-all shadow-md whitespace-nowrap shrink-0"
+              >
+                <span>{t("nav.donate", "Donate")}</span>
+                <span>💖</span>
+              </Link>
+            )}
           </div>
 
           {/* ── Desktop right section ── */}
