@@ -177,7 +177,7 @@ export const hasPermission = (user, moduleName, actionName = "view") => {
     }
   }
 
-  // 1. Check explicit permissions on role object or user doc
+  // Check explicit permissions on role object, user doc, basePermissions, or customRole
   const rolePermissions =
     (user.role && typeof user.role === "object" && Array.isArray(user.role.permissions)
       ? user.role.permissions
@@ -187,27 +187,12 @@ export const hasPermission = (user, moduleName, actionName = "view") => {
     (getCustomRole(user)?.permissions);
 
   if (Array.isArray(rolePermissions) && rolePermissions.length > 0) {
-    const match = rolePermissions.some(
+    return rolePermissions.some(
       (p) =>
         p.module === moduleName &&
         Array.isArray(p.actions) &&
         p.actions.includes(actionName),
     );
-    if (match) return true;
-  }
-
-  // 2. Staff / custom role fallback: Allow view/access for modules present in dashboardModules
-  if (hasBaseRole(user, "staff") || hasCustomRole(user)) {
-    if (actionName === "view" || actionName === "access") {
-      const mods = user.dashboardModules ?? user.role?.dashboardModules;
-      if (
-        mods == null ||
-        (Array.isArray(mods) &&
-          (mods.includes(moduleName) || mods.includes("all")))
-      ) {
-        return true;
-      }
-    }
   }
 
   return false;

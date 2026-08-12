@@ -137,20 +137,10 @@ const getGrantedPermissions = (user) => {
 
   if (Array.isArray(permissionsList)) {
     permissionsList.forEach((permission) => {
-      const current = grouped.get(permission.module) || new Set();
-      (permission.actions || []).forEach((action) => current.add(action));
-      grouped.set(permission.module, current);
-    });
-  }
-
-  // Also include modules granted via dashboardModules as "view"
-  const dashMods = user?.dashboardModules ?? user?.role?.dashboardModules;
-  if (Array.isArray(dashMods)) {
-    dashMods.forEach((mod) => {
-      if (mod && mod !== "overview") {
-        const current = grouped.get(mod) || new Set();
-        current.add("view");
-        grouped.set(mod, current);
+      if (permission && permission.module && Array.isArray(permission.actions) && permission.actions.length > 0) {
+        const current = grouped.get(permission.module) || new Set();
+        permission.actions.forEach((action) => current.add(action));
+        grouped.set(permission.module, current);
       }
     });
   }
@@ -181,7 +171,10 @@ const AdminOverview = ({
   const greetingName = isFullAdmin ? 'Admin' : firstName || 'Admin';
 
   // Get the role name safely — guard against unpopulated ObjectId strings
-  const rawRoleName = getCustomRole(user)?.name;
+  const rawRoleName =
+    (user?.role && typeof user.role === 'object' ? user.role.name : null) ||
+    getCustomRole(user)?.name ||
+    (typeof user?.role === 'string' && !/^[a-f0-9]{24}$/i.test(user.role) ? user.role : null);
   const isObjectId = rawRoleName && /^[a-f0-9]{24}$/i.test(rawRoleName);
   const roleLabel = isObjectId
     ? (isFullAdmin ? 'Administrator' : 'Staff Member')

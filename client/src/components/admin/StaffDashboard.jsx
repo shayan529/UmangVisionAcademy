@@ -185,7 +185,10 @@ const StaffSidebar = ({
 
   const authLoading = useSelector((s) => s.auth.loading);
   const username = user?.name || user?.email?.split("@")[0] || "Staff Member";
-  const rawCustomRoleName = getCustomRole(user)?.name;
+  const rawCustomRoleName =
+    (user?.role && typeof user.role === "object" ? user.role.name : null) ||
+    getCustomRole(user)?.name ||
+    (typeof user?.role === "string" && !/^[a-f0-9]{24}$/i.test(user.role) ? user.role : null);
   const isObjectId = rawCustomRoleName && /^[a-f0-9]{24}$/i.test(rawCustomRoleName);
   const customRoleNames = isObjectId ? "Staff" : (rawCustomRoleName || "Staff");
 
