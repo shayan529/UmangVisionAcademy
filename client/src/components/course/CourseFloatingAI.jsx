@@ -689,6 +689,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
   );
 
   const quickPrompts = useMemo(() => {
+    if (!course) return [];
     if (isHindi) {
       return [
         `वर्तमान वीडियो "${activeLesson?.title || "पाठ"}" का सारांश दें`,
@@ -701,7 +702,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
       `What notes are available in this course?`,
       `Explain the key concepts of this lesson`,
     ];
-  }, [activeLesson, isHindi]);
+  }, [course, activeLesson, isHindi]);
 
   const isChatRoute = typeof window !== "undefined" && (
     window.location.pathname.includes("ask") ||
@@ -844,9 +845,13 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
                     {
                       id: "welcome",
                       role: "assistant",
-                      content: isHindi
-                        ? `☁️ **${course?.title || "इस कोर्स"}** के बारे में मुझसे कुछ भी पूछें!`
-                        : `☁️ Ask me anything about **${course?.title || "this course"}**!`,
+                      content: course
+                        ? (isHindi
+                            ? `☁️ **${course.title || "इस कोर्स"}** के बारे में मुझसे कुछ भी पूछें!`
+                            : `☁️ Ask me anything about **${course.title || "this course"}**!`)
+                        : (isHindi
+                            ? `✨ नमस्ते! मैं आपका **AI एकेडमी गाइड** हूँ!\n\nआप मुझसे स्टूडेंट डैशबोर्ड के किसी भी फीचर या पढ़ाई से जुड़ा कोई भी सवाल पूछ सकते हैं!`
+                            : `✨ Hi! I'm your **AI Academy Guide**!\n\nYou can ask me about any feature on the Student Dashboard or any study question!`),
                     },
                   ]);
                 }}
@@ -856,9 +861,13 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
                     {
                       id: "welcome",
                       role: "assistant",
-                      content: isHindi
-                        ? `☁️ **${course?.title || "इस कोर्स"}** के बारे में मुझसे कुछ भी पूछें!`
-                        : `☁️ Ask me anything about **${course?.title || "this course"}**!`,
+                      content: course
+                        ? (isHindi
+                            ? `☁️ **${course.title || "इस कोर्स"}** के बारे में मुझसे कुछ भी पूछें!`
+                            : `☁️ Ask me anything about **${course.title || "this course"}**!`)
+                        : (isHindi
+                            ? `✨ नमस्ते! मैं आपका **AI एकेडमी गाइड** हूँ!\n\nआप मुझसे स्टूडेंट डैशबोर्ड के किसी भी फीचर या पढ़ाई से जुड़ा कोई भी सवाल पूछ सकते हैं!`
+                            : `✨ Hi! I'm your **AI Academy Guide**!\n\nYou can ask me about any feature on the Student Dashboard or any study question!`),
                     },
                   ]);
                 }}
@@ -942,8 +951,8 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick prompts suggestions (if few messages) */}
-          {chatMessages.length <= 2 && !isAiLoading && (
+          {/* Quick prompts suggestions (only inside course and if few messages) */}
+          {course && quickPrompts.length > 0 && chatMessages.length <= 2 && !isAiLoading && (
             <div className="px-3 py-2 bg-[#08130f] border-t border-teal-500/15 flex flex-wrap gap-1.5 shrink-0">
               {quickPrompts.map((qp, idx) => (
                 <button
@@ -971,9 +980,13 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
                 ref={textareaRef}
                 rows={1}
                 placeholder={
-                  isHindi
-                    ? "AI से सवाल पूछें (वीडियो, नोट्स)..."
-                    : "Ask AI about videos, notes..."
+                  course
+                    ? (isHindi
+                        ? "AI से सवाल पूछें (वीडियो, नोट्स)..."
+                        : "Ask AI about videos, notes...")
+                    : (isHindi
+                        ? "AI एकेडमी गाइड से सवाल पूछें..."
+                        : "Ask AI about dashboard, courses, study...")
                 }
                 value={inputQuery}
                 onChange={(e) => setInputQuery(e.target.value)}
