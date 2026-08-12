@@ -135,10 +135,11 @@ export default function AdminDashboard() {
       s + (c.price || 0) * (c.studentsCount ?? c.students?.length ?? 0),
     0,
   );
-  const totalStudents = courses.reduce(
+  const totalEnrollments = courses.reduce(
     (s, c) => s + (c.studentsCount ?? c.students?.length ?? 0),
     0,
   );
+  const totalStudents = totalEnrollments;
 
   const enriched = instructors.map((inst) => {
     const mc = courses.filter(
