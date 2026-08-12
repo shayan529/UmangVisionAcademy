@@ -41,7 +41,7 @@ const Footer = () => {
               to="/become-instructor"
               className="hover:text-indigo-400 transition-colors duration-200"
             >
-              Become an Expert Guide
+              {t("nav.becomeInstructor", "Become an Expert Guide")}
             </Link>
             <Link
               to="/donate"
@@ -111,8 +111,8 @@ const Footer = () => {
 
       {/* Bottom Copyright Divider */}
       <div className="max-w-7xl mx-auto mt-12 pt-6 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-        <p>© {new Date().getFullYear()} Umang Vision Academy. All rights reserved.</p>
-        <p className="text-slate-500">Free Student Guidance Initiative</p>
+        <p>© {new Date().getFullYear()} Umang Vision Academy. {t("footer.allRightsReserved", "All rights reserved.")}</p>
+        <p className="text-slate-500">{t("becomeInstructor.heroBadge", "Free Student Guidance Initiative")}</p>
       </div>
     </footer>
   );

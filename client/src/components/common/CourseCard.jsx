@@ -203,7 +203,7 @@ const CourseCard = ({ course }) => {
                     e.stopPropagation();
                     navigate(`/courses/${courseId}/demo`);
                   }}
-                  className="flex-1 py-1.5 px-2 rounded-xl border border-slate-700 hover:border-slate-500 bg-slate-800/70 hover:bg-slate-700/70 text-slate-200 hover:text-white text-xs font-semibold transition cursor-pointer"
+                  className="flex-1 min-w-0 py-2 px-2 rounded-xl border border-slate-700 hover:border-slate-500 bg-slate-800/70 hover:bg-slate-700/70 text-slate-200 hover:text-white text-xs font-semibold transition cursor-pointer text-center truncate"
                 >
                   {t("courseCard.viewDetails", "Details")}
                 </button>
@@ -212,7 +212,7 @@ const CourseCard = ({ course }) => {
               <button
                 onClick={handleBuy}
                 disabled={!canEnroll && user}
-                className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold text-center transition shadow-md shadow-indigo-600/20 active:scale-98 cursor-pointer border-none ${
+                className={`flex-1 min-w-0 py-2 px-2 rounded-xl text-xs font-bold text-center transition shadow-md shadow-indigo-600/20 active:scale-98 cursor-pointer border-none truncate ${
                   !canEnroll && user
                     ? "bg-slate-700 text-slate-400 border border-slate-600 cursor-not-allowed"
                     : "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white"

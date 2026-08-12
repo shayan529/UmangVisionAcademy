@@ -457,13 +457,16 @@ const Courses = () => {
             <p className="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">
               {t("courses.headerTag")}
             </p>
-            <div className="flex items-baseline gap-3">
+            <div className="flex flex-wrap items-baseline gap-3">
               <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
                 {t("courses.title")}
               </h2>
               {!loading && allCourses.length > 0 && (
-                <span className="text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800/80 px-2.5 py-0.5 rounded-full">
-                  {`${filteredCourses.length} ${filteredCourses.length === 1 ? "course" : "courses"} available`}
+                <span className="text-xs font-semibold text-slate-300 bg-slate-900/90 border border-slate-700/60 px-3 py-1 rounded-full shadow-inner">
+                  {t("courses.availableCourses", {
+                    count: filteredCourses.length,
+                    defaultValue: `${filteredCourses.length} ${filteredCourses.length === 1 ? "course" : "courses"} available`,
+                  })}
                 </span>
               )}
             </div>
@@ -471,7 +474,7 @@ const Courses = () => {
 
           {/* Course type toggle */}
           <div className="shrink-0">
-            <div className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-800 bg-[#0f172a]/90 backdrop-blur-md max-w-full overflow-x-auto no-scrollbar">
+            <div className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-800 bg-[#0f172a]/90 backdrop-blur-md max-w-full overflow-x-auto no-scrollbar shadow-lg">
               {[
                 { key: TYPE_ALL, label: t("courses.courseTypeAll", "All") },
                 {
@@ -487,9 +490,9 @@ const Courses = () => {
                   key={opt.key}
                   type="button"
                   onClick={() => handleCourseTypeChange(opt.key)}
-                  className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap shrink-0 ${
+                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap shrink-0 cursor-pointer ${
                     selectedCourseType === opt.key
-                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xs"
+                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/30"
                       : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                   }`}
                 >
@@ -514,17 +517,17 @@ const Courses = () => {
         )}
 
         {/* Filters Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6 p-3 sm:p-4 rounded-2xl bg-slate-900/50 border border-slate-800/80">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 p-3.5 sm:p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm shadow-inner">
           {selectedCourseType === TYPE_COMPETITIVE ? (
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-indigo-300/90 mb-1 truncate">
+              <label className="block text-[10.5px] font-bold uppercase tracking-wider text-indigo-300/90 mb-1.5 truncate">
                 {t("courses.select_exam", "Select Exam")}
               </label>
               <div className="relative">
                 <select
                   value={selectedExam}
                   onChange={(e) => setSelectedExam(e.target.value)}
-                  className="w-full bg-[#090e1a] border border-slate-700/70 hover:border-indigo-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                  className="w-full min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-indigo-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
                 >
                   <option key={ALL_EXAMS} value={ALL_EXAMS}>
                     {t("courses.allExams", "All Exams")}
@@ -547,14 +550,14 @@ const Courses = () => {
             </div>
           ) : (
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-indigo-300/90 mb-1 truncate">
+              <label className="block text-[10.5px] font-bold uppercase tracking-wider text-indigo-300/90 mb-1.5 truncate">
                 {t("courses.select_class")}
               </label>
               <div className="relative">
                 <select
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
-                  className="w-full bg-[#090e1a] border border-slate-700/70 hover:border-indigo-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                  className="w-full min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-indigo-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
                 >
                   <option key={ALL} value={ALL}>
                     {t("courses.all")}
@@ -578,14 +581,14 @@ const Courses = () => {
           )}
 
           <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-cyan-300/90 mb-1 truncate">
+            <label className="block text-[10.5px] font-bold uppercase tracking-wider text-cyan-300/90 mb-1.5 truncate">
               {t("courses.select_subject")}
             </label>
             <div className="relative">
               <select
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
-                className="w-full bg-[#090e1a] border border-slate-700/70 hover:border-cyan-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                className="w-full min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-cyan-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
               >
                 <option key={ALL_SUBJECTS} value={ALL_SUBJECTS}>
                   {t("courses.allSubjects")}
@@ -609,14 +612,14 @@ const Courses = () => {
 
           {selectedCourseType !== TYPE_COMPETITIVE && (
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-purple-300/90 mb-1 truncate">
+              <label className="block text-[10.5px] font-bold uppercase tracking-wider text-purple-300/90 mb-1.5 truncate">
                 {t("courses.select_board")}
               </label>
               <div className="relative">
                 <select
                   value={selectedBoard}
                   onChange={(e) => setSelectedBoard(e.target.value)}
-                  className="w-full bg-[#090e1a] border border-slate-700/70 hover:border-purple-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                  className="w-full min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-purple-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
                 >
                   <option key={ALL_BOARDS} value={ALL_BOARDS}>
                     {t("courses.allBoards")}
@@ -640,14 +643,14 @@ const Courses = () => {
           )}
 
           <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-emerald-300/90 mb-1 truncate">
+            <label className="block text-[10.5px] font-bold uppercase tracking-wider text-emerald-300/90 mb-1.5 truncate">
               {t("courses.select_language", "Select Language")}
             </label>
             <div className="relative">
               <select
                 value={selectedLanguage}
                 onChange={(e) => setSelectedLanguage(e.target.value)}
-                className="w-full bg-[#090e1a] border border-slate-700/70 hover:border-emerald-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                className="w-full min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-emerald-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
               >
                 <option key={ALL_LANGUAGES} value={ALL_LANGUAGES}>
                   {t("courses.multilanguage", "Multilanguage")}

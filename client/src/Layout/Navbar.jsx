@@ -217,12 +217,22 @@ const Navbar = () => {
   transition: box-shadow .2s ease, transform .2s ease;
   white-space: nowrap;
   border-radius: 0.75rem;
-  padding: 0.625rem 1.25rem;
-  font-size: 0.875rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8125rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1280px) {
+  .btn-navy,
+  .btn-indigo-shine,
+  .btn-red {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+  }
 }
 
 .btn-navy {
@@ -271,7 +281,7 @@ button.btn-red:hover,
 
         <div
           ref={topBarRef}
-          className="w-full px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 flex items-center justify-between gap-2"
+          className="max-w-[1440px] mx-auto w-full px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3 lg:py-3.5 flex items-center justify-between gap-2 lg:gap-4"
         >
           {/* ── Logo ── */}
           <Link
@@ -280,14 +290,14 @@ button.btn-red:hover,
             aria-label="Go to home"
             onClick={() => console.debug("Navbar: logo click -> /")}
           >
-            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex items-center justify-center">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex items-center justify-center shrink-0">
               <img
                 src="/Logo.png"
                 alt="Logo"
                 className="w-full h-full object-contain"
               />
             </div>
-            <div className="hidden md:flex items-center ml-2 lg:ml-3">
+            <div className="flex items-center ml-2 xl:ml-2.5 shrink-0 whitespace-nowrap">
               <span className="text-sm lg:text-base xl:text-lg font-extrabold text-white tracking-wide">
                 Umang Vision
               </span>
@@ -298,11 +308,11 @@ button.btn-red:hover,
           </Link>
 
           {/* ── Desktop nav links ── */}
-          <div className="hidden md:flex justify-center flex-1 items-center gap-4 xl:gap-8 text-[15px] font-medium text-gray-300 mx-4 xl:mx-8">
+          <div className="hidden xl:flex items-center justify-center gap-2 xl:gap-3 2xl:gap-5 text-xs xl:text-[13px] 2xl:text-[14px] font-medium text-gray-300 shrink-0">
             {!isStaffOrAdmin && !user && (
               <Link
                 to="/courses"
-                className="hover:text-indigo-300 transition duration-300"
+                className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
               >
                 {t("nav.courses")}
               </Link>
@@ -310,7 +320,7 @@ button.btn-red:hover,
             {!isStaffOrAdmin && !user && (
               <Link
                 to="/plans"
-                className="hover:text-indigo-300 transition duration-300"
+                className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
                 onClick={() => console.debug("Navbar: plans click -> /plans")}
               >
                 {t("nav.plans")}
@@ -320,13 +330,13 @@ button.btn-red:hover,
               <>
                 <Link
                   to="/question-bank"
-                  className="hover:text-indigo-300 transition duration-300"
+                  className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
                 >
                   {t("nav.questionBank")}
                 </Link>
                 <Link
                   to="/blogs"
-                  className="hover:text-indigo-300 transition duration-300"
+                  className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
                 >
                   {t("nav.blogs")}
                 </Link>
@@ -336,7 +346,7 @@ button.btn-red:hover,
             {!hasInstructorRole && !isStaffOrAdmin && !user && (
               <Link
                 to="/become-instructor"
-                className="hover:text-indigo-300 transition duration-300"
+                className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
               >
                 {t("nav.becomeInstructor")}
               </Link>
@@ -344,7 +354,7 @@ button.btn-red:hover,
 
             <Link
               to="/donate"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-amber-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold hover:bg-emerald-500/30 hover:scale-105 transition-all shadow-md"
+              className="inline-flex items-center gap-1 px-2.5 py-1 2xl:px-3 2xl:py-1.5 rounded-full bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-amber-500/20 border border-emerald-500/40 text-emerald-300 text-[11px] 2xl:text-xs font-bold hover:bg-emerald-500/30 hover:scale-105 transition-all shadow-md whitespace-nowrap shrink-0"
             >
               <span>{t("nav.donate", "Donate")}</span>
               <span>💖</span>
@@ -352,7 +362,7 @@ button.btn-red:hover,
           </div>
 
           {/* ── Desktop right section ── */}
-          <div className="hidden md:flex items-center gap-2 lg:gap-4 ml-auto shrink-0">
+          <div className="hidden xl:flex items-center gap-1.5 2xl:gap-3 shrink-0">
             {(!user || hasStudentRole) && (
               <div ref={dropdownRef} className="relative">
                 <button
@@ -362,7 +372,7 @@ button.btn-red:hover,
                     setLangDropdownOpen(false);
                     setRolesDropdownOpen(false);
                   }}
-                  className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800 transition cursor-pointer"
+                  className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-3 xl:px-4 py-1.5 xl:py-2 text-xs xl:text-sm font-semibold text-slate-200 hover:bg-slate-800 transition cursor-pointer whitespace-nowrap shrink-0"
                 >
                   {t("nav.board")}
                   <ChevronDown
@@ -405,7 +415,7 @@ button.btn-red:hover,
                   setBoardOpen(false);
                   setRolesDropdownOpen(false);
                 }}
-                className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800 transition"
+                className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-2.5 xl:px-3.5 py-1.5 xl:py-2 text-xs xl:text-sm font-semibold text-slate-200 hover:bg-slate-800 transition whitespace-nowrap shrink-0 cursor-pointer"
               >
                 {currentLangObj.label}
                 <ChevronDown
@@ -436,7 +446,7 @@ button.btn-red:hover,
               <button
                 type="button"
                 onClick={() => navigate("/cart")}
-                className="relative cursor-pointer inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
+                className="relative cursor-pointer inline-flex h-9 w-9 xl:h-10 xl:w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10 shrink-0"
                 aria-label="Cart"
               >
                 <ShoppingCart size={18} />
@@ -525,7 +535,7 @@ button.btn-red:hover,
           </div>
 
           {/* ── Mobile actions ── */}
-          <div className="md:hidden ml-auto flex items-center gap-2">
+          <div className="xl:hidden ml-auto flex items-center gap-2">
             {/* Language selector in mobile navbar */}
             <div ref={mobileLangRef} className="relative">
               <button
@@ -563,7 +573,7 @@ button.btn-red:hover,
               <button
                 type="button"
                 onClick={() => navigate("/cart")}
-                className="relative cursor-pointer inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
+                className="relative cursor-pointer inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
                 aria-label="Cart"
               >
                 <ShoppingCart size={18} />
@@ -605,7 +615,7 @@ button.btn-red:hover,
          position:fixed descendants, which was collapsing this overlay down
          to the height of the top bar instead of the full viewport. ── */}
       <div
-        className={`md:hidden fixed inset-x-0 bottom-0 z-[100] bg-black/60 transition-opacity duration-300 ${
+        className={`xl:hidden fixed inset-x-0 bottom-0 z-[100] bg-black/60 transition-opacity duration-300 ${
           mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         style={{ top: topBarHeight }}
@@ -614,7 +624,7 @@ button.btn-red:hover,
       />
 
       <div
-        className="md:hidden fixed right-0 w-[280px] max-w-[80vw] bottom-0 z-[100] bg-[#0f172a] overflow-y-auto transition-transform duration-300 ease-out border-l border-white/10"
+        className="xl:hidden fixed right-0 w-[280px] max-w-[80vw] bottom-0 z-[100] bg-[#0f172a] overflow-y-auto transition-transform duration-300 ease-out border-l border-white/10"
         style={{
           top: topBarHeight,
           overscrollBehavior: "contain",

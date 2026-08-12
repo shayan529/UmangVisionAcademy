@@ -30,63 +30,75 @@ import {
 } from "lucide-react";
 
 const guidanceTopics = [
-  { title: "Career Guidance & Planning", icon: Compass, color: "#818cf8" },
-  { title: "Academic & Subject Guidance", icon: BookOpen, color: "#38bdf8" },
-  { title: "Competitive & Entrance Exams", icon: Target, color: "#c084fc" },
-  { title: "Government Exams & Careers", icon: ShieldCheck, color: "#fb7185" },
-  { title: "Upcoming Exams & Jobs", icon: TrendingUp, color: "#4ade80" },
-  { title: "Emerging & New-Age Fields", icon: Sparkles, color: "#facc15" },
-  { title: "Skill Development Programs", icon: Zap, color: "#fb923c" },
-  { title: "Study Strategies & Prep", icon: Lightbulb, color: "#2dd4bf" },
-  { title: "Higher Education & Admissions", icon: GraduationCap, color: "#a855f7" },
-  { title: "Industry Trends & Opportunities", icon: Briefcase, color: "#38bdf8" },
+  { key: "becomeInstructor.topics.career", title: "Career Guidance & Planning", icon: Compass, color: "#818cf8" },
+  { key: "becomeInstructor.topics.academic", title: "Academic & Subject Guidance", icon: BookOpen, color: "#38bdf8" },
+  { key: "becomeInstructor.topics.competitive", title: "Competitive & Entrance Exams", icon: Target, color: "#c084fc" },
+  { key: "becomeInstructor.topics.govt", title: "Government Exams & Careers", icon: ShieldCheck, color: "#fb7185" },
+  { key: "becomeInstructor.topics.upcoming", title: "Upcoming Exams & Jobs", icon: TrendingUp, color: "#4ade80" },
+  { key: "becomeInstructor.topics.emerging", title: "Emerging & New-Age Fields", icon: Sparkles, color: "#facc15" },
+  { key: "becomeInstructor.topics.skills", title: "Skill Development Programs", icon: Zap, color: "#fb923c" },
+  { key: "becomeInstructor.topics.strategies", title: "Study Strategies & Prep", icon: Lightbulb, color: "#2dd4bf" },
+  { key: "becomeInstructor.topics.higherEd", title: "Higher Education & Admissions", icon: GraduationCap, color: "#a855f7" },
+  { key: "becomeInstructor.topics.industry", title: "Industry Trends & Opportunities", icon: Briefcase, color: "#38bdf8" },
 ];
 
 const targetAudience = [
-  "Teachers",
-  "Professors",
-  "Subject Experts",
-  "Career Counsellors",
-  "Competitive Exam Experts",
-  "Industry Professionals",
-  "Entrepreneurs",
-  "Skilled Professionals",
-  "Mentors",
+  { key: "becomeInstructor.audience.teachers", label: "Teachers" },
+  { key: "becomeInstructor.audience.professors", label: "Professors" },
+  { key: "becomeInstructor.audience.experts", label: "Subject Experts" },
+  { key: "becomeInstructor.audience.counsellors", label: "Career Counsellors" },
+  { key: "becomeInstructor.audience.examExperts", label: "Competitive Exam Experts" },
+  { key: "becomeInstructor.audience.industryPros", label: "Industry Professionals" },
+  { key: "becomeInstructor.audience.entrepreneurs", label: "Entrepreneurs" },
+  { key: "becomeInstructor.audience.skilledPros", label: "Skilled Professionals" },
+  { key: "becomeInstructor.audience.mentors", label: "Mentors" },
 ];
 
 const expertBenefits = [
   {
     icon: Award,
+    titleKey: "becomeInstructor.benefits.recognition.title",
+    descKey: "becomeInstructor.benefits.recognition.desc",
     title: "Professional Recognition",
     desc: "Be recognized as a subject, career, examination, or industry expert across our network.",
     color: "#818cf8",
   },
   {
     icon: UserCheck,
+    titleKey: "becomeInstructor.benefits.profile.title",
+    descKey: "becomeInstructor.benefits.profile.desc",
     title: "Expert Profile",
     desc: "Showcase your professional expertise, experience, and areas of guidance on our platform.",
     color: "#c084fc",
   },
   {
     icon: FileText,
+    titleKey: "becomeInstructor.benefits.cert.title",
+    descKey: "becomeInstructor.benefits.cert.desc",
     title: "Certificate of Appreciation",
     desc: "Receive an official certificate in recognition of your valuable contribution to student guidance.",
     color: "#4ade80",
   },
   {
     icon: Video,
+    titleKey: "becomeInstructor.benefits.sessions.title",
+    descKey: "becomeInstructor.benefits.sessions.desc",
     title: "Expert Session Opportunities",
     desc: "Get opportunities to conduct live sessions, expert talks, webinars, and interactive Q&A sessions.",
     color: "#38bdf8",
   },
   {
     icon: Users,
+    titleKey: "becomeInstructor.benefits.networking.title",
+    descKey: "becomeInstructor.benefits.networking.desc",
     title: "Professional Networking",
     desc: "Connect and network with fellow educators, mentors, industry professionals, and experts.",
     color: "#fb923c",
   },
   {
     icon: Globe,
+    titleKey: "becomeInstructor.benefits.collaborations.title",
+    descKey: "becomeInstructor.benefits.collaborations.desc",
     title: "Future Collaborations",
     desc: "Explore opportunities for webinars, workshops, mentoring programs, and academic initiatives.",
     color: "#2dd4bf",
@@ -126,10 +138,18 @@ const BecomeInstructor = () => {
   };
 
   const buttonLabel = loading
-    ? "Checking Status…"
+    ? t("becomeInstructor.btnChecking", "Checking Status…")
     : myApplication
-    ? "View Registration Status →"
-    : "Register as an Expert Guide";
+    ? t("becomeInstructor.btnStatus", "View Registration Status →")
+    : t("becomeInstructor.btnRegister", "Register as an Expert Guide");
+
+  const whyJoinTags = [
+    { key: "becomeInstructor.whyJoinGiveBack", label: "Give Back" },
+    { key: "becomeInstructor.whyJoinShareExp", label: "Share Experience" },
+    { key: "becomeInstructor.whyJoinInspire", label: "Inspire Students" },
+    { key: "becomeInstructor.whyJoinAwareness", label: "Create Awareness" },
+    { key: "becomeInstructor.whyJoinMakeDiff", label: "Make a Difference" },
+  ];
 
   return (
     <div className="min-h-screen bg-[#0B1120] text-slate-100 relative overflow-x-clip py-12 lg:py-20 px-4 sm:px-6 lg:px-10">
@@ -146,39 +166,39 @@ const BecomeInstructor = () => {
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider">
               <Sparkles size={15} className="text-amber-400" />
-              <span>Free Student Guidance Initiative</span>
+              <span>{t("becomeInstructor.heroBadge", "Free Student Guidance Initiative")}</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-              BECOME A STUDENT GUIDE &{" "}
+              {t("becomeInstructor.heroTitlePart1", "BECOME A STUDENT GUIDE &")}{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">
-                EXPERT MENTOR
+                {t("becomeInstructor.heroTitlePart2", "EXPERT MENTOR")}
               </span>
             </h1>
 
             <p className="text-base sm:text-lg font-bold text-teal-300 tracking-wide">
-              Share Your Knowledge • Guide Students • Shape Futures
+              {t("becomeInstructor.heroTagline", "Share Your Knowledge • Guide Students • Shape Futures")}
             </p>
 
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl">
-              Are you an educator, subject expert, career mentor, industry professional, competitive-exam specialist, or skilled professional with valuable knowledge and experience to share?
+              {t("becomeInstructor.heroP1", "Are you an educator, subject expert, career mentor, industry professional, competitive-exam specialist, or skilled professional with valuable knowledge and experience to share?")}
             </p>
             <p className="text-slate-400 text-xs sm:text-sm leading-relaxed max-w-2xl">
-              AI Online Coaching invites experts to become part of our <strong className="text-slate-200">Free Student Guidance Initiative</strong> and voluntarily conduct informative and interactive sessions for students. Your knowledge, experience, and practical guidance can help students discover opportunities, make informed career decisions, understand examinations, develop relevant skills, and plan their academic and professional journey.
+              {t("becomeInstructor.heroP2", "AI Online Coaching invites experts to become part of our Free Student Guidance Initiative and voluntarily conduct informative and interactive sessions for students. Your knowledge, experience, and practical guidance can help students discover opportunities, make informed career decisions, understand examinations, develop relevant skills, and plan their academic and professional journey.")}
             </p>
 
             {/* Why Join Us Quick Badge Strip */}
             <div className="pt-2">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                WHY JOIN US?
+                {t("becomeInstructor.whyJoinTitle", "WHY JOIN US?")}
               </p>
               <div className="flex flex-wrap gap-2 text-xs font-bold text-teal-300">
-                {["Give Back", "Share Experience", "Inspire Students", "Create Awareness", "Make a Difference"].map((tag, i) => (
+                {whyJoinTags.map((tag, i) => (
                   <span
                     key={i}
                     className="px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20"
                   >
-                    ✦ {tag}
+                    ✦ {t(tag.key, tag.label)}
                   </span>
                 ))}
               </div>
@@ -195,15 +215,15 @@ const BecomeInstructor = () => {
               <div className="space-y-4 relative z-10">
                 <div className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-teal-400 bg-teal-500/10 px-3 py-1 rounded-full border border-teal-500/20">
                   <HeartHandshake size={14} className="text-teal-400" />
-                  <span>REGISTER AS AN EXPERT</span>
+                  <span>{t("becomeInstructor.cardBadge", "REGISTER AS AN EXPERT")}</span>
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl font-black text-white leading-snug">
-                  Join Our Expert Guide Network
+                  {t("becomeInstructor.cardTitle", "Join Our Expert Guide Network")}
                 </h2>
 
                 <p className="text-slate-400 text-sm leading-relaxed">
-                  Register as an expert guide, share your proposed guidance topic, and contribute to voluntary free student mentorship sessions.
+                  {t("becomeInstructor.cardDesc", "Register as an expert guide, share your proposed guidance topic, and contribute to voluntary free student mentorship sessions.")}
                 </p>
               </div>
 
@@ -211,7 +231,7 @@ const BecomeInstructor = () => {
                 {isStudent && (
                   <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 text-xs text-amber-300 font-medium space-y-2">
                     <p className="leading-relaxed font-semibold">
-                      ⚠️ Students cannot register as an expert guide. Please log out to register a new expert profile.
+                      {t("becomeInstructor.studentWarning", "⚠️ Students cannot register as an expert guide. Please log out to register a new expert profile.")}
                     </p>
                     <button
                       type="button"
@@ -221,7 +241,7 @@ const BecomeInstructor = () => {
                       }}
                       className="inline-block px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-bold transition-colors cursor-pointer"
                     >
-                      Log Out & Register Fresh Profile
+                      {t("becomeInstructor.studentLogoutBtn", "Log Out & Register Fresh Profile")}
                     </button>
                   </div>
                 )}
@@ -238,7 +258,7 @@ const BecomeInstructor = () => {
 
                 <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
                   <CheckCircle2 size={13} className="text-teal-400" />
-                  <span>Free Sessions for Students • Voluntary Initiative</span>
+                  <span>{t("becomeInstructor.freeSessionsNote", "Free Sessions for Students • Voluntary Initiative")}</span>
                 </div>
               </div>
             </div>
@@ -249,13 +269,13 @@ const BecomeInstructor = () => {
         <div className="space-y-8 pt-6 border-t border-slate-800/80">
           <div className="text-center space-y-3 max-w-2xl mx-auto">
             <span className="text-xs font-extrabold uppercase tracking-widest text-teal-400 bg-teal-500/10 px-3.5 py-1 rounded-full border border-teal-500/20">
-              Guidance Areas
+              {t("becomeInstructor.areasBadge", "Guidance Areas")}
             </span>
             <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              WHAT CAN YOU GUIDE STUDENTS ON?
+              {t("becomeInstructor.areasTitle", "WHAT CAN YOU GUIDE STUDENTS ON?")}
             </h2>
             <p className="text-slate-400 text-sm sm:text-base">
-              Experts can conduct FREE guidance sessions on topics such as:
+              {t("becomeInstructor.areasSubtitle", "Experts can conduct FREE guidance sessions on topics such as:")}
             </p>
           </div>
 
@@ -271,7 +291,7 @@ const BecomeInstructor = () => {
                     <Icon size={20} style={{ color: topic.color }} />
                   </div>
                   <h3 className="font-bold text-white text-sm group-hover:text-teal-300 transition-colors">
-                    {topic.title}
+                    {t(topic.key, topic.title)}
                   </h3>
                 </div>
               );
@@ -283,10 +303,10 @@ const BecomeInstructor = () => {
         <div className="rounded-[32px] border border-slate-800 bg-gradient-to-r from-slate-900 via-[#111827] to-indigo-950/40 p-8 sm:p-10 shadow-2xl space-y-6">
           <div className="text-center space-y-2 max-w-xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-black text-white">
-              WHO CAN JOIN?
+              {t("becomeInstructor.whoCanJoinTitle", "WHO CAN JOIN?")}
             </h2>
             <p className="text-slate-400 text-xs sm:text-sm">
-              We welcome passionate professionals from all backgrounds to empower the next generation:
+              {t("becomeInstructor.whoCanJoinSubtitle", "We welcome passionate professionals from all backgrounds to empower the next generation:")}
             </p>
           </div>
 
@@ -296,7 +316,7 @@ const BecomeInstructor = () => {
                 key={i}
                 className="px-4 py-2 rounded-2xl bg-slate-900/90 border border-slate-800 text-slate-200 text-xs sm:text-sm font-bold shadow-md hover:border-indigo-500/40 hover:text-indigo-300 transition-all"
               >
-                🎓 {role}
+                🎓 {t(role.key, role.label)}
               </span>
             ))}
           </div>
@@ -306,10 +326,10 @@ const BecomeInstructor = () => {
         <div className="space-y-8">
           <div className="text-center space-y-3 max-w-2xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Benefits of Joining Our Expert Guide Network
+              {t("becomeInstructor.benefitsTitle", "Benefits of Joining Our Expert Guide Network")}
             </h2>
             <p className="text-slate-400 text-sm sm:text-base">
-              Why experts choose to guide and mentor students on our platform:
+              {t("becomeInstructor.benefitsSubtitle", "Why experts choose to guide and mentor students on our platform:")}
             </p>
           </div>
 
@@ -326,10 +346,10 @@ const BecomeInstructor = () => {
                   </div>
                   <div className="space-y-1.5">
                     <h3 className="font-bold text-white text-base group-hover:text-teal-300 transition-colors">
-                      {benefit.title}
+                      {t(benefit.titleKey, benefit.title)}
                     </h3>
                     <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                      {benefit.desc}
+                      {t(benefit.descKey, benefit.desc)}
                     </p>
                   </div>
                 </div>
@@ -347,15 +367,15 @@ const BecomeInstructor = () => {
 
             <div className="space-y-2">
               <p className="text-xs font-bold uppercase tracking-[0.25em] text-teal-400">
-                BECOME AN EXPERT GUIDE
+                {t("becomeInstructor.finalCtaBadge", "BECOME AN EXPERT GUIDE")}
               </p>
               <h2 className="text-2xl sm:text-4xl font-black text-white">
-                Register Your Expert Profile
+                {t("becomeInstructor.finalCtaTitle", "Register Your Expert Profile")}
               </h2>
             </div>
 
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-              Ready to share your experience, inspire students, and create awareness? Register now to conduct your guidance session.
+              {t("becomeInstructor.finalCtaDesc", "Ready to share your experience, inspire students, and create awareness? Register now to conduct your guidance session.")}
             </p>
 
             <button

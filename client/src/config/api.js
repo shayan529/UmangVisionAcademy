@@ -8,37 +8,41 @@ const IS_LOCAL =
     window.location.hostname.startsWith("192.168.") ||
     window.location.hostname.startsWith("10."));
 
-const BACKEND_URLS = [
-  "https://umangvisionacademy.onrender.com",
-  "https://umangvisionacademy-42sz.onrender.com",
-];
+// ── Production Backend URLs with High-Availability Failover ────────────────────
+export const PRIMARY_BACKEND_URL = "https://umangvisionacademy-42sz.onrender.com";
+export const SECONDARY_BACKEND_URL = "https://umangvisionacademy.onrender.com";
 
-const getRandomBackendUrl = () => {
-  const index = Math.floor(Math.random() * BACKEND_URLS.length);
-  return BACKEND_URLS[index];
+let activeBackendUrl = PRIMARY_BACKEND_URL;
+
+export const getActiveBackendUrl = () => {
+  if (typeof window !== "undefined" && IS_LOCAL) {
+    return `http://${window.location.hostname}:5000`;
+  }
+  return activeBackendUrl;
 };
 
-const getDefaultApiBaseUrl = () => {
-  if (typeof window !== "undefined") {
-    if (IS_LOCAL) return `http://${window.location.hostname}:5000/api`;
-  }
-  return `${getRandomBackendUrl()}/api`;
+export const getActiveApiBaseUrl = () => {
+  return `${getActiveBackendUrl()}/api`;
 };
 
-const getDefaultSocketUrl = () => {
-  if (typeof window !== "undefined") {
-    if (IS_LOCAL) return `http://${window.location.hostname}:5000`;
+export const switchToBackupBackend = () => {
+  if (activeBackendUrl !== SECONDARY_BACKEND_URL) {
+    console.warn(
+      `[API Failover] Primary backend (${PRIMARY_BACKEND_URL}) failed. Automatically switching to secondary backup backend: ${SECONDARY_BACKEND_URL}`
+    );
+    activeBackendUrl = SECONDARY_BACKEND_URL;
+    api.defaults.baseURL = `${SECONDARY_BACKEND_URL}/api`;
+    axios.defaults.baseURL = `${SECONDARY_BACKEND_URL}/api`;
   }
-  return getRandomBackendUrl();
 };
 
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
-  getDefaultApiBaseUrl();
+  getActiveApiBaseUrl();
 
 export const SOCKET_URL =
-  import.meta.env.VITE_SOCKET_URL || getDefaultSocketUrl();
+  import.meta.env.VITE_SOCKET_URL || getActiveBackendUrl();
 
 // ── Socket.IO transport options ───────────────────────────────────────────────
 // Use polling-only in production if the backend is hosted on Render or another
@@ -199,7 +203,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Global interceptor to sanitize 5xx (Internal Server Errors) and handle network errors cleanly on the frontend
+// Global interceptor to sanitize 5xx (Internal Server Errors) and handle auto-failover to backup backend
 api.interceptors.response.use(
   (response) => {
     if (IS_LOCAL_DEV && response.data) {
@@ -207,7 +211,36 @@ api.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+  async (error) => {
+    const config = error.config;
+    const isNetworkOrDown =
+      !error.response ||
+      error.code === "ECONNABORTED" ||
+      error.code === "ERR_NETWORK" ||
+      [502, 503, 504].includes(error.response?.status);
+
+    // Failover: If primary backend is down/unreachable, switch to backup and retry once
+    if (
+      !IS_LOCAL &&
+      isNetworkOrDown &&
+      config &&
+      !config._isRetryBackup &&
+      activeBackendUrl === PRIMARY_BACKEND_URL
+    ) {
+      config._isRetryBackup = true;
+      switchToBackupBackend();
+
+      if (config.baseURL) {
+        config.baseURL = `${SECONDARY_BACKEND_URL}/api`;
+      }
+      if (config.url && config.url.includes(PRIMARY_BACKEND_URL)) {
+        config.url = config.url.replace(PRIMARY_BACKEND_URL, SECONDARY_BACKEND_URL);
+      }
+
+      console.info(`[API Failover] Retrying request on backup backend (${SECONDARY_BACKEND_URL})...`);
+      return api(config);
+    }
+
     if (error.response) {
       const status = error.response.status;
       const serverData = error.response.data;
@@ -250,7 +283,35 @@ axios.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+  async (error) => {
+    const config = error.config;
+    const isNetworkOrDown =
+      !error.response ||
+      error.code === "ECONNABORTED" ||
+      error.code === "ERR_NETWORK" ||
+      [502, 503, 504].includes(error.response?.status);
+
+    if (
+      !IS_LOCAL &&
+      isNetworkOrDown &&
+      config &&
+      !config._isRetryBackup &&
+      activeBackendUrl === PRIMARY_BACKEND_URL
+    ) {
+      config._isRetryBackup = true;
+      switchToBackupBackend();
+
+      if (config.baseURL) {
+        config.baseURL = `${SECONDARY_BACKEND_URL}/api`;
+      }
+      if (config.url && config.url.includes(PRIMARY_BACKEND_URL)) {
+        config.url = config.url.replace(PRIMARY_BACKEND_URL, SECONDARY_BACKEND_URL);
+      }
+
+      console.info(`[Axios Failover] Retrying request on backup backend (${SECONDARY_BACKEND_URL})...`);
+      return axios(config);
+    }
+
     if (error.response) {
       const status = error.response.status;
       if (status >= 500) {
@@ -270,13 +331,9 @@ axios.interceptors.response.use(
 
 if (typeof window !== "undefined") {
   const originalFetch = window.fetch;
-  window.fetch = function (input, init) {
+  window.fetch = async function (input, init) {
     if (typeof input === "string" && input.startsWith("/api/")) {
-      const apiPrefix = "/api";
-      const baseDomain = API_BASE_URL.endsWith(apiPrefix)
-        ? API_BASE_URL.slice(0, -apiPrefix.length)
-        : API_BASE_URL;
-
+      const baseDomain = getActiveBackendUrl();
       input = `${baseDomain}${input}`;
 
       // Auto-inject Authorization header for native webview environment
@@ -303,6 +360,23 @@ if (typeof window !== "undefined") {
             init.headers["Authorization"] = `Bearer ${token}`;
           }
         }
+      }
+
+      try {
+        const res = await originalFetch.call(this, input, init);
+        if (!res.ok && [502, 503, 504].includes(res.status) && activeBackendUrl === PRIMARY_BACKEND_URL && !IS_LOCAL) {
+          switchToBackupBackend();
+          const fallbackInput = input.replace(PRIMARY_BACKEND_URL, SECONDARY_BACKEND_URL);
+          return originalFetch.call(this, fallbackInput, init);
+        }
+        return res;
+      } catch (err) {
+        if (!IS_LOCAL && activeBackendUrl === PRIMARY_BACKEND_URL) {
+          switchToBackupBackend();
+          const fallbackInput = input.replace(PRIMARY_BACKEND_URL, SECONDARY_BACKEND_URL);
+          return originalFetch.call(this, fallbackInput, init);
+        }
+        throw err;
       }
     }
     return originalFetch.call(this, input, init);

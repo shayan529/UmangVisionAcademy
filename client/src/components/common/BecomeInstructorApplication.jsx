@@ -418,16 +418,19 @@ const BecomeInstructorApplication = () => {
           to="/become-instructor"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-400 hover:text-teal-300 transition mb-2"
         >
-          ← Back to Overview
+          {t("becomeInstructorApp.backToOverview", "← Back to Overview")}
         </Link>
         <span className="block w-fit mx-auto rounded-full bg-teal-500/10 text-teal-300 px-4 py-1.5 text-xs font-bold uppercase tracking-wider border border-teal-500/20">
-          FREE STUDENT GUIDANCE INITIATIVE
+          {t("becomeInstructor.heroBadge", "FREE STUDENT GUIDANCE INITIATIVE")}
         </span>
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
-          REGISTER AS AN <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-emerald-400 to-indigo-400">EXPERT GUIDE</span>
+          {t("becomeInstructorApp.heroTitlePart1", "REGISTER AS AN")}{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-emerald-400 to-indigo-400">
+            {t("becomeInstructorApp.heroTitlePart2", "EXPERT GUIDE")}
+          </span>
         </h1>
         <p className="text-slate-400 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-          Share your professional experience, guide students in making informed career decisions, and conduct voluntary guidance sessions.
+          {t("becomeInstructorApp.heroSubtitle", "Share your professional experience, guide students in making informed career decisions, and conduct voluntary guidance sessions.")}
         </p>
       </div>
 
@@ -439,10 +442,10 @@ const BecomeInstructorApplication = () => {
             <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-6 text-center space-y-4">
               <div className="text-3xl">⚠️</div>
               <h3 className="text-lg font-bold text-amber-200">
-                Student Accounts Cannot Register as Expert Guides
+                {t("becomeInstructorApp.studentWarningTitle", "Student Accounts Cannot Register as Expert Guides")}
               </h3>
               <p className="text-sm text-slate-300 leading-relaxed max-w-md mx-auto">
-                Student accounts cannot register as an expert guide. Please log out to register a new expert profile.
+                {t("becomeInstructorApp.studentWarningText", "Student accounts cannot register as an expert guide. Please log out to register a new expert profile.")}
               </p>
               <div className="pt-2">
                 <button
@@ -450,7 +453,7 @@ const BecomeInstructorApplication = () => {
                   onClick={() => dispatch(clearAuth())}
                   className="rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-bold text-slate-950 transition hover:scale-105 shadow-lg shadow-amber-500/20 cursor-pointer"
                 >
-                  Log Out & Register Fresh Profile
+                  {t("becomeInstructor.studentLogoutBtn", "Log Out & Register Fresh Profile")}
                 </button>
               </div>
             </div>
@@ -461,13 +464,13 @@ const BecomeInstructorApplication = () => {
               {!isAuthenticated && (
                 <div className="space-y-5 pb-8 border-b border-slate-800">
                   <div className="flex items-center gap-2 text-teal-400 font-bold text-base">
-                    <span>1. Create Your Guide Account Credentials</span>
+                    <span>{t("becomeInstructorApp.section1Title", "1. Create Your Guide Account Credentials")}</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        Full Name <span className="text-red-400">*</span>
+                        {t("becomeInstructorApp.fullName", "Full Name")} <span className="text-red-400">*</span>
                       </span>
                       <input
                         type="text"
@@ -475,14 +478,14 @@ const BecomeInstructorApplication = () => {
                         required
                         value={accountData.name}
                         onChange={handleAccountChange}
-                        placeholder="Dr. Rajesh Kumar"
+                        placeholder={t("becomeInstructorApp.fullNamePlaceholder", "Dr. Rajesh Kumar")}
                         className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       />
                     </label>
 
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        Email Address <span className="text-red-400">*</span>
+                        {t("becomeInstructorApp.emailAddress", "Email Address")} <span className="text-red-400">*</span>
                       </span>
                       <input
                         type="email"
@@ -490,7 +493,7 @@ const BecomeInstructorApplication = () => {
                         required
                         value={accountData.email}
                         onChange={handleAccountChange}
-                        placeholder="expert@example.com"
+                        placeholder={t("becomeInstructorApp.emailPlaceholder", "expert@example.com")}
                         className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       />
                     </label>
@@ -499,7 +502,7 @@ const BecomeInstructorApplication = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block relative">
                       <span className="text-sm font-semibold text-slate-300">
-                        Password <span className="text-red-400">*</span>
+                        {t("becomeInstructorApp.password", "Password")} <span className="text-red-400">*</span>
                       </span>
                       <div className="relative mt-2">
                         <input
@@ -509,7 +512,7 @@ const BecomeInstructorApplication = () => {
                           minLength={6}
                           value={accountData.password}
                           onChange={handleAccountChange}
-                          placeholder="Min 6 characters"
+                          placeholder={t("becomeInstructorApp.passwordPlaceholder", "Min 6 characters")}
                           className="w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 pr-10 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                         />
                         <button
@@ -526,11 +529,11 @@ const BecomeInstructorApplication = () => {
                     <label className="block">
                       <div className="flex items-center justify-between text-sm font-semibold text-slate-300">
                         <span>
-                          Mobile / WhatsApp Number <span className="text-red-400">*</span>
+                          {t("becomeInstructorApp.mobileNumber", "Mobile / WhatsApp Number")} <span className="text-red-400">*</span>
                         </span>
                         {phoneVerified && (
                           <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400">
-                            <FiCheckCircle size={13} /> Verified
+                            <FiCheckCircle size={13} /> {t("becomeInstructorApp.verified", "Verified")}
                           </span>
                         )}
                       </div>
@@ -541,7 +544,7 @@ const BecomeInstructorApplication = () => {
                           required
                           value={accountData.phoneNumber}
                           onChange={handleAccountChange}
-                          placeholder="10-digit mobile number"
+                          placeholder={t("becomeInstructorApp.mobilePlaceholder", "10-digit mobile number")}
                           className={`w-full rounded-2xl border bg-slate-950/80 px-4 py-3.5 pr-28 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 transition ${
                             phoneVerified
                               ? 'border-emerald-500/50 focus:border-emerald-400 focus:ring-emerald-500/20'
@@ -559,10 +562,10 @@ const BecomeInstructorApplication = () => {
                             className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-teal-600 hover:bg-teal-500 px-3.5 py-1.5 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
                           >
                             {sendingPhoneOtp
-                              ? 'Sending...'
+                              ? t("becomeInstructorApp.sendingOtp", "Sending...")
                               : phoneOtpSent
-                              ? 'Resend OTP'
-                              : 'Send OTP'}
+                              ? t("becomeInstructorApp.resendOtp", "Resend OTP")
+                              : t("becomeInstructorApp.sendOtp", "Send OTP")}
                           </button>
                         )}
                       </div>
@@ -574,11 +577,11 @@ const BecomeInstructorApplication = () => {
                     <div className="rounded-2xl bg-teal-500/10 border border-teal-500/30 p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-teal-300">
-                          Enter 6-digit OTP sent to +91 {accountData.phoneNumber}
+                          {t("becomeInstructorApp.enterOtpNotice", "Enter 6-digit OTP sent to +91 {{phone}}", { phone: accountData.phoneNumber })}
                         </span>
                         {phoneResendCooldown > 0 ? (
                           <span className="text-xs text-slate-400 font-medium">
-                            Resend in {phoneResendCooldown}s
+                            {t("becomeInstructorApp.resendIn", "Resend in {{seconds}}s", { seconds: phoneResendCooldown })}
                           </span>
                         ) : (
                           <button
@@ -586,7 +589,7 @@ const BecomeInstructorApplication = () => {
                             onClick={handleSendPhoneOtp}
                             className="text-xs font-bold text-teal-400 hover:underline cursor-pointer"
                           >
-                            Resend OTP
+                            {t("becomeInstructorApp.resendOtp", "Resend OTP")}
                           </button>
                         )}
                       </div>
@@ -614,7 +617,7 @@ const BecomeInstructorApplication = () => {
                         disabled={verifyingPhone || phoneOtpInputs.join('').length < 6}
                         className="w-full rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 py-2.5 text-xs font-bold text-slate-950 transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
                       >
-                        {verifyingPhone ? 'Verifying OTP...' : 'Verify OTP Code'}
+                        {verifyingPhone ? t("becomeInstructorApp.verifyingOtp", "Verifying OTP...") : t("becomeInstructorApp.verifyOtpCode", "Verify OTP Code")}
                       </button>
                     </div>
                   )}
@@ -622,7 +625,7 @@ const BecomeInstructorApplication = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        State <span className="text-red-400">*</span>
+                        {t("becomeInstructorApp.state", "State")} <span className="text-red-400">*</span>
                       </span>
                       <select
                         name="state"
@@ -631,7 +634,7 @@ const BecomeInstructorApplication = () => {
                         onChange={handleAccountChange}
                         className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       >
-                        <option value="">Select State</option>
+                        <option value="">{t("becomeInstructorApp.selectState", "Select State")}</option>
                         {INDIA_STATES.map((s) => (
                           <option key={s} value={s} className="bg-slate-900">
                             {s}
@@ -642,7 +645,7 @@ const BecomeInstructorApplication = () => {
 
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        City <span className="text-red-400">*</span>
+                        {t("becomeInstructorApp.city", "City")} <span className="text-red-400">*</span>
                       </span>
                       <select
                         name="city"
@@ -652,7 +655,7 @@ const BecomeInstructorApplication = () => {
                         disabled={!accountData.state}
                         className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition disabled:opacity-50"
                       >
-                        <option value="">Select City</option>
+                        <option value="">{t("becomeInstructorApp.selectCity", "Select City")}</option>
                         {availableCities.map((c) => (
                           <option key={c} value={c} className="bg-slate-900">
                             {c}
@@ -663,7 +666,7 @@ const BecomeInstructorApplication = () => {
 
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        Pincode <span className="text-red-400">*</span>
+                        {t("becomeInstructorApp.pincode", "Pincode")} <span className="text-red-400">*</span>
                       </span>
                       <input
                         type="text"
@@ -671,7 +674,7 @@ const BecomeInstructorApplication = () => {
                         required
                         value={accountData.pincode}
                         onChange={handleAccountChange}
-                        placeholder="6-digit PIN"
+                        placeholder={t("becomeInstructorApp.pincodePlaceholder", "6-digit PIN")}
                         className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       />
                     </label>
@@ -683,14 +686,14 @@ const BecomeInstructorApplication = () => {
               <div className="space-y-6">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                   <h2 className="text-lg font-extrabold text-white flex items-center gap-2">
-                    <span className="text-teal-400 font-mono">2.</span> Personal & Professional Details
+                    <span className="text-teal-400 font-mono">2.</span> {t("becomeInstructorApp.section2Title", "Personal & Professional Details")}
                   </h2>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <label className="block">
                     <span className="text-sm font-semibold text-slate-300">
-                      1. Full Name <span className="text-red-400">*</span>
+                      {t("becomeInstructorApp.f1_fullName", "1. Full Name")} <span className="text-red-400">*</span>
                     </span>
                     <input
                       type="text"
@@ -698,14 +701,14 @@ const BecomeInstructorApplication = () => {
                       required
                       value={formData.name}
                       onChange={handleFormChange}
-                      placeholder="e.g. Dr. Rajesh Kumar"
+                      placeholder={t("becomeInstructorApp.f1_placeholder", "e.g. Dr. Rajesh Kumar")}
                       className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                     />
                   </label>
 
                   <label className="block">
                     <span className="text-sm font-semibold text-slate-300">
-                      2. Designation / Professional Role <span className="text-red-400">*</span>
+                      {t("becomeInstructorApp.f2_designation", "2. Designation / Professional Role")} <span className="text-red-400">*</span>
                     </span>
                     <input
                       type="text"
@@ -713,7 +716,7 @@ const BecomeInstructorApplication = () => {
                       required
                       value={formData.designation}
                       onChange={handleFormChange}
-                      placeholder="e.g. Senior Lecturer / Career Counselor"
+                      placeholder={t("becomeInstructorApp.f2_placeholder", "e.g. Senior Lecturer / Career Counselor")}
                       className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                     />
                   </label>
@@ -722,21 +725,21 @@ const BecomeInstructorApplication = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <label className="block">
                     <span className="text-sm font-semibold text-slate-300">
-                      3. Organization / Institution
+                      {t("becomeInstructorApp.f3_organization", "3. Organization / Institution")}
                     </span>
                     <input
                       type="text"
                       name="organization"
                       value={formData.organization}
                       onChange={handleFormChange}
-                      placeholder="e.g. National Institute of Technology"
+                      placeholder={t("becomeInstructorApp.f3_placeholder", "e.g. National Institute of Technology")}
                       className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                     />
                   </label>
 
                   <label className="block">
                     <span className="text-sm font-semibold text-slate-300">
-                      4. Highest Qualification <span className="text-red-400">*</span>
+                      {t("becomeInstructorApp.f4_qualification", "4. Highest Qualification")} <span className="text-red-400">*</span>
                     </span>
                     <input
                       type="text"
@@ -744,7 +747,7 @@ const BecomeInstructorApplication = () => {
                       required
                       value={formData.qualification}
                       onChange={handleFormChange}
-                      placeholder="e.g. Ph.D. / M.Tech / M.Sc"
+                      placeholder={t("becomeInstructorApp.f4_placeholder", "e.g. Ph.D. / M.Tech / M.Sc")}
                       className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                     />
                   </label>
@@ -753,7 +756,7 @@ const BecomeInstructorApplication = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <label className="block">
                     <span className="text-sm font-semibold text-slate-300">
-                      5. Area of Expertise <span className="text-red-400">*</span>
+                      {t("becomeInstructorApp.f5_expertise", "5. Area of Expertise")} <span className="text-red-400">*</span>
                     </span>
                     <input
                       type="text"
@@ -761,14 +764,14 @@ const BecomeInstructorApplication = () => {
                       required
                       value={formData.expertise}
                       onChange={handleFormChange}
-                      placeholder="e.g. Physics / Career Mentorship"
+                      placeholder={t("becomeInstructorApp.f5_placeholder", "e.g. Physics / Career Mentorship")}
                       className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                     />
                   </label>
 
                   <label className="block">
                     <span className="text-sm font-semibold text-slate-300">
-                      6. Years of Experience <span className="text-red-400">*</span>
+                      {t("becomeInstructorApp.f6_experience", "6. Years of Experience")} <span className="text-red-400">*</span>
                     </span>
                     <input
                       type="text"
@@ -776,21 +779,21 @@ const BecomeInstructorApplication = () => {
                       required
                       value={formData.experienceYears}
                       onChange={handleFormChange}
-                      placeholder="e.g. 8+ Years"
+                      placeholder={t("becomeInstructorApp.f6_placeholder", "e.g. 8+ Years")}
                       className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                     />
                   </label>
 
                   <label className="block">
                     <span className="text-sm font-semibold text-slate-300">
-                      7. Current Professional Field
+                      {t("becomeInstructorApp.f7_field", "7. Current Professional Field")}
                     </span>
                     <input
                       type="text"
                       name="professionalField"
                       value={formData.professionalField}
                       onChange={handleFormChange}
-                      placeholder="e.g. Education / Engineering"
+                      placeholder={t("becomeInstructorApp.f7_placeholder", "e.g. Education / Engineering")}
                       className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                     />
                   </label>
@@ -798,7 +801,7 @@ const BecomeInstructorApplication = () => {
 
                 <label className="block">
                   <span className="text-sm font-semibold text-slate-300">
-                    8. Short Self-Introduction <span className="text-red-400">*</span>
+                    {t("becomeInstructorApp.f8_bio", "8. Short Self-Introduction")} <span className="text-red-400">*</span>
                   </span>
                   <textarea
                     rows="3"
@@ -806,14 +809,14 @@ const BecomeInstructorApplication = () => {
                     required
                     value={formData.bio}
                     onChange={handleFormChange}
-                    placeholder="Briefly tell us about your professional background, expertise, and experience."
+                    placeholder={t("becomeInstructorApp.f8_placeholder", "Briefly tell us about your professional background, expertise, and experience.")}
                     className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition leading-relaxed"
                   />
                 </label>
 
                 <label className="block">
                   <span className="text-sm font-semibold text-slate-300">
-                    9. Professional Profile / LinkedIn Profile <span className="text-slate-500 font-normal">(Optional)</span>
+                    {t("becomeInstructorApp.f9_linkedin", "9. Professional Profile / LinkedIn Profile")} <span className="text-slate-500 font-normal">({t("becomeInstructorApp.optional", "Optional")})</span>
                   </span>
                   <input
                     type="url"
@@ -828,12 +831,12 @@ const BecomeInstructorApplication = () => {
                 {/* SESSION DETAILS */}
                 <div className="pt-4 border-t border-slate-800 space-y-4">
                   <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-                    <span className="text-teal-400 font-mono">3.</span> Proposed Student Guidance Session
+                    <span className="text-teal-400 font-mono">3.</span> {t("becomeInstructorApp.section3Title", "Proposed Student Guidance Session")}
                   </h3>
 
                   <label className="block">
                     <span className="text-sm font-semibold text-slate-300">
-                      10. Topic You Would Like to Guide Students On <span className="text-red-400">*</span>
+                      {t("becomeInstructorApp.f10_topic", "10. Topic You Would Like to Guide Students On")} <span className="text-red-400">*</span>
                     </span>
                     <input
                       type="text"
@@ -841,14 +844,14 @@ const BecomeInstructorApplication = () => {
                       required
                       value={formData.topic}
                       onChange={handleFormChange}
-                      placeholder="e.g. How to Prepare for JEE/NEET & Career Paths in Technology"
+                      placeholder={t("becomeInstructorApp.f10_placeholder", "e.g. How to Prepare for JEE/NEET & Career Paths in Technology")}
                       className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                     />
                   </label>
 
                   <label className="block">
                     <span className="text-sm font-semibold text-slate-300">
-                      11. Brief Description of Your Proposed Session <span className="text-red-400">*</span>
+                      {t("becomeInstructorApp.f11_desc", "11. Brief Description of Your Proposed Session")} <span className="text-red-400">*</span>
                     </span>
                     <textarea
                       rows="3"
@@ -856,7 +859,7 @@ const BecomeInstructorApplication = () => {
                       required
                       value={formData.sessionDescription}
                       onChange={handleFormChange}
-                      placeholder="Describe the key topics, outline, and focus of your guidance session."
+                      placeholder={t("becomeInstructorApp.f11_placeholder", "Describe the key topics, outline, and focus of your guidance session.")}
                       className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition leading-relaxed"
                     />
                   </label>
@@ -864,7 +867,7 @@ const BecomeInstructorApplication = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        12. Target Student Group <span className="text-red-400">*</span>
+                        {t("becomeInstructorApp.f12_targetGroup", "12. Target Student Group")} <span className="text-red-400">*</span>
                       </span>
                       <select
                         name="targetGroup"
@@ -873,18 +876,18 @@ const BecomeInstructorApplication = () => {
                         onChange={handleFormChange}
                         className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       >
-                        <option value="Classes 9–10">Classes 9–10</option>
-                        <option value="Classes 11–12">Classes 11–12</option>
-                        <option value="College / University Students">College / University Students</option>
-                        <option value="Competitive Exam Aspirants">Competitive Exam Aspirants</option>
-                        <option value="Job / Career Aspirants">Job / Career Aspirants</option>
-                        <option value="Other">Other</option>
+                        <option value="Classes 9–10">{t("becomeInstructorApp.targetGroup_9_10", "Classes 9–10")}</option>
+                        <option value="Classes 11–12">{t("becomeInstructorApp.targetGroup_11_12", "Classes 11–12")}</option>
+                        <option value="College / University Students">{t("becomeInstructorApp.targetGroup_college", "College / University Students")}</option>
+                        <option value="Competitive Exam Aspirants">{t("becomeInstructorApp.targetGroup_competitive", "Competitive Exam Aspirants")}</option>
+                        <option value="Job / Career Aspirants">{t("becomeInstructorApp.targetGroup_career", "Job / Career Aspirants")}</option>
+                        <option value="Other">{t("becomeInstructorApp.other", "Other")}</option>
                       </select>
                     </label>
 
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        14. Preferred Session Duration <span className="text-red-400">*</span>
+                        {t("becomeInstructorApp.f14_duration", "14. Preferred Session Duration")} <span className="text-red-400">*</span>
                       </span>
                       <select
                         name="sessionDuration"
@@ -893,16 +896,16 @@ const BecomeInstructorApplication = () => {
                         onChange={handleFormChange}
                         className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       >
-                        <option value="45 Minutes">45 Minutes</option>
-                        <option value="30 Minutes">30 Minutes</option>
-                        <option value="60 Minutes">60 Minutes</option>
-                        <option value="Other">Other</option>
+                        <option value="45 Minutes">{t("becomeInstructorApp.duration_45", "45 Minutes")}</option>
+                        <option value="30 Minutes">{t("becomeInstructorApp.duration_30", "30 Minutes")}</option>
+                        <option value="60 Minutes">{t("becomeInstructorApp.duration_60", "60 Minutes")}</option>
+                        <option value="Other">{t("becomeInstructorApp.other", "Other")}</option>
                       </select>
                     </label>
 
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        15. Preferred Session Format
+                        {t("becomeInstructorApp.f15_format", "15. Preferred Session Format")}
                       </span>
                       <select
                         name="sessionFormat"
@@ -910,17 +913,17 @@ const BecomeInstructorApplication = () => {
                         onChange={handleFormChange}
                         className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       >
-                        <option value="Live Online Session">Live Online Session</option>
-                        <option value="Webinar">Webinar</option>
-                        <option value="Interactive Q&A">Interactive Q&A</option>
-                        <option value="Expert Talk">Expert Talk</option>
+                        <option value="Live Online Session">{t("becomeInstructorApp.format_live", "Live Online Session")}</option>
+                        <option value="Webinar">{t("becomeInstructorApp.format_webinar", "Webinar")}</option>
+                        <option value="Interactive Q&A">{t("becomeInstructorApp.format_qa", "Interactive Q&A")}</option>
+                        <option value="Expert Talk">{t("becomeInstructorApp.format_talk", "Expert Talk")}</option>
                       </select>
                     </label>
                   </div>
 
                   <label className="block">
                     <span className="text-sm font-semibold text-slate-300">
-                      13. Expected Learning Outcome for Students <span className="text-red-400">*</span>
+                      {t("becomeInstructorApp.f13_outcome", "13. Expected Learning Outcome for Students")} <span className="text-red-400">*</span>
                     </span>
                     <textarea
                       rows="2"
@@ -928,7 +931,7 @@ const BecomeInstructorApplication = () => {
                       required
                       value={formData.learningOutcome}
                       onChange={handleFormChange}
-                      placeholder="What key takeaways or skills will students gain after attending your session?"
+                      placeholder={t("becomeInstructorApp.f13_placeholder", "What key takeaways or skills will students gain after attending your session?")}
                       className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                     />
                   </label>
@@ -937,13 +940,13 @@ const BecomeInstructorApplication = () => {
                 {/* CONTACT & AVAILABILITY */}
                 <div className="pt-4 border-t border-slate-800 space-y-4">
                   <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-                    <span className="text-teal-400 font-mono">4.</span> Contact & Availability
+                    <span className="text-teal-400 font-mono">4.</span> {t("becomeInstructorApp.section4Title", "Contact & Availability")}
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        16. Mobile / WhatsApp Number <span className="text-red-400">*</span>
+                        {t("becomeInstructorApp.f16_whatsapp", "16. Mobile / WhatsApp Number")} <span className="text-red-400">*</span>
                       </span>
                       <input
                         type="tel"
@@ -951,14 +954,14 @@ const BecomeInstructorApplication = () => {
                         required
                         value={formData.whatsappNumber}
                         onChange={handleFormChange}
-                        placeholder="10-digit WhatsApp number"
+                        placeholder={t("becomeInstructorApp.f16_placeholder", "10-digit WhatsApp number")}
                         className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       />
                     </label>
 
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        17. Email Address <span className="text-red-400">*</span>
+                        {t("becomeInstructorApp.f17_email", "17. Email Address")} <span className="text-red-400">*</span>
                       </span>
                       <input
                         type="email"
@@ -966,7 +969,7 @@ const BecomeInstructorApplication = () => {
                         required
                         value={formData.email}
                         onChange={handleFormChange}
-                        placeholder="expert@example.com"
+                        placeholder={t("becomeInstructorApp.f17_placeholder", "expert@example.com")}
                         className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       />
                     </label>
@@ -975,28 +978,28 @@ const BecomeInstructorApplication = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        18. Preferred Availability / Suitable Days
+                        {t("becomeInstructorApp.f18_availability", "18. Preferred Availability / Suitable Days")}
                       </span>
                       <input
                         type="text"
                         name="availability"
                         value={formData.availability}
                         onChange={handleFormChange}
-                        placeholder="e.g. Weekends / Saturdays 4 PM – 6 PM"
+                        placeholder={t("becomeInstructorApp.f18_placeholder", "e.g. Weekends / Saturdays 4 PM – 6 PM")}
                         className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       />
                     </label>
 
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-300">
-                        19. Any Additional Information
+                        {t("becomeInstructorApp.f19_additional", "19. Any Additional Information")}
                       </span>
                       <input
                         type="text"
                         name="additionalInfo"
                         value={formData.additionalInfo}
                         onChange={handleFormChange}
-                        placeholder="Any additional notes or requirements"
+                        placeholder={t("becomeInstructorApp.f19_placeholder", "Any additional notes or requirements")}
                         className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition"
                       />
                     </label>
@@ -1005,7 +1008,7 @@ const BecomeInstructorApplication = () => {
                   {/* RESUME UPLOAD (OPTIONAL) */}
                   <label className="block pt-2">
                     <span className="text-sm font-semibold text-slate-300">
-                      Upload Resume / Curriculum Vitae <span className="text-slate-500 font-normal">(PDF / Image, Max 5MB)</span>
+                      {t("becomeInstructorApp.resumeTitle", "Upload Resume / Curriculum Vitae")} <span className="text-slate-500 font-normal">({t("becomeInstructorApp.resumeFormat", "PDF / Image, Max 5MB")})</span>
                     </span>
                     <div className="mt-2">
                       <label className="flex flex-col items-center justify-center w-full rounded-2xl border border-dashed border-slate-800 bg-slate-950/80 px-4 py-5 cursor-pointer hover:border-teal-400/50 transition duration-200">
@@ -1028,7 +1031,7 @@ const BecomeInstructorApplication = () => {
                           </span>
                         ) : (
                           <span className="text-xs text-slate-500">
-                            Click to upload resume file
+                            {t("becomeInstructorApp.resumeClick", "Click to upload resume file")}
                           </span>
                         )}
                         <input
@@ -1041,7 +1044,7 @@ const BecomeInstructorApplication = () => {
                       {resumeUploading && (
                         <div className="mt-3 rounded-2xl bg-slate-950/90 px-4 py-3">
                           <div className="flex items-center justify-between text-xs text-slate-400">
-                            <span>Uploading resume...</span>
+                            <span>{t("becomeInstructorApp.uploadingResume", "Uploading resume...")}</span>
                             <span>{resumeUploadProgress}%</span>
                           </div>
                           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-900">
@@ -1054,17 +1057,17 @@ const BecomeInstructorApplication = () => {
                       )}
                       {resumeUrl && !resumeUploading && (
                         <div className="mt-3 flex items-center justify-between rounded-2xl bg-slate-950/90 px-4 py-3 text-xs text-slate-200">
-                          <span>✓ Resume uploaded successfully</span>
+                          <span>{t("becomeInstructorApp.resumeSuccess", "✓ Resume uploaded successfully")}</span>
                           <button
                             type="button"
-                            className="text-teal-300 hover:text-teal-200 font-bold"
+                            className="text-teal-300 hover:text-teal-200 font-bold cursor-pointer"
                             onClick={() => {
                               setResumeFile(null);
                               setResumeUrl('');
                               setResumeUploadProgress(0);
                             }}
                           >
-                            Remove
+                            {t("becomeInstructorApp.remove", "Remove")}
                           </button>
                         </div>
                       )}
@@ -1087,7 +1090,7 @@ const BecomeInstructorApplication = () => {
                       className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-900 text-teal-400 focus:ring-teal-400 cursor-pointer"
                     />
                     <span className="text-xs sm:text-sm font-medium text-slate-200 leading-relaxed">
-                      I confirm that the information provided above is correct and that I am willing to contribute a <strong>FREE student guidance session</strong> on the selected topic.
+                      {t("becomeInstructorApp.confirmText", "I confirm that the information provided above is correct and that I am willing to contribute a FREE student guidance session on the selected topic.")}
                     </span>
                   </label>
                 </div>
@@ -1099,8 +1102,8 @@ const BecomeInstructorApplication = () => {
                     className="w-full rounded-2xl bg-gradient-to-r from-teal-500 via-emerald-500 to-indigo-600 px-6 py-4 text-sm sm:text-base font-extrabold text-slate-950 transition hover:scale-[1.01] active:scale-[0.99] shadow-xl shadow-teal-500/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer uppercase tracking-wider"
                   >
                     {submitting || appLoading || authLoading || resumeUploading
-                      ? 'SUBMITTING PROFILE...'
-                      : '[ SUBMIT YOUR EXPERT PROFILE ]'}
+                      ? t("becomeInstructorApp.submittingBtn", "SUBMITTING PROFILE...")
+                      : t("becomeInstructorApp.submitBtn", "[ SUBMIT YOUR EXPERT PROFILE ]")}
                   </button>
                 </div>
               </div>

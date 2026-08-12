@@ -696,57 +696,87 @@
     }
   },
   "becomeInstructor": {
-    "tag": "Teach on Umang Vision Academy",
-    "headlinePart1": "Share Your",
-    "headlinePart2": "Knowledge.",
-    "subtitle": "Join 300+ instructors building courses that reach thousands of learners. Submit your application, get verified fast, and start teaching with AI-supported tools.",
-    "applyNow": "Apply now",
-    "startJourney": "Start your instructor journey",
-    "cardBody": "Fill in your expertise and sample content to get started. Our team will reach out within 24 hours with next steps.",
-    "buttonBecome": "Become an Instructor",
-    "buttonStatus": "View Application Status →",
-    "buttonChecking": "Checking...",
-    "whyChooseTitle": "Why Instructors Choose Umang Vision Academy",
-    "whyChooseSubtitle": "Everything you need to build, market, and monetize high-impact online courses.",
-    "perks": {
-      "reachStudents": {
-        "title": "Reach Thousands of Students",
-        "desc": "Teach motivated learners across Class 9-12, competitive exams, and specialized skill tracks."
+    "heroBadge": "Free Student Guidance Initiative",
+    "heroTitlePart1": "BECOME A STUDENT GUIDE &",
+    "heroTitlePart2": "EXPERT MENTOR",
+    "heroTagline": "Share Your Knowledge • Guide Students • Shape Futures",
+    "heroP1": "Are you an educator, subject expert, career mentor, industry professional, competitive-exam specialist, or skilled professional with valuable knowledge and experience to share?",
+    "heroP2": "AI Online Coaching invites experts to become part of our Free Student Guidance Initiative and voluntarily conduct informative and interactive sessions for students. Your knowledge, experience, and practical guidance can help students discover opportunities, make informed career decisions, understand examinations, develop relevant skills, and plan their academic and professional journey.",
+    "whyJoinTitle": "WHY JOIN US?",
+    "whyJoinGiveBack": "Give Back",
+    "whyJoinShareExp": "Share Experience",
+    "whyJoinInspire": "Inspire Students",
+    "whyJoinAwareness": "Create Awareness",
+    "whyJoinMakeDiff": "Make a Difference",
+    "cardBadge": "REGISTER AS AN EXPERT",
+    "cardTitle": "Join Our Expert Guide Network",
+    "cardDesc": "Register as an expert guide, share your proposed guidance topic, and contribute to voluntary free student mentorship sessions.",
+    "studentWarning": "⚠️ Students cannot register as an expert guide. Please log out to register a new expert profile.",
+    "studentLogoutBtn": "Log Out & Register Fresh Profile",
+    "btnChecking": "Checking Status…",
+    "btnStatus": "View Registration Status →",
+    "btnRegister": "Register as an Expert Guide",
+    "freeSessionsNote": "Free Sessions for Students • Voluntary Initiative",
+    "areasBadge": "Guidance Areas",
+    "areasTitle": "WHAT CAN YOU GUIDE STUDENTS ON?",
+    "areasSubtitle": "Experts can conduct FREE guidance sessions on topics such as:",
+    "topics": {
+      "career": "Career Guidance & Planning",
+      "academic": "Academic & Subject Guidance",
+      "competitive": "Competitive & Entrance Exams",
+      "govt": "Government Exams & Careers",
+      "upcoming": "Upcoming Exams & Jobs",
+      "emerging": "Emerging & New-Age Fields",
+      "skills": "Skill Development Programs",
+      "strategies": "Study Strategies & Prep",
+      "higherEd": "Higher Education & Admissions",
+      "industry": "Industry Trends & Opportunities"
+    },
+    "whoCanJoinTitle": "WHO CAN JOIN?",
+    "whoCanJoinSubtitle": "We welcome passionate professionals from all backgrounds to empower the next generation:",
+    "audience": {
+      "teachers": "Teachers",
+      "professors": "Professors",
+      "experts": "Subject Experts",
+      "counsellors": "Career Counsellors",
+      "examExperts": "Competitive Exam Experts",
+      "industryPros": "Industry Professionals",
+      "entrepreneurs": "Entrepreneurs",
+      "skilledPros": "Skilled Professionals",
+      "mentors": "Mentors"
+    },
+    "benefitsTitle": "Benefits of Joining Our Expert Guide Network",
+    "benefitsSubtitle": "Why experts choose to guide and mentor students on our platform:",
+    "benefits": {
+      "recognition": {
+        "title": "Professional Recognition",
+        "desc": "Be recognized as a subject, career, examination, or industry expert across our network."
       },
-      "aiBuilder": {
-        "title": "AI-Powered Course Builder",
-        "desc": "Auto-generate practice quizzes, lesson notes, and student progress reports effortlessly."
+      "profile": {
+        "title": "Expert Profile",
+        "desc": "Showcase your professional expertise, experience, and areas of guidance on our platform."
       },
-      "earnings": {
-        "title": "Transparent & Timely Earnings",
-        "desc": "Earn competitive revenues per enrollment with direct payouts and clear performance analytics."
+      "cert": {
+        "title": "Certificate of Appreciation",
+        "desc": "Receive an official certificate in recognition of your valuable contribution to student guidance."
       },
-      "streamingTools": {
-        "title": "High-Quality Streaming Tools",
-        "desc": "Host live video classes or publish self-paced HD video courses with automatic PDF material attachments."
+      "sessions": {
+        "title": "Expert Session Opportunities",
+        "desc": "Get opportunities to conduct live sessions, expert talks, webinars, and interactive Q&A sessions."
+      },
+      "networking": {
+        "title": "Professional Networking",
+        "desc": "Connect and network with fellow educators, mentors, industry professionals, and experts."
+      },
+      "collaborations": {
+        "title": "Future Collaborations",
+        "desc": "Explore opportunities for webinars, workshops, mentoring programs, and academic initiatives."
       }
     },
-    "howItWorks": "How it works",
-    "howItWorksHeading": "A simple process to launch your first course",
-    "howItWorksBody": "Apply with your expertise, get verified quickly, and publish your first course to start earning from day one.",
-    "steps": {
-      "apply": {
-        "title": "Apply",
-        "description": "Submit your bio, expertise and sample content so we can learn about your teaching style."
-      },
-      "upload": {
-        "title": "Start Uploading",
-        "description": "Start creating your first course and content, and get feedback from students."
-      },
-      "teach": {
-        "title": "Start Teaching",
-        "description": "Launch your first course, reach students, and start your journey as an instructor."
-      }
-    },
-    "readyToJoin": "Ready to join?",
-    "applyToTeach": "Apply to teach",
-    "readyBody": "Are you ready to share your expertise and shape the future of learning? Submit your application and become part of our world-class coaching community.",
-    "studentCannotBecomeError": "Students cannot become an instructor. Please create a fresh account."
+    "finalCtaBadge": "BECOME AN EXPERT GUIDE",
+    "finalCtaTitle": "Register Your Expert Profile",
+    "finalCtaDesc": "Ready to share your experience, inspire students, and create awareness? Register now to conduct your guidance session.",
+    "studentCannotBecomeError": "Students cannot register as an expert. Please log out and register a new guide account."
   },
   "becomeInstructorApplication": {
     "backToOverview": "Back to overview",
@@ -2408,5 +2438,96 @@
     "cancel": "Cancel",
     "confirm": "Confirm {{amount}}",
     "removedFromCart": "Removed from cart"
+  },
+  "becomeInstructorApp": {
+    "backToOverview": "← Back to Overview",
+    "heroTitlePart1": "REGISTER AS AN",
+    "heroTitlePart2": "EXPERT GUIDE",
+    "heroSubtitle": "Share your professional experience, guide students in making informed career decisions, and conduct voluntary guidance sessions.",
+    "studentWarningTitle": "Student Accounts Cannot Register as Expert Guides",
+    "studentWarningText": "Student accounts cannot register as an expert guide. Please log out to register a new expert profile.",
+    "section1Title": "1. Create Your Guide Account Credentials",
+    "fullName": "Full Name",
+    "fullNamePlaceholder": "Dr. Rajesh Kumar",
+    "emailAddress": "Email Address",
+    "emailPlaceholder": "expert@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "Min 6 characters",
+    "mobileNumber": "Mobile / WhatsApp Number",
+    "mobilePlaceholder": "10-digit mobile number",
+    "verified": "Verified",
+    "sendOtp": "Send OTP",
+    "resendOtp": "Resend OTP",
+    "sendingOtp": "Sending...",
+    "enterOtpNotice": "Enter 6-digit OTP sent to +91 {{phone}}",
+    "resendIn": "Resend in {{seconds}}s",
+    "verifyOtpCode": "Verify OTP Code",
+    "verifyingOtp": "Verifying OTP...",
+    "state": "State",
+    "selectState": "Select State",
+    "city": "City",
+    "selectCity": "Select City",
+    "pincode": "Pincode",
+    "pincodePlaceholder": "6-digit PIN",
+    "section2Title": "Personal & Professional Details",
+    "f1_fullName": "1. Full Name",
+    "f1_placeholder": "e.g. Dr. Rajesh Kumar",
+    "f2_designation": "2. Designation / Professional Role",
+    "f2_placeholder": "e.g. Senior Lecturer / Career Counselor",
+    "f3_organization": "3. Organization / Institution",
+    "f3_placeholder": "e.g. National Institute of Technology",
+    "f4_qualification": "4. Highest Qualification",
+    "f4_placeholder": "e.g. Ph.D. / M.Tech / M.Sc",
+    "f5_expertise": "5. Area of Expertise",
+    "f5_placeholder": "e.g. Physics / Career Mentorship",
+    "f6_experience": "6. Years of Experience",
+    "f6_placeholder": "e.g. 8+ Years",
+    "f7_field": "7. Current Professional Field",
+    "f7_placeholder": "e.g. Education / Engineering",
+    "f8_bio": "8. Short Self-Introduction",
+    "f8_placeholder": "Briefly tell us about your professional background, expertise, and experience.",
+    "f9_linkedin": "9. Professional Profile / LinkedIn Profile",
+    "optional": "Optional",
+    "section3Title": "Proposed Student Guidance Session",
+    "f10_topic": "10. Topic You Would Like to Guide Students On",
+    "f10_placeholder": "e.g. How to Prepare for JEE/NEET & Career Paths in Technology",
+    "f11_desc": "11. Brief Description of Your Proposed Session",
+    "f11_placeholder": "Describe the key topics, outline, and focus of your guidance session.",
+    "f12_targetGroup": "12. Target Student Group",
+    "targetGroup_9_10": "Classes 9–10",
+    "targetGroup_11_12": "Classes 11–12",
+    "targetGroup_college": "College / University Students",
+    "targetGroup_competitive": "Competitive Exam Aspirants",
+    "targetGroup_career": "Job / Career Aspirants",
+    "other": "Other",
+    "f14_duration": "14. Preferred Session Duration",
+    "duration_30": "30 Minutes",
+    "duration_45": "45 Minutes",
+    "duration_60": "60 Minutes",
+    "f15_format": "15. Preferred Session Format",
+    "format_live": "Live Online Session",
+    "format_webinar": "Webinar",
+    "format_qa": "Interactive Q&A",
+    "format_talk": "Expert Talk",
+    "f13_outcome": "13. Expected Learning Outcome for Students",
+    "f13_placeholder": "What key takeaways or skills will students gain after attending your session?",
+    "section4Title": "Contact & Availability",
+    "f16_whatsapp": "16. Mobile / WhatsApp Number",
+    "f16_placeholder": "10-digit WhatsApp number",
+    "f17_email": "17. Email Address",
+    "f17_placeholder": "expert@example.com",
+    "f18_availability": "18. Preferred Availability / Suitable Days",
+    "f18_placeholder": "e.g. Weekends / Saturdays 4 PM – 6 PM",
+    "f19_additional": "19. Any Additional Information",
+    "f19_placeholder": "Any additional notes or requirements",
+    "resumeTitle": "Upload Resume / Curriculum Vitae",
+    "resumeFormat": "PDF / Image, Max 5MB",
+    "resumeClick": "Click to upload resume file",
+    "uploadingResume": "Uploading resume...",
+    "resumeSuccess": "✓ Resume uploaded successfully",
+    "remove": "Remove",
+    "confirmText": "I confirm that the information provided above is correct and that I am willing to contribute a FREE student guidance session on the selected topic.",
+    "submitBtn": "[ SUBMIT YOUR EXPERT PROFILE ]",
+    "submittingBtn": "SUBMITTING PROFILE..."
   }
 }

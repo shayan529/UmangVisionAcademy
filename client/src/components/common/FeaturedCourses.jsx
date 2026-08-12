@@ -290,7 +290,7 @@ const Courses = () => {
               </h2>
               {!loading && allCourses.length > 0 && (
                 <span className="text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800/80 px-2.5 py-0.5 rounded-full">
-                  {`${featuredList.length} ${featuredList.length === 1 ? "course" : "courses"} available`}
+                  {t("courses.availableCourses", { count: featuredList.length })}
                 </span>
               )}
             </div>
