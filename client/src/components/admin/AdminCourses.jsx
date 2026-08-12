@@ -1,6 +1,37 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useDispatch } from "react-redux";
+import {
+  BookOpen,
+  Users,
+  Award,
+  CalendarClock,
+  MapPin,
+  Mail,
+  Phone,
+  Shield,
+  Coins,
+  Eye,
+  Pencil,
+  Trash2,
+  Tag,
+  GraduationCap,
+  CheckCircle2,
+  X,
+  Search,
+  ExternalLink,
+  FileText,
+  Sparkles,
+  Clock,
+  Video,
+  Layers,
+  BookPlus,
+  Loader2,
+  Play,
+  FileQuestion,
+  HelpCircle,
+  FolderOpen,
+} from "lucide-react";
 import api from "../../config/api.js";
 import { fetchAllCoursesAdmin } from "../../redux/slices/courseSlice";
 import InstructorCourses from "../instructor/InstructorCourses.jsx";
@@ -1297,47 +1328,230 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, onEdit
   );
 }
 
-// ── Student Quick View Modal ──────────────────────────────────────────────────
+// ── Student Full Details Modal ────────────────────────────────────────────────
 function StudentQuickViewModal({ student, onClose }) {
+  const [fullUser, setFullUser] = useState(student);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (student?._id) {
+      setLoading(true);
+      api
+        .get(`/users/${student._id}`)
+        .then((res) => {
+          if (res.data) setFullUser(res.data);
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    }
+  }, [student?._id]);
+
   if (!student) return null;
-  const sub = student.subscription || {};
+  const s = fullUser || student;
+  const sub = s.subscription || {};
   const hasActivePlan = sub.status === "active" && sub.plan;
+  const coins = typeof s.coins === "number" ? s.coins : 0;
+  const enrolledCourses = s.enrolledCourses || [];
+
   return createPortal(
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: "min(460px,100%)", maxHeight: "80vh", overflowY: "auto", background: "#0f172a", borderRadius: 16, border: "1px solid #1e293b", padding: 24 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {student.avatarUrl
-              ? <img src={student.avatarUrl} alt="" style={{ width: 48, height: 48, borderRadius: 12, objectFit: "cover" }} />
-              : <div style={{ width: 48, height: 48, borderRadius: 12, background: "#1e293b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#64748b" }}>{student.name?.slice(0, 2).toUpperCase() || "?"}</div>
-            }
-            <div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{student.name}</h3>
-              <p style={{ fontSize: 12, color: "#64748b", margin: "2px 0 0" }}>{student.email || student.phoneNumber || "—"}</p>
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn font-sans text-slate-100"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl border border-slate-800 bg-[#090e1a] shadow-2xl overflow-hidden"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between gap-4 p-5 border-b border-slate-800/80 bg-[#0f172a]/95 backdrop-blur shrink-0">
+          <div className="flex items-center gap-3.5 min-w-0">
+            {s.avatarUrl ? (
+              <img
+                src={s.avatarUrl}
+                alt={s.name}
+                className="w-12 h-12 rounded-2xl object-cover border border-slate-700 shrink-0"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-extrabold text-base shrink-0">
+                {s.name?.slice(0, 2).toUpperCase() || "?"}
+              </div>
+            )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base font-extrabold text-white truncate">
+                  {s.name}
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                  {s.role || "student"}
+                </span>
+                {hasActivePlan && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                    {sub.plan} Plan
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-400 truncate mt-0.5">
+                {s.email || "No email"} {s.phoneNumber ? `· ${s.phoneNumber}` : ""}
+              </p>
             </div>
           </div>
-          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #334155", background: "#1e293b", color: "#94a3b8", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>x</button>
+
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition shrink-0"
+          >
+            <X size={20} />
+          </button>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div style={{ background: "#111827", borderRadius: 10, padding: 12, border: "1px solid #1e293b" }}>
-              <p style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Email</p>
-              <p style={{ fontSize: 12, color: "#e2e8f0", fontWeight: 600, wordBreak: "break-all" }}>{student.email || "—"}</p>
+
+        {/* Body Content */}
+        <div className="p-6 overflow-y-auto flex-1 space-y-5">
+          {loading && (
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold">
+              <Loader2 size={14} className="animate-spin" />
+              Syncing latest student record...
             </div>
-            <div style={{ background: "#111827", borderRadius: 10, padding: 12, border: "1px solid #1e293b" }}>
-              <p style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Phone</p>
-              <p style={{ fontSize: 12, color: "#e2e8f0", fontWeight: 600 }}>{student.phoneNumber || "—"}</p>
+          )}
+
+          {/* Quick Metrics Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800">
+              <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
+                Enrolled Courses
+              </p>
+              <p className="text-base font-extrabold text-white mt-1">
+                {enrolledCourses.length}
+              </p>
+            </div>
+            <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800">
+              <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
+                Academy Coins
+              </p>
+              <p className="text-base font-extrabold text-amber-400 mt-1 flex items-center gap-1">
+                <Coins size={14} />
+                {coins} <span className="text-[11px] text-slate-400 font-medium">(₹{(coins / 25).toFixed(2)})</span>
+              </p>
+            </div>
+            <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800">
+              <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
+                Academic Class
+              </p>
+              <p className="text-xs font-bold text-slate-200 mt-1 truncate">
+                {s.selectedClass || "—"}
+              </p>
+            </div>
+            <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800">
+              <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
+                Joined Date
+              </p>
+              <p className="text-xs font-bold text-slate-200 mt-1">
+                {s.createdAt ? new Date(s.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+              </p>
             </div>
           </div>
+
+          {/* Student Profile Info */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
+              <Shield size={14} />
+              Personal & Contact Information
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-900/40 border border-slate-800/80">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Email Address</p>
+                <p className="text-xs font-semibold text-slate-200 break-words mt-0.5">{s.email || "—"}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Phone Number</p>
+                <p className="text-xs font-semibold text-slate-200 mt-0.5">{s.phoneNumber || "—"}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Father's Name</p>
+                <p className="text-xs font-semibold text-slate-200 mt-0.5">{s.fatherName || "—"}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Location</p>
+                <p className="text-xs font-semibold text-slate-200 mt-0.5">
+                  {[s.city, s.state, s.pincode].filter(Boolean).join(", ") || "—"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Subscription Info */}
           {hasActivePlan && (
-            <div style={{ background: "#111827", borderRadius: 10, padding: 12, border: "1px solid #1e293b" }}>
-              <p style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase", fontWeight: 700, marginBottom: 6 }}>Active Subscription</p>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: "#10b981", color: "#fff" }}>{sub.label || sub.plan}</span>
-                {student.selectedClass && <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: "#334155", color: "#94a3b8" }}>{student.selectedClass}</span>}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <Sparkles size={14} />
+                Subscription Membership
+              </h4>
+              <div className="p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <p className="text-sm font-extrabold text-white capitalize">{sub.plan} Plan ({sub.interval || "Annual"})</p>
+                  <p className="text-xs text-emerald-300/80 mt-0.5">
+                    Valid until: {sub.expiresAt ? new Date(sub.expiresAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "Active"}
+                  </p>
+                </div>
+                <span className="px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-extrabold">
+                  ✓ Active Status
+                </span>
               </div>
             </div>
           )}
+
+          {/* Enrolled Courses List */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-indigo-400">
+                <BookOpen size={14} />
+                Enrolled Courses ({enrolledCourses.length})
+              </span>
+            </h4>
+            {enrolledCourses.length > 0 ? (
+              <div className="grid grid-cols-1 gap-2 max-h-56 overflow-y-auto pr-1">
+                {enrolledCourses.map((c, idx) => {
+                  const courseObj = typeof c === "object" ? c : { _id: c, title: "Course " + (idx + 1) };
+                  return (
+                    <div
+                      key={courseObj._id || idx}
+                      className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {courseObj.thumbnailUrl ? (
+                          <img src={courseObj.thumbnailUrl} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-lg bg-indigo-950 border border-indigo-800/60 flex items-center justify-center text-indigo-400 shrink-0">
+                            <BookOpen size={13} />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-bold text-white truncate">{courseObj.title || "Course"}</p>
+                          <p className="text-[10px] text-slate-400 truncate">{courseObj.category || "Class & Subject"}</p>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 font-bold shrink-0">
+                        Enrolled
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500 italic p-3 rounded-xl bg-slate-900/30 border border-slate-800/50">
+                No individual courses enrolled directly.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-800 bg-[#0f172a]/95 flex items-center justify-end shrink-0">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>,
@@ -1403,120 +1617,898 @@ function EnrolledStudentsSection({ students }) {
 }
 
 // ── Approved Courses View ─────────────────────────────────────────────────────
-function ApprovedCoursesView({ courses }) {
+function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
   const approved = courses.filter((c) => c.approvalStatus === "approved");
   const [search, setSearch] = useState("");
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [studentSearch, setStudentSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [activeTab, setActiveTab] = useState("overview"); // "overview" | "students"
+  const [previewLesson, setPreviewLesson] = useState(null);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   const filtered = approved.filter(
-    (c) => !search ||
+    (c) =>
+      !search ||
       c.title?.toLowerCase().includes(search.toLowerCase()) ||
       c.instructor?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      c.category?.toLowerCase().includes(search.toLowerCase()),
+      c.category?.toLowerCase().includes(search.toLowerCase()) ||
+      c.board?.toLowerCase().includes(search.toLowerCase())
   );
 
   const filteredStudents = (selectedCourse?.students || []).filter(
-    (s) => !studentSearch ||
+    (s) =>
+      !studentSearch ||
       s.name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
       s.email?.toLowerCase().includes(studentSearch.toLowerCase()) ||
-      s.phoneNumber?.includes(studentSearch),
+      s.phoneNumber?.includes(studentSearch)
   );
+
+  // Group lessons and notes by subject/chapter
+  const subjects = React.useMemo(() => {
+    if (!selectedCourse) return [];
+    const map = {};
+    (selectedCourse.lessons || []).forEach((l, idx) => {
+      const key = l.subject || "General Curriculum";
+      if (!map[key]) map[key] = { name: key, lessons: [], notes: [] };
+      map[key].lessons.push({ ...l, _globalIndex: idx });
+    });
+    (selectedCourse.notes || []).forEach((n, idx) => {
+      const key = n.subject || "General Curriculum";
+      if (!map[key]) map[key] = { name: key, lessons: [], notes: [] };
+      map[key].notes.push({ ...n, _globalIndex: idx });
+    });
+    return Object.values(map);
+  }, [selectedCourse]);
 
   return (
     <>
       <div style={{ marginBottom: 20 }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: "#818cf8", textTransform: "uppercase", marginBottom: 4 }}>Course Management</p>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#f1f5f9", margin: 0 }}>Approved Courses</h2>
-        <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>{approved.length} published course{approved.length !== 1 ? "s" : ""} — click the eye icon to view enrolled students</p>
+        <p
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            color: "#818cf8",
+            textTransform: "uppercase",
+            marginBottom: 4,
+          }}
+        >
+          Course Management
+        </p>
+        <h2
+          style={{
+            fontSize: 22,
+            fontWeight: 800,
+            color: "#f1f5f9",
+            margin: 0,
+          }}
+        >
+          Approved Courses
+        </h2>
+        <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>
+          {approved.length} published course{approved.length !== 1 ? "s" : ""} — click any course or "View Full Details" to inspect comprehensive curriculum, lessons, notes, and enrolled students
+        </p>
       </div>
 
-      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by course title, instructor, or category..." style={{ width: "100%", padding: "9px 14px", background: "#111827", border: "1px solid #1e293b", borderRadius: 10, color: "#f1f5f9", fontSize: 13, outline: "none", marginBottom: 14, boxSizing: "border-box" }} />
+      <div style={{ position: "relative", marginBottom: 16 }}>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by course title, instructor, category, or board..."
+          style={{
+            width: "100%",
+            padding: "11px 16px",
+            background: "#111827",
+            border: "1px solid #1e293b",
+            borderRadius: 12,
+            color: "#f1f5f9",
+            fontSize: 13,
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
 
-      {filtered.length === 0
-        ? <div style={{ textAlign: "center", padding: "60px 0" }}><p style={{ fontSize: 32, margin: "0 0 10px" }}>📭</p><p style={{ color: "#64748b", fontWeight: 600 }}>No approved courses found.</p></div>
-        : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {filtered.map((course) => (
-              <div key={course._id} style={{ background: "#111827", border: "1px solid #1e293b", borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 10, background: "#1e293b", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
-                  {course.thumbnailUrl ? <img src={course.thumbnailUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "📚"}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{course.title}</p>
-                  <div style={{ display: "flex", gap: 10, marginTop: 4, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 11, color: "#64748b" }}>by {course.instructor?.name ?? "Unknown"}</span>
-                    {course.category && <span style={{ fontSize: 11, color: "#64748b" }}>{course.category}</span>}
-                    <span style={{ fontSize: 11, color: "#64748b" }}>{course.lessons?.length ?? 0} lessons</span>
-                    <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700 }}>{course.students?.length ?? 0} students</span>
-                    {course.price > 0 && <span style={{ fontSize: 11, color: "#64748b" }}>Rs.{course.price}</span>}
+      {filtered.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "60px 0" }}>
+          <p style={{ fontSize: 32, margin: "0 0 10px" }}>📭</p>
+          <p style={{ color: "#64748b", fontWeight: 600 }}>No approved courses found.</p>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
+          {filtered.map((course) => {
+            const studentCount = course.students?.length || 0;
+            const lessonCount = course.lessons?.length || 0;
+            const noteCount = course.notes?.length || 0;
+            return (
+              <div
+                key={course._id}
+                style={{
+                  background: "#111827",
+                  border: "1px solid #1e293b",
+                  borderRadius: 16,
+                  padding: "16px 20px",
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 16,
+                  transition: "all 0.15s",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                    minWidth: 260,
+                    flex: 1,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => {
+                    setSelectedCourse(course);
+                    setActiveTab("overview");
+                    setStudentSearch("");
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 12,
+                      background: "#1e293b",
+                      flexShrink: 0,
+                      overflow: "hidden",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 24,
+                      border: "1px solid #334155",
+                    }}
+                  >
+                    {course.thumbnailUrl ? (
+                      <img
+                        src={course.thumbnailUrl}
+                        alt=""
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      "📚"
+                    )}
                   </div>
-                </div>
-                <button onClick={() => { setSelectedCourse(course); setStudentSearch(""); }} title="View enrolled students"
-                  style={{ width: 36, height: 36, borderRadius: 10, border: "1px solid #334155", background: "#1e293b", color: "#818cf8", fontSize: 16, cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  &#128065;
-                </button>
-              </div>
-            ))}
-          </div>
-        )
-      }
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <p
+                        style={{
+                          fontSize: 15,
+                          fontWeight: 700,
+                          color: "#f1f5f9",
+                          margin: 0,
+                        }}
+                      >
+                        {course.title}
+                      </p>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 800,
+                          padding: "2px 8px",
+                          borderRadius: 20,
+                          background: "#052e16",
+                          color: "#4ade80",
+                          border: "1px solid #166534",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        ✓ Approved
+                      </span>
+                    </div>
 
-      {selectedCourse && createPortal(
-        <div onClick={() => setSelectedCourse(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 200, display: "flex", justifyContent: "flex-end" }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(560px,100vw)", height: "100%", background: "#0d1526", borderLeft: "1px solid #1e293b", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-            <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #1e293b", flexShrink: 0 }}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    {selectedCourse.thumbnailUrl && <img src={selectedCourse.thumbnailUrl} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />}
-                    <h3 style={{ fontSize: 16, fontWeight: 800, color: "#f1f5f9", margin: 0, lineHeight: 1.3 }}>{selectedCourse.title}</h3>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 12,
+                        marginTop: 6,
+                        flexWrap: "wrap",
+                        alignItems: "center",
+                        fontSize: 12,
+                        color: "#94a3b8",
+                      }}
+                    >
+                      <span>
+                        Instructor: <strong style={{ color: "#e2e8f0" }}>{course.instructor?.name || "Umang Academy"}</strong>
+                      </span>
+                      {course.category && (
+                        <span style={{ background: "#1e293b", padding: "1px 8px", borderRadius: 6, fontSize: 11 }}>
+                          {course.category}
+                        </span>
+                      )}
+                      {course.board && (
+                        <span style={{ background: "#1e293b", padding: "1px 8px", borderRadius: 6, fontSize: 11 }}>
+                          {course.board}
+                        </span>
+                      )}
+                      <span>{lessonCount} lesson{lessonCount !== 1 ? "s" : ""}</span>
+                      {noteCount > 0 && <span>{noteCount} note{noteCount !== 1 ? "s" : ""}</span>}
+                      <span style={{ color: "#10b981", fontWeight: 700 }}>
+                        {studentCount} student{studentCount !== 1 ? "s" : ""}
+                      </span>
+                      <span style={{ color: "#fbbf24", fontWeight: 700 }}>
+                        {course.price > 0 ? `₹${course.price}` : "Free"}
+                      </span>
+                    </div>
                   </div>
-                  <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>{selectedCourse.instructor?.name} — {selectedCourse.students?.length ?? 0} enrolled student{(selectedCourse.students?.length ?? 0) !== 1 ? "s" : ""}</p>
                 </div>
-                <button onClick={() => setSelectedCourse(null)} style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #334155", background: "#1e293b", color: "#94a3b8", fontSize: 18, cursor: "pointer", flexShrink: 0 }}>x</button>
+
+                {/* Actions */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  <button
+                    onClick={() => {
+                      setSelectedCourse(course);
+                      setActiveTab("overview");
+                      setStudentSearch("");
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "8px 14px",
+                      borderRadius: 10,
+                      border: "1px solid #6366f1",
+                      background: "rgba(99,102,241,0.15)",
+                      color: "#a5b4fc",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Eye size={14} />
+                    View Full Details
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedCourse(course);
+                      setActiveTab("students");
+                      setStudentSearch("");
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "8px 14px",
+                      borderRadius: 10,
+                      border: "1px solid #059669",
+                      background: "rgba(5,150,105,0.15)",
+                      color: "#6ee7b7",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Users size={14} />
+                    Students ({studentCount})
+                  </button>
+
+                  {onEditCourse && (
+                    <button
+                      onClick={() => onEditCourse(course)}
+                      title="Edit Course"
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: 10,
+                        border: "1px solid #334155",
+                        background: "#1e293b",
+                        color: "#94a3b8",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <Pencil size={14} />
+                    </button>
+                  )}
+                </div>
               </div>
-              <input value={studentSearch} onChange={(e) => setStudentSearch(e.target.value)} placeholder="Search students by name, email or phone..." style={{ width: "100%", padding: "8px 12px", background: "#111827", border: "1px solid #1e293b", borderRadius: 8, color: "#f1f5f9", fontSize: 12, outline: "none", boxSizing: "border-box" }} />
-            </div>
-            <div style={{ flex: 1, overflowY: "auto", padding: "12px 24px" }}>
-              {filteredStudents.length === 0
-                ? <div style={{ textAlign: "center", padding: "60px 0" }}><p style={{ color: "#64748b", fontWeight: 600, fontSize: 13 }}>{(selectedCourse.students?.length ?? 0) === 0 ? "No students enrolled yet." : "No students match your search."}</p></div>
-                : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {filteredStudents.map((s) => {
-                      const sub = s.subscription || {};
-                      const hasActivePlan = sub.status === "active" && sub.plan;
-                      return (
-                        <div key={s._id} onClick={() => setSelectedStudent(s)}
-                          style={{ background: "#111827", border: "1px solid #1e293b", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
-                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#334155"; e.currentTarget.style.background = "#1e293b"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#1e293b"; e.currentTarget.style.background = "#111827"; }}
-                        >
-                          {s.avatarUrl
-                            ? <img src={s.avatarUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
-                            : <div style={{ width: 40, height: 40, borderRadius: 10, background: "#1e293b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#64748b", flexShrink: 0 }}>{s.name?.slice(0, 2).toUpperCase() || "?"}</div>
-                          }
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</p>
-                            <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.email || "—"}{s.phoneNumber ? ` · ${s.phoneNumber}` : ""}</p>
-                          </div>
-                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
-                            {hasActivePlan && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 12, background: "#10b98120", color: "#10b981", border: "1px solid #10b98140" }}>{sub.plan === "premium" ? "Premium" : sub.plan === "elite" ? "Elite" : "Basic Plan"}</span>}
-                            <span style={{ fontSize: 10, color: "#475569" }}>View details</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )
-              }
-            </div>
-          </div>
-        </div>,
-        document.body
+            );
+          })}
+        </div>
       )}
-      {selectedStudent && <StudentQuickViewModal student={selectedStudent} onClose={() => setSelectedStudent(null)} />}
+
+      {/* ── Comprehensive Course Full Details Drawer / Modal ── */}
+      {selectedCourse &&
+        createPortal(
+          <div
+            onClick={() => setSelectedCourse(null)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.8)",
+              backdropFilter: "blur(4px)",
+              zIndex: 250,
+              display: "flex",
+              justifyContent: "flex-end",
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: "min(680px, 100vw)",
+                height: "100%",
+                background: "#090e1a",
+                borderLeft: "1px solid #1e293b",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                boxShadow: "-8px 0 32px rgba(0,0,0,0.5)",
+              }}
+            >
+              {/* Drawer Header */}
+              <div
+                style={{
+                  padding: "20px 24px 16px",
+                  borderBottom: "1px solid #1e293b",
+                  background: "#0f172a",
+                  flexShrink: 0,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    gap: 14,
+                    marginBottom: 12,
+                  }}
+                >
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 800,
+                          padding: "2px 8px",
+                          borderRadius: 20,
+                          background: "#052e16",
+                          color: "#4ade80",
+                          border: "1px solid #166534",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        ✓ Approved Course
+                      </span>
+                      {selectedCourse.category && (
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            padding: "2px 8px",
+                            borderRadius: 20,
+                            background: "#1e293b",
+                            color: "#94a3b8",
+                          }}
+                        >
+                          {selectedCourse.category}
+                        </span>
+                      )}
+                    </div>
+                    <h3
+                      style={{
+                        fontSize: 18,
+                        fontWeight: 800,
+                        color: "#f1f5f9",
+                        margin: 0,
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {selectedCourse.title}
+                    </h3>
+                    <p style={{ fontSize: 12, color: "#64748b", margin: "4px 0 0" }}>
+                      Instructor: <strong style={{ color: "#cbd5e1" }}>{selectedCourse.instructor?.name || "Umang Vision Academy"}</strong>
+                      {selectedCourse.instructor?.email ? ` (${selectedCourse.instructor.email})` : ""}
+                    </p>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    {onEditCourse && (
+                      <button
+                        onClick={() => {
+                          const c = selectedCourse;
+                          setSelectedCourse(null);
+                          onEditCourse(c);
+                        }}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: 8,
+                          border: "1px solid #6366f1",
+                          background: "rgba(99,102,241,0.15)",
+                          color: "#a5b4fc",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        ✏️ Edit
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setSelectedCourse(null)}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        border: "1px solid #334155",
+                        background: "#1e293b",
+                        color: "#94a3b8",
+                        fontSize: 18,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tabs Bar */}
+                <div style={{ display: "flex", gap: 8, borderTop: "1px solid #1e293b", paddingTop: 12 }}>
+                  <button
+                    onClick={() => setActiveTab("overview")}
+                    style={{
+                      padding: "7px 14px",
+                      borderRadius: 8,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      border: "none",
+                      background: activeTab === "overview" ? "#4f46e5" : "#1e293b",
+                      color: activeTab === "overview" ? "#fff" : "#94a3b8",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    📖 Overview &amp; Curriculum
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("students")}
+                    style={{
+                      padding: "7px 14px",
+                      borderRadius: 8,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      border: "none",
+                      background: activeTab === "students" ? "#059669" : "#1e293b",
+                      color: activeTab === "students" ? "#fff" : "#94a3b8",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    👥 Enrolled Students ({selectedCourse.students?.length || 0})
+                  </button>
+                </div>
+              </div>
+
+              {/* Drawer Content */}
+              <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 20 }}>
+                {activeTab === "overview" && (
+                  <>
+                    {/* Thumbnail banner */}
+                    {selectedCourse.thumbnailUrl && (
+                      <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid #1e293b", maxHeight: 220 }}>
+                        <img
+                          src={selectedCourse.thumbnailUrl}
+                          alt=""
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Stats Metrics Grid */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 10 }}>
+                      {[
+                        { label: "Price", value: selectedCourse.price > 0 ? `₹${selectedCourse.price}` : "Free" },
+                        { label: "Lessons", value: selectedCourse.lessons?.length ?? 0 },
+                        { label: "Notes", value: selectedCourse.notes?.length ?? 0 },
+                        { label: "Enrolled", value: selectedCourse.students?.length ?? 0 },
+                        { label: "Class", value: selectedCourse.className || selectedCourse.level || "—" },
+                        { label: "Board", value: selectedCourse.board || "—" },
+                      ].map(({ label, value }) => (
+                        <div
+                          key={label}
+                          style={{
+                            background: "#111827",
+                            border: "1px solid #1e293b",
+                            borderRadius: 10,
+                            padding: "10px 12px",
+                            textAlign: "center",
+                          }}
+                        >
+                          <div style={{ fontSize: 15, fontWeight: 800, color: "#f1f5f9" }}>{value}</div>
+                          <div style={{ fontSize: 10, color: "#64748b", marginTop: 2, textTransform: "uppercase", fontWeight: 700 }}>{label}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
+                        Course Description &amp; Summary
+                      </p>
+                      <div style={{ background: "#111827", border: "1px solid #1e293b", borderRadius: 12, padding: "14px 16px", color: "#cbd5e1", fontSize: 13, lineHeight: 1.7 }}>
+                        {selectedCourse.description || selectedCourse.summary || "No description provided."}
+                      </div>
+                    </div>
+
+                    {/* Demo Video Preview */}
+                    {selectedCourse.demoVideoUrl && (
+                      <div style={{ background: "#111827", border: "1px solid #1e293b", borderRadius: 12, padding: "14px 16px" }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+                          🎬 Demo Preview Video
+                        </p>
+                        <a
+                          href={selectedCourse.demoVideoUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "8px 16px",
+                            borderRadius: 10,
+                            background: "rgba(99,102,241,0.15)",
+                            border: "1px solid rgba(99,102,241,0.3)",
+                            color: "#a5b4fc",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            textDecoration: "none",
+                          }}
+                        >
+                          <Play size={14} /> Open Demo Video in New Tab ↗
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Curriculum Sections */}
+                    <div>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>
+                        Curriculum ({selectedCourse.lessons?.length ?? 0} lessons, {selectedCourse.notes?.length ?? 0} notes)
+                      </p>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        {subjects.map((subj, sIdx) => (
+                          <div key={sIdx} style={{ display: "flex", flexDirection: "column" }}>
+                            {subj.name && (
+                              <div
+                                style={{
+                                  padding: "8px 14px",
+                                  background: "#1e293b",
+                                  borderRadius: subj.lessons.length > 0 || subj.notes.length > 0 ? "10px 10px 0 0" : "10px",
+                                  color: "#f1f5f9",
+                                  fontWeight: 700,
+                                  fontSize: 13,
+                                  border: "1px solid #334155",
+                                  borderBottom: "none",
+                                }}
+                              >
+                                {subj.name}
+                              </div>
+                            )}
+
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 6,
+                                padding: subj.name ? "10px" : "0",
+                                background: subj.name ? "#111827" : "transparent",
+                                border: subj.name ? "1px solid #1e293b" : "none",
+                                borderTop: "none",
+                                borderRadius: subj.name ? "0 0 10px 10px" : "0",
+                              }}
+                            >
+                              {subj.lessons.map((l) => {
+                                const isVideo = l.type !== "text";
+                                const hasContent = isVideo ? !!l.videoUrl : !!(l.content || l.pdfUrl);
+                                return (
+                                  <div
+                                    key={"l" + l._globalIndex}
+                                    onClick={() => {
+                                      setPreviewLesson(l);
+                                      setPreviewIndex(l._globalIndex);
+                                    }}
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 10,
+                                      padding: "10px 14px",
+                                      background: "#0f172a",
+                                      border: "1px solid #1e293b",
+                                      borderRadius: 10,
+                                      fontSize: 12,
+                                      color: "#e2e8f0",
+                                      cursor: "pointer",
+                                      transition: "all 0.15s",
+                                    }}
+                                  >
+                                    <span style={{ color: "#64748b", fontSize: 10, fontWeight: 700, width: 16, textAlign: "center" }}>
+                                      {l._globalIndex + 1}
+                                    </span>
+                                    <span style={{ fontSize: 14 }}>{isVideo ? "🎬" : "📝"}</span>
+                                    <span style={{ flex: 1, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                      {l.title}
+                                    </span>
+                                    <span
+                                      style={{
+                                        fontSize: 10,
+                                        fontWeight: 600,
+                                        padding: "2px 8px",
+                                        borderRadius: 20,
+                                        background: hasContent ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                                        color: hasContent ? "#4ade80" : "#f87171",
+                                        border: `1px solid ${hasContent ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
+                                      }}
+                                    >
+                                      {hasContent ? (isVideo ? "Has video" : l.pdfUrl ? "Has PDF" : "Has text") : "No content"}
+                                    </span>
+                                    <div
+                                      style={{
+                                        width: 26,
+                                        height: 26,
+                                        borderRadius: 6,
+                                        background: "rgba(14,165,233,0.12)",
+                                        border: "1px solid rgba(56,189,248,0.2)",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        fontSize: 11,
+                                        color: "#38bdf8",
+                                      }}
+                                    >
+                                      {isVideo ? "▶" : "👁"}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+
+                              {subj.notes.map((n) => (
+                                <div
+                                  key={"n" + n._globalIndex}
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 10,
+                                    padding: "10px 14px",
+                                    background: "#0f172a",
+                                    border: "1px solid #1e293b",
+                                    borderRadius: 10,
+                                    fontSize: 12,
+                                    color: "#e2e8f0",
+                                  }}
+                                >
+                                  <span style={{ color: "#64748b", fontSize: 10, fontWeight: 700, width: 16, textAlign: "center" }}>
+                                    {n._globalIndex + 1}
+                                  </span>
+                                  <span style={{ fontSize: 14 }}>📄</span>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p style={{ fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                      {n.title || "Note"}
+                                    </p>
+                                    {n.description && <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0" }}>{n.description}</p>}
+                                  </div>
+                                  {n.fileUrl ? (
+                                    <a
+                                      href={n.fileUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      style={{
+                                        fontSize: 11,
+                                        fontWeight: 700,
+                                        padding: "3px 10px",
+                                        borderRadius: 20,
+                                        background: "rgba(56,189,248,0.1)",
+                                        color: "#38bdf8",
+                                        border: "1px solid rgba(56,189,248,0.25)",
+                                        textDecoration: "none",
+                                      }}
+                                    >
+                                      View file ↗
+                                    </a>
+                                  ) : (
+                                    <span style={{ fontSize: 10, color: "#64748b" }}>No file attached</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {activeTab === "students" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    <input
+                      value={studentSearch}
+                      onChange={(e) => setStudentSearch(e.target.value)}
+                      placeholder="Search enrolled students by name, email or phone..."
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        background: "#111827",
+                        border: "1px solid #1e293b",
+                        borderRadius: 10,
+                        color: "#f1f5f9",
+                        fontSize: 12,
+                        outline: "none",
+                        boxSizing: "border-box",
+                      }}
+                    />
+
+                    {filteredStudents.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "50px 0" }}>
+                        <p style={{ color: "#64748b", fontWeight: 600, fontSize: 13 }}>
+                          {(selectedCourse.students?.length ?? 0) === 0
+                            ? "No students enrolled in this course yet."
+                            : "No students match your search filter."}
+                        </p>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {filteredStudents.map((s) => {
+                          const sub = s.subscription || {};
+                          const hasActivePlan = sub.status === "active" && sub.plan;
+                          return (
+                            <div
+                              key={s._id}
+                              onClick={() => setSelectedStudent(s)}
+                              style={{
+                                background: "#111827",
+                                border: "1px solid #1e293b",
+                                borderRadius: 12,
+                                padding: "12px 16px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 12,
+                                cursor: "pointer",
+                                transition: "all 0.15s",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = "#334155";
+                                e.currentTarget.style.background = "#1e293b";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = "#1e293b";
+                                e.currentTarget.style.background = "#111827";
+                              }}
+                            >
+                              {s.avatarUrl ? (
+                                <img
+                                  src={s.avatarUrl}
+                                  alt=""
+                                  style={{
+                                    width: 42,
+                                    height: 42,
+                                    borderRadius: 12,
+                                    objectFit: "cover",
+                                    flexShrink: 0,
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: 42,
+                                    height: 42,
+                                    borderRadius: 12,
+                                    background: "#1e293b",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: 14,
+                                    fontWeight: 700,
+                                    color: "#64748b",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {s.name?.slice(0, 2).toUpperCase() || "?"}
+                                </div>
+                              )}
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <p
+                                  style={{
+                                    fontSize: 14,
+                                    fontWeight: 700,
+                                    color: "#f1f5f9",
+                                    margin: 0,
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap"
+                                  }}
+                                >
+                                  {s.name}
+                                </p>
+                                <p
+                                  style={{
+                                    fontSize: 12,
+                                    color: "#94a3b8",
+                                    margin: "2px 0 0",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap"
+                                  }}
+                                >
+                                  {s.email || "—"}
+                                  {s.phoneNumber ? ` · ${s.phoneNumber}` : ""}
+                                </p>
+                              </div>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "flex-end",
+                                  gap: 4,
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {hasActivePlan && (
+                                  <span
+                                    style={{
+                                      fontSize: 10,
+                                      fontWeight: 800,
+                                      padding: "2px 8px",
+                                      borderRadius: 12,
+                                      background: "#10b98120",
+                                      color: "#10b981",
+                                      border: "1px solid #10b98140",
+                                    }}
+                                  >
+                                    {sub.plan === "premium"
+                                      ? "Premium ⭐"
+                                      : sub.plan === "elite"
+                                      ? "Elite 👑"
+                                      : "Basic Plan"}
+                                  </span>
+                                )}
+                                <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 700 }}>
+                                  View Full Profile →
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* Lesson Preview Modal */}
+      {previewLesson && (
+        <LessonPreviewModal
+          lesson={previewLesson}
+          lessonIndex={previewIndex}
+          onClose={() => setPreviewLesson(null)}
+        />
+      )}
+
+      {/* Full Student Profile Modal */}
+      {selectedStudent && (
+        <StudentQuickViewModal
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+        />
+      )}
     </>
   );
 }
@@ -1697,7 +2689,16 @@ export default function AdminCourses({
         </div>
 
       {mode === "approved" && (
-        <ApprovedCoursesView courses={courses} />
+        <ApprovedCoursesView
+          courses={courses}
+          onEditCourse={(c) => {
+            setEditingCourse(c);
+            setMode("manage");
+          }}
+          onRejectCourse={(c) => {
+            setRejectTarget(c);
+          }}
+        />
       )}
 
       {canManage && mode === "manage" ? (
