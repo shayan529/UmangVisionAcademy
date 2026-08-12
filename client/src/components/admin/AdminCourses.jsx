@@ -830,16 +830,32 @@ function CourseDrawer({ course, onClose, onApprove, onReject, onUnreject, onEdit
 
         {/* Thumbnail */}
         {course.thumbnailUrl && (
-          <img
-            src={course.thumbnailUrl}
-            alt=""
+          <div
             style={{
               width: "100%",
+              height: 200,
               borderRadius: 12,
-              objectFit: "cover",
-              maxHeight: 180,
+              overflow: "hidden",
+              border: "1px solid #1e293b",
+              background: "#0f172a",
+              flexShrink: 0,
+              position: "relative",
             }}
-          />
+          >
+            <img
+              src={course.thumbnailUrl}
+              alt={course.title}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          </div>
         )}
 
         {/* Stats */}
@@ -2102,11 +2118,30 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                   <>
                     {/* Thumbnail banner */}
                     {selectedCourse.thumbnailUrl && (
-                      <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid #1e293b", maxHeight: 220 }}>
+                      <div
+                        style={{
+                          width: "100%",
+                          height: 220,
+                          borderRadius: 14,
+                          overflow: "hidden",
+                          border: "1px solid #1e293b",
+                          background: "#0f172a",
+                          flexShrink: 0,
+                          position: "relative",
+                        }}
+                      >
                         <img
                           src={selectedCourse.thumbnailUrl}
-                          alt=""
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          alt={selectedCourse.title || "Course Thumbnail"}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                          }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
                         />
                       </div>
                     )}
