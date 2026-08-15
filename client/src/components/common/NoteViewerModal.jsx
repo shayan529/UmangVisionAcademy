@@ -23,7 +23,8 @@ import { useTranslation } from "react-i18next";
 import { getAiLanguageName } from "../../utils/aiLanguage";
 
 const getFileMeta = (url = "") => {
-  const ext = url.split(".").pop()?.toLowerCase().split("?")[0]?.split("#")[0] ?? "";
+  const ext =
+    url.split(".").pop()?.toLowerCase().split("?")[0]?.split("#")[0] ?? "";
   if (["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) {
     return { type: "image", label: ext.toUpperCase(), color: "#2dd4bf" };
   }
@@ -40,7 +41,10 @@ const getFileMeta = (url = "") => {
 // can't render our own text layer, so we lean on Google's viewer.
 const getFallbackEmbedUrl = (url = "") => {
   if (!url) return "";
-  const isLocal = url.includes("localhost") || url.includes("127.0.0.1") || url.includes("192.168.");
+  const isLocal =
+    url.includes("localhost") ||
+    url.includes("127.0.0.1") ||
+    url.includes("192.168.");
   if (isLocal) return url;
   return `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`;
 };
@@ -49,16 +53,22 @@ const getFallbackEmbedUrl = (url = "") => {
 // Escapes HTML first, then re-introduces a small safe subset:
 // **bold**, *italic*, `code`, and "- " bullet lines.
 const escapeHtml = (str) =>
-  str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 const inlineFormat = (line) =>
   escapeHtml(line)
-    .replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 rounded bg-black/30 text-teal-300 text-[0.85em]">$1</code>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-white">$1</strong>')
-    .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em class="italic text-slate-300">$1</em>');
+    .replace(
+      /`([^`]+)`/g,
+      '<code class="px-1 py-0.5 rounded bg-black/30 text-teal-300 text-[0.85em]">$1</code>',
+    )
+    .replace(
+      /\*\*([^*]+)\*\*/g,
+      '<strong class="font-bold text-white">$1</strong>',
+    )
+    .replace(
+      /(?<!\*)\*([^*]+)\*(?!\*)/g,
+      '<em class="italic text-slate-300">$1</em>',
+    );
 
 function FormattedMessage({ text }) {
   if (!text) return null;
@@ -69,11 +79,17 @@ function FormattedMessage({ text }) {
   const flushBullets = (key) => {
     if (bulletBuf.length) {
       blocks.push(
-        <ul key={`ul-${key}`} className="list-disc list-outside pl-4 space-y-1 my-1">
+        <ul
+          key={`ul-${key}`}
+          className="list-disc list-outside pl-4 space-y-1 my-1"
+        >
           {bulletBuf.map((li, i) => (
-            <li key={i} dangerouslySetInnerHTML={{ __html: inlineFormat(li) }} />
+            <li
+              key={i}
+              dangerouslySetInnerHTML={{ __html: inlineFormat(li) }}
+            />
           ))}
-        </ul>
+        </ul>,
       );
       bulletBuf = [];
     }
@@ -89,7 +105,12 @@ function FormattedMessage({ text }) {
     if (line.trim() === "") {
       blocks.push(<div key={idx} className="h-1.5" />);
     } else {
-      blocks.push(<p key={idx} dangerouslySetInnerHTML={{ __html: inlineFormat(line) }} />);
+      blocks.push(
+        <p
+          key={idx}
+          dangerouslySetInnerHTML={{ __html: inlineFormat(line) }}
+        />,
+      );
     }
   });
   flushBullets("end");
@@ -99,7 +120,10 @@ function FormattedMessage({ text }) {
 
 function TypingDots() {
   return (
-    <span className="inline-flex items-center gap-1 h-4" aria-label="AI is responding">
+    <span
+      className="inline-flex items-center gap-1 h-4"
+      aria-label="AI is responding"
+    >
       {[0, 1, 2].map((i) => (
         <span
           key={i}
@@ -130,7 +154,11 @@ function CopyButton({ value }) {
       title="Copy response"
       aria-label="Copy response"
     >
-      {copied ? <Check size={12} className="text-teal-400" /> : <Copy size={12} />}
+      {copied ? (
+        <Check size={12} className="text-teal-400" />
+      ) : (
+        <Copy size={12} />
+      )}
     </button>
   );
 }
@@ -140,7 +168,8 @@ function CopyButton({ value }) {
 function renderPlaceholder(pageWrap) {
   pageWrap.innerHTML = "";
   const spinner = document.createElement("div");
-  spinner.className = "absolute inset-0 flex items-center justify-center text-slate-400";
+  spinner.className =
+    "absolute inset-0 flex items-center justify-center text-slate-400";
   spinner.innerHTML =
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="motion-safe:animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
   pageWrap.appendChild(spinner);
@@ -199,9 +228,13 @@ const PdfViewer = React.memo(function PdfViewer({ url }) {
       const containerWidth = scrollRef.current?.clientWidth || 800;
       const unscaled = page.getViewport({ scale: 1 });
       const dpr = Math.min(Math.max(window.devicePixelRatio || 1, 2), 3);
-      const isMobileScreen = typeof window !== "undefined" && window.innerWidth < 640;
+      const isMobileScreen =
+        typeof window !== "undefined" && window.innerWidth < 640;
       const padding = isMobileScreen ? 12 : 32;
-      const scale = Math.min((containerWidth - padding) / unscaled.width, MAX_RENDER_SCALE);
+      const scale = Math.min(
+        (containerWidth - padding) / unscaled.width,
+        MAX_RENDER_SCALE,
+      );
       const viewport = page.getViewport({ scale });
 
       pageWrap.style.width = `${viewport.width}px`;
@@ -229,40 +262,50 @@ const PdfViewer = React.memo(function PdfViewer({ url }) {
       // Defer text-layer DOM creation and width-correction pass to animation frames
       // so canvas rendering finishes immediately and scrolling remains 60fps smooth.
       requestAnimationFrame(() => {
-        page.getTextContent().then((textContent) => {
-          const fragment = document.createDocumentFragment();
-          const spans = [];
-          textContent.items.forEach((item) => {
-            if (!item.str) return;
-            const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-            const angle = Math.atan2(tx[1], tx[0]);
-            const fontHeight = Math.hypot(tx[2], tx[3]);
-            const span = document.createElement("span");
-            span.textContent = item.str;
-            span.style.left = `${tx[4]}px`;
-            span.style.top = `${tx[5] - fontHeight}px`;
-            span.style.fontSize = `${fontHeight}px`;
-            fragment.appendChild(span);
-            spans.push({ span, angle, expectedWidth: Math.abs(item.width * viewport.scale) });
-          });
-          textLayer.appendChild(fragment);
-
-          requestAnimationFrame(() => {
-            const measuredWidths = spans.map(({ span }) => span.offsetWidth);
-            spans.forEach(({ span, angle, expectedWidth }, i) => {
-              const actualWidth = measuredWidths[i];
-              const rotate = angle ? `rotate(${angle}rad) ` : "";
-              if (actualWidth > 0 && expectedWidth > 0) {
-                const scaleX = expectedWidth / actualWidth;
-                if (isFinite(scaleX) && scaleX > 0.05 && scaleX < 20) {
-                  span.style.transform = `${rotate}scaleX(${scaleX})`;
-                }
-              } else if (rotate) {
-                span.style.transform = rotate;
-              }
+        page
+          .getTextContent()
+          .then((textContent) => {
+            const fragment = document.createDocumentFragment();
+            const spans = [];
+            textContent.items.forEach((item) => {
+              if (!item.str) return;
+              const tx = pdfjsLib.Util.transform(
+                viewport.transform,
+                item.transform,
+              );
+              const angle = Math.atan2(tx[1], tx[0]);
+              const fontHeight = Math.hypot(tx[2], tx[3]);
+              const span = document.createElement("span");
+              span.textContent = item.str;
+              span.style.left = `${tx[4]}px`;
+              span.style.top = `${tx[5] - fontHeight}px`;
+              span.style.fontSize = `${fontHeight}px`;
+              fragment.appendChild(span);
+              spans.push({
+                span,
+                angle,
+                expectedWidth: Math.abs(item.width * viewport.scale),
+              });
             });
-          });
-        }).catch(() => { });
+            textLayer.appendChild(fragment);
+
+            requestAnimationFrame(() => {
+              const measuredWidths = spans.map(({ span }) => span.offsetWidth);
+              spans.forEach(({ span, angle, expectedWidth }, i) => {
+                const actualWidth = measuredWidths[i];
+                const rotate = angle ? `rotate(${angle}rad) ` : "";
+                if (actualWidth > 0 && expectedWidth > 0) {
+                  const scaleX = expectedWidth / actualWidth;
+                  if (isFinite(scaleX) && scaleX > 0.05 && scaleX < 20) {
+                    span.style.transform = `${rotate}scaleX(${scaleX})`;
+                  }
+                } else if (rotate) {
+                  span.style.transform = rotate;
+                }
+              });
+            });
+          })
+          .catch(() => {});
       });
     } catch (err) {
       renderedRef.current.delete(pageNum); // allow a retry (e.g. scroll away and back)
@@ -275,9 +318,14 @@ const PdfViewer = React.memo(function PdfViewer({ url }) {
   // page currently in view, so a fast scroll re-prioritizes toward where
   // the user actually is instead of grinding through stale FIFO order.
   const pumpQueue = useCallback(() => {
-    while (activeWorkersRef.current < RENDER_CONCURRENCY && renderQueueRef.current.length) {
+    while (
+      activeWorkersRef.current < RENDER_CONCURRENCY &&
+      renderQueueRef.current.length
+    ) {
       renderQueueRef.current.sort(
-        (a, b) => Math.abs(a - currentPageRef.current) - Math.abs(b - currentPageRef.current)
+        (a, b) =>
+          Math.abs(a - currentPageRef.current) -
+          Math.abs(b - currentPageRef.current),
       );
       const nextPage = renderQueueRef.current.shift();
       pendingRef.current.delete(nextPage);
@@ -291,12 +339,13 @@ const PdfViewer = React.memo(function PdfViewer({ url }) {
 
   const enqueueRender = useCallback(
     (pageNum) => {
-      if (renderedRef.current.has(pageNum) || pendingRef.current.has(pageNum)) return;
+      if (renderedRef.current.has(pageNum) || pendingRef.current.has(pageNum))
+        return;
       pendingRef.current.add(pageNum);
       renderQueueRef.current.push(pageNum);
       pumpQueue();
     },
-    [pumpQueue]
+    [pumpQueue],
   );
 
   useEffect(() => {
@@ -356,7 +405,11 @@ const PdfViewer = React.memo(function PdfViewer({ url }) {
 
         // Warm several pages ahead in the background so scrolling forward
         // feels instant without blocking the "ready" state on it.
-        for (let p = 2; p <= Math.min(pdfDoc.numPages, 1 + RENDER_CONCURRENCY); p++) {
+        for (
+          let p = 2;
+          p <= Math.min(pdfDoc.numPages, 1 + RENDER_CONCURRENCY);
+          p++
+        ) {
           enqueueRender(p);
         }
       } catch (err) {
@@ -393,7 +446,7 @@ const PdfViewer = React.memo(function PdfViewer({ url }) {
           }
         });
       },
-      { root: scrollEl, rootMargin: PRELOAD_MARGIN, threshold: [0, 0.3] }
+      { root: scrollEl, rootMargin: PRELOAD_MARGIN, threshold: [0, 0.3] },
     );
     pagesRef.current.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
@@ -401,7 +454,10 @@ const PdfViewer = React.memo(function PdfViewer({ url }) {
 
   return (
     <div className="relative w-full h-full">
-      <div ref={scrollRef} className="w-full h-full overflow-y-auto py-4 px-2" />
+      <div
+        ref={scrollRef}
+        className="w-full h-full overflow-y-auto py-4 px-2"
+      />
 
       {status === "loading" && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#0b0f19]/90">
@@ -416,7 +472,9 @@ const PdfViewer = React.memo(function PdfViewer({ url }) {
         <div className="absolute inset-0 flex items-center justify-center bg-[#0b0f19]/90">
           <div className="flex flex-col items-center gap-2 text-slate-400 px-6 text-center">
             <FileText size={20} />
-            <span className="text-xs font-medium">Couldn't preview this file. It may be taking too long to load.</span>
+            <span className="text-xs font-medium">
+              Couldn't preview this file. It may be taking too long to load.
+            </span>
             <div className="flex items-center gap-3 mt-1">
               <button
                 type="button"
@@ -425,7 +483,12 @@ const PdfViewer = React.memo(function PdfViewer({ url }) {
               >
                 Try again
               </button>
-              <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-teal-400 hover:underline">
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-teal-400 hover:underline"
+              >
                 Open the original file
               </a>
             </div>
@@ -495,9 +558,17 @@ const ChatPanelContent = React.memo(function ChatPanelContent({
         onPointerDown={onHeaderPointerDown}
         onTouchStart={onHeaderPointerDown}
         className={`p-3.5 bg-gradient-to-r from-[#131f38]/90 via-[#18294a]/90 to-[#1f1e42]/90 border-b border-teal-500/25 flex items-center justify-between shrink-0 shadow-sm touch-none ${
-          onHeaderPointerDown ? "cursor-grab active:cursor-grabbing select-none" : ""
+          onHeaderPointerDown
+            ? "cursor-grab active:cursor-grabbing select-none"
+            : ""
         }`}
-        title={onHeaderPointerDown ? (isHindi ? "ड्रैग करने के लिए पकड़ें" : "Drag to move across note") : undefined}
+        title={
+          onHeaderPointerDown
+            ? isHindi
+              ? "ड्रैग करने के लिए पकड़ें"
+              : "Drag to move across note"
+            : undefined
+        }
       >
         <div className="flex items-center gap-2.5 min-w-0 pointer-events-none">
           <div className="relative w-8 h-8 rounded-xl bg-gradient-to-tr from-teal-400 via-emerald-400 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-teal-500/30 shrink-0">
@@ -506,13 +577,20 @@ const ChatPanelContent = React.memo(function ChatPanelContent({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              {onHeaderPointerDown && <GripHorizontal size={14} className="text-teal-400/60 shrink-0" />}
+              {onHeaderPointerDown && (
+                <GripHorizontal
+                  size={14}
+                  className="text-teal-400/60 shrink-0"
+                />
+              )}
               <h3 className="text-xs sm:text-sm font-extrabold text-white">
                 {isHindi ? "AI नोट्स असिस्टेंट" : "AI Note Assistant"}
               </h3>
             </div>
             <p className="text-[10px] sm:text-[11px] text-teal-300/80 truncate">
-              {isHindi ? "सवाल पूछें या टेक्स्ट हाइलाइट करें" : "Ask questions or highlight text to analyze"}
+              {isHindi
+                ? "सवाल पूछें या टेक्स्ट हाइलाइट करें"
+                : "Ask questions or highlight text to analyze"}
             </p>
           </div>
         </div>
@@ -589,20 +667,32 @@ const ChatPanelContent = React.memo(function ChatPanelContent({
             <p className="text-xs text-slate-300 leading-relaxed max-w-[220px]">
               {isHindi ? (
                 <>
-                  बाईं ओर किसी भी टेक्स्ट को हाइलाइट करें, या नीचे सवाल पूछें — मैंने{" "}
-                  <span className="text-teal-300 font-semibold">{note.title}</span> पढ़ा है।
+                  बाईं ओर किसी भी टेक्स्ट को हाइलाइट करें, या नीचे सवाल पूछें —
+                  मैंने{" "}
+                  <span className="text-teal-300 font-semibold">
+                    {note.title}
+                  </span>{" "}
+                  पढ़ा है।
                 </>
               ) : (
                 <>
-                  Highlight any text on the left, or type a question below — I've read{" "}
-                  <span className="text-teal-300 font-semibold">{note.title}</span>.
+                  Highlight any text on the left, or type a question below —
+                  I've read{" "}
+                  <span className="text-teal-300 font-semibold">
+                    {note.title}
+                  </span>
+                  .
                 </>
               )}
             </p>
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-teal-400/90 font-medium mt-1">
             <MessageCircleQuestion size={12} />
-            <span>{isHindi ? 'प्रयास करें: "इस नोट का सारांश दें"' : 'Try "summarize this note" to start'}</span>
+            <span>
+              {isHindi
+                ? 'प्रयास करें: "इस नोट का सारांश दें"'
+                : 'Try "summarize this note" to start'}
+            </span>
           </div>
         </div>
       ) : (
@@ -612,7 +702,10 @@ const ChatPanelContent = React.memo(function ChatPanelContent({
           className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-5 scroll-smooth overscroll-contain"
         >
           {chatMessages.map((msg) => (
-            <div key={msg.id} className={`group flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div
+              key={msg.id}
+              className={`group flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            >
               {msg.role === "assistant" && (
                 <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-teal-400 via-emerald-400 to-indigo-500 flex items-center justify-center text-white shrink-0 mt-0.5 shadow-md shadow-teal-500/30">
                   <Bot size={14} />
@@ -628,8 +721,13 @@ const ChatPanelContent = React.memo(function ChatPanelContent({
               >
                 {msg.highlightedContext && (
                   <div className="flex items-start gap-1.5 p-2 rounded-lg bg-[#090e1a]/80 border border-cyan-500/25 text-[11px] italic text-cyan-200/90 mb-1.5 shadow-inner">
-                    <Quote size={11} className="mt-0.5 shrink-0 text-cyan-400" />
-                    <span className="line-clamp-3">{msg.highlightedContext}</span>
+                    <Quote
+                      size={11}
+                      className="mt-0.5 shrink-0 text-cyan-400"
+                    />
+                    <span className="line-clamp-3">
+                      {msg.highlightedContext}
+                    </span>
                   </div>
                 )}
 
@@ -642,7 +740,9 @@ const ChatPanelContent = React.memo(function ChatPanelContent({
                       <CopyButton value={msg.content} />
                     </div>
                   ) : (
-                    <p className="whitespace-pre-wrap font-normal">{msg.content}</p>
+                    <p className="whitespace-pre-wrap font-normal">
+                      {msg.content}
+                    </p>
                   )
                 ) : (
                   <TypingDots />
@@ -678,7 +778,10 @@ const ChatPanelContent = React.memo(function ChatPanelContent({
       )}
 
       {/* Composer */}
-      <form onSubmit={onComposerSubmit} className="p-3 bg-[#121c33]/95 border-t border-teal-500/20 shrink-0">
+      <form
+        onSubmit={onComposerSubmit}
+        className="p-3 bg-[#121c33]/95 border-t border-teal-500/20 shrink-0"
+      >
         <div className="flex items-end gap-2 bg-[#182645]/90 border border-teal-500/35 rounded-2xl px-3.5 py-2 focus-within:border-teal-400 focus-within:ring-2 focus-within:ring-teal-400/40 shadow-[0_0_15px_rgba(45,212,191,0.15)] transition-all">
           <textarea
             ref={textareaRef}
@@ -770,7 +873,7 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
                 x: Math.max(0, Math.min(maxX, prev.x)),
                 y: Math.max(0, Math.min(maxY, prev.y)),
               }
-            : null
+            : null,
         );
       }
 
@@ -784,7 +887,7 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
                 x: Math.max(0, Math.min(maxX, prev.x)),
                 y: Math.max(0, Math.min(maxY, prev.y)),
               }
-            : null
+            : null,
         );
       }
     };
@@ -798,7 +901,10 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
       return { x: evt.touches[0].clientX, y: evt.touches[0].clientY };
     }
     if (evt.changedTouches && evt.changedTouches.length > 0) {
-      return { x: evt.changedTouches[0].clientX, y: evt.changedTouches[0].clientY };
+      return {
+        x: evt.changedTouches[0].clientX,
+        y: evt.changedTouches[0].clientY,
+      };
     }
     return { x: evt.clientX, y: evt.clientY };
   };
@@ -873,7 +979,7 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
       window.addEventListener("touchmove", handleMove, { passive: false });
       window.addEventListener("touchend", handleUp);
     },
-    [chatPos]
+    [chatPos],
   );
 
   const handleAvatarPointerDown = useCallback(
@@ -886,8 +992,12 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
       const containerRect = container.getBoundingClientRect();
       const avatarRect = avatar.getBoundingClientRect();
 
-      const currentX = avatarPos ? avatarPos.x : avatarRect.left - containerRect.left;
-      const currentY = avatarPos ? avatarPos.y : avatarRect.top - containerRect.top;
+      const currentX = avatarPos
+        ? avatarPos.x
+        : avatarRect.left - containerRect.left;
+      const currentY = avatarPos
+        ? avatarPos.y
+        : avatarRect.top - containerRect.top;
 
       const startCoords = getClientCoords(e);
       const startX = startCoords.x;
@@ -955,7 +1065,7 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
       window.addEventListener("touchmove", handleMove, { passive: false });
       window.addEventListener("touchend", handleUp);
     },
-    [avatarPos]
+    [avatarPos],
   );
 
   // Manage modal open state and body class
@@ -963,7 +1073,9 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
     if (!isOpen) return;
     document.body.classList.add("note-viewer-open");
     window.__isNoteViewerModalOpen = true;
-    window.dispatchEvent(new CustomEvent("note-viewer-modal-toggle", { detail: { open: true } }));
+    window.dispatchEvent(
+      new CustomEvent("note-viewer-modal-toggle", { detail: { open: true } }),
+    );
 
     const handleKey = (e) => {
       if (e.key === "Escape") onClose?.();
@@ -973,7 +1085,11 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
     return () => {
       document.body.classList.remove("note-viewer-open");
       window.__isNoteViewerModalOpen = false;
-      window.dispatchEvent(new CustomEvent("note-viewer-modal-toggle", { detail: { open: false } }));
+      window.dispatchEvent(
+        new CustomEvent("note-viewer-modal-toggle", {
+          detail: { open: false },
+        }),
+      );
       document.removeEventListener("keydown", handleKey);
     };
   }, [isOpen, onClose]);
@@ -1005,7 +1121,7 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
               top: topPos,
               left: Math.min(
                 Math.max(10, rect.left + rect.width / 2 - 80),
-                window.innerWidth - popoverWidth - 10
+                window.innerWidth - popoverWidth - 10,
               ),
               showBelow,
             });
@@ -1035,14 +1151,22 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
       if (!userPrompt || isAiLoading) return;
 
       const newMsgId = Date.now().toString();
-      const userMsg = { id: newMsgId, role: "user", content: userPrompt, highlightedContext };
+      const userMsg = {
+        id: newMsgId,
+        role: "user",
+        content: userPrompt,
+        highlightedContext,
+      };
       const updatedMessages = [...chatMessages, userMsg];
       setChatMessages(updatedMessages);
       setInputQuery("");
       setIsAiLoading(true);
 
       const aiMsgId = (Date.now() + 1).toString();
-      setChatMessages((prev) => [...prev, { id: aiMsgId, role: "assistant", content: "" }]);
+      setChatMessages((prev) => [
+        ...prev,
+        { id: aiMsgId, role: "assistant", content: "" },
+      ]);
 
       try {
         const systemContext = isHindi
@@ -1059,9 +1183,13 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
           })),
         ];
 
+        const authToken = localStorage.getItem("authToken");
         const res = await fetch(`${API_BASE_URL}/ai/chat`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
           credentials: "include",
           body: JSON.stringify({
             messages: apiHistory,
@@ -1094,7 +1222,9 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
               if (chunk) {
                 fullText += chunk;
                 setChatMessages((prev) =>
-                  prev.map((msg) => (msg.id === aiMsgId ? { ...msg, content: fullText } : msg))
+                  prev.map((msg) =>
+                    msg.id === aiMsgId ? { ...msg, content: fullText } : msg,
+                  ),
                 );
               }
             } catch (e) {
@@ -1108,19 +1238,19 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
           prev.map((msg) =>
             msg.id === aiMsgId
               ? {
-                ...msg,
-                content: isHindi
-                  ? "क्षमा करें, उत्तर उत्पन्न करने में त्रुटि हुई। कृपया पुन: प्रयास करें।"
-                  : "Sorry, I ran into an error generating an answer. Please try asking again.",
-              }
-              : msg
-          )
+                  ...msg,
+                  content: isHindi
+                    ? "क्षमा करें, उत्तर उत्पन्न करने में त्रुटि हुई। कृपया पुन: प्रयास करें।"
+                    : "Sorry, I ran into an error generating an answer. Please try asking again.",
+                }
+              : msg,
+          ),
         );
       } finally {
         setIsAiLoading(false);
       }
     },
-    [chatMessages, isAiLoading, note, isHindi]
+    [chatMessages, isAiLoading, note, isHindi],
   );
 
   const handleAskAiAboutText = (overrideText = null) => {
@@ -1130,7 +1260,7 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
       isHindi
         ? `नोट के इस भाग को हिंदी में विस्तार से समझाएं: "${textToAsk}"`
         : `Explain this text from the note: "${textToAsk}"`,
-      textToAsk
+      textToAsk,
     );
     setSelectedText("");
     setPopoverPos(null);
@@ -1169,7 +1299,12 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
       {/* Floating "Ask AI" popover for highlighted text */}
       {popoverPos && selectedText && (
         <div
-          style={{ position: "fixed", top: popoverPos.top, left: popoverPos.left, zIndex: 10000 }}
+          style={{
+            position: "fixed",
+            top: popoverPos.top,
+            left: popoverPos.left,
+            zIndex: 10000,
+          }}
           className="motion-safe:animate-popIn select-none"
         >
           <button
@@ -1182,7 +1317,10 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
             onClick={() => handleAskAiAboutText()}
             className="relative flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#0f172a] border-2 border-teal-400 text-white text-xs font-black shadow-[0_10px_35px_rgba(0,0,0,0.9)] hover:bg-[#1e293b] hover:border-teal-300 active:scale-95 transition-all cursor-pointer"
           >
-            <Sparkles size={14} className="text-amber-400 fill-amber-400 shrink-0" />
+            <Sparkles
+              size={14}
+              className="text-amber-400 fill-amber-400 shrink-0"
+            />
             <span className="text-white font-extrabold tracking-wide drop-shadow">
               {isHindi ? "इसके बारे में AI से पूछें" : "Ask AI about this"}
             </span>
@@ -1197,8 +1335,11 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
 
       {/* Main modal */}
       <div
-        className={`relative w-full bg-gradient-to-b from-[#121c33] via-[#0d1425] to-[#0a0f1d] border border-teal-500/30 rounded-3xl shadow-[0_30px_70px_-15px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden transition-[border-radius] duration-300 ${isFullscreen ? "fixed inset-0 rounded-none h-full max-h-full" : "max-w-7xl h-[94vh] max-h-[900px]"
-          }`}
+        className={`relative w-full bg-gradient-to-b from-[#121c33] via-[#0d1425] to-[#0a0f1d] border border-teal-500/30 rounded-3xl shadow-[0_30px_70px_-15px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden transition-[border-radius] duration-300 ${
+          isFullscreen
+            ? "fixed inset-0 rounded-none h-full max-h-full"
+            : "max-w-7xl h-[94vh] max-h-[900px]"
+        }`}
       >
         {/* Ambient glow orbs rendered with hardware-accelerated CSS radial gradients (0ms GPU blur overhead) */}
         <div className="pointer-events-none absolute -top-28 -left-20 w-[450px] h-[450px] rounded-full bg-[radial-gradient(circle_at_center,rgba(45,212,191,0.22)_0%,transparent_70%)]" />
@@ -1207,14 +1348,20 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
         {/* Header */}
         <div className="relative px-4 py-3 sm:px-6 bg-[#162138] border-b border-teal-500/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] flex items-center justify-between gap-4 shrink-0">
           <div
-            className={`absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-teal-400/70 to-transparent transition-opacity duration-500 ${isAiLoading ? "opacity-100 motion-safe:animate-pulse" : "opacity-0"
-              }`}
+            className={`absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-teal-400/70 to-transparent transition-opacity duration-500 ${
+              isAiLoading
+                ? "opacity-100 motion-safe:animate-pulse"
+                : "opacity-0"
+            }`}
           />
 
           <div className="flex items-center gap-3 min-w-0">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-slate-800/80"
-              style={{ background: `${fileMeta.color}18`, boxShadow: `inset 0 0 0 1px ${fileMeta.color}30` }}
+              style={{
+                background: `${fileMeta.color}18`,
+                boxShadow: `inset 0 0 0 1px ${fileMeta.color}30`,
+              }}
             >
               {fileMeta.type === "image" ? (
                 <FileImage size={18} style={{ color: fileMeta.color }} />
@@ -1226,7 +1373,10 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
             <div className="min-w-0">
               {note.instructorName && (
                 <p className="text-[11px] text-slate-400 truncate">
-                  by <span className="text-slate-200 font-semibold">{note.instructorName}</span>
+                  by{" "}
+                  <span className="text-slate-200 font-semibold">
+                    {note.instructorName}
+                  </span>
                 </p>
               )}
               <h2 className="text-sm sm:text-base font-extrabold text-white truncate leading-snug tracking-tight">
@@ -1243,15 +1393,20 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
                 e.preventDefault();
                 setIsChatVisible((v) => !v);
               }}
-              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold border transition-colors ${isChatVisible
-                ? "text-teal-300 bg-teal-500/10 border-teal-400/20 hover:bg-teal-500/15"
-                : "text-slate-400 border-white/10 hover:text-white hover:bg-white/5"
-                }`}
+              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                isChatVisible
+                  ? "text-teal-300 bg-teal-500/10 border-teal-400/20 hover:bg-teal-500/15"
+                  : "text-slate-400 border-white/10 hover:text-white hover:bg-white/5"
+              }`}
               title={isChatVisible ? "Hide AI chat" : "Show AI chat"}
               aria-label={isChatVisible ? "Hide AI chat" : "Show AI chat"}
               aria-pressed={isChatVisible}
             >
-              {isChatVisible ? <PanelRightClose size={16} /> : <PanelRightOpen size={16} />}
+              {isChatVisible ? (
+                <PanelRightClose size={16} />
+              ) : (
+                <PanelRightOpen size={16} />
+              )}
               AI Chat
             </button>
 
@@ -1282,7 +1437,10 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
         </div>
 
         {/* Body */}
-        <div ref={containerRef} className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
+        <div
+          ref={containerRef}
+          className="relative flex-1 min-h-0 flex flex-col overflow-hidden"
+        >
           {/* Document panel — full screen preview */}
           <div
             ref={viewerRef}
@@ -1301,7 +1459,12 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
             ) : (
               <div className="relative w-full h-full bg-slate-950/40 overflow-hidden">
                 <div className="absolute top-0 right-0 w-16 h-16 bg-[#0b0f19] z-20 pointer-events-auto" />
-                <iframe src={fallbackUrl} title={note.title} className="w-full h-full border-0" allowFullScreen />
+                <iframe
+                  src={fallbackUrl}
+                  title={note.title}
+                  className="w-full h-full border-0"
+                  allowFullScreen
+                />
               </div>
             )}
           </div>
@@ -1310,7 +1473,16 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
           {isChatVisible && (
             <div
               ref={chatCardRef}
-              style={chatPos ? { left: `${chatPos.x}px`, top: `${chatPos.y}px`, right: "auto", bottom: "auto" } : {}}
+              style={
+                chatPos
+                  ? {
+                      left: `${chatPos.x}px`,
+                      top: `${chatPos.y}px`,
+                      right: "auto",
+                      bottom: "auto",
+                    }
+                  : {}
+              }
               className={`absolute z-50 w-[calc(100%-1.5rem)] sm:w-[380px] lg:w-[410px] h-[500px] max-h-[72vh] flex flex-col bg-[#101726] border border-teal-500/35 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden transition-shadow ${
                 !chatPos ? "bottom-3 right-3 sm:bottom-5 sm:right-5" : ""
               } ${isDraggingChat ? "ring-2 ring-teal-400 shadow-[0_30px_90px_rgba(45,212,191,0.3)]" : "motion-safe:animate-popIn"}`}
@@ -1341,14 +1513,26 @@ export default function NoteViewerModal({ note, isOpen, onClose }) {
               type="button"
               onPointerDown={handleAvatarPointerDown}
               onTouchStart={handleAvatarPointerDown}
-              style={avatarPos ? { left: `${avatarPos.x}px`, top: `${avatarPos.y}px`, right: "auto", bottom: "auto" } : {}}
+              style={
+                avatarPos
+                  ? {
+                      left: `${avatarPos.x}px`,
+                      top: `${avatarPos.y}px`,
+                      right: "auto",
+                      bottom: "auto",
+                    }
+                  : {}
+              }
               className={`absolute z-30 w-14 h-14 rounded-full bg-gradient-to-tr from-teal-500 to-indigo-600 text-white flex items-center justify-center shadow-2xl shadow-black/50 border border-white/20 hover:scale-105 active:scale-95 transition-transform cursor-grab active:cursor-grabbing select-none touch-none ${
                 !avatarPos ? "bottom-5 right-5" : ""
               } ${isDraggingAvatar ? "ring-4 ring-teal-400/50 scale-110" : ""}`}
               aria-label="Open AI chat"
               title="Click to open AI chat, or drag to reposition"
             >
-              <GripHorizontal size={14} className="absolute top-1 text-teal-200/60 pointer-events-none" />
+              <GripHorizontal
+                size={14}
+                className="absolute top-1 text-teal-200/60 pointer-events-none"
+              />
               <Bot size={22} className="mt-1 pointer-events-none" />
               <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-teal-400 ring-2 ring-[#0d1322] motion-safe:animate-pulse pointer-events-none" />
             </button>

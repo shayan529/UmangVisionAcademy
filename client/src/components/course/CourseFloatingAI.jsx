@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   Bot,
   X,
@@ -18,16 +24,22 @@ import { getAiLanguageName } from "../../utils/aiLanguage";
 
 // ── Minimal markdown → JSX formatter for AI responses ──
 const escapeHtml = (str) =>
-  str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 const inlineFormat = (line) =>
   escapeHtml(line)
-    .replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 rounded bg-black/30 text-teal-300 text-[0.85em]">$1</code>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-white">$1</strong>')
-    .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em class="italic text-slate-300">$1</em>');
+    .replace(
+      /`([^`]+)`/g,
+      '<code class="px-1 py-0.5 rounded bg-black/30 text-teal-300 text-[0.85em]">$1</code>',
+    )
+    .replace(
+      /\*\*([^*]+)\*\*/g,
+      '<strong class="font-bold text-white">$1</strong>',
+    )
+    .replace(
+      /(?<!\*)\*([^*]+)\*(?!\*)/g,
+      '<em class="italic text-slate-300">$1</em>',
+    );
 
 function FormattedMessage({ text }) {
   if (!text) return null;
@@ -38,11 +50,17 @@ function FormattedMessage({ text }) {
   const flushBullets = (key) => {
     if (bulletBuf.length) {
       blocks.push(
-        <ul key={`ul-${key}`} className="list-disc list-outside pl-4 space-y-1 my-1 text-slate-200">
+        <ul
+          key={`ul-${key}`}
+          className="list-disc list-outside pl-4 space-y-1 my-1 text-slate-200"
+        >
           {bulletBuf.map((li, i) => (
-            <li key={i} dangerouslySetInnerHTML={{ __html: inlineFormat(li) }} />
+            <li
+              key={i}
+              dangerouslySetInnerHTML={{ __html: inlineFormat(li) }}
+            />
           ))}
-        </ul>
+        </ul>,
       );
       bulletBuf = [];
     }
@@ -58,17 +76,29 @@ function FormattedMessage({ text }) {
     if (line.trim() === "") {
       blocks.push(<div key={idx} className="h-1.5" />);
     } else {
-      blocks.push(<p key={idx} dangerouslySetInnerHTML={{ __html: inlineFormat(line) }} />);
+      blocks.push(
+        <p
+          key={idx}
+          dangerouslySetInnerHTML={{ __html: inlineFormat(line) }}
+        />,
+      );
     }
   });
   flushBullets("end");
 
-  return <div className="space-y-1 leading-relaxed text-xs sm:text-sm text-slate-200">{blocks}</div>;
+  return (
+    <div className="space-y-1 leading-relaxed text-xs sm:text-sm text-slate-200">
+      {blocks}
+    </div>
+  );
 }
 
 function TypingDots() {
   return (
-    <span className="inline-flex items-center gap-1 h-4" aria-label="AI is responding">
+    <span
+      className="inline-flex items-center gap-1 h-4"
+      aria-label="AI is responding"
+    >
       {[0, 1, 2].map((i) => (
         <span
           key={i}
@@ -91,13 +121,17 @@ function CopyButton({ value }) {
           await navigator.clipboard.writeText(value);
           setCopied(true);
           setTimeout(() => setCopied(false), 1500);
-        } catch { }
+        } catch {}
       }}
       className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-1 rounded-md text-slate-400 hover:text-teal-300 hover:bg-white/10"
       title="Copy response"
       aria-label="Copy response"
     >
-      {copied ? <Check size={12} className="text-teal-400" /> : <Copy size={12} />}
+      {copied ? (
+        <Check size={12} className="text-teal-400" />
+      ) : (
+        <Copy size={12} />
+      )}
     </button>
   );
 }
@@ -118,13 +152,18 @@ const getClientCoords = (e) => {
 function RobotAvatar({ size = "md", className = "" }) {
   if (size === "lg") {
     return (
-      <div className={`relative flex items-center justify-center select-none ${className}`}>
+      <div
+        className={`relative flex items-center justify-center select-none ${className}`}
+      >
         {/* Glow backdrop */}
         <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-teal-500/40 via-emerald-500/30 to-amber-400/30 blur-xl animate-pulse" />
 
         {/* Studio-lamp style bot: teal circuitry, warm amber core */}
         <div className="relative z-10 w-16 h-16 sm:w-36 sm:h-36 flex items-center justify-center">
-          <svg viewBox="0 0 120 120" className="w-full h-full filter drop-shadow-[0_0_20px_rgba(20,184,166,0.65)] drop-shadow-[0_8px_25px_rgba(245,158,11,0.35)]">
+          <svg
+            viewBox="0 0 120 120"
+            className="w-full h-full filter drop-shadow-[0_0_20px_rgba(20,184,166,0.65)] drop-shadow-[0_8px_25px_rgba(245,158,11,0.35)]"
+          >
             <defs>
               <linearGradient id="botGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#2dd4bf" />
@@ -147,36 +186,127 @@ function RobotAvatar({ size = "md", className = "" }) {
             </defs>
 
             {/* Antenna & Signal Beacon */}
-            <line x1="60" y1="20" x2="60" y2="35" stroke="url(#botGrad)" strokeWidth="3" strokeLinecap="round" />
-            <circle cx="60" cy="16" r="5" fill="#2dd4bf" className="animate-ping" style={{ transformOrigin: "60px 16px" }} />
+            <line
+              x1="60"
+              y1="20"
+              x2="60"
+              y2="35"
+              stroke="url(#botGrad)"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            <circle
+              cx="60"
+              cy="16"
+              r="5"
+              fill="#2dd4bf"
+              className="animate-ping"
+              style={{ transformOrigin: "60px 16px" }}
+            />
             <circle cx="60" cy="16" r="4" fill="#99f6e4" />
 
             {/* Robot Head Outer Shell */}
-            <rect x="30" y="32" width="60" height="46" rx="16" fill="url(#bodyGrad)" stroke="url(#botGrad)" strokeWidth="2.5" />
+            <rect
+              x="30"
+              y="32"
+              width="60"
+              height="46"
+              rx="16"
+              fill="url(#bodyGrad)"
+              stroke="url(#botGrad)"
+              strokeWidth="2.5"
+            />
 
             {/* Ear Caps */}
-            <rect x="22" y="46" width="8" height="18" rx="4" fill="#1c2e29" stroke="#2dd4bf" strokeWidth="1.5" />
-            <rect x="90" y="46" width="8" height="18" rx="4" fill="#1c2e29" stroke="#2dd4bf" strokeWidth="1.5" />
+            <rect
+              x="22"
+              y="46"
+              width="8"
+              height="18"
+              rx="4"
+              fill="#1c2e29"
+              stroke="#2dd4bf"
+              strokeWidth="1.5"
+            />
+            <rect
+              x="90"
+              y="46"
+              width="8"
+              height="18"
+              rx="4"
+              fill="#1c2e29"
+              stroke="#2dd4bf"
+              strokeWidth="1.5"
+            />
 
             {/* Visor Screen */}
-            <rect x="38" y="42" width="44" height="22" rx="10" fill="#050b09" stroke="#132420" strokeWidth="1.5" />
-            <rect x="40" y="44" width="40" height="18" rx="8" fill="url(#visorGrad)" opacity="0.2" />
+            <rect
+              x="38"
+              y="42"
+              width="44"
+              height="22"
+              rx="10"
+              fill="#050b09"
+              stroke="#132420"
+              strokeWidth="1.5"
+            />
+            <rect
+              x="40"
+              y="44"
+              width="40"
+              height="18"
+              rx="8"
+              fill="url(#visorGrad)"
+              opacity="0.2"
+            />
 
             {/* Glowing Eyes */}
-            <circle cx="50" cy="53" r="4.5" fill="#2dd4bf" className="animate-pulse" />
+            <circle
+              cx="50"
+              cy="53"
+              r="4.5"
+              fill="#2dd4bf"
+              className="animate-pulse"
+            />
             <circle cx="50" cy="53" r="2" fill="#ffffff" />
-            <circle cx="70" cy="53" r="4.5" fill="#2dd4bf" className="animate-pulse" />
+            <circle
+              cx="70"
+              cy="53"
+              r="4.5"
+              fill="#2dd4bf"
+              className="animate-pulse"
+            />
             <circle cx="70" cy="53" r="2" fill="#ffffff" />
 
             {/* Mouth / Speaker Grill */}
-            <line x1="52" y1="67" x2="68" y2="67" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+            <line
+              x1="52"
+              y1="67"
+              x2="68"
+              y2="67"
+              stroke="#2dd4bf"
+              strokeWidth="2"
+              strokeLinecap="round"
+              opacity="0.8"
+            />
 
             {/* Robot Neck */}
             <rect x="52" y="78" width="16" height="8" rx="2" fill="#1c2e29" />
 
             {/* Robot Chest & Core Power Orb */}
-            <path d="M 32 86 Q 60 82 88 86 L 82 108 Q 60 112 38 108 Z" fill="url(#bodyGrad)" stroke="url(#botGrad)" strokeWidth="2" />
-            <circle cx="60" cy="96" r="7" fill="url(#coreGlow)" className="animate-pulse" />
+            <path
+              d="M 32 86 Q 60 82 88 86 L 82 108 Q 60 112 38 108 Z"
+              fill="url(#bodyGrad)"
+              stroke="url(#botGrad)"
+              strokeWidth="2"
+            />
+            <circle
+              cx="60"
+              cy="96"
+              r="7"
+              fill="url(#coreGlow)"
+              className="animate-pulse"
+            />
             <circle cx="60" cy="96" r="3" fill="#ffffff" />
           </svg>
         </div>
@@ -190,9 +320,13 @@ function RobotAvatar({ size = "md", className = "" }) {
 
   // Small/Medium icon for header & message bubbles
   return (
-    <div className={`relative flex items-center justify-center rounded-full bg-gradient-to-tr from-teal-400 to-amber-500 p-0.5 shadow-sm border border-teal-300/80 ${className}`}>
+    <div
+      className={`relative flex items-center justify-center rounded-full bg-gradient-to-tr from-teal-400 to-amber-500 p-0.5 shadow-sm border border-teal-300/80 ${className}`}
+    >
       <div className="w-full h-full rounded-full bg-[#0a1310] flex items-center justify-center">
-        <Bot className={`${size === "sm" ? "w-4 h-4" : "w-5 h-5"} text-teal-300`} />
+        <Bot
+          className={`${size === "sm" ? "w-4 h-4" : "w-5 h-5"} text-teal-300`}
+        />
       </div>
     </div>
   );
@@ -260,7 +394,7 @@ export default function CourseFloatingAI({
       const active = Boolean(
         window.__isNoteViewerModalOpen ||
         document.body.classList.contains("note-viewer-open") ||
-        document.querySelector('[data-note-modal]')
+        document.querySelector("[data-note-modal]"),
       );
       setIsNoteModalOpen(active);
     };
@@ -268,7 +402,11 @@ export default function CourseFloatingAI({
     updateModalState();
     window.addEventListener("note-viewer-modal-toggle", updateModalState);
     const observer = new MutationObserver(updateModalState);
-    observer.observe(document.body, { attributes: true, childList: true, subtree: true });
+    observer.observe(document.body, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+    });
 
     return () => {
       window.removeEventListener("note-viewer-modal-toggle", updateModalState);
@@ -283,7 +421,7 @@ export default function CourseFloatingAI({
       if (
         window.__isNoteViewerModalOpen ||
         document.body.classList.contains("note-viewer-open") ||
-        document.querySelector('[data-note-modal]')
+        document.querySelector("[data-note-modal]")
       ) {
         setPopoverPos(null);
         return;
@@ -329,7 +467,7 @@ export default function CourseFloatingAI({
               top: topPos,
               left: Math.min(
                 Math.max(10, rect.left + rect.width / 2 - 80),
-                window.innerWidth - popoverWidth - 10
+                window.innerWidth - popoverWidth - 10,
               ),
               showBelow,
             });
@@ -372,7 +510,8 @@ export default function CourseFloatingAI({
   // Build full course / dashboard context for system prompt
   const buildSystemContext = useCallback(() => {
     if (!course) {
-      let context = `You are the friendly and expert AI Academy Guide for Umang Vision Academy.
+      let context =
+        `You are the friendly and expert AI Academy Guide for Umang Vision Academy.
 You are embedded across the Student Dashboard and are here to help the student with ANY feature, page, or study concept.
 
 STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
@@ -389,7 +528,8 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
 11. Wallet & Referral: Wallet balance for buying courses/plans, transaction log, and referral links to earn cash bonuses.
 12. Settings & Class Switch: Profile updates, class selection (Class 9, Class 10, Class 11, Class 12, Competitive Exams), and account settings.
 
-` + (isHindi
+` +
+        (isHindi
           ? `RULE: Answer the student clearly in Hindi or Hinglish based on their language. Be encouraging, educational, concise, and helpful.`
           : `RULE: Always match the user's language (English, Hindi, Hinglish, etc.). Be encouraging, educational, clear, and guide them on platform features.`);
       return context;
@@ -397,7 +537,8 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
 
     const courseTitle = course.title || "Course";
     const courseDesc = course.description || "";
-    const instructor = course.instructorName || course.instructor?.name || "Instructor";
+    const instructor =
+      course.instructorName || course.instructor?.name || "Instructor";
 
     let context = `You are the friendly and expert AI Learning Guide for the course "${courseTitle}".\n`;
     if (courseDesc) context += `Course Overview: "${courseDesc}".\n`;
@@ -407,12 +548,17 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
     if (activeLesson) {
       context += `\nCURRENTLY WATCHING / ACTIVE LESSON:\n`;
       context += `- Title: "${activeLesson.title || "Untitled Lesson"}"\n`;
-      if (activeLesson.subject) context += `- Subject: "${activeLesson.subject}"\n`;
-      if (activeLesson.chapterTitle) context += `- Chapter: "${activeLesson.chapterTitle}"\n`;
+      if (activeLesson.subject)
+        context += `- Subject: "${activeLesson.subject}"\n`;
+      if (activeLesson.chapterTitle)
+        context += `- Chapter: "${activeLesson.chapterTitle}"\n`;
       context += `- Type: ${activeLesson.type || "video"}\n`;
-      if (currentVideoPct > 0) context += `- Progress: ${Math.round(currentVideoPct)}% watched\n`;
-      if (initialTime > 0) context += `- Current Time: ${Math.floor(initialTime / 60)}m ${Math.floor(initialTime % 60)}s\n`;
-      if (activeLesson.description) context += `- Lesson Details: "${activeLesson.description}"\n`;
+      if (currentVideoPct > 0)
+        context += `- Progress: ${Math.round(currentVideoPct)}% watched\n`;
+      if (initialTime > 0)
+        context += `- Current Time: ${Math.floor(initialTime / 60)}m ${Math.floor(initialTime % 60)}s\n`;
+      if (activeLesson.description)
+        context += `- Lesson Details: "${activeLesson.description}"\n`;
     }
 
     // Lessons list
@@ -441,94 +587,106 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
   }, [course, activeLesson, allLessons, currentVideoPct, initialTime, isHindi]);
 
   // Send message handler
-  const handleSendMessage = useCallback(async (promptText) => {
-    const textToSend = promptText || inputQuery;
-    if (!textToSend || !textToSend.trim() || isAiLoading) return;
+  const handleSendMessage = useCallback(
+    async (promptText) => {
+      const textToSend = promptText || inputQuery;
+      if (!textToSend || !textToSend.trim() || isAiLoading) return;
 
-    const userPrompt = textToSend.trim();
-    const newMsgId = Date.now().toString();
-    const userMsg = { id: newMsgId, role: "user", content: userPrompt };
+      const userPrompt = textToSend.trim();
+      const newMsgId = Date.now().toString();
+      const userMsg = { id: newMsgId, role: "user", content: userPrompt };
 
-    const updatedMessages = [...chatMessages, userMsg];
-    setChatMessages(updatedMessages);
-    setInputQuery("");
-    setIsAiLoading(true);
+      const updatedMessages = [...chatMessages, userMsg];
+      setChatMessages(updatedMessages);
+      setInputQuery("");
+      setIsAiLoading(true);
 
-    const aiMsgId = (Date.now() + 1).toString();
-    setChatMessages((prev) => [...prev, { id: aiMsgId, role: "assistant", content: "" }]);
+      const aiMsgId = (Date.now() + 1).toString();
+      setChatMessages((prev) => [
+        ...prev,
+        { id: aiMsgId, role: "assistant", content: "" },
+      ]);
 
-    try {
-      const systemContext = buildSystemContext();
+      try {
+        const systemContext = buildSystemContext();
 
-      const apiHistory = [
-        { role: "system", content: systemContext },
-        ...updatedMessages.slice(-10).map((m) => ({
-          role: m.role === "assistant" ? "assistant" : "user",
-          content: m.content,
-        })),
-      ];
+        const apiHistory = [
+          { role: "system", content: systemContext },
+          ...updatedMessages.slice(-10).map((m) => ({
+            role: m.role === "assistant" ? "assistant" : "user",
+            content: m.content,
+          })),
+        ];
 
-      const res = await fetch(`${API_BASE_URL}/ai/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          messages: apiHistory,
-          language: getAiLanguageName(i18n.language),
-          userRole: "student",
-        }),
-      });
+        const authToken = localStorage.getItem("authToken");
+        const res = await fetch(`${API_BASE_URL}/ai/chat`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            messages: apiHistory,
+            language: getAiLanguageName(i18n.language),
+            userRole: "student",
+          }),
+        });
 
-      if (!res.ok) throw new Error("Failed to connect to AI service.");
+        if (!res.ok) throw new Error("Failed to connect to AI service.");
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = "";
-      let fullText = "";
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = "";
+        let fullText = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        const lines = buf.split("\n");
-        buf = lines.pop() ?? "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split("\n");
+          buf = lines.pop() ?? "";
 
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          const payload = line.slice(6).trim();
-          if (payload === "[DONE]") break;
-          try {
-            const { text: chunk, error: err } = JSON.parse(payload);
-            if (err) throw new Error(err);
-            if (chunk) {
-              fullText += chunk;
-              setChatMessages((prev) =>
-                prev.map((msg) => (msg.id === aiMsgId ? { ...msg, content: fullText } : msg))
-              );
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const payload = line.slice(6).trim();
+            if (payload === "[DONE]") break;
+            try {
+              const { text: chunk, error: err } = JSON.parse(payload);
+              if (err) throw new Error(err);
+              if (chunk) {
+                fullText += chunk;
+                setChatMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === aiMsgId ? { ...msg, content: fullText } : msg,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (e.name !== "SyntaxError") throw e;
             }
-          } catch (e) {
-            if (e.name !== "SyntaxError") throw e;
           }
         }
+      } catch (err) {
+        console.error("Course AI Error:", err);
+        setChatMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === aiMsgId
+              ? {
+                  ...msg,
+                  content: isHindi
+                    ? "क्षमा करें, AI उत्तर उत्पन्न करने में त्रुटि हुई। कृपया पुनः प्रयास करें।"
+                    : "Sorry, I ran into an error generating the response. Please try again.",
+                }
+              : msg,
+          ),
+        );
+      } finally {
+        setIsAiLoading(false);
       }
-    } catch (err) {
-      console.error("Course AI Error:", err);
-      setChatMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === aiMsgId
-            ? {
-              ...msg,
-              content: isHindi
-                ? "क्षमा करें, AI उत्तर उत्पन्न करने में त्रुटि हुई। कृपया पुनः प्रयास करें।"
-                : "Sorry, I ran into an error generating the response. Please try again.",
-            }
-            : msg
-        )
-      );
-    } finally {
-      setIsAiLoading(false);
-    }
-  }, [inputQuery, isAiLoading, chatMessages, buildSystemContext, isHindi]);
+    },
+    [inputQuery, isAiLoading, chatMessages, buildSystemContext, isHindi],
+  );
 
   const onComposerKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -557,7 +715,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
         if (e.pointerId !== undefined && target.setPointerCapture) {
           target.setPointerCapture(e.pointerId);
         }
-      } catch (err) { }
+      } catch (err) {}
 
       setIsDraggingChat(true);
 
@@ -580,7 +738,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
           if (upEvent.pointerId !== undefined && target.releasePointerCapture) {
             target.releasePointerCapture(upEvent.pointerId);
           }
-        } catch (err) { }
+        } catch (err) {}
         target.removeEventListener("pointermove", handleMove);
         target.removeEventListener("pointerup", handleUp);
         target.removeEventListener("pointercancel", handleUp);
@@ -605,7 +763,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
       window.addEventListener("touchmove", handleMove, { passive: false });
       window.addEventListener("touchend", handleUp);
     },
-    [chatPos]
+    [chatPos],
   );
 
   // Dragging logic for avatar launcher container
@@ -629,7 +787,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
         if (e.pointerId !== undefined && target.setPointerCapture) {
           target.setPointerCapture(e.pointerId);
         }
-      } catch (err) { }
+      } catch (err) {}
 
       setIsDraggingAvatar(true);
 
@@ -656,7 +814,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
           if (upEvent.pointerId !== undefined && target.releasePointerCapture) {
             target.releasePointerCapture(upEvent.pointerId);
           }
-        } catch (err) { }
+        } catch (err) {}
         target.removeEventListener("pointermove", handleMove);
         target.removeEventListener("pointerup", handleUp);
         target.removeEventListener("pointercancel", handleUp);
@@ -685,7 +843,7 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
       window.addEventListener("touchmove", handleMove, { passive: false });
       window.addEventListener("touchend", handleUp);
     },
-    [avatarPos]
+    [avatarPos],
   );
 
   const quickPrompts = useMemo(() => {
@@ -704,11 +862,11 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
     ];
   }, [course, activeLesson, isHindi]);
 
-  const isChatRoute = typeof window !== "undefined" && (
-    window.location.pathname.includes("ask") ||
-    window.location.pathname.includes("chat") ||
-    window.location.pathname.includes("queries")
-  );
+  const isChatRoute =
+    typeof window !== "undefined" &&
+    (window.location.pathname.includes("ask") ||
+      window.location.pathname.includes("chat") ||
+      window.location.pathname.includes("queries"));
 
   if (isNoteModalOpen || isChatRoute) return null;
 
@@ -753,9 +911,19 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
           ref={avatarBtnRef}
           onPointerDown={handleAvatarPointerDown}
           onTouchStart={handleAvatarPointerDown}
-          style={avatarPos ? { left: `${avatarPos.x}px`, top: `${avatarPos.y}px`, right: "auto", bottom: "auto" } : {}}
-          className={`fixed z-50 flex items-center gap-2 sm:gap-3 select-none touch-none cursor-grab active:cursor-grabbing group motion-safe:animate-cloudFloat ${!avatarPos ? "bottom-28 right-3 sm:bottom-6 sm:right-6" : ""
-            }`}
+          style={
+            avatarPos
+              ? {
+                  left: `${avatarPos.x}px`,
+                  top: `${avatarPos.y}px`,
+                  right: "auto",
+                  bottom: "auto",
+                }
+              : {}
+          }
+          className={`fixed z-50 flex items-center gap-2 sm:gap-3 select-none touch-none cursor-grab active:cursor-grabbing group motion-safe:animate-cloudFloat ${
+            !avatarPos ? "bottom-28 right-3 sm:bottom-6 sm:right-6" : ""
+          }`}
         >
           {/* Cloud Speech Bubble Comment ("Ask AI") */}
           <button
@@ -774,8 +942,12 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
               {activeLesson?.title
                 ? `Ask about "${activeLesson.title}"`
                 : course?.title
-                  ? isHindi ? "वीडियो और नोट्स से सवाल पूछें" : "Ask about videos & notes"
-                  : isHindi ? "डैशबोर्ड व स्टडी से सवाल पूछें" : "Ask about dashboard & study"}
+                  ? isHindi
+                    ? "वीडियो और नोट्स से सवाल पूछें"
+                    : "Ask about videos & notes"
+                  : isHindi
+                    ? "डैशबोर्ड व स्टडी से सवाल पूछें"
+                    : "Ask about dashboard & study"}
             </span>
 
             {/* Pointer tail pointing right to avatar (desktop only) */}
@@ -787,8 +959,9 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
             type="button"
             onClick={() => setIsOpen(true)}
             aria-label="Open AI Assistant"
-            className={`flex relative items-center justify-center cursor-pointer border-none bg-transparent p-0 transition-transform duration-300 hover:scale-110 active:scale-95 ${isDraggingAvatar ? "scale-110" : ""
-              }`}
+            className={`flex relative items-center justify-center cursor-pointer border-none bg-transparent p-0 transition-transform duration-300 hover:scale-110 active:scale-95 ${
+              isDraggingAvatar ? "scale-110" : ""
+            }`}
           >
             <RobotAvatar size="lg" />
           </button>
@@ -799,9 +972,19 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
       {isOpen && (
         <div
           ref={chatCardRef}
-          style={chatPos ? { left: `${chatPos.x}px`, top: `${chatPos.y}px`, right: "auto", bottom: "auto" } : {}}
-          className={`fixed z-50 w-[calc(100vw-2rem)] sm:w-[390px] lg:w-[420px] h-[540px] max-h-[80vh] flex flex-col bg-[#080f0c] border border-teal-500/30 rounded-3xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden transition-shadow ${!chatPos ? "bottom-20 right-4 sm:bottom-6 sm:right-6" : ""
-            } ${isDraggingChat ? "ring-2 ring-teal-400 shadow-[0_30px_90px_rgba(20,184,166,0.35)]" : "motion-safe:animate-popIn"}`}
+          style={
+            chatPos
+              ? {
+                  left: `${chatPos.x}px`,
+                  top: `${chatPos.y}px`,
+                  right: "auto",
+                  bottom: "auto",
+                }
+              : {}
+          }
+          className={`fixed z-50 w-[calc(100vw-2rem)] sm:w-[390px] lg:w-[420px] h-[540px] max-h-[80vh] flex flex-col bg-[#080f0c] border border-teal-500/30 rounded-3xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden transition-shadow ${
+            !chatPos ? "bottom-20 right-4 sm:bottom-6 sm:right-6" : ""
+          } ${isDraggingChat ? "ring-2 ring-teal-400 shadow-[0_30px_90px_rgba(20,184,166,0.35)]" : "motion-safe:animate-popIn"}`}
         >
           {/* Header */}
           <div
@@ -814,19 +997,30 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
               <RobotAvatar size="md" className="w-9 h-9 shrink-0" />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <GripHorizontal size={14} className="text-teal-400/70 shrink-0" />
+                  <GripHorizontal
+                    size={14}
+                    className="text-teal-400/70 shrink-0"
+                  />
                   <h3 className="font-display text-xs sm:text-sm font-semibold text-white truncate tracking-wide">
                     {course
-                      ? (isHindi ? "Ask AI · AI कोर्स गाइड" : "Ask AI · Course AI Guide")
-                      : (isHindi ? "Ask AI · AI एकेडमी गाइड" : "Ask AI · Academy AI Guide")}
+                      ? isHindi
+                        ? "Ask AI · AI कोर्स गाइड"
+                        : "Ask AI · Course AI Guide"
+                      : isHindi
+                        ? "Ask AI · AI एकेडमी गाइड"
+                        : "Ask AI · Academy AI Guide"}
                   </h3>
                 </div>
                 <p className="text-[10px] sm:text-[11px] text-teal-300/80 truncate font-medium">
                   {activeLesson?.title
                     ? `${activeLesson.title}`
                     : course?.title
-                      ? (isHindi ? "वीडियो और नोट्स से मदद पाएं" : "Context from course videos & notes")
-                      : (isHindi ? "डैशबोर्ड फीचर्स व स्टडी से मदद पाएं" : "Dashboard features, courses & study guide")}
+                      ? isHindi
+                        ? "वीडियो और नोट्स से मदद पाएं"
+                        : "Context from course videos & notes"
+                      : isHindi
+                        ? "डैशबोर्ड फीचर्स व स्टडी से मदद पाएं"
+                        : "Dashboard features, courses & study guide"}
                 </p>
               </div>
             </div>
@@ -846,12 +1040,12 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
                       id: "welcome",
                       role: "assistant",
                       content: course
-                        ? (isHindi
-                            ? `☁️ **${course.title || "इस कोर्स"}** के बारे में मुझसे कुछ भी पूछें!`
-                            : `☁️ Ask me anything about **${course.title || "this course"}**!`)
-                        : (isHindi
-                            ? `✨ नमस्ते! मैं आपका **AI एकेडमी गाइड** हूँ!\n\nआप मुझसे स्टूडेंट डैशबोर्ड के किसी भी फीचर या पढ़ाई से जुड़ा कोई भी सवाल पूछ सकते हैं!`
-                            : `✨ Hi! I'm your **AI Academy Guide**!\n\nYou can ask me about any feature on the Student Dashboard or any study question!`),
+                        ? isHindi
+                          ? `☁️ **${course.title || "इस कोर्स"}** के बारे में मुझसे कुछ भी पूछें!`
+                          : `☁️ Ask me anything about **${course.title || "this course"}**!`
+                        : isHindi
+                          ? `✨ नमस्ते! मैं आपका **AI एकेडमी गाइड** हूँ!\n\nआप मुझसे स्टूडेंट डैशबोर्ड के किसी भी फीचर या पढ़ाई से जुड़ा कोई भी सवाल पूछ सकते हैं!`
+                          : `✨ Hi! I'm your **AI Academy Guide**!\n\nYou can ask me about any feature on the Student Dashboard or any study question!`,
                     },
                   ]);
                 }}
@@ -862,12 +1056,12 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
                       id: "welcome",
                       role: "assistant",
                       content: course
-                        ? (isHindi
-                            ? `☁️ **${course.title || "इस कोर्स"}** के बारे में मुझसे कुछ भी पूछें!`
-                            : `☁️ Ask me anything about **${course.title || "this course"}**!`)
-                        : (isHindi
-                            ? `✨ नमस्ते! मैं आपका **AI एकेडमी गाइड** हूँ!\n\nआप मुझसे स्टूडेंट डैशबोर्ड के किसी भी फीचर या पढ़ाई से जुड़ा कोई भी सवाल पूछ सकते हैं!`
-                            : `✨ Hi! I'm your **AI Academy Guide**!\n\nYou can ask me about any feature on the Student Dashboard or any study question!`),
+                        ? isHindi
+                          ? `☁️ **${course.title || "इस कोर्स"}** के बारे में मुझसे कुछ भी पूछें!`
+                          : `☁️ Ask me anything about **${course.title || "this course"}**!`
+                        : isHindi
+                          ? `✨ नमस्ते! मैं आपका **AI एकेडमी गाइड** हूँ!\n\nआप मुझसे स्टूडेंट डैशबोर्ड के किसी भी फीचर या पढ़ाई से जुड़ा कोई भी सवाल पूछ सकते हैं!`
+                          : `✨ Hi! I'm your **AI Academy Guide**!\n\nYou can ask me about any feature on the Student Dashboard or any study question!`,
                     },
                   ]);
                 }}
@@ -903,7 +1097,9 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
                 ) : (
                   <FileText size={13} className="text-emerald-400 shrink-0" />
                 )}
-                <span className="truncate font-medium">{activeLesson.title}</span>
+                <span className="truncate font-medium">
+                  {activeLesson.title}
+                </span>
               </div>
               {currentVideoPct > 0 && (
                 <span className="font-mono-catalog text-[10px] text-teal-300 shrink-0 ml-2">
@@ -924,10 +1120,11 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
                   <RobotAvatar size="sm" className="w-7 h-7 shrink-0 mt-0.5" />
                 )}
                 <div
-                  className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm shadow-sm relative ${msg.role === "user"
-                    ? "bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-br-none"
-                    : "bg-[#0e1815] text-slate-200 border border-teal-500/20 rounded-bl-none"
-                    }`}
+                  className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm shadow-sm relative ${
+                    msg.role === "user"
+                      ? "bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-br-none"
+                      : "bg-[#0e1815] text-slate-200 border border-teal-500/20 rounded-bl-none"
+                  }`}
                 >
                   {msg.role === "assistant" && !msg.content ? (
                     <div className="flex items-center gap-2">
@@ -952,20 +1149,23 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
           </div>
 
           {/* Quick prompts suggestions (only inside course and if few messages) */}
-          {course && quickPrompts.length > 0 && chatMessages.length <= 2 && !isAiLoading && (
-            <div className="px-3 py-2 bg-[#08130f] border-t border-teal-500/15 flex flex-wrap gap-1.5 shrink-0">
-              {quickPrompts.map((qp, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleSendMessage(qp)}
-                  className="text-[11px] bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 hover:border-teal-400/60 text-teal-300 px-2.5 py-1 rounded-full text-left transition-colors truncate max-w-full font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50"
-                >
-                  ✨ {qp}
-                </button>
-              ))}
-            </div>
-          )}
+          {course &&
+            quickPrompts.length > 0 &&
+            chatMessages.length <= 2 &&
+            !isAiLoading && (
+              <div className="px-3 py-2 bg-[#08130f] border-t border-teal-500/15 flex flex-wrap gap-1.5 shrink-0">
+                {quickPrompts.map((qp, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSendMessage(qp)}
+                    className="text-[11px] bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 hover:border-teal-400/60 text-teal-300 px-2.5 py-1 rounded-full text-left transition-colors truncate max-w-full font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50"
+                  >
+                    ✨ {qp}
+                  </button>
+                ))}
+              </div>
+            )}
 
           {/* Composer */}
           <form
@@ -981,12 +1181,12 @@ STUDENT DASHBOARD FEATURES YOU CAN HELP WITH & EXPLAIN:
                 rows={1}
                 placeholder={
                   course
-                    ? (isHindi
-                        ? "AI से सवाल पूछें (वीडियो, नोट्स)..."
-                        : "Ask AI about videos, notes...")
-                    : (isHindi
-                        ? "AI एकेडमी गाइड से सवाल पूछें..."
-                        : "Ask AI about dashboard, courses, study...")
+                    ? isHindi
+                      ? "AI से सवाल पूछें (वीडियो, नोट्स)..."
+                      : "Ask AI about videos, notes..."
+                    : isHindi
+                      ? "AI एकेडमी गाइड से सवाल पूछें..."
+                      : "Ask AI about dashboard, courses, study..."
                 }
                 value={inputQuery}
                 onChange={(e) => setInputQuery(e.target.value)}

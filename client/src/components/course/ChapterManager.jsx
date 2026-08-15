@@ -336,8 +336,14 @@ const VideoUploadCell = ({ value, onUploaded, videoType = "video" }) => {
             <span style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
               Click or drag &amp; drop {isAnimated ? "Animated Video" : "Video"}
             </span>
-            <span style={{ fontSize: 11, color: isAnimated ? "#f472b6" : "#475569" }}>
-              MP4, WEBM — max 200 MB · Label: {isAnimated ? "Animated Video" : "Video"}
+            <span
+              style={{
+                fontSize: 11,
+                color: isAnimated ? "#f472b6" : "#475569",
+              }}
+            >
+              MP4, WEBM — max 200 MB · Label:{" "}
+              {isAnimated ? "Animated Video" : "Video"}
             </span>
           </>
         )}
@@ -375,12 +381,12 @@ const TextLessonEditor = ({
     setAiGenerating(true);
     setAiError("");
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("authToken");
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
         body: JSON.stringify({
@@ -1047,7 +1053,9 @@ export default function ChapterManager({
                         {!isText && (
                           <VideoTypeToggle
                             value={lesson.videoType || "video"}
-                            onChange={(vt) => updateLesson(ci, li, "videoType", vt)}
+                            onChange={(vt) =>
+                              updateLesson(ci, li, "videoType", vt)
+                            }
                           />
                         )}
                         <button

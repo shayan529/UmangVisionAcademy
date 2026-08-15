@@ -14,7 +14,10 @@ import {
 } from "../../redux/slices/aiTutorSlice.js";
 import { useTranslation } from "react-i18next";
 import { API_BASE_URL } from "../../config/api.js";
-import { getAiLanguageName, getTtsLanguageCode } from "../../utils/aiLanguage.js";
+import {
+  getAiLanguageName,
+  getTtsLanguageCode,
+} from "../../utils/aiLanguage.js";
 
 // ── Theme tokens ─────────────────────────────────────────────────────────────
 const DARK = {
@@ -365,7 +368,7 @@ const IconBtn = ({ onClick, title, children, color, t }) => (
       transition: "color .15s, background .15s",
     }}
     onMouseEnter={(e) => {
-    e.currentTarget.style.color = t.text;
+      e.currentTarget.style.color = t.text;
       e.currentTarget.style.background = t.iconHoverBg;
     }}
     onMouseLeave={(e) => {
@@ -658,7 +661,10 @@ export default function MobileChat() {
         activeIdRef.current = newActiveId;
 
         if (Array.isArray(persisted.messages)) {
-          dispatch({ type: "aiTutor/setMessages", payload: persisted.messages });
+          dispatch({
+            type: "aiTutor/setMessages",
+            payload: persisted.messages,
+          });
         } else if (newActiveId) {
           const restoredSession = persisted.sessions.find(
             (s) => s.id === newActiveId,
@@ -920,9 +926,13 @@ export default function MobileChat() {
           mode === "voice"
             ? getAiLanguageName(voiceLang)
             : getAiLanguageName(i18n.language);
+        const authToken = localStorage.getItem("authToken");
         const res = await fetch(`${baseUrl}/ai/chat`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
           body: JSON.stringify({
             messages: history,
             language: requestedLanguage,
@@ -980,8 +990,6 @@ export default function MobileChat() {
     [input, messages, streaming, mode, voiceLang, dispatch, i18n.language],
   );
 
-
-
   const speak = useCallback(
     (text) =>
       new Promise((resolve) => {
@@ -1000,9 +1008,7 @@ export default function MobileChat() {
           const langPrefix = targetLang.split("-")[0];
           return (
             voices.find((v) => v.lang === targetLang) ||
-            voices.find((v) =>
-              v.lang?.toLowerCase().startsWith(langPrefix),
-            ) ||
+            voices.find((v) => v.lang?.toLowerCase().startsWith(langPrefix)) ||
             null
           );
         };
@@ -1069,7 +1075,8 @@ export default function MobileChat() {
         aborted: null,
       };
       const m = map[e.error];
-      if (m !== null && m !== undefined) dispatch(setError(m ?? `Voice error: ${e.error}`));
+      if (m !== null && m !== undefined)
+        dispatch(setError(m ?? `Voice error: ${e.error}`));
       if (e.error === "not-allowed" || e.error === "audio-capture") {
         voiceActiveRef.current = false;
         clearSilenceTimer();

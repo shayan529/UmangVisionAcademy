@@ -13,7 +13,10 @@ import {
 } from "../../redux/slices/aiTutorSlice.js";
 import { useTranslation } from "react-i18next";
 import { API_BASE_URL } from "../../config/api.js";
-import { getAiLanguageName, getTtsLanguageCode } from "../../utils/aiLanguage.js";
+import {
+  getAiLanguageName,
+  getTtsLanguageCode,
+} from "../../utils/aiLanguage.js";
 
 // ── Theme tokens ─────────────────────────────────────────────────────────────
 const DARK = {
@@ -798,9 +801,13 @@ export default function AITutor() {
           mode === "voice"
             ? getAiLanguageName(voiceLang)
             : getAiLanguageName(i18n.language);
+        const authToken = localStorage.getItem("authToken");
         const res = await fetch(`${baseUrl}/ai/chat`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
           body: JSON.stringify({
             messages: history,
             language: requestedLanguage,
@@ -858,8 +865,6 @@ export default function AITutor() {
     [input, messages, streaming, mode, voiceLang, dispatch, i18n.language],
   );
 
-
-
   const speak = useCallback(
     (text) =>
       new Promise((resolve) => {
@@ -878,9 +883,7 @@ export default function AITutor() {
           const langPrefix = targetLang.split("-")[0];
           return (
             voices.find((v) => v.lang === targetLang) ||
-            voices.find((v) =>
-              v.lang?.toLowerCase().startsWith(langPrefix),
-            ) ||
+            voices.find((v) => v.lang?.toLowerCase().startsWith(langPrefix)) ||
             null
           );
         };
@@ -947,7 +950,8 @@ export default function AITutor() {
         aborted: null,
       };
       const m = map[e.error];
-      if (m !== null && m !== undefined) dispatch(setError(m ?? `Voice error: ${e.error}`));
+      if (m !== null && m !== undefined)
+        dispatch(setError(m ?? `Voice error: ${e.error}`));
       if (e.error === "not-allowed" || e.error === "audio-capture") {
         voiceActiveRef.current = false;
         clearSilenceTimer();
