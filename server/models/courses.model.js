@@ -110,6 +110,7 @@ const courseSchema = new Schema(
         description: { type: String, trim: true, default: "" },
         fileUrl: { type: String, required: true },
         subject: { type: String, trim: true, default: "" },
+        chapterTitle: { type: String, trim: true, default: "" },
         // Every note starts "pending" and only becomes visible to students
         // once an admin/moderator approves it (see note.controller.js).
         status: {
@@ -119,7 +120,7 @@ const courseSchema = new Schema(
         },
         rejectedReason: { type: String, default: "" },
         createdAt: { type: Date, default: Date.now },
-      }
+      },
     ],
   },
   { timestamps: true },

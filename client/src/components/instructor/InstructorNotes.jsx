@@ -115,7 +115,16 @@ export default function InstructorNotes({ showToast }) {
     return result;
   }, [notes, statusFilter, searchQuery, selectedSubject, sortBy]);
 
-  const [form, setForm] = useState({ title: "", description: "", fileUrl: "", instructorId: "", courseId: "" });
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    fileUrl: "",
+    instructorId: "",
+    courseId: "",
+    subject: "",
+    chapterTitle: "Chapter 1: Study Notes",
+    addToCurriculum: true,
+  });
 
   const [courseSearch, setCourseSearch] = useState("");
   const [courseInstructor, setCourseInstructor] = useState("");
@@ -123,16 +132,16 @@ export default function InstructorNotes({ showToast }) {
   const [courseClass, setCourseClass] = useState("");
 
   // Derived filter options for courses
-  const uniqueCourseSubjects = [...new Set(courses.map(c => c.category).filter(Boolean))];
-  const uniqueCourseClasses = [...new Set(courses.map(c => c.board).filter(Boolean))]; // assuming 'board' or 'category' might be used for classes, or we just map everything to category
-  const uniqueCourseInstructors = [...new Set(courses.map(c => c.instructor?.name || c.instructor?.email).filter(Boolean))];
+  const uniqueCourseSubjects = [...new Set(courses.map((c) => c.category).filter(Boolean))];
+  const uniqueCourseClasses = [...new Set(courses.map((c) => c.board).filter(Boolean))];
+  const uniqueCourseInstructors = [...new Set(courses.map((c) => c.instructor?.name || c.instructor?.email).filter(Boolean))];
 
   const filteredCourses = courses.filter((c) => {
     const q = courseSearch.toLowerCase();
     const matchesSearch = c.title?.toLowerCase().includes(q);
     const matchesInstructor = courseInstructor ? (c.instructor?.name === courseInstructor || c.instructor?.email === courseInstructor) : true;
     const matchesSubject = courseSubject ? c.category === courseSubject : true;
-    const matchesClass = courseClass ? c.board === courseClass : true; // Assuming class maps to board, wait let's adjust this later if needed
+    const matchesClass = courseClass ? c.board === courseClass : true;
     return matchesSearch && matchesInstructor && matchesSubject && matchesClass;
   });
 
@@ -384,6 +393,9 @@ export default function InstructorNotes({ showToast }) {
     fileUrl: "",
     courseId: "",
     instructorId: "",
+    subject: "",
+    chapterTitle: "Chapter 1: Study Notes",
+    addToCurriculum: true,
   });
   const [editCourseSearch, setEditCourseSearch] = useState("");
   const [editCourseSubject, setEditCourseSubject] = useState("");
@@ -397,10 +409,14 @@ export default function InstructorNotes({ showToast }) {
   // ── Batch Assign Course State ──
   const [showBatchAssignModal, setShowBatchAssignModal] = useState(false);
   const [batchTargetCourseId, setBatchTargetCourseId] = useState("");
+  const [batchSubject, setBatchSubject] = useState("");
+  const [batchChapterTitle, setBatchChapterTitle] = useState("Chapter 1: Study Notes");
+  const [batchAddToCurriculum, setBatchAddToCurriculum] = useState(true);
   const [batchAssigning, setBatchAssigning] = useState(false);
 
   const handleEditClick = (note) => {
     setEditingNote(note);
+    const targetCourse = courses.find((c) => c._id === note.courseId);
     setEditForm({
       title: note.title || "",
       description: note.description || "",
@@ -408,6 +424,9 @@ export default function InstructorNotes({ showToast }) {
       courseId: note.courseId || "",
       instructorId:
         (typeof note.instructor === "object" ? note.instructor?._id : note.instructor) || "",
+      subject: note.subject || targetCourse?.category || "",
+      chapterTitle: note.chapterTitle || "Chapter 1: Study Notes",
+      addToCurriculum: true,
     });
     setEditCourseSearch("");
     setEditCourseSubject("");
@@ -477,6 +496,9 @@ export default function InstructorNotes({ showToast }) {
         fileUrl: editForm.fileUrl,
         courseId: editForm.courseId || "",
         instructorId: editForm.instructorId || undefined,
+        subject: editForm.subject?.trim() || "",
+        chapterTitle: editForm.chapterTitle?.trim() || "Chapter 1: Study Notes",
+        addToCurriculum: editForm.addToCurriculum !== false,
         source: editingNote.source || (editingNote.courseId ? "course" : "standalone"),
       };
 
@@ -487,6 +509,11 @@ export default function InstructorNotes({ showToast }) {
         );
         showToast?.(data.message || "Note updated successfully!");
         closeEditModal();
+        if (isAdmin) {
+          dispatch(fetchAllCoursesAdmin());
+        } else {
+          dispatch(fetchCourses());
+        }
       } else {
         showToast?.(data.message || "Note updated");
         fetchNotes();
@@ -507,12 +534,20 @@ export default function InstructorNotes({ showToast }) {
       const { data } = await api.post("/notes/bulk-assign-course", {
         noteIds: selectedNoteIds,
         targetCourseId: batchTargetCourseId || "standalone",
+        subject: batchSubject?.trim() || "",
+        chapterTitle: batchChapterTitle?.trim() || "Chapter 1: Study Notes",
+        addToCurriculum: batchAddToCurriculum !== false,
       });
 
       showToast?.(data.message || "Notes assigned successfully!");
       setSelectedNoteIds([]);
       setShowBatchAssignModal(false);
       fetchNotes();
+      if (isAdmin) {
+        dispatch(fetchAllCoursesAdmin());
+      } else {
+        dispatch(fetchCourses());
+      }
     } catch (err) {
       console.error("Bulk assign course error:", err);
       showToast?.(err.response?.data?.message || "Failed to assign notes to course");
@@ -520,6 +555,97 @@ export default function InstructorNotes({ showToast }) {
       setBatchAssigning(false);
     }
   };
+
+  // Target course currently selected in Edit Modal
+  const editTargetCourse = useMemo(() => {
+    return courses.find((c) => c._id === editForm.courseId);
+  }, [courses, editForm.courseId]);
+
+  const editCourseAvailableSubjects = useMemo(() => {
+    if (!editTargetCourse) return [];
+    const set = new Set();
+    if (editTargetCourse.category) set.add(editTargetCourse.category);
+    if (Array.isArray(editTargetCourse.subjectDetails)) {
+      editTargetCourse.subjectDetails.forEach((s) => s.subject && set.add(s.subject));
+    }
+    if (Array.isArray(editTargetCourse.lessons)) {
+      editTargetCourse.lessons.forEach((l) => l.subject && set.add(l.subject));
+    }
+    if (Array.isArray(editTargetCourse.tags)) {
+      editTargetCourse.tags.forEach((t) => t && set.add(t));
+    }
+    return Array.from(set).filter(Boolean);
+  }, [editTargetCourse]);
+
+  const editCourseAvailableChapters = useMemo(() => {
+    if (!editTargetCourse || !Array.isArray(editTargetCourse.lessons)) return [];
+    const set = new Set();
+    editTargetCourse.lessons.forEach((l) => {
+      if (l.chapterTitle) {
+        if (!editForm.subject || !l.subject || l.subject.toLowerCase() === editForm.subject.toLowerCase()) {
+          set.add(l.chapterTitle);
+        }
+      }
+    });
+    return Array.from(set).filter(Boolean);
+  }, [editTargetCourse, editForm.subject]);
+
+  const uploadTargetCourse = useMemo(() => {
+    return courses.find((c) => c._id === form.courseId);
+  }, [courses, form.courseId]);
+
+  const uploadAvailableSubjects = useMemo(() => {
+    if (!uploadTargetCourse) return [];
+    const set = new Set();
+    if (uploadTargetCourse.category) set.add(uploadTargetCourse.category);
+    if (Array.isArray(uploadTargetCourse.subjectDetails)) {
+      uploadTargetCourse.subjectDetails.forEach((s) => s.subject && set.add(s.subject));
+    }
+    if (Array.isArray(uploadTargetCourse.lessons)) {
+      uploadTargetCourse.lessons.forEach((l) => l.subject && set.add(l.subject));
+    }
+    return Array.from(set).filter(Boolean);
+  }, [uploadTargetCourse]);
+
+  const uploadAvailableChapters = useMemo(() => {
+    if (!uploadTargetCourse || !Array.isArray(uploadTargetCourse.lessons)) return [];
+    const set = new Set();
+    uploadTargetCourse.lessons.forEach((l) => {
+      if (l.chapterTitle) {
+        if (!form.subject || !l.subject || l.subject.toLowerCase() === form.subject.toLowerCase()) {
+          set.add(l.chapterTitle);
+        }
+      }
+    });
+    return Array.from(set).filter(Boolean);
+  }, [uploadTargetCourse, form.subject]);
+
+  const batchTargetCourse = useMemo(() => {
+    return courses.find((c) => c._id === batchTargetCourseId);
+  }, [courses, batchTargetCourseId]);
+
+  const batchAvailableSubjects = useMemo(() => {
+    if (!batchTargetCourse) return [];
+    const set = new Set();
+    if (batchTargetCourse.category) set.add(batchTargetCourse.category);
+    if (Array.isArray(batchTargetCourse.lessons)) {
+      batchTargetCourse.lessons.forEach((l) => l.subject && set.add(l.subject));
+    }
+    return Array.from(set).filter(Boolean);
+  }, [batchTargetCourse]);
+
+  const batchAvailableChapters = useMemo(() => {
+    if (!batchTargetCourse || !Array.isArray(batchTargetCourse.lessons)) return [];
+    const set = new Set();
+    batchTargetCourse.lessons.forEach((l) => {
+      if (l.chapterTitle) {
+        if (!batchSubject || !l.subject || l.subject.toLowerCase() === batchSubject.toLowerCase()) {
+          set.add(l.chapterTitle);
+        }
+      }
+    });
+    return Array.from(set).filter(Boolean);
+  }, [batchTargetCourse, batchSubject]);
 
   const filteredEditCourses = useMemo(() => {
     return courses.filter((c) => {
@@ -926,10 +1052,24 @@ export default function InstructorNotes({ showToast }) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <h4 className="truncate text-[15px] font-bold text-slate-100">{note.title}</h4>
-                    <span className="text-[11px] text-slate-500">
+                    <span className="text-[11px] text-slate-500 block truncate">
                       {new Date(note.createdAt).toLocaleDateString()}
                       {note.courseTitle ? ` · ${note.courseTitle}` : " · General upload"}
                     </span>
+                    {(note.subject || note.chapterTitle) && (
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        {note.subject && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-500/10 text-violet-300 border border-violet-500/20 truncate max-w-[150px]">
+                            {note.subject}
+                          </span>
+                        )}
+                        {note.chapterTitle && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700 truncate max-w-[180px]">
+                            {note.chapterTitle}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1075,7 +1215,15 @@ export default function InstructorNotes({ showToast }) {
 
                     <select
                       value={form.courseId}
-                      onChange={(e) => setForm({ ...form, courseId: e.target.value })}
+                      onChange={(e) => {
+                        const newCourseId = e.target.value;
+                        const c = courses.find((crs) => crs._id === newCourseId);
+                        setForm({
+                          ...form,
+                          courseId: newCourseId,
+                          subject: form.subject || c?.category || "",
+                        });
+                      }}
                       className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3.5 py-2 text-sm text-slate-100 outline-none focus:border-violet-600"
                     >
                       <option value="">-- No Course (Standalone Note) --</option>
@@ -1085,6 +1233,59 @@ export default function InstructorNotes({ showToast }) {
                         </option>
                       ))}
                     </select>
+
+                    {form.courseId && (
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-700/60">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1">
+                            Subject / Category in Course
+                          </label>
+                          <input
+                            type="text"
+                            list="upload-subjects-list"
+                            value={form.subject}
+                            onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                            placeholder="e.g. Accounts, Physics..."
+                            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-100 outline-none focus:border-violet-600"
+                          />
+                          <datalist id="upload-subjects-list">
+                            {uploadAvailableSubjects.map((s, idx) => (
+                              <option key={idx} value={s} />
+                            ))}
+                          </datalist>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1">
+                            Chapter / Unit in Course
+                          </label>
+                          <input
+                            type="text"
+                            list="upload-chapters-list"
+                            value={form.chapterTitle}
+                            onChange={(e) => setForm({ ...form, chapterTitle: e.target.value })}
+                            placeholder="e.g. Chapter 1: Introduction..."
+                            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-100 outline-none focus:border-violet-600"
+                          />
+                          <datalist id="upload-chapters-list">
+                            {uploadAvailableChapters.map((ch, idx) => (
+                              <option key={idx} value={ch} />
+                            ))}
+                          </datalist>
+                        </div>
+                        <div className="sm:col-span-2 flex items-center gap-2 mt-1">
+                          <input
+                            type="checkbox"
+                            id="upload-add-curriculum"
+                            checked={form.addToCurriculum}
+                            onChange={(e) => setForm({ ...form, addToCurriculum: e.target.checked })}
+                            className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                          />
+                          <label htmlFor="upload-add-curriculum" className="text-xs text-slate-300 cursor-pointer select-none">
+                            Also insert note into course curriculum / lessons under this chapter
+                          </label>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -1291,48 +1492,50 @@ export default function InstructorNotes({ showToast }) {
                   setIsBulkDragging(false);
                   if (!bulkUploading) handleBulkFilesSelect(e.dataTransfer.files);
                 }}
-                className={`rounded-2xl border-2 border-dashed p-8 text-center transition-colors cursor-pointer ${
+                className={`rounded-2xl border-2 border-dashed p-8 text-center transition-colors ${
+                  bulkUploading ? "cursor-default" : "cursor-pointer"
+                } ${
                   isBulkDragging
                     ? "border-emerald-500 bg-emerald-500/10"
-                    : "border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:bg-slate-900/80"
+                    : "border-slate-800 bg-slate-900/40 hover:border-slate-700"
                 }`}
               >
-                <Upload size={28} className="mx-auto mb-3 text-emerald-400" />
-                <div className="text-sm font-bold text-slate-200">
-                  Click to select multiple PDF files, or drag & drop here
-                </div>
-                <div className="mt-1 text-xs text-slate-500">
-                  Select 2, 5, 10+ PDF files to batch upload simultaneously
-                </div>
+                <FolderPlus size={32} className="mx-auto mb-3 text-emerald-400/80" />
+                <h4 className="text-sm font-bold text-slate-200">
+                  Select or Drag & Drop Multiple PDF Files
+                </h4>
+                <p className="text-xs text-slate-500 mt-1">
+                  Upload batch lecture notes, chapter summaries, formula sheets at once
+                </p>
               </div>
 
               {/* Staged File List */}
               {bulkFiles.length > 0 && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    <span>Selected Files ({bulkFiles.length})</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-300">
+                      Files Queue ({bulkFiles.length})
+                    </span>
                     {!bulkUploading && (
                       <button
                         onClick={() => setBulkFiles([])}
-                        className="text-red-400 hover:underline cursor-pointer"
+                        className="text-xs text-red-400 hover:text-red-300 cursor-pointer"
                       >
-                        Clear All
+                        Clear all
                       </button>
                     )}
                   </div>
 
-                  <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
                     {bulkFiles.map((item) => (
                       <div
                         key={item.id}
-                        className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 space-y-3 relative group"
+                        className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80 space-y-2.5"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-950/60 text-red-400 border border-red-900/50 shrink-0 font-extrabold text-xs">
-                              PDF
-                            </div>
-                            <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <FileText size={18} className="text-emerald-400 shrink-0" />
+                            <div className="min-w-0 flex-1">
                               <input
                                 type="text"
                                 value={item.title}
@@ -1455,7 +1658,7 @@ export default function InstructorNotes({ showToast }) {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-100">Edit Study Note & Course</h3>
-                  <p className="text-xs text-slate-400">Update note title, description, reassign course, or replace the attached PDF file.</p>
+                  <p className="text-xs text-slate-400">Update note title, description, assign to a course chapter/subject, or replace the attached PDF.</p>
                 </div>
               </div>
               <button
@@ -1528,7 +1731,15 @@ export default function InstructorNotes({ showToast }) {
                 {/* Course Dropdown */}
                 <select
                   value={editForm.courseId}
-                  onChange={(e) => setEditForm({ ...editForm, courseId: e.target.value })}
+                  onChange={(e) => {
+                    const newCourseId = e.target.value;
+                    const c = courses.find((crs) => crs._id === newCourseId);
+                    setEditForm({
+                      ...editForm,
+                      courseId: newCourseId,
+                      subject: editForm.subject || c?.category || "",
+                    });
+                  }}
                   className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 outline-none focus:border-amber-500"
                 >
                   <option value="">-- No Course (Standalone General Study Note) --</option>
@@ -1538,6 +1749,69 @@ export default function InstructorNotes({ showToast }) {
                     </option>
                   ))}
                 </select>
+
+                {/* Subject & Chapter Selection inside selected Course */}
+                {editForm.courseId && (
+                  <div className="mt-3 p-4 rounded-xl border border-slate-800 bg-slate-900/70 space-y-3">
+                    <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
+                      <BookOpen size={15} />
+                      <span>Course Subject & Chapter Placement</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">
+                          Subject / Stream in Course *
+                        </label>
+                        <input
+                          type="text"
+                          list="edit-subjects-list"
+                          value={editForm.subject}
+                          onChange={(e) => setEditForm({ ...editForm, subject: e.target.value })}
+                          placeholder="e.g. Accounts, Physics, Chemistry..."
+                          className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-amber-500"
+                        />
+                        <datalist id="edit-subjects-list">
+                          {editCourseAvailableSubjects.map((s, idx) => (
+                            <option key={idx} value={s} />
+                          ))}
+                        </datalist>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">
+                          Chapter / Unit in Course *
+                        </label>
+                        <input
+                          type="text"
+                          list="edit-chapters-list"
+                          value={editForm.chapterTitle}
+                          onChange={(e) => setEditForm({ ...editForm, chapterTitle: e.target.value })}
+                          placeholder="e.g. Chapter 1: Introduction..."
+                          className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-amber-500"
+                        />
+                        <datalist id="edit-chapters-list">
+                          {editCourseAvailableChapters.map((ch, idx) => (
+                            <option key={idx} value={ch} />
+                          ))}
+                        </datalist>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="checkbox"
+                        id="edit-add-curriculum"
+                        checked={editForm.addToCurriculum}
+                        onChange={(e) => setEditForm({ ...editForm, addToCurriculum: e.target.checked })}
+                        className="h-4 w-4 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-500 cursor-pointer"
+                      />
+                      <label htmlFor="edit-add-curriculum" className="text-xs text-slate-300 cursor-pointer select-none">
+                        Also add note into course curriculum / lessons under this chapter
+                      </label>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Title */}
@@ -1672,7 +1946,7 @@ export default function InstructorNotes({ showToast }) {
                 <div>
                   <h3 className="text-lg font-bold text-slate-100">Batch Assign to Course</h3>
                   <p className="text-xs text-slate-400">
-                    Assign {selectedNoteIds.length} selected note(s) to a course at once.
+                    Assign {selectedNoteIds.length} selected note(s) to a course, subject, and chapter at once.
                   </p>
                 </div>
               </div>
@@ -1685,23 +1959,87 @@ export default function InstructorNotes({ showToast }) {
               </button>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-200">
-                Target Course
-              </label>
-              <select
-                value={batchTargetCourseId}
-                onChange={(e) => setBatchTargetCourseId(e.target.value)}
-                disabled={batchAssigning}
-                className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 outline-none focus:border-violet-500"
-              >
-                <option value="">-- No Course (Convert to Standalone General Notes) --</option>
-                {courses.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.title} ({c.category || c.board || "Course"})
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-200 mb-1">
+                  Target Course *
+                </label>
+                <select
+                  value={batchTargetCourseId}
+                  onChange={(e) => {
+                    const newId = e.target.value;
+                    const c = courses.find((crs) => crs._id === newId);
+                    setBatchTargetCourseId(newId);
+                    setBatchSubject(batchSubject || c?.category || "");
+                  }}
+                  disabled={batchAssigning}
+                  className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 outline-none focus:border-violet-500"
+                >
+                  <option value="">-- No Course (Convert to Standalone General Notes) --</option>
+                  {courses.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.title} ({c.category || c.board || "Course"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {batchTargetCourseId && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                        Subject / Stream
+                      </label>
+                      <input
+                        type="text"
+                        list="batch-subjects-list"
+                        value={batchSubject}
+                        onChange={(e) => setBatchSubject(e.target.value)}
+                        placeholder="e.g. Accounts, Physics..."
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-violet-500"
+                      />
+                      <datalist id="batch-subjects-list">
+                        {batchAvailableSubjects.map((s, idx) => (
+                          <option key={idx} value={s} />
+                        ))}
+                      </datalist>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                        Chapter / Unit
+                      </label>
+                      <input
+                        type="text"
+                        list="batch-chapters-list"
+                        value={batchChapterTitle}
+                        onChange={(e) => setBatchChapterTitle(e.target.value)}
+                        placeholder="e.g. Chapter 1: Introduction..."
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-violet-500"
+                      />
+                      <datalist id="batch-chapters-list">
+                        {batchAvailableChapters.map((ch, idx) => (
+                          <option key={idx} value={ch} />
+                        ))}
+                      </datalist>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="checkbox"
+                      id="batch-add-curriculum"
+                      checked={batchAddToCurriculum}
+                      onChange={(e) => setBatchAddToCurriculum(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                    />
+                    <label htmlFor="batch-add-curriculum" className="text-xs text-slate-300 cursor-pointer select-none">
+                      Also insert notes into course curriculum / lessons under this chapter
+                    </label>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">

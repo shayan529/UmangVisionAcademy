@@ -28,6 +28,8 @@ const shapeStandaloneNote = (note) => ({
   title: note.title,
   description: note.description,
   fileUrl: note.fileUrl,
+  subject: note.subject || "",
+  chapterTitle: note.chapterTitle || "",
   createdAt: note.createdAt,
   status: note.status,
   rejectedReason: note.rejectedReason || "",
@@ -47,6 +49,8 @@ const shapeCourseNote = (note, course) => ({
   title: note.title,
   description: note.description,
   fileUrl: note.fileUrl,
+  subject: note.subject || "",
+  chapterTitle: note.chapterTitle || "",
   createdAt: note.createdAt,
   status: note.status || "pending",
   rejectedReason: note.rejectedReason || "",
@@ -63,7 +67,17 @@ const shapeCourseNote = (note, course) => ({
 
 export const createNote = async (req, res) => {
   try {
-    const { title, description, fileUrl, instructorId, courseId } = req.body;
+    const {
+      title,
+      description,
+      fileUrl,
+      instructorId,
+      courseId,
+      subject,
+      chapterTitle,
+      addToCurriculum = true,
+    } = req.body;
+
     if (!fileUrl) {
       return res.status(400).json({ message: "fileUrl required" });
     }
@@ -89,16 +103,47 @@ export const createNote = async (req, res) => {
         return res.status(403).json({ message: "You don't have permission to add notes to this course" });
       }
 
+      const finalSubject = (subject && String(subject).trim()) || course.category || "General";
+      const finalChapter = (chapterTitle && String(chapterTitle).trim()) || "Chapter 1: Study Notes";
+
       const newNote = {
         title: finalTitle,
         description: description || "",
         fileUrl,
+        subject: finalSubject,
+        chapterTitle: finalChapter,
         status: "pending",
         createdAt: new Date(),
       };
-      
+
       course.notes = course.notes || [];
       course.notes.push(newNote);
+
+      if (addToCurriculum) {
+        course.lessons = course.lessons || [];
+        const existingLessonIdx = course.lessons.findIndex(
+          (l) => (l.pdfUrl && l.pdfUrl === fileUrl) || (l.title === finalTitle && l.chapterTitle === finalChapter)
+        );
+        const lessonData = {
+          title: finalTitle,
+          description: description || "",
+          chapterTitle: finalChapter,
+          subject: finalSubject,
+          type: "text",
+          videoType: "video",
+          content: description || "",
+          pdfUrl: fileUrl,
+        };
+        if (existingLessonIdx >= 0) {
+          course.lessons[existingLessonIdx] = {
+            ...(course.lessons[existingLessonIdx].toObject?.() || course.lessons[existingLessonIdx]),
+            ...lessonData,
+          };
+        } else {
+          course.lessons.push(lessonData);
+        }
+      }
+
       await course.save();
 
       const pushedNote = course.notes[course.notes.length - 1];
@@ -127,6 +172,8 @@ export const createNote = async (req, res) => {
       title: finalTitle,
       description: description || "",
       fileUrl,
+      subject: subject?.trim() || "",
+      chapterTitle: chapterTitle?.trim() || "",
       instructor: noteInstructorId,
       instructorName: noteInstructorName,
       status: "pending",
@@ -547,7 +594,17 @@ export const deleteNote = async (req, res) => {
 export const updateNote = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, fileUrl, courseId, instructorId, source } = req.body || {};
+    const {
+      title,
+      description,
+      fileUrl,
+      courseId,
+      instructorId,
+      source,
+      subject,
+      chapterTitle,
+      addToCurriculum = true,
+    } = req.body || {};
 
     const isAdmin = hasBaseRole(req.user, "admin");
     const isInstructor = hasBaseRole(req.user, "instructor");
@@ -608,11 +665,50 @@ export const updateNote = async (req, res) => {
         targetCourseId &&
         originCourse._id.toString() === targetCourseId.toString();
 
+      const finalSubject =
+        subject !== undefined
+          ? String(subject).trim()
+          : (existingCourseNote.subject || originCourse.category || "General");
+      const finalChapter =
+        chapterTitle !== undefined
+          ? String(chapterTitle).trim()
+          : (existingCourseNote.chapterTitle || "Chapter 1: Study Notes");
+
       // Case 1A: Stays in the SAME course
       if (isSameCourse || (!targetCourseId && source === "course" && !courseId)) {
         if (finalTitle) existingCourseNote.title = finalTitle;
         if (description !== undefined) existingCourseNote.description = description;
         if (fileUrl) existingCourseNote.fileUrl = fileUrl;
+        existingCourseNote.subject = finalSubject;
+        existingCourseNote.chapterTitle = finalChapter;
+
+        if (addToCurriculum) {
+          originCourse.lessons = originCourse.lessons || [];
+          const noteFile = fileUrl || existingCourseNote.fileUrl;
+          const noteHead = finalTitle || existingCourseNote.title;
+          const existingLessonIdx = originCourse.lessons.findIndex(
+            (l) => (l.pdfUrl && l.pdfUrl === noteFile) || (l.title === noteHead && l.chapterTitle === finalChapter)
+          );
+          const lessonData = {
+            title: noteHead,
+            description: (description !== undefined ? description : existingCourseNote.description) || "",
+            chapterTitle: finalChapter,
+            subject: finalSubject,
+            type: "text",
+            videoType: "video",
+            content: (description !== undefined ? description : existingCourseNote.description) || "",
+            pdfUrl: noteFile,
+          };
+          if (existingLessonIdx >= 0) {
+            originCourse.lessons[existingLessonIdx] = {
+              ...(originCourse.lessons[existingLessonIdx].toObject?.() || originCourse.lessons[existingLessonIdx]),
+              ...lessonData,
+            };
+          } else {
+            originCourse.lessons.push(lessonData);
+          }
+        }
+
         await originCourse.save();
         await invalidateNoteCaches(originCourse._id);
 
@@ -629,13 +725,20 @@ export const updateNote = async (req, res) => {
         title: finalTitle || existingCourseNote.title,
         description: description !== undefined ? description : (existingCourseNote.description || ""),
         fileUrl: fileUrl || existingCourseNote.fileUrl,
+        subject: finalSubject,
+        chapterTitle: finalChapter,
         status: existingCourseNote.status || "approved",
         rejectedReason: existingCourseNote.rejectedReason || "",
         createdAt: existingCourseNote.createdAt || new Date(),
       };
 
-      // Remove from origin course
+      // Remove from origin course notes & lessons
       originCourse.notes.pull({ _id: id });
+      if (originCourse.lessons) {
+        originCourse.lessons = originCourse.lessons.filter(
+          (l) => l.pdfUrl !== existingCourseNote.fileUrl && l.title !== existingCourseNote.title
+        );
+      }
       await originCourse.save();
       await invalidateNoteCaches(originCourse._id);
 
@@ -647,6 +750,32 @@ export const updateNote = async (req, res) => {
         }
         destCourse.notes = destCourse.notes || [];
         destCourse.notes.push(notePayload);
+
+        if (addToCurriculum) {
+          destCourse.lessons = destCourse.lessons || [];
+          const existingLessonIdx = destCourse.lessons.findIndex(
+            (l) => (l.pdfUrl && l.pdfUrl === notePayload.fileUrl) || (l.title === notePayload.title && l.chapterTitle === finalChapter)
+          );
+          const lessonData = {
+            title: notePayload.title,
+            description: notePayload.description || "",
+            chapterTitle: finalChapter,
+            subject: finalSubject || destCourse.category || "General",
+            type: "text",
+            videoType: "video",
+            content: notePayload.description || "",
+            pdfUrl: notePayload.fileUrl,
+          };
+          if (existingLessonIdx >= 0) {
+            destCourse.lessons[existingLessonIdx] = {
+              ...(destCourse.lessons[existingLessonIdx].toObject?.() || destCourse.lessons[existingLessonIdx]),
+              ...lessonData,
+            };
+          } else {
+            destCourse.lessons.push(lessonData);
+          }
+        }
+
         await destCourse.save();
         await invalidateNoteCaches(destCourse._id);
 
@@ -677,6 +806,15 @@ export const updateNote = async (req, res) => {
 
     // ── CASE 2: Note is currently a Standalone Note ─────────────────────────
     if (standaloneNote) {
+      const finalSubject =
+        subject !== undefined
+          ? String(subject).trim()
+          : (standaloneNote.subject || "");
+      const finalChapter =
+        chapterTitle !== undefined
+          ? String(chapterTitle).trim()
+          : (standaloneNote.chapterTitle || "Chapter 1: Study Notes");
+
       if (targetCourseId) {
         // Move from Standalone TO target course
         const destCourse = await Course.findById(targetCourseId).populate("instructor");
@@ -688,6 +826,8 @@ export const updateNote = async (req, res) => {
           title: finalTitle || standaloneNote.title,
           description: description !== undefined ? description : (standaloneNote.description || ""),
           fileUrl: fileUrl || standaloneNote.fileUrl,
+          subject: finalSubject || destCourse.category || "General",
+          chapterTitle: finalChapter,
           status: standaloneNote.status || "approved",
           rejectedReason: standaloneNote.rejectedReason || "",
           createdAt: standaloneNote.createdAt || new Date(),
@@ -695,6 +835,32 @@ export const updateNote = async (req, res) => {
 
         destCourse.notes = destCourse.notes || [];
         destCourse.notes.push(notePayload);
+
+        if (addToCurriculum) {
+          destCourse.lessons = destCourse.lessons || [];
+          const existingLessonIdx = destCourse.lessons.findIndex(
+            (l) => (l.pdfUrl && l.pdfUrl === notePayload.fileUrl) || (l.title === notePayload.title && l.chapterTitle === finalChapter)
+          );
+          const lessonData = {
+            title: notePayload.title,
+            description: notePayload.description || "",
+            chapterTitle: finalChapter,
+            subject: finalSubject || destCourse.category || "General",
+            type: "text",
+            videoType: "video",
+            content: notePayload.description || "",
+            pdfUrl: notePayload.fileUrl,
+          };
+          if (existingLessonIdx >= 0) {
+            destCourse.lessons[existingLessonIdx] = {
+              ...(destCourse.lessons[existingLessonIdx].toObject?.() || destCourse.lessons[existingLessonIdx]),
+              ...lessonData,
+            };
+          } else {
+            destCourse.lessons.push(lessonData);
+          }
+        }
+
         await destCourse.save();
 
         // Delete standalone record
@@ -713,6 +879,8 @@ export const updateNote = async (req, res) => {
       if (finalTitle) standaloneNote.title = finalTitle;
       if (description !== undefined) standaloneNote.description = description;
       if (fileUrl) standaloneNote.fileUrl = fileUrl;
+      standaloneNote.subject = finalSubject;
+      standaloneNote.chapterTitle = finalChapter;
 
       if (instructorId && isAdmin) {
         const User = mongoose.model("User");
@@ -742,7 +910,14 @@ export const updateNote = async (req, res) => {
 // ── bulkAssignCourseNotes (assign multiple notes to a course) ─────────────────
 export const bulkAssignCourseNotes = async (req, res) => {
   try {
-    const { noteIds, targetCourseId } = req.body || {};
+    const {
+      noteIds,
+      targetCourseId,
+      subject,
+      chapterTitle,
+      addToCurriculum = true,
+    } = req.body || {};
+
     if (!Array.isArray(noteIds) || noteIds.length === 0) {
       return res.status(400).json({ message: "noteIds array required" });
     }
@@ -761,6 +936,9 @@ export const bulkAssignCourseNotes = async (req, res) => {
       }
     }
 
+    const finalSubject = (subject && String(subject).trim()) || (destCourse ? destCourse.category : "") || "General";
+    const finalChapter = (chapterTitle && String(chapterTitle).trim()) || "Chapter 1: Study Notes";
+
     for (const noteId of noteIds) {
       if (!mongoose.Types.ObjectId.isValid(noteId)) continue;
 
@@ -772,21 +950,60 @@ export const bulkAssignCourseNotes = async (req, res) => {
             title: existingNote.title,
             description: existingNote.description || "",
             fileUrl: existingNote.fileUrl,
+            subject: finalSubject,
+            chapterTitle: finalChapter,
             status: existingNote.status || "approved",
             rejectedReason: existingNote.rejectedReason || "",
             createdAt: existingNote.createdAt || new Date(),
           };
 
           if (destCourse && originCourse._id.toString() === destCourse._id.toString()) {
+            existingNote.subject = finalSubject;
+            existingNote.chapterTitle = finalChapter;
+            if (addToCurriculum) {
+              destCourse.lessons = destCourse.lessons || [];
+              const exists = destCourse.lessons.some((l) => l.pdfUrl === existingNote.fileUrl);
+              if (!exists) {
+                destCourse.lessons.push({
+                  title: existingNote.title,
+                  description: existingNote.description || "",
+                  chapterTitle: finalChapter,
+                  subject: finalSubject,
+                  type: "text",
+                  videoType: "video",
+                  content: existingNote.description || "",
+                  pdfUrl: existingNote.fileUrl,
+                });
+              }
+            }
             continue;
           }
 
           originCourse.notes.pull({ _id: noteId });
+          if (originCourse.lessons) {
+            originCourse.lessons = originCourse.lessons.filter((l) => l.pdfUrl !== existingNote.fileUrl);
+          }
           await originCourse.save();
 
           if (destCourse) {
             destCourse.notes = destCourse.notes || [];
             destCourse.notes.push(notePayload);
+            if (addToCurriculum) {
+              destCourse.lessons = destCourse.lessons || [];
+              const exists = destCourse.lessons.some((l) => l.pdfUrl === notePayload.fileUrl);
+              if (!exists) {
+                destCourse.lessons.push({
+                  title: notePayload.title,
+                  description: notePayload.description || "",
+                  chapterTitle: finalChapter,
+                  subject: finalSubject,
+                  type: "text",
+                  videoType: "video",
+                  content: notePayload.description || "",
+                  pdfUrl: notePayload.fileUrl,
+                });
+              }
+            }
           } else {
             await Note.create({
               ...notePayload,
@@ -802,15 +1019,35 @@ export const bulkAssignCourseNotes = async (req, res) => {
         const standalone = await Note.findById(noteId);
         if (standalone) {
           if (destCourse) {
-            destCourse.notes = destCourse.notes || [];
-            destCourse.notes.push({
+            const notePayload = {
               title: standalone.title,
               description: standalone.description || "",
               fileUrl: standalone.fileUrl,
+              subject: finalSubject,
+              chapterTitle: finalChapter,
               status: standalone.status || "approved",
               rejectedReason: standalone.rejectedReason || "",
               createdAt: standalone.createdAt || new Date(),
-            });
+            };
+            destCourse.notes = destCourse.notes || [];
+            destCourse.notes.push(notePayload);
+
+            if (addToCurriculum) {
+              destCourse.lessons = destCourse.lessons || [];
+              const exists = destCourse.lessons.some((l) => l.pdfUrl === notePayload.fileUrl);
+              if (!exists) {
+                destCourse.lessons.push({
+                  title: notePayload.title,
+                  description: notePayload.description || "",
+                  chapterTitle: finalChapter,
+                  subject: finalSubject,
+                  type: "text",
+                  videoType: "video",
+                  content: notePayload.description || "",
+                  pdfUrl: notePayload.fileUrl,
+                });
+              }
+            }
             await Note.findByIdAndDelete(noteId);
           }
         }

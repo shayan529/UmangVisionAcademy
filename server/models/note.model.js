@@ -18,6 +18,16 @@ const NoteSchema = new Schema(
       type: String,
       required: true,
     },
+    subject: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    chapterTitle: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     instructor: {
       type: Types.ObjectId,
       ref: "User",
