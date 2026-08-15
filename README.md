@@ -1,6 +1,6 @@
 # Umang Vision Academy
 
-An AI-powered EdTech platform for Indian students (Classes 1–12) featuring live classes, recorded courses, an AI tutor, instructor dashboards, subscription billing via Razorpay, and admin management.
+An AI-powered EdTech platform for Indian students (Classes 9–12) featuring live classes, recorded courses, an AI tutor, instructor dashboards, subscription billing via Razorpay, and admin management.
 
 ---
 
