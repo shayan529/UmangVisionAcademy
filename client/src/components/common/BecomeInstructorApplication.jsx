@@ -594,7 +594,7 @@ const BecomeInstructorApplication = () => {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 justify-center py-1">
+                      <div className="flex items-center gap-1.5 sm:gap-2 justify-center py-1">
                         {phoneOtpInputs.map((digit, idx) => (
                           <input
                             key={idx}
@@ -606,7 +606,7 @@ const BecomeInstructorApplication = () => {
                             onChange={(e) => handlePhoneOtpChange(idx, e.target.value)}
                             onKeyDown={(e) => handlePhoneOtpKeyDown(idx, e)}
                             onPaste={handlePhoneOtpPaste}
-                            className="w-10 h-12 text-center text-lg font-bold rounded-xl border border-white/20 bg-slate-950 text-white focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                            className="w-8 xs:w-9 sm:w-10 h-10 sm:h-12 text-center text-base sm:text-lg font-bold rounded-xl border border-white/20 bg-slate-950 text-white focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                           />
                         ))}
                       </div>

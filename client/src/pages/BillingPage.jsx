@@ -195,7 +195,7 @@ export default function BillingPage() {
           style={{
             maxWidth: 900,
             margin: "0 auto",
-            padding: "40px 20px",
+            padding: "clamp(20px, 4vw, 40px) clamp(12px, 3vw, 24px)",
             display: "flex",
             flexDirection: "column",
             gap: 28,
@@ -441,7 +441,7 @@ export default function BillingPage() {
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit,minmax(270px,1fr))",
+                  gridTemplateColumns: "repeat(auto-fit,minmax(min(260px, 100%),1fr))",
                   gap: 16,
                 }}
               >

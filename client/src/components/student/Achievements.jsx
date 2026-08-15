@@ -465,7 +465,7 @@ export default function Achievements() {
   };
 
   return (
-    <div className="p-6" style={rootStyle}>
+    <div className="p-3 sm:p-6" style={rootStyle}>
       <style>{`
         @media (prefers-reduced-motion: no-preference) {
           .uva-glow { animation: uva-glow 2.4s ease-in-out infinite; }

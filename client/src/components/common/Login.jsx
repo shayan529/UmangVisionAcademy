@@ -646,7 +646,12 @@ const PasswordResetModal = ({ onClose }) => {
               </p>
 
               <div
-                style={{ display: "flex", gap: 8, justifyContent: "center" }}
+                style={{
+                  display: "flex",
+                  gap: "clamp(4px, 1.5vw, 8px)",
+                  justifyContent: "center",
+                  width: "100%",
+                }}
                 onPaste={handleOtpPaste}
               >
                 {otp.map((digit, idx) => (
@@ -660,10 +665,10 @@ const PasswordResetModal = ({ onClose }) => {
                     onChange={(e) => handleOtpChange(idx, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                     style={{
-                      width: 46,
-                      height: 54,
+                      width: "clamp(34px, 11vw, 46px)",
+                      height: "clamp(42px, 13vw, 54px)",
                       textAlign: "center",
-                      fontSize: 22,
+                      fontSize: "clamp(16px, 4.5vw, 22px)",
                       fontWeight: 800,
                       background: "rgba(14,165,233,0.07)",
                       border: `2px solid ${digit ? "rgba(56,189,248,0.5)" : "rgba(255,255,255,0.1)"}`,

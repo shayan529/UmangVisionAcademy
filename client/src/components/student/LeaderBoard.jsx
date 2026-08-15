@@ -454,7 +454,8 @@ const LeaderBoard = () => {
             background: "#0f172a",
             border: "1px solid #334155",
             color: "#fff",
-            minWidth: 180,
+            minWidth: 140,
+            flex: "1 1 140px",
           }}
         >
           <option value="">{t("studentLeaderboard.allStates")}</option>
@@ -475,7 +476,8 @@ const LeaderBoard = () => {
             background: "#0f172a",
             border: "1px solid #334155",
             color: "#fff",
-            minWidth: 180,
+            minWidth: 140,
+            flex: "1 1 140px",
             opacity: selectedState ? 1 : 0.55,
             cursor: selectedState ? "pointer" : "not-allowed",
           }}

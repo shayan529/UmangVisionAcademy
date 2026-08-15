@@ -277,8 +277,22 @@ const Layout = () => {
   const navigate = useNavigate();
 
   const nativeApp = isNativeApp();
-  const isMobileViewport =
-    typeof window !== "undefined" && window.innerWidth < 768;
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 768 : false,
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileViewport(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+    };
+  }, []);
+
   const showMobileBottomBar = nativeApp || isMobileViewport;
 
   const showNavbarAndFooter = nativeApp ? isAuthenticated : true;

@@ -141,6 +141,25 @@ input:-webkit-autofill:active {
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
   }
+
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .pb-safe-nav {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
