@@ -24,9 +24,9 @@ import {
 } from "lucide-react";
 
 const STATUS_STYLE = {
-  approved: { bg: "bg-green-950", text: "text-green-400", border: "border-green-800", label: "Approved" },
-  rejected: { bg: "bg-red-950", text: "text-red-400", border: "border-red-900", label: "Rejected" },
-  pending: { bg: "bg-yellow-950", text: "text-amber-400", border: "border-yellow-900", label: "Pending" },
+  approved: { bg: "bg-emerald-500/15", text: "text-emerald-300", border: "border-emerald-500/30", label: "Approved" },
+  rejected: { bg: "bg-rose-500/15", text: "text-rose-300", border: "border-rose-500/30", label: "Rejected" },
+  pending: { bg: "bg-amber-500/15", text: "text-amber-300", border: "border-amber-500/30", label: "Pending" },
 };
 
 export default function InstructorNotes({ showToast }) {
@@ -818,32 +818,32 @@ export default function InstructorNotes({ showToast }) {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-extrabold text-slate-100">Study Notes</h2>
-          <p className="mt-1 text-sm text-slate-400">Study notes and documents uploaded for your courses.</p>
+          <h2 className="text-2xl font-extrabold text-white tracking-tight">Study Notes</h2>
+          <p className="mt-1 text-sm text-slate-300">Study notes, lecture slides, and PDF documents uploaded for your courses.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
-            <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search notes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full min-w-[180px] rounded-lg border border-slate-800 bg-slate-950 py-2.5 pl-8 pr-8 text-sm text-slate-100 outline-none transition-colors focus:border-violet-600 sm:w-[200px]"
+              className="w-full min-w-[190px] rounded-xl border border-slate-700 bg-slate-900 py-2.5 pl-9 pr-8 text-sm text-white placeholder:text-slate-400 outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20 sm:w-[220px]"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
                 aria-label="Clear search"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
               >
                 <X size={14} />
               </button>
             )}
           </div>
 
-          <div className="flex rounded-lg border border-slate-800 bg-slate-950 p-1">
+          <div className="flex rounded-xl border border-slate-700 bg-slate-900 p-1">
             {[
               { id: "all", label: "All" },
               { id: "pending", label: "Pending" },
@@ -853,8 +853,11 @@ export default function InstructorNotes({ showToast }) {
               <button
                 key={tab.id}
                 onClick={() => setStatusFilter(tab.id)}
-                className={`rounded-md px-3 py-1.5 text-[13px] font-semibold transition-colors ${statusFilter === tab.id ? "bg-slate-700 text-slate-100" : "text-slate-500 hover:text-slate-300"
-                  }`}
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                  statusFilter === tab.id
+                    ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-600/25"
+                    : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                }`}
               >
                 {tab.label}
               </button>
@@ -862,7 +865,7 @@ export default function InstructorNotes({ showToast }) {
           </div>
 
           {/* Sort Dropdown */}
-          <div className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs font-bold text-slate-300">
+          <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2 text-xs font-bold text-slate-200">
             <ArrowUpDown size={14} className="text-emerald-400 shrink-0" />
             <select
               value={sortBy}
@@ -886,15 +889,15 @@ export default function InstructorNotes({ showToast }) {
 
           <button
             onClick={() => setShowBulkModal(true)}
-            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-500 active:bg-emerald-700 cursor-pointer shadow-md"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2.5 text-xs font-bold text-white transition-all hover:from-emerald-400 hover:to-teal-500 active:scale-95 cursor-pointer shadow-lg shadow-emerald-500/20"
           >
-            <FolderPlus size={18} /> Bulk Upload
+            <FolderPlus size={16} /> Bulk Upload
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-500 active:bg-violet-700 cursor-pointer shadow-md"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2.5 text-xs font-bold text-white transition-all hover:from-violet-500 hover:to-indigo-500 active:scale-95 cursor-pointer shadow-lg shadow-violet-600/20"
           >
-            <Plus size={18} /> Upload Note
+            <Plus size={16} /> Upload Note
           </button>
         </div>
       </div>
@@ -906,18 +909,18 @@ export default function InstructorNotes({ showToast }) {
             <button
               key={tab.name}
               onClick={() => setSelectedSubject(tab.name)}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap border ${
+              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap border ${
                 selectedSubject === tab.name
-                  ? "bg-violet-600/20 text-violet-300 border-violet-500/40 shadow-sm"
-                  : "bg-slate-950/60 text-slate-400 border-slate-800/80 hover:text-slate-200 hover:border-slate-700"
+                  ? "bg-violet-600 text-white border-violet-500 shadow-md shadow-violet-600/25"
+                  : "bg-slate-900/90 text-slate-200 border-slate-700/80 hover:text-white hover:border-slate-500 hover:bg-slate-800"
               }`}
             >
               <span>{tab.name}</span>
               <span
-                className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold ${
+                className={`px-1.5 py-0.5 rounded-md text-[10px] font-extrabold ${
                   selectedSubject === tab.name
-                    ? "bg-violet-500/30 text-violet-200"
-                    : "bg-slate-800 text-slate-400"
+                    ? "bg-white/20 text-white"
+                    : "bg-slate-800 text-slate-300 border border-slate-700"
                 }`}
               >
                 {tab.count}
@@ -930,35 +933,35 @@ export default function InstructorNotes({ showToast }) {
       {/* Selection Control & Bulk Action Bar */}
       {!loading && filteredNotes.length > 0 && (
         <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/80 px-4 py-2.5 shadow-sm">
-            <label className="flex items-center gap-2.5 text-xs font-bold text-slate-300 cursor-pointer select-none">
+          <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-2.5 shadow-sm">
+            <label className="flex items-center gap-2.5 text-xs font-bold text-slate-200 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={isAllSelected}
                 onChange={handleToggleSelectAll}
-                className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
+                className="h-4 w-4 rounded border-slate-600 bg-slate-950 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
               />
               <span>Select All Visible ({filteredNotes.length})</span>
             </label>
 
             {selectedNoteIds.length > 0 && (
-              <span className="text-xs font-semibold text-emerald-400">
+              <span className="text-xs font-bold text-emerald-400">
                 {selectedNoteIds.length} of {filteredNotes.length} selected
               </span>
             )}
           </div>
 
           {selectedNoteIds.length > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-violet-500/30 bg-gradient-to-r from-violet-950/80 via-slate-900 to-emerald-950/60 p-4 shadow-xl backdrop-blur-xl animate-fade-in">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-violet-500/40 bg-gradient-to-r from-slate-900 via-violet-950/70 to-slate-900 p-4 shadow-xl backdrop-blur-xl animate-fade-in">
               <div className="flex items-center gap-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-600 text-xs font-extrabold text-white">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600 text-xs font-black text-white shadow-md">
                   {selectedNoteIds.length}
                 </span>
                 <div>
-                  <span className="text-xs font-bold text-slate-100 block">
+                  <span className="text-xs font-bold text-white block">
                     {selectedNoteIds.length} Note{selectedNoteIds.length !== 1 ? "s" : ""} Selected
                   </span>
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[11px] text-slate-300 font-medium">
                     Apply bulk actions across all selected items
                   </span>
                 </div>
@@ -970,14 +973,14 @@ export default function InstructorNotes({ showToast }) {
                     <button
                       onClick={() => handleBatchAction("approve")}
                       disabled={bulkActioning}
-                      className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50 cursor-pointer shadow-md"
+                      className="flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3.5 py-2 text-xs font-bold text-white transition-colors disabled:opacity-50 cursor-pointer shadow-md"
                     >
                       <Check size={14} /> Approve All ({selectedNoteIds.length})
                     </button>
                     <button
                       onClick={() => handleBatchAction("reject")}
                       disabled={bulkActioning}
-                      className="flex items-center gap-1.5 rounded-xl bg-amber-600 px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-amber-500 disabled:opacity-50 cursor-pointer shadow-md"
+                      className="flex items-center gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 px-3.5 py-2 text-xs font-bold text-white transition-colors disabled:opacity-50 cursor-pointer shadow-md"
                     >
                       <XCircle size={14} /> Reject All ({selectedNoteIds.length})
                     </button>
@@ -986,20 +989,20 @@ export default function InstructorNotes({ showToast }) {
                 <button
                   onClick={() => setShowBatchAssignModal(true)}
                   disabled={bulkActioning}
-                  className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-violet-500 disabled:opacity-50 cursor-pointer shadow-md"
+                  className="flex items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 px-3.5 py-2 text-xs font-bold text-white transition-colors disabled:opacity-50 cursor-pointer shadow-md"
                 >
                   <BookOpen size={14} /> Assign Course ({selectedNoteIds.length})
                 </button>
                 <button
                   onClick={() => handleBatchAction("delete")}
                   disabled={bulkActioning}
-                  className="flex items-center gap-1.5 rounded-xl bg-red-600 px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-red-500 disabled:opacity-50 cursor-pointer shadow-md"
+                  className="flex items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 px-3.5 py-2 text-xs font-bold text-white transition-colors disabled:opacity-50 cursor-pointer shadow-md"
                 >
                   <Trash2 size={14} /> Delete All ({selectedNoteIds.length})
                 </button>
                 <button
                   onClick={() => setSelectedNoteIds([])}
-                  className="rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 cursor-pointer"
+                  className="rounded-xl border border-slate-600 bg-slate-800 hover:bg-slate-700 px-3.5 py-2 text-xs font-bold text-slate-200 hover:text-white cursor-pointer transition-colors"
                 >
                   Deselect All
                 </button>
@@ -1013,12 +1016,12 @@ export default function InstructorNotes({ showToast }) {
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="animate-pulse rounded-2xl border border-slate-800 bg-slate-950 p-5">
-              <div className="mb-3 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-slate-800" />
+            <div key={i} className="animate-pulse rounded-2xl border border-slate-700/80 bg-slate-900/90 p-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-slate-800" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-3 w-3/4 rounded bg-slate-800" />
-                  <div className="h-2 w-1/2 rounded bg-slate-800" />
+                  <div className="h-3.5 w-3/4 rounded bg-slate-800" />
+                  <div className="h-2.5 w-1/2 rounded bg-slate-800" />
                 </div>
               </div>
               <div className="h-2 w-full rounded bg-slate-800" />
@@ -1026,12 +1029,12 @@ export default function InstructorNotes({ showToast }) {
           ))}
         </div>
       ) : filteredNotes.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-800 bg-slate-950 px-5 py-16 text-center">
-          <FileText size={44} className="mx-auto mb-4 text-slate-700" />
-          <h3 className="text-base font-bold text-slate-100">
+        <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/60 px-5 py-16 text-center">
+          <FileText size={44} className="mx-auto mb-4 text-slate-500" />
+          <h3 className="text-base font-bold text-white">
             {notes.length === 0 ? "No notes yet" : "No notes match your filters"}
           </h3>
-          <p className="mt-2 text-[13px] text-slate-500">
+          <p className="mt-2 text-xs text-slate-400">
             {notes.length === 0
               ? "Add study notes inside your courses via the Course Creator / Editor, or upload one directly."
               : "Try a different search term or status filter."}
@@ -1041,30 +1044,41 @@ export default function InstructorNotes({ showToast }) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredNotes.map((note) => {
             const st = STATUS_STYLE[note.status] || STATUS_STYLE.pending;
+            const isSelected = selectedNoteIds.includes(note._id);
             return (
               <div
                 key={note._id}
-                className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-5 transition-colors hover:border-slate-700"
+                className={`flex flex-col gap-3.5 rounded-2xl border transition-all p-5 shadow-lg ${
+                  isSelected
+                    ? "border-violet-500 bg-slate-900/95 ring-2 ring-violet-500/30"
+                    : "border-slate-700/80 bg-slate-900/90 hover:border-slate-500 hover:shadow-xl hover:shadow-black/50"
+                }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-600/10 text-violet-400">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleNoteSelection(note._id)}
+                    className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-950 text-violet-600 focus:ring-violet-500 cursor-pointer shrink-0"
+                  />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-300">
                     <FileText size={20} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="truncate text-[15px] font-bold text-slate-100">{note.title}</h4>
-                    <span className="text-[11px] text-slate-500 block truncate">
+                    <h4 className="truncate text-sm font-bold text-white">{note.title}</h4>
+                    <span className="text-xs text-slate-300 block truncate mt-0.5">
                       {new Date(note.createdAt).toLocaleDateString()}
-                      {note.courseTitle ? ` · ${note.courseTitle}` : " · General upload"}
+                      {note.courseTitle ? ` · ${note.courseTitle}` : " · Standalone note"}
                     </span>
                     {(note.subject || note.chapterTitle) && (
-                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                         {note.subject && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-500/10 text-violet-300 border border-violet-500/20 truncate max-w-[150px]">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-violet-500/15 text-violet-300 border border-violet-500/30 truncate max-w-[150px]">
                             {note.subject}
                           </span>
                         )}
                         {note.chapterTitle && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700 truncate max-w-[180px]">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-800 text-slate-200 border border-slate-600 truncate max-w-[180px]">
                             {note.chapterTitle}
                           </span>
                         )}
@@ -1074,12 +1088,12 @@ export default function InstructorNotes({ showToast }) {
                 </div>
 
                 {note.description && (
-                  <p className="line-clamp-2 text-[13px] leading-relaxed text-slate-400">{note.description}</p>
+                  <p className="line-clamp-2 text-xs leading-relaxed text-slate-300">{note.description}</p>
                 )}
 
-                <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-800 pt-3">
+                <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-700/80 pt-3">
                   <div
-                    className={`rounded-full border px-2.5 py-1 text-[10px] font-bold ${st.bg} ${st.text} ${st.border}`}
+                    className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${st.bg} ${st.text} ${st.border}`}
                   >
                     {st.label}
                   </div>
@@ -1089,13 +1103,13 @@ export default function InstructorNotes({ showToast }) {
                       <>
                         <button
                           onClick={() => handleApprove(note)}
-                          className="flex items-center gap-1 rounded-lg bg-green-400/10 px-2.5 py-1.5 text-xs font-semibold text-green-400 transition-colors hover:bg-green-400/20"
+                          className="flex items-center gap-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1.5 text-xs font-bold text-emerald-300 transition-colors hover:bg-emerald-500/30 cursor-pointer"
                         >
                           <Check size={13} /> Approve
                         </button>
                         <button
                           onClick={() => handleReject(note)}
-                          className="flex items-center gap-1 rounded-lg bg-red-400/10 px-2.5 py-1.5 text-xs font-semibold text-red-400 transition-colors hover:bg-red-400/20"
+                          className="flex items-center gap-1 rounded-lg bg-rose-500/15 border border-rose-500/30 px-2.5 py-1.5 text-xs font-bold text-rose-300 transition-colors hover:bg-rose-500/30 cursor-pointer"
                         >
                           <XCircle size={13} /> Reject
                         </button>
@@ -1103,7 +1117,7 @@ export default function InstructorNotes({ showToast }) {
                     )}
                     <button
                       onClick={() => handleEditClick(note)}
-                      className="flex items-center gap-1 rounded-lg bg-amber-400/10 px-2.5 py-1.5 text-xs font-semibold text-amber-400 transition-colors hover:bg-amber-400/20 cursor-pointer"
+                      className="flex items-center gap-1 rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1.5 text-xs font-bold text-amber-300 transition-colors hover:bg-amber-500/30 cursor-pointer"
                     >
                       <Edit2 size={13} /> Edit
                     </button>
@@ -1111,13 +1125,14 @@ export default function InstructorNotes({ showToast }) {
                       href={note.fileUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="rounded-lg bg-sky-400/10 px-2.5 py-1.5 text-xs font-semibold text-sky-400 no-underline transition-colors hover:bg-sky-400/20"
+                      className="flex items-center gap-1 rounded-lg bg-sky-500/15 border border-sky-500/30 px-2.5 py-1.5 text-xs font-bold text-sky-300 no-underline transition-colors hover:bg-sky-500/30"
                     >
-                      View
+                      <span>View</span>
+                      <ExternalLink size={11} />
                     </a>
                     <button
                       onClick={() => handleDelete(note)}
-                      className="rounded-lg bg-red-400/10 px-2.5 py-1.5 text-xs font-semibold text-red-400 transition-colors hover:bg-red-400/20"
+                      className="rounded-lg bg-rose-500/15 border border-rose-500/30 px-2.5 py-1.5 text-xs font-bold text-rose-300 transition-colors hover:bg-rose-500/30 cursor-pointer"
                     >
                       Delete
                     </button>
@@ -1125,7 +1140,7 @@ export default function InstructorNotes({ showToast }) {
                 </div>
 
                 {note.status === "rejected" && note.rejectedReason && (
-                  <div className="rounded-lg bg-red-400/10 px-2.5 py-2 text-[11px] text-red-300">
+                  <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 px-3 py-2 text-xs text-rose-300 font-medium">
                     Reason: {note.rejectedReason}
                   </div>
                 )}
@@ -1135,30 +1150,47 @@ export default function InstructorNotes({ showToast }) {
         </div>
       )}
 
-      {/* Upload modal */}
+      {/* ── Upload Note Modal ── */}
       {showModal && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
           onClick={(e) => e.target === e.currentTarget && closeModal()}
         >
-          <div className="w-full max-w-[650px] rounded-2xl border border-slate-800 bg-slate-950 p-6 max-h-[90vh] overflow-y-auto">
-            <div className="mb-5 flex items-center justify-between">
-              <h3 className="text-lg font-extrabold text-slate-100">Upload Note</h3>
-              <button onClick={closeModal} aria-label="Close" className="text-slate-500 hover:text-slate-300">
-                <X size={20} />
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md" onClick={closeModal} />
+          <div className="relative z-10 w-full max-w-2xl my-auto flex flex-col rounded-2xl sm:rounded-3xl border border-slate-700 bg-slate-900 shadow-[0_25px_70px_rgba(0,0,0,0.9)] max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4.5 bg-slate-900 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15 text-violet-300 border border-violet-500/30 shadow-inner">
+                  <Upload size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-white">Upload Study Note</h3>
+                  <p className="text-xs text-slate-300">Add a new PDF note to your course or standalone library.</p>
+                </div>
+              </div>
+              <button
+                onClick={closeModal}
+                aria-label="Close"
+                className="rounded-xl p-2 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-700/80 transition-colors cursor-pointer"
+              >
+                <X size={18} />
               </button>
             </div>
 
-            <div className="flex flex-col gap-4">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4.5 bg-[#0b1120]/60 custom-scrollbar">
               {isAdmin && (
                 <>
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-400">Assign Instructor (Optional)</label>
+                    <label className="mb-1.5 block text-xs font-bold text-slate-200 uppercase tracking-wide">
+                      Assign Instructor (Optional)
+                    </label>
                     <select
                       value={form.instructorId}
                       onChange={(e) => setForm({ ...form, instructorId: e.target.value })}
                       disabled={!!form.courseId}
-                      className={`w-full rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-slate-100 outline-none focus:border-violet-600 ${form.courseId ? "opacity-50 cursor-not-allowed" : ""}`}
+                      className={`w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-2.5 text-sm text-white font-medium outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20 transition-all ${
+                        form.courseId ? "opacity-60 cursor-not-allowed" : ""
+                      }`}
                     >
                       <option value="">-- Assign to yourself --</option>
                       {instructors.map((inst) => (
@@ -1167,24 +1199,26 @@ export default function InstructorNotes({ showToast }) {
                         </option>
                       ))}
                     </select>
-                    {form.courseId && <p className="mt-1 text-xs text-slate-500">Instructor is inherited from the selected course.</p>}
+                    {form.courseId && <p className="mt-1 text-xs text-slate-400">Instructor is inherited from the selected course.</p>}
                   </div>
 
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-                    <label className="mb-2 block text-xs font-semibold text-slate-300">Assign to Course (Optional)</label>
+                  <div className="rounded-2xl border border-slate-700/80 bg-slate-950/70 p-4.5 space-y-3">
+                    <label className="block text-xs font-bold text-slate-200 uppercase tracking-wide">
+                      Assign to Course (Optional)
+                    </label>
                     
-                    <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       <input
                         type="text"
                         placeholder="Search..."
                         value={courseSearch}
                         onChange={(e) => setCourseSearch(e.target.value)}
-                        className="w-full rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-violet-600"
+                        className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white placeholder:text-slate-400 outline-none focus:border-violet-400"
                       />
                       <select
                         value={courseInstructor}
                         onChange={(e) => setCourseInstructor(e.target.value)}
-                        className="w-full rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-violet-600"
+                        className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-slate-200 outline-none focus:border-violet-400"
                       >
                         <option value="">Instructors (All)</option>
                         {uniqueCourseInstructors.map((inst, idx) => (
@@ -1194,7 +1228,7 @@ export default function InstructorNotes({ showToast }) {
                       <select
                         value={courseSubject}
                         onChange={(e) => setCourseSubject(e.target.value)}
-                        className="w-full rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-violet-600"
+                        className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-slate-200 outline-none focus:border-violet-400"
                       >
                         <option value="">Subjects (All)</option>
                         {uniqueCourseSubjects.map((sub, idx) => (
@@ -1204,7 +1238,7 @@ export default function InstructorNotes({ showToast }) {
                       <select
                         value={courseClass}
                         onChange={(e) => setCourseClass(e.target.value)}
-                        className="w-full rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-violet-600"
+                        className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-slate-200 outline-none focus:border-violet-400"
                       >
                         <option value="">Classes (All)</option>
                         {uniqueCourseClasses.map((cls, idx) => (
@@ -1224,7 +1258,7 @@ export default function InstructorNotes({ showToast }) {
                           subject: form.subject || c?.category || "",
                         });
                       }}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3.5 py-2 text-sm text-slate-100 outline-none focus:border-violet-600"
+                      className="w-full rounded-xl border border-slate-600 bg-slate-900 px-4 py-2.5 text-xs text-white font-medium outline-none focus:border-violet-400"
                     >
                       <option value="">-- No Course (Standalone Note) --</option>
                       {filteredCourses.map((c) => (
@@ -1235,9 +1269,9 @@ export default function InstructorNotes({ showToast }) {
                     </select>
 
                     {form.courseId && (
-                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-700/60">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-700/60">
                         <div>
-                          <label className="block text-xs font-semibold text-slate-300 mb-1">
+                          <label className="block text-xs font-semibold text-slate-200 mb-1">
                             Subject / Category in Course
                           </label>
                           <input
@@ -1246,7 +1280,7 @@ export default function InstructorNotes({ showToast }) {
                             value={form.subject}
                             onChange={(e) => setForm({ ...form, subject: e.target.value })}
                             placeholder="e.g. Accounts, Physics..."
-                            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-100 outline-none focus:border-violet-600"
+                            className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder:text-slate-400 outline-none focus:border-violet-400"
                           />
                           <datalist id="upload-subjects-list">
                             {uploadAvailableSubjects.map((s, idx) => (
@@ -1255,7 +1289,7 @@ export default function InstructorNotes({ showToast }) {
                           </datalist>
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-slate-300 mb-1">
+                          <label className="block text-xs font-semibold text-slate-200 mb-1">
                             Chapter / Unit in Course
                           </label>
                           <input
@@ -1264,7 +1298,7 @@ export default function InstructorNotes({ showToast }) {
                             value={form.chapterTitle}
                             onChange={(e) => setForm({ ...form, chapterTitle: e.target.value })}
                             placeholder="e.g. Chapter 1: Introduction..."
-                            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-100 outline-none focus:border-violet-600"
+                            className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder:text-slate-400 outline-none focus:border-violet-400"
                           />
                           <datalist id="upload-chapters-list">
                             {uploadAvailableChapters.map((ch, idx) => (
@@ -1278,7 +1312,7 @@ export default function InstructorNotes({ showToast }) {
                             id="upload-add-curriculum"
                             checked={form.addToCurriculum}
                             onChange={(e) => setForm({ ...form, addToCurriculum: e.target.checked })}
-                            className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                            className="h-4 w-4 rounded border-slate-600 bg-slate-950 text-violet-600 focus:ring-violet-500 cursor-pointer"
                           />
                           <label htmlFor="upload-add-curriculum" className="text-xs text-slate-300 cursor-pointer select-none">
                             Also insert note into course curriculum / lessons under this chapter
@@ -1291,30 +1325,36 @@ export default function InstructorNotes({ showToast }) {
               )}
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-400">Title (Optional)</label>
+                <label className="mb-1.5 block text-xs font-bold text-slate-200 uppercase tracking-wide">
+                  Title (Optional - defaults to file name)
+                </label>
                 <input
                   ref={titleInputRef}
                   type="text"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="e.g. Chapter 1: Introduction"
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-slate-100 outline-none focus:border-violet-600"
+                  className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-2.5 text-sm text-white font-medium placeholder:text-slate-400 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20 transition-all"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-400">Description</label>
+                <label className="mb-1.5 block text-xs font-bold text-slate-200 uppercase tracking-wide">
+                  Description
+                </label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="Brief description of the notes..."
                   rows={3}
-                  className="w-full resize-y rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-slate-100 outline-none focus:border-violet-600"
+                  className="w-full resize-y rounded-xl border border-slate-600 bg-slate-950 px-4 py-2.5 text-sm text-white font-medium placeholder:text-slate-400 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20 transition-all"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-400">File (PDF Only) *</label>
+                <label className="mb-1.5 block text-xs font-bold text-slate-200 uppercase tracking-wide">
+                  File (PDF Only) *
+                </label>
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -1324,17 +1364,19 @@ export default function InstructorNotes({ showToast }) {
                 />
 
                 {form.fileUrl ? (
-                  <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-3">
-                    <div className="flex min-w-0 items-center gap-2 text-[13px] font-semibold text-green-400">
-                      <FileText size={16} className="shrink-0" />
-                      <span className="truncate">{uploadedFileName || "File uploaded"}</span>
+                  <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-slate-800/90 p-4 shadow-sm">
+                    <div className="flex min-w-0 items-center gap-3 text-sm font-bold text-emerald-400">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-300">
+                        <FileText size={18} className="shrink-0" />
+                      </div>
+                      <span className="truncate text-white">{uploadedFileName || "File uploaded"}</span>
                     </div>
                     <button
                       onClick={() => {
                         setForm({ ...form, fileUrl: "" });
                         setUploadedFileName("");
                       }}
-                      className="shrink-0 text-xs font-semibold text-red-400 hover:text-red-300"
+                      className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                     >
                       Remove
                     </button>
@@ -1348,49 +1390,50 @@ export default function InstructorNotes({ showToast }) {
                     }}
                     onDragLeave={() => setIsDragging(false)}
                     onDrop={handleDrop}
-                    className={`rounded-xl border-2 border-dashed p-6 text-center transition-colors ${uploadingFile ? "cursor-default" : "cursor-pointer"
-                      } ${isDragging ? "border-violet-500 bg-violet-500/5" : "border-slate-800 bg-slate-900/60"}`}
+                    className={`rounded-2xl border-2 border-dashed p-7 text-center transition-all ${
+                      uploadingFile ? "cursor-default" : "cursor-pointer"
+                    } ${isDragging ? "border-violet-400 bg-violet-500/10" : "border-slate-600 bg-slate-950/60 hover:border-violet-400 hover:bg-slate-950/90"}`}
                   >
                     {uploadingFile ? (
-                      <div>
-                        <div className="mb-2 text-[13px] font-semibold text-indigo-400">
-                          Uploading {uploadProgress}%
+                      <div className="space-y-2">
+                        <div className="text-xs font-bold text-violet-300">
+                          Uploading PDF… {uploadProgress}%
                         </div>
-                        <div className="h-1 w-full rounded-full bg-slate-800">
+                        <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-indigo-400 transition-all"
+                            className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all duration-200"
                             style={{ width: `${uploadProgress}%` }}
                           />
                         </div>
                       </div>
                     ) : (
                       <>
-                        <Upload size={22} className="mx-auto mb-2 text-slate-500" />
-                        <div className="text-[13px] font-medium text-slate-400">
-                          Click to upload, or drag a file here
+                        <Upload size={26} className="mx-auto mb-2 text-violet-400" />
+                        <div className="text-sm font-bold text-slate-200">
+                          Click to upload, or drag PDF file here
                         </div>
-                        <div className="mt-1 text-[11px] text-slate-600">PDF, DOC, DOCX up to 10MB</div>
+                        <div className="mt-1 text-xs text-slate-400">PDF documents up to 50MB</div>
                       </>
                     )}
                   </div>
                 )}
               </div>
+            </div>
 
-              <div className="mt-2 flex gap-3">
-                <button
-                  onClick={closeModal}
-                  className="flex-1 rounded-lg border border-slate-800 bg-transparent py-3 font-bold text-slate-300 transition-colors hover:bg-slate-900"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreate}
-                  disabled={saving || uploadingFile}
-                  className="flex-1 rounded-lg bg-violet-600 py-3 font-bold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {saving ? "Saving..." : "Upload"}
-                </button>
-              </div>
+            <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4 bg-slate-900 shrink-0">
+              <button
+                onClick={closeModal}
+                className="rounded-xl border border-slate-600 bg-slate-800 px-5 py-2.5 text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreate}
+                disabled={saving || uploadingFile}
+                className="rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-6 py-2.5 text-xs font-bold text-white hover:from-violet-500 hover:to-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-violet-600/25"
+              >
+                {saving ? "Saving..." : "Upload Note"}
+              </button>
             </div>
           </div>
         </div>
@@ -1398,43 +1441,43 @@ export default function InstructorNotes({ showToast }) {
 
       {/* ── Bulk Upload Modal ── */}
       {showBulkModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6">
-          <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md" onClick={closeBulkModal} />
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md" onClick={closeBulkModal} />
 
-          <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col rounded-3xl border border-slate-700/80 bg-slate-950 shadow-[0_20px_60px_rgba(0,0,0,0.85)] overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative z-10 w-full max-w-3xl my-auto flex flex-col rounded-2xl sm:rounded-3xl border border-slate-700 bg-slate-900 shadow-[0_25px_70px_rgba(0,0,0,0.9)] max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-800/80 px-6 py-4.5 bg-slate-900/50 shrink-0">
+            <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4.5 bg-slate-900 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-inner">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-inner">
                   <FolderPlus size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-extrabold text-slate-100">Bulk Upload Study Notes</h3>
-                  <p className="text-xs text-slate-400">Select multiple PDF files, edit note details, and upload in batch.</p>
+                  <h3 className="text-lg font-extrabold text-white">Bulk Upload Study Notes</h3>
+                  <p className="text-xs text-slate-300">Select multiple PDF files, edit note details, and upload in batch.</p>
                 </div>
               </div>
               <button
                 onClick={closeBulkModal}
                 disabled={bulkUploading}
-                className="rounded-xl p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
+                className="rounded-xl p-2 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-700/80 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-[#0b1120]/60 custom-scrollbar">
               {/* Optional Global Course / Instructor Assignment */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+                  <label className="mb-1.5 block text-xs font-bold text-slate-200 uppercase tracking-wide">
                     Assign All to Course (Optional)
                   </label>
                   <select
                     value={bulkCourseId}
                     onChange={(e) => setBulkCourseId(e.target.value)}
                     disabled={bulkUploading}
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/80 p-3 text-xs text-slate-200 outline-none focus:border-emerald-500"
+                    className="w-full rounded-xl border border-slate-600 bg-slate-950 p-3 text-xs text-white font-medium outline-none focus:border-emerald-400"
                   >
                     <option value="">Standalone Notes (No specific course)</option>
                     {courses.map((c) => (
@@ -1447,14 +1490,14 @@ export default function InstructorNotes({ showToast }) {
 
                 {isAdmin && (
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+                    <label className="mb-1.5 block text-xs font-bold text-slate-200 uppercase tracking-wide">
                       Assigned Instructor (Admin)
                     </label>
                     <select
                       value={bulkInstructorId}
                       onChange={(e) => setBulkInstructorId(e.target.value)}
                       disabled={bulkUploading}
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900/80 p-3 text-xs text-slate-200 outline-none focus:border-emerald-500"
+                      className="w-full rounded-xl border border-slate-600 bg-slate-950 p-3 text-xs text-white font-medium outline-none focus:border-emerald-400"
                     >
                       <option value="">Default (Me)</option>
                       {instructors.map((inst) => (
@@ -1492,20 +1535,20 @@ export default function InstructorNotes({ showToast }) {
                   setIsBulkDragging(false);
                   if (!bulkUploading) handleBulkFilesSelect(e.dataTransfer.files);
                 }}
-                className={`rounded-2xl border-2 border-dashed p-8 text-center transition-colors ${
+                className={`rounded-2xl border-2 border-dashed p-8 text-center transition-all ${
                   bulkUploading ? "cursor-default" : "cursor-pointer"
                 } ${
                   isBulkDragging
-                    ? "border-emerald-500 bg-emerald-500/10"
-                    : "border-slate-800 bg-slate-900/40 hover:border-slate-700"
+                    ? "border-emerald-400 bg-emerald-500/10"
+                    : "border-slate-600 bg-slate-950/60 hover:border-emerald-400 hover:bg-slate-950/90"
                 }`}
               >
-                <FolderPlus size={32} className="mx-auto mb-3 text-emerald-400/80" />
-                <h4 className="text-sm font-bold text-slate-200">
+                <FolderPlus size={34} className="mx-auto mb-3 text-emerald-400" />
+                <h4 className="text-sm font-bold text-white">
                   Select or Drag & Drop Multiple PDF Files
                 </h4>
-                <p className="text-xs text-slate-500 mt-1">
-                  Upload batch lecture notes, chapter summaries, formula sheets at once
+                <p className="text-xs text-slate-300 mt-1 font-medium">
+                  Upload batch lecture notes, chapter summaries, and revision sheets all at once
                 </p>
               </div>
 
@@ -1513,13 +1556,13 @@ export default function InstructorNotes({ showToast }) {
               {bulkFiles.length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-300">
+                    <span className="text-xs font-bold text-white">
                       Files Queue ({bulkFiles.length})
                     </span>
                     {!bulkUploading && (
                       <button
                         onClick={() => setBulkFiles([])}
-                        className="text-xs text-red-400 hover:text-red-300 cursor-pointer"
+                        className="text-xs font-bold text-rose-400 hover:text-rose-300 cursor-pointer"
                       >
                         Clear all
                       </button>
@@ -1530,11 +1573,13 @@ export default function InstructorNotes({ showToast }) {
                     {bulkFiles.map((item) => (
                       <div
                         key={item.id}
-                        className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80 space-y-2.5"
+                        className="p-4 rounded-2xl border border-slate-700/80 bg-slate-950/80 space-y-3"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            <FileText size={18} className="text-emerald-400 shrink-0" />
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+                              <FileText size={18} />
+                            </div>
                             <div className="min-w-0 flex-1">
                               <input
                                 type="text"
@@ -1542,9 +1587,9 @@ export default function InstructorNotes({ showToast }) {
                                 onChange={(e) => updateBulkFileField(item.id, "title", e.target.value)}
                                 disabled={bulkUploading}
                                 placeholder="Note Title (Required)"
-                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white font-bold outline-none focus:border-emerald-500"
+                                className="w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-xs text-white font-bold outline-none focus:border-emerald-400"
                               />
-                              <span className="text-[10px] text-slate-500 block truncate mt-1">
+                              <span className="text-[11px] text-slate-400 font-medium block truncate mt-1">
                                 File: {item.file?.name} ({(item.file?.size / (1024 * 1024)).toFixed(2)} MB)
                               </span>
                             </div>
@@ -1553,7 +1598,7 @@ export default function InstructorNotes({ showToast }) {
                           {!bulkUploading && (
                             <button
                               onClick={() => removeBulkFile(item.id)}
-                              className="text-slate-500 hover:text-red-400 p-1 rounded-lg transition-colors cursor-pointer shrink-0"
+                              className="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
                               title="Remove file"
                             >
                               <Trash2 size={16} />
@@ -1569,18 +1614,18 @@ export default function InstructorNotes({ showToast }) {
                             onChange={(e) => updateBulkFileField(item.id, "description", e.target.value)}
                             disabled={bulkUploading}
                             placeholder="Optional description (e.g. Chapter 1 revision summary)"
-                            className="w-full bg-slate-950/60 border border-slate-800/80 rounded-lg px-3 py-1.5 text-[11px] text-slate-300 outline-none focus:border-emerald-500"
+                            className="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder:text-slate-400 outline-none focus:border-emerald-400"
                           />
                         </div>
 
                         {/* Upload Progress Bar */}
                         {item.status === "uploading" && (
                           <div className="space-y-1">
-                            <div className="flex justify-between text-[10px] font-semibold text-emerald-400">
+                            <div className="flex justify-between text-xs font-semibold text-emerald-400">
                               <span>Uploading file…</span>
                               <span>{item.progress}%</span>
                             </div>
-                            <div className="h-1.5 w-full rounded-full bg-slate-800">
+                            <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
                               <div
                                 className="h-full rounded-full bg-emerald-400 transition-all duration-200"
                                 style={{ width: `${item.progress}%` }}
@@ -1590,14 +1635,14 @@ export default function InstructorNotes({ showToast }) {
                         )}
 
                         {item.status === "ready" && (
-                          <div className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
-                            <Check size={12} /> Ready for batch save
+                          <div className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                            <Check size={14} /> Ready for batch save
                           </div>
                         )}
 
                         {item.status === "error" && (
-                          <div className="text-[10px] font-bold text-red-400 flex items-center gap-1">
-                            <XCircle size={12} /> {item.errorMsg || "Upload error"}
+                          <div className="text-xs font-bold text-rose-400 flex items-center gap-1.5">
+                            <XCircle size={14} /> {item.errorMsg || "Upload error"}
                           </div>
                         )}
                       </div>
@@ -1608,14 +1653,14 @@ export default function InstructorNotes({ showToast }) {
             </div>
 
             {/* Footer Buttons */}
-            <div className="flex items-center justify-end gap-3 border-t border-slate-800/80 px-6 py-4 bg-slate-900/50 shrink-0">
-              <span className="text-xs text-slate-400 mr-auto">
+            <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4 bg-slate-900 shrink-0">
+              <span className="text-xs font-bold text-slate-300 mr-auto">
                 {bulkFiles.length} file{bulkFiles.length !== 1 ? "s" : ""} selected
               </span>
               <button
                 onClick={closeBulkModal}
                 disabled={bulkUploading}
-                className="rounded-xl border border-slate-700 bg-transparent px-5 py-2.5 text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
+                className="rounded-xl border border-slate-600 bg-slate-800 px-5 py-2.5 text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Cancel
               </button>
@@ -1643,70 +1688,70 @@ export default function InstructorNotes({ showToast }) {
 
       {/* ── Edit Note & Course Assignment Modal ── */}
       {showEditModal && editingNote && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6">
-          <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md" onClick={closeEditModal} />
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md" onClick={closeEditModal} />
 
-          <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-3xl border border-slate-700/80 bg-slate-950 shadow-[0_20px_60px_rgba(0,0,0,0.85)] overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative z-10 w-full max-w-2xl my-auto flex flex-col rounded-2xl sm:rounded-3xl border border-slate-700 bg-slate-900 shadow-[0_25px_70px_rgba(0,0,0,0.9)] max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-800/80 px-6 py-4.5 bg-slate-900/50 shrink-0">
+            <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4.5 bg-slate-900 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-inner">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-inner">
                   <Edit2 size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-extrabold text-slate-100">Edit Study Note & Course</h3>
-                  <p className="text-xs text-slate-400">Update note title, description, assign to a course chapter/subject, or replace the attached PDF.</p>
+                  <h3 className="text-lg font-extrabold text-white">Edit Study Note & Course</h3>
+                  <p className="text-xs text-slate-300">Update note title, description, assign to a course chapter/subject, or replace the attached PDF.</p>
                 </div>
               </div>
               <button
                 onClick={closeEditModal}
                 disabled={editSaving || editUploadingFile}
-                className="rounded-xl p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
+                className="rounded-xl p-2 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-700/80 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-[#0b1120]/60 custom-scrollbar">
               {/* Current Assignment Status Pill */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl text-xs">
-                <div className="space-y-0.5">
-                  <span className="text-slate-400 block font-medium">Current Assignment:</span>
-                  <span className="text-amber-400 font-bold">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-slate-800/90 border border-amber-500/40 p-4 rounded-2xl text-xs shadow-inner">
+                <div className="space-y-1">
+                  <span className="text-slate-300 block font-bold text-[11px] uppercase tracking-wider">Current Assignment:</span>
+                  <span className="text-amber-300 font-extrabold text-sm block">
                     {editingNote.courseTitle ? `📚 ${editingNote.courseTitle}` : "📄 Standalone Note (General Upload)"}
                   </span>
                 </div>
-                <span className="text-slate-500 text-[11px]">
+                <span className="text-slate-300 text-xs font-semibold bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-700">
                   Created: {new Date(editingNote.createdAt).toLocaleDateString()}
                 </span>
               </div>
 
               {/* Course Assignment Selector */}
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-200">
+                <label className="block text-xs font-bold text-slate-200 uppercase tracking-wide">
                   Assign / Move to Course
                 </label>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-xs text-slate-300">
                   Choose which course this study note belongs to so students enrolled in that class can access it.
                 </p>
 
                 {/* Quick Filters */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div className="relative">
-                    <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       type="text"
                       placeholder="Search courses..."
                       value={editCourseSearch}
                       onChange={(e) => setEditCourseSearch(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-7 pr-2.5 py-1.5 text-xs text-white outline-none focus:border-amber-500"
+                      className="w-full bg-slate-950 border border-slate-600 rounded-xl pl-8 pr-3 py-2 text-xs text-white placeholder:text-slate-400 outline-none focus:border-amber-400"
                     />
                   </div>
                   <select
                     value={editCourseSubject}
                     onChange={(e) => setEditCourseSubject(e.target.value)}
-                    className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 outline-none focus:border-amber-500"
+                    className="bg-slate-950 border border-slate-600 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none focus:border-amber-400"
                   >
                     <option value="">All Categories</option>
                     {uniqueCourseSubjects.map((s, idx) => (
@@ -1716,7 +1761,7 @@ export default function InstructorNotes({ showToast }) {
                   <select
                     value={editCourseClass}
                     onChange={(e) => setEditCourseClass(e.target.value)}
-                    className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 outline-none focus:border-amber-500"
+                    className="bg-slate-950 border border-slate-600 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none focus:border-amber-400"
                   >
                     <option value="">All Classes/Boards</option>
                     {uniqueCourseClasses.map((cls, idx) => (
@@ -1737,7 +1782,7 @@ export default function InstructorNotes({ showToast }) {
                       subject: editForm.subject || c?.category || "",
                     });
                   }}
-                  className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 outline-none focus:border-amber-500"
+                  className="w-full bg-slate-950 border border-slate-600 rounded-xl px-4 py-2.5 text-xs text-white font-medium outline-none focus:border-amber-400"
                 >
                   <option value="">-- No Course (Standalone General Study Note) --</option>
                   {filteredEditCourses.map((c) => (
@@ -1749,15 +1794,15 @@ export default function InstructorNotes({ showToast }) {
 
                 {/* Subject & Chapter Selection inside selected Course */}
                 {editForm.courseId && (
-                  <div className="mt-3 p-4 rounded-xl border border-slate-800 bg-slate-900/70 space-y-3">
-                    <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
-                      <BookOpen size={15} />
+                  <div className="mt-3 p-4.5 rounded-2xl border border-slate-700/80 bg-slate-950/70 space-y-3.5">
+                    <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
+                      <BookOpen size={16} />
                       <span>Course Subject & Chapter Placement</span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-300 mb-1">
+                        <label className="block text-xs font-bold text-slate-200 mb-1">
                           Subject / Stream in Course *
                         </label>
                         <input
@@ -1766,7 +1811,7 @@ export default function InstructorNotes({ showToast }) {
                           value={editForm.subject}
                           onChange={(e) => setEditForm({ ...editForm, subject: e.target.value })}
                           placeholder="e.g. Accounts, Physics, Chemistry..."
-                          className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-amber-500"
+                          className="w-full bg-slate-900 border border-slate-600 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-slate-400 outline-none focus:border-amber-400"
                         />
                         <datalist id="edit-subjects-list">
                           {editCourseAvailableSubjects.map((s, idx) => (
@@ -1776,7 +1821,7 @@ export default function InstructorNotes({ showToast }) {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-slate-300 mb-1">
+                        <label className="block text-xs font-bold text-slate-200 mb-1">
                           Chapter / Unit in Course *
                         </label>
                         <input
@@ -1785,7 +1830,7 @@ export default function InstructorNotes({ showToast }) {
                           value={editForm.chapterTitle}
                           onChange={(e) => setEditForm({ ...editForm, chapterTitle: e.target.value })}
                           placeholder="e.g. Chapter 1: Introduction..."
-                          className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-amber-500"
+                          className="w-full bg-slate-900 border border-slate-600 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-slate-400 outline-none focus:border-amber-400"
                         />
                         <datalist id="edit-chapters-list">
                           {editCourseAvailableChapters.map((ch, idx) => (
@@ -1801,9 +1846,9 @@ export default function InstructorNotes({ showToast }) {
                         id="edit-add-curriculum"
                         checked={editForm.addToCurriculum}
                         onChange={(e) => setEditForm({ ...editForm, addToCurriculum: e.target.checked })}
-                        className="h-4 w-4 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-500 cursor-pointer"
+                        className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-amber-500 focus:ring-amber-500 cursor-pointer"
                       />
-                      <label htmlFor="edit-add-curriculum" className="text-xs text-slate-300 cursor-pointer select-none">
+                      <label htmlFor="edit-add-curriculum" className="text-xs font-medium text-slate-200 cursor-pointer select-none">
                         Also add note into course curriculum / lessons under this chapter
                       </label>
                     </div>
@@ -1813,7 +1858,7 @@ export default function InstructorNotes({ showToast }) {
 
               {/* Title */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-200">
+                <label className="block text-xs font-bold text-slate-200 uppercase tracking-wide">
                   Note Title *
                 </label>
                 <input
@@ -1821,13 +1866,13 @@ export default function InstructorNotes({ showToast }) {
                   value={editForm.title}
                   onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                   placeholder="e.g. Chapter 1: Introduction & Notes"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white font-medium outline-none focus:border-amber-500"
+                  className="w-full bg-slate-950 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white font-medium placeholder:text-slate-400 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all"
                 />
               </div>
 
               {/* Description */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-200">
+                <label className="block text-xs font-bold text-slate-200 uppercase tracking-wide">
                   Description
                 </label>
                 <textarea
@@ -1835,13 +1880,13 @@ export default function InstructorNotes({ showToast }) {
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                   placeholder="Brief summary or topic notes..."
                   rows={3}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 outline-none focus:border-amber-500 resize-none"
+                  className="w-full bg-slate-950 border border-slate-600 rounded-xl px-4 py-2.5 text-xs text-white placeholder:text-slate-400 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all resize-none"
                 />
               </div>
 
               {/* Attached PDF Document */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-200">
+                <label className="block text-xs font-bold text-slate-200 uppercase tracking-wide">
                   Attached PDF Document *
                 </label>
 
@@ -1853,11 +1898,13 @@ export default function InstructorNotes({ showToast }) {
                   accept=".pdf,application/pdf"
                 />
 
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3.5 rounded-xl">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <FileText size={18} className="text-emerald-400 shrink-0" />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-800/90 border border-emerald-500/30 p-4 rounded-2xl shadow-sm">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+                      <FileText size={20} />
+                    </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-slate-200 truncate">
+                      <p className="text-xs font-bold text-white truncate">
                         {editUploadedFileName || "Current Attached Document"}
                       </p>
                       {editForm.fileUrl && (
@@ -1865,10 +1912,10 @@ export default function InstructorNotes({ showToast }) {
                           href={editForm.fileUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-[11px] text-sky-400 hover:underline flex items-center gap-1 mt-0.5"
+                          className="text-xs font-bold text-sky-300 hover:text-sky-200 hover:underline flex items-center gap-1 mt-0.5"
                         >
                           <span>View PDF document</span>
-                          <ExternalLink size={10} />
+                          <ExternalLink size={12} />
                         </a>
                       )}
                     </div>
@@ -1878,16 +1925,16 @@ export default function InstructorNotes({ showToast }) {
                     type="button"
                     onClick={() => !editUploadingFile && editFileInputRef.current?.click()}
                     disabled={editUploadingFile}
-                    className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-700 transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                    className="px-4 py-2 rounded-xl border border-slate-600 bg-slate-900 text-xs font-bold text-slate-100 hover:bg-slate-700 hover:text-white transition-colors shrink-0 cursor-pointer disabled:opacity-50 shadow-sm"
                   >
                     {editUploadingFile ? `Uploading ${editUploadProgress}%...` : "Replace PDF"}
                   </button>
                 </div>
 
                 {editUploadingFile && (
-                  <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
+                  <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-amber-400 transition-all duration-200"
+                      className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-200"
                       style={{ width: `${editUploadProgress}%` }}
                     />
                   </div>
@@ -1896,18 +1943,18 @@ export default function InstructorNotes({ showToast }) {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 border-t border-slate-800/80 px-6 py-4 bg-slate-900/50 shrink-0">
+            <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4 bg-slate-900 shrink-0">
               <button
                 onClick={closeEditModal}
                 disabled={editSaving || editUploadingFile}
-                className="rounded-xl border border-slate-700 bg-transparent px-5 py-2.5 text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
+                className="rounded-xl border border-slate-600 bg-slate-800 px-5 py-2.5 text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveEdit}
                 disabled={editSaving || editUploadingFile}
-                className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold px-6 py-2.5 text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2 shadow-lg shadow-amber-500/25 active:scale-[0.98]"
+                className="rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black px-6 py-2.5 text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2 shadow-lg shadow-amber-500/25 active:scale-[0.98]"
               >
                 {editSaving ? (
                   <>
@@ -1928,37 +1975,37 @@ export default function InstructorNotes({ showToast }) {
 
       {/* ── Batch Assign Course Modal ── */}
       {showBatchAssignModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
           <div
-            className="fixed inset-0 bg-slate-950/85 backdrop-blur-md"
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md"
             onClick={() => !batchAssigning && setShowBatchAssignModal(false)}
           />
 
-          <div className="relative w-full max-w-lg rounded-3xl border border-slate-700/80 bg-slate-950 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.85)] z-10 space-y-5 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="relative z-10 w-full max-w-lg my-auto flex flex-col rounded-2xl sm:rounded-3xl border border-slate-700 bg-slate-900 shadow-[0_25px_70px_rgba(0,0,0,0.9)] max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4.5 bg-slate-900 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15 text-violet-300 border border-violet-500/30">
                   <BookOpen size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-100">Batch Assign to Course</h3>
-                  <p className="text-xs text-slate-400">
-                    Assign {selectedNoteIds.length} selected note(s) to a course, subject, and chapter at once.
+                  <h3 className="text-lg font-extrabold text-white">Batch Assign to Course</h3>
+                  <p className="text-xs text-slate-300">
+                    Assign {selectedNoteIds.length} selected note(s) to a course, subject, and chapter.
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowBatchAssignModal(false)}
                 disabled={batchAssigning}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition-colors disabled:opacity-50 cursor-pointer"
+                className="rounded-xl p-2 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-700/80 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#0b1120]/60 custom-scrollbar">
               <div>
-                <label className="block text-xs font-bold text-slate-200 mb-1">
+                <label className="block text-xs font-bold text-slate-200 uppercase tracking-wide mb-1.5">
                   Target Course *
                 </label>
                 <select
@@ -1970,7 +2017,7 @@ export default function InstructorNotes({ showToast }) {
                     setBatchSubject(batchSubject || c?.category || "");
                   }}
                   disabled={batchAssigning}
-                  className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 outline-none focus:border-violet-500"
+                  className="w-full bg-slate-950 border border-slate-600 rounded-xl px-4 py-2.5 text-xs text-white font-medium outline-none focus:border-violet-400"
                 >
                   <option value="">-- No Course (Convert to Standalone General Notes) --</option>
                   {courses.map((c) => (
@@ -1982,10 +2029,10 @@ export default function InstructorNotes({ showToast }) {
               </div>
 
               {batchTargetCourseId && (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="space-y-3.5 p-4.5 rounded-2xl border border-slate-700/80 bg-slate-950/70">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      <label className="block text-xs font-bold text-slate-200 mb-1">
                         Subject / Stream
                       </label>
                       <input
@@ -1994,7 +2041,7 @@ export default function InstructorNotes({ showToast }) {
                         value={batchSubject}
                         onChange={(e) => setBatchSubject(e.target.value)}
                         placeholder="e.g. Accounts, Physics..."
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-violet-500"
+                        className="w-full bg-slate-900 border border-slate-600 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-slate-400 outline-none focus:border-violet-400"
                       />
                       <datalist id="batch-subjects-list">
                         {batchAvailableSubjects.map((s, idx) => (
@@ -2004,7 +2051,7 @@ export default function InstructorNotes({ showToast }) {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      <label className="block text-xs font-bold text-slate-200 mb-1">
                         Chapter / Unit
                       </label>
                       <input
@@ -2013,7 +2060,7 @@ export default function InstructorNotes({ showToast }) {
                         value={batchChapterTitle}
                         onChange={(e) => setBatchChapterTitle(e.target.value)}
                         placeholder="e.g. Chapter 1: Introduction..."
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-violet-500"
+                        className="w-full bg-slate-900 border border-slate-600 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-slate-400 outline-none focus:border-violet-400"
                       />
                       <datalist id="batch-chapters-list">
                         {batchAvailableChapters.map((ch, idx) => (
@@ -2029,28 +2076,28 @@ export default function InstructorNotes({ showToast }) {
                       id="batch-add-curriculum"
                       checked={batchAddToCurriculum}
                       onChange={(e) => setBatchAddToCurriculum(e.target.checked)}
-                      className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                      className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-violet-500 focus:ring-violet-500 cursor-pointer"
                     />
-                    <label htmlFor="batch-add-curriculum" className="text-xs text-slate-300 cursor-pointer select-none">
+                    <label htmlFor="batch-add-curriculum" className="text-xs font-medium text-slate-200 cursor-pointer select-none">
                       Also insert notes into course curriculum / lessons under this chapter
                     </label>
                   </div>
-                </>
+                </div>
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4 bg-slate-900 shrink-0">
               <button
                 onClick={() => setShowBatchAssignModal(false)}
                 disabled={batchAssigning}
-                className="rounded-xl border border-slate-800 bg-transparent px-4 py-2 text-xs font-bold text-slate-300 hover:bg-slate-900 cursor-pointer"
+                className="rounded-xl border border-slate-600 bg-slate-800 px-5 py-2.5 text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleBulkAssignCourseSubmit}
                 disabled={batchAssigning}
-                className="rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold px-5 py-2 text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-violet-600/20"
+                className="rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold px-6 py-2.5 text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-violet-600/25"
               >
                 {batchAssigning ? (
                   <>
