@@ -403,7 +403,7 @@ const Layout = () => {
       {showNavbarAndFooter && <Navbar />}
 
       <div
-        {...(showMobileBottomBar ? swipeHandlers : {})}
+        {...(nativeApp ? swipeHandlers : {})}
         className={showNavbarAndFooter ? "pb-8" : ""}
       >
         <div className={showMobileBottomBar ? slideAnim : ""}>
