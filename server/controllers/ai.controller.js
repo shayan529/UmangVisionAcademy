@@ -7,7 +7,36 @@ import { getJson, setJson, deleteKey } from '../utils/redisClient.js';
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // Default model — fast & capable Groq-hosted model
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+
+// Resilient helper to execute Groq chat completions with automatic model fallback
+export async function createGroqChatCompletion(options) {
+  const primaryModel = options.model || GROQ_MODEL;
+  const candidateModels = [
+    primaryModel,
+    'llama-3.1-8b-instant',
+    'llama-3.3-70b-versatile',
+    'mixtral-8x7b-32768',
+    'gemma2-9b-it',
+  ];
+  const uniqueModels = [...new Set(candidateModels.filter(Boolean))];
+
+  let lastError;
+  for (const model of uniqueModels) {
+    try {
+      return await groq.chat.completions.create({
+        ...options,
+        model,
+      });
+    } catch (err) {
+      lastError = err;
+      console.warn(
+        `[Groq AI] Model "${model}" failed (${err?.message || err?.status || err}), trying fallback...`
+      );
+    }
+  }
+  throw lastError;
+}
 
 // System prompt — scoped to Umang Vision Academy's EdTech context (Students)
 const SYSTEM_PROMPT = `You are an expert AI Tutor for Umang Vision Academy, an EdTech platform for Indian students in Classes 1–12 studying under CBSE, ICSE, and MP Board curricula.
@@ -280,19 +309,15 @@ export const chatWithAI = async (req, res) => {
 
     const groqMessages = [
       { role: 'system', content: activePrompt },
-      { role: 'system', content: languageHint },
+      ...(languageHint ? [{ role: 'system', content: languageHint }] : []),
       // Only send last 20 messages to stay within context limits
       ...messages.slice(-20).map((m) => ({
         role: m.role === 'ai' ? 'assistant' : m.role,
         content: m.content ?? m.text ?? '',
       })),
-    ];
-
-    // Set up SSE headers for immediate streaming response with zero delay
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();
+    ].filter(
+      (m) => typeof m.content === 'string' && m.content.trim().length > 0
+    );
 
     // Perform database persistence asynchronously so streaming starts instantly
     const lastUserText =
@@ -348,13 +373,18 @@ export const chatWithAI = async (req, res) => {
       })();
     }
 
-    const stream = await groq.chat.completions.create({
-      model: GROQ_MODEL,
+    const stream = await createGroqChatCompletion({
       messages: groqMessages,
       stream: true,
       max_tokens: 800,
       temperature: 0.7,
     });
+
+    // Set up SSE headers for streaming response after stream initialized
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
 
     let assistantText = '';
 
@@ -488,8 +518,7 @@ Return valid JSON only in the following shape:
 Each question must have exactly 4 options and a correctOptionIndex between 0 and 3.
 `;
 
-    const response = await groq.chat.completions.create({
-      model: GROQ_MODEL,
+    const response = await createGroqChatCompletion({
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: prompt },
@@ -591,8 +620,7 @@ Return valid JSON only in the following exact shape:
 - "marks" should default to 1, or more if it's a very hard question.
 Do NOT include markdown formatting outside the JSON block. Return ONLY the raw JSON string.`;
 
-    const response = await groq.chat.completions.create({
-      model: GROQ_MODEL,
+    const response = await createGroqChatCompletion({
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: prompt },
@@ -756,8 +784,7 @@ Return a JSON object with a single key "articles" whose value is an array of 6 o
 - url: null`;
 
     try {
-      const response = await groq.chat.completions.create({
-        model: GROQ_MODEL,
+      const response = await createGroqChatCompletion({
         messages: [
           {
             role: 'system',
@@ -942,8 +969,7 @@ Do NOT include markdown formatting, code block markers, or commentary.
 Input strings:
 ${JSON.stringify(uniqueTexts)}`;
 
-    const completion = await groq.chat.completions.create({
-      model: GROQ_MODEL,
+    const completion = await createGroqChatCompletion({
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.1,
       response_format: { type: 'json_object' },

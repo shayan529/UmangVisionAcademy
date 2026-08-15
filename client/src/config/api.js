@@ -206,7 +206,7 @@ api.interceptors.request.use((config) => {
 // Global interceptor to sanitize 5xx (Internal Server Errors) and handle auto-failover to backup backend
 api.interceptors.response.use(
   (response) => {
-    if (IS_LOCAL_DEV && response.data) {
+    if (response.data) {
       response.data = replaceLocalhostUrls(response.data);
     }
     return response;
@@ -278,7 +278,7 @@ axios.interceptors.request.use((config) => {
 
 axios.interceptors.response.use(
   (response) => {
-    if (IS_LOCAL_DEV && response.data) {
+    if (response.data) {
       response.data = replaceLocalhostUrls(response.data);
     }
     return response;
