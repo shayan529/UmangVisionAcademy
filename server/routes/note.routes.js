@@ -3,11 +3,13 @@ import {
   createNote,
   bulkCreateNotes,
   bulkActionNotes,
+  bulkAssignCourseNotes,
   listNotes,
   approveNote,
   rejectNote,
   unapproveNote,
   deleteNote,
+  updateNote,
 } from "../controllers/note.controller.js";
 import {
   protect,
@@ -29,6 +31,7 @@ router.get("/", optionalAuth, listNotes);
 router.post("/", protect, instructorOnly, createNote);
 router.post("/bulk", protect, instructorOnly, bulkCreateNotes);
 router.post("/bulk-action", protect, instructorOnly, bulkActionNotes);
+router.post("/bulk-assign-course", protect, instructorOnly, bulkAssignCourseNotes);
 router.put(
   "/:id/approve",
   protect,
@@ -47,6 +50,7 @@ router.put(
   requirePermission("notes", "approve"),
   unapproveNote,
 );
+router.put("/:id", protect, updateNote);
 router.delete("/:id", protect, deleteNote);
 
 export default router;

@@ -542,3 +542,294 @@ export const deleteNote = async (req, res) => {
     res.status(500).json({ message: err.message || "Failed to delete note" });
   }
 };
+
+// ── updateNote (edit title, description, file, or reassign course) ─────────────
+export const updateNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, fileUrl, courseId, instructorId, source } = req.body || {};
+
+    const isAdmin = hasBaseRole(req.user, "admin");
+    const isInstructor = hasBaseRole(req.user, "instructor");
+    const canEdit =
+      isAdmin ||
+      isInstructor ||
+      hasPermissionGrant(req.user, "notes", "edit") ||
+      hasPermissionGrant(req.user, "notes", "approve");
+
+    if (!canEdit) {
+      return res.status(403).json({ message: "Unauthorized to edit this note" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid note ID" });
+    }
+
+    let finalTitle = title !== undefined ? String(title).trim() : undefined;
+
+    // 1. Locate if note is currently embedded inside a Course
+    let originCourse = null;
+    let existingCourseNote = null;
+
+    if (source === "course" || (courseId && courseId !== "standalone")) {
+      if (courseId && mongoose.Types.ObjectId.isValid(courseId)) {
+        originCourse = await Course.findById(courseId).populate("instructor");
+        if (originCourse && Array.isArray(originCourse.notes)) {
+          existingCourseNote = originCourse.notes.id(id);
+        }
+      }
+    }
+
+    if (!existingCourseNote) {
+      originCourse = await Course.findOne({ "notes._id": id }).populate("instructor");
+      if (originCourse && Array.isArray(originCourse.notes)) {
+        existingCourseNote = originCourse.notes.id(id);
+      }
+    }
+
+    // 2. If not embedded in any Course, check Standalone Note collection
+    let standaloneNote = null;
+    if (!existingCourseNote) {
+      standaloneNote = await Note.findById(id).populate("instructor");
+    }
+
+    if (!existingCourseNote && !standaloneNote) {
+      return res.status(404).json({ message: "Note not found" });
+    }
+
+    const targetCourseId =
+      courseId && courseId !== "standalone" && courseId !== "" && courseId !== "none"
+        ? courseId
+        : null;
+
+    // ── CASE 1: Note is currently embedded in originCourse ───────────────────
+    if (originCourse && existingCourseNote) {
+      const isSameCourse =
+        targetCourseId &&
+        originCourse._id.toString() === targetCourseId.toString();
+
+      // Case 1A: Stays in the SAME course
+      if (isSameCourse || (!targetCourseId && source === "course" && !courseId)) {
+        if (finalTitle) existingCourseNote.title = finalTitle;
+        if (description !== undefined) existingCourseNote.description = description;
+        if (fileUrl) existingCourseNote.fileUrl = fileUrl;
+        await originCourse.save();
+        await invalidateNoteCaches(originCourse._id);
+
+        const updatedNote = originCourse.notes.id(id) || existingCourseNote;
+        return res.json({
+          success: true,
+          note: shapeCourseNote(updatedNote, originCourse),
+          message: "Note updated successfully",
+        });
+      }
+
+      // Case 1B: Moving from originCourse to a DIFFERENT target course OR converting to standalone
+      const notePayload = {
+        title: finalTitle || existingCourseNote.title,
+        description: description !== undefined ? description : (existingCourseNote.description || ""),
+        fileUrl: fileUrl || existingCourseNote.fileUrl,
+        status: existingCourseNote.status || "approved",
+        rejectedReason: existingCourseNote.rejectedReason || "",
+        createdAt: existingCourseNote.createdAt || new Date(),
+      };
+
+      // Remove from origin course
+      originCourse.notes.pull({ _id: id });
+      await originCourse.save();
+      await invalidateNoteCaches(originCourse._id);
+
+      if (targetCourseId) {
+        // Move to target course
+        const destCourse = await Course.findById(targetCourseId).populate("instructor");
+        if (!destCourse) {
+          return res.status(404).json({ message: "Target course not found" });
+        }
+        destCourse.notes = destCourse.notes || [];
+        destCourse.notes.push(notePayload);
+        await destCourse.save();
+        await invalidateNoteCaches(destCourse._id);
+
+        const pushedNote = destCourse.notes[destCourse.notes.length - 1];
+        return res.json({
+          success: true,
+          note: shapeCourseNote(pushedNote, destCourse),
+          message: `Note reassigned to ${destCourse.title}`,
+        });
+      } else {
+        // Convert to standalone Note
+        const newStandalone = await Note.create({
+          ...notePayload,
+          instructor: originCourse.instructor?._id || req.user._id,
+          instructorName:
+            originCourse.instructor?.name ||
+            originCourse.instructor?.email ||
+            "Instructor",
+        });
+        await invalidateNoteCaches();
+        return res.json({
+          success: true,
+          note: shapeStandaloneNote(newStandalone),
+          message: "Note converted to standalone study note",
+        });
+      }
+    }
+
+    // ── CASE 2: Note is currently a Standalone Note ─────────────────────────
+    if (standaloneNote) {
+      if (targetCourseId) {
+        // Move from Standalone TO target course
+        const destCourse = await Course.findById(targetCourseId).populate("instructor");
+        if (!destCourse) {
+          return res.status(404).json({ message: "Target course not found" });
+        }
+
+        const notePayload = {
+          title: finalTitle || standaloneNote.title,
+          description: description !== undefined ? description : (standaloneNote.description || ""),
+          fileUrl: fileUrl || standaloneNote.fileUrl,
+          status: standaloneNote.status || "approved",
+          rejectedReason: standaloneNote.rejectedReason || "",
+          createdAt: standaloneNote.createdAt || new Date(),
+        };
+
+        destCourse.notes = destCourse.notes || [];
+        destCourse.notes.push(notePayload);
+        await destCourse.save();
+
+        // Delete standalone record
+        await Note.findByIdAndDelete(id);
+        await invalidateNoteCaches(destCourse._id);
+
+        const pushedNote = destCourse.notes[destCourse.notes.length - 1];
+        return res.json({
+          success: true,
+          note: shapeCourseNote(pushedNote, destCourse),
+          message: `Note assigned to ${destCourse.title}`,
+        });
+      }
+
+      // Remains Standalone: update in place
+      if (finalTitle) standaloneNote.title = finalTitle;
+      if (description !== undefined) standaloneNote.description = description;
+      if (fileUrl) standaloneNote.fileUrl = fileUrl;
+
+      if (instructorId && isAdmin) {
+        const User = mongoose.model("User");
+        const assignedInstructor = await User.findById(instructorId);
+        if (assignedInstructor) {
+          standaloneNote.instructor = assignedInstructor._id;
+          standaloneNote.instructorName =
+            assignedInstructor.name || assignedInstructor.email || "Instructor";
+        }
+      }
+
+      await standaloneNote.save();
+      await invalidateNoteCaches();
+
+      return res.json({
+        success: true,
+        note: shapeStandaloneNote(standaloneNote),
+        message: "Note updated successfully",
+      });
+    }
+  } catch (err) {
+    console.error("updateNote", err);
+    res.status(500).json({ message: err.message || "Failed to update note" });
+  }
+};
+
+// ── bulkAssignCourseNotes (assign multiple notes to a course) ─────────────────
+export const bulkAssignCourseNotes = async (req, res) => {
+  try {
+    const { noteIds, targetCourseId } = req.body || {};
+    if (!Array.isArray(noteIds) || noteIds.length === 0) {
+      return res.status(400).json({ message: "noteIds array required" });
+    }
+
+    const isAdmin = hasBaseRole(req.user, "admin");
+    const isInstructor = hasBaseRole(req.user, "instructor");
+    if (!isAdmin && !isInstructor) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    let destCourse = null;
+    if (targetCourseId && targetCourseId !== "standalone" && targetCourseId !== "" && targetCourseId !== "none") {
+      destCourse = await Course.findById(targetCourseId).populate("instructor");
+      if (!destCourse) {
+        return res.status(404).json({ message: "Target course not found" });
+      }
+    }
+
+    for (const noteId of noteIds) {
+      if (!mongoose.Types.ObjectId.isValid(noteId)) continue;
+
+      const originCourse = await Course.findOne({ "notes._id": noteId }).populate("instructor");
+      if (originCourse) {
+        const existingNote = originCourse.notes.id(noteId);
+        if (existingNote) {
+          const notePayload = {
+            title: existingNote.title,
+            description: existingNote.description || "",
+            fileUrl: existingNote.fileUrl,
+            status: existingNote.status || "approved",
+            rejectedReason: existingNote.rejectedReason || "",
+            createdAt: existingNote.createdAt || new Date(),
+          };
+
+          if (destCourse && originCourse._id.toString() === destCourse._id.toString()) {
+            continue;
+          }
+
+          originCourse.notes.pull({ _id: noteId });
+          await originCourse.save();
+
+          if (destCourse) {
+            destCourse.notes = destCourse.notes || [];
+            destCourse.notes.push(notePayload);
+          } else {
+            await Note.create({
+              ...notePayload,
+              instructor: originCourse.instructor?._id || req.user._id,
+              instructorName:
+                originCourse.instructor?.name ||
+                originCourse.instructor?.email ||
+                "Instructor",
+            });
+          }
+        }
+      } else {
+        const standalone = await Note.findById(noteId);
+        if (standalone) {
+          if (destCourse) {
+            destCourse.notes = destCourse.notes || [];
+            destCourse.notes.push({
+              title: standalone.title,
+              description: standalone.description || "",
+              fileUrl: standalone.fileUrl,
+              status: standalone.status || "approved",
+              rejectedReason: standalone.rejectedReason || "",
+              createdAt: standalone.createdAt || new Date(),
+            });
+            await Note.findByIdAndDelete(noteId);
+          }
+        }
+      }
+    }
+
+    if (destCourse) {
+      await destCourse.save();
+    }
+
+    await invalidateNoteCaches();
+    return res.json({
+      success: true,
+      message: destCourse
+        ? `Successfully assigned ${noteIds.length} notes to ${destCourse.title}`
+        : `Successfully set ${noteIds.length} notes to standalone general study`,
+    });
+  } catch (err) {
+    console.error("bulkAssignCourseNotes", err);
+    res.status(500).json({ message: err.message || "Failed to bulk assign notes" });
+  }
+};

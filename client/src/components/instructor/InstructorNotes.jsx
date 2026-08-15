@@ -5,7 +5,23 @@ import { fetchAllCoursesAdmin, fetchCourses } from "../../redux/slices/courseSli
 import api from "../../config/api";
 import { Toast } from "./InstructorUi";
 import { uploadFile } from "../../utils/uploadFile";
-import { FileText, Plus, X, Upload, Search, Check, XCircle, FolderPlus, Trash2, Layers, Loader2, ArrowUpDown } from "lucide-react";
+import {
+  FileText,
+  Plus,
+  X,
+  Upload,
+  Search,
+  Check,
+  XCircle,
+  FolderPlus,
+  Trash2,
+  Layers,
+  Loader2,
+  ArrowUpDown,
+  Edit2,
+  BookOpen,
+  ExternalLink,
+} from "lucide-react";
 
 const STATUS_STYLE = {
   approved: { bg: "bg-green-950", text: "text-green-400", border: "border-green-800", label: "Approved" },
@@ -359,6 +375,168 @@ export default function InstructorNotes({ showToast }) {
     }
   };
 
+  // ── Edit Note State ──
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingNote, setEditingNote] = useState(null);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    description: "",
+    fileUrl: "",
+    courseId: "",
+    instructorId: "",
+  });
+  const [editCourseSearch, setEditCourseSearch] = useState("");
+  const [editCourseSubject, setEditCourseSubject] = useState("");
+  const [editCourseClass, setEditCourseClass] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+  const [editUploadingFile, setEditUploadingFile] = useState(false);
+  const [editUploadProgress, setEditUploadProgress] = useState(0);
+  const [editUploadedFileName, setEditUploadedFileName] = useState("");
+  const editFileInputRef = useRef(null);
+
+  // ── Batch Assign Course State ──
+  const [showBatchAssignModal, setShowBatchAssignModal] = useState(false);
+  const [batchTargetCourseId, setBatchTargetCourseId] = useState("");
+  const [batchAssigning, setBatchAssigning] = useState(false);
+
+  const handleEditClick = (note) => {
+    setEditingNote(note);
+    setEditForm({
+      title: note.title || "",
+      description: note.description || "",
+      fileUrl: note.fileUrl || "",
+      courseId: note.courseId || "",
+      instructorId:
+        (typeof note.instructor === "object" ? note.instructor?._id : note.instructor) || "",
+    });
+    setEditCourseSearch("");
+    setEditCourseSubject("");
+    setEditCourseClass("");
+    setEditUploadedFileName("");
+    setShowEditModal(true);
+  };
+
+  const closeEditModal = () => {
+    if (editSaving || editUploadingFile) return;
+    setShowEditModal(false);
+    setEditingNote(null);
+    setEditUploadedFileName("");
+  };
+
+  const doEditUpload = useCallback(
+    async (file) => {
+      if (!file) return;
+      const isPdf = file.name?.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
+      if (!isPdf) {
+        showToast?.("Only PDF files are allowed for study notes.");
+        return;
+      }
+      try {
+        setEditUploadingFile(true);
+        setEditUploadProgress(0);
+        const data = await uploadFile({
+          file,
+          folder: "/notes",
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setEditUploadProgress(percentCompleted);
+          },
+        });
+        setEditForm((prev) => ({
+          ...prev,
+          fileUrl: data.url,
+          title: prev.title.trim() || cleanTitleFromFileName(file.name),
+        }));
+        setEditUploadedFileName(file.name);
+        showToast?.("PDF file replaced successfully!");
+      } catch (error) {
+        showToast?.("File upload failed");
+      } finally {
+        setEditUploadingFile(false);
+      }
+    },
+    [showToast],
+  );
+
+  const handleSaveEdit = async () => {
+    if (!editingNote) return;
+    if (!editForm.fileUrl) {
+      showToast?.("A PDF file is required.");
+      return;
+    }
+    if (!editForm.title.trim()) {
+      showToast?.("Please enter a note title.");
+      return;
+    }
+
+    try {
+      setEditSaving(true);
+      const payload = {
+        title: editForm.title.trim(),
+        description: editForm.description.trim(),
+        fileUrl: editForm.fileUrl,
+        courseId: editForm.courseId || "",
+        instructorId: editForm.instructorId || undefined,
+        source: editingNote.source || (editingNote.courseId ? "course" : "standalone"),
+      };
+
+      const { data } = await api.put(`/notes/${editingNote._id}`, payload);
+      if (data.note) {
+        setNotes((prev) =>
+          prev.map((n) => (n._id === editingNote._id ? data.note : n)),
+        );
+        showToast?.(data.message || "Note updated successfully!");
+        closeEditModal();
+      } else {
+        showToast?.(data.message || "Note updated");
+        fetchNotes();
+        closeEditModal();
+      }
+    } catch (err) {
+      console.error("Save edit note error:", err);
+      showToast?.(err.response?.data?.message || "Failed to update note");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const handleBulkAssignCourseSubmit = async () => {
+    if (selectedNoteIds.length === 0) return;
+    try {
+      setBatchAssigning(true);
+      const { data } = await api.post("/notes/bulk-assign-course", {
+        noteIds: selectedNoteIds,
+        targetCourseId: batchTargetCourseId || "standalone",
+      });
+
+      showToast?.(data.message || "Notes assigned successfully!");
+      setSelectedNoteIds([]);
+      setShowBatchAssignModal(false);
+      fetchNotes();
+    } catch (err) {
+      console.error("Bulk assign course error:", err);
+      showToast?.(err.response?.data?.message || "Failed to assign notes to course");
+    } finally {
+      setBatchAssigning(false);
+    }
+  };
+
+  const filteredEditCourses = useMemo(() => {
+    return courses.filter((c) => {
+      const q = editCourseSearch.toLowerCase();
+      const matchesSearch =
+        !q ||
+        c.title?.toLowerCase().includes(q) ||
+        c.category?.toLowerCase().includes(q) ||
+        c.board?.toLowerCase().includes(q) ||
+        c.instructor?.name?.toLowerCase().includes(q) ||
+        c.instructor?.email?.toLowerCase().includes(q);
+      const matchesSubject = editCourseSubject ? c.category === editCourseSubject : true;
+      const matchesClass = editCourseClass ? c.board === editCourseClass : true;
+      return matchesSearch && matchesSubject && matchesClass;
+    });
+  }, [courses, editCourseSearch, editCourseSubject, editCourseClass]);
+
   useEffect(() => {
     fetchNotes();
     if (isAdmin && users.length === 0) {
@@ -680,6 +858,13 @@ export default function InstructorNotes({ showToast }) {
                   </>
                 )}
                 <button
+                  onClick={() => setShowBatchAssignModal(true)}
+                  disabled={bulkActioning}
+                  className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-violet-500 disabled:opacity-50 cursor-pointer shadow-md"
+                >
+                  <BookOpen size={14} /> Assign Course ({selectedNoteIds.length})
+                </button>
+                <button
                   onClick={() => handleBatchAction("delete")}
                   disabled={bulkActioning}
                   className="flex items-center gap-1.5 rounded-xl bg-red-600 px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-red-500 disabled:opacity-50 cursor-pointer shadow-md"
@@ -776,6 +961,12 @@ export default function InstructorNotes({ showToast }) {
                         </button>
                       </>
                     )}
+                    <button
+                      onClick={() => handleEditClick(note)}
+                      className="flex items-center gap-1 rounded-lg bg-amber-400/10 px-2.5 py-1.5 text-xs font-semibold text-amber-400 transition-colors hover:bg-amber-400/20 cursor-pointer"
+                    >
+                      <Edit2 size={13} /> Edit
+                    </button>
                     <a
                       href={note.fileUrl}
                       target="_blank"
@@ -1245,6 +1436,299 @@ export default function InstructorNotes({ showToast }) {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Note & Course Assignment Modal ── */}
+      {showEditModal && editingNote && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={closeEditModal} />
+
+          <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl overflow-hidden z-10">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 p-5 bg-slate-950">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <Edit2 size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-100">Edit Study Note & Course</h3>
+                  <p className="text-xs text-slate-400">Update note title, description, reassign course, or replace the attached PDF file.</p>
+                </div>
+              </div>
+              <button
+                onClick={closeEditModal}
+                disabled={editSaving || editUploadingFile}
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+              {/* Current Assignment Status Pill */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl text-xs">
+                <div className="space-y-0.5">
+                  <span className="text-slate-400 block font-medium">Current Assignment:</span>
+                  <span className="text-amber-400 font-bold">
+                    {editingNote.courseTitle ? `📚 ${editingNote.courseTitle}` : "📄 Standalone Note (General Upload)"}
+                  </span>
+                </div>
+                <span className="text-slate-500 text-[11px]">
+                  Created: {new Date(editingNote.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+
+              {/* Course Assignment Selector */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-200">
+                  Assign / Move to Course
+                </label>
+                <p className="text-[11px] text-slate-400">
+                  Choose which course this study note belongs to so students enrolled in that class can access it.
+                </p>
+
+                {/* Quick Filters */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="relative">
+                    <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <input
+                      type="text"
+                      placeholder="Search courses..."
+                      value={editCourseSearch}
+                      onChange={(e) => setEditCourseSearch(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-7 pr-2.5 py-1.5 text-xs text-white outline-none focus:border-amber-500"
+                    />
+                  </div>
+                  <select
+                    value={editCourseSubject}
+                    onChange={(e) => setEditCourseSubject(e.target.value)}
+                    className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 outline-none focus:border-amber-500"
+                  >
+                    <option value="">All Categories</option>
+                    {uniqueCourseSubjects.map((s, idx) => (
+                      <option key={idx} value={s}>{s}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={editCourseClass}
+                    onChange={(e) => setEditCourseClass(e.target.value)}
+                    className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 outline-none focus:border-amber-500"
+                  >
+                    <option value="">All Classes/Boards</option>
+                    {uniqueCourseClasses.map((cls, idx) => (
+                      <option key={idx} value={cls}>{cls}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Course Dropdown */}
+                <select
+                  value={editForm.courseId}
+                  onChange={(e) => setEditForm({ ...editForm, courseId: e.target.value })}
+                  className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 outline-none focus:border-amber-500"
+                >
+                  <option value="">-- No Course (Standalone General Study Note) --</option>
+                  {filteredEditCourses.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.title} • {c.category || c.board || "Course"} {c.instructor ? `(${c.instructor.name || c.instructor.email})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Title */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-200">
+                  Note Title *
+                </label>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  placeholder="e.g. Chapter 1: Introduction & Notes"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white font-medium outline-none focus:border-amber-500"
+                />
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-200">
+                  Description
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  placeholder="Brief summary or topic notes..."
+                  rows={3}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 outline-none focus:border-amber-500 resize-none"
+                />
+              </div>
+
+              {/* Attached PDF Document */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-200">
+                  Attached PDF Document *
+                </label>
+
+                <input
+                  type="file"
+                  ref={editFileInputRef}
+                  onChange={(e) => doEditUpload(e.target.files?.[0])}
+                  className="hidden"
+                  accept=".pdf,application/pdf"
+                />
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3.5 rounded-xl">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FileText size={18} className="text-emerald-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-200 truncate">
+                        {editUploadedFileName || "Current Attached Document"}
+                      </p>
+                      {editForm.fileUrl && (
+                        <a
+                          href={editForm.fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[11px] text-sky-400 hover:underline flex items-center gap-1 mt-0.5"
+                        >
+                          <span>View PDF document</span>
+                          <ExternalLink size={10} />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => !editUploadingFile && editFileInputRef.current?.click()}
+                    disabled={editUploadingFile}
+                    className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-700 transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                  >
+                    {editUploadingFile ? `Uploading ${editUploadProgress}%...` : "Replace PDF"}
+                  </button>
+                </div>
+
+                {editUploadingFile && (
+                  <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-amber-400 transition-all duration-200"
+                      style={{ width: `${editUploadProgress}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 border-t border-slate-800 p-4 bg-slate-950">
+              <button
+                onClick={closeEditModal}
+                disabled={editSaving || editUploadingFile}
+                className="rounded-xl border border-slate-800 bg-transparent px-5 py-2.5 text-xs font-bold text-slate-300 hover:bg-slate-900 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={editSaving || editUploadingFile}
+                className="rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2.5 text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2 shadow-lg shadow-amber-500/20"
+              >
+                {editSaving ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" />
+                    <span>Saving Changes...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={15} />
+                    <span>Save & Reassign</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Batch Assign Course Modal ── */}
+      {showBatchAssignModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
+            onClick={() => !batchAssigning && setShowBatchAssignModal(false)}
+          />
+
+          <div className="relative w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl z-10 space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                  <BookOpen size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-100">Batch Assign to Course</h3>
+                  <p className="text-xs text-slate-400">
+                    Assign {selectedNoteIds.length} selected note(s) to a course at once.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowBatchAssignModal(false)}
+                disabled={batchAssigning}
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-200">
+                Target Course
+              </label>
+              <select
+                value={batchTargetCourseId}
+                onChange={(e) => setBatchTargetCourseId(e.target.value)}
+                disabled={batchAssigning}
+                className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 outline-none focus:border-violet-500"
+              >
+                <option value="">-- No Course (Convert to Standalone General Notes) --</option>
+                {courses.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.title} ({c.category || c.board || "Course"})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setShowBatchAssignModal(false)}
+                disabled={batchAssigning}
+                className="rounded-xl border border-slate-800 bg-transparent px-4 py-2 text-xs font-bold text-slate-300 hover:bg-slate-900 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkAssignCourseSubmit}
+                disabled={batchAssigning}
+                className="rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold px-5 py-2 text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-violet-600/20"
+              >
+                {batchAssigning ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Assigning...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={14} />
+                    <span>Assign {selectedNoteIds.length} Notes</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
