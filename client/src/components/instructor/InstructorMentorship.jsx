@@ -238,7 +238,7 @@ export default function InstructorMentorship() {
 
           {/* Action Plan Modal */}
           {activeSessionForNotes && (
-            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
               <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl">
                 <h3 className="text-xl font-bold text-white mb-1">
                   Complete Session & Submit Action Plan
@@ -333,7 +333,7 @@ export default function InstructorMentorship() {
 
           {/* SOP Feedback Modal */}
           {activeSopReview && (
-            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
               <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-2xl w-full shadow-2xl">
                 <h3 className="text-xl font-bold text-white mb-1">
                   SOP Review Feedback for {activeSopReview.studentName}

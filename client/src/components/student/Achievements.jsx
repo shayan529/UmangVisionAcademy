@@ -263,7 +263,7 @@ function BadgeModal({ badge, earned, earnedDate, progressValue, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--ink)]/60 backdrop-blur-sm px-4 uva-fade-in"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--ink)]/60 backdrop-blur-sm px-4 uva-fade-in"
       onClick={onClose}
       role="presentation"
     >

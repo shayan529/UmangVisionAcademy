@@ -1161,7 +1161,7 @@ export default function AdminReports() {
           TAKE ACTION CONFIRMATION MODAL
          ─────────────────────────────────────────────────────────────────────────── */}
       {actionModalOpen && actionTargetConv && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2.5 text-rose-400 font-bold">

@@ -493,7 +493,7 @@ const ProgressPage = () => {
       </div>
       {/* ── Multi-Page Smart Report Card Modal ── */}
       {showReportCard && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 md:p-8 max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">

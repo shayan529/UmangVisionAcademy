@@ -1398,32 +1398,32 @@ export default function InstructorNotes({ showToast }) {
 
       {/* ── Bulk Upload Modal ── */}
       {showBulkModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={closeBulkModal} />
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6">
+          <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md" onClick={closeBulkModal} />
 
-          <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl overflow-hidden z-10">
+          <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col rounded-3xl border border-slate-700/80 bg-slate-950 shadow-[0_20px_60px_rgba(0,0,0,0.85)] overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 p-5">
+            <div className="flex items-center justify-between border-b border-slate-800/80 px-6 py-4.5 bg-slate-900/50 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-inner">
                   <FolderPlus size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-100">Bulk Upload Study Notes</h3>
+                  <h3 className="text-lg font-extrabold text-slate-100">Bulk Upload Study Notes</h3>
                   <p className="text-xs text-slate-400">Select multiple PDF files, edit note details, and upload in batch.</p>
                 </div>
               </div>
               <button
                 onClick={closeBulkModal}
                 disabled={bulkUploading}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition-colors disabled:opacity-50 cursor-pointer"
+                className="rounded-xl p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-6">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
               {/* Optional Global Course / Instructor Assignment */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -1607,38 +1607,35 @@ export default function InstructorNotes({ showToast }) {
               )}
             </div>
 
-            {/* Modal Footer */}
-            <div className="flex items-center justify-between border-t border-slate-800 p-4 bg-slate-950">
-              <span className="text-xs text-slate-400">
+            {/* Footer Buttons */}
+            <div className="flex items-center justify-end gap-3 border-t border-slate-800/80 px-6 py-4 bg-slate-900/50 shrink-0">
+              <span className="text-xs text-slate-400 mr-auto">
                 {bulkFiles.length} file{bulkFiles.length !== 1 ? "s" : ""} selected
               </span>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={closeBulkModal}
-                  disabled={bulkUploading}
-                  className="rounded-xl border border-slate-800 bg-transparent px-5 py-2.5 text-xs font-bold text-slate-300 hover:bg-slate-900 transition-colors disabled:opacity-50 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleBulkSubmit}
-                  disabled={bulkUploading || bulkFiles.length === 0}
-                  className="rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2 shadow-lg shadow-emerald-600/20"
-                >
-                  {bulkUploading ? (
-                    <>
-                      <Loader2 size={15} className="animate-spin" />
-                      <span>Batch Uploading…</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload size={15} />
-                      <span>Upload All ({bulkFiles.length} Notes)</span>
-                    </>
-                  )}
-                </button>
-              </div>
+              <button
+                onClick={closeBulkModal}
+                disabled={bulkUploading}
+                className="rounded-xl border border-slate-700 bg-transparent px-5 py-2.5 text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkSubmit}
+                disabled={bulkUploading || bulkFiles.length === 0}
+                className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-2.5 text-xs font-bold text-white hover:from-emerald-400 hover:to-teal-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2 shadow-lg shadow-emerald-500/25 active:scale-[0.98]"
+              >
+                {bulkUploading ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" />
+                    <span>Batch Uploading…</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload size={15} />
+                    <span>Upload All ({bulkFiles.length} Notes)</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -1646,32 +1643,32 @@ export default function InstructorNotes({ showToast }) {
 
       {/* ── Edit Note & Course Assignment Modal ── */}
       {showEditModal && editingNote && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={closeEditModal} />
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6">
+          <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md" onClick={closeEditModal} />
 
-          <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl overflow-hidden z-10">
+          <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-3xl border border-slate-700/80 bg-slate-950 shadow-[0_20px_60px_rgba(0,0,0,0.85)] overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 p-5 bg-slate-950">
+            <div className="flex items-center justify-between border-b border-slate-800/80 px-6 py-4.5 bg-slate-900/50 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-inner">
                   <Edit2 size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-100">Edit Study Note & Course</h3>
+                  <h3 className="text-lg font-extrabold text-slate-100">Edit Study Note & Course</h3>
                   <p className="text-xs text-slate-400">Update note title, description, assign to a course chapter/subject, or replace the attached PDF.</p>
                 </div>
               </div>
               <button
                 onClick={closeEditModal}
                 disabled={editSaving || editUploadingFile}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition-colors disabled:opacity-50 cursor-pointer"
+                className="rounded-xl p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+            <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
               {/* Current Assignment Status Pill */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl text-xs">
                 <div className="space-y-0.5">
@@ -1899,18 +1896,18 @@ export default function InstructorNotes({ showToast }) {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 border-t border-slate-800 p-4 bg-slate-950">
+            <div className="flex items-center justify-end gap-3 border-t border-slate-800/80 px-6 py-4 bg-slate-900/50 shrink-0">
               <button
                 onClick={closeEditModal}
                 disabled={editSaving || editUploadingFile}
-                className="rounded-xl border border-slate-800 bg-transparent px-5 py-2.5 text-xs font-bold text-slate-300 hover:bg-slate-900 transition-colors disabled:opacity-50 cursor-pointer"
+                className="rounded-xl border border-slate-700 bg-transparent px-5 py-2.5 text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveEdit}
                 disabled={editSaving || editUploadingFile}
-                className="rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2.5 text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2 shadow-lg shadow-amber-500/20"
+                className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold px-6 py-2.5 text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2 shadow-lg shadow-amber-500/25 active:scale-[0.98]"
               >
                 {editSaving ? (
                   <>
@@ -1931,13 +1928,13 @@ export default function InstructorNotes({ showToast }) {
 
       {/* ── Batch Assign Course Modal ── */}
       {showBatchAssignModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6">
           <div
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-950/85 backdrop-blur-md"
             onClick={() => !batchAssigning && setShowBatchAssignModal(false)}
           />
 
-          <div className="relative w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl z-10 space-y-5">
+          <div className="relative w-full max-w-lg rounded-3xl border border-slate-700/80 bg-slate-950 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.85)] z-10 space-y-5 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20">

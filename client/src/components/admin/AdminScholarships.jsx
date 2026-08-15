@@ -288,7 +288,7 @@ export default function AdminScholarships() {
 
           {/* Award Modal */}
           {activeNomForReview && (
-            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
               <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl">
                 <h3 className="text-xl font-bold text-white mb-1">
                   Award Higher-Study Grant
@@ -412,7 +412,7 @@ export default function AdminScholarships() {
 
           {/* Add Modal */}
           {showAddModal && (
-            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
               <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl">
                 <h3 className="text-xl font-bold text-white mb-4">
                   Add Scholarship to Student Directory
