@@ -56,6 +56,7 @@ import unsubscribeRoutes from "./routes/unsubscribe.routes.js";
 import contactRoutes from "./routes/contact.routes.js";
 import instructorChatRoutes from "./routes/instructorChat.routes.js";
 import webrtcSessionRoutes from "./routes/webrtcSession.routes.js";
+import studentHubRoutes from "./routes/studentHub.routes.js";
 import { startSessionReminderScheduler } from "./utils/sessionScheduler.js";
 import { ensureBaseRoleDocs } from "./utils/seedBaseRoles.js";
 
@@ -152,10 +153,17 @@ app.options(/.*/, cors(corsOptions));
 
 app.use(
   helmet({
-    contentSecurityPolicy: false, // Disabled to prevent blocking dynamic third-party CDN assets and APIs
+    contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: "cross-origin" },
-    frameguard: false,
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+    noSniff: true,
+    xDnsPrefetchControl: { allow: false },
   }),
 );
 
@@ -281,6 +289,7 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/instructor-applications", instructorApplicationRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/students", studentRoutes);
+app.use("/api/student-hub", studentHubRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/ai", aiRoutes);

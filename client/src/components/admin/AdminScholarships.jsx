@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Award,
   Crown,
@@ -14,61 +14,45 @@ import {
   Building,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { API_BASE_URL } from "../../config/api";
 
-const INITIAL_NOMINATIONS = [
-  {
-    id: "nom-101",
-    studentName: "Rohan Gupta",
-    studentEmail: "rohan.gupta@gmail.com",
-    selectedClass: "Class 12",
-    marks: "96.4% in Board (JEE 99.4%ile)",
-    targetCollege: "IIT Delhi (B.Tech Computer Science)",
-    householdIncome: "₹4.5 Lakhs/year",
-    sop: "I come from a single-earner family in Indore. Winning this scholarship will enable me to pursue high-performance computing without overwhelming education loans.",
-    status: "Pending Review",
-    grantPercentage: null,
-  },
-  {
-    id: "nom-102",
-    studentName: "Ananya Iyer",
-    studentEmail: "ananya.iyer@gmail.com",
-    selectedClass: "Class 12",
-    marks: "94.8% in PCB (NEET 685 Marks)",
-    targetCollege: "AIIMS New Delhi / Madras Medical College",
-    householdIncome: "₹5.8 Lakhs/year",
-    sop: "Aspiring to become a paediatric oncologist. This grant will cover clinical textbook fees and research conference travel.",
-    status: "Awarded 100%",
-    grantPercentage: 100,
-  },
-];
-
-const INITIAL_DIRECTORY = [
-  {
-    id: "dir-1",
-    name: "Reliance Foundation Undergraduate Scholarship",
-    provider: "Reliance Foundation",
-    award: "Up to ₹2,00,000",
-    category: "Merit-cum-Means",
-    eligibility: "Class 12 min 60%, income < ₹15L",
-    deadline: "15 Oct 2026",
-    link: "https://www.scholarships.reliancefoundation.org",
-  },
-  {
-    id: "dir-2",
-    name: "INSPIRE Scholarship for Higher Education (SHE)",
-    provider: "Govt of India (DST)",
-    award: "₹80,000 / year",
-    category: "STEM Government",
-    eligibility: "Top 1% Class 12 Board",
-    deadline: "30 Nov 2026",
-    link: "https://online-inspire.gov.in",
-  },
-];
+const DEFAULT_NOMINATIONS = [];
+const DEFAULT_DIRECTORY = [];
 
 export default function AdminScholarships() {
-  const [nominations, setNominations] = useState(INITIAL_NOMINATIONS);
-  const [directory, setDirectory] = useState(INITIAL_DIRECTORY);
+  const [nominations, setNominations] = useState(DEFAULT_NOMINATIONS);
+  const [directory, setDirectory] = useState(DEFAULT_DIRECTORY);
   const [activeTab, setActiveTab] = useState("nominations"); // 'nominations' | 'directory'
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    fetch(`${API_BASE_URL}/student-hub/scholarships`, {
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Failed to load scholarship data");
+        const payload = await res.json();
+        setNominations(
+          Array.isArray(payload?.data?.nominations)
+            ? payload.data.nominations
+            : [],
+        );
+        setDirectory(
+          Array.isArray(payload?.data?.directory) ? payload.data.directory : [],
+        );
+      })
+      .catch(() => {
+        setNominations([]);
+        setDirectory([]);
+        toast.error("Could not load scholarship data from backend.");
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   // Review / Award modal
   const [activeNomForReview, setActiveNomForReview] = useState(null);
@@ -86,36 +70,76 @@ export default function AdminScholarships() {
     link: "",
   });
 
-  const handleGrantScholarship = (status, pct = null) => {
-    setNominations((prev) =>
-      prev.map((n) =>
-        n.id === activeNomForReview.id
-          ? {
-              ...n,
-              status: status === "awarded" ? `Awarded ${pct}%` : "Rejected",
-              grantPercentage: pct,
-            }
-          : n
-      )
+  const handleGrantScholarship = async (status, pct = null) => {
+    const nextNominations = nominations.map((n) =>
+      n.id === activeNomForReview.id
+        ? {
+            ...n,
+            status: status === "awarded" ? `Awarded ${pct}%` : "Rejected",
+            grantPercentage: pct,
+          }
+        : n,
     );
-    toast.success(`Nomination ${status === "awarded" ? `awarded with ${pct}% grant` : "rejected"}.`);
+    setNominations(nextNominations);
+
+    const token = localStorage.getItem("authToken");
+    try {
+      const res = await fetch(`${API_BASE_URL}/student-hub/scholarships`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          data: { nominations: nextNominations, directory },
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to sync scholarship review");
+      toast.success(
+        `Nomination ${status === "awarded" ? `awarded with ${pct}% grant` : "rejected"}.`,
+      );
+    } catch {
+      toast.error("Backend sync failed. Review updated locally only.");
+    }
     setActiveNomForReview(null);
   };
 
-  const handleAddDirectoryItem = (e) => {
+  const handleAddDirectoryItem = async (e) => {
     e.preventDefault();
     if (!newSch.name || !newSch.provider || !newSch.award) {
-      toast.error("Please fill in scholarship title, provider and award amount.");
+      toast.error(
+        "Please fill in scholarship title, provider and award amount.",
+      );
       return;
     }
-    setDirectory((prev) => [
+    const nextDirectory = [
       {
         ...newSch,
         id: `dir-${Date.now()}`,
       },
-      ...prev,
-    ]);
-    toast.success("New scholarship added to student directory!");
+      ...directory,
+    ];
+    setDirectory(nextDirectory);
+
+    const token = localStorage.getItem("authToken");
+    try {
+      const res = await fetch(`${API_BASE_URL}/student-hub/scholarships`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          data: { nominations, directory: nextDirectory },
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to sync directory");
+      toast.success("New scholarship added to student directory!");
+    } catch {
+      toast.error("Directory not saved to backend.");
+    }
     setShowAddModal(false);
     setNewSch({
       name: "",
@@ -147,7 +171,9 @@ export default function AdminScholarships() {
                 Higher-Study Scholarship Management Hub
               </h1>
               <p className="text-xs md:text-sm text-slate-400">
-                Review Elite student scholarship nominations, evaluate financial justifications, grant awards, and manage the Global Scholarship Directory.
+                Review Elite student scholarship nominations, evaluate financial
+                justifications, grant awards, and manage the Global Scholarship
+                Directory.
               </p>
             </div>
           </div>
@@ -161,7 +187,8 @@ export default function AdminScholarships() {
                   : "bg-slate-800 text-slate-300 hover:bg-slate-700"
               }`}
             >
-              Elite Nominations ({nominations.filter((n) => n.status === "Pending Review").length})
+              Elite Nominations (
+              {nominations.filter((n) => n.status === "Pending Review").length})
             </button>
             <button
               onClick={() => setActiveTab("directory")}
@@ -198,8 +225,8 @@ export default function AdminScholarships() {
                     nom.status.startsWith("Awarded")
                       ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                       : nom.status === "Rejected"
-                      ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
-                      : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                        ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                        : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                   }`}
                 >
                   {nom.status}
@@ -208,21 +235,35 @@ export default function AdminScholarships() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-800/40 p-4 rounded-2xl border border-slate-700/40 text-xs">
                 <div>
-                  <span className="text-slate-400 block font-semibold">Academic Score / Percentile:</span>
-                  <span className="text-white font-bold text-sm">{nom.marks}</span>
+                  <span className="text-slate-400 block font-semibold">
+                    Academic Score / Percentile:
+                  </span>
+                  <span className="text-white font-bold text-sm">
+                    {nom.marks}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block font-semibold">Target College / Program:</span>
-                  <span className="text-indigo-300 font-semibold">{nom.targetCollege}</span>
+                  <span className="text-slate-400 block font-semibold">
+                    Target College / Program:
+                  </span>
+                  <span className="text-indigo-300 font-semibold">
+                    {nom.targetCollege}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block font-semibold">Household Income Tier:</span>
-                  <span className="text-emerald-400 font-semibold">{nom.householdIncome}</span>
+                  <span className="text-slate-400 block font-semibold">
+                    Household Income Tier:
+                  </span>
+                  <span className="text-emerald-400 font-semibold">
+                    {nom.householdIncome}
+                  </span>
                 </div>
               </div>
 
               <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 text-xs text-slate-300">
-                <strong className="text-slate-200 block mb-1">Student Statement of Purpose:</strong>
+                <strong className="text-slate-200 block mb-1">
+                  Student Statement of Purpose:
+                </strong>
                 {nom.sop}
               </div>
 
@@ -253,7 +294,8 @@ export default function AdminScholarships() {
                   Award Higher-Study Grant
                 </h3>
                 <p className="text-xs text-slate-400 mb-6">
-                  Applicant: {activeNomForReview.studentName} ({activeNomForReview.marks})
+                  Applicant: {activeNomForReview.studentName} (
+                  {activeNomForReview.marks})
                 </p>
 
                 <div className="space-y-4">
@@ -289,7 +331,9 @@ export default function AdminScholarships() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleGrantScholarship("awarded", awardGrantInput)}
+                      onClick={() =>
+                        handleGrantScholarship("awarded", awardGrantInput)
+                      }
                       className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs"
                     >
                       Confirm {awardGrantInput}% Award
@@ -325,13 +369,24 @@ export default function AdminScholarships() {
                     <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30">
                       {sch.category}
                     </span>
-                    <span className="text-xs text-slate-400">Deadline: {sch.deadline}</span>
+                    <span className="text-xs text-slate-400">
+                      Deadline: {sch.deadline}
+                    </span>
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-1">{sch.name}</h3>
+                  <h3 className="text-lg font-bold text-white mb-1">
+                    {sch.name}
+                  </h3>
                   <p className="text-xs text-slate-400 mb-3">{sch.provider}</p>
                   <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/40 text-xs space-y-1 mb-4">
-                    <p><strong>Award:</strong> <span className="text-emerald-400 font-bold">{sch.award}</span></p>
-                    <p><strong>Eligibility:</strong> {sch.eligibility}</p>
+                    <p>
+                      <strong>Award:</strong>{" "}
+                      <span className="text-emerald-400 font-bold">
+                        {sch.award}
+                      </span>
+                    </p>
+                    <p>
+                      <strong>Eligibility:</strong> {sch.eligibility}
+                    </p>
                   </div>
                 </div>
 
@@ -359,15 +414,24 @@ export default function AdminScholarships() {
           {showAddModal && (
             <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
               <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl">
-                <h3 className="text-xl font-bold text-white mb-4">Add Scholarship to Student Directory</h3>
+                <h3 className="text-xl font-bold text-white mb-4">
+                  Add Scholarship to Student Directory
+                </h3>
 
-                <form onSubmit={handleAddDirectoryItem} className="space-y-4 text-xs">
+                <form
+                  onSubmit={handleAddDirectoryItem}
+                  className="space-y-4 text-xs"
+                >
                   <div>
-                    <label className="block font-bold text-slate-400 uppercase mb-1">Scholarship Title</label>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">
+                      Scholarship Title
+                    </label>
                     <input
                       type="text"
                       value={newSch.name}
-                      onChange={(e) => setNewSch({ ...newSch, name: e.target.value })}
+                      onChange={(e) =>
+                        setNewSch({ ...newSch, name: e.target.value })
+                      }
                       required
                       placeholder="e.g. Tata Trust Higher Education Fellowship"
                       className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500 text-xs"
@@ -376,22 +440,30 @@ export default function AdminScholarships() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-bold text-slate-400 uppercase mb-1">Provider / Foundation</label>
+                      <label className="block font-bold text-slate-400 uppercase mb-1">
+                        Provider / Foundation
+                      </label>
                       <input
                         type="text"
                         value={newSch.provider}
-                        onChange={(e) => setNewSch({ ...newSch, provider: e.target.value })}
+                        onChange={(e) =>
+                          setNewSch({ ...newSch, provider: e.target.value })
+                        }
                         required
                         placeholder="e.g. Tata Trusts"
                         className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500 text-xs"
                       />
                     </div>
                     <div>
-                      <label className="block font-bold text-slate-400 uppercase mb-1">Award Amount</label>
+                      <label className="block font-bold text-slate-400 uppercase mb-1">
+                        Award Amount
+                      </label>
                       <input
                         type="text"
                         value={newSch.award}
-                        onChange={(e) => setNewSch({ ...newSch, award: e.target.value })}
+                        onChange={(e) =>
+                          setNewSch({ ...newSch, award: e.target.value })
+                        }
                         required
                         placeholder="e.g. Up to ₹3,00,000"
                         className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500 text-xs"
@@ -400,11 +472,15 @@ export default function AdminScholarships() {
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-400 uppercase mb-1">Eligibility Criteria</label>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">
+                      Eligibility Criteria
+                    </label>
                     <input
                       type="text"
                       value={newSch.eligibility}
-                      onChange={(e) => setNewSch({ ...newSch, eligibility: e.target.value })}
+                      onChange={(e) =>
+                        setNewSch({ ...newSch, eligibility: e.target.value })
+                      }
                       placeholder="e.g. Class 12 PCM with 85%+ score"
                       className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500 text-xs"
                     />
@@ -412,21 +488,29 @@ export default function AdminScholarships() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-bold text-slate-400 uppercase mb-1">Application Deadline</label>
+                      <label className="block font-bold text-slate-400 uppercase mb-1">
+                        Application Deadline
+                      </label>
                       <input
                         type="text"
                         value={newSch.deadline}
-                        onChange={(e) => setNewSch({ ...newSch, deadline: e.target.value })}
+                        onChange={(e) =>
+                          setNewSch({ ...newSch, deadline: e.target.value })
+                        }
                         placeholder="e.g. 31 Oct 2026"
                         className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500 text-xs"
                       />
                     </div>
                     <div>
-                      <label className="block font-bold text-slate-400 uppercase mb-1">Application URL</label>
+                      <label className="block font-bold text-slate-400 uppercase mb-1">
+                        Application URL
+                      </label>
                       <input
                         type="url"
                         value={newSch.link}
-                        onChange={(e) => setNewSch({ ...newSch, link: e.target.value })}
+                        onChange={(e) =>
+                          setNewSch({ ...newSch, link: e.target.value })
+                        }
                         placeholder="https://..."
                         className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500 text-xs"
                       />

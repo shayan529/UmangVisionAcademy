@@ -1,5 +1,12 @@
 import React, { Suspense, lazy } from "react";
-import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loadCurrentUser } from "./redux/slices/authSlice";
@@ -62,70 +69,199 @@ const BillingPage = retryLazy(() => import("./pages/BillingPage"));
 const Donate = retryLazy(() => import("./pages/Donate"));
 
 const Community = retryLazy(() => import("./components/common/Community"));
-const BecomeInstructor = retryLazy(() => import("./components/common/BecomeInstructor"));
-const BecomeInstructorApplication = retryLazy(() => import("./components/common/BecomeInstructorApplication"));
+const BecomeInstructor = retryLazy(
+  () => import("./components/common/BecomeInstructor"),
+);
+const BecomeInstructorApplication = retryLazy(
+  () => import("./components/common/BecomeInstructorApplication"),
+);
 
 /* Student Dashboard */
-const StudentDashboard = retryLazy(() => import("./components/student/StudentDashboard"));
-const DashboardHome = retryLazy(() => import("./components/student/StudentDashboard").then(module => ({ default: module.DashboardHome })));
-const MyCoursesSection = retryLazy(() => import("./components/student/MyCoursesSection"));
+const StudentDashboard = retryLazy(
+  () => import("./components/student/StudentDashboard"),
+);
+const DashboardHome = retryLazy(() =>
+  import("./components/student/StudentDashboard").then((module) => ({
+    default: module.DashboardHome,
+  })),
+);
+const MyCoursesSection = retryLazy(
+  () => import("./components/student/MyCoursesSection"),
+);
 const AITutor = retryLazy(() => import("./components/student/AITutor"));
-const CommunitySection = retryLazy(() => import("./components/student/CommunitySection"));
-const CertificatesSection = retryLazy(() => import("./components/student/CertificatesSection"));
-const Achievements = retryLazy(() => import("./components/student/Achievements"));
-const SettingsSection = retryLazy(() => import("./components/student/SettingsSection"));
+const CommunitySection = retryLazy(
+  () => import("./components/student/CommunitySection"),
+);
+const CertificatesSection = retryLazy(
+  () => import("./components/student/CertificatesSection"),
+);
+const Achievements = retryLazy(
+  () => import("./components/student/Achievements"),
+);
+const SettingsSection = retryLazy(
+  () => import("./components/student/SettingsSection"),
+);
 const LeaderBoard = retryLazy(() => import("./components/student/LeaderBoard"));
-const StudentNotifications = retryLazy(() => import("./components/student/StudentNotifications"));
-const StudentSessions = retryLazy(() => import("./components/student/StudentSessions"));
-const StudentWallet = retryLazy(() => import("./components/student/StudentWallet"));
-const ReferralPage = retryLazy(() => import("./components/student/ReferralPage"));
-const StudentReferences = retryLazy(() => import("./components/student/StudentReferences"));
-const AskInstructor = retryLazy(() => import("./components/student/AskInstructor"));
-const VideoCall     = retryLazy(() => import("./components/common/VideoCall"));
+const StudentNotifications = retryLazy(
+  () => import("./components/student/StudentNotifications"),
+);
+const StudentSessions = retryLazy(
+  () => import("./components/student/StudentSessions"),
+);
+const StudentWallet = retryLazy(
+  () => import("./components/student/StudentWallet"),
+);
+const ReferralPage = retryLazy(
+  () => import("./components/student/ReferralPage"),
+);
+const StudentReferences = retryLazy(
+  () => import("./components/student/StudentReferences"),
+);
+const AskInstructor = retryLazy(
+  () => import("./components/student/AskInstructor"),
+);
+const VideoCall = retryLazy(() => import("./components/common/VideoCall"));
 
 /* Mock Tests */
-const MockTestsLayout = retryLazy(() => import("./components/student/MockTestsIndex"));
-const AvailableMockTests = retryLazy(() => import("./components/student/AvailableMockTests"));
-const MockTestPlayer = retryLazy(() => import("./components/student/MockTestPlayer"));
+const MockTestsLayout = retryLazy(
+  () => import("./components/student/MockTestsIndex"),
+);
+const AvailableMockTests = retryLazy(
+  () => import("./components/student/AvailableMockTests"),
+);
+const MockTestPlayer = retryLazy(
+  () => import("./components/student/MockTestPlayer"),
+);
 
 /* Instructor Dashboard */
-const InstructorDashboard = retryLazy(() => import("./components/instructor/InstructorDashboard"));
-const InstructorHome = retryLazy(() => import("./components/instructor/InstructorHome"));
-const InstructorCourses = retryLazy(() => import("./components/instructor/InstructorCourses"));
-const InstructorStudents = retryLazy(() => import("./components/instructor/InstructorStudents"));
-const InstructorSessions = retryLazy(() => import("./components/instructor/InstructorSessions"));
-const InstructorAnalytics = retryLazy(() => import("./components/instructor/InstructorAnalytics"));
-const InstructorAI = retryLazy(() => import("./components/instructor/InstructorAI"));
-const InstructorNotifications = retryLazy(() => import("./components/instructor/InstructorNotifications"));
-const InstructorSettings = retryLazy(() => import("./components/instructor/InstructorSettings"));
-const InstructorMockTests = retryLazy(() => import("./components/instructor/InstructorMockTests"));
+const InstructorDashboard = retryLazy(
+  () => import("./components/instructor/InstructorDashboard"),
+);
+const InstructorHome = retryLazy(
+  () => import("./components/instructor/InstructorHome"),
+);
+const InstructorCourses = retryLazy(
+  () => import("./components/instructor/InstructorCourses"),
+);
+const InstructorStudents = retryLazy(
+  () => import("./components/instructor/InstructorStudents"),
+);
+const InstructorSessions = retryLazy(
+  () => import("./components/instructor/InstructorSessions"),
+);
+const InstructorAnalytics = retryLazy(
+  () => import("./components/instructor/InstructorAnalytics"),
+);
+const InstructorAI = retryLazy(
+  () => import("./components/instructor/InstructorAI"),
+);
+const InstructorNotifications = retryLazy(
+  () => import("./components/instructor/InstructorNotifications"),
+);
+const InstructorSettings = retryLazy(
+  () => import("./components/instructor/InstructorSettings"),
+);
+const InstructorMockTests = retryLazy(
+  () => import("./components/instructor/InstructorMockTests"),
+);
 
 /* Admin Dashboard */
-const AdminDashboard = retryLazy(() => import("./components/admin/AdminDashboard"));
-const StaffDashboard = retryLazy(() => import("./components/admin/StaffDashboard"));
-const AdminOverview = retryLazy(() => import("./components/admin/AdminOverview"));
-const AdminStudents = retryLazy(() => import("./components/admin/AdminStudents"));
-const AdminInstructors = retryLazy(() => import("./components/admin/AdminInstructors"));
-const AdminApplications = retryLazy(() => import("./components/admin/AdminApplications"));
+const AdminDashboard = retryLazy(
+  () => import("./components/admin/AdminDashboard"),
+);
+const StaffDashboard = retryLazy(
+  () => import("./components/admin/StaffDashboard"),
+);
+const AdminOverview = retryLazy(
+  () => import("./components/admin/AdminOverview"),
+);
+const AdminStudents = retryLazy(
+  () => import("./components/admin/AdminStudents"),
+);
+const AdminInstructors = retryLazy(
+  () => import("./components/admin/AdminInstructors"),
+);
+const AdminApplications = retryLazy(
+  () => import("./components/admin/AdminApplications"),
+);
 const AdminCourses = retryLazy(() => import("./components/admin/AdminCourses"));
-const AdminLeaderboard = retryLazy(() => import("./components/admin/AdminLeaderboard"));
+const AdminLeaderboard = retryLazy(
+  () => import("./components/admin/AdminLeaderboard"),
+);
 const AdminReels = retryLazy(() => import("./components/admin/AdminReels"));
 const MyReels = retryLazy(() => import("./components/reels/MyReels"));
-const InstructorApplicationStatus = retryLazy(() => import("./components/common/InstructorApplicationStatus"));
-const PrivacyPolicy = retryLazy(() => import("./components/common/PrivacyPolicy"));
-const TermsOfService = retryLazy(() => import("./components/common/TermsOfService"));
-const RefundPolicy = retryLazy(() => import("./components/common/RefundPolicy"));
+const InstructorApplicationStatus = retryLazy(
+  () => import("./components/common/InstructorApplicationStatus"),
+);
+const PrivacyPolicy = retryLazy(
+  () => import("./components/common/PrivacyPolicy"),
+);
+const TermsOfService = retryLazy(
+  () => import("./components/common/TermsOfService"),
+);
+const RefundPolicy = retryLazy(
+  () => import("./components/common/RefundPolicy"),
+);
 const CourseDemo = retryLazy(() => import("./components/course/CourseDemo"));
 const AboutUs = retryLazy(() => import("./pages/AboutUs"));
-const QuestionBank = retryLazy(() => import("./components/common/QuestionBank"));
+const QuestionBank = retryLazy(
+  () => import("./components/common/QuestionBank"),
+);
 const Blogs = retryLazy(() => import("./components/common/Blogs"));
 const CoursePage = retryLazy(() => import("./components/course/CoursePage"));
-const ProgressPage = retryLazy(() => import("./components/student/ProgressPage"));
-const PurchaseHistory = retryLazy(() => import("./components/student/PurchaseHistory"));
-const CareerCounselling = retryLazy(() => import("./components/student/CareerCounselling"));
-const InternationalStudy = retryLazy(() => import("./components/student/InternationalStudy"));
-const ScholarshipsPortal = retryLazy(() => import("./components/student/ScholarshipsPortal"));
-const InstructorAboutPage = retryLazy(() => import("./components/common/InstructorAboutPage"));
+const ProgressPage = retryLazy(
+  () => import("./components/student/ProgressPage"),
+);
+const PurchaseHistory = retryLazy(
+  () => import("./components/student/PurchaseHistory"),
+);
+const CareerCounselling = retryLazy(
+  () => import("./components/student/CareerCounselling"),
+);
+const InternationalStudy = retryLazy(
+  () => import("./components/student/InternationalStudy"),
+);
+const ScholarshipsPortal = retryLazy(
+  () => import("./components/student/ScholarshipsPortal"),
+);
+const InstructorAboutPage = retryLazy(
+  () => import("./components/common/InstructorAboutPage"),
+);
+
+const routeImports = [
+  () => import("./components/common/Courses"),
+  () => import("./components/common/Login"),
+  () => import("./components/common/Signup"),
+  () => import("./components/common/Community"),
+  () => import("./components/student/StudentDashboard"),
+  () => import("./components/instructor/InstructorDashboard"),
+  () => import("./components/admin/AdminDashboard"),
+  () => import("./components/course/CoursePage"),
+  () => import("./pages/Contact"),
+  () => import("./components/student/SettingsSection"),
+];
+
+const prefetchHighValueRoutes = () => {
+  if (typeof window === "undefined") return;
+
+  const schedule =
+    window.requestIdleCallback ||
+    ((cb) =>
+      setTimeout(
+        () => cb({ didTimeout: false, timeRemaining: () => 50 }),
+        250,
+      ));
+
+  schedule(() => {
+    routeImports.forEach((importFn) => {
+      try {
+        importFn();
+      } catch {
+        // Ignore failed prefetches; the route will still load on demand.
+      }
+    });
+  });
+};
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -139,7 +275,7 @@ const Layout = () => {
   const { isAuthenticated, user } = useSelector((s) => s.auth);
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const nativeApp = isNativeApp();
   const isMobileViewport =
     typeof window !== "undefined" && window.innerWidth < 768;
@@ -187,8 +323,17 @@ const Layout = () => {
   const currentTabIndex = getTabIndex(location.pathname);
 
   useEffect(() => {
-    if (showMobileBottomBar && prevTabRef.current !== null && currentTabIndex !== -1 && prevTabRef.current !== currentTabIndex) {
-      setSlideAnim(currentTabIndex > prevTabRef.current ? "animate-slide-in-right" : "animate-slide-in-left");
+    if (
+      showMobileBottomBar &&
+      prevTabRef.current !== null &&
+      currentTabIndex !== -1 &&
+      prevTabRef.current !== currentTabIndex
+    ) {
+      setSlideAnim(
+        currentTabIndex > prevTabRef.current
+          ? "animate-slide-in-right"
+          : "animate-slide-in-left",
+      );
       const timer = setTimeout(() => {
         setSlideAnim("");
       }, 300);
@@ -199,13 +344,19 @@ const Layout = () => {
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: (eventData) => {
-      if (eventData.event.target.closest('.overflow-x-auto, .overflow-x-scroll')) return;
+      if (
+        eventData.event.target.closest(".overflow-x-auto, .overflow-x-scroll")
+      )
+        return;
       if (currentTabIndex !== -1 && currentTabIndex < tabs.length - 1) {
         navigate(tabs[currentTabIndex + 1]);
       }
     },
     onSwipedRight: (eventData) => {
-      if (eventData.event.target.closest('.overflow-x-auto, .overflow-x-scroll')) return;
+      if (
+        eventData.event.target.closest(".overflow-x-auto, .overflow-x-scroll")
+      )
+        return;
       if (currentTabIndex > 0) {
         navigate(tabs[currentTabIndex - 1]);
       }
@@ -215,7 +366,9 @@ const Layout = () => {
   });
 
   return (
-    <div className={`bg-slate-950 text-slate-100 min-h-screen ${showMobileBottomBar ? 'pb-[calc(5rem+env(safe-area-inset-bottom))] overflow-x-hidden' : 'pb-0'} md:pb-0`}>
+    <div
+      className={`bg-slate-950 text-slate-100 min-h-screen ${showMobileBottomBar ? "pb-[calc(5rem+env(safe-area-inset-bottom))] overflow-x-hidden" : "pb-0"} md:pb-0`}
+    >
       <style>{`
         @keyframes slideInRight {
           0% { transform: translateX(30%); opacity: 0; }
@@ -232,25 +385,27 @@ const Layout = () => {
           animation: slideInLeft 250ms cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
         }
       `}</style>
-      
+
       {showNavbarAndFooter && <Navbar />}
-      
-      <div 
-        {...(showMobileBottomBar ? swipeHandlers : {})} 
+
+      <div
+        {...(showMobileBottomBar ? swipeHandlers : {})}
         className={showNavbarAndFooter ? "pb-8" : ""}
       >
         <div className={showMobileBottomBar ? slideAnim : ""}>
-          <Suspense fallback={
-            <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-400">
-              <div className="w-10 h-10 border-4 border-slate-800 border-t-purple-600 rounded-full animate-spin mb-4" />
-              <p className="text-sm">Loading page...</p>
-            </div>
-          }>
+          <Suspense
+            fallback={
+              <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-400">
+                <div className="w-10 h-10 border-4 border-slate-800 border-t-purple-600 rounded-full animate-spin mb-4" />
+                <p className="text-sm">Loading page...</p>
+              </div>
+            }
+          >
             <Outlet />
           </Suspense>
         </div>
       </div>
-      
+
       {showMobileBottomBar && <MobileBottomBar />}
       {showNavbarAndFooter && <Footer />}
     </div>
@@ -269,6 +424,7 @@ function App() {
     // no spinner — and updates once the refresh resolves.
     // If there is no cached user but a token exists, we must wait (loading=true).
     dispatch(loadCurrentUser());
+    prefetchHighValueRoutes();
   }, [dispatch]);
 
   useEffect(() => {
@@ -418,13 +574,19 @@ function App() {
             <Route path="my-reels" element={<MyReels />} />
             <Route path="purchase-history" element={<PurchaseHistory />} />
             <Route path="career-counselling" element={<CareerCounselling />} />
-            <Route path="international-study" element={<InternationalStudy />} />
+            <Route
+              path="international-study"
+              element={<InternationalStudy />}
+            />
             <Route path="scholarships" element={<ScholarshipsPortal />} />
 
             {/* ── Mock Tests ── */}
             <Route path="mock-tests" element={<MockTestsLayout />}>
               <Route index element={<AvailableMockTests />} />
-              <Route path="result/:attemptId" element={<AvailableMockTests />} />
+              <Route
+                path="result/:attemptId"
+                element={<AvailableMockTests />}
+              />
             </Route>
           </Route>
 

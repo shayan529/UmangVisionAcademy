@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Compass,
   Calendar,
@@ -15,48 +15,9 @@ import {
   ChevronDown,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { API_BASE_URL } from "../../config/api";
 
-const INITIAL_BOOKINGS = [
-  {
-    id: "b-1",
-    studentName: "Aarav Sharma",
-    studentEmail: "aarav.sharma@gmail.com",
-    selectedClass: "Class 11",
-    planTier: "Premium",
-    type: "Career Counselling",
-    topic: "Class 11 Science Stream Strategy & JEE Target Score",
-    assignedTo: "Dr. Alok Verma",
-    scheduledAt: "2026-08-11 17:00",
-    status: "Confirmed",
-    meetingUrl: "https://meet.google.com/abc-defg-hij",
-  },
-  {
-    id: "b-2",
-    studentName: "Riya Patel",
-    studentEmail: "riya.patel@outlook.com",
-    selectedClass: "Class 12",
-    planTier: "Elite",
-    type: "International Study Advisory",
-    topic: "US Top 30 University Shortlisting & SAT Strategy",
-    assignedTo: "Sarah Montgomery",
-    scheduledAt: "2026-08-12 18:30",
-    status: "Confirmed",
-    meetingUrl: "https://meet.google.com/xyz-uvwx-rst",
-  },
-  {
-    id: "b-3",
-    studentName: "Sneha Kapoor",
-    studentEmail: "sneha.k@gmail.com",
-    selectedClass: "Class 10",
-    planTier: "Basic",
-    type: "Career Counselling",
-    topic: "Stream Selection (Class 10 to 11)",
-    assignedTo: "Unassigned",
-    scheduledAt: "2026-08-13 16:00",
-    status: "Pending Assignment",
-    meetingUrl: "",
-  },
-];
+const DEFAULT_BOOKINGS = [];
 
 const AVAILABLE_COUNSELLORS = [
   "Dr. Alok Verma (Engineering / JEE)",
@@ -68,49 +29,164 @@ const AVAILABLE_COUNSELLORS = [
 ];
 
 export default function AdminCounselling() {
-  const [bookings, setBookings] = useState(INITIAL_BOOKINGS);
+  const [bookings, setBookings] = useState(DEFAULT_BOOKINGS);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [tierFilter, setTierFilter] = useState("All");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    fetch(`${API_BASE_URL}/student-hub/counselling`, {
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Failed to load counselling data");
+        const payload = await res.json();
+        setBookings(
+          Array.isArray(payload?.data?.bookings) ? payload.data.bookings : [],
+        );
+      })
+      .catch(() => {
+        setBookings([]);
+        toast.error("Could not load counselling bookings from backend.");
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   // Assignment Modal
   const [activeBookingForAssign, setActiveBookingForAssign] = useState(null);
-  const [assignedCounsellor, setAssignedCounsellor] = useState(AVAILABLE_COUNSELLORS[0]);
+  const [assignedCounsellor, setAssignedCounsellor] = useState(
+    AVAILABLE_COUNSELLORS[0],
+  );
   const [meetingUrlInput, setMeetingUrlInput] = useState("");
 
-  const handleAssignCounsellor = (e) => {
+  const handleAssignCounsellor = async (e) => {
     e.preventDefault();
-    setBookings((prev) =>
-      prev.map((b) =>
-        b.id === activeBookingForAssign.id
-          ? {
-              ...b,
-              assignedTo: assignedCounsellor.split(" (")[0],
-              status: "Confirmed",
-              meetingUrl: meetingUrlInput || `https://meet.google.com/uva-${Date.now().toString(36)}`,
-            }
-          : b
-      )
+    if (!activeBookingForAssign) return;
+
+    const assignedMentorName = assignedCounsellor.split(" (")[0];
+    const generatedMeetingUrl =
+      meetingUrlInput ||
+      `https://meet.google.com/uva-${Date.now().toString(36)}`;
+
+    const nextBookings = bookings.map((b) =>
+      b.id === activeBookingForAssign.id
+        ? {
+            ...b,
+            assignedTo: assignedMentorName,
+            counsellor: assignedMentorName,
+            status: "Confirmed",
+            meetingUrl: generatedMeetingUrl,
+          }
+        : b,
     );
-    toast.success("Counsellor assigned and meeting link generated!");
+
+    setBookings(nextBookings);
+    const token = localStorage.getItem("authToken");
+    try {
+      let existingSectionData = {};
+      try {
+        const getRes = await fetch(`${API_BASE_URL}/student-hub/counselling`, {
+          credentials: "include",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (getRes.ok) {
+          const payload = await getRes.json();
+          existingSectionData = payload?.data || {};
+        }
+      } catch {}
+
+      const res = await fetch(`${API_BASE_URL}/student-hub/counselling`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          data: {
+            ...existingSectionData,
+            bookings: nextBookings,
+          },
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save counselling updates");
+      toast.success("Counsellor assigned and meeting link generated!");
+    } catch {
+      toast.error("Booking updated locally, but backend sync failed.");
+    }
     setActiveBookingForAssign(null);
     setMeetingUrlInput("");
   };
 
-  const handleMarkComplete = (id) => {
-    setBookings((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, status: "Completed" } : b))
+  const handleMarkComplete = async (id) => {
+    const nextBookings = bookings.map((b) =>
+      b.id === id ? { ...b, status: "Completed" } : b,
     );
-    toast.success("Booking marked as Completed!");
+    setBookings(nextBookings);
+    const token = localStorage.getItem("authToken");
+    try {
+      let existingSectionData = {};
+      try {
+        const getRes = await fetch(`${API_BASE_URL}/student-hub/counselling`, {
+          credentials: "include",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (getRes.ok) {
+          const payload = await getRes.json();
+          existingSectionData = payload?.data || {};
+        }
+      } catch {}
+
+      const res = await fetch(`${API_BASE_URL}/student-hub/counselling`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          data: {
+            ...existingSectionData,
+            bookings: nextBookings,
+          },
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to sync");
+      toast.success("Booking marked as Completed!");
+    } catch {
+      toast.error("Sync to backend failed. Please try again.");
+    }
   };
 
   const filteredBookings = bookings.filter((b) => {
+    if (!b) return false;
+    const sName = String(b.studentName || b.name || "Student").toLowerCase();
+    const sEmail = String(b.studentEmail || b.email || "").toLowerCase();
+    const sTopic = String(b.topic || b.subject || "").toLowerCase();
+    const sCounsellor = String(
+      b.assignedTo || b.counsellor || "",
+    ).toLowerCase();
+    const sQuery = (searchTerm || "").trim().toLowerCase();
+
     const matchesSearch =
-      b.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.studentEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.topic.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "All" || b.type === typeFilter;
-    const matchesTier = tierFilter === "All" || b.planTier === tierFilter;
+      !sQuery ||
+      sName.includes(sQuery) ||
+      sEmail.includes(sQuery) ||
+      sTopic.includes(sQuery) ||
+      sCounsellor.includes(sQuery);
+
+    const bookingType = b.type || (b.topic ? "Career Counselling" : "General");
+    const matchesType = typeFilter === "All" || bookingType === typeFilter;
+
+    const bookingTier = b.planTier || "Basic";
+    const matchesTier = tierFilter === "All" || bookingTier === tierFilter;
+
     return matchesSearch && matchesType && matchesTier;
   });
 
@@ -127,7 +203,8 @@ export default function AdminCounselling() {
               Counselling & Advisory Desk Management
             </h1>
             <p className="text-xs md:text-sm text-slate-400">
-              Schedule, assign mentors, manage video meeting URLs, and oversee all 1-on-1 student career & international study consultations.
+              Schedule, assign mentors, manage video meeting URLs, and oversee
+              all 1-on-1 student career & international study consultations.
             </p>
           </div>
         </div>
@@ -135,25 +212,42 @@ export default function AdminCounselling() {
         {/* Quick Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
           <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
-            <span className="text-xs text-slate-400 block font-semibold">Total Bookings</span>
-            <span className="text-2xl font-black text-white">{bookings.length}</span>
+            <span className="text-xs text-slate-400 block font-semibold">
+              Total Bookings
+            </span>
+            <span className="text-2xl font-black text-white">
+              {bookings.length}
+            </span>
           </div>
           <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
-            <span className="text-xs text-amber-400 block font-semibold">Pending Assignment</span>
+            <span className="text-xs text-amber-400 block font-semibold">
+              Pending Assignment
+            </span>
             <span className="text-2xl font-black text-amber-400">
-              {bookings.filter((b) => b.status === "Pending Assignment").length}
+              {
+                bookings.filter(
+                  (b) =>
+                    !b?.status ||
+                    b.status === "Pending Assignment" ||
+                    b.status === "Scheduled",
+                ).length
+              }
             </span>
           </div>
           <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
-            <span className="text-xs text-indigo-400 block font-semibold">Confirmed & Upcoming</span>
+            <span className="text-xs text-indigo-400 block font-semibold">
+              Confirmed & Upcoming
+            </span>
             <span className="text-2xl font-black text-indigo-400">
-              {bookings.filter((b) => b.status === "Confirmed").length}
+              {bookings.filter((b) => b?.status === "Confirmed").length}
             </span>
           </div>
           <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
-            <span className="text-xs text-emerald-400 block font-semibold">Completed Sessions</span>
+            <span className="text-xs text-emerald-400 block font-semibold">
+              Completed Sessions
+            </span>
             <span className="text-2xl font-black text-emerald-400">
-              {bookings.filter((b) => b.status === "Completed").length}
+              {bookings.filter((b) => b?.status === "Completed").length}
             </span>
           </div>
         </div>
@@ -162,7 +256,10 @@ export default function AdminCounselling() {
       {/* Filters & Search */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
         <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+            size={16}
+          />
           <input
             type="text"
             value={searchTerm}
@@ -180,7 +277,9 @@ export default function AdminCounselling() {
           >
             <option value="All">All Advisory Types</option>
             <option value="Career Counselling">Career Counselling</option>
-            <option value="International Study Advisory">International Study Advisory</option>
+            <option value="International Study Advisory">
+              International Study Advisory
+            </option>
           </select>
 
           <select
@@ -212,88 +311,136 @@ export default function AdminCounselling() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800 text-slate-300">
-              {filteredBookings.map((b) => (
-                <tr key={b.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="p-4">
-                    <div className="font-bold text-white text-sm">{b.studentName}</div>
-                    <div className="text-[11px] text-slate-400">{b.studentEmail} • {b.selectedClass}</div>
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                        b.planTier === "Elite"
-                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                          : b.planTier === "Premium"
-                          ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
-                          : "bg-lime-500/20 text-lime-300 border border-lime-500/30"
-                      }`}
-                    >
-                      {b.planTier}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <div className="font-semibold text-indigo-300">{b.type}</div>
-                    <div className="text-[11px] text-slate-400 max-w-xs truncate">{b.topic}</div>
-                  </td>
-                  <td className="p-4 font-mono text-slate-300">{b.scheduledAt}</td>
-                  <td className="p-4">
-                    {b.assignedTo === "Unassigned" ? (
-                      <span className="text-amber-400 font-bold">⚠️ Unassigned</span>
-                    ) : (
-                      <span className="text-white font-medium">👨‍🏫 {b.assignedTo}</span>
-                    )}
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                        b.status === "Completed"
-                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                          : b.status === "Confirmed"
-                          ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
-                          : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                      }`}
-                    >
-                      {b.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {b.status === "Pending Assignment" && (
-                        <button
-                          onClick={() => {
-                            setActiveBookingForAssign(b);
-                            setMeetingUrlInput(b.meetingUrl || "");
-                          }}
-                          className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs"
-                        >
-                          Assign Mentor
-                        </button>
-                      )}
-                      {b.status === "Confirmed" && (
-                        <>
-                          <button
-                            onClick={() => handleMarkComplete(b.id)}
-                            className="px-3 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 border border-emerald-600/40 hover:bg-emerald-600/30 font-bold text-xs"
-                          >
-                            Mark Done
-                          </button>
-                          {b.meetingUrl && (
-                            <a
-                              href={b.meetingUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
-                              title="Join Video Link"
-                            >
-                              <ExternalLink size={14} />
-                            </a>
-                          )}
-                        </>
-                      )}
-                    </div>
+              {filteredBookings.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-slate-500">
+                    <Compass size={32} className="mx-auto mb-2 opacity-40" />
+                    No counselling bookings found.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredBookings.map((b, idx) => {
+                  const studentName =
+                    b.studentName || b.name || b.student || "Student";
+                  const studentEmail = b.studentEmail || b.email || "—";
+                  const selectedClass =
+                    b.selectedClass || b.class || "Class 9-12";
+                  const planTier = b.planTier || "Basic";
+                  const type =
+                    b.type || (b.topic ? "Career Counselling" : "General");
+                  const topic = b.topic || b.subject || "1-on-1 Consultation";
+                  const scheduledSlot =
+                    b.scheduledAt || b.date || b.time || "Scheduled";
+                  const assignedMentor =
+                    b.assignedTo || b.counsellor || "Unassigned";
+                  const status =
+                    b.status ||
+                    (assignedMentor !== "Unassigned"
+                      ? "Confirmed"
+                      : "Pending Assignment");
+
+                  return (
+                    <tr
+                      key={b.id || idx}
+                      className="hover:bg-slate-800/40 transition-colors"
+                    >
+                      <td className="p-4">
+                        <div className="font-bold text-white text-sm">
+                          {studentName}
+                        </div>
+                        <div className="text-[11px] text-slate-400">
+                          {studentEmail} • {selectedClass}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                            planTier === "Elite"
+                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                              : planTier === "Premium"
+                                ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                                : "bg-lime-500/20 text-lime-300 border border-lime-500/30"
+                          }`}
+                        >
+                          {planTier}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="font-semibold text-indigo-300">
+                          {type}
+                        </div>
+                        <div className="text-[11px] text-slate-400 max-w-xs truncate">
+                          {topic}
+                        </div>
+                      </td>
+                      <td className="p-4 font-mono text-slate-300">
+                        {scheduledSlot}
+                      </td>
+                      <td className="p-4">
+                        {assignedMentor === "Unassigned" ? (
+                          <span className="text-amber-400 font-bold">
+                            ⚠️ Unassigned
+                          </span>
+                        ) : (
+                          <span className="text-white font-medium">
+                            👨‍🏫 {assignedMentor}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                            status === "Completed"
+                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                              : status === "Confirmed"
+                                ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+                                : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                          }`}
+                        >
+                          {status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {(status === "Pending Assignment" ||
+                            status === "Scheduled") && (
+                            <button
+                              onClick={() => {
+                                setActiveBookingForAssign(b);
+                                setMeetingUrlInput(b.meetingUrl || "");
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs"
+                            >
+                              Assign Mentor
+                            </button>
+                          )}
+                          {status === "Confirmed" && (
+                            <>
+                              <button
+                                onClick={() => handleMarkComplete(b.id)}
+                                className="px-3 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 border border-emerald-600/40 hover:bg-emerald-600/30 font-bold text-xs"
+                              >
+                                Mark Done
+                              </button>
+                              {b.meetingUrl && (
+                                <a
+                                  href={b.meetingUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
+                                  title="Join Video Link"
+                                >
+                                  <ExternalLink size={14} />
+                                </a>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
@@ -303,9 +450,12 @@ export default function AdminCounselling() {
       {activeBookingForAssign && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl">
-            <h3 className="text-xl font-bold text-white mb-1">Assign Expert Counsellor</h3>
+            <h3 className="text-xl font-bold text-white mb-1">
+              Assign Expert Counsellor
+            </h3>
             <p className="text-xs text-slate-400 mb-6">
-              Student: {activeBookingForAssign.studentName} ({activeBookingForAssign.type})
+              Student: {activeBookingForAssign.studentName} (
+              {activeBookingForAssign.type})
             </p>
 
             <form onSubmit={handleAssignCounsellor} className="space-y-4">
@@ -319,7 +469,9 @@ export default function AdminCounselling() {
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs md:text-sm text-white focus:outline-none focus:border-indigo-500"
                 >
                   {AVAILABLE_COUNSELLORS.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
                   ))}
                 </select>
               </div>
