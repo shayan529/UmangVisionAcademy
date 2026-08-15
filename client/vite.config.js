@@ -74,6 +74,8 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes("node_modules")) return;
 
+          if (id.includes("firebase")) return "firebase";
+          if (id.includes("react-icons")) return "react-icons";
           if (id.includes("three")) return "three";
           if (id.includes("framer-motion")) return "framer-motion";
           if (id.includes("jspdf") || id.includes("html2canvas"))

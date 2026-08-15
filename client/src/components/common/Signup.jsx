@@ -20,89 +20,13 @@ import {
   clearRecaptcha,
 } from "../../services/firebasePhoneAuth";
 
-/* ── Animated particle canvas (lightweight for high performance) ── */
-const ParticleCanvas = () => {
-  const canvasRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== "undefined" ? window.innerWidth < 768 : false,
-  );
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    window.addEventListener("resize", handleResize, { passive: true });
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    if (isMobile) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    let animId;
-    const resize = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    };
-    resize();
-
-    const NODES = Array.from({ length: 18 }, () => ({
-      x: Math.random() * (canvas.width || 1200),
-      y: Math.random() * (canvas.height || 800),
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      r: Math.random() * 2 + 0.8,
-      alpha: Math.random() * 0.4 + 0.1,
-    }));
-
-    const draw = () => {
-      const W = canvas.width,
-        H = canvas.height;
-      ctx.clearRect(0, 0, W, H);
-      for (let i = 0; i < NODES.length; i++) {
-        for (let j = i + 1; j < NODES.length; j++) {
-          const dx = NODES[i].x - NODES[j].x;
-          const dy = NODES[i].y - NODES[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 100) {
-            ctx.beginPath();
-            ctx.moveTo(NODES[i].x, NODES[i].y);
-            ctx.lineTo(NODES[j].x, NODES[j].y);
-            ctx.strokeStyle = `rgba(99,179,237,${(1 - dist / 100) * 0.12})`;
-            ctx.lineWidth = 0.7;
-            ctx.stroke();
-          }
-        }
-      }
-      NODES.forEach((n) => {
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(147,210,255,${n.alpha})`;
-        ctx.fill();
-        n.x += n.vx;
-        n.y += n.vy;
-        if (n.x < 0 || n.x > W) n.vx *= -1;
-        if (n.y < 0 || n.y > H) n.vy *= -1;
-      });
-      animId = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => {
-      cancelAnimationFrame(animId);
-    };
-  }, [isMobile]);
-
-  if (isMobile) return null;
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{ opacity: 0.65 }}
-    />
-  );
-};
+/* ── Ambient background glow (GPU-accelerated, 0% CPU overhead) ── */
+const ParticleCanvas = React.memo(() => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+    <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2" />
+    <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl transform translate-x-1/2 translate-y-1/2" />
+  </div>
+));
 
 /* ── Helper for sessionStorage persistence ── */
 const getSessionValue = (key, defaultValue) => {
