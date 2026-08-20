@@ -14,10 +14,14 @@ export async function createGroqChatCompletion(options) {
   const primaryModel = options.model || GROQ_MODEL;
   const candidateModels = [
     primaryModel,
-    'llama-3.1-8b-instant',
     'llama-3.3-70b-versatile',
-    'mixtral-8x7b-32768',
-    'gemma2-9b-it',
+    'llama-3.1-8b-instant',
+    'llama3-70b-8192',
+    'llama3-8b-8192',
+    'qwen/qwen3.6-27b',
+    'openai/gpt-oss-120b',
+    'openai/gpt-oss-20b',
+    'groq/compound',
   ];
   const uniqueModels = [...new Set(candidateModels.filter(Boolean))];
 
@@ -30,8 +34,9 @@ export async function createGroqChatCompletion(options) {
       });
     } catch (err) {
       lastError = err;
+      const errMsg = err?.error?.error?.message || err?.message || String(err);
       console.warn(
-        `[Groq AI] Model "${model}" failed (${err?.message || err?.status || err}), trying fallback...`
+        `[Groq AI] Model "${model}" failed (${errMsg}), trying fallback...`
       );
     }
   }
