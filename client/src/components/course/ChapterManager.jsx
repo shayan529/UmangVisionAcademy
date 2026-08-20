@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { uploadFile } from "../../utils/uploadFile.js";
 
 // ── shared primitives (duplicated from parent for standalone use) ──────────────
@@ -800,6 +800,16 @@ export default function ChapterManager({
 
   const [groups, setGroups] = useState(() => buildGroups(lessons));
   const [expandedCh, setExpandedCh] = useState(new Set([0]));
+
+  useEffect(() => {
+    const currentFlat = flattenGroups(groups);
+    if (JSON.stringify(lessons || []) !== JSON.stringify(currentFlat)) {
+      const newGroups = buildGroups(lessons || []);
+      setGroups(newGroups);
+      const expanded = new Set(newGroups.map((_, i) => i));
+      setExpandedCh(expanded.size > 0 ? expanded : new Set([0]));
+    }
+  }, [lessons]);
 
   const sync = (newGroups) => {
     setGroups(newGroups);

@@ -2650,6 +2650,7 @@ const CourseForm = ({
       </div>
 
       <ChapterManager
+        key={form._id || form.subject || "course-chapter-mgr"}
         lessons={form.lessons ?? []}
         onChange={(lessons) => setForm((f) => ({ ...f, lessons }))}
         courseSubject={form.subject}
@@ -3203,6 +3204,7 @@ const BulkCourseForm = ({
                   </div>
 
                   <ChapterManager
+                    key={`bulk-subj-${item.subject || idx}`}
                     lessons={item.lessons ?? []}
                     onChange={(lessons) => updateItem(idx, "lessons", lessons)}
                     courseSubject={item.subject}
@@ -3513,10 +3515,10 @@ export default function InstructorCourses({
         className: isKnownClass ? category : "",
         examName: isKnownClass || !category ? "" : category,
         board: course.board ?? "",
-        description: course.summary ?? "",
+        description: course.summary || course.description || "",
         lessons: course.lessons ?? [],
         notes: course.notes ?? [],
-        content: course.description ?? "",
+        content: course.description || course.summary || "",
         thumbnailUrl: course.thumbnailUrl ?? "",
         demoVideoUrl: course.demoVideoUrl ?? "",
         price: course.price ?? 0,
@@ -3568,6 +3570,7 @@ export default function InstructorCourses({
     thumbnailUrl: form.thumbnailUrl || "",
     demoVideoUrl: form.demoVideoUrl || "",
     published,
+    language: form.language || "",
     quiz: form.quiz ?? { title: "Final Quiz", questions: [] },
     certificate: form.certificate ?? {
       enabled: false,
