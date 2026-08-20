@@ -791,6 +791,8 @@ const FileUploader = ({
     setProgress(0);
     onUploaded("");
     if (inputRef.current) inputRef.current.value = "";
+  };
+
   return (
     <div>
       <label
@@ -1507,8 +1509,6 @@ function QuizManager({
     } finally {
       setAiLoading(false);
     }
-  };
-
   };
 
   return (
