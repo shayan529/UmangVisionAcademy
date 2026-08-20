@@ -93,115 +93,56 @@ const RefundPolicy = () => {
         {/* Detailed Sections */}
         <div className="space-y-8 text-slate-300 leading-relaxed border-t border-slate-800 pt-10">
 
-          {/* Section 1: Eligibility */}
           <section className="space-y-3">
-            <h2 className="text-2xl font-bold text-cyan-400 flex items-center gap-2">
-              <CheckCircle2 size={22} className="text-cyan-400" />
-              {t("refundPolicy.sections.eligibility.title", "1. Refund Eligibility")}
-            </h2>
-            <p>
-              {t(
-                "refundPolicy.sections.eligibility.intro",
-                "To be eligible for a refund on any course or batch purchased on Umang Vision Academy:"
-              )}
-            </p>
-            <ul className="list-disc ml-6 space-y-2 text-slate-300">
-              <li>{t("refundPolicy.sections.eligibility.item1", "The request must be submitted within 7 calendar days from the date of purchase.")}</li>
-              <li>{t("refundPolicy.sections.eligibility.item2", "You must have completed less than 25% of the total course video/lesson content.")}</li>
-              <li>{t("refundPolicy.sections.eligibility.item3", "Course certificates or downloadable bonus materials must not have been claimed.")}</li>
-            </ul>
+            <h2 className="text-2xl font-bold text-cyan-400">Refund Policy — Umang Vision Academy</h2>
+            <p className="text-sm text-slate-400 font-medium">Effective</p>
+
+            <div className="mt-4 grid gap-4">
+              <div className="bg-white/[0.02] border border-white/[0.03] rounded-lg p-4">
+                <h3 className="font-semibold">1. Course Enrollment</h3>
+                <p className="text-sm text-slate-300 mt-1">Once the student completes the enrollment and payment, the admission is considered confirmed.</p>
+              </div>
+
+              <div className="bg-white/[0.02] border border-white/[0.03] rounded-lg p-4">
+                <h3 className="font-semibold">2. Refund</h3>
+                <p className="text-sm text-slate-300 mt-1">Umang Vision Academy does not provide refunds.</p>
+              </div>
+
+              <div className="bg-white/[0.02] border border-white/[0.03] rounded-lg p-4">
+                <h3 className="font-semibold">3. Non-Refundable Fees</h3>
+                <p className="text-sm text-slate-300 mt-1">Registration fees, admission fees, processing charges, and applicable administrative charges are non-refundable.</p>
+              </div>
+
+              <div className="bg-white/[0.02] border border-white/[0.03] rounded-lg p-4">
+                <h3 className="font-semibold">4. Refund Request</h3>
+                <p className="text-sm text-slate-300 mt-1">Students or parents must submit a refund request through the academy's official contact channel along with the required enrollment and payment details.</p>
+              </div>
+
+              <div className="bg-white/[0.02] border border-white/[0.03] rounded-lg p-4">
+                <h3 className="font-semibold">5. Course Access</h3>
+                <p className="text-sm text-slate-300 mt-1">Once the student has accessed classes, recorded lectures, study material, tests, or other digital resources, the fee may become non-refundable.</p>
+              </div>
+
+              <div className="bg-white/[0.02] border border-white/[0.03] rounded-lg p-4">
+                <h3 className="font-semibold">6. Refund Processing</h3>
+                <p className="text-sm text-slate-300 mt-1">If a refund is approved, it will be processed through the original payment method or another authorized digital payment mode. Processing time may depend on the bank or payment provider.</p>
+              </div>
+
+              <div className="bg-white/[0.02] border border-white/[0.03] rounded-lg p-4">
+                <h3 className="font-semibold">7. Contact for Refund Queries</h3>
+                <p className="text-sm text-slate-300 mt-1">For any refund-related query, students or parents may contact Umang Vision Academy through the official contact details provided by the academy.</p>
+              </div>
+            </div>
           </section>
 
-          {/* Section 2: Wallet Refund Policy */}
-          <section className="p-6 rounded-2xl border border-violet-500/30 bg-violet-950/30 space-y-3">
-            <h2 className="text-2xl font-bold text-violet-300 flex items-center gap-2">
-              <Wallet size={24} className="text-violet-400" />
-              {t("refundPolicy.sections.walletCredit.title", "2. Wallet Refund Policy (Wallet Credit Only)")}
-            </h2>
-            <p className="text-violet-200/90 leading-relaxed">
-              {t(
-                "refundPolicy.sections.walletCredit.body",
-                "All approved refunds will be credited exclusively to your Umang Vision Academy Wallet balance. Wallet funds can be used immediately to purchase any other course, mock test series, or batch on our platform. Wallet credits are non-transferable and non-refundable to external bank accounts."
-              )}
-            </p>
-          </section>
-
-          {/* Section 3: Non-Refundable Items */}
-          <section className="space-y-3">
-            <h2 className="text-2xl font-bold text-cyan-400 flex items-center gap-2">
-              <AlertCircle size={22} className="text-cyan-400" />
-              {t("refundPolicy.sections.nonRefundable.title", "3. Non-Refundable Items")}
-            </h2>
-            <p>
-              {t(
-                "refundPolicy.sections.nonRefundable.intro",
-                "The following items and services are strictly non-refundable:"
-              )}
-            </p>
-            <ul className="list-disc ml-6 space-y-2 text-slate-300">
-              <li>{t("refundPolicy.sections.nonRefundable.item1", "One-on-one live tutoring or doubt-clearing sessions already conducted.")}</li>
-              <li>{t("refundPolicy.sections.nonRefundable.item2", "Attempted mock test paper submissions or evaluated test series.")}</li>
-              <li>{t("refundPolicy.sections.nonRefundable.item3", "Printed study materials or physical books shipped to your address.")}</li>
-              <li>{t("refundPolicy.sections.nonRefundable.item4", "Refund requests submitted after the 7-day refund window.")}</li>
-            </ul>
-          </section>
-
-          {/* Section 4: Refund Request Process */}
-          <section className="space-y-3">
-            <h2 className="text-2xl font-bold text-cyan-400 flex items-center gap-2">
-              <ArrowRight size={22} className="text-cyan-400" />
-              {t("refundPolicy.sections.process.title", "4. Refund Request Process")}
-            </h2>
-            <p>
-              {t(
-                "refundPolicy.sections.process.intro",
-                "To request a refund to your wallet, follow these simple steps:"
-              )}
-            </p>
-            <ol className="list-decimal ml-6 space-y-2 text-slate-300">
-              <li>
-                {t("refundPolicy.sections.process.step1", "Visit the Contact Page or email support@umangvisionacademy.com.")}
-              </li>
-              <li>
-                {t("refundPolicy.sections.process.step2", "Provide your Order ID, registered email address, and reason for the request.")}
-              </li>
-              <li>
-                {t("refundPolicy.sections.process.step3", "Our team will review your eligibility within 24-48 hours.")}
-              </li>
-              <li>
-                {t("refundPolicy.sections.process.step4", "Once approved, the refund amount will be credited directly into your Wallet balance.")}
-              </li>
-            </ol>
-          </section>
-
-          {/* Section 5: Course Exchanges & Upgrades */}
-          <section className="space-y-3">
-            <h2 className="text-2xl font-bold text-cyan-400">
-              {t("refundPolicy.sections.exchanges.title", "5. Course Exchanges & Upgrades")}
-            </h2>
-            <p>
-              {t(
-                "refundPolicy.sections.exchanges.body",
-                "If you accidentally purchased the wrong subject or class batch, you can request an instant course transfer or upgrade within 7 days without needing a cancellation. Contact our support team for immediate assistance."
-              )}
-            </p>
-          </section>
-
-          {/* Section 6: Contact */}
           <section className="space-y-3 pt-6 border-t border-slate-800">
-            <h2 className="text-xl font-bold text-white">
-              {t("refundPolicy.sections.contact.title", "Have questions?")}
-            </h2>
+            <h2 className="text-xl font-bold text-white">Have questions?</h2>
             <p className="text-slate-400">
-              {t(
-                "refundPolicy.sections.contact.body",
-                "If you have any questions regarding our Refund Policy or Wallet balance, please contact us at support@umangvisionacademy.com or visit our Contact Page."
-              )}{" "}
-              <Link to="/contact" className="text-cyan-400 hover:underline font-semibold ml-1">
-                Contact Page →
-              </Link>
+              For assistance, contact us at <span className="font-semibold">support@umangvisionacademy.com</span> or visit our
+              <Link to="/contact" className="text-cyan-400 hover:underline font-semibold ml-1"> Contact Page →</Link>
             </p>
           </section>
+
         </div>
       </div>
     </div>
