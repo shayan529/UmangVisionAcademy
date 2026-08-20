@@ -7,8 +7,6 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
-  Crown,
-  Star,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -125,15 +123,13 @@ export default function PlanSelectionModal({
               >
                 {/* Badges */}
                 {isPopular && (
-                  <div className="absolute -top-3 right-4 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-[10px] font-black text-white uppercase tracking-wider shadow-md flex items-center gap-1">
-                    <Star size={10} className="fill-white" />
-                    <span>⭐ {t("plans.mostPopular", "MOST POPULAR")}</span>
+                  <div className="absolute -top-3 right-4 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-[10px] font-black text-white uppercase tracking-wider shadow-md">
+                    ⭐ {t("plans.mostPopular", "MOST POPULAR")}
                   </div>
                 )}
                 {isPremium && (
-                  <div className="absolute -top-3 right-4 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-[10px] font-black text-slate-950 uppercase tracking-wider shadow-md flex items-center gap-1">
-                    <Crown size={10} />
-                    <span>👑 VIP SUITE</span>
+                  <div className="absolute -top-3 right-4 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-[10px] font-black text-slate-950 uppercase tracking-wider shadow-md">
+                    👑 VIP SUITE
                   </div>
                 )}
 

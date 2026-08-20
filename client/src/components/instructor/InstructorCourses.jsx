@@ -43,6 +43,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutList,
+  Plus,
 } from "lucide-react";
 
 const EMPTY_FORM = {
@@ -4420,7 +4421,7 @@ export default function InstructorCourses({
                   whiteSpace: "nowrap",
                 }}
               >
-                <Sparkles size={14} /> New Course
+                <Plus size={15} /> New Course
               </button>
             )
           ) : (
@@ -4715,7 +4716,7 @@ export default function InstructorCourses({
                       boxShadow: "0 4px 16px rgba(124,58,237,.3)",
                     }}
                   >
-                    <Sparkles size={14} /> Create your first course
+                    <Plus size={15} /> Create your first course
                   </button>
                 )}
               </div>
