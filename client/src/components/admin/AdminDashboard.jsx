@@ -343,7 +343,7 @@ export default function AdminDashboard() {
 
       <div className="flex-1 min-w-0 flex flex-col">
         <main
-          className="flex-1 px-4 py-4 md:px-7 md:py-6"
+          className="flex-1 px-3 py-4 sm:px-4 md:px-7 md:py-6 pb-24 md:pb-6"
           onClick={() => {
             if (sideOpen) setSideOpen(false);
           }}
@@ -372,7 +372,7 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          <div className="rounded-3xl border border-slate-800 bg-white/5 p-5 md:p-7 min-h-full">
+          <div className="rounded-3xl border border-slate-800 bg-white/5 p-3 sm:p-5 md:p-7 min-h-full">
             {renderTabContent()}
           </div>
         </main>

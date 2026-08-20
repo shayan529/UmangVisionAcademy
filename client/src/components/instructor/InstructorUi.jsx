@@ -143,25 +143,44 @@ export const Toast = ({ msg }) => {
   }
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        bottom: 24,
-        right: 24,
-        background: bg,
-        color: "#fff",
-        padding: "12px 20px",
-        borderRadius: 12,
-        fontSize: 14,
-        fontWeight: 600,
-        zIndex: 99999,
-        boxShadow: shadow,
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-      }}
-    >
-      {text}
-    </div>
+    <>
+      <style>{`
+        .instr-toast-box {
+          position: fixed;
+          bottom: 24px;
+          right: 24px;
+          max-width: calc(100vw - 32px);
+          z-index: 99999;
+          word-break: break-word;
+        }
+        @media (max-width: 768px) {
+          .instr-toast-box {
+            bottom: 76px !important;
+            right: 16px !important;
+            left: 16px !important;
+            margin: 0 auto;
+            width: fit-content;
+          }
+        }
+      `}</style>
+      <div
+        className="instr-toast-box"
+        style={{
+          background: bg,
+          color: "#fff",
+          padding: "12px 20px",
+          borderRadius: 12,
+          fontSize: 13,
+          fontWeight: 600,
+          boxShadow: shadow,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          lineHeight: 1.4,
+        }}
+      >
+        {text}
+      </div>
+    </>
   );
 };

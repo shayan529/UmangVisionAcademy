@@ -623,7 +623,14 @@ export default function InstructorDashboard() {
           </div> */}
 
           {/* Page content */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              padding: "clamp(14px, 3vw, 28px)",
+              paddingBottom: 90,
+            }}
+          >
             {renderSection()}
           </div>
         </div>

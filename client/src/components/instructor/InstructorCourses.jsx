@@ -40,6 +40,9 @@ import {
   Info,
   BookOpen,
   Award,
+  ChevronLeft,
+  ChevronRight,
+  LayoutList,
 } from "lucide-react";
 
 const EMPTY_FORM = {
@@ -1116,8 +1119,8 @@ const useCourseTextGenerator = ({ showToast } = {}) => {
       console.error("AI course text generation failed:", err);
       showToast?.(
         err.response?.data?.message ||
-          err.message ||
-          "Failed to generate course text with AI."
+        err.message ||
+        "Failed to generate course text with AI."
       );
       return null;
     } finally {
@@ -1315,8 +1318,8 @@ function NotesManager({ notes = [], onChange, showToast }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, background: "#111827", border: "1px solid #1e293b", borderRadius: 12, padding: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, background: "#111827", border: "1px solid #1e293b", borderRadius: 12, padding: "clamp(12px, 3vw, 16px)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
         <div>
           <h4 style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>Subject Study Notes</h4>
           <p style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>Upload documents & PDFs for this course.</p>
@@ -1326,10 +1329,10 @@ function NotesManager({ notes = [], onChange, showToast }) {
             type="button"
             onClick={() => setShowAddForm(true)}
             style={{
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              padding: "6px 12px",
+              padding: "6px 14px",
               borderRadius: 8,
               border: "none",
               background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
@@ -1337,6 +1340,8 @@ function NotesManager({ notes = [], onChange, showToast }) {
               fontSize: 11,
               fontWeight: 700,
               cursor: "pointer",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
             <FileText size={13} /> Add Note
@@ -1610,17 +1615,20 @@ function QuizManager({
       }}
     >
       <div
+        className="qm-header"
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "12px 16px",
+          padding: "10px 14px",
           background: "#111827",
           borderBottom: "1px solid #1e293b",
+          flexWrap: "wrap",
+          gap: 10,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <FileQuestion size={16} color="#818cf8" />
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <FileQuestion size={16} color="#818cf8" style={{ flexShrink: 0 }} />
           <span style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
             Final Quiz
           </span>
@@ -1632,6 +1640,7 @@ function QuizManager({
               borderRadius: 20,
               background: "#1e1b4b",
               color: "#818cf8",
+              whiteSpace: "nowrap",
             }}
           >
             {questions.length} question{questions.length !== 1 ? "s" : ""}
@@ -1642,8 +1651,9 @@ function QuizManager({
           onClick={handleGenerateWithAI}
           disabled={aiLoading}
           style={{
-            display: "flex",
+            display: "inline-flex",
             alignItems: "center",
+            justifyContent: "center",
             gap: 6,
             padding: "6px 14px",
             borderRadius: 10,
@@ -1656,6 +1666,8 @@ function QuizManager({
             fontWeight: 700,
             cursor: aiLoading ? "not-allowed" : "pointer",
             opacity: aiLoading ? 0.7 : 1,
+            whiteSpace: "nowrap",
+            flexShrink: 0,
           }}
         >
           {aiLoading ? (
@@ -1732,22 +1744,25 @@ function QuizManager({
             </button>
           </div>
         )}
-        <div style={{ flex: 1, padding: 16, overflowY: "auto" }}>
+        <div style={{ flex: 1, padding: "clamp(10px, 2.5vw, 16px)", overflowY: "auto", minWidth: 0 }}>
           {questions.length === 0 ? (
             <div
               style={{
                 height: "100%",
+                minHeight: 120,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 12,
                 color: "#475569",
+                padding: "16px 8px",
+                textAlign: "center",
               }}
             >
               <ListChecks size={26} />
               <p style={{ fontSize: 13 }}>No questions yet</p>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", width: "100%" }}>
                 <button
                   type="button"
                   onClick={addQuestion}
@@ -1760,6 +1775,7 @@ function QuizManager({
                     fontSize: 12,
                     fontWeight: 600,
                     cursor: "pointer",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   + Add Question
@@ -1769,7 +1785,7 @@ function QuizManager({
                   onClick={handleGenerateWithAI}
                   disabled={aiLoading}
                   style={{
-                    display: "flex",
+                    display: "inline-flex",
                     alignItems: "center",
                     gap: 6,
                     padding: "7px 14px",
@@ -1781,6 +1797,7 @@ function QuizManager({
                     fontWeight: 600,
                     cursor: "pointer",
                     opacity: aiLoading ? 0.5 : 1,
+                    whiteSpace: "nowrap",
                   }}
                 >
                   <Sparkles size={13} /> Generate with AI
@@ -1858,6 +1875,7 @@ function QuizManager({
                           display: "flex",
                           alignItems: "center",
                           gap: 8,
+                          width: "100%",
                         }}
                       >
                         <input
@@ -1872,10 +1890,11 @@ function QuizManager({
                             )
                           }
                           style={{
-                            width: 20,
-                            height: 20,
+                            width: 18,
+                            height: 18,
                             accentColor: "#4ade80",
                             flexShrink: 0,
+                            cursor: "pointer",
                           }}
                         />
                         <span
@@ -1883,8 +1902,9 @@ function QuizManager({
                             fontSize: 11,
                             fontWeight: 800,
                             color: "#64748b",
-                            width: 16,
+                            width: 14,
                             flexShrink: 0,
+                            textAlign: "center",
                           }}
                         >
                           {"ABCD"[oIdx]}
@@ -1897,6 +1917,8 @@ function QuizManager({
                           placeholder={`Option ${"ABCD"[oIdx]}`}
                           style={{
                             ...iStyle,
+                            flex: 1,
+                            minWidth: 0,
                             borderColor: isCorrect ? "#16a34a" : "#1e293b",
                             background: isCorrect ? "#052e16" : "#0b1120",
                             color: isCorrect ? "#4ade80" : "#f1f5f9",
@@ -1918,6 +1940,7 @@ function QuizManager({
             <div
               style={{
                 height: "100%",
+                minHeight: 120,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -2637,7 +2660,172 @@ const RecordedSessionsManager = ({ courseId, showToast }) => {
   );
 };
 
+// ── FormStepper ───────────────────────────────────────────────────────────────
+// A compact horizontal progress stepper used to break long course forms into
+// digestible stages. `steps` is [{ key, label, icon, complete }]. Clicking a
+// step (or the header progress bar) jumps directly to it — nothing is ever
+// locked, so an instructor can always jump ahead or back to fix something.
+const FormStepper = ({ steps, activeKey, onSelect }) => {
+  const activeIdx = steps.findIndex((s) => s.key === activeKey);
+  const doneCount = steps.filter((s) => s.complete).length;
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        padding: "14px 16px",
+        background: "#0b1120",
+        border: "1px solid #1e293b",
+        borderRadius: 14,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          Step {activeIdx + 1} of {steps.length}
+        </span>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>
+          {doneCount}/{steps.length} sections ready
+        </span>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${steps.length}, 1fr)`,
+          gap: 6,
+        }}
+      >
+        {steps.map((s, i) => (
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => onSelect(s.key)}
+            title={s.label}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 6,
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "4px 2px 0",
+            }}
+          >
+            <div
+              style={{
+                width: "100%",
+                height: 5,
+                borderRadius: 3,
+                background:
+                  i <= activeIdx
+                    ? "linear-gradient(90deg,#7c3aed,#06b6d4)"
+                    : "#1e293b",
+                transition: "background 0.2s",
+              }}
+            />
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              {s.complete ? (
+                <CheckCircle2 size={12} color="#4ade80" style={{ flexShrink: 0 }} />
+              ) : (
+                <span
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: "50%",
+                    border: `1.5px solid ${s.key === activeKey ? "#a78bfa" : "#334155"}`,
+                    flexShrink: 0,
+                  }}
+                />
+              )}
+              <span
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: s.key === activeKey ? 700 : 600,
+                  color: s.key === activeKey ? "#e2e8f0" : "#64748b",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: "100%",
+                }}
+              >
+                {s.label}
+              </span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// A sticky action bar so Save/Submit controls stay reachable without
+// scrolling through the entire (often long) course form.
+const StickyFormFooter = ({ children }) => (
+  <div
+    style={{
+      position: "sticky",
+      bottom: 0,
+      marginLeft: -18,
+      marginRight: -18,
+      marginBottom: -18,
+      padding: "14px 18px",
+      display: "flex",
+      gap: 10,
+      justifyContent: "flex-end",
+      flexWrap: "wrap",
+      background: "linear-gradient(180deg, rgba(15,23,42,0) 0%, #0f172a 28%)",
+      backdropFilter: "blur(6px)",
+      borderTop: "1px solid #1e293b",
+      zIndex: 5,
+    }}
+  >
+    {children}
+  </div>
+);
+
+const ghostBtn = {
+  padding: "10px 20px",
+  borderRadius: 10,
+  border: "1px solid #334155",
+  background: "transparent",
+  color: "#94a3b8",
+  fontWeight: 600,
+  fontSize: 13,
+  cursor: "pointer",
+  minHeight: 40,
+};
+const draftBtn = {
+  padding: "10px 20px",
+  borderRadius: 10,
+  border: "1px solid #334155",
+  background: "#111827",
+  color: "#e2e8f0",
+  fontWeight: 600,
+  fontSize: 13,
+  cursor: "pointer",
+  minHeight: 40,
+};
+const submitBtn = {
+  padding: "10px 22px",
+  borderRadius: 10,
+  border: "none",
+  background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+  color: "#fff",
+  fontWeight: 700,
+  fontSize: 13,
+  cursor: "pointer",
+  boxShadow: "0 4px 16px rgba(124,58,237,.3)",
+  minHeight: 40,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+};
+
 // ── CourseForm ────────────────────────────────────────────────────────────────
+// Broken into wizard-style steps so instructors aren't confronted with one
+// giant scrolling form. Every step stays reachable via the stepper at any
+// time — nothing is gated — so people can jump around freely.
 const CourseForm = ({
   form,
   setForm,
@@ -2652,6 +2840,7 @@ const CourseForm = ({
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const courseType = form.courseType || "classes";
   const { loading: aiLoading, generateCourseText } = useCourseTextGenerator({ showToast });
+  const [step, setStep] = useState("basics");
 
   const handleGenerate = async () => {
     const data = await generateCourseText({
@@ -2670,262 +2859,262 @@ const CourseForm = ({
     }));
   };
 
+  const basicsComplete = Boolean(
+    form.subject?.trim() &&
+    (courseType === "classes" ? form.className && form.board : form.examName?.trim()),
+  );
+  const curriculumComplete = Boolean(
+    form.description?.trim() && (form.lessons ?? []).length > 0,
+  );
+  const mediaComplete = Boolean(form.thumbnailUrl);
+  const extrasComplete = Boolean(form.quiz?.questions?.length || form.certificate?.enabled);
+
+  const steps = [
+    { key: "basics", label: "Basics", complete: basicsComplete },
+    { key: "curriculum", label: "Curriculum", complete: curriculumComplete },
+    { key: "media", label: "Media & Notes", complete: mediaComplete },
+    { key: "extras", label: "Quiz & Certificate", complete: extrasComplete },
+    ...(mode === "edit" && form._id ? [{ key: "recordings", label: "Recordings", complete: true }] : []),
+  ];
+  const stepIdx = steps.findIndex((s) => s.key === step);
+  const goNext = () => stepIdx < steps.length - 1 && setStep(steps[stepIdx + 1].key);
+  const goBack = () => stepIdx > 0 && setStep(steps[stepIdx - 1].key);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {isAdmin && instructors.length > 0 && (
-        <Field label="Assign Instructor" hint="*">
-          <Sel
-            value={form.instructor || ""}
-            onChange={set("instructor")}
-            options={[
-              { value: "", label: "Select instructor" },
-              ...instructors.map((inst) => ({
-                value: inst._id,
-                label: inst.name || inst.email,
-              })),
-            ]}
-          />
-        </Field>
+      <FormStepper steps={steps} activeKey={step} onSelect={setStep} />
+
+      {step === "basics" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeIn 0.2s ease" }}>
+          {isAdmin && instructors.length > 0 && (
+            <Field label="Assign Instructor" hint="*">
+              <Sel
+                value={form.instructor || ""}
+                onChange={set("instructor")}
+                options={[
+                  { value: "", label: "Select instructor" },
+                  ...instructors.map((inst) => ({
+                    value: inst._id,
+                    label: inst.name || inst.email,
+                  })),
+                ]}
+              />
+            </Field>
+          )}
+          <Field label="Course Type" hint="* (choose one)">
+            <CourseTypeSelector
+              value={courseType}
+              onChange={(type) =>
+                setForm((f) => ({
+                  ...f,
+                  courseType: type,
+                  // clear the field that no longer applies
+                  className: type === "competitive" ? "" : f.className,
+                  examName: type === "classes" ? "" : f.examName,
+                  board: type === "competitive" ? "" : f.board,
+                }))
+              }
+            />
+          </Field>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
+            <Field label="Subject" hint="*">
+              <Input
+                value={form.subject}
+                onChange={set("subject")}
+                placeholder="e.g. Mathematics"
+              />
+            </Field>
+            {courseType === "classes" ? (
+              <Field label="Class" hint="*">
+                <Sel
+                  value={form.className}
+                  onChange={set("className")}
+                  options={[
+                    { value: "", label: "Select class" },
+                    ...CLASSES.map((c) => ({ value: c, label: c })),
+                  ]}
+                />
+              </Field>
+            ) : (
+              <Field label="Exam Name" hint="*">
+                <Input
+                  value={form.examName}
+                  onChange={set("examName")}
+                  placeholder="e.g. JEE Main, NEET, CUET"
+                />
+              </Field>
+            )}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
+            {courseType === "classes" ? (
+              <Field label="Board" hint="*">
+                <Sel
+                  value={form.board}
+                  onChange={set("board")}
+                  options={[
+                    { value: "", label: "Select board" },
+                    ...BOARDS.map((b) => ({ value: b, label: b })),
+                  ]}
+                />
+              </Field>
+            ) : null}
+            <Field label="Price" hint="(₹ — 0 for free)">
+              <Input
+                value={form.price}
+                onChange={set("price")}
+                placeholder="0"
+                type="number"
+              />
+            </Field>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
+            <Field label="Language" hint="">
+              <Sel
+                value={form.language || ""}
+                onChange={set("language")}
+                options={[
+                  { value: "", label: "Multilanguage (Default)" },
+                  ...LANGUAGES.map((l) => ({ value: l, label: l })),
+                ]}
+              />
+            </Field>
+          </div>
+        </div>
       )}
-      <Field label="Course Type" hint="* (choose one)">
-        <CourseTypeSelector
-          value={courseType}
-          onChange={(type) =>
-            setForm((f) => ({
-              ...f,
-              courseType: type,
-              // clear the field that no longer applies
-              className: type === "competitive" ? "" : f.className,
-              examName: type === "classes" ? "" : f.examName,
-              board: type === "competitive" ? "" : f.board,
-            }))
-          }
-        />
-      </Field>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
-        <Field label="Subject" hint="*">
-          <Input
-            value={form.subject}
-            onChange={set("subject")}
-            placeholder="e.g. Mathematics"
+      {step === "curriculum" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeIn 0.2s ease" }}>
+          <ChapterManager
+            key={form._id || form.subject || "course-chapter-mgr"}
+            lessons={form.lessons ?? []}
+            onChange={(lessons) => setForm((f) => ({ ...f, lessons }))}
+            courseSubject={form.subject}
+            courseDescription={form.description}
           />
-        </Field>
-        {courseType === "classes" ? (
-          <Field label="Class" hint="*">
-            <Sel
-              value={form.className}
-              onChange={set("className")}
-              options={[
-                { value: "", label: "Select class" },
-                ...CLASSES.map((c) => ({ value: c, label: c })),
-              ]}
+          <Field label="Description" hint="* (course summary)">
+            <AITextGeneratorPanel loading={aiLoading} onGenerate={handleGenerate}>
+              <Textarea
+                value={form.description}
+                onChange={set("description")}
+                placeholder="Brief description"
+                rows={3}
+              />
+            </AITextGeneratorPanel>
+          </Field>
+          <Field label="Subject Content" hint="(chapters, topics)">
+            <Textarea
+              value={form.content}
+              onChange={set("content")}
+              placeholder={"Chapter 1: Algebra\nChapter 2: Geometry"}
+              rows={5}
             />
           </Field>
-        ) : (
-          <Field label="Exam Name" hint="*">
-            <Input
-              value={form.examName}
-              onChange={set("examName")}
-              placeholder="e.g. JEE Main, NEET, CUET"
+        </div>
+      )}
+
+      {step === "media" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeIn 0.2s ease" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+              gap: 16,
+            }}
+          >
+            <FileUploader
+              label="Thumbnail"
+              hint="JPG, PNG, WEBP"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              folder="Umang Vision Academy/thumbnails"
+              icon={<ImageIcon size={22} />}
+              currentUrl={form.thumbnailUrl}
+              onUploaded={(url) => setForm((f) => ({ ...f, thumbnailUrl: url }))}
+            />
+            <FileUploader
+              label="Demo Video"
+              hint="MP4, WEBM — max 200 MB"
+              accept="video/mp4,video/webm,video/quicktime"
+              folder="Umang Vision Academy/demos"
+              icon={<Video size={22} />}
+              currentUrl={form.demoVideoUrl}
+              onUploaded={(url) => setForm((f) => ({ ...f, demoVideoUrl: url }))}
+            />
+          </div>
+          <NotesManager
+            notes={form.notes ?? []}
+            onChange={(notes) => setForm((f) => ({ ...f, notes }))}
+            showToast={showToast}
+          />
+        </div>
+      )}
+
+      {step === "extras" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeIn 0.2s ease" }}>
+          <CertificateManager
+            certificate={form.certificate}
+            onChange={(certificate) => setForm((f) => ({ ...f, certificate }))}
+            courseTitle={form.subject}
+          />
+          <Field
+            label="Final Quiz"
+            hint="(optional — students take after completing all lessons)"
+          >
+            <QuizManager
+              quiz={form.quiz}
+              onChange={(quiz) => setForm((f) => ({ ...f, quiz }))}
+              courseTitle={form.subject}
+              courseDescription={form.description}
+              courseClass={courseType === "classes" ? form.className : form.examName}
+              showToast={showToast}
             />
           </Field>
-        )}
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
-        {courseType === "classes" ? (
-          <Field label="Board" hint="*">
-            <Sel
-              value={form.board}
-              onChange={set("board")}
-              options={[
-                { value: "", label: "Select board" },
-                ...BOARDS.map((b) => ({ value: b, label: b })),
-              ]}
-            />
-          </Field>
-        ) : null}
-        <Field label="Price" hint="(₹ — 0 for free)">
-          <Input
-            value={form.price}
-            onChange={set("price")}
-            placeholder="0"
-            type="number"
-          />
-        </Field>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
-        <Field label="Language" hint="">
-          <Sel
-            value={form.language || ""}
-            onChange={set("language")}
-            options={[
-              { value: "", label: "Multilanguage (Default)" },
-              ...LANGUAGES.map((l) => ({ value: l, label: l })),
-            ]}
-          />
-        </Field>
-      </div>
+        </div>
+      )}
 
-      <ChapterManager
-        key={form._id || form.subject || "course-chapter-mgr"}
-        lessons={form.lessons ?? []}
-        onChange={(lessons) => setForm((f) => ({ ...f, lessons }))}
-        courseSubject={form.subject}
-        courseDescription={form.description}
-      />
-
-      <CertificateManager
-        certificate={form.certificate}
-        onChange={(certificate) => setForm((f) => ({ ...f, certificate }))}
-        courseTitle={form.subject}
-      />
-
-      <Field label="Description" hint="* (course summary)">
-        <AITextGeneratorPanel loading={aiLoading} onGenerate={handleGenerate}>
-          <Textarea
-            value={form.description}
-            onChange={set("description")}
-            placeholder="Brief description"
-            rows={3}
-          />
-        </AITextGeneratorPanel>
-      </Field>
-      <Field label="Subject Content" hint="(chapters, topics)">
-        <Textarea
-          value={form.content}
-          onChange={set("content")}
-          placeholder={"Chapter 1: Algebra\nChapter 2: Geometry"}
-          rows={5}
-        />
-      </Field>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
-          gap: 16,
-        }}
-      >
-        <FileUploader
-          label="Thumbnail"
-          hint="JPG, PNG, WEBP"
-          accept="image/jpeg,image/png,image/webp,image/gif"
-          folder="Umang Vision Academy/thumbnails"
-          icon={<ImageIcon size={22} />}
-          currentUrl={form.thumbnailUrl}
-          onUploaded={(url) => setForm((f) => ({ ...f, thumbnailUrl: url }))}
-        />
-        <FileUploader
-          label="Demo Video"
-          hint="MP4, WEBM — max 200 MB"
-          accept="video/mp4,video/webm,video/quicktime"
-          folder="Umang Vision Academy/demos"
-          icon={<Video size={22} />}
-          currentUrl={form.demoVideoUrl}
-          onUploaded={(url) => setForm((f) => ({ ...f, demoVideoUrl: url }))}
-        />
-      </div>
-      <NotesManager
-        notes={form.notes ?? []}
-        onChange={(notes) => setForm((f) => ({ ...f, notes }))}
-        showToast={showToast}
-      />
-
-      {/* ── Recorded Sessions ── only visible when editing an existing course */}
-      {mode === "edit" && form._id && (
+      {step === "recordings" && mode === "edit" && form._id && (
         <div
           style={{
             padding: "16px 18px",
             borderRadius: 12,
             background: "#0f172a",
             border: "1px solid #1e293b",
+            animation: "fadeIn 0.2s ease",
           }}
         >
           <RecordedSessionsManager courseId={form._id} showToast={showToast} />
         </div>
       )}
 
-      <Field
-        label="Final Quiz"
-        hint="(optional — students take after completing all lessons)"
-      >
-        <QuizManager
-          quiz={form.quiz}
-          onChange={(quiz) => setForm((f) => ({ ...f, quiz }))}
-          courseTitle={form.subject}
-          courseDescription={form.description}
-          courseClass={courseType === "classes" ? form.className : form.examName}
-          showToast={showToast}
-        />
-      </Field>
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          justifyContent: "flex-end",
-          paddingTop: 8,
-          borderTop: "1px solid #1e293b",
-          flexWrap: "wrap",
-        }}
-      >
-        <button
-          onClick={onCancel}
-          style={{
-            padding: "10px 20px",
-            borderRadius: 10,
-            border: "1px solid #334155",
-            background: "transparent",
-            color: "#94a3b8",
-            fontWeight: 600,
-            fontSize: 13,
-            cursor: "pointer",
-            minHeight: 40,
-          }}
-        >
+      <StickyFormFooter>
+        <button onClick={onCancel} style={ghostBtn}>
           Cancel
         </button>
-        <button
-          onClick={() => onSave(false)}
-          disabled={saving}
-          style={{
-            padding: "10px 20px",
-            borderRadius: 10,
-            border: "1px solid #334155",
-            background: "transparent",
-            color: "#e2e8f0",
-            fontWeight: 600,
-            fontSize: 13,
-            cursor: "pointer",
-            opacity: saving ? 0.6 : 1,
-            minHeight: 40,
-          }}
-        >
-          Save as Draft
-        </button>
-        <button
-          onClick={() => onSave(true)}
-          disabled={saving}
-          style={{
-            padding: "10px 20px",
-            borderRadius: 10,
-            border: "none",
-            background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
-            color: "#fff",
-            fontWeight: 700,
-            fontSize: 13,
-            cursor: "pointer",
-            opacity: saving ? 0.6 : 1,
-            boxShadow: "0 4px 16px rgba(124,58,237,.25)",
-            minHeight: 40,
-          }}
-        >
-          {saving
-            ? "Saving…"
-            : mode === "create"
-              ? "Submit for Review"
-              : "Save & Submit for Review"}
-        </button>
-      </div>
+        {stepIdx > 0 && (
+          <button onClick={goBack} style={{ ...draftBtn, display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <ChevronLeft size={14} /> Back
+          </button>
+        )}
+        {stepIdx < steps.length - 1 ? (
+          <button onClick={goNext} style={{ ...submitBtn }}>
+            Next <ChevronRight size={14} />
+          </button>
+        ) : (
+          <>
+            <button onClick={() => onSave(false)} disabled={saving} style={{ ...draftBtn, opacity: saving ? 0.6 : 1 }}>
+              Save as Draft
+            </button>
+            <button onClick={() => onSave(true)} disabled={saving} style={{ ...submitBtn, opacity: saving ? 0.6 : 1 }}>
+              {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+              {saving
+                ? "Saving…"
+                : mode === "create"
+                  ? "Submit for Review"
+                  : "Save & Submit for Review"}
+            </button>
+          </>
+        )}
+      </StickyFormFooter>
     </div>
   );
 };
@@ -3005,8 +3194,54 @@ const BulkCourseForm = ({
   const branches = getBranches(form.board, form.className);
   const hasBranches = branches.length > 0;
 
+  const readyItems = form.items.filter(
+    (it) => it.subject.trim() && it.description.trim() && it.content.trim(),
+  ).length;
+  const filledItems = form.items.filter((it) => it.subject.trim()).length;
+  const metaComplete = Boolean(
+    form.title?.trim() && form.className && form.board && (!hasBranches || form.branch),
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* ── Bundle progress summary ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          padding: "12px 16px",
+          background: "#0b1120",
+          border: "1px solid #1e293b",
+          borderRadius: 14,
+          flexWrap: "wrap",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 12,
+            fontWeight: 700,
+            color: metaComplete ? "#4ade80" : "#94a3b8",
+          }}
+        >
+          {metaComplete ? <CheckCircle2 size={14} /> : <Info size={14} />}
+          Bundle details {metaComplete ? "complete" : "incomplete"}
+        </div>
+        <div style={{ width: 1, height: 16, background: "#1e293b" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700, color: "#94a3b8" }}>
+          <LayoutList size={14} color="#818cf8" />
+          {filledItems} subject{filledItems !== 1 ? "s" : ""} added
+        </div>
+        <div style={{ width: 1, height: 16, background: "#1e293b" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700, color: readyItems === form.items.length && readyItems > 0 ? "#4ade80" : "#94a3b8" }}>
+          <ClipboardList size={14} />
+          {readyItems}/{form.items.length} ready for review
+        </div>
+      </div>
+
       {isAdmin && instructors.length > 0 && (
         <Field label="Assign Instructor" hint="*">
           <Sel
@@ -3191,12 +3426,13 @@ const BulkCourseForm = ({
           );
 
           const isCollapsed = !!collapsedItems[idx];
+          const itemReady = Boolean(item.subject.trim() && item.description.trim() && item.content.trim());
 
           return (
             <div
               key={idx}
               style={{
-                border: "1px solid #1e293b",
+                border: `1px solid ${itemReady ? "#166534" : "#1e293b"}`,
                 borderRadius: 14,
                 background: "#0b1120",
                 overflow: "hidden",
@@ -3234,6 +3470,20 @@ const BulkCourseForm = ({
                   >
                     ▼
                   </span>
+                  {itemReady ? (
+                    <CheckCircle2 size={15} color="#4ade80" style={{ flexShrink: 0 }} />
+                  ) : (
+                    <span
+                      style={{
+                        width: 15,
+                        height: 15,
+                        borderRadius: "50%",
+                        border: "1.5px solid #334155",
+                        flexShrink: 0,
+                        display: "inline-block",
+                      }}
+                    />
+                  )}
                   <span
                     style={{ fontSize: 13, fontWeight: 700, color: "#ffffff" }}
                   >
@@ -3398,72 +3648,20 @@ const BulkCourseForm = ({
         })}
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          justifyContent: "flex-end",
-          paddingTop: 8,
-          borderTop: "1px solid #1e293b",
-          flexWrap: "wrap",
-        }}
-      >
-        <button
-          onClick={onCancel}
-          style={{
-            padding: "10px 20px",
-            borderRadius: 10,
-            border: "1px solid #334155",
-            background: "transparent",
-            color: "#94a3b8",
-            fontWeight: 600,
-            fontSize: 13,
-            cursor: "pointer",
-            minHeight: 40,
-          }}
-        >
+      <StickyFormFooter>
+        <button onClick={onCancel} style={ghostBtn}>
           Cancel
         </button>
-        <button
-          onClick={() => onSave(false)}
-          disabled={saving}
-          style={{
-            padding: "10px 20px",
-            borderRadius: 10,
-            border: "1px solid #334155",
-            background: "transparent",
-            color: "#e2e8f0",
-            fontWeight: 600,
-            fontSize: 13,
-            cursor: "pointer",
-            opacity: saving ? 0.6 : 1,
-            minHeight: 40,
-          }}
-        >
+        <button onClick={() => onSave(false)} disabled={saving} style={{ ...draftBtn, opacity: saving ? 0.6 : 1 }}>
           Save All as Draft
         </button>
-        <button
-          onClick={() => onSave(true)}
-          disabled={saving}
-          style={{
-            padding: "10px 20px",
-            borderRadius: 10,
-            border: "none",
-            background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
-            color: "#fff",
-            fontWeight: 700,
-            fontSize: 13,
-            cursor: "pointer",
-            opacity: saving ? 0.6 : 1,
-            boxShadow: "0 4px 16px rgba(124,58,237,.25)",
-            minHeight: 40,
-          }}
-        >
+        <button onClick={() => onSave(true)} disabled={saving} style={{ ...submitBtn, opacity: saving ? 0.6 : 1 }}>
+          {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
           {saving
             ? "Submitting…"
             : `Submit All ${form.items.length} for Review`}
         </button>
-      </div>
+      </StickyFormFooter>
     </div>
   );
 };
@@ -4105,25 +4303,50 @@ export default function InstructorCourses({
         @keyframes fadeIn    { from{opacity:0} to{opacity:1} }
         @keyframes pulse     { 0%,100%{opacity:1} 50%{opacity:.5} }
         @keyframes spin      { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-        .ic-row:hover { border-color:#334155 !important; }
+        .ic-row:hover { border-color:#334155 !important; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,0.25); }
+        .ic-row { transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s, background 0.15s; }
         .ic-btn:hover { opacity:.8; }
+        .ic-stat:hover { border-color:#334155 !important; transform: translateY(-2px); }
+        .ic-stat { transition: border-color 0.15s, transform 0.15s; }
+        .ic-mode-toggle { transition: background 0.15s, color 0.15s; }
         select option { background:#0b1120; color:#f1f5f9; }
         select optgroup { background:#0b1120; color:#94a3b8; font-style:normal; font-weight:700; }
         @media (max-width: 640px) {
-          .qm-body { flex-direction: column; }
+          .qm-header {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .qm-header > button {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+          .qm-body { flex-direction: column !important; min-height: auto !important; }
           .qm-sidebar {
             width: 100% !important;
             flex-direction: row !important;
-            overflow-x: auto;
-            overflow-y: hidden;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
             border-right: none !important;
-            border-bottom: 1px solid #1e293b;
+            border-bottom: 1px solid #1e293b !important;
+            padding: 6px !important;
+            gap: 6px !important;
           }
-          .qm-sidebar button { flex-shrink: 0; width: auto !important; min-width: 120px; }
+          .qm-sidebar button {
+            flex-shrink: 0 !important;
+            width: auto !important;
+            min-width: 80px !important;
+            max-width: 130px !important;
+            padding: 6px 8px !important;
+            font-size: 10.5px !important;
+          }
+          .ic-form-card {
+            padding: 12px 14px !important;
+            border-radius: 14px !important;
+          }
         }
       `}</style>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingBottom: 60 }}>
         {/* Header */}
         <div
           style={{
@@ -4132,6 +4355,10 @@ export default function InstructorCourses({
             justifyContent: "space-between",
             flexWrap: "wrap",
             gap: 12,
+            padding: "18px 22px",
+            borderRadius: 18,
+            background: "linear-gradient(135deg, rgba(124,58,237,0.14), rgba(6,182,212,0.08))",
+            border: "1px solid #1e293b",
           }}
         >
           <div>
@@ -4143,15 +4370,25 @@ export default function InstructorCourses({
                 color: "#818cf8",
                 textTransform: "uppercase",
                 marginBottom: 4,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
               }}
             >
-              Course Management
+              <GraduationCap size={13} /> Course Management
             </p>
             <h2 style={{ fontSize: 24, fontWeight: 800, color: "#f1f5f9" }}>
               {view === "create"
                 ? t("instructorCourses.createNewCourse")
                 : t("instructorCourses.yourCourses")}
             </h2>
+            {view === "list" && (
+              <p style={{ fontSize: 12.5, color: "#64748b", marginTop: 4 }}>
+                {counts.total === 0
+                  ? "Create your first course to get started."
+                  : `${counts.total} course${counts.total !== 1 ? "s" : ""} total · ${counts.approved} live`}
+              </p>
+            )}
           </div>
           {view === "list" ? (
             canCreate && (
@@ -4162,6 +4399,9 @@ export default function InstructorCourses({
                   closeEdit();
                 }}
                 style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
                   padding: "10px 20px",
                   borderRadius: 12,
                   border: "none",
@@ -4174,7 +4414,7 @@ export default function InstructorCourses({
                   whiteSpace: "nowrap",
                 }}
               >
-                + New Course
+                <Sparkles size={14} /> New Course
               </button>
             )
           ) : (
@@ -4189,9 +4429,12 @@ export default function InstructorCourses({
                 fontWeight: 600,
                 fontSize: 13,
                 cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
               }}
             >
-              ← Back to Courses
+              <ChevronLeft size={14} /> Back to Courses
             </button>
           )}
         </div>
@@ -4199,11 +4442,12 @@ export default function InstructorCourses({
         {/* Create view */}
         {view === "create" && (
           <div
+            className="ic-form-card"
             style={{
               background: "#111827",
               border: "1px solid #1e293b",
               borderRadius: 18,
-              padding: 28,
+              padding: "clamp(14px, 3vw, 28px)",
               animation: "slideDown 0.3s ease",
             }}
           >
@@ -4218,14 +4462,18 @@ export default function InstructorCourses({
               }}
             >
               {[
-                { key: "single", label: "Single Course" },
-                { key: "bulk", label: "Bulk Upload (Whole Class)" },
+                { key: "single", label: "Single Course", icon: <FileText size={13} /> },
+                { key: "bulk", label: "Bulk Upload (Whole Class)", icon: <Package size={13} /> },
               ].map((opt) => (
                 <button
                   key={opt.key}
                   type="button"
                   onClick={() => setCreateMode(opt.key)}
+                  className="ic-mode-toggle"
                   style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
                     padding: "8px 18px",
                     borderRadius: 9,
                     border: "none",
@@ -4239,7 +4487,7 @@ export default function InstructorCourses({
                     cursor: "pointer",
                   }}
                 >
-                  {opt.label}
+                  {opt.icon} {opt.label}
                 </button>
               ))}
             </div>
@@ -4290,6 +4538,7 @@ export default function InstructorCourses({
               ].map((s) => (
                 <div
                   key={s.label}
+                  className="ic-stat"
                   style={{
                     background: "#111827",
                     border: "1px solid #1e293b",
@@ -4301,7 +4550,19 @@ export default function InstructorCourses({
                     <div style={{ fontSize: 26, fontWeight: 800, color: s.color }}>
                       {s.value}
                     </div>
-                    <s.Icon size={16} color={s.color} style={{ opacity: 0.7 }} />
+                    <div
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 9,
+                        background: `${s.color}1a`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <s.Icon size={14} color={s.color} />
+                    </div>
                   </div>
                   <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
                     {s.label}
@@ -4408,13 +4669,49 @@ export default function InstructorCourses({
                 />
               ))
             ) : filtered.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "64px 0" }}>
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "56px 24px",
+                  border: "1px dashed #1e293b",
+                  borderRadius: 18,
+                  background: "#0f172a",
+                }}
+              >
                 <Inbox size={38} color="#334155" style={{ marginBottom: 12 }} />
-                <p style={{ color: "#64748b", fontWeight: 600 }}>
-                  {courses.length === 0
-                    ? "No courses yet. Create your first one!"
-                    : "No courses match your filter."}
+                <p style={{ color: "#e2e8f0", fontWeight: 700, marginBottom: 4 }}>
+                  {courses.length === 0 ? "No courses yet" : "No courses match your filter"}
                 </p>
+                <p style={{ color: "#64748b", fontSize: 13, marginBottom: courses.length === 0 && canCreate ? 18 : 0 }}>
+                  {courses.length === 0
+                    ? "Create a single course or bulk-upload a whole class in a few guided steps."
+                    : "Try a different search term or status filter."}
+                </p>
+                {courses.length === 0 && canCreate && (
+                  <button
+                    onClick={() => {
+                      loadSavedDraft();
+                      setView("create");
+                      closeEdit();
+                    }}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "10px 20px",
+                      borderRadius: 12,
+                      border: "none",
+                      background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                      color: "#fff",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      cursor: "pointer",
+                      boxShadow: "0 4px 16px rgba(124,58,237,.3)",
+                    }}
+                  >
+                    <Sparkles size={14} /> Create your first course
+                  </button>
+                )}
               </div>
             ) : (
               <div
@@ -4547,436 +4844,436 @@ export default function InstructorCourses({
                     return 0;
                   })
                   .map((course) => {
-                  const st = statusStyle(course);
-                  const isOpen = expandedId === course._id;
-                  return (
-                    <div
-                      key={course._id}
-                      style={{ animation: "fadeIn 0.25s ease" }}
-                    >
+                    const st = statusStyle(course);
+                    const isOpen = expandedId === course._id;
+                    return (
                       <div
-                        className="ic-row"
-                        style={{
-                          background: selectedIds.includes(course._id)
-                            ? "rgba(124, 58, 237, 0.07)"
-                            : "#111827",
-                          border: `1px solid ${selectedIds.includes(course._id) ? "rgba(124, 58, 237, 0.55)" : isOpen ? "#7c3aed40" : "#1e293b"}`,
-                          borderRadius: isOpen ? "18px 18px 0 0" : 18,
-                          padding: "16px 20px",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 14,
-                          flexWrap: "wrap",
-                          transition: "border-color 0.15s, background 0.15s",
-                        }}
+                        key={course._id}
+                        style={{ animation: "fadeIn 0.25s ease" }}
                       >
-                        {canDelete && (
-                          <div
-                            onClick={(e) => e.stopPropagation()}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              flexShrink: 0,
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedIds.includes(course._id)}
-                              onChange={(e) =>
-                                handleToggleSelect(course._id, e)
-                              }
-                              style={{
-                                width: 18,
-                                height: 18,
-                                accentColor: "#7c3aed",
-                                cursor: "pointer",
-                              }}
-                              title="Select course for bulk action"
-                            />
-                          </div>
-                        )}
                         <div
+                          className="ic-row"
                           style={{
-                            width: 56,
-                            height: 56,
-                            borderRadius: 12,
-                            background: "#1e293b",
-                            flexShrink: 0,
-                            overflow: "hidden",
+                            background: selectedIds.includes(course._id)
+                              ? "rgba(124, 58, 237, 0.07)"
+                              : "#111827",
+                            border: `1px solid ${selectedIds.includes(course._id) ? "rgba(124, 58, 237, 0.55)" : isOpen ? "#7c3aed40" : "#1e293b"}`,
+                            borderRadius: isOpen ? "18px 18px 0 0" : 18,
+                            padding: "16px 20px",
                             display: "flex",
                             alignItems: "center",
-                            justifyContent: "center",
+                            gap: 14,
+                            flexWrap: "wrap",
                           }}
                         >
-                          {course.thumbnailUrl ? (
-                            <img
-                              src={course.thumbnailUrl}
-                              alt=""
+                          {canDelete && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
                               style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
+                                display: "flex",
+                                alignItems: "center",
+                                flexShrink: 0,
                               }}
-                              onError={(e) => {
-                                e.target.style.display = "none";
-                              }}
-                            />
-                          ) : (
-                            <BookOpen size={22} color="#64748b" />
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedIds.includes(course._id)}
+                                onChange={(e) =>
+                                  handleToggleSelect(course._id, e)
+                                }
+                                style={{
+                                  width: 18,
+                                  height: 18,
+                                  accentColor: "#7c3aed",
+                                  cursor: "pointer",
+                                }}
+                                title="Select course for bulk action"
+                              />
+                            </div>
                           )}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 180 }}>
+                          <div
+                            style={{
+                              width: 56,
+                              height: 56,
+                              borderRadius: 12,
+                              background: "#1e293b",
+                              flexShrink: 0,
+                              overflow: "hidden",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {course.thumbnailUrl ? (
+                              <img
+                                src={course.thumbnailUrl}
+                                alt=""
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                                onError={(e) => {
+                                  e.target.style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              <BookOpen size={22} color="#64748b" />
+                            )}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 180 }}>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 8,
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              <p
+                                style={{
+                                  fontSize: 14,
+                                  fontWeight: 700,
+                                  color: "#f1f5f9",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  maxWidth: "30ch",
+                                }}
+                              >
+                                {course.title || "Untitled"}
+                              </p>
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  padding: "2px 8px",
+                                  borderRadius: 20,
+                                  background: st.bg,
+                                  color: st.text,
+                                  border: `1px solid ${st.border}`,
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {st.label}
+                              </span>
+                              {isBulkCourse(course) && (
+                                <span
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 4,
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    padding: "2px 8px",
+                                    borderRadius: 20,
+                                    background: "#052e2b",
+                                    color: "#2dd4bf",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <Package size={11} /> Bundle
+                                </span>
+                              )}
+                              {course.quiz?.questions?.length > 0 && (
+                                <span
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 4,
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    padding: "2px 8px",
+                                    borderRadius: 20,
+                                    background: "#1e1b4b",
+                                    color: "#818cf8",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <FileQuestion size={11} /> {course.quiz.questions.length}Q Quiz
+                                </span>
+                              )}
+                            </div>
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: 12,
+                                marginTop: 4,
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              {course.category && (
+                                <span style={{ fontSize: 11, color: "#64748b" }}>
+                                  {course.category}
+                                </span>
+                              )}
+                              {course.board && (
+                                <span style={{ fontSize: 11, color: "#64748b", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                  <ClipboardList size={11} /> {course.board}
+                                </span>
+                              )}
+                              <span style={{ fontSize: 11, color: "#64748b", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                <Users size={11} /> {course.enrolledCount ?? 0}
+                              </span>
+                              {isAdmin && course.instructor && (
+                                <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                  <User size={11} /> {course.instructor.name || course.instructor.email}
+                                </span>
+                              )}
+                              {course.price > 0 && (
+                                <span style={{ fontSize: 11, color: "#64748b" }}>
+                                  ₹{course.price}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                           <div
                             style={{
                               display: "flex",
-                              alignItems: "center",
                               gap: 8,
+                              flexShrink: 0,
                               flexWrap: "wrap",
+                              justifyContent: "flex-end",
+                            }}
+                          >
+                            {course.approvalStatus === "pending" && (
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  color: "#fbbf24",
+                                  padding: "6px 12px",
+                                  background: "#1c1a00",
+                                  borderRadius: 8,
+                                  border: "1px solid #854d0e",
+                                  fontWeight: 600,
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                }}
+                              >
+                                <Clock size={12} /> In review
+                              </span>
+                            )}
+                            {canEdit && (isAdmin || course.approvalStatus !== "pending") && (
+                              <button
+                                className="ic-btn"
+                                onClick={() =>
+                                  isOpen ? closeEdit() : openEdit(course)
+                                }
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  padding: "8px 14px",
+                                  borderRadius: 8,
+                                  border: `1px solid ${isOpen ? "#7c3aed" : "#334155"}`,
+                                  background: isOpen ? "#2e1065" : "transparent",
+                                  color: isOpen ? "#a78bfa" : "#e2e8f0",
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  transition: "all 0.15s",
+                                  minHeight: 36,
+                                }}
+                              >
+                                {isOpen ? (
+                                  <><X size={13} /> Close</>
+                                ) : (
+                                  <><Pencil size={13} /> Edit / Manage</>
+                                )}
+                              </button>
+                            )}
+                            {canDelete && (
+                              <button
+                                className="ic-btn"
+                                onClick={() => setDeleteId(course._id)}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  padding: "8px 12px",
+                                  borderRadius: 8,
+                                  border: "1px solid #7f1d1d30",
+                                  background: "#2d0a0a",
+                                  color: "#f87171",
+                                  fontSize: 11,
+                                  cursor: "pointer",
+                                  transition: "opacity 0.15s",
+                                  minHeight: 36,
+                                }}
+                                title="Delete Course"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {isOpen && (
+                          <div
+                            className="ic-form-card"
+                            style={{
+                              background: "#0f172a",
+                              border: "1px solid #7c3aed40",
+                              borderTop: "none",
+                              borderRadius: "0 0 18px 18px",
+                              padding: "clamp(12px, 3vw, 24px)",
+                              animation: "slideDown 0.25s ease",
                             }}
                           >
                             <p
                               style={{
-                                fontSize: 14,
+                                fontSize: 11,
                                 fontWeight: 700,
-                                color: "#f1f5f9",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                maxWidth: "30ch",
+                                color: "#a78bfa",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.12em",
+                                marginBottom: 16,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
                               }}
                             >
-                              {course.title || "Untitled"}
+                              <Pencil size={12} /> Editing: {course.title}
+                              {editMode === "bulk" ? " (Bundle)" : ""}
                             </p>
-                            <span
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 700,
-                                padding: "2px 8px",
-                                borderRadius: 20,
-                                background: st.bg,
-                                color: st.text,
-                                border: `1px solid ${st.border}`,
-                                flexShrink: 0,
-                              }}
-                            >
-                              {st.label}
-                            </span>
-                            {isBulkCourse(course) && (
-                              <span
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 4,
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  padding: "2px 8px",
-                                  borderRadius: 20,
-                                  background: "#052e2b",
-                                  color: "#2dd4bf",
-                                  flexShrink: 0,
-                                }}
-                              >
-                                <Package size={11} /> Bundle
-                              </span>
-                            )}
-                            {course.quiz?.questions?.length > 0 && (
-                              <span
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 4,
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  padding: "2px 8px",
-                                  borderRadius: 20,
-                                  background: "#1e1b4b",
-                                  color: "#818cf8",
-                                  flexShrink: 0,
-                                }}
-                              >
-                                <FileQuestion size={11} /> {course.quiz.questions.length}Q Quiz
-                              </span>
-                            )}
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: 12,
-                              marginTop: 4,
-                              flexWrap: "wrap",
-                            }}
-                          >
-                            {course.category && (
-                              <span style={{ fontSize: 11, color: "#64748b" }}>
-                                {course.category}
-                              </span>
-                            )}
-                            {course.board && (
-                              <span style={{ fontSize: 11, color: "#64748b", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                                <ClipboardList size={11} /> {course.board}
-                              </span>
-                            )}
-                            <span style={{ fontSize: 11, color: "#64748b", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                              <Users size={11} /> {course.enrolledCount ?? 0}
-                            </span>
-                            {isAdmin && course.instructor && (
-                              <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                                <User size={11} /> {course.instructor.name || course.instructor.email}
-                              </span>
-                            )}
-                            {course.price > 0 && (
-                              <span style={{ fontSize: 11, color: "#64748b" }}>
-                                ₹{course.price}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: 8,
-                            flexShrink: 0,
-                            flexWrap: "wrap",
-                            justifyContent: "flex-end",
-                          }}
-                        >
-                          {course.approvalStatus === "pending" && (
-                            <span
-                              style={{
-                                fontSize: 11,
-                                color: "#fbbf24",
-                                padding: "6px 12px",
-                                background: "#1c1a00",
-                                borderRadius: 8,
-                                border: "1px solid #854d0e",
-                                fontWeight: 600,
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 6,
-                              }}
-                            >
-                              <Clock size={12} /> In review
-                            </span>
-                          )}
-                          {canEdit && (isAdmin || course.approvalStatus !== "pending") && (
-                            <button
-                              className="ic-btn"
-                              onClick={() =>
-                                isOpen ? closeEdit() : openEdit(course)
-                              }
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 6,
-                                padding: "8px 14px",
-                                borderRadius: 8,
-                                border: `1px solid ${isOpen ? "#7c3aed" : "#334155"}`,
-                                background: isOpen ? "#2e1065" : "transparent",
-                                color: isOpen ? "#a78bfa" : "#e2e8f0",
-                                fontSize: 12,
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                transition: "all 0.15s",
-                                minHeight: 36,
-                              }}
-                            >
-                              {isOpen ? (
-                                <><X size={13} /> Close</>
-                              ) : (
-                                <><Pencil size={13} /> Edit / Manage</>
+
+                            {course.approvalStatus === "rejected" &&
+                              course.rejectionReason && (
+                                <div
+                                  style={{
+                                    background: "#2d0a0a",
+                                    border: "1px solid #7f1d1d",
+                                    borderRadius: 10,
+                                    padding: "12px 16px",
+                                    marginBottom: 16,
+                                    display: "flex",
+                                    gap: 12,
+                                    alignItems: "flex-start",
+                                  }}
+                                >
+                                  <XCircle size={20} color="#f87171" style={{ flexShrink: 0 }} />
+                                  <div>
+                                    <p
+                                      style={{
+                                        fontSize: 12,
+                                        fontWeight: 700,
+                                        color: "#f87171",
+                                        marginBottom: 4,
+                                      }}
+                                    >
+                                      Rejected by admin
+                                    </p>
+                                    <p
+                                      style={{
+                                        fontSize: 13,
+                                        color: "#fca5a5",
+                                        lineHeight: 1.6,
+                                      }}
+                                    >
+                                      {course.rejectionReason}
+                                    </p>
+                                    <p
+                                      style={{
+                                        fontSize: 11,
+                                        color: "#64748b",
+                                        marginTop: 6,
+                                      }}
+                                    >
+                                      Edit your course and click "Save & Submit
+                                      for Review" to resubmit.
+                                    </p>
+                                  </div>
+                                </div>
                               )}
-                            </button>
-                          )}
-                          {canDelete && (
-                            <button
-                              className="ic-btn"
-                              onClick={() => setDeleteId(course._id)}
+
+                            {editMode === "bulk" && editBulkForm ? (
+                              <BulkCourseForm
+                                form={editBulkForm}
+                                setForm={setEditBulkForm}
+                                onSave={handleEditBulk}
+                                onCancel={closeEdit}
+                                saving={saving}
+                                showToast={showToast}
+                                isAdmin={isAdmin}
+                                instructors={instructors}
+                              />
+                            ) : (
+                              <CourseForm
+                                form={editForm}
+                                setForm={setEditForm}
+                                onSave={handleEdit}
+                                onCancel={closeEdit}
+                                saving={saving}
+                                mode="edit"
+                                showToast={showToast}
+                                isAdmin={isAdmin}
+                                instructors={instructors}
+                              />
+                            )}
+
+                            <div
                               style={{
-                                display: "flex",
-                                alignItems: "center",
-                                padding: "8px 12px",
-                                borderRadius: 8,
-                                border: "1px solid #7f1d1d30",
-                                background: "#2d0a0a",
-                                color: "#f87171",
-                                fontSize: 11,
-                                cursor: "pointer",
-                                transition: "opacity 0.15s",
-                                minHeight: 36,
+                                marginTop: 20,
+                                paddingTop: 16,
+                                borderTop: "1px solid #1e293b",
+                                display: "grid",
+                                gridTemplateColumns:
+                                  "repeat(auto-fit,minmax(110px,1fr))",
+                                gap: 10,
                               }}
-                              title="Delete Course"
                             >
-                              <Trash2 size={14} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {isOpen && (
-                        <div
-                          style={{
-                            background: "#0f172a",
-                            border: "1px solid #7c3aed40",
-                            borderTop: "none",
-                            borderRadius: "0 0 18px 18px",
-                            padding: "24px 24px 28px",
-                            animation: "slideDown 0.25s ease",
-                          }}
-                        >
-                          <p
-                            style={{
-                              fontSize: 11,
-                              fontWeight: 700,
-                              color: "#a78bfa",
-                              textTransform: "uppercase",
-                              letterSpacing: "0.12em",
-                              marginBottom: 16,
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 6,
-                            }}
-                          >
-                            <Pencil size={12} /> Editing: {course.title}
-                            {editMode === "bulk" ? " (Bundle)" : ""}
-                          </p>
-
-                          {course.approvalStatus === "rejected" &&
-                            course.rejectionReason && (
-                              <div
-                                style={{
-                                  background: "#2d0a0a",
-                                  border: "1px solid #7f1d1d",
-                                  borderRadius: 10,
-                                  padding: "12px 16px",
-                                  marginBottom: 16,
-                                  display: "flex",
-                                  gap: 12,
-                                  alignItems: "flex-start",
-                                }}
-                              >
-                                <XCircle size={20} color="#f87171" style={{ flexShrink: 0 }} />
-                                <div>
-                                  <p
+                              {[
+                                {
+                                  label: "Enrolled",
+                                  value: course.enrolledCount ?? 0,
+                                },
+                                {
+                                  label: "Rating",
+                                  value:
+                                    course.ratingAverage > 0
+                                      ? `${course.ratingAverage} ★`
+                                      : "No ratings",
+                                },
+                                {
+                                  label: "Lessons",
+                                  value: course.lessons?.length ?? 0,
+                                },
+                              ].map((s) => (
+                                <div
+                                  key={s.label}
+                                  style={{
+                                    background: "#111827",
+                                    borderRadius: 10,
+                                    padding: "12px 14px",
+                                    border: "1px solid #1e293b",
+                                  }}
+                                >
+                                  <div
                                     style={{
-                                      fontSize: 12,
+                                      fontSize: 16,
                                       fontWeight: 700,
-                                      color: "#f87171",
-                                      marginBottom: 4,
+                                      color: "#f1f5f9",
                                     }}
                                   >
-                                    Rejected by admin
-                                  </p>
-                                  <p
-                                    style={{
-                                      fontSize: 13,
-                                      color: "#fca5a5",
-                                      lineHeight: 1.6,
-                                    }}
-                                  >
-                                    {course.rejectionReason}
-                                  </p>
-                                  <p
+                                    {s.value}
+                                  </div>
+                                  <div
                                     style={{
                                       fontSize: 11,
                                       color: "#64748b",
-                                      marginTop: 6,
+                                      marginTop: 2,
                                     }}
                                   >
-                                    Edit your course and click "Save & Submit
-                                    for Review" to resubmit.
-                                  </p>
+                                    {s.label}
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-
-                          {editMode === "bulk" && editBulkForm ? (
-                            <BulkCourseForm
-                              form={editBulkForm}
-                              setForm={setEditBulkForm}
-                              onSave={handleEditBulk}
-                              onCancel={closeEdit}
-                              saving={saving}
-                              showToast={showToast}
-                              isAdmin={isAdmin}
-                              instructors={instructors}
-                            />
-                          ) : (
-                            <CourseForm
-                              form={editForm}
-                              setForm={setEditForm}
-                              onSave={handleEdit}
-                              onCancel={closeEdit}
-                              saving={saving}
-                              mode="edit"
-                              showToast={showToast}
-                              isAdmin={isAdmin}
-                              instructors={instructors}
-                            />
-                          )}
-
-                          <div
-                            style={{
-                              marginTop: 20,
-                              paddingTop: 16,
-                              borderTop: "1px solid #1e293b",
-                              display: "grid",
-                              gridTemplateColumns:
-                                "repeat(auto-fit,minmax(110px,1fr))",
-                              gap: 10,
-                            }}
-                          >
-                            {[
-                              {
-                                label: "Enrolled",
-                                value: course.enrolledCount ?? 0,
-                              },
-                              {
-                                label: "Rating",
-                                value:
-                                  course.ratingAverage > 0
-                                    ? `${course.ratingAverage} ★`
-                                    : "No ratings",
-                              },
-                              {
-                                label: "Lessons",
-                                value: course.lessons?.length ?? 0,
-                              },
-                            ].map((s) => (
-                              <div
-                                key={s.label}
-                                style={{
-                                  background: "#111827",
-                                  borderRadius: 10,
-                                  padding: "12px 14px",
-                                  border: "1px solid #1e293b",
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    fontSize: 16,
-                                    fontWeight: 700,
-                                    color: "#f1f5f9",
-                                  }}
-                                >
-                                  {s.value}
-                                </div>
-                                <div
-                                  style={{
-                                    fontSize: 11,
-                                    color: "#64748b",
-                                    marginTop: 2,
-                                  }}
-                                >
-                                  {s.label}
-                                </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             )}
           </>
