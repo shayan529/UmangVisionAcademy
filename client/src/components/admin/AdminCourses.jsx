@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   BookOpen,
   Users,
@@ -3274,6 +3274,9 @@ export default function AdminCourses({
   canDelete = true,
 }) {
   const dispatch = useDispatch();
+  const reduxCourses = useSelector((s) => s.courses.courses) || [];
+  const safeCourses =
+    Array.isArray(courses) && courses.length > 0 ? courses : reduxCourses;
   const canManage = canCreate || canEdit || canDelete;
   const [mode, setMode] = useState("review"); // "approved" | "review" | "manage"
   const [editingCourse, setEditingCourse] = useState(null);
@@ -3282,6 +3285,12 @@ export default function AdminCourses({
   const [selected, setSelected] = useState(null);
   const [rejectTarget, setRejectTarget] = useState(null);
   const [actioning, setActioning] = useState(false);
+
+  useEffect(() => {
+    if (!courses || courses.length === 0) {
+      dispatch(fetchAllCoursesAdmin());
+    }
+  }, [dispatch, courses]);
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -3295,7 +3304,7 @@ export default function AdminCourses({
     setMode("manage");
   };
 
-  const filtered = courses.filter((c) => {
+  const filtered = safeCourses.filter((c) => {
     const matchQ =
       !q ||
       c.title?.toLowerCase().includes(q.toLowerCase()) ||
@@ -3306,11 +3315,11 @@ export default function AdminCourses({
   });
 
   const counts = {
-    all: courses.length,
-    pending: courses.filter((c) => c.approvalStatus === "pending").length,
-    approved: courses.filter((c) => c.approvalStatus === "approved").length,
-    rejected: courses.filter((c) => c.approvalStatus === "rejected").length,
-    draft: courses.filter(
+    all: safeCourses.length,
+    pending: safeCourses.filter((c) => c.approvalStatus === "pending").length,
+    approved: safeCourses.filter((c) => c.approvalStatus === "approved").length,
+    rejected: safeCourses.filter((c) => c.approvalStatus === "rejected").length,
+    draft: safeCourses.filter(
       (c) => !c.approvalStatus || c.approvalStatus === "draft",
     ).length,
   };
@@ -3452,7 +3461,7 @@ export default function AdminCourses({
 
       {mode === "approved" && (
         <ApprovedCoursesView
-          courses={courses}
+          courses={safeCourses}
           onEditCourse={(c) => {
             setEditingCourse(c);
             setMode("manage");
@@ -3463,13 +3472,13 @@ export default function AdminCourses({
         />
       )}
 
-      {canManage && mode === "manage" ? (
+      {mode === "manage" && (
         <div>
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              justifyBetween: "space-between",
+              justifyContent: "space-between",
               marginBottom: 16,
             }}
           >
@@ -3504,7 +3513,9 @@ export default function AdminCourses({
             initialEditCourse={editingCourse}
           />
         </div>
-      ) : mode === "review" ? (
+      )}
+
+      {mode === "review" && (
         <>
           {/* Header */}
           <div
@@ -3973,7 +3984,7 @@ export default function AdminCourses({
             />
           )}
         </>
-      ) : null}
+      )}
       <Toast msg={toastMsg} />
     </>
   );
