@@ -230,7 +230,7 @@ const Plans = ({ showTable = true, showFaq = true, isHomePage = false }) => {
                       color: plan.vip ? "#0f172a" : "#ffffff",
                     }}
                   >
-                    {user ? t(plan.buttonKey, plan.buttonText) : t("plans.signIn", "Sign In →")}
+                    {user ? t(plan.buttonKey, plan.buttonText) : t("plans.signIn", "Sign In")}
                     <ArrowRight size={16} />
                   </button>
                 </div>

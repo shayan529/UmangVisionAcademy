@@ -552,10 +552,10 @@
         "desc": "100% तक कॉलेज ट्यूशन अनुदान और वैश्विक छात्रवृत्ति के लिए सीधा नामांकन"
       }
     },
-    "viewLessFeatures": "कम सुविधाएं देखें",
-    "viewMoreFeatures": "{{count}} और सुविधाएं देखें",
-    "featuresCount": "विशेषताएं",
-    "signIn": "साइन इन करें →"
+    "viewLessFeatures": "কম বৈশিষ্ট্য দেখুন",
+    "viewMoreFeatures": "{{count}}টি অতিরিক্ত বৈশিষ্ট্য দেখুন",
+    "featuresCount": "বৈশিষ্ট্য",
+    "signIn": "সাইন ইন করুন"
   },
   "courseCard": {
     "viewDemo": "বিবরণ দেখুন",
