@@ -14,17 +14,13 @@ export async function createGroqChatCompletion(options) {
   const primaryModel = options.model || GROQ_MODEL;
   const candidateModels = [
     primaryModel,
-    'llama-3.3-70b-versatile',
-    'llama-3.1-8b-instant',
-    'mixtral-8x7b-32768',
-    'gemma2-9b-it',
     'openai/gpt-oss-120b',
     'openai/gpt-oss-20b',
-    'qwen/qwen3.6-27b',
     'groq/compound',
     'groq/compound-mini',
-    'llama3-70b-8192',
-    'llama3-8b-8192',
+    'qwen/qwen3.6-27b',
+    'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant',
   ];
   const uniqueModels = [...new Set(candidateModels.filter(Boolean))];
 
@@ -41,6 +37,19 @@ export async function createGroqChatCompletion(options) {
       console.warn(
         `[Groq AI] Model "${model}" failed (${errMsg}), trying fallback...`
       );
+
+      // If JSON mode failed validation or generation, retry this model without response_format
+      if (options.response_format && (errMsg.includes('JSON') || errMsg.includes('format') || errMsg.includes('validate'))) {
+        try {
+          const { response_format: _rf, ...noFormatOptions } = options;
+          return await groq.chat.completions.create({
+            ...noFormatOptions,
+            model,
+          });
+        } catch (subErr) {
+          lastError = subErr;
+        }
+      }
     }
   }
   throw lastError;
@@ -849,7 +858,12 @@ Return ONLY a valid JSON object in this exact shape:
     if (!normalizedQuestions.length) {
       console.log(`[AI Quiz] Using fallback generator for "${title}" (${className})`);
       const fallback = getFallbackQuiz(title, className, summary);
-      return res.json({ quiz: fallback });
+      return res.json({
+        quiz: {
+          title: `${title} Quiz`,
+          questions: fallback,
+        },
+      });
     }
 
     return res.json({
@@ -862,7 +876,12 @@ Return ONLY a valid JSON object in this exact shape:
     console.error('AI quiz generation error:', err);
     try {
       const fallback = getFallbackQuiz(req.body?.title || 'Subject', req.body?.className || '', req.body?.summary || '');
-      return res.json({ quiz: fallback });
+      return res.json({
+        quiz: {
+          title: `${req.body?.title || 'Subject'} Quiz`,
+          questions: fallback,
+        },
+      });
     } catch {
       return res.status(500).json({
         message: err.message || 'Quiz generation failed.',
@@ -870,6 +889,82 @@ Return ONLY a valid JSON object in this exact shape:
     }
   }
 };
+
+// Syllabus-aware fallback generator for course overview and content outline
+export function getFallbackCourseText(subject = 'General Studies', className = '', examName = '', board = '', language = 'English') {
+  const target = examName ? examName : className ? `${className}${board ? ` (${board})` : ''}` : 'School & Competitive level';
+  const subLower = String(subject).toLowerCase();
+
+  let desc = `Comprehensive and structured masterclass on ${subject} tailored for ${target} students. This course delivers deep conceptual clarity, step-by-step problem-solving methods, and exam-oriented practice to help students achieve top scores.`;
+  let outline = '';
+
+  if (subLower.includes('math') || subLower.includes('algebra') || subLower.includes('calculus') || subLower.includes('arithmetic') || subLower.includes('geometry')) {
+    outline = [
+      'Chapter 1: Number Systems, Real Numbers & Polynomials',
+      'Chapter 2: Linear & Quadratic Equations with Applications',
+      'Chapter 3: Coordinate Geometry & Arithmetic Progressions',
+      'Chapter 4: Triangles, Circles & Geometric Theorems',
+      'Chapter 5: Trigonometric Ratios, Identities & Heights & Distances',
+      'Chapter 6: Surface Areas, Volumes, Statistics & Probability',
+    ].join('\n');
+  } else if (subLower.includes('physic') || subLower.includes('motion') || subLower.includes('mechanic') || subLower.includes('optics')) {
+    outline = [
+      'Chapter 1: Units, Measurements & Kinematics',
+      'Chapter 2: Laws of Motion, Work, Energy & Power',
+      'Chapter 3: Gravitation, Properties of Matter & Thermodynamics',
+      'Chapter 4: Electrostatics & Current Electricity',
+      'Chapter 5: Magnetic Effects of Current & Electromagnetic Induction',
+      'Chapter 6: Optics, Wave Nature of Light & Modern Physics',
+    ].join('\n');
+  } else if (subLower.includes('chem') || subLower.includes('organic') || subLower.includes('inorganic') || subLower.includes('reaction')) {
+    outline = [
+      'Chapter 1: Basic Concepts of Chemistry & Atomic Structure',
+      'Chapter 2: Chemical Bonding & States of Matter',
+      'Chapter 3: Thermodynamics, Chemical Equilibrium & Kinetics',
+      'Chapter 4: Periodic Classification & Metallurgy',
+      'Chapter 5: Hydrocarbons, Organic Functional Groups & Reaction Mechanisms',
+      'Chapter 6: Practical Chemistry, Everyday Applications & Mock Problems',
+    ].join('\n');
+  } else if (subLower.includes('bio') || subLower.includes('zoology') || subLower.includes('botany') || subLower.includes('life')) {
+    outline = [
+      'Chapter 1: Diversity in the Living World & Cell Biology',
+      'Chapter 2: Plant Physiology & Photosynthesis',
+      'Chapter 3: Human Physiology, Respiration & Circulation',
+      'Chapter 4: Genetics, Heredity & Molecular Biology',
+      'Chapter 5: Biotechnology Principles, Processes & Applications',
+      'Chapter 6: Ecology, Environment & Conservation',
+    ].join('\n');
+  } else if (subLower.includes('english') || subLower.includes('grammar') || subLower.includes('literature') || subLower.includes('language')) {
+    outline = [
+      'Unit 1: Reading Comprehension & Critical Analysis',
+      'Unit 2: Applied Grammar, Tenses & Sentence Structures',
+      'Unit 3: Creative & Formal Writing Skills (Essays, Letters, Reports)',
+      'Unit 4: Prose & Poetry Masterclass with Thematic Insights',
+      'Unit 5: Vocabulary Enrichment, Idioms & Oral Communication',
+      'Unit 6: Comprehensive Review & Previous Year Question Analysis',
+    ].join('\n');
+  } else if (subLower.includes('computer') || subLower.includes('python') || subLower.includes('code') || subLower.includes('cs') || subLower.includes('it')) {
+    outline = [
+      'Chapter 1: Fundamentals of Computing & Problem Solving',
+      'Chapter 2: Core Data Types, Variables & Conditional Statements',
+      'Chapter 3: Loops, Functions & Modular Programming',
+      'Chapter 4: Data Structures: Lists, Tuples, Dictionaries & Sets',
+      'Chapter 5: File Handling, Object-Oriented Principles & Algorithms',
+      'Chapter 6: Capstone Project, Debugging & Practical Mock Exams',
+    ].join('\n');
+  } else {
+    outline = [
+      `Chapter 1: Introduction & Foundational Concepts of ${subject}`,
+      `Chapter 2: Core Principles, Theories & Frameworks`,
+      `Chapter 3: Deep Dive into Advanced Topics & Case Studies`,
+      `Chapter 4: Problem-Solving Strategies & Exam Application`,
+      `Chapter 5: Important Formulas, Key Terms & Revision Notes`,
+      `Chapter 6: Full Syllabus Review, Mock Tests & Previous Year Questions`,
+    ].join('\n');
+  }
+
+  return { description: desc, content: outline };
+}
 
 export const generateCourseTextAI = async (req, res) => {
   try {
@@ -890,50 +985,101 @@ Subject: ${subject}
 ${courseLabel}
 Language: ${targetLanguage}
 
-Return ONLY valid JSON in this exact shape:
+Return ONLY valid JSON format in this exact shape:
 {
   "description": "2-4 concise sentences describing the course overview, learning goals, and value to students.",
   "content": "A structured outline with 4-6 lines. Use chapter/topic style entries. If helpful, include numbered items or bullet-like lines separated by newline characters."
 }
 
 Rules:
-- Keep the description polished and marketing-friendly.
-- Keep the subject content practical and syllabus-oriented.
+- Keep the description polished, encouraging, and marketing-friendly.
+- Keep the subject content practical, clear, and syllabus-oriented.
 - Match the selected language naturally.
 - Do not include markdown fences or any extra keys.`;
 
-    const response = await createGroqChatCompletion({
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT_INSTRUCTOR },
-        { role: 'user', content: prompt },
-      ],
-      max_tokens: 500,
-      temperature: 0.6,
-      response_format: { type: 'json_object' },
-    });
+    let raw = '';
+    try {
+      const response = await createGroqChatCompletion({
+        messages: [
+          { role: 'system', content: `${SYSTEM_PROMPT_INSTRUCTOR}\nAlways output valid JSON format.` },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: 1000,
+        temperature: 0.6,
+        response_format: { type: 'json_object' },
+      });
+      raw = response.choices?.[0]?.message?.content?.trim() ?? '{}';
+    } catch (llmErr) {
+      console.warn('LLM call error in generateCourseTextAI, falling back:', llmErr.message);
+      const fallback = getFallbackCourseText(subject, className, examName, board, targetLanguage);
+      return res.json(fallback);
+    }
 
-    const raw = response.choices?.[0]?.message?.content?.trim() ?? '{}';
     let parsed = {};
     try {
       parsed = JSON.parse(raw);
     } catch {
       const cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
-      parsed = JSON.parse(cleaned);
+      const start = cleaned.indexOf('{');
+      const end = cleaned.lastIndexOf('}');
+      if (start !== -1 && end !== -1 && end > start) {
+        try {
+          parsed = JSON.parse(cleaned.slice(start, end + 1));
+        } catch {
+          parsed = {};
+        }
+      }
     }
 
-    const description = typeof parsed.description === 'string' ? parsed.description.trim() : '';
-    const content = typeof parsed.content === 'string' ? parsed.content.trim() : '';
+    let description = '';
+    if (typeof parsed.description === 'string') {
+      description = parsed.description.trim();
+    } else if (Array.isArray(parsed.description)) {
+      description = parsed.description.join(' ').trim();
+    }
+
+    let content = '';
+    if (typeof parsed.content === 'string') {
+      content = parsed.content.trim();
+    } else if (Array.isArray(parsed.content)) {
+      content = parsed.content
+        .map((item, idx) => {
+          if (typeof item === 'string') {
+            return item.startsWith('Chapter') || item.startsWith('Unit') ? item : `Chapter ${idx + 1}: ${item}`;
+          }
+          if (typeof item === 'object' && item !== null) {
+            const title = item.unit || item.chapter || item.title || `Chapter ${idx + 1}`;
+            const topics = Array.isArray(item.topics) ? item.topics.join(', ') : item.description || '';
+            return topics ? `${title}: ${topics}` : title;
+          }
+          return String(item);
+        })
+        .join('\n');
+    }
 
     if (!description || !content) {
-      return res.status(500).json({ message: 'AI did not return valid course text.' });
+      const fallback = getFallbackCourseText(subject, className, examName, board, targetLanguage);
+      description = description || fallback.description;
+      content = content || fallback.content;
     }
 
     return res.json({ description, content });
   } catch (err) {
     console.error('AI course text generation error:', err);
-    return res.status(500).json({
-      message: err.response?.data?.message || err.message || 'Course text generation failed.',
-    });
+    try {
+      const fallback = getFallbackCourseText(
+        req.body?.subject || 'Subject',
+        req.body?.className || '',
+        req.body?.examName || '',
+        req.body?.board || '',
+        req.body?.language || 'English'
+      );
+      return res.json(fallback);
+    } catch {
+      return res.status(500).json({
+        message: err.response?.data?.message || err.message || 'Course text generation failed.',
+      });
+    }
   }
 };
 
@@ -1050,20 +1196,38 @@ Do NOT include markdown formatting outside the JSON block. Return ONLY the raw J
       .filter(Boolean);
 
     if (!normalized.length) {
-      return res.status(500).json({
-        message: 'AI did not return a valid question format. Please try again.',
-      });
+      const fallbackQuiz = getFallbackQuiz(subject, className, topic || '');
+      const mockFallback = fallbackQuiz.map((q) => ({
+        questionText: q.question,
+        options: q.options,
+        correctOption: q.correctOptionIndex ?? 0,
+        explanation: 'Standard curriculum question and solution.',
+        marks: 1,
+      }));
+      return res.json({ questions: mockFallback });
     }
 
     res.json({ questions: normalized });
   } catch (err) {
     console.error('AI mock test generation error:', err);
-    res.status(500).json({
-      message:
-        err.response?.data?.message ||
-        err.message ||
-        'Question generation failed.',
-    });
+    try {
+      const fallbackQuiz = getFallbackQuiz(req.body?.subject || 'Subject', req.body?.className || '', req.body?.topic || '');
+      const mockFallback = fallbackQuiz.map((q) => ({
+        questionText: q.question,
+        options: q.options,
+        correctOption: q.correctOptionIndex ?? 0,
+        explanation: 'Standard curriculum question and solution.',
+        marks: 1,
+      }));
+      return res.json({ questions: mockFallback });
+    } catch {
+      res.status(500).json({
+        message:
+          err.response?.data?.message ||
+          err.message ||
+          'Question generation failed.',
+      });
+    }
   }
 };
 

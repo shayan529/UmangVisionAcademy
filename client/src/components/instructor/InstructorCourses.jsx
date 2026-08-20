@@ -1586,7 +1586,13 @@ function QuizManager({
         className: courseClass,
       });
 
-      const aiQuestions = data.quiz?.questions;
+      const aiQuestions = Array.isArray(data.quiz?.questions)
+        ? data.quiz.questions
+        : Array.isArray(data.quiz)
+          ? data.quiz
+          : Array.isArray(data.questions)
+            ? data.questions
+            : [];
       if (aiQuestions?.length) {
         updateQuestions(aiQuestions);
         setActiveIdx(0);
