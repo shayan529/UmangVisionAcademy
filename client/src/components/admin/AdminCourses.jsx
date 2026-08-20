@@ -3275,8 +3275,7 @@ export default function AdminCourses({
 }) {
   const dispatch = useDispatch();
   const reduxCourses = useSelector((s) => s.courses.courses) || [];
-  const safeCourses =
-    Array.isArray(courses) && courses.length > 0 ? courses : reduxCourses;
+  const safeCourses = Array.isArray(courses) ? courses : reduxCourses;
   const canManage = canCreate || canEdit || canDelete;
   const [mode, setMode] = useState("review"); // "approved" | "review" | "manage"
   const [editingCourse, setEditingCourse] = useState(null);
@@ -3287,10 +3286,10 @@ export default function AdminCourses({
   const [actioning, setActioning] = useState(false);
 
   useEffect(() => {
-    if (!courses || courses.length === 0) {
+    if (courses === undefined && reduxCourses.length === 0) {
       dispatch(fetchAllCoursesAdmin());
     }
-  }, [dispatch, courses]);
+  }, [dispatch, courses, reduxCourses.length]);
 
   const showToast = (msg) => {
     setToastMsg(msg);

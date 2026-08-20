@@ -444,13 +444,17 @@ export default function StaffDashboard() {
     }
   }, [user?.role, dispatch]);
 
+  const [initialFetchDone, setInitialFetchDone] = useState(false);
+
   const refreshUsersAndCourses = useCallback(() => {
+    const promises = [];
     if (hasPermission(user, "users", "view")) {
-      dispatch(fetchUsers());
+      promises.push(dispatch(fetchUsers()));
     }
     if (hasPermission(user, "courses", "view")) {
-      dispatch(fetchAllCoursesAdmin());
+      promises.push(dispatch(fetchAllCoursesAdmin()));
     }
+    return Promise.allSettled(promises);
   }, [dispatch, user]);
 
   useEffect(() => {
@@ -475,7 +479,9 @@ export default function StaffDashboard() {
   };
 
   useEffect(() => {
-    refreshUsersAndCourses();
+    refreshUsersAndCourses().finally(() => {
+      setInitialFetchDone(true);
+    });
   }, [tab, refreshUsersAndCourses]);
 
   const totalRevenue = courses.reduce(
@@ -516,13 +522,7 @@ export default function StaffDashboard() {
     return 0;
   });
 
-  const isInitialLoad =
-    (usersLoading &&
-      users.length === 0 &&
-      hasPermission(user, "users", "view")) ||
-    (coursesLoading &&
-      courses.length === 0 &&
-      hasPermission(user, "courses", "view"));
+  const isInitialLoad = !initialFetchDone && (usersLoading || coursesLoading);
 
   const currentTabError =
     (tab === "students" || tab === "instructors") && hasPermission(user, "users", "view")

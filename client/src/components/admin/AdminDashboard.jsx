@@ -73,10 +73,16 @@ export default function AdminDashboard() {
   }, []);
 
 
+  const [initialFetchDone, setInitialFetchDone] = useState(false);
+
   // ── Fetch on mount ─────────────────────────────────────────────────────────
   useEffect(() => {
-    dispatch(fetchUsers());
-    dispatch(fetchAllCoursesAdmin());
+    Promise.allSettled([
+      dispatch(fetchUsers()),
+      dispatch(fetchAllCoursesAdmin()),
+    ]).finally(() => {
+      setInitialFetchDone(true);
+    });
   }, [dispatch]);
 
   useEffect(() => {
@@ -173,10 +179,8 @@ export default function AdminDashboard() {
     (u) => u.instructorApplication?.status === "pending",
   ).length;
 
-  // Global loading — show spinner on first load when both slices are empty
-  const isInitialLoad =
-    (usersLoading && users.length === 0) ||
-    (coursesLoading && courses.length === 0);
+  // Global loading — show skeleton only on first mount until initial request completes
+  const isInitialLoad = !initialFetchDone && (usersLoading || coursesLoading);
 
   const globalError = usersError || coursesError;
 
