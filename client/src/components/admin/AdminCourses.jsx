@@ -2021,6 +2021,7 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
   const approved = courses.filter((c) => c.approvalStatus === "approved");
   const [search, setSearch] = useState("");
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedCourseLoading, setSelectedCourseLoading] = useState(false);
   const [studentSearch, setStudentSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [activeTab, setActiveTab] = useState("overview"); // "overview" | "students"
