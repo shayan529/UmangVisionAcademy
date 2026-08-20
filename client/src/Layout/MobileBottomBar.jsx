@@ -43,8 +43,8 @@ export default function MobileBottomBar() {
   // }
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-30">
-      <div className="w-full rounded-t-2xl border-t border-white/10 bg-slate-950/95 p-2 pb-safe-offset shadow-2xl backdrop-blur-xl flex items-center justify-around">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 pointer-events-auto">
+      <div className="w-full rounded-t-2xl border-t border-white/10 bg-slate-950/95 px-1 py-1.5 sm:p-2 pb-safe-offset shadow-2xl backdrop-blur-xl flex items-center justify-around">
         {uniqueNavItems.map((item) => {
           const isActive =
             pathname === item.path ||
@@ -56,18 +56,18 @@ export default function MobileBottomBar() {
             <Link
               key={item.path}
               to={item.path}
-              className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition duration-200"
+              className="flex flex-col items-center justify-center py-1 px-2 sm:px-3 rounded-xl transition duration-200 min-w-0"
             >
               <div
-                className={`flex items-center justify-center p-2 rounded-xl transition-all duration-300 ${isActive
-                    ? "bg-indigo-500/20 text-indigo-400 scale-110 shadow-lg shadow-indigo-500/10"
+                className={`flex items-center justify-center p-1.5 sm:p-2 rounded-xl transition-all duration-300 ${isActive
+                    ? "bg-indigo-500/20 text-indigo-400 scale-105 sm:scale-110 shadow-lg shadow-indigo-500/10"
                     : "text-slate-400 hover:text-slate-200"
                   }`}
               >
-                <Icon size={20} className={isActive ? "animate-pulse" : ""} />
+                <Icon size={18} className={`sm:w-5 sm:h-5 ${isActive ? "animate-pulse" : ""}`} />
               </div>
               <span
-                className={`text-[10px] mt-1 font-bold tracking-wide transition-all duration-300 ${isActive
+                className={`text-[9.5px] sm:text-[10px] mt-0.5 sm:mt-1 font-bold tracking-wide transition-all duration-300 truncate max-w-[60px] text-center ${isActive
                     ? "text-indigo-300 opacity-100 scale-105"
                     : "text-slate-500 opacity-80"
                   }`}

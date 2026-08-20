@@ -1093,6 +1093,9 @@
       "verified": "ચકાસાયેલ",
       "activeStudents": "સક્રિય છાત્ર",
       "coursesPublished": "પ્રકાશિત અભ્યાસક્રમ",
+      "languages": "ભાષાઓ",
+      "boardsSupported": "સપોર્ટેડ બોર્ડ",
+      "classesCovered": "સમાવિષ્ટ વર્ગો",
       "passRate": "પાસ પ્રતિશત",
       "statesCovered": "કવર કિએ ગએ રાજ્ય"
     },

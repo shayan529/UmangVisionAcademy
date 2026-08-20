@@ -1086,6 +1086,9 @@
       "verified": "నిర్ధారించబడింది",
       "activeStudents": "సక్రియ ఛాత్ర",
       "coursesPublished": "ప్రకాశిత కోర్సు",
+      "languages": "భాషలు",
+      "boardsSupported": "మద్దతు ఉన్న బోర్డులు",
+      "classesCovered": "కవర్ చేయబడిన తరగతులు",
       "passRate": "పాస ప్రతిశత",
       "statesCovered": "కవర కిఏ గఏ రాజ్య"
     },

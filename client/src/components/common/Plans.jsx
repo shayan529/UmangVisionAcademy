@@ -68,18 +68,18 @@ const Plans = () => {
   };
 
   return (
-    <section className="px-4 sm:px-6 md:px-10 py-16 md:py-24 bg-[#0B1120] text-slate-100 min-h-screen font-sans">
-      <div className="max-w-7xl mx-auto space-y-20">
+    <section className="px-4 sm:px-6 md:px-10 py-10 sm:py-16 md:py-24 bg-[#0B1120] text-slate-100 min-h-screen font-sans">
+      <div className="max-w-7xl mx-auto space-y-12 sm:space-y-16 md:space-y-20">
         {/* ── Top Header ── */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 via-indigo-500/20 to-purple-500/20 border border-white/10 text-amber-300 text-xs font-black uppercase tracking-widest">
-            <Sparkles size={14} className="text-amber-400" />
+        <div className="text-center max-w-3xl mx-auto space-y-3 sm:space-y-4">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 via-indigo-500/20 to-purple-500/20 border border-white/10 text-amber-300 text-[10.5px] sm:text-xs font-black uppercase tracking-widest">
+            <Sparkles size={13} className="text-amber-400" />
             {t("plans.heroTag", "Transparent & Empowering Pricing")}
           </div>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
             {t("plans.heading", "Smart Learning Plans")}
           </h1>
-          <p className="text-slate-400 text-sm sm:text-base md:text-lg leading-relaxed">
+          <p className="text-slate-400 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed">
             {t(
               "plans.subtitle",
               "All-inclusive academic subscriptions designed for school curriculum mastery, competitive entrance readiness, 1-on-1 career counselling, and global higher-study pathways.",
@@ -88,7 +88,7 @@ const Plans = () => {
         </div>
 
         {/* ── 1. Plan Overview Cards (With Full Points & View More) ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-start">
           {SMART_PLANS.map((plan) => {
             const isExpanded = Boolean(expandedCards[plan.id]);
             const features = plan.allFeatures || [];
@@ -98,7 +98,7 @@ const Plans = () => {
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-3xl p-6 sm:p-8 flex flex-col justify-between border transition-all duration-300 shadow-2xl ${
+                className={`relative rounded-3xl p-5 sm:p-8 flex flex-col justify-between border transition-all duration-300 shadow-2xl ${
                   plan.popular
                     ? "bg-gradient-to-b from-rose-950/60 via-slate-900 to-purple-950/40 border-rose-500/50 shadow-rose-500/10 md:scale-105"
                     : plan.vip
@@ -240,11 +240,15 @@ const Plans = () => {
         </div>
 
         {/* ── 2. Tick Mark Comparison Table Matrix ── */}
-        <div className="space-y-4 pt-4 max-w-4xl mx-auto w-full">
+        <div className="space-y-4 pt-4 w-full">
+          <p className="text-[11px] text-indigo-300/80 text-center font-medium sm:hidden">
+            👈 {t("plans.swipeTable", "Swipe horizontally to compare all plans")} 👉
+          </p>
+
           {/* Outer Table Container */}
           <div className="overflow-hidden rounded-2xl border border-slate-800/90 shadow-xl bg-slate-900/80 backdrop-blur-xl">
             {/* Top Main Title Bar */}
-            <div className="bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 py-2 px-4 text-center border-b border-slate-800">
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 py-2.5 px-4 text-center border-b border-slate-800">
               <h2 className="text-xs sm:text-sm font-black text-white tracking-widest uppercase drop-shadow-sm flex items-center justify-center gap-1.5">
                 <Sparkles size={14} className="text-amber-400" />
                 {t("plans.heading", "SMART LEARNING PLANS COMPARISON")}

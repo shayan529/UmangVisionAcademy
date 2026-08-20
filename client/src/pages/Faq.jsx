@@ -160,22 +160,22 @@ const Faq = () => {
       <div className="pointer-events-none absolute top-0 left-1/3 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[140px]" />
       <div className="pointer-events-none absolute top-1/2 right-10 w-[450px] h-[450px] bg-cyan-600/10 rounded-full blur-[120px]" />
 
-      <main className="relative max-w-7xl mx-auto px-5 md:px-10 py-12 lg:py-20">
+      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-10 sm:py-12 lg:py-20">
         {/* ── Top Header ── */}
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-10">
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.05] border border-white/10 backdrop-blur-md text-xs font-semibold text-indigo-300 shadow-xl">
-            <Sparkles size={14} className="text-amber-400" />
+        <div className="text-center max-w-3xl mx-auto space-y-3 sm:space-y-4 mb-8 sm:mb-10">
+          <div className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/[0.05] border border-white/10 backdrop-blur-md text-[11px] sm:text-xs font-semibold text-indigo-300 shadow-xl">
+            <Sparkles size={13} className="text-amber-400" />
             <span>{t("faq.tag", "FREQUENTLY ASKED QUESTIONS")}</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.15]">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.2]">
             {t("faq.headline", "Answers to your")}{" "}
             <span className="bg-gradient-to-r from-indigo-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">
               {t("faq.highlight", "Questions")}
             </span>
           </h1>
 
-          <p className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+          <p className="text-slate-400 text-xs sm:text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
             {t(
               "faq.description",
               "Find answers about courses, AI features, certifications, instructor tools, business plans, and platform support.",
@@ -184,32 +184,32 @@ const Faq = () => {
         </div>
 
         {/* ── Search Bar ── */}
-        <div className="max-w-2xl mx-auto mb-10 relative">
-          <div className="relative flex items-center rounded-2xl border border-white/15 bg-slate-900/80 p-2.5 backdrop-blur-xl shadow-2xl focus-within:border-indigo-500 transition-all">
-            <Search size={20} className="text-slate-400 ml-3 shrink-0" />
+        <div className="max-w-2xl mx-auto mb-8 sm:mb-10 relative">
+          <div className="relative flex items-center rounded-2xl border border-white/15 bg-slate-900/80 p-2 sm:p-2.5 backdrop-blur-xl shadow-2xl focus-within:border-indigo-500 transition-all">
+            <Search size={18} className="text-slate-400 ml-2.5 sm:ml-3 shrink-0" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search questions by keyword (e.g. certificate, AI tutor, refund)..."
-              className="w-full bg-transparent px-3 py-2 text-sm text-white placeholder-slate-500 outline-none"
+              className="w-full bg-transparent px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white placeholder-slate-500 outline-none"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors mr-1"
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors mr-1 cursor-pointer"
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             )}
           </div>
         </div>
 
         {/* ── Category Filter Tabs ── */}
-        <div className="flex items-center justify-center gap-2 flex-wrap mb-12">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap mb-8 sm:mb-12">
           <button
             onClick={() => setSelectedCategory("all")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
               selectedCategory === "all"
                 ? "bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-500/25"
                 : "bg-white/[0.04] text-slate-400 border-white/10 hover:border-white/20 hover:text-white"
@@ -224,7 +224,7 @@ const Faq = () => {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
                   isSelected
                     ? "bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-500/25"
                     : "bg-white/[0.04] text-slate-400 border-white/10 hover:border-white/20 hover:text-white"

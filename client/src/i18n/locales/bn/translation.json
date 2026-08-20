@@ -1093,6 +1093,9 @@
       "verified": "যাচাইকৃত",
       "activeStudents": "সক্রিয ছাত্র",
       "coursesPublished": "প্রকাশিত কোর্স",
+      "languages": "ভাষা",
+      "boardsSupported": "সমর্থিত বোর্ড",
+      "classesCovered": "অন্তর্ভুক্ত শ্রেণী",
       "passRate": "পাস প্রতিশত",
       "statesCovered": "ক঵র কিএ গএ রাজ্য"
     },

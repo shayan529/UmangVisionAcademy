@@ -151,6 +151,10 @@ input:-webkit-autofill:active {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 
+  .pb-safe-offset {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
   .pb-safe-nav {
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
   }

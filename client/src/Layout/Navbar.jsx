@@ -283,27 +283,27 @@ button.btn-red:hover,
 
         <div
           ref={topBarRef}
-          className="max-w-[1440px] mx-auto w-full px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3 lg:py-3.5 flex items-center justify-between gap-2 lg:gap-4"
+          className="max-w-[1440px] mx-auto w-full px-2.5 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3.5 flex items-center justify-between gap-1.5 sm:gap-2 lg:gap-4"
         >
           {/* ── Logo ── */}
           <Link
             to="/"
-            className="flex items-center shrink-0"
+            className="flex items-center shrink-0 min-w-0"
             aria-label="Go to home"
             onClick={() => console.debug("Navbar: logo click -> /")}
           >
-            <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 flex items-center justify-center shrink-0">
               <img
                 src="/Logo.png"
                 alt="Logo"
                 className="w-full h-full object-contain"
               />
             </div>
-            <div className="flex items-center ml-2 xl:ml-2.5 shrink-0 whitespace-nowrap">
-              <span className="text-sm lg:text-base xl:text-lg font-extrabold text-white tracking-wide">
+            <div className="flex items-center ml-1.5 sm:ml-2 xl:ml-2.5 shrink-0 whitespace-nowrap">
+              <span className="text-xs sm:text-sm lg:text-base xl:text-lg font-extrabold text-white tracking-wide">
                 Umang Vision
               </span>
-              <span className="ml-1 shimmer-txt text-sm lg:text-base xl:text-lg font-extrabold tracking-wide">
+              <span className="ml-1 shimmer-txt text-xs sm:text-sm lg:text-base xl:text-lg font-extrabold tracking-wide">
                 Academy
               </span>
             </div>
@@ -496,13 +496,13 @@ button.btn-red:hover,
           </div>
 
           {/* ── Mobile actions ── */}
-          <div className="xl:hidden ml-auto flex items-center gap-2">
+          <div className="xl:hidden ml-auto flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Language selector in mobile navbar */}
-            <div ref={mobileLangRef} className="relative">
+            <div ref={mobileLangRef} className="relative shrink-0">
               <button
                 type="button"
                 onClick={() => setMobileLangDropdownOpen((prev) => !prev)}
-                className="inline-flex h-9 items-center gap-0.5 rounded-xl border border-white/10 bg-white/5 px-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition"
+                className="inline-flex h-8 sm:h-9 items-center gap-0.5 rounded-lg sm:rounded-xl border border-white/10 bg-white/5 px-2 sm:px-2.5 text-[11px] sm:text-xs font-semibold text-slate-200 hover:bg-white/10 transition"
               >
                 {currentLangObj.label}
                 <ChevronDown
@@ -534,12 +534,12 @@ button.btn-red:hover,
               <button
                 type="button"
                 onClick={() => navigate("/cart")}
-                className="relative cursor-pointer inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
+                className="relative cursor-pointer inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg sm:rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10 shrink-0"
                 aria-label="Cart"
               >
-                <ShoppingCart size={18} />
+                <ShoppingCart size={16} className="sm:w-[18px] sm:h-[18px]" />
                 {cartCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                  <span className="absolute -right-1 -top-1 flex min-h-4 min-w-4 sm:min-h-5 sm:min-w-5 items-center justify-center rounded-full bg-rose-500 px-0.5 text-[9px] sm:text-[10px] font-bold text-white">
                     {cartCount}
                   </span>
                 )}
@@ -559,7 +559,7 @@ button.btn-red:hover,
                     return next;
                   })
                 }
-                className="relative z-50 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white hover:bg-white/5 transition text-lg"
+                className="relative z-50 inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg sm:rounded-xl border border-white/10 text-white hover:bg-white/5 transition text-base sm:text-lg shrink-0"
                 aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
                 aria-expanded={mobileMenuOpen}
               >

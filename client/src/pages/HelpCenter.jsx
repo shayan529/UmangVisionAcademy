@@ -156,24 +156,24 @@ const HelpCenter = () => {
       <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-indigo-600/10 rounded-full blur-[140px]" />
       <div className="pointer-events-none absolute top-1/3 right-10 w-[450px] h-[450px] bg-purple-600/10 rounded-full blur-[140px]" />
 
-      <main className="relative max-w-7xl mx-auto px-5 md:px-10 py-12 lg:py-20">
+      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-10 sm:py-12 lg:py-20">
         {/* ── Hero & Search ── */}
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-12">
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.05] border border-white/10 backdrop-blur-md text-xs font-semibold text-indigo-300 shadow-xl">
-            <Sparkles size={14} className="text-amber-400" />
+        <div className="text-center max-w-3xl mx-auto space-y-3 sm:space-y-4 mb-10 sm:mb-12">
+          <div className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/[0.05] border border-white/10 backdrop-blur-md text-[11px] sm:text-xs font-semibold text-indigo-300 shadow-xl">
+            <Sparkles size={13} className="text-amber-400" />
             <span>{t("helpCenter.tag", "HELP & SUPPORT CENTER")}</span>
             <span className="text-slate-500">•</span>
             <span className="text-emerald-400 font-bold">24/7 Active</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.15]">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.2]">
             {t("helpCenter.headline", "How can we")}{" "}
             <span className="bg-gradient-to-r from-indigo-300 via-cyan-300 to-purple-400 bg-clip-text text-transparent">
               {t("helpCenter.highlight", "help you today?")}
             </span>
           </h1>
 
-          <p className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+          <p className="text-slate-400 text-xs sm:text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
             {t(
               "helpCenter.description",
               "Search our knowledge base, explore quick support topics, or reach out directly to our support team.",
@@ -181,35 +181,35 @@ const HelpCenter = () => {
           </p>
 
           {/* Search Input Box */}
-          <div className="pt-4 max-w-2xl mx-auto">
-            <div className="relative flex items-center rounded-2xl border border-white/15 bg-slate-900/90 p-3 backdrop-blur-xl shadow-2xl focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
-              <Search size={20} className="text-indigo-400 ml-3 shrink-0" />
+          <div className="pt-3 sm:pt-4 max-w-2xl mx-auto">
+            <div className="relative flex items-center rounded-2xl border border-white/15 bg-slate-900/90 p-2.5 sm:p-3 backdrop-blur-xl shadow-2xl focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+              <Search size={18} className="text-indigo-400 ml-2 sm:ml-3 shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search help articles (e.g. password, certificate, refund, AI tutor)..."
-                className="w-full bg-transparent px-3 py-2 text-sm text-white placeholder-slate-500 outline-none"
+                className="w-full bg-transparent px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white placeholder-slate-500 outline-none"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors mr-1 cursor-pointer"
+                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors mr-1 cursor-pointer"
                   title="Clear Search"
                 >
-                  <X size={16} />
+                  <X size={15} />
                 </button>
               )}
             </div>
 
             {/* Quick Suggestion Pills */}
-            <div className="flex items-center justify-center gap-2 flex-wrap mt-4 text-xs">
-              <span className="text-slate-500 font-medium">Quick search:</span>
+            <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap mt-3 sm:mt-4 text-xs">
+              <span className="text-slate-500 text-[11px] sm:text-xs font-medium">Quick search:</span>
               {quickSuggestions.map((sug) => (
                 <button
                   key={sug.label}
                   onClick={() => handleCardClick(sug.query)}
-                  className={`px-3 py-1 rounded-full border text-[11px] font-semibold transition-all cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1 rounded-full border text-[10.5px] sm:text-[11px] font-semibold transition-all cursor-pointer ${
                     searchQuery === sug.query
                       ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-500/20"
                       : "bg-white/[0.03] border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20"
@@ -223,7 +223,7 @@ const HelpCenter = () => {
         </div>
 
         {/* ── Quick Help Cards (No Explore Category Footer) ── */}
-        <div className="grid md:grid-cols-3 gap-6 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-12 sm:mb-16">
           {quickHelp.map((card, idx) => {
             const Icon = card.icon;
             const isCardActive = searchQuery === card.query;

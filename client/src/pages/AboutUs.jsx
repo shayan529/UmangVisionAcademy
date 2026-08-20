@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Lightbulb, ShieldCheck, Users, TrendingUp } from 'lucide-react';
 import SEO from '../components/common/SEO';
 
 const team = [
@@ -39,25 +40,25 @@ const team = [
 
 const values = [
   {
-    icon: 'ti-bulb',
+    icon: Lightbulb,
     titleKey: 'aboutUs.values.curiosity.title',
     descKey: 'aboutUs.values.curiosity.desc',
     color: '#F2A93B',
   },
   {
-    icon: 'ti-shield-check',
+    icon: ShieldCheck,
     titleKey: 'aboutUs.values.trust.title',
     descKey: 'aboutUs.values.trust.desc',
     color: '#185FA5',
   },
   {
-    icon: 'ti-users',
+    icon: Users,
     titleKey: 'aboutUs.values.access.title',
     descKey: 'aboutUs.values.access.desc',
     color: '#1D9E75',
   },
   {
-    icon: 'ti-chart-line',
+    icon: TrendingUp,
     titleKey: 'aboutUs.values.outcomes.title',
     descKey: 'aboutUs.values.outcomes.desc',
     color: '#534AB7',
@@ -71,19 +72,22 @@ const stats = [
     fallback: 'Courses Published',
   },
   {
-    value: 'English, Hindi, Marathi, Gujarati, Bengali, Tamil & Telugu',
+    value: '7',
     labelKey: 'aboutUs.stats.languages',
     fallback: 'Languages',
+    tooltip: 'English, Hindi, Marathi, Gujarati, Bengali, Tamil & Telugu',
   },
   {
     value: '3',
     labelKey: 'aboutUs.stats.boardsSupported',
     fallback: 'Boards Supported',
+    tooltip: 'CBSE · ICSE · MP Board',
   },
   {
     value: '9–12',
     labelKey: 'aboutUs.stats.classesCovered',
     fallback: 'Classes Covered',
+    tooltip: 'Class 9, 10, 11 & 12',
   },
 ];
 
@@ -259,8 +263,8 @@ export default function AboutUs() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: 48,
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+            gap: 40,
             alignItems: 'center',
           }}
         >
@@ -548,6 +552,7 @@ export default function AboutUs() {
                 <span className="uva-leader-fill" />
                 <span
                   className="uva-display"
+                  title={s.tooltip || undefined}
                   style={{
                     fontSize: 26,
                     fontWeight: 700,
@@ -566,7 +571,7 @@ export default function AboutUs() {
       {/* ── Mission ── */}
       <section
         style={{
-          maxWidth: 1000,
+          maxWidth: 1120,
           margin: '0 auto',
           padding: '88px 24px',
           position: 'relative',
@@ -576,7 +581,7 @@ export default function AboutUs() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
             gap: 40,
             alignItems: 'center',
           }}
@@ -615,17 +620,20 @@ export default function AboutUs() {
               background: '#111827',
               border: '1px solid #1e293b',
               borderRadius: 16,
-              padding: '8px 22px',
+              padding: '12px 22px',
             }}
           >
             {missionItems.map((item, i) => (
               <div
                 key={item.labelKey}
-                className="uva-leader"
                 style={{
                   padding: '14px 0',
                   borderBottom:
                     i < missionItems.length - 1 ? '1px solid #1e293b' : 'none',
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'space-between',
+                  gap: 12,
                 }}
               >
                 <span
@@ -638,14 +646,24 @@ export default function AboutUs() {
                 >
                   {t(item.labelKey)}
                 </span>
-                <span className="uva-leader-fill" />
+                <span
+                  className="uva-leader-fill"
+                  style={{
+                    flex: 1,
+                    minWidth: 10,
+                    marginBottom: 4,
+                  }}
+                />
                 <span
                   className="uva-mono"
                   style={{
-                    fontSize: 13,
+                    fontSize: 12.5,
                     color: '#e2e8f0',
                     fontWeight: 600,
-                    flexShrink: 0,
+                    textAlign: 'right',
+                    maxWidth: '65%',
+                    lineHeight: 1.5,
+                    wordBreak: 'break-word',
                   }}
                 >
                   {t(item.valueKey)}
@@ -666,7 +684,7 @@ export default function AboutUs() {
           zIndex: 1,
         }}
       >
-        <div style={{ maxWidth: 1000, margin: '0 auto', padding: '88px 24px' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '88px 24px' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <p
               style={{
@@ -694,8 +712,8 @@ export default function AboutUs() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: 18,
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+              gap: 20,
             }}
           >
             {translatedValues.map((v, i) => (
@@ -723,11 +741,7 @@ export default function AboutUs() {
                     border: `1px solid ${v.color}35`,
                   }}
                 >
-                  <i
-                    className={`ti ${v.icon}`}
-                    style={{ fontSize: 20, color: v.color }}
-                    aria-hidden="true"
-                  />
+                  <v.icon size={20} color={v.color} strokeWidth={2.2} />
                 </div>
                 <h3
                   style={{

@@ -5,12 +5,12 @@ const Footer = () => {
   const { t } = useTranslation();
 
   return (
-    <footer className="w-full bg-slate-950 border-t border-slate-800/80 text-slate-300 py-12 px-6 sm:px-8 lg:px-12">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 lg:gap-14 items-start">
+    <footer className="w-full bg-slate-950 border-t border-slate-800/80 text-slate-300 py-8 sm:py-12 px-4 sm:px-8 lg:px-12">
+      <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-10 lg:gap-14 items-start">
         
         {/* Column 1: Logo Section */}
-        <div className="flex flex-col items-start gap-4">
-          <div className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 p-2.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 shadow-2xl transition-transform hover:scale-105">
+        <div className="col-span-2 sm:col-span-1 flex flex-col items-start gap-4">
+          <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 p-2 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 shadow-2xl transition-transform hover:scale-105">
             <img
               src="/Logo.png"
               alt="Umang Vision Academy Logo"

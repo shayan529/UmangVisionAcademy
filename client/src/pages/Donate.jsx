@@ -282,13 +282,13 @@ const Donate = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120]/95 via-[#0B1120]/40 to-transparent" />
 
             {/* Direct Text Overlay - NO BACKGROUND BOX */}
-            <div className="absolute bottom-6 left-16 right-16 sm:bottom-8 sm:left-24 lg:left-28 z-20 space-y-3 max-w-2xl">
-              <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-extrabold uppercase tracking-wider backdrop-blur-md">
-                <Heart size={13} className="text-rose-400 fill-rose-400 animate-pulse" />
-                <span>{t(slide.badgeKey || "donate.badge", slide.defaultBadge || "FREE STUDENT EDUCATION & CHARITY INITIATIVE")}</span>
+            <div className="absolute bottom-5 sm:bottom-8 left-4 right-4 sm:left-20 sm:right-20 lg:left-28 z-20 space-y-2.5 sm:space-y-3 max-w-2xl">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10.5px] sm:text-xs font-extrabold uppercase tracking-wider backdrop-blur-md">
+                <Heart size={12} className="text-rose-400 fill-rose-400 animate-pulse sm:w-[13px] sm:h-[13px]" />
+                <span className="truncate">{t(slide.badgeKey || "donate.badge", slide.defaultBadge || "FREE STUDENT EDUCATION & CHARITY INITIATIVE")}</span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+              <h1 className="text-xl sm:text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
                 {t(slide.titleKey, slide.defaultTitle)}
               </h1>
 
@@ -296,45 +296,45 @@ const Donate = () => {
                 {t(slide.subtitleKey, slide.defaultSubtitle)}
               </p>
 
-              <div className="pt-1.5 flex flex-wrap items-center gap-3">
+              <div className="pt-1 flex flex-wrap items-center gap-3">
                 <a
                   href="#donate-form"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm transition-transform hover:scale-105 shadow-xl shadow-emerald-500/30 uppercase tracking-wider cursor-pointer"
+                  className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm transition-transform hover:scale-105 shadow-xl shadow-emerald-500/30 uppercase tracking-wider cursor-pointer"
                 >
                   <span>{t("donate.donateNowBtn", "Donate Now")}</span>
-                  <Heart size={15} className="fill-slate-950" />
+                  <Heart size={14} className="fill-slate-950 sm:w-[15px] sm:h-[15px]" />
                 </a>
               </div>
             </div>
           </div>
         ))}
 
-        {/* Slider Navigation Buttons (Positioned lower & clear of badge) */}
+        {/* Slider Navigation Buttons */}
         <button
           type="button"
           onClick={handlePrevSlide}
           aria-label="Previous Slide"
-          className="absolute left-4 sm:left-6 top-[60%] -translate-y-1/2 z-30 h-11 w-11 sm:h-13 sm:w-13 rounded-full bg-slate-950/80 border border-white/25 text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl backdrop-blur-md cursor-pointer"
+          className="hidden sm:flex absolute left-4 sm:left-6 top-[60%] -translate-y-1/2 z-30 h-10 w-10 sm:h-13 sm:w-13 rounded-full bg-slate-950/80 border border-white/25 text-white items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl backdrop-blur-md cursor-pointer"
         >
-          <ChevronLeft size={24} />
+          <ChevronLeft size={22} className="sm:w-6 sm:h-6" />
         </button>
         <button
           type="button"
           onClick={handleNextSlide}
           aria-label="Next Slide"
-          className="absolute right-4 sm:right-6 top-[60%] -translate-y-1/2 z-30 h-11 w-11 sm:h-13 sm:w-13 rounded-full bg-slate-950/80 border border-white/25 text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl backdrop-blur-md cursor-pointer"
+          className="hidden sm:flex absolute right-4 sm:right-6 top-[60%] -translate-y-1/2 z-30 h-10 w-10 sm:h-13 sm:w-13 rounded-full bg-slate-950/80 border border-white/25 text-white items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl backdrop-blur-md cursor-pointer"
         >
-          <ChevronRight size={24} />
+          <ChevronRight size={22} className="sm:w-6 sm:h-6" />
         </button>
 
         {/* Slide Position Indicator Dots (Top Right) */}
-        <div className="absolute top-5 right-5 sm:top-6 sm:right-8 z-30 flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/15 shadow-xl">
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-8 z-30 flex items-center gap-1.5 sm:gap-2 bg-slate-950/80 backdrop-blur-md px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full border border-white/15 shadow-xl">
           {carouselSlides.map((_, idx) => (
             <button
               key={idx}
               type="button"
               onClick={() => setCurrentSlide(idx)}
-              className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${idx === currentSlide ? "w-7 bg-emerald-400" : "w-2.5 bg-white/40 hover:bg-white"
+              className={`h-2 sm:h-2.5 rounded-full transition-all duration-300 cursor-pointer ${idx === currentSlide ? "w-5 sm:w-7 bg-emerald-400" : "w-2 sm:w-2.5 bg-white/40 hover:bg-white"
                 }`}
               aria-label={`Go to slide ${idx + 1}`}
             />
@@ -343,10 +343,10 @@ const Donate = () => {
       </section>
 
       {/* ── 2. DONATION CONTENT (UNTOUCHED max-w-7xl CONTAINER) ── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 space-y-16 lg:space-y-24 relative z-10 pt-12 lg:pt-16">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 space-y-12 lg:space-y-24 relative z-10 pt-8 sm:pt-12 lg:pt-16">
 
         {/* ── 2. IMPACT STATS STRIP ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 sm:p-8 rounded-[28px] border border-slate-800 bg-[#111827]/90 shadow-2xl backdrop-blur-xl">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 p-4 sm:p-8 rounded-2xl sm:rounded-[28px] border border-slate-800 bg-[#111827]/90 shadow-2xl backdrop-blur-xl">
           <div className="text-center space-y-1 p-2">
             <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-white">15,000+</div>
             <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">

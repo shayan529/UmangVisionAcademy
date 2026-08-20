@@ -1042,6 +1042,9 @@
       "verified": "VERIFIED",
       "activeStudents": "Active students",
       "coursesPublished": "Courses published",
+      "languages": "Languages",
+      "boardsSupported": "Boards supported",
+      "classesCovered": "Classes covered",
       "passRate": "Pass rate",
       "statesCovered": "States covered"
     },

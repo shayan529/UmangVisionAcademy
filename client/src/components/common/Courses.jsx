@@ -517,17 +517,17 @@ const Courses = () => {
         </div>
 
         {/* Filters Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 p-3.5 sm:p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm shadow-inner">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm shadow-inner">
           {selectedCourseType === TYPE_COMPETITIVE ? (
-            <div>
-              <label className="block text-[10.5px] font-bold uppercase tracking-wider text-indigo-300/90 mb-1.5 truncate">
+            <div className="min-w-0">
+              <label className="block text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-indigo-300/90 mb-1 sm:mb-1.5 truncate">
                 {t("courses.select_exam", "Select Exam")}
               </label>
-              <div className="relative">
+              <div className="relative min-w-0">
                 <select
                   value={selectedExam}
                   onChange={(e) => setSelectedExam(e.target.value)}
-                  className="w-full min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-indigo-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                  className="w-full min-h-[36px] sm:min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-indigo-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
                 >
                   <option key={ALL_EXAMS} value={ALL_EXAMS}>
                     {t("courses.allExams", "All Exams")}
@@ -538,7 +538,7 @@ const Courses = () => {
                     </option>
                   ))}
                 </select>
-                <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                <div className="pointer-events-none absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
                   <svg
                     className="w-3.5 h-3.5 fill-current opacity-70"
                     viewBox="0 0 20 20"
@@ -549,15 +549,15 @@ const Courses = () => {
               </div>
             </div>
           ) : (
-            <div>
-              <label className="block text-[10.5px] font-bold uppercase tracking-wider text-indigo-300/90 mb-1.5 truncate">
+            <div className="min-w-0">
+              <label className="block text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-indigo-300/90 mb-1 sm:mb-1.5 truncate">
                 {t("courses.select_class")}
               </label>
-              <div className="relative">
+              <div className="relative min-w-0">
                 <select
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
-                  className="w-full min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-indigo-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                  className="w-full min-h-[36px] sm:min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-indigo-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
                 >
                   <option key={ALL} value={ALL}>
                     {t("courses.all")}
@@ -568,7 +568,7 @@ const Courses = () => {
                     </option>
                   ))}
                 </select>
-                <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                <div className="pointer-events-none absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
                   <svg
                     className="w-3.5 h-3.5 fill-current opacity-70"
                     viewBox="0 0 20 20"
@@ -580,15 +580,15 @@ const Courses = () => {
             </div>
           )}
 
-          <div>
-            <label className="block text-[10.5px] font-bold uppercase tracking-wider text-cyan-300/90 mb-1.5 truncate">
+          <div className="min-w-0">
+            <label className="block text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-cyan-300/90 mb-1 sm:mb-1.5 truncate">
               {t("courses.select_subject")}
             </label>
-            <div className="relative">
+            <div className="relative min-w-0">
               <select
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
-                className="w-full min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-cyan-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                className="w-full min-h-[36px] sm:min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-cyan-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
               >
                 <option key={ALL_SUBJECTS} value={ALL_SUBJECTS}>
                   {t("courses.allSubjects")}
@@ -599,7 +599,7 @@ const Courses = () => {
                   </option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+              <div className="pointer-events-none absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
                 <svg
                   className="w-3.5 h-3.5 fill-current opacity-70"
                   viewBox="0 0 20 20"
@@ -611,15 +611,15 @@ const Courses = () => {
           </div>
 
           {selectedCourseType !== TYPE_COMPETITIVE && (
-            <div>
-              <label className="block text-[10.5px] font-bold uppercase tracking-wider text-purple-300/90 mb-1.5 truncate">
+            <div className="min-w-0">
+              <label className="block text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-purple-300/90 mb-1 sm:mb-1.5 truncate">
                 {t("courses.select_board")}
               </label>
-              <div className="relative">
+              <div className="relative min-w-0">
                 <select
                   value={selectedBoard}
                   onChange={(e) => setSelectedBoard(e.target.value)}
-                  className="w-full min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-purple-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                  className="w-full min-h-[36px] sm:min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-purple-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
                 >
                   <option key={ALL_BOARDS} value={ALL_BOARDS}>
                     {t("courses.allBoards")}
@@ -630,7 +630,7 @@ const Courses = () => {
                     </option>
                   ))}
                 </select>
-                <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                <div className="pointer-events-none absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
                   <svg
                     className="w-3.5 h-3.5 fill-current opacity-70"
                     viewBox="0 0 20 20"
@@ -642,15 +642,15 @@ const Courses = () => {
             </div>
           )}
 
-          <div>
-            <label className="block text-[10.5px] font-bold uppercase tracking-wider text-emerald-300/90 mb-1.5 truncate">
+          <div className="min-w-0">
+            <label className="block text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-emerald-300/90 mb-1 sm:mb-1.5 truncate">
               {t("courses.select_language", "Select Language")}
             </label>
-            <div className="relative">
+            <div className="relative min-w-0">
               <select
                 value={selectedLanguage}
                 onChange={(e) => setSelectedLanguage(e.target.value)}
-                className="w-full min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-emerald-500/50 text-white rounded-xl pl-3 pr-8 py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                className="w-full min-h-[36px] sm:min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-emerald-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
               >
                 <option key={ALL_LANGUAGES} value={ALL_LANGUAGES}>
                   {t("courses.multilanguage", "Multilanguage")}
@@ -661,7 +661,7 @@ const Courses = () => {
                   </option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+              <div className="pointer-events-none absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
                 <svg
                   className="w-3.5 h-3.5 fill-current opacity-70"
                   viewBox="0 0 20 20"

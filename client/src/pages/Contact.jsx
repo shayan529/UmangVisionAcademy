@@ -91,25 +91,25 @@ const Contact = () => {
       <div className="pointer-events-none absolute top-1/3 right-10 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[140px]" />
       <div className="pointer-events-none absolute bottom-10 left-10 w-[400px] h-[400px] bg-emerald-600/10 rounded-full blur-[120px]" />
 
-      <main className="relative max-w-7xl mx-auto px-5 md:px-10 py-12 lg:py-20">
+      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-10 sm:py-12 lg:py-20">
         {/* ── Top Header Badge & Intro ── */}
-        <div className="text-center max-w-3xl mx-auto mb-14 space-y-4">
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.05] border border-white/10 backdrop-blur-md text-xs font-semibold text-indigo-300 shadow-xl">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <Sparkles size={14} className="text-amber-400" />
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14 space-y-3 sm:space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/[0.05] border border-white/10 backdrop-blur-md text-[11px] sm:text-xs font-semibold text-indigo-300 shadow-xl">
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <Sparkles size={13} className="text-amber-400" />
             <span>{t("contact.tag", "CONTACT US")}</span>
             <span className="text-slate-500">•</span>
             <span className="text-slate-300">24/7 Support Hub</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.15]">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.2]">
             {t("contact.headline", "Let's build the future of")}{" "}
             <span className="bg-gradient-to-r from-emerald-300 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
               {t("contact.highlight", "AI Learning")}
             </span>
           </h1>
 
-          <p className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+          <p className="text-slate-400 text-xs sm:text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
             {t(
               "contact.description",
               "Have questions, feedback, or business inquiries? Reach out to our dedicated team for courses, subscriptions, instructor onboarding, and enterprise solutions.",

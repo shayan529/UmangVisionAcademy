@@ -1106,6 +1106,9 @@
       "verified": "सत्यापित",
       "activeStudents": "सक्रिय छात्र",
       "coursesPublished": "प्रकाशित अभ्यासक्रम",
+      "languages": "भाषा",
+      "boardsSupported": "समर्थित बोर्ड",
+      "classesCovered": "समाविष्ट वर्ग",
       "passRate": "पास प्रतिशत",
       "statesCovered": "कवर किए गए राज्य"
     },

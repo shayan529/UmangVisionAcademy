@@ -53,27 +53,27 @@ const Hero = () => {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.25),_transparent_20%),radial-gradient(circle_at_top_right,_rgba(168,85,247,0.22),_transparent_20%),radial-gradient(circle_at_bottom_left,_rgba(56,189,248,0.18),_transparent_25%),linear-gradient(135deg,#0f172a_0%,#1e1b4b_40%,#6d28d9_100%)]" />
 
       {/* ══════════════════════ MOBILE LAYOUT (< md) — app-screen style ══════════════════════ */}
-      <div className="relative md:hidden px-5 pt-[calc(env(safe-area-inset-top,0px)+18px)] pb-9">
-        <div className="flex flex-col gap-6">
+      <div className="relative md:hidden px-4 sm:px-5 pt-[calc(env(safe-area-inset-top,0px)+14px)] pb-8 max-w-md mx-auto">
+        <div className="flex flex-col gap-5">
           {/* TAG */}
           <div className="flex items-center justify-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[11px] font-medium text-white/85 backdrop-blur-sm">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10.5px] sm:text-[11px] font-medium text-white/85 backdrop-blur-sm shadow-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
               {t("hero.tag")}
             </div>
           </div>
 
           {/* DECORATIVE VISUAL */}
-          <div className="relative mx-auto mt-1 h-36 w-full max-w-[260px]">
+          <div className="relative mx-auto mt-0.5 h-32 sm:h-36 w-full max-w-[240px] sm:max-w-[260px]">
             <div className="absolute inset-0 rounded-[32px] bg-gradient-to-br from-emerald-300/25 via-sky-300/15 to-purple-400/25 blur-2xl" />
             <div className="relative h-full w-full rounded-[28px] border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden flex items-center justify-center">
-              <div className="absolute -left-2 top-3 h-12 w-12 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-sm flex items-center justify-center text-xl -rotate-[10deg] shadow-lg">
+              <div className="absolute -left-1.5 top-2.5 h-11 w-11 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-sm flex items-center justify-center text-lg -rotate-[10deg] shadow-lg">
                 📘
               </div>
-              <div className="absolute right-1 top-1 h-12 w-12 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-sm flex items-center justify-center text-xl rotate-[12deg] shadow-lg">
+              <div className="absolute right-1 top-1 h-11 w-11 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-sm flex items-center justify-center text-lg rotate-[12deg] shadow-lg">
                 🔬
               </div>
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 h-12 w-12 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-sm flex items-center justify-center text-xl rotate-[6deg] shadow-lg">
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 h-11 w-11 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-sm flex items-center justify-center text-lg rotate-[6deg] shadow-lg">
                 ➗
               </div>
               <div className="relative h-16 w-16 flex items-center justify-center">
@@ -84,8 +84,8 @@ const Hero = () => {
                   }
                 `}</style>
                 <svg
-                  width="52"
-                  height="58"
+                  width="48"
+                  height="54"
                   viewBox="0 0 56 64"
                   style={{ animation: "uvGhostFloat 3.2s ease-in-out infinite" }}
                   className="drop-shadow-[0_8px_16px_rgba(110,231,183,0.35)]"
@@ -121,36 +121,36 @@ const Hero = () => {
                   />
                 </svg>
                 {/* sparkle accents */}
-                <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-violet-300/80" />
+                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-violet-300/80" />
                 <span className="absolute top-2 -left-2 h-1.5 w-1.5 rounded-full bg-sky-300/80" />
               </div>
             </div>
             {/* Floating stat pill overlapping the card edge */}
-            <div className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-950/90 border border-white/10 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg">
+            <div className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-950/90 border border-white/10 px-3 py-1 text-[10.5px] sm:text-[11px] font-semibold text-white shadow-lg">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
               {t("hero.floatingBadge")}
             </div>
           </div>
 
           {/* HEADING */}
-          <div className="text-center mt-2">
+          <div className="text-center mt-1">
             <h1 className="font-black tracking-tight">
-              <span className="block text-[32px] leading-[1.12] text-white">
+              <span className="block text-2xl sm:text-3xl leading-[1.2] text-white">
                 {t("hero.headingLine1")}
               </span>
-              <span className="block text-[19px] leading-[1.35] text-emerald-300 mt-2 tracking-normal">
+              <span className="block text-base sm:text-lg leading-[1.3] text-emerald-300 mt-1.5 tracking-normal">
                 {t("hero.headingLine2")}
               </span>
             </h1>
-            <p className="mt-3 text-slate-200 text-[15px] leading-7 max-w-sm mx-auto">
+            <p className="mt-2.5 text-slate-200 text-xs sm:text-sm leading-relaxed max-w-xs sm:max-w-sm mx-auto">
               {isMobile ? shortText : fullText}
             </p>
           </div>
 
           {/* CTAs — one solid action, one quiet text link (app-pattern, not two competing buttons) */}
-          <div className="flex flex-col items-center gap-3.5 mt-1">
+          <div className="flex flex-col items-center gap-3 mt-0.5">
             <Link to="/my-courses" className="w-full">
-              <button className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-300 px-8 py-4 text-slate-950 font-bold text-[15px] shadow-lg shadow-emerald-300/25 active:scale-[0.97] transition">
+              <button className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-300 px-6 py-3.5 text-slate-950 font-bold text-sm sm:text-[15px] shadow-lg shadow-emerald-300/25 active:scale-[0.97] transition cursor-pointer">
                 {t("hero.startLearning")}
                 <svg
                   width="16"
@@ -168,28 +168,27 @@ const Hero = () => {
               </button>
             </Link>
             <Link to="/courses">
-              <span className="text-[13px] font-semibold text-white/75 underline underline-offset-4 decoration-white/30 active:text-white transition">
+              <span className="text-xs sm:text-[13px] font-semibold text-white/75 underline underline-offset-4 decoration-white/30 active:text-white transition">
                 {t("hero.exploreCourses")}
               </span>
             </Link>
           </div>
 
-
           {/* BENEFITS CAROUSEL */}
-          <div className="mt-2">
+          <div className="mt-1 w-full overflow-hidden">
             <div
               ref={carouselRef}
               onScroll={handleCarouselScroll}
-              className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 -mx-5 px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {benefits.map((b, idx) => (
                 <div
                   key={idx}
-                  className="snap-center flex-shrink-0 w-[200px] rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm px-4 py-4"
+                  className="snap-center flex-shrink-0 w-[190px] sm:w-[200px] rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm px-3.5 py-3.5"
                 >
-                  <div className="text-xl mb-1.5">{b.icon}</div>
+                  <div className="text-lg sm:text-xl mb-1.5">{b.icon}</div>
                   <p className="text-xs font-bold text-emerald-300">{b.title}</p>
-                  <p className="mt-1.5 text-[10px] leading-relaxed text-slate-300">
+                  <p className="mt-1 text-[10px] leading-relaxed text-slate-300">
                     {b.desc}
                   </p>
                 </div>
@@ -197,7 +196,7 @@ const Hero = () => {
             </div>
 
             {/* DOTS */}
-            <div className="mt-4 flex justify-center items-center gap-2">
+            <div className="mt-3 flex justify-center items-center gap-2">
               {benefits.map((_, idx) => (
                 <button
                   key={idx}
@@ -210,7 +209,7 @@ const Hero = () => {
                       behavior: "smooth",
                     });
                   }}
-                  className={`h-2 rounded-full transition-all duration-300 ease-out ${activeSlide === idx
+                  className={`h-2 rounded-full transition-all duration-300 ease-out cursor-pointer ${activeSlide === idx
                     ? "w-6 bg-gradient-to-r from-emerald-300 to-sky-300 shadow-[0_0_8px_rgba(110,231,183,0.6)]"
                     : "w-2 bg-white/25 hover:bg-white/40"
                     }`}

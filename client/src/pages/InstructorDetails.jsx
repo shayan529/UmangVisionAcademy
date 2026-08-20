@@ -58,36 +58,34 @@ const InstructorDetails = () => {
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.15),_transparent_20%),radial-gradient(circle_at_top_right,_rgba(168,85,247,0.18),_transparent_20%),linear-gradient(135deg,#020817_0%,#111827_50%,#1e1b4b_100%)]" />
 
-        <div className="relative max-w-7xl mx-auto px-6 py-24">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-20 lg:py-24">
+          <div className="grid lg:grid-cols-2 gap-10 sm:gap-16 items-center">
             {/* LEFT */}
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-300">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3.5 py-1.5 text-xs sm:text-sm text-emerald-300">
                 <GraduationCap size={16} />
                 {t("instructorDetails.tag")}
               </div>
 
-              <h1 className="mt-8 text-5xl md:text-6xl font-black leading-tight">
+              <h1 className="mt-4 sm:mt-8 text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight">
                 {t("instructorDetails.heroTitleLine1")}
-                <span className="block text-emerald-300">
+                <span className="block text-emerald-300 mt-1">
                   {t("instructorDetails.heroTitleLine2")}
                 </span>
               </h1>
 
-              <p className="mt-6 text-lg leading-8 text-slate-300 max-w-2xl">
+              <p className="mt-4 sm:mt-6 text-sm sm:text-base md:text-lg leading-relaxed sm:leading-8 text-slate-300 max-w-2xl">
                 {t("instructorDetails.heroDescription")}
               </p>
 
               {/* BUTTONS */}
-              <div className="mt-10 flex flex-wrap gap-4">
+              <div className="mt-6 sm:mt-10 flex flex-wrap gap-4">
                 <Link
                   to="/become-instructor"
-                  className="bg-emerald-300 hover:bg-emerald-400 transition duration-300 px-8 py-4 rounded-full text-slate-950 font-semibold shadow-xl shadow-emerald-300/20 inline-flex items-center justify-center"
+                  className="inline-flex items-center justify-center gap-2.5 rounded-full bg-emerald-300 hover:bg-emerald-400 text-slate-950 font-bold px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base shadow-xl shadow-emerald-300/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <button className="inline-flex items-center gap-3 rounded-full bg-emerald-300 px-8 py-4 text-slate-950 font-bold transition hover:scale-[1.02]">
-                    {t("instructorDetails.applyAsInstructor")}
-                    <ArrowRight size={20} />
-                  </button>
+                  <span>{t("instructorDetails.applyAsInstructor")}</span>
+                  <ArrowRight size={18} />
                 </Link>
               </div>
             </div>
