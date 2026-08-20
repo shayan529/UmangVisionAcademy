@@ -5027,7 +5027,7 @@ export default function InstructorCourses({
 
             <div
               style={{
-                maxHeight: 140,
+                maxHeight: 150,
                 overflowY: "auto",
                 background: "#080e1a",
                 border: "1px solid #1e293b",
@@ -5039,23 +5039,58 @@ export default function InstructorCourses({
                 gap: 6,
               }}
             >
-              {courses
-                .filter((c) => selectedIds.includes(c._id))
+              {(courses.length > 0 ? courses : filtered)
+                .filter((c) =>
+                  selectedIds.map(String).includes(String(c._id || c.id)),
+                )
                 .map((c) => (
                   <div
-                    key={c._id}
+                    key={c._id || c.id}
                     style={{
                       fontSize: 12,
-                      color: "#cbd5e1",
+                      color: "#e2e8f0",
                       display: "flex",
                       alignItems: "center",
-                      gap: 6,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      gap: 8,
+                      padding: "4px 6px",
+                      borderRadius: 6,
+                      background: "rgba(255,255,255,0.03)",
                     }}
                   >
-                    <span style={{ color: "#f87171" }}>•</span> {c.title}
+                    <span
+                      style={{
+                        color: "#f87171",
+                        fontSize: 14,
+                        flexShrink: 0,
+                        lineHeight: 1,
+                      }}
+                    >
+                      •
+                    </span>
+                    <span
+                      style={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        flex: 1,
+                      }}
+                    >
+                      {c.title || c.subject || "Untitled Course"}
+                    </span>
+                    {c.category && (
+                      <span
+                        style={{
+                          fontSize: 10,
+                          color: "#94a3b8",
+                          background: "#1e293b",
+                          padding: "1px 6px",
+                          borderRadius: 4,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {c.category}
+                      </span>
+                    )}
                   </div>
                 ))}
             </div>
