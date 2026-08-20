@@ -9,9 +9,10 @@ import { hasBaseRole } from "../../utils/permissions.js";
 import { useTranslation } from "react-i18next";
 import { normalizeVideoUrl, isImageFile, isEmbedVideo, getEmbedUrl } from "../../utils/media.js";
 import NoteViewerModal from "../common/NoteViewerModal.jsx";
+import PlanSelectionModal from "./PlanSelectionModal.jsx";
 import { useAiTranslation } from "../../utils/aiTranslate.js";
 import { generateCourseAiDetails } from "../../utils/courseAiDetails.js";
-import { SMART_PLANS } from "../../data/plansData.js";
+import { SMART_PLANS, TICK_COMPARISON_MATRIX } from "../../data/plansData.js";
 import toast from "react-hot-toast";
 import {
   Star,
@@ -36,6 +37,7 @@ import {
   Tv,
   CheckCircle2,
   ArrowRight,
+  Crown,
 } from "lucide-react";
 
 // ── Hook: fetch course demo ───────────────────────────────────────────────────
@@ -225,23 +227,42 @@ const UdemyPurchaseCard = ({
   isFreeWithPlan,
   enrollingFree,
   onEnroll,
+  onOpenPlansModal,
+  onProceedToBuy,
   navigate,
+  selectedPlanId,
+  setSelectedPlanId,
   withInstructorAssistance,
   setWithInstructorAssistance,
 }) => {
   const { t } = useTranslation();
 
+  const isAssistantChecked =
+    withInstructorAssistance ||
+    selectedPlanId === "standard" ||
+    selectedPlanId === "premium";
 
   const rawPrice =
-    typeof course?.price === "number"
+    selectedPlanId === "premium"
+      ? 1000
+      : isAssistantChecked
+      ? 500
+      : typeof course?.price === "number"
       ? course.price
-      : parseFloat(String(course?.price || "0").replace(/[^\d.]/g, ""));
-  const originalPrice = rawPrice > 0 ? Math.round(rawPrice * 2.5) : null;
-  const discountPct = originalPrice
-    ? Math.round(((originalPrice - rawPrice) / originalPrice) * 100)
-    : 60;
+      : parseFloat(String(course?.price || "100").replace(/[^\d.]/g, "")) || 100;
 
+  const originalPrice = Math.round(rawPrice * 2.5);
+  const discountPct = 60;
 
+  const handleToggleAssistant = () => {
+    if (isAssistantChecked) {
+      setWithInstructorAssistance?.(false);
+      setSelectedPlanId?.("basic");
+    } else {
+      setWithInstructorAssistance?.(true);
+      setSelectedPlanId?.("standard");
+    }
+  };
 
   const handleShare = () => {
     if (navigator.share) {
@@ -310,30 +331,25 @@ const UdemyPurchaseCard = ({
             <div className="flex items-baseline justify-between gap-2 flex-wrap pt-1">
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                  {withInstructorAssistance
-                    ? "₹500"
-                    : course?.price
-                      ? `₹${course.price}`
-                      : t("courses.free", "Free")}
+                  ₹{rawPrice}
                 </span>
-                {originalPrice && !withInstructorAssistance && (
-                  <span className="text-xs sm:text-sm text-slate-500 line-through font-medium">
-                    ₹{originalPrice.toLocaleString()}
-                  </span>
-                )}
-                {originalPrice && !withInstructorAssistance && (
-                  <span className="text-xs font-extrabold text-rose-400 bg-rose-500/10 border border-rose-500/30 px-1.5 py-0.5 rounded">
-                    {discountPct}% off
-                  </span>
-                )}
+                <span className="text-xs text-slate-400 font-medium">
+                  /{t("plans.perYear", "year")}
+                </span>
+                <span className="text-xs sm:text-sm text-slate-500 line-through font-medium">
+                  ₹{originalPrice.toLocaleString()}
+                </span>
+                <span className="text-xs font-extrabold text-rose-400 bg-rose-500/10 border border-rose-500/30 px-1.5 py-0.5 rounded">
+                  {discountPct}% off
+                </span>
               </div>
             </div>
 
             {/* 1-on-1 Faculty Assistance Option */}
             <div
-              onClick={() => setWithInstructorAssistance((prev) => !prev)}
+              onClick={handleToggleAssistant}
               className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all ${
-                withInstructorAssistance
+                isAssistantChecked
                   ? "bg-purple-950/40 border-purple-500/60 shadow-md ring-1 ring-purple-500/40"
                   : "bg-slate-900 border-slate-800 hover:border-slate-700"
               }`}
@@ -341,12 +357,12 @@ const UdemyPurchaseCard = ({
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <div
                   className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                    withInstructorAssistance
+                    isAssistantChecked
                       ? "bg-purple-600 text-white"
                       : "border border-slate-600"
                   }`}
                 >
-                  {withInstructorAssistance && "✓"}
+                  {isAssistantChecked && "✓"}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-bold text-white leading-tight truncate">
@@ -365,9 +381,29 @@ const UdemyPurchaseCard = ({
               </span>
             </div>
 
+            {/* Smart Plan Tagline */}
+            <div className="p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/30 flex items-center gap-2">
+              <Sparkles size={14} className="text-purple-400 shrink-0" />
+              <p className="text-[11px] text-purple-200 font-medium leading-tight">
+                {selectedPlanId === "premium"
+                  ? "👑 Premium VIP Suite includes Higher-Study Scholarships & 1-on-1 Faculty Support"
+                  : isAssistantChecked
+                  ? "⭐ Standard Plan includes 1-on-1 Faculty Chat Support & all class subjects"
+                  : `Includes all subjects of ${course?.category || "this class"} with Smart Learning Plans`}
+              </p>
+            </div>
+
             {/* Buy / Enroll Button */}
             <button
-              onClick={onEnroll}
+              onClick={() => {
+                if (canAccess) {
+                  navigate(`/courses/${course?._id}`);
+                } else if (isFreeWithPlan) {
+                  onEnroll();
+                } else {
+                  onProceedToBuy();
+                }
+              }}
               disabled={enrollingFree}
               className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer active:scale-98"
             >
@@ -378,11 +414,11 @@ const UdemyPurchaseCard = ({
                       "courseDetails.enrollFreePlan",
                       "Enroll for Free (Academy Plan)",
                     )
-                  : isInCart || addedToCart
-                    ? t("courseDetails.addedToCart", "Added to Cart ✓")
-                    : course?.price > 0
-                      ? t("courseDetails.buyNow", "Buy This Course Now")
-                      : t("courseDetails.enrollFree", "Enroll for Free")}
+                  : selectedPlanId === "premium"
+                  ? "Buy Premium Plan (₹1,000/yr)"
+                  : isAssistantChecked
+                  ? "Buy Standard Plan (₹500/yr)"
+                  : t("courseDetails.buyNow", "Buy Course / Choose Plan")}
             </button>
 
             {(isInCart || addedToCart) && (
@@ -393,8 +429,6 @@ const UdemyPurchaseCard = ({
                 {t("courseDetails.goToCart", "Go to Cart →")}
               </button>
             )}
-
-
 
             {/* Features list */}
             <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-1.5 text-xs text-slate-400">
@@ -466,14 +500,6 @@ export default function CourseDemo() {
   const { user } = useSelector((s) => s.auth);
   const { t, i18n } = useTranslation();
 
-  const handleSelectPlan = (plan) => {
-    if (!user) {
-      navigate("/login", { state: { from: location.pathname } });
-      return;
-    }
-    navigate("/student-dashboard/billing", { state: { plan } });
-  };
-
   const { course, loading, error } = useCourseDemo(id);
 
   // AI-synthesized details (What you'll learn, Requirements, Rich Description)
@@ -499,11 +525,39 @@ export default function CourseDemo() {
   const { tText } = useAiTranslation(translatableTexts);
 
   const [addedToCart, setAddedToCart] = useState(false);
+  const [showPlansModal, setShowPlansModal] = useState(false);
   const [activeModalNote, setActiveModalNote] = useState(null);
-  const [withInstructorAssistance, setWithInstructorAssistance] = useState(false);
+  
+  const initialPlanId = location.state?.selectedPlanId || "basic";
+  const [selectedPlanId, setSelectedPlanId] = useState(initialPlanId);
+  const [withInstructorAssistance, setWithInstructorAssistance] = useState(
+    initialPlanId === "standard" || initialPlanId === "premium"
+  );
+
+  useEffect(() => {
+    if (location.state?.selectedPlanId) {
+      const planId = location.state.selectedPlanId;
+      setSelectedPlanId(planId);
+      if (planId === "standard" || planId === "premium") {
+        setWithInstructorAssistance(true);
+      } else {
+        setWithInstructorAssistance(false);
+      }
+    }
+  }, [location.state]);
+
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [showFullBio, setShowFullBio] = useState(false);
   const [expandedSections, setExpandedSections] = useState({});
+  const [expandedPlanCards, setExpandedPlanCards] = useState({});
+
+  const toggleExpandPlanCard = (planId, e) => {
+    e?.stopPropagation?.();
+    setExpandedPlanCards((prev) => ({
+      ...prev,
+      [planId]: !prev[planId],
+    }));
+  };
 
   const cartIds = useSelector((s) => s.cart?.cartIds ?? []);
   const isInCart = cartIds.includes(id);
@@ -515,6 +569,34 @@ export default function CourseDemo() {
     course?.category &&
     user.selectedClass.toLowerCase().trim() === course.category.toLowerCase().trim();
   const [enrollingFree, setEnrollingFree] = useState(false);
+
+  const handleSelectPlan = (plan) => {
+    setSelectedPlanId(plan.id);
+    if (plan.id === "standard" || plan.id === "premium") {
+      setWithInstructorAssistance(true);
+    } else {
+      setWithInstructorAssistance(false);
+    }
+    setShowPlansModal(false);
+  };
+
+  const handleProceedToBuy = () => {
+    if (!user) {
+      navigate("/login", {
+        state: { from: `/courses/${id}/demo`, replace: true },
+      });
+      return;
+    }
+    const currentPlan =
+      SMART_PLANS.find((p) => p.id === selectedPlanId) || SMART_PLANS[0];
+    navigate("/student-dashboard/billing", {
+      state: {
+        plan: currentPlan,
+        courseId: id,
+        withInstructorAssistance,
+      },
+    });
+  };
 
   // Organize curriculum into sections
   const curriculumSections = useMemo(() => {
@@ -625,7 +707,12 @@ export default function CourseDemo() {
     isFreeWithPlan,
     enrollingFree,
     onEnroll: handleEnrollClick,
+    onOpenPlansModal: () => setShowPlansModal(true),
+    onProceedToBuy: handleProceedToBuy,
+    onSelectPlan: handleSelectPlan,
     navigate,
+    selectedPlanId,
+    setSelectedPlanId,
     withInstructorAssistance,
     setWithInstructorAssistance,
   };
@@ -814,43 +901,63 @@ export default function CourseDemo() {
                     <Sparkles size={13} />
                   </div>
                   <div className="flex items-baseline gap-1.5 flex-wrap">
-                    <span className="text-sm sm:text-base font-black text-white tracking-tight">
+                    <h2 className="text-sm sm:text-base font-black text-white tracking-tight">
                       {t("plans.heading", "Smart Learning Plans")}
-                    </span>
-                    <span className="text-xs text-purple-300/90 font-medium hidden sm:inline">
+                    </h2>
+                    <span className="text-xs text-purple-300 font-medium hidden sm:inline">
                       • {t("plans.heroTag", "Transparent & Empowering Pricing")}
                     </span>
                   </div>
                 </div>
-                <Link
-                  to="/plans"
-                  className="text-xs font-bold text-purple-300 hover:text-white flex items-center gap-1 transition ml-auto shrink-0"
-                >
-                  <span>{t("plans.viewComparison", "Full 17-Feature Comparison Matrix")}</span>
-                  <ArrowRight size={13} />
-                </Link>
+                <div className="text-xs text-slate-300 font-bold bg-purple-900/40 border border-purple-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-sm">
+                  <span>Selected:</span>
+                  <span className="text-purple-200 capitalize font-extrabold">
+                    {selectedPlanId} ({selectedPlanId === "premium" ? "₹1,000/yr" : selectedPlanId === "standard" ? "₹500/yr" : "₹100/yr"})
+                  </span>
+                </div>
               </div>
 
               {/* 3 Plan Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
                 {SMART_PLANS.map((plan) => {
                   const isPopular = plan.id === "standard";
                   const isPremium = plan.id === "premium";
+                  const isSelected = selectedPlanId === plan.id;
+                  const isExpanded = Boolean(expandedPlanCards[plan.id]);
+                  const features = plan.allFeatures || [];
+                  const visibleFeatures = isExpanded ? features : features.slice(0, 4);
+                  const remainingCount = features.length - 4;
 
                   return (
                     <div
                       key={plan.id}
-                      className={`relative p-3.5 sm:p-4 rounded-xl flex flex-col justify-between transition-all duration-200 ${
-                        isPopular
-                          ? "bg-gradient-to-b from-purple-950/80 to-slate-900/95 border-2 border-purple-500/60 shadow-lg shadow-purple-950/40 ring-1 ring-purple-400/40"
+                      onClick={() => handleSelectPlan(plan)}
+                      className={`relative p-4 rounded-xl flex flex-col justify-between transition-all duration-200 cursor-pointer ${
+                        isSelected
+                          ? isPopular
+                            ? "bg-gradient-to-b from-purple-950/90 to-slate-900/95 border-2 border-purple-400 shadow-xl shadow-purple-950/60 ring-2 ring-purple-400/50"
+                            : isPremium
+                            ? "bg-gradient-to-b from-amber-950/60 to-slate-900/95 border-2 border-amber-400 shadow-xl shadow-amber-950/50 ring-2 ring-amber-400/40"
+                            : "bg-slate-900 border-2 border-indigo-400 shadow-lg ring-2 ring-indigo-400/30"
+                          : isPopular
+                          ? "bg-gradient-to-b from-purple-950/80 to-slate-900/95 border border-purple-500/40 hover:border-purple-400 shadow-lg"
                           : isPremium
-                          ? "bg-gradient-to-b from-amber-950/40 to-slate-900/95 border border-amber-500/40 hover:border-amber-400/60 shadow-md"
+                          ? "bg-gradient-to-b from-amber-950/40 to-slate-900/95 border border-amber-500/40 hover:border-amber-400 shadow-md"
                           : "bg-slate-900/90 hover:bg-slate-900 border border-slate-700/80 shadow-sm"
                       }`}
+                      style={{
+                        borderTop: `3px solid ${plan.color}`,
+                      }}
                     >
+                      {/* Badges */}
                       {isPopular && (
                         <div className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-[9px] font-black text-white uppercase tracking-wider shadow-md">
-                          {t("plans.mostPopular", "MOST POPULAR")}
+                          ⭐ {t("plans.mostPopular", "MOST POPULAR")}
+                        </div>
+                      )}
+                      {isPremium && (
+                        <div className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-[9px] font-black text-slate-950 uppercase tracking-wider shadow-md">
+                          👑 VIP SUITE
                         </div>
                       )}
 
@@ -872,71 +979,75 @@ export default function CourseDemo() {
                           </div>
                         </div>
 
-                        {/* Bullet Highlights */}
-                        <ul className="space-y-1.5 my-2.5 text-[11px] sm:text-xs text-slate-300 leading-snug">
-                          {plan.id === "basic" && (
-                            <>
-                              <li className="flex items-start gap-1.5 text-slate-300">
-                                <Check size={12} className="text-lime-400 shrink-0 mt-0.5" />
-                                <span>{t("plans.features.allSubjectsCovered", "All Class Subjects Covered")}</span>
-                              </li>
-                              <li className="flex items-start gap-1.5 text-slate-300">
-                                <Check size={12} className="text-lime-400 shrink-0 mt-0.5" />
-                                <span>{t("plans.features.progressReport3", "3-Page Smart Progress Report Card")}</span>
-                              </li>
-                              <li className="flex items-start gap-1.5 text-slate-300">
-                                <Check size={12} className="text-lime-400 shrink-0 mt-0.5" />
-                                <span>{t("plans.features.practiceTests3", "3 Practice Tests & 3-Year Question Bank")}</span>
-                              </li>
-                            </>
-                          )}
-                          {plan.id === "standard" && (
-                            <>
-                              <li className="flex items-start gap-1.5 text-purple-200 font-medium">
-                                <Check size={12} className="text-purple-400 shrink-0 mt-0.5" />
-                                <span>{t("plans.features.everythingInBasic", "Everything in Basic Plan")}</span>
-                              </li>
-                              <li className="flex items-start gap-1.5 text-purple-200">
-                                <Check size={12} className="text-purple-400 shrink-0 mt-0.5" />
-                                <span>{t("plans.features.progressReport8", "8-Page Detailed Performance Report Card ⬆️")}</span>
-                              </li>
-                              <li className="flex items-start gap-1.5 text-purple-200">
-                                <Check size={12} className="text-purple-400 shrink-0 mt-0.5" />
-                                <span>{t("plans.features.smsAlerts", "Subject, Class & Competitive Exam SMS Alerts")}</span>
-                              </li>
-                            </>
-                          )}
-                          {plan.id === "premium" && (
-                            <>
-                              <li className="flex items-start gap-1.5 text-amber-200 font-medium">
-                                <Check size={12} className="text-amber-400 shrink-0 mt-0.5" />
-                                <span>{t("plans.features.everythingInStandard", "Everything in Standard Plan")}</span>
-                              </li>
-                              <li className="flex items-start gap-1.5 text-amber-200">
-                                <Check size={12} className="text-amber-400 shrink-0 mt-0.5" />
-                                <span>{t("plans.features.scholarshipEligibility", "Higher-Study Scholarship Eligibility* (EXCLUSIVE)")}</span>
-                              </li>
-                              <li className="flex items-start gap-1.5 text-amber-200">
-                                <Check size={12} className="text-amber-400 shrink-0 mt-0.5" />
-                                <span>{t("plans.features.intlStudyCounselling", "International Study Counselling & Support (EXCLUSIVE)")}</span>
-                              </li>
-                            </>
-                          )}
-                        </ul>
+                        {/* Bullet Highlights from allFeatures matching Plans.jsx */}
+                        <div className="space-y-1.5 my-2.5 text-xs text-slate-200 leading-snug">
+                          {visibleFeatures.map((feat, idx) => {
+                            const featureKey = plan.featureKeys?.[idx];
+                            const featureText = featureKey ? t(featureKey, feat) : feat;
+                            return (
+                              <div
+                                key={idx}
+                                className="flex items-start gap-2 text-[11px] sm:text-xs text-slate-300 leading-snug"
+                              >
+                                <div
+                                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold text-[9px]"
+                                  style={{
+                                    background: `${plan.color}25`,
+                                    color: plan.color,
+                                  }}
+                                >
+                                  ✓
+                                </div>
+                                <span>{featureText}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* View More / View Less Toggle directly on card like /plans */}
+                        {features.length > 4 && (
+                          <button
+                            type="button"
+                            onClick={(e) => toggleExpandPlanCard(plan.id, e)}
+                            className="mt-1 mb-2 text-[11px] font-bold flex items-center gap-1 cursor-pointer transition hover:underline"
+                            style={{ color: plan.color }}
+                          >
+                            {isExpanded ? (
+                              <>
+                                <span>{t("plans.viewLessFeatures", "View less features")}</span>
+                                <ChevronUp size={13} />
+                              </>
+                            ) : (
+                              <>
+                                <span>{t("plans.viewMoreFeatures", "View {{count}} more features", { count: remainingCount })}</span>
+                                <ChevronDown size={13} />
+                              </>
+                            )}
+                          </button>
+                        )}
                       </div>
 
                       <button
                         type="button"
-                        onClick={() => handleSelectPlan(plan)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectPlan(plan);
+                        }}
                         className={`w-full mt-2 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
-                          isPopular
+                          isSelected
+                            ? isPopular
+                              ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg ring-2 ring-purple-300"
+                              : isPremium
+                              ? "bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-lg ring-2 ring-amber-300"
+                              : "bg-indigo-600 text-white shadow-md ring-2 ring-indigo-300"
+                            : isPopular
                             ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-md shadow-purple-900/40"
                             : isPremium
                             ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black shadow-md shadow-amber-950/30"
                             : "bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 shadow-sm"
                         }`}
                       >
-                        <span>{t(plan.buttonKey, `Choose ${plan.title}`)}</span>
+                        <span>{isSelected ? `✓ Selected: ${plan.title}` : t(plan.buttonKey, `Choose ${plan.title}`)}</span>
                       </button>
                     </div>
                   );
@@ -1338,6 +1449,14 @@ export default function CourseDemo() {
         note={activeModalNote}
         isOpen={Boolean(activeModalNote)}
         onClose={() => setActiveModalNote(null)}
+      />
+
+      <PlanSelectionModal
+        isOpen={showPlansModal}
+        onClose={() => setShowPlansModal(false)}
+        course={course}
+        selectedPlanId={selectedPlanId}
+        onSelectPlan={handleSelectPlan}
       />
     </div>
   );

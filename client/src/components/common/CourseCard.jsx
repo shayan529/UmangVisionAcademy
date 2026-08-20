@@ -5,6 +5,7 @@ import { addToCart } from "../../redux/slices/cartSlice.js";
 import { hasBaseRole } from "../../utils/permissions";
 import { useTranslation } from "react-i18next";
 import { Star, Sparkles, CheckCircle2 } from "lucide-react";
+import PlanSelectionModal from "../course/PlanSelectionModal.jsx";
 
 const getOptimizedImageUrl = (url) => {
   if (!url) return "";
@@ -22,6 +23,7 @@ const CourseCard = ({ course }) => {
   const { t } = useTranslation();
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [showPlansModal, setShowPlansModal] = useState(false);
 
   const canEnroll =
     hasBaseRole(user, "student") || hasBaseRole(user, "instructor");
@@ -43,13 +45,14 @@ const CourseCard = ({ course }) => {
 
   const handleBuy = (e) => {
     e.stopPropagation();
-    if (!user) {
-      navigate(`/courses/${courseId ?? ""}/demo`);
-      return;
-    }
-    if (!courseId) return;
-    dispatch(addToCart(courseId));
-    navigate("/cart");
+    setShowPlansModal(true);
+  };
+
+  const handleSelectPlan = (plan) => {
+    setShowPlansModal(false);
+    navigate(`/courses/${courseId}/demo`, {
+      state: { selectedPlanId: plan.id },
+    });
   };
 
   const rawPriceNum =
@@ -174,7 +177,7 @@ const CourseCard = ({ course }) => {
             {/* Price & Strikethrough */}
             <div className="flex items-baseline gap-1.5">
               <span className="text-base sm:text-lg font-black text-white tracking-tight">
-                {course.price}
+                {course.price ? (String(course.price).includes("/yr") || String(course.price).includes("/year") ? course.price : `${course.price}/yr`) : "₹100/yr"}
               </span>
               {originalPrice && (
                 <span className="text-[11px] sm:text-xs text-slate-500 line-through font-medium">
@@ -236,6 +239,13 @@ const CourseCard = ({ course }) => {
           )}
         </div>
       </div>
+
+      <PlanSelectionModal
+        isOpen={showPlansModal}
+        onClose={() => setShowPlansModal(false)}
+        course={course}
+        onSelectPlan={handleSelectPlan}
+      />
     </div>
   );
 };
