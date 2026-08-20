@@ -43,7 +43,6 @@ const SkeletonCard = () => (
 );
 
 const ALL = "All";
-const ALL_SUBJECTS = "All Subjects";
 const ALL_BOARDS = "All Boards";
 
 const CLASSES = ["Class 9", "Class 10", "Class 11", "Class 12"];
@@ -54,120 +53,6 @@ const ALL_EXAMS = "All Exams";
 const isClassCategory = (category) => CLASSES.includes(category);
 const isCompetitiveCourse = (course) =>
   Boolean(course.category) && !isClassCategory(course.category);
-
-const STANDARD_CLASS_SUBJECTS = {
-  "Class 9": [
-    "Mathematics",
-    "Science",
-    "Social Science",
-    "English",
-    "Hindi",
-    "Physics",
-    "Chemistry",
-    "Biology",
-    "History",
-    "Geography",
-    "Information Technology",
-    "Computer Applications",
-    "Computer Science",
-    "Artificial Intelligence",
-    "Sanskrit",
-    "Economics",
-  ],
-  "Class 10": [
-    "Mathematics",
-    "Science",
-    "Social Science",
-    "English",
-    "Hindi",
-    "Physics",
-    "Chemistry",
-    "Biology",
-    "History",
-    "Geography",
-    "Information Technology",
-    "Computer Applications",
-    "Computer Science",
-    "Artificial Intelligence",
-    "Sanskrit",
-    "Economics",
-  ],
-  "Class 11": [
-    "Physics",
-    "Chemistry",
-    "Mathematics",
-    "Biology",
-    "English",
-    "Hindi",
-    "Accountancy",
-    "Business Studies",
-    "Economics",
-    "History",
-    "Political Science",
-    "Geography",
-    "Computer Science",
-    "Informatics Practices",
-    "Physical Education",
-    "Sociology",
-    "Psychology",
-    "Sanskrit",
-    "Legal Studies",
-    "Entrepreneurship",
-  ],
-  "Class 12": [
-    "Physics",
-    "Chemistry",
-    "Mathematics",
-    "Biology",
-    "English",
-    "Hindi",
-    "Accountancy",
-    "Business Studies",
-    "Economics",
-    "History",
-    "Political Science",
-    "Geography",
-    "Computer Science",
-    "Informatics Practices",
-    "Physical Education",
-    "Sociology",
-    "Psychology",
-    "Sanskrit",
-    "Legal Studies",
-    "Entrepreneurship",
-  ],
-};
-
-const STANDARD_EXAM_SUBJECTS = {
-  NEET: ["Physics", "Chemistry", "Biology", "Botany", "Zoology"],
-  "JEE Main": ["Physics", "Chemistry", "Mathematics"],
-  "JEE Advanced": ["Physics", "Chemistry", "Mathematics"],
-  NDA: ["Mathematics", "General Ability", "English", "General Knowledge"],
-  CUET: ["Domain Subjects", "General Test", "English", "Hindi"],
-};
-
-const isExcludedSubject = (val) => {
-  if (!val || typeof val !== "string") return true;
-  const clean = val.trim();
-  if (!clean) return true;
-  const lower = clean.toLowerCase();
-  if (
-    lower === "all" ||
-    lower === "general" ||
-    lower === "classes" ||
-    lower === "courses"
-  )
-    return true;
-  if (CLASSES.some((c) => c.toLowerCase() === lower)) return true;
-  if (
-    lower.includes("complete bundle") ||
-    lower.includes("bundle") ||
-    lower.startsWith("class ")
-  )
-    return true;
-  if (["cbse", "icse", "mp board", "mpbse", "isc"].includes(lower)) return true;
-  return false;
-};
 
 const ALL_LANGUAGES = "Multilanguage";
 const LANGUAGE_OPTIONS = ["English", "Hindi"];
@@ -195,7 +80,6 @@ const Courses = () => {
   const [selectedCourseType, setSelectedCourseType] = useState(TYPE_ALL);
   const [selectedClass, setSelectedClass] = useState(ALL);
   const [selectedExam, setSelectedExam] = useState(ALL_EXAMS);
-  const [selectedSubject, setSelectedSubject] = useState(ALL_SUBJECTS);
   const [selectedBoard, setSelectedBoard] = useState(ALL_BOARDS);
   const [selectedLanguage, setSelectedLanguage] = useState(ALL_LANGUAGES);
 
@@ -221,17 +105,14 @@ const Courses = () => {
     setSelectedClass(ALL);
     setSelectedExam(ALL_EXAMS);
     setSelectedBoard(ALL_BOARDS);
-    setSelectedSubject(ALL_SUBJECTS);
   };
 
   const handleClassChange = (cls) => {
     setSelectedClass(cls);
-    setSelectedSubject(ALL_SUBJECTS);
   };
 
   const handleExamChange = (exam) => {
     setSelectedExam(exam);
-    setSelectedSubject(ALL_SUBJECTS);
   };
 
   // ── Derived filter options — recomputed only when courses change ──────────
@@ -260,75 +141,6 @@ const Courses = () => {
     [allCourses],
   );
 
-  const dynamicSubjects = useMemo(() => {
-    const scopedCourses = allCourses.filter((course) => {
-      const typeMatch =
-        selectedCourseType === TYPE_ALL
-          ? true
-          : selectedCourseType === TYPE_CLASSES
-            ? isClassCategory(course.category)
-            : isCompetitiveCourse(course);
-
-      const classMatch =
-        selectedCourseType === TYPE_COMPETITIVE
-          ? selectedExam === ALL_EXAMS || course.category === selectedExam
-          : selectedClass === ALL || course.category === selectedClass;
-
-      return typeMatch && classMatch;
-    });
-
-    const subjects = new Set();
-
-    scopedCourses.forEach((course) => {
-      if (Array.isArray(course.subjects)) {
-        course.subjects.forEach((s) => {
-          if (!isExcludedSubject(s)) subjects.add(s.trim());
-        });
-      }
-      if (Array.isArray(course.tags)) {
-        course.tags.forEach((tag) => {
-          if (!isExcludedSubject(tag)) subjects.add(tag.trim());
-        });
-      }
-      if (Array.isArray(course.lessons)) {
-        course.lessons.forEach((l) => {
-          if (!isExcludedSubject(l?.subject)) subjects.add(l.subject.trim());
-        });
-      }
-      if (course.title && !isExcludedSubject(course.title)) {
-        const titleTrimmed = course.title.trim();
-        const allStandard = [
-          ...Object.values(STANDARD_CLASS_SUBJECTS).flat(),
-          ...Object.values(STANDARD_EXAM_SUBJECTS).flat(),
-        ];
-        const match = allStandard.find(
-          (s) => s.toLowerCase() === titleTrimmed.toLowerCase(),
-        );
-        if (match) {
-          subjects.add(match);
-        }
-      }
-    });
-
-    if (selectedClass !== ALL && STANDARD_CLASS_SUBJECTS[selectedClass]) {
-      STANDARD_CLASS_SUBJECTS[selectedClass].forEach((s) => subjects.add(s));
-    } else if (
-      selectedExam !== ALL_EXAMS &&
-      STANDARD_EXAM_SUBJECTS[selectedExam]
-    ) {
-      STANDARD_EXAM_SUBJECTS[selectedExam].forEach((s) => subjects.add(s));
-    } else if (
-      selectedCourseType === TYPE_CLASSES ||
-      selectedCourseType === TYPE_ALL
-    ) {
-      Object.values(STANDARD_CLASS_SUBJECTS)
-        .flat()
-        .forEach((s) => subjects.add(s));
-    }
-
-    return Array.from(subjects).sort((a, b) => a.localeCompare(b));
-  }, [allCourses, selectedCourseType, selectedClass, selectedExam]);
-
   const dynamicBoards = useMemo(
     () => [...new Set(allCourses.map((c) => c.board).filter(Boolean))],
     [allCourses],
@@ -356,16 +168,6 @@ const Courses = () => {
           ? selectedExam === ALL_EXAMS || course.category === selectedExam
           : selectedClass === ALL || course.category === selectedClass;
 
-      // Subject match (lightweight checks only — avoid iterating lessons/tags unless necessary)
-      const titleLower = (course.title || "").toLowerCase();
-      const summaryLower = (course.summary || "").toLowerCase();
-      const subjectLower = (selectedSubject || "").toLowerCase();
-
-      const subjectMatch =
-        selectedSubject === ALL_SUBJECTS ||
-        titleLower.includes(subjectLower) ||
-        summaryLower.includes(subjectLower);
-
       // Board match
       const boardMatch =
         selectedCourseType === TYPE_COMPETITIVE
@@ -379,7 +181,7 @@ const Courses = () => {
         (course.language || "").toLowerCase() ===
           (selectedLanguage || "").toLowerCase();
 
-      return typeMatch && classMatch && subjectMatch && boardMatch && languageMatch;
+      return typeMatch && classMatch && boardMatch && languageMatch;
     };
 
     // First, try to pick one course per standard class (Class 9..12)
@@ -411,7 +213,6 @@ const Courses = () => {
     selectedCourseType,
     selectedClass,
     selectedExam,
-    selectedSubject,
     selectedBoard,
     selectedLanguage,
   ]);
@@ -527,7 +328,7 @@ const Courses = () => {
         </div>
 
         {/* Filters Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mb-6 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900/50 border border-slate-800/80">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3 mb-6 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900/50 border border-slate-800/80">
           {selectedCourseType === TYPE_COMPETITIVE ? (
             <div className="min-w-0">
               <label className="block text-[10px] font-bold uppercase tracking-wider text-indigo-300/90 mb-1 truncate">
@@ -589,36 +390,6 @@ const Courses = () => {
               </div>
             </div>
           )}
-
-          <div className="min-w-0">
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-cyan-300/90 mb-1 truncate">
-              {t("courses.select_subject")}
-            </label>
-            <div className="relative min-w-0">
-              <select
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                className="w-full bg-[#090e1a] border border-slate-700/70 hover:border-cyan-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-2 text-xs appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
-              >
-                <option key={ALL_SUBJECTS} value={ALL_SUBJECTS}>
-                  {t("courses.allSubjects")}
-                </option>
-                {dynamicSubjects.map((subject) => (
-                  <option key={subject} value={subject}>
-                    {subject}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                <svg
-                  className="w-3.5 h-3.5 fill-current opacity-70"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                </svg>
-              </div>
-            </div>
-          </div>
 
           {selectedCourseType !== TYPE_COMPETITIVE && (
             <div className="min-w-0">
@@ -687,7 +458,6 @@ const Courses = () => {
         {(selectedCourseType !== TYPE_ALL ||
           selectedClass !== ALL ||
           selectedExam !== ALL_EXAMS ||
-          selectedSubject !== ALL_SUBJECTS ||
           selectedBoard !== ALL_BOARDS ||
           selectedLanguage !== ALL_LANGUAGES) && (
           <div className="flex flex-wrap items-center gap-2 mb-8 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-slate-900/80 border border-slate-800 text-xs">
@@ -719,17 +489,6 @@ const Courses = () => {
                 Exam: {selectedExam}
                 <button
                   onClick={() => handleExamChange(ALL_EXAMS)}
-                  className="hover:text-white font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            {selectedSubject !== ALL_SUBJECTS && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 font-medium">
-                Subject: {selectedSubject}
-                <button
-                  onClick={() => setSelectedSubject(ALL_SUBJECTS)}
                   className="hover:text-white font-bold"
                 >
                   ✕
