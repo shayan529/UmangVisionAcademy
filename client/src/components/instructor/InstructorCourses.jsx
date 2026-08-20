@@ -781,8 +781,6 @@ const FileUploader = ({
     setProgress(0);
     onUploaded("");
     if (inputRef.current) inputRef.current.value = "";
-  };
-
   return (
     <div>
       <label
@@ -1164,6 +1162,7 @@ function NotesManager({ notes = [], onChange, showToast }) {
       showToast?.("Only PDF files are allowed for notes.");
       return;
     }
+
     // Reset the input so the same file can be re-selected after a remove
     if (fileInputRef.current) fileInputRef.current.value = "";
     setUploading(true);
@@ -1468,7 +1467,7 @@ function QuizManager({
       }),
     );
 
-  const generateWithAI = async () => {
+  const handleGenerateWithAI = async () => {
     if (!courseTitle?.trim() || !courseDescription?.trim()) {
       showToast?.("Add a Subject and Description before generating with AI.");
       return;
@@ -1498,6 +1497,8 @@ function QuizManager({
     } finally {
       setAiLoading(false);
     }
+  };
+
   };
 
   return (
@@ -1539,7 +1540,7 @@ function QuizManager({
         </div>
         <button
           type="button"
-          onClick={generateWithAI}
+          onClick={handleGenerateWithAI}
           disabled={aiLoading}
           style={{
             display: "flex",
@@ -1666,7 +1667,7 @@ function QuizManager({
                 </button>
                 <button
                   type="button"
-                  onClick={generateWithAI}
+                  onClick={handleGenerateWithAI}
                   disabled={aiLoading}
                   style={{
                     display: "flex",
@@ -2551,6 +2552,24 @@ const CourseForm = ({
 }) => {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const courseType = form.courseType || "classes";
+  const { loading: aiLoading, generateCourseText } = useCourseTextGenerator({ showToast });
+
+  const handleGenerate = async () => {
+    const data = await generateCourseText({
+      subject: form.subject,
+      className: courseType === "classes" ? form.className : "",
+      board: courseType === "classes" ? form.board : "",
+      examName: courseType === "competitive" ? form.examName : "",
+      language: form.language,
+      type: courseType,
+    });
+    if (!data) return;
+    setForm((f) => ({
+      ...f,
+      description: data.description || f.description,
+      content: data.content || f.content,
+    }));
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -2663,12 +2682,14 @@ const CourseForm = ({
       />
 
       <Field label="Description" hint="* (course summary)">
-        <Textarea
-          value={form.description}
-          onChange={set("description")}
-          placeholder="Brief description"
-          rows={3}
-        />
+        <AITextGeneratorPanel loading={aiLoading} onGenerate={handleGenerate}>
+          <Textarea
+            value={form.description}
+            onChange={set("description")}
+            placeholder="Brief description"
+            rows={3}
+          />
+        </AITextGeneratorPanel>
       </Field>
       <Field label="Subject Content" hint="(chapters, topics)">
         <Textarea
@@ -2823,6 +2844,7 @@ const BulkCourseForm = ({
   const setMeta = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const [collapsedItems, setCollapsedItems] = useState({});
+  const { loading: aiLoading, generateCourseText } = useCourseTextGenerator({ showToast });
   const toggleCollapse = (idx) =>
     setCollapsedItems((prev) => ({ ...prev, [idx]: !prev[idx] }));
 
@@ -3210,14 +3232,35 @@ const BulkCourseForm = ({
                   />
 
                   <Field label="Description" hint="* (course summary)">
-                    <Textarea
-                      value={item.description}
-                      onChange={(e) =>
-                        updateItem(idx, "description", e.target.value)
-                      }
-                      placeholder="Brief description"
-                      rows={3}
-                    />
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                        <AIGenerateButton
+                          loading={aiLoading}
+                          onClick={async () => {
+                            const data = await generateCourseText({
+                              subject: item.subject,
+                              className: form.className,
+                              board: form.board,
+                              language: form.language,
+                              type: "classes",
+                            });
+                            if (!data) return;
+                            updateItem(idx, "description", data.description || item.description);
+                            updateItem(idx, "content", data.content || item.content);
+                          }}
+                        >
+                          Generate with AI
+                        </AIGenerateButton>
+                      </div>
+                      <Textarea
+                        value={item.description}
+                        onChange={(e) =>
+                          updateItem(idx, "description", e.target.value)
+                        }
+                        placeholder="Brief description"
+                        rows={3}
+                      />
+                    </div>
                   </Field>
                   <Field label="Subject Content" hint="(chapters, topics)">
                     <Textarea

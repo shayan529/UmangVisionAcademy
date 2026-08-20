@@ -582,6 +582,72 @@ Each question must have exactly 4 options and a correctOptionIndex between 0 and
   }
 };
 
+export const generateCourseTextAI = async (req, res) => {
+  try {
+    const { subject, className, board, examName, language, type } = req.body;
+    if (!subject) {
+      return res.status(400).json({ message: 'Subject is required.' });
+    }
+
+    const courseLabel =
+      type === 'competitive'
+        ? `Competitive exam: ${examName || 'General'}`
+        : `Class: ${className || 'General'}${board ? `, Board: ${board}` : ''}`;
+    const targetLanguage = language || 'English';
+
+    const prompt = `Generate course copy for an EdTech instructor form.
+
+Subject: ${subject}
+${courseLabel}
+Language: ${targetLanguage}
+
+Return ONLY valid JSON in this exact shape:
+{
+  "description": "2-4 concise sentences describing the course overview, learning goals, and value to students.",
+  "content": "A structured outline with 4-6 lines. Use chapter/topic style entries. If helpful, include numbered items or bullet-like lines separated by newline characters."
+}
+
+Rules:
+- Keep the description polished and marketing-friendly.
+- Keep the subject content practical and syllabus-oriented.
+- Match the selected language naturally.
+- Do not include markdown fences or any extra keys.`;
+
+    const response = await createGroqChatCompletion({
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT_INSTRUCTOR },
+        { role: 'user', content: prompt },
+      ],
+      max_tokens: 500,
+      temperature: 0.6,
+      response_format: { type: 'json_object' },
+    });
+
+    const raw = response.choices?.[0]?.message?.content?.trim() ?? '{}';
+    let parsed = {};
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      const cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+      parsed = JSON.parse(cleaned);
+    }
+
+    const description = typeof parsed.description === 'string' ? parsed.description.trim() : '';
+    const content = typeof parsed.content === 'string' ? parsed.content.trim() : '';
+
+    if (!description || !content) {
+      return res.status(500).json({ message: 'AI did not return valid course text.' });
+    }
+
+    return res.json({ description, content });
+  } catch (err) {
+    console.error('AI course text generation error:', err);
+    return res.status(500).json({
+      message: err.response?.data?.message || err.message || 'Course text generation failed.',
+    });
+  }
+};
+
 export const generateMockTestQuestionsAI = async (req, res) => {
   try {
     const { subject, className, board, difficulty, topic, count } = req.body;
