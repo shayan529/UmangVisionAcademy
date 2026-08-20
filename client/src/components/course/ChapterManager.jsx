@@ -1,5 +1,11 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { uploadFile } from "../../utils/uploadFile.js";
+import {
+  normalizeVideoUrl,
+  isEmbedVideo,
+  getEmbedUrl,
+} from "../../utils/media.js";
 
 // ── shared primitives (duplicated from parent for standalone use) ──────────────
 const iStyle = {
@@ -25,6 +31,187 @@ const EMPTY_LESSON = {
   pdfUrl: "",
   description: "",
 };
+
+// ── VideoModalPlayer ─────────────────────────────────────────────────────────
+function VideoModalPlayer({ url, title, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  if (!url) return null;
+
+  const isEmbed = isEmbedVideo(url);
+  const embedUrl = isEmbed ? getEmbedUrl(url) : "";
+  const directUrl = normalizeVideoUrl(url);
+
+  return createPortal(
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0, 0, 0, 0.85)",
+        backdropFilter: "blur(8px)",
+        zIndex: 99999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "min(840px, 96vw)",
+          background: "#0d1526",
+          border: "1px solid #1e293b",
+          borderRadius: 16,
+          boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          animation: "fadeIn 0.2s ease",
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "12px 18px",
+            background: "#080e1a",
+            borderBottom: "1px solid #1e293b",
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              minWidth: 0,
+              flex: 1,
+            }}
+          >
+            <span style={{ fontSize: 16, flexShrink: 0 }}>🎬</span>
+            <p
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#f1f5f9",
+                margin: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+              title={title || "Video Preview"}
+            >
+              {title || "Video Preview"}
+            </p>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexShrink: 0,
+            }}
+          >
+            <a
+              href={directUrl || url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#818cf8",
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "4px 10px",
+                borderRadius: 6,
+                background: "rgba(99,102,241,0.12)",
+                border: "1px solid rgba(99,102,241,0.25)",
+              }}
+            >
+              Open in tab ↗
+            </a>
+            <button
+              onClick={onClose}
+              type="button"
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 6,
+                background: "#1e293b",
+                border: "none",
+                color: "#94a3b8",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Video Body */}
+        <div
+          style={{
+            position: "relative",
+            background: "#000",
+            minHeight: 280,
+            maxHeight: "75vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {isEmbed ? (
+            <iframe
+              src={embedUrl}
+              title={title || "Video Preview"}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              style={{
+                width: "100%",
+                aspectRatio: "16/9",
+                minHeight: 380,
+                border: "none",
+              }}
+            />
+          ) : (
+            <video
+              src={directUrl}
+              controls
+              autoPlay
+              playsInline
+              style={{
+                width: "100%",
+                maxHeight: "70vh",
+                display: "block",
+                background: "#000",
+              }}
+            >
+              Your browser does not support the video tag.
+            </video>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
 
 // ── VideoTypeToggle ───────────────────────────────────────────────────────────
 const VideoTypeToggle = ({ value = "video", onChange }) => (
@@ -130,6 +317,7 @@ const VideoUploadCell = ({ value, onUploaded, videoType = "video" }) => {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
   const fileInputRef = useRef(null);
 
   const isAnimated = videoType === "animated_video";
@@ -163,69 +351,114 @@ const VideoUploadCell = ({ value, onUploaded, videoType = "video" }) => {
     await handleUpload(file);
   };
 
-  // Uploaded state — show filename/url with a remove button
+  // Uploaded state — show filename/url with View and Remove buttons
   if (value && !uploading) {
     const displayName = value.split("/").pop() || value;
     return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "10px 14px",
-          background: isAnimated ? "rgba(124, 58, 237, 0.08)" : "#0b1120",
-          border: `1px solid ${isAnimated ? "rgba(236, 72, 153, 0.3)" : "#1e293b"}`,
-          borderRadius: 10,
-        }}
-      >
-        <span style={{ fontSize: 16 }}>{isAnimated ? "✨" : "🎬"}</span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span
-              style={{
-                fontSize: 12,
-                color: isAnimated ? "#f472b6" : "#a78bfa",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                fontWeight: 600,
-              }}
-            >
-              {displayName}
-            </span>
-            <span
-              style={{
-                fontSize: 9,
-                fontWeight: 800,
-                padding: "2px 6px",
-                borderRadius: 4,
-                textTransform: "uppercase",
-                background: isAnimated
-                  ? "linear-gradient(135deg, #7c3aed, #ec4899)"
-                  : "#1e293b",
-                color: "#ffffff",
-              }}
-            >
-              {isAnimated ? "Animated Video" : "Video"}
-            </span>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => onUploaded("")}
+      <>
+        <div
           style={{
-            background: "none",
-            border: "none",
-            color: "#f87171",
-            cursor: "pointer",
-            fontSize: 13,
-            padding: 0,
-            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "10px 14px",
+            background: isAnimated ? "rgba(124, 58, 237, 0.08)" : "#0b1120",
+            border: `1px solid ${isAnimated ? "rgba(236, 72, 153, 0.3)" : "#1e293b"}`,
+            borderRadius: 10,
           }}
         >
-          ✕ Remove
-        </button>
-      </div>
+          <span style={{ fontSize: 16 }}>{isAnimated ? "✨" : "🎬"}</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span
+                style={{
+                  fontSize: 12,
+                  color: isAnimated ? "#f472b6" : "#a78bfa",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  fontWeight: 600,
+                }}
+                title={displayName}
+              >
+                {displayName}
+              </span>
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 800,
+                  padding: "2px 6px",
+                  borderRadius: 4,
+                  textTransform: "uppercase",
+                  background: isAnimated
+                    ? "linear-gradient(135deg, #7c3aed, #ec4899)"
+                    : "#1e293b",
+                  color: "#ffffff",
+                  flexShrink: 0,
+                }}
+              >
+                {isAnimated ? "Animated Video" : "Video"}
+              </span>
+            </div>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexShrink: 0,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setShowPreview(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                background: "rgba(99, 102, 241, 0.15)",
+                border: "1px solid rgba(99, 102, 241, 0.35)",
+                color: "#a5b4fc",
+                cursor: "pointer",
+                fontSize: 11,
+                fontWeight: 700,
+                padding: "3px 9px",
+                borderRadius: 6,
+                transition: "all 0.15s",
+              }}
+              title="Preview / Play Video"
+            >
+              👁️ View
+            </button>
+            <button
+              type="button"
+              onClick={() => onUploaded("")}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#f87171",
+                cursor: "pointer",
+                fontSize: 13,
+                padding: "3px 4px",
+                flexShrink: 0,
+                fontWeight: 600,
+              }}
+              title="Remove video"
+            >
+              ✕ Remove
+            </button>
+          </div>
+        </div>
+
+        {/* Video Preview Modal */}
+        {showPreview && (
+          <VideoModalPlayer
+            url={value}
+            title={displayName}
+            onClose={() => setShowPreview(false)}
+          />
+        )}
+      </>
     );
   }
 
