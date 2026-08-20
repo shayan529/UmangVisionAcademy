@@ -522,11 +522,10 @@ const Courses = () => {
                 handleCourseTypeChange(TYPE_ALL);
                 setSelectedClass(ALL);
                 setSelectedExam(ALL_EXAMS);
-                setSelectedSubject(ALL_SUBJECTS);
                 setSelectedBoard(ALL_BOARDS);
                 setSelectedLanguage(ALL_LANGUAGES);
               }}
-              className="text-cyan-400 hover:text-cyan-300 font-bold underline ml-auto text-xs"
+              className="text-cyan-400 hover:text-cyan-300 font-bold underline ml-auto text-xs cursor-pointer"
             >
               Reset All
             </button>
@@ -588,7 +587,6 @@ const Courses = () => {
             {(selectedCourseType !== TYPE_ALL ||
               selectedClass !== ALL ||
               selectedExam !== ALL_EXAMS ||
-              selectedSubject !== ALL_SUBJECTS ||
               selectedBoard !== ALL_BOARDS ||
               selectedLanguage !== ALL_LANGUAGES) && (
               <button
@@ -596,11 +594,10 @@ const Courses = () => {
                   setSelectedCourseType(TYPE_ALL);
                   setSelectedClass(ALL);
                   setSelectedExam(ALL_EXAMS);
-                  setSelectedSubject(ALL_SUBJECTS);
                   setSelectedBoard(ALL_BOARDS);
                   setSelectedLanguage(ALL_LANGUAGES);
                 }}
-                className="mt-6 px-6 py-2 rounded-xl border border-indigo-500/30 text-indigo-400 text-sm font-semibold hover:bg-indigo-500/10 transition"
+                className="mt-6 px-6 py-2 rounded-xl border border-indigo-500/30 text-indigo-400 text-sm font-semibold hover:bg-indigo-500/10 transition cursor-pointer"
               >
                 {t("courses.clearFilters")}
               </button>
@@ -608,7 +605,7 @@ const Courses = () => {
           </div>
         )}
 
-        {filteredCourses.length > featuredList.length && (
+        {allCourses.length > featuredList.length && (
           <div className="flex justify-center mt-10">
             <button
               onClick={() => navigate("/courses")}

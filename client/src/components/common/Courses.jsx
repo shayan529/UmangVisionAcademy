@@ -676,15 +676,8 @@ const Courses = () => {
               </span>
             )}
             <button
-              onClick={() => {
-                handleCourseTypeChange(TYPE_ALL);
-                setSelectedClass(ALL);
-                setSelectedExam(ALL_EXAMS);
-                setSelectedSubject(ALL_SUBJECTS);
-                setSelectedBoard(ALL_BOARDS);
-                setSelectedLanguage(ALL_LANGUAGES);
-              }}
-              className="text-cyan-400 hover:text-cyan-300 font-bold underline ml-auto text-xs"
+              onClick={clearFilters}
+              className="text-cyan-400 hover:text-cyan-300 font-bold underline ml-auto text-xs cursor-pointer"
             >
               Reset All
             </button>
