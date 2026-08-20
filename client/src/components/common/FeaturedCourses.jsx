@@ -200,8 +200,20 @@ const Courses = () => {
   const [selectedLanguage, setSelectedLanguage] = useState(ALL_LANGUAGES);
 
   useEffect(() => {
-    dispatch(fetchPublishedCourses());
-    if (user?._id) dispatch(fetchEnrolledCourses());
+    // Defer heavy fetch work to idle time so initial paint is fast on low-end devices
+    const load = () => {
+      dispatch(fetchPublishedCourses());
+      if (user?._id) dispatch(fetchEnrolledCourses());
+    };
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(load, { timeout: 2000 });
+      return () => window.cancelIdleCallback && window.cancelIdleCallback(id);
+    }
+
+    // Fallback: small timeout so browser can finish first paint
+    const t = setTimeout(load, 600);
+    return () => clearTimeout(t);
   }, [dispatch, user?._id]);
 
   const handleCourseTypeChange = (type) => {
@@ -322,100 +334,87 @@ const Courses = () => {
     [allCourses],
   );
 
-  // ── Filtered list ─────────────────────────────────────────────────────────
-  const filteredCourses = useMemo(
-    () =>
-      allCourses.filter((course) => {
-        const typeMatch =
-          selectedCourseType === TYPE_ALL
-            ? true
-            : selectedCourseType === TYPE_CLASSES
-              ? isClassCategory(course.category)
-              : isCompetitiveCourse(course);
-
-        const classMatch =
-          selectedCourseType === TYPE_COMPETITIVE
-            ? selectedExam === ALL_EXAMS || course.category === selectedExam
-            : selectedClass === ALL || course.category === selectedClass;
-
-        const courseSubjects = [
-          ...(course.subjects ?? []),
-          ...(course.tags ?? []).filter(Boolean),
-          ...(course.lessons
-            ? course.lessons.map((l) => l.subject).filter(Boolean)
-            : []),
-          course.title,
-        ]
-          .filter(Boolean)
-          .map((value) => value.trim().toLowerCase());
-
-        const isBundle =
-          course.title?.toLowerCase().includes("bundle") ||
-          course.summary?.toLowerCase().includes("bundle");
-
-        const subjectMatch =
-          selectedSubject === "All Subjects" ||
-          courseSubjects.includes(selectedSubject.trim().toLowerCase()) ||
-          course.title?.toLowerCase().includes(selectedSubject.toLowerCase()) ||
-          course.summary?.toLowerCase().includes(selectedSubject.toLowerCase()) ||
-          (isBundle &&
-            (selectedClass === ALL || course.category === selectedClass));
-
-        // Board doesn't apply to competitive-exam courses.
-        const boardMatch =
-          selectedCourseType === TYPE_COMPETITIVE
-            ? true
-            : selectedBoard === "All Boards" || course.board === selectedBoard;
-
-        // A course with no language tag is treated as available in every
-        // language, so it still shows up under English or Hindi filters.
-        const languageMatch =
-          selectedLanguage === ALL_LANGUAGES ||
-          !course.language ||
-          course.language.toLowerCase() === selectedLanguage.toLowerCase();
-
-        return (
-          typeMatch && classMatch && subjectMatch && boardMatch && languageMatch
-        );
-      }),
-    [
-      allCourses,
-      selectedCourseType,
-      selectedClass,
-      selectedExam,
-      selectedSubject,
-      selectedBoard,
-      selectedLanguage,
-    ],
-  );
-
+  // Lightweight featured list: scan courses and stop after collecting 4 matches.
+  // Avoid building large intermediate arrays (filteredCourses) which can be
+  // expensive on low-end devices when `allCourses` is large.
   const featuredList = useMemo(() => {
-    const selected = [];
+    const result = [];
     const classesSeen = new Set();
 
-    // First, try to find one course for each class (Class 9, 10, 11, 12)
-    for (const cls of CLASSES) {
-      const courseForClass = filteredCourses.find((c) => c.category === cls);
-      if (courseForClass) {
-        selected.push(courseForClass);
-        classesSeen.add(cls);
-      }
-    }
+    const addIfMatches = (course) => {
+      // Type match
+      const typeMatch =
+        selectedCourseType === TYPE_ALL
+          ? true
+          : selectedCourseType === TYPE_CLASSES
+            ? isClassCategory(course.category)
+            : isCompetitiveCourse(course);
 
-    // If we have fewer than 4 courses, fill the rest with any remaining courses from filteredCourses (avoiding duplicates)
-    if (selected.length < 4) {
-      const selectedIds = new Set(selected.map((c) => c._id?.toString()));
-      for (const course of filteredCourses) {
-        if (selected.length >= 4) break;
-        if (!selectedIds.has(course._id?.toString())) {
-          selected.push(course);
-          selectedIds.add(course._id?.toString());
+      // Class/Exam match
+      const classMatch =
+        selectedCourseType === TYPE_COMPETITIVE
+          ? selectedExam === ALL_EXAMS || course.category === selectedExam
+          : selectedClass === ALL || course.category === selectedClass;
+
+      // Subject match (lightweight checks only — avoid iterating lessons/tags unless necessary)
+      const titleLower = (course.title || "").toLowerCase();
+      const summaryLower = (course.summary || "").toLowerCase();
+      const subjectLower = (selectedSubject || "").toLowerCase();
+
+      const subjectMatch =
+        selectedSubject === ALL_SUBJECTS ||
+        titleLower.includes(subjectLower) ||
+        summaryLower.includes(subjectLower);
+
+      // Board match
+      const boardMatch =
+        selectedCourseType === TYPE_COMPETITIVE
+          ? true
+          : selectedBoard === ALL_BOARDS || course.board === selectedBoard;
+
+      // Language match
+      const languageMatch =
+        selectedLanguage === ALL_LANGUAGES ||
+        !course.language ||
+        (course.language || "").toLowerCase() ===
+          (selectedLanguage || "").toLowerCase();
+
+      return typeMatch && classMatch && subjectMatch && boardMatch && languageMatch;
+    };
+
+    // First, try to pick one course per standard class (Class 9..12)
+    for (const cls of CLASSES) {
+      for (const course of allCourses) {
+        if (result.length >= 4) break;
+        if (classesSeen.has(cls)) break;
+        if (course.category === cls && addIfMatches(course)) {
+          result.push(course);
+          classesSeen.add(cls);
         }
       }
     }
 
-    return selected.slice(0, 4);
-  }, [filteredCourses]);
+    // Fill remaining slots with the first matching courses (avoid duplicates)
+    const selectedIds = new Set(result.map((c) => c._id?.toString()));
+    for (const course of allCourses) {
+      if (result.length >= 4) break;
+      if (selectedIds.has(course._id?.toString())) continue;
+      if (addIfMatches(course)) {
+        result.push(course);
+        selectedIds.add(course._id?.toString());
+      }
+    }
+
+    return result.slice(0, 4);
+  }, [
+    allCourses,
+    selectedCourseType,
+    selectedClass,
+    selectedExam,
+    selectedSubject,
+    selectedBoard,
+    selectedLanguage,
+  ]);
   const isEnrolled = (course) => {
     if (!user) return false;
 
