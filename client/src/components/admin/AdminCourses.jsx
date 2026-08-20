@@ -758,23 +758,39 @@ function CourseDrawer({
   const isBulkCourse =
     (course.lessons ?? []).some((l) => l.subject) ||
     (course.notes ?? []).some((n) => n.subject) ||
-    (course.subjectQuizzes ?? []).length > 0;
+    (course.subjectQuizzes ?? []).length > 0 ||
+    (course.subjectDetails ?? []).length > 0;
 
   const subjects = isBulkCourse
     ? Array.from(
         new Set([
+          ...(course.subjectDetails ?? []).map((s) => s.title).filter(Boolean),
           ...(course.lessons ?? []).map((l) => l.subject).filter(Boolean),
           ...(course.notes ?? []).map((n) => n.subject).filter(Boolean),
         ]),
-      ).map((subj) => ({
-        name: subj,
-        lessons: (course.lessons ?? [])
-          .map((l, i) => ({ ...l, _globalIndex: i }))
-          .filter((l) => l.subject === subj),
-        notes: (course.notes ?? [])
-          .map((n, i) => ({ ...n, _globalIndex: i }))
-          .filter((n) => n.subject === subj),
-      }))
+      ).map((subj) => {
+        const sDetail = (course.subjectDetails ?? []).find(
+          (s) => s.title === subj,
+        );
+        const directLessons = (course.lessons ?? []).filter(
+          (l) => l.subject === subj,
+        );
+        const detailLessons = sDetail?.lessons ?? [];
+        const subjLessons =
+          directLessons.length > 0 ? directLessons : detailLessons;
+
+        const directNotes = (course.notes ?? []).filter(
+          (n) => n.subject === subj,
+        );
+        const detailNotes = sDetail?.notes ?? [];
+        const subjNotes = directNotes.length > 0 ? directNotes : detailNotes;
+
+        return {
+          name: subj,
+          lessons: subjLessons.map((l, i) => ({ ...l, _globalIndex: i })),
+          notes: subjNotes.map((n, i) => ({ ...n, _globalIndex: i })),
+        };
+      })
     : [
         {
           name: "",
@@ -1142,17 +1158,31 @@ function CourseDrawer({
                           <span style={{ fontSize: 14, flexShrink: 0 }}>
                             {isVideo ? "🎬" : "📝"}
                           </span>
-                          <span
-                            style={{
-                              flex: 1,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              fontWeight: 500,
-                            }}
-                          >
-                            {l.title}
-                          </span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p
+                              style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                fontWeight: 500,
+                                margin: 0,
+                              }}
+                            >
+                              {l.title}
+                            </p>
+                            {l.chapterTitle && (
+                              <p
+                                style={{
+                                  fontSize: 10,
+                                  color: "#818cf8",
+                                  margin: "2px 0 0",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                📖 {l.chapterTitle}
+                              </p>
+                            )}
+                          </div>
                           <span
                             style={{
                               fontSize: 10,
@@ -3806,9 +3836,34 @@ export default function AdminCourses({
                         paddingTop: 8,
                         borderTop: "1px solid #1e293b",
                         justifyContent: "flex-end",
+                        alignItems: "center",
+                        flexWrap: "wrap",
                       }}
                       onClick={(e) => e.stopPropagation()}
                     >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelected(course);
+                        }}
+                        style={{
+                          padding: "7px 14px",
+                          borderRadius: 8,
+                          border: "1px solid #6366f1",
+                          background: "rgba(99,102,241,0.15)",
+                          color: "#a5b4fc",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          transition: "all 0.15s",
+                        }}
+                        title="View and preview course curriculum, lessons, notes & quizzes"
+                      >
+                        <Eye size={13} /> View Content
+                      </button>
                       {canEdit && (
                         <button
                           onClick={(e) => handleStartEdit(course, e)}
@@ -3823,10 +3878,11 @@ export default function AdminCourses({
                             cursor: "pointer",
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: 4,
+                            gap: 5,
+                            transition: "all 0.15s",
                           }}
                         >
-                          ✏️ Edit
+                          <Pencil size={12} /> Edit
                         </button>
                       )}
                       {canApprove && course.approvalStatus === "pending" && (
@@ -3849,9 +3905,14 @@ export default function AdminCourses({
                               fontWeight: 700,
                               cursor: "pointer",
                               textAlign: "center",
+                              transition: "all 0.15s",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 4,
                             }}
                           >
-                            Reject
+                            <X size={12} /> Reject
                           </button>
                           <button
                             onClick={(e) => {
@@ -3872,9 +3933,14 @@ export default function AdminCourses({
                               fontWeight: 700,
                               cursor: "pointer",
                               textAlign: "center",
+                              transition: "all 0.15s",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 4,
                             }}
                           >
-                            Approve
+                            <CheckCircle2 size={12} /> Approve
                           </button>
                         </>
                       )}
