@@ -455,52 +455,26 @@ export const getCourseByIdPublic = async (req, res) => {
 // ── getAllCoursesAdmin — returns ALL courses for admin review ─────────────────
 export const getAllCoursesAdmin = async (req, res) => {
   try {
-    const courses = await Course.aggregate([
-      { $sort: { createdAt: -1 } },
-      {
-        $lookup: {
-          from: "users",
-          localField: "instructor",
-          foreignField: "_id",
-          as: "instructor",
-        },
-      },
-      {
-        $unwind: {
-          path: "$instructor",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $project: {
-          title: 1,
-          summary: 1,
-          category: 1,
-          board: 1,
-          language: 1,
-          level: 1,
-          price: 1,
-          approvalStatus: 1,
-          published: 1,
-          createdAt: 1,
-          tags: 1,
-          durationHours: 1,
-          ratingAverage: 1,
-          reviewCount: 1,
-          thumbnailUrl: 1,
-          demoVideoUrl: 1,
-          instructor: {
-            _id: "$instructor._id",
-            name: "$instructor.name",
-            email: "$instructor.email",
-          },
-          studentsCount: { $size: { $ifNull: ["$students", []] } },
-          lessonCount: { $size: { $ifNull: ["$lessons", []] } },
-          noteCount: { $size: { $ifNull: ["$notes", []] } },
-        },
-      },
-    ]);
-    res.json(courses);
+    const courses = await Course.find({})
+      .populate("instructor", "name email")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json(
+      courses.map((c) => ({
+        ...shapeCourse(c),
+        instructor: c.instructor
+          ? {
+              _id: c.instructor._id,
+              name: c.instructor.name,
+              email: c.instructor.email,
+            }
+          : null,
+        studentsCount: c.students?.length ?? 0,
+        lessonCount: c.lessons?.length ?? 0,
+        noteCount: c.notes?.length ?? 0,
+      })),
+    );
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
