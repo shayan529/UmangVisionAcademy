@@ -12,7 +12,7 @@ import {
 import { updateSession } from "../../redux/slices/sessionSlice";
 import { uploadFile } from "../../utils/uploadFile.js";
 import ChapterManager from "../course/ChapterManager.jsx";
-import api from "../../config/api";
+import api, { API_ENDPOINTS } from "../../config/api";
 import {
   GraduationCap,
   Trophy,
@@ -1084,6 +1084,95 @@ const Sel = ({ value, onChange, options }) => {
     </select>
   );
 };
+
+// ── AI Course Text Generator Hook & UI Components ───────────────────────────
+const useCourseTextGenerator = ({ showToast } = {}) => {
+  const [loading, setLoading] = useState(false);
+
+  const generateCourseText = async ({
+    subject,
+    className,
+    board,
+    examName,
+    language,
+    type,
+  }) => {
+    if (!subject?.trim()) {
+      showToast?.("Please enter a subject name first to generate details with AI.");
+      return null;
+    }
+    setLoading(true);
+    try {
+      const { data } = await api.post(API_ENDPOINTS.AI.GENERATE_COURSE_TEXT, {
+        subject,
+        className,
+        board,
+        examName,
+        language,
+        type,
+      });
+      return data;
+    } catch (err) {
+      console.error("AI course text generation failed:", err);
+      showToast?.(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to generate course text with AI."
+      );
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { loading, generateCourseText };
+};
+
+const AIGenerateButton = ({
+  loading,
+  onClick,
+  children = "Generate with AI",
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={loading}
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 6,
+      background:
+        "linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(219, 39, 119, 0.25))",
+      border: "1px solid rgba(192, 132, 252, 0.4)",
+      color: "#f3e8ff",
+      borderRadius: 8,
+      padding: "6px 12px",
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: loading ? "not-allowed" : "pointer",
+      opacity: loading ? 0.7 : 1,
+      transition: "all 0.2s ease",
+    }}
+  >
+    {loading ? (
+      <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
+    ) : (
+      <Sparkles size={13} style={{ color: "#c084fc" }} />
+    )}
+    {loading ? "Generating…" : children}
+  </button>
+);
+
+const AITextGeneratorPanel = ({ loading, onGenerate, children }) => (
+  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <AIGenerateButton loading={loading} onClick={onGenerate}>
+        Generate with AI
+      </AIGenerateButton>
+    </div>
+    {children}
+  </div>
+);
 
 // ── CourseTypeSelector (circular toggle: Classes vs Competitive Exam) ────────
 const CourseTypeSelector = ({ value, onChange }) => {
