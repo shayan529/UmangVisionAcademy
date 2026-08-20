@@ -3534,6 +3534,9 @@ export default function InstructorCourses({
     }
 
     setView("list");
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 50);
   };
   const closeEdit = () => {
     setExpandedId(null);
@@ -4213,7 +4216,15 @@ export default function InstructorCourses({
               <div
                 style={{ display: "flex", flexDirection: "column", gap: 10 }}
               >
-                {filtered.map((course) => {
+                {[...filtered]
+                  .sort((a, b) => {
+                    if (expandedId) {
+                      if (a._id === expandedId) return -1;
+                      if (b._id === expandedId) return 1;
+                    }
+                    return 0;
+                  })
+                  .map((course) => {
                   const st = statusStyle(course);
                   const isOpen = expandedId === course._id;
                   return (
@@ -4398,7 +4409,7 @@ export default function InstructorCourses({
                               <Clock size={12} /> In review
                             </span>
                           )}
-                          {canEdit && course.approvalStatus !== "pending" && (
+                          {canEdit && (isAdmin || course.approvalStatus !== "pending") && (
                             <button
                               className="ic-btn"
                               onClick={() =>
