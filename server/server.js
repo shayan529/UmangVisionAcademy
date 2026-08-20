@@ -503,3 +503,4 @@ if (!isVercel) {
 
 // Export for Vercel Serverless (@vercel/node uses the default export)
 export default app;
+
