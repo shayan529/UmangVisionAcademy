@@ -148,25 +148,6 @@ export default function BillingPage() {
     planColors[subscription?.plan ?? selectedPlan?.id] ?? "#7c3aed";
   const days = daysLeft(subscription?.endDate);
 
-  const handleMockPay = async (plan) => {
-    if (!selectedClass) {
-      alert("Please select a class before purchasing the plan.");
-      return;
-    }
-
-    await dispatch(
-      verifyPayment({
-        razorpay_order_id: `mock_order_${Date.now()}`,
-        razorpay_payment_id: `mock_pay_${Date.now()}`,
-        razorpay_signature: "mock_signature",
-        planId: plan.id,
-        selectedClass,
-      }),
-    );
-    dispatch(fetchSubscription());
-    dispatch(loadCurrentUser());
-  };
-
   return (
     <>
       <SEO
@@ -650,26 +631,6 @@ export default function BillingPage() {
                             ? "Processing…"
                             : `Pay ${plan.price}`}
                         </button>
-                        {process.env.NODE_ENV !== "production" && (
-                          <button
-                            onClick={() => handleMockPay(plan)}
-                            disabled={orderLoading || paymentLoading}
-                            style={{
-                              width: "100%",
-                              marginTop: 8,
-                              padding: "10px",
-                              borderRadius: 12,
-                              border: `1px dashed ${plan.color}60`,
-                              background: "transparent",
-                              color: "#94a3b8",
-                              fontSize: 12,
-                              fontWeight: 600,
-                              cursor: "pointer",
-                            }}
-                          >
-                            🧪 Mock Pay (Test Only)
-                          </button>
-                        )}
                       </div>
                     );
                   })}
