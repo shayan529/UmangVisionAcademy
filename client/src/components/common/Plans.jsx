@@ -18,7 +18,7 @@ import {
 
 const BillingPage = lazy(() => import("../../pages/BillingPage"));
 
-const Plans = () => {
+const Plans = ({ showTable = true, showFaq = true, isHomePage = false }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,8 +68,8 @@ const Plans = () => {
   };
 
   return (
-    <section className="px-4 sm:px-6 md:px-10 py-10 sm:py-16 md:py-24 bg-[#0B1120] text-slate-100 min-h-screen font-sans">
-      <div className="max-w-7xl mx-auto space-y-12 sm:space-y-16 md:space-y-20">
+    <section className={`px-4 sm:px-6 md:px-10 ${isHomePage ? "py-12 sm:py-16" : "py-10 sm:py-16 md:py-24 min-h-screen"} bg-[#0B1120] text-slate-100 font-sans`}>
+      <div className={`max-w-7xl mx-auto ${isHomePage ? "space-y-8 sm:space-y-12" : "space-y-12 sm:space-y-16 md:space-y-20"}`}>
         {/* ── Top Header ── */}
         <div className="text-center max-w-3xl mx-auto space-y-3 sm:space-y-4">
           <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 via-indigo-500/20 to-purple-500/20 border border-white/10 text-amber-300 text-[10.5px] sm:text-xs font-black uppercase tracking-widest">
@@ -239,199 +239,216 @@ const Plans = () => {
           })}
         </div>
 
+        {/* ── Link to full comparison matrix for home page ── */}
+        {isHomePage && (
+          <div className="text-center pt-2">
+            <Link
+              to="/plans"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-slate-900 hover:bg-slate-800 border border-purple-500/30 text-purple-300 hover:text-white text-xs sm:text-sm font-bold transition shadow-lg hover:border-purple-500/60"
+            >
+              <span>{t("plans.viewComparison", "Full 17-Feature Comparison Matrix")}</span>
+              <ArrowRight size={15} />
+            </Link>
+          </div>
+        )}
+
         {/* ── 2. Tick Mark Comparison Table Matrix ── */}
-        <div className="space-y-4 pt-4 w-full">
-          <p className="text-[11px] text-indigo-300/80 text-center font-medium sm:hidden">
-            👈 {t("plans.swipeTable", "Swipe horizontally to compare all plans")} 👉
-          </p>
+        {showTable && (
+          <div className="space-y-4 pt-4 w-full">
+            <p className="text-[11px] text-indigo-300/80 text-center font-medium sm:hidden">
+              👈 {t("plans.swipeTable", "Swipe horizontally to compare all plans")} 👉
+            </p>
 
-          {/* Outer Table Container */}
-          <div className="overflow-hidden rounded-2xl border border-slate-800/90 shadow-xl bg-slate-900/80 backdrop-blur-xl">
-            {/* Top Main Title Bar */}
-            <div className="bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 py-2.5 px-4 text-center border-b border-slate-800">
-              <h2 className="text-xs sm:text-sm font-black text-white tracking-widest uppercase drop-shadow-sm flex items-center justify-center gap-1.5">
-                <Sparkles size={14} className="text-amber-400" />
-                {t("plans.heading", "SMART LEARNING PLANS COMPARISON")}
-              </h2>
-            </div>
+            {/* Outer Table Container */}
+            <div className="overflow-hidden rounded-2xl border border-slate-800/90 shadow-xl bg-slate-900/80 backdrop-blur-xl">
+              {/* Top Main Title Bar */}
+              <div className="bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 py-2.5 px-4 text-center border-b border-slate-800">
+                <h2 className="text-xs sm:text-sm font-black text-white tracking-widest uppercase drop-shadow-sm flex items-center justify-center gap-1.5">
+                  <Sparkles size={14} className="text-amber-400" />
+                  {t("plans.heading", "SMART LEARNING PLANS COMPARISON")}
+                </h2>
+              </div>
 
-            {/* Scrollable Table Viewport */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-center border-collapse text-[11px] font-sans min-w-[500px]">
-                <thead>
-                  {/* Table Column Headers */}
-                  <tr className="border-b border-slate-800 text-[11px]">
-                    {/* Feature Column Header */}
-                    <th className="bg-slate-900/90 text-slate-400 py-2 px-3 w-[34%] text-left font-bold uppercase tracking-wider">
-                      {t("plans.featureCol", "Feature")}
-                    </th>
+              {/* Scrollable Table Viewport */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-center border-collapse text-[11px] font-sans min-w-[500px]">
+                  <thead>
+                    {/* Table Column Headers */}
+                    <tr className="border-b border-slate-800 text-[11px]">
+                      {/* Feature Column Header */}
+                      <th className="bg-slate-900/90 text-slate-400 py-2 px-3 w-[34%] text-left font-bold uppercase tracking-wider">
+                        {t("plans.featureCol", "Feature")}
+                      </th>
 
-                    {/* Basic Plan Header */}
-                    <th className="bg-lime-950/20 text-lime-400 py-2 px-2 border-l border-slate-800/80 w-[22%]">
-                      <div className="flex items-center justify-center gap-1 font-black text-xs">
-                        <span>📋 BASIC</span>
-                      </div>
-                      <div className="font-extrabold text-[10px] text-lime-300/80 mt-0.5">
-                        ₹100 / year
-                      </div>
-                    </th>
+                      {/* Basic Plan Header */}
+                      <th className="bg-lime-950/20 text-lime-400 py-2 px-2 border-l border-slate-800/80 w-[22%]">
+                        <div className="flex items-center justify-center gap-1 font-black text-xs">
+                          <span>📋 BASIC</span>
+                        </div>
+                        <div className="font-extrabold text-[10px] text-lime-300/80 mt-0.5">
+                          ₹100 / year
+                        </div>
+                      </th>
 
-                    {/* Premium Plan Header */}
-                    <th className="bg-rose-950/30 text-rose-300 py-2 px-2 border-l border-slate-800/80 w-[22%] relative">
-                      <div className="flex items-center justify-center gap-1 font-black text-xs text-rose-400">
-                        <span>⭐ PREMIUM</span>
-                      </div>
-                      <div className="font-extrabold text-[10px] text-rose-300/80 mt-0.5">
-                        ₹500 / year
-                      </div>
-                    </th>
+                      {/* Standard Plan Header */}
+                      <th className="bg-rose-950/30 text-rose-300 py-2 px-2 border-l border-slate-800/80 w-[22%] relative">
+                        <div className="flex items-center justify-center gap-1 font-black text-xs text-rose-400">
+                          <span>⭐ STANDARD</span>
+                        </div>
+                        <div className="font-extrabold text-[10px] text-rose-300/80 mt-0.5">
+                          ₹500 / year
+                        </div>
+                      </th>
 
-                    {/* Elite Plan Header */}
-                    <th className="bg-amber-950/30 text-amber-300 py-2 px-2 border-l border-slate-800/80 w-[22%]">
-                      <div className="flex items-center justify-center gap-1 font-black text-xs text-amber-400">
-                        <span>👑 ELITE</span>
-                      </div>
-                      <div className="font-extrabold text-[10px] text-amber-300/80 mt-0.5">
-                        ₹1,000 / year
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-slate-800/60">
-                  {TICK_COMPARISON_MATRIX.map((row, idx) => (
-                    <tr
-                      key={idx}
-                      className="hover:bg-slate-800/30 transition-colors text-[11px]"
-                    >
-                      {/* 1. Feature Name */}
-                      <td className="bg-slate-900/60 text-slate-200 font-medium py-1.5 px-3 text-left leading-tight">
-                        {row.link ? (
-                          <Link
-                            to={row.link}
-                            className="hover:text-indigo-300 hover:underline flex items-center justify-between group"
-                          >
-                            <span>{row.nameKey ? t(row.nameKey, row.feature) : row.feature}</span>
-                            <span className="text-[9px] text-indigo-400 opacity-60 group-hover:opacity-100">↗</span>
-                          </Link>
-                        ) : (
-                          <span>{row.nameKey ? t(row.nameKey, row.feature) : row.feature}</span>
-                        )}
-                      </td>
-
-                      {/* 2. Basic Cell */}
-                      <td className="bg-lime-950/10 text-slate-300 py-1.5 px-2 border-l border-slate-800/60 font-semibold">
-                        {row.basic === "✓" ? (
-                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-lime-500/15 text-lime-400 font-bold text-[10px]">
-                            ✓
-                          </span>
-                        ) : row.basic === "—" ? (
-                          <span className="text-slate-600 text-xs">—</span>
-                        ) : (
-                          <span className="text-slate-300 text-[11px]">{row.basic}</span>
-                        )}
-                      </td>
-
-                      {/* 3. Premium Cell */}
-                      <td className="bg-rose-950/15 text-slate-300 py-1.5 px-2 border-l border-slate-800/60 font-semibold">
-                        {row.premium === "✓" ? (
-                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-rose-500/15 text-rose-400 font-bold text-[10px]">
-                            ✓
-                          </span>
-                        ) : row.premium === "—" ? (
-                          <span className="text-slate-600 text-xs">—</span>
-                        ) : (
-                          <span className="text-rose-200 text-[11px]">{row.premium}</span>
-                        )}
-                      </td>
-
-                      {/* 4. Elite Cell */}
-                      <td className="bg-amber-950/15 text-slate-300 py-1.5 px-2 border-l border-slate-800/60 font-semibold">
-                        {row.elite === "✓" ? (
-                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500/15 text-amber-400 font-bold text-[10px]">
-                            ✓
-                          </span>
-                        ) : row.elite === "—" ? (
-                          <span className="text-slate-600 text-xs">—</span>
-                        ) : row.elite.includes("EXCLUSIVE") ? (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-black">
-                            ✓ EXCLUSIVE
-                          </span>
-                        ) : (
-                          <span className="text-amber-200 text-[11px]">{row.elite}</span>
-                        )}
-                      </td>
+                      {/* Premium Plan Header */}
+                      <th className="bg-amber-950/30 text-amber-300 py-2 px-2 border-l border-slate-800/80 w-[22%]">
+                        <div className="flex items-center justify-center gap-1 font-black text-xs text-amber-400">
+                          <span>👑 PREMIUM</span>
+                        </div>
+                        <div className="font-extrabold text-[10px] text-amber-300/80 mt-0.5">
+                          ₹1,000 / year
+                        </div>
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
 
-            {/* Bottom Plan Action Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 p-2.5 bg-slate-950/90 border-t border-slate-800 gap-2.5 items-center">
-              <button
-                onClick={() => handlePlanClick(SMART_PLANS[0])}
-                className="py-1.5 px-3 rounded-lg bg-lime-600 hover:bg-lime-500 text-white font-bold text-[11px] cursor-pointer transition shadow-sm shadow-lime-900/20 active:scale-[0.98]"
-              >
-                {t("plans.chooseBasicWithPrice", "Choose Basic (₹100)")}
-              </button>
-              <button
-                onClick={() => handlePlanClick(SMART_PLANS[1])}
-                className="py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] cursor-pointer transition shadow-sm shadow-rose-900/20 active:scale-[0.98]"
-              >
-                {t("plans.choosePremiumWithPrice", "Choose Premium (₹500)")}
-              </button>
-              <button
-                onClick={() => handlePlanClick(SMART_PLANS[2])}
-                className="py-1.5 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] cursor-pointer transition shadow-sm shadow-amber-900/20 active:scale-[0.98]"
-              >
-                {t("plans.chooseEliteWithPrice", "Unlock Elite (₹1,000)")}
-              </button>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {TICK_COMPARISON_MATRIX.map((row, idx) => (
+                      <tr
+                        key={idx}
+                        className="hover:bg-slate-800/30 transition-colors text-[11px]"
+                      >
+                        {/* 1. Feature Name */}
+                        <td className="bg-slate-900/60 text-slate-200 font-medium py-1.5 px-3 text-left leading-tight">
+                          {row.link ? (
+                            <Link
+                              to={row.link}
+                              className="hover:text-indigo-300 hover:underline flex items-center justify-between group"
+                            >
+                              <span>{row.nameKey ? t(row.nameKey, row.feature) : row.feature}</span>
+                              <span className="text-[9px] text-indigo-400 opacity-60 group-hover:opacity-100">↗</span>
+                            </Link>
+                          ) : (
+                            <span>{row.nameKey ? t(row.nameKey, row.feature) : row.feature}</span>
+                          )}
+                        </td>
+
+                        {/* 2. Basic Cell */}
+                        <td className="bg-lime-950/10 text-slate-300 py-1.5 px-2 border-l border-slate-800/60 font-semibold">
+                          {row.basic === "✓" ? (
+                            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-lime-500/15 text-lime-400 font-bold text-[10px]">
+                              ✓
+                            </span>
+                          ) : row.basic === "—" ? (
+                            <span className="text-slate-600 text-xs">—</span>
+                          ) : (
+                            <span className="text-slate-300 text-[11px]">{row.basic}</span>
+                          )}
+                        </td>
+
+                        {/* 3. Standard Cell */}
+                        <td className="bg-rose-950/15 text-slate-300 py-1.5 px-2 border-l border-slate-800/60 font-semibold">
+                          {(row.standard ?? row.premium) === "✓" ? (
+                            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-rose-500/15 text-rose-400 font-bold text-[10px]">
+                              ✓
+                            </span>
+                          ) : (row.standard ?? row.premium) === "—" ? (
+                            <span className="text-slate-600 text-xs">—</span>
+                          ) : (
+                            <span className="text-rose-200 text-[11px]">{row.standard ?? row.premium}</span>
+                          )}
+                        </td>
+
+                        {/* 4. Premium Cell */}
+                        <td className="bg-amber-950/15 text-slate-300 py-1.5 px-2 border-l border-slate-800/60 font-semibold">
+                          {(row.premium ?? row.elite) === "✓" ? (
+                            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500/15 text-amber-400 font-bold text-[10px]">
+                              ✓
+                            </span>
+                          ) : (row.premium ?? row.elite) === "—" ? (
+                            <span className="text-slate-600 text-xs">—</span>
+                          ) : (row.premium ?? row.elite)?.includes?.("EXCLUSIVE") ? (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-black">
+                              ✓ EXCLUSIVE
+                            </span>
+                          ) : (
+                            <span className="text-amber-200 text-[11px]">{row.premium ?? row.elite}</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Bottom Plan Action Bar */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 p-2.5 bg-slate-950/90 border-t border-slate-800 gap-2.5 items-center">
+                <button
+                  onClick={() => handlePlanClick(SMART_PLANS[0])}
+                  className="py-1.5 px-3 rounded-lg bg-lime-600 hover:bg-lime-500 text-white font-bold text-[11px] cursor-pointer transition shadow-sm shadow-lime-900/20 active:scale-[0.98]"
+                >
+                  {t("plans.chooseBasicWithPrice", "Choose Basic (₹100)")}
+                </button>
+                <button
+                  onClick={() => handlePlanClick(SMART_PLANS[1])}
+                  className="py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] cursor-pointer transition shadow-sm shadow-rose-900/20 active:scale-[0.98]"
+                >
+                  {t("plans.chooseStandardWithPrice", "Choose Standard (₹500)")}
+                </button>
+                <button
+                  onClick={() => handlePlanClick(SMART_PLANS[2])}
+                  className="py-1.5 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] cursor-pointer transition shadow-sm shadow-amber-900/20 active:scale-[0.98]"
+                >
+                  {t("plans.choosePremiumWithPrice", "Unlock Premium (₹1,000)")}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* ── 3. FAQ Quick Section ── */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-10">
-          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <HelpCircle className="text-indigo-400" size={22} />
-            {t("plans.faqTitle", "Frequently Asked Questions about Smart Learning Plans")}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs sm:text-sm text-slate-300">
-            <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
-              <h4 className="font-bold text-white mb-1">
-                {t("plans.faq1Q", "How does Class selection work?")}
-              </h4>
-              <p className="text-slate-400">
-                {t("plans.faq1A", "When you activate your plan, you select your grade (e.g. Class 9, 10, 11, or 12). All syllabus subjects, live lessons, notes, and recorded classes for that grade are automatically unlocked for you.")}
-              </p>
-            </div>
-            <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
-              <h4 className="font-bold text-white mb-1">
-                {t("plans.faq2Q", "What is included in Elite Exclusive features?")}
-              </h4>
-              <p className="text-slate-400">
-                {t("plans.faq2A", "Elite members get direct Higher-Study Scholarship Eligibility nomination (up to 100% college grant) and dedicated International Study Counselling with country guides, test prep, SOP review studio, and 1-on-1 global education advisors.")}
-              </p>
-            </div>
-            <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
-              <h4 className="font-bold text-white mb-1">
-                {t("plans.faq3Q", "Can I upgrade my plan mid-year?")}
-              </h4>
-              <p className="text-slate-400">
-                {t("plans.faq3A", "Yes! You can easily upgrade from Basic to Premium or Elite anytime from your Student Dashboard Billing page.")}
-              </p>
-            </div>
-            <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
-              <h4 className="font-bold text-white mb-1">
-                {t("plans.faq4Q", "How do Career Counselling sessions work?")}
-              </h4>
-              <p className="text-slate-400">
-                {t("plans.faq4A", "Basic plans include 2 sessions per year, while Premium & Elite plans include 5 sessions per year. You can book 1-on-1 video consultations with certified counsellors directly in your dashboard.")}
-              </p>
+        {showFaq && (
+          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-10">
+            <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <HelpCircle className="text-indigo-400" size={22} />
+              {t("plans.faqTitle", "Frequently Asked Questions about Smart Learning Plans")}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs sm:text-sm text-slate-300">
+              <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
+                <h4 className="font-bold text-white mb-1">
+                  {t("plans.faq1Q", "How does Class selection work?")}
+                </h4>
+                <p className="text-slate-400">
+                  {t("plans.faq1A", "When you activate your plan, you select your grade (e.g. Class 9, 10, 11, or 12). All syllabus subjects, live lessons, notes, and recorded classes for that grade are automatically unlocked for you.")}
+                </p>
+              </div>
+              <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
+                <h4 className="font-bold text-white mb-1">
+                  {t("plans.faq2Q", "What is included in Premium Exclusive features?")}
+                </h4>
+                <p className="text-slate-400">
+                  {t("plans.faq2A", "Premium members get direct Higher-Study Scholarship Eligibility nomination (up to 100% college grant) and dedicated International Study Counselling with country guides, test prep, SOP review studio, and 1-on-1 global education advisors.")}
+                </p>
+              </div>
+              <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
+                <h4 className="font-bold text-white mb-1">
+                  {t("plans.faq3Q", "Can I upgrade my plan mid-year?")}
+                </h4>
+                <p className="text-slate-400">
+                  {t("plans.faq3A", "Yes! You can easily upgrade from Basic to Standard or Premium anytime from your Student Dashboard Billing page.")}
+                </p>
+              </div>
+              <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
+                <h4 className="font-bold text-white mb-1">
+                  {t("plans.faq4Q", "How do Career Counselling sessions work?")}
+                </h4>
+                <p className="text-slate-400">
+                  {t("plans.faq4A", "Basic plans include 2 sessions per year, while Standard & Premium plans include 5 sessions per year. You can book 1-on-1 video consultations with certified counsellors directly in your dashboard.")}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );

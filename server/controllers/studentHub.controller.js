@@ -207,10 +207,10 @@ const DEFAULT_SEED = {
         award: "Up to 100% College Tuition (₹2,50,000/yr)",
         category: "Merit & Academic Excellence",
         eligibility:
-          "Class 12 / JEE / NEET aspirants with 85%+ score on Elite Plan",
+          "Class 12 / JEE / NEET aspirants with 85%+ score on Premium Plan",
         deadline: "30 September 2026",
         isInternal: true,
-        tag: "Exclusive for Elite Members",
+        tag: "Exclusive for Premium Members",
         color: "#f59e0b",
       },
       {

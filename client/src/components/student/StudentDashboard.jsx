@@ -393,7 +393,12 @@ export const DashboardHome = () => {
     (s) => s.courses?.enrolledLoading ?? s.myCourses?.loading ?? false,
   );
 
-  const username = user?.email ? user.email.split("@")[0] : "User";
+  const rawName = user?.name || settingsProfile?.name;
+  const firstName = rawName?.trim()
+    ? rawName.trim().split(/\s+/)[0]
+    : user?.email
+      ? user.email.split("@")[0]
+      : "Student";
   const userId = user?._id ?? user?.id;
 
   const overallProgress = getOverallProgress(enrolledCourses);
@@ -463,7 +468,7 @@ export const DashboardHome = () => {
           <div className="relative flex flex-wrap items-start justify-between gap-6">
             <div className="max-w-xl">
               <p className="mb-2 text-sm font-semibold tracking-wide text-indigo-400">
-                {t("studentDashboard.welcomeBack", { name: username })}
+                {t("studentDashboard.welcomeBack", { name: firstName })}
               </p>
               <h1 className="text-[clamp(26px,4vw,40px)] font-extrabold leading-tight text-slate-50">
                 {t("studentDashboard.studentDashboardTitle")}

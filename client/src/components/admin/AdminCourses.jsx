@@ -1948,25 +1948,25 @@ function EnrolledStudentsSection({ students, loading }) {
                         padding: "2px 8px",
                         borderRadius: 12,
                         background:
-                          sub.plan === "elite"
+                          sub.plan === "premium" || sub.plan === "elite"
                             ? "#f59e0b20"
-                            : sub.plan === "premium"
+                            : sub.plan === "standard"
                               ? "#ef444420"
                               : "#10b98120",
                         color:
-                          sub.plan === "elite"
+                          sub.plan === "premium" || sub.plan === "elite"
                             ? "#fbbf24"
-                            : sub.plan === "premium"
+                            : sub.plan === "standard"
                               ? "#f87171"
                               : "#10b981",
-                        border: `1px solid ${sub.plan === "elite" ? "#f59e0b40" : sub.plan === "premium" ? "#ef444440" : "#10b98140"}`,
+                        border: `1px solid ${sub.plan === "premium" || sub.plan === "elite" ? "#f59e0b40" : sub.plan === "standard" ? "#ef444440" : "#10b98140"}`,
                         flexShrink: 0,
                       }}
                     >
-                      {sub.plan === "elite"
-                        ? "Elite 👑"
-                        : sub.plan === "premium"
-                          ? "Premium ⭐"
+                      {sub.plan === "premium" || sub.plan === "elite"
+                        ? "Premium 👑"
+                        : sub.plan === "standard"
+                          ? "Standard ⭐"
                           : "Basic"}
                     </span>
                   )}
@@ -3179,10 +3179,10 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
                                       border: "1px solid #10b98140",
                                     }}
                                   >
-                                    {sub.plan === "premium"
-                                      ? "Premium ⭐"
-                                      : sub.plan === "elite"
-                                        ? "Elite 👑"
+                                    {sub.plan === "premium" || sub.plan === "elite"
+                                      ? "Premium 👑"
+                                      : sub.plan === "standard"
+                                        ? "Standard ⭐"
                                         : "Basic Plan"}
                                   </span>
                                 )}

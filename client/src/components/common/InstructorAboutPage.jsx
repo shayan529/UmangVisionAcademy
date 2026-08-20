@@ -220,7 +220,7 @@ const InstructorAboutPage = () => {
                                 <div
                                     key={course._id}
                                     onClick={() => handleCourseClick(course._id)}
-                                    className="cursor-pointer"
+                                    className="cursor-pointer h-full flex flex-col"
                                 >
                                     <CourseCard
                                         course={{

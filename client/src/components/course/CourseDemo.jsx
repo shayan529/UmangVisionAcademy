@@ -11,6 +11,7 @@ import { normalizeVideoUrl, isImageFile, isEmbedVideo, getEmbedUrl } from "../..
 import NoteViewerModal from "../common/NoteViewerModal.jsx";
 import { useAiTranslation } from "../../utils/aiTranslate.js";
 import { generateCourseAiDetails } from "../../utils/courseAiDetails.js";
+import { SMART_PLANS } from "../../data/plansData.js";
 import toast from "react-hot-toast";
 import {
   Star,
@@ -34,6 +35,7 @@ import {
   ShieldCheck,
   Tv,
   CheckCircle2,
+  ArrowRight,
 } from "lucide-react";
 
 // ── Hook: fetch course demo ───────────────────────────────────────────────────
@@ -459,9 +461,18 @@ const UdemyPurchaseCard = ({
 export default function CourseDemo() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
   const { t, i18n } = useTranslation();
+
+  const handleSelectPlan = (plan) => {
+    if (!user) {
+      navigate("/login", { state: { from: location.pathname } });
+      return;
+    }
+    navigate("/student-dashboard/billing", { state: { plan } });
+  };
 
   const { course, loading, error } = useCourseDemo(id);
 
@@ -779,30 +790,6 @@ export default function CourseDemo() {
                   </div>
                 )}
               </div>
-
-              {/* Udemy Plan Banner */}
-              <div className="mt-2 p-3.5 rounded-xl bg-gradient-to-r from-purple-950/60 to-indigo-950/60 border border-purple-500/30 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-300 shrink-0">
-                    <Sparkles size={16} />
-                  </div>
-                  <div className="text-xs text-slate-200">
-                    <span className="font-bold text-white">
-                      {t("courseDetails.academyPlanTitle", "Smart Basic Plan:")}
-                    </span>{" "}
-                    {t(
-                      "courseDetails.academyPlanDesc",
-                      "Access all top-rated courses with 1 simple yearly subscription.",
-                    )}
-                  </div>
-                </div>
-                <Link
-                  to="/plans"
-                  className="px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shrink-0 transition"
-                >
-                  {t("courseDetails.viewPlans", "View Plans")}
-                </Link>
-              </div>
             </div>
 
             {/* Mobile-only purchase card */}
@@ -818,6 +805,145 @@ export default function CourseDemo() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Content Column (65% width on desktop) */}
           <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-8">
+            {/* ── Smart Learning Plans Section (Above What You'll Learn) ── */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-900/95 via-purple-950/40 to-slate-900/95 border border-purple-500/30 shadow-xl backdrop-blur-md">
+              {/* Header Row */}
+              <div className="flex items-center justify-between gap-2 mb-3.5 pb-2.5 border-b border-purple-500/20 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-purple-900/40 shrink-0">
+                    <Sparkles size={13} />
+                  </div>
+                  <div className="flex items-baseline gap-1.5 flex-wrap">
+                    <span className="text-sm sm:text-base font-black text-white tracking-tight">
+                      {t("plans.heading", "Smart Learning Plans")}
+                    </span>
+                    <span className="text-xs text-purple-300/90 font-medium hidden sm:inline">
+                      • {t("plans.heroTag", "Transparent & Empowering Pricing")}
+                    </span>
+                  </div>
+                </div>
+                <Link
+                  to="/plans"
+                  className="text-xs font-bold text-purple-300 hover:text-white flex items-center gap-1 transition ml-auto shrink-0"
+                >
+                  <span>{t("plans.viewComparison", "Full 17-Feature Comparison Matrix")}</span>
+                  <ArrowRight size={13} />
+                </Link>
+              </div>
+
+              {/* 3 Plan Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {SMART_PLANS.map((plan) => {
+                  const isPopular = plan.id === "standard";
+                  const isPremium = plan.id === "premium";
+
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`relative p-3.5 sm:p-4 rounded-xl flex flex-col justify-between transition-all duration-200 ${
+                        isPopular
+                          ? "bg-gradient-to-b from-purple-950/80 to-slate-900/95 border-2 border-purple-500/60 shadow-lg shadow-purple-950/40 ring-1 ring-purple-400/40"
+                          : isPremium
+                          ? "bg-gradient-to-b from-amber-950/40 to-slate-900/95 border border-amber-500/40 hover:border-amber-400/60 shadow-md"
+                          : "bg-slate-900/90 hover:bg-slate-900 border border-slate-700/80 shadow-sm"
+                      }`}
+                    >
+                      {isPopular && (
+                        <div className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-[9px] font-black text-white uppercase tracking-wider shadow-md">
+                          {t("plans.mostPopular", "MOST POPULAR")}
+                        </div>
+                      )}
+
+                      <div>
+                        <div className="flex items-center justify-between gap-1.5 mb-1.5 pb-1.5 border-b border-slate-800/80">
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm">{plan.icon}</span>
+                            <span className="text-xs sm:text-sm font-bold text-white leading-tight">
+                              {t(plan.labelKey, plan.label)}
+                            </span>
+                          </div>
+                          <div className="text-right whitespace-nowrap">
+                            <span className="text-sm sm:text-base font-black text-white">
+                              {plan.price}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              /{t(plan.periodKey, "year")}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Bullet Highlights */}
+                        <ul className="space-y-1.5 my-2.5 text-[11px] sm:text-xs text-slate-300 leading-snug">
+                          {plan.id === "basic" && (
+                            <>
+                              <li className="flex items-start gap-1.5 text-slate-300">
+                                <Check size={12} className="text-lime-400 shrink-0 mt-0.5" />
+                                <span>{t("plans.features.allSubjectsCovered", "All Class Subjects Covered")}</span>
+                              </li>
+                              <li className="flex items-start gap-1.5 text-slate-300">
+                                <Check size={12} className="text-lime-400 shrink-0 mt-0.5" />
+                                <span>{t("plans.features.progressReport3", "3-Page Smart Progress Report Card")}</span>
+                              </li>
+                              <li className="flex items-start gap-1.5 text-slate-300">
+                                <Check size={12} className="text-lime-400 shrink-0 mt-0.5" />
+                                <span>{t("plans.features.practiceTests3", "3 Practice Tests & 3-Year Question Bank")}</span>
+                              </li>
+                            </>
+                          )}
+                          {plan.id === "standard" && (
+                            <>
+                              <li className="flex items-start gap-1.5 text-purple-200 font-medium">
+                                <Check size={12} className="text-purple-400 shrink-0 mt-0.5" />
+                                <span>{t("plans.features.everythingInBasic", "Everything in Basic Plan")}</span>
+                              </li>
+                              <li className="flex items-start gap-1.5 text-purple-200">
+                                <Check size={12} className="text-purple-400 shrink-0 mt-0.5" />
+                                <span>{t("plans.features.progressReport8", "8-Page Detailed Performance Report Card ⬆️")}</span>
+                              </li>
+                              <li className="flex items-start gap-1.5 text-purple-200">
+                                <Check size={12} className="text-purple-400 shrink-0 mt-0.5" />
+                                <span>{t("plans.features.smsAlerts", "Subject, Class & Competitive Exam SMS Alerts")}</span>
+                              </li>
+                            </>
+                          )}
+                          {plan.id === "premium" && (
+                            <>
+                              <li className="flex items-start gap-1.5 text-amber-200 font-medium">
+                                <Check size={12} className="text-amber-400 shrink-0 mt-0.5" />
+                                <span>{t("plans.features.everythingInStandard", "Everything in Standard Plan")}</span>
+                              </li>
+                              <li className="flex items-start gap-1.5 text-amber-200">
+                                <Check size={12} className="text-amber-400 shrink-0 mt-0.5" />
+                                <span>{t("plans.features.scholarshipEligibility", "Higher-Study Scholarship Eligibility* (EXCLUSIVE)")}</span>
+                              </li>
+                              <li className="flex items-start gap-1.5 text-amber-200">
+                                <Check size={12} className="text-amber-400 shrink-0 mt-0.5" />
+                                <span>{t("plans.features.intlStudyCounselling", "International Study Counselling & Support (EXCLUSIVE)")}</span>
+                              </li>
+                            </>
+                          )}
+                        </ul>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSelectPlan(plan)}
+                        className={`w-full mt-2 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
+                          isPopular
+                            ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-md shadow-purple-900/40"
+                            : isPremium
+                            ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black shadow-md shadow-amber-950/30"
+                            : "bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 shadow-sm"
+                        }`}
+                      >
+                        <span>{t(plan.buttonKey, `Choose ${plan.title}`)}</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* ── 2.1 "What you'll learn" Box (Udemy Exact Style) ── */}
             <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
               <h2 className="text-lg sm:text-xl font-bold text-white mb-4">

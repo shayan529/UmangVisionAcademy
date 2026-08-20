@@ -38,12 +38,12 @@ export default function CareerCounselling() {
     user?.subscription?.plan ||
     "free"
   ).toLowerCase();
-  const isElite = planId === "elite";
-  const isPremium = planId === "premium";
+  const isPremium = planId === "premium" || planId === "elite";
+  const isStandard = planId === "standard";
   const isBasic = planId === "basic" || planId === "base";
-  const hasPlan = isBasic || isPremium || isElite;
+  const hasPlan = isBasic || isStandard || isPremium;
 
-  const totalQuota = isElite || isPremium ? 5 : isBasic ? 2 : 0;
+  const totalQuota = isPremium || isStandard ? 5 : isBasic ? 2 : 0;
   const [usedSessions, setUsedSessions] = useState(0);
   const remainingSessions = Math.max(0, totalQuota - usedSessions);
 
@@ -109,7 +109,7 @@ export default function CareerCounselling() {
       return;
     }
     if (remainingSessions <= 0) {
-      const upgradeTo = isBasic ? "Premium or Elite" : "Elite";
+      const upgradeTo = isBasic ? "Standard or Premium" : "Premium";
       toast.error(
         `⬆️ You've used all your sessions. Upgrade to ${upgradeTo} Plan to get more Career Counselling sessions.`,
       );
@@ -218,19 +218,19 @@ export default function CareerCounselling() {
               </span>
               <span
                 className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                  isElite
+                  isPremium
                     ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                    : isPremium
+                    : isStandard
                       ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
                       : isBasic
                         ? "bg-lime-500/20 text-lime-300 border border-lime-500/30"
                         : "bg-slate-800 text-slate-400"
                 }`}
               >
-                {isElite
-                  ? "ELITE 👑"
-                  : isPremium
-                    ? "PREMIUM ⭐"
+                {isPremium
+                  ? "PREMIUM 👑"
+                  : isStandard
+                    ? "STANDARD ⭐"
                     : isBasic
                       ? "BASIC"
                       : "FREE"}

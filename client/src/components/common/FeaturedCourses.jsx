@@ -55,6 +55,120 @@ const isClassCategory = (category) => CLASSES.includes(category);
 const isCompetitiveCourse = (course) =>
   Boolean(course.category) && !isClassCategory(course.category);
 
+const STANDARD_CLASS_SUBJECTS = {
+  "Class 9": [
+    "Mathematics",
+    "Science",
+    "Social Science",
+    "English",
+    "Hindi",
+    "Physics",
+    "Chemistry",
+    "Biology",
+    "History",
+    "Geography",
+    "Information Technology",
+    "Computer Applications",
+    "Computer Science",
+    "Artificial Intelligence",
+    "Sanskrit",
+    "Economics",
+  ],
+  "Class 10": [
+    "Mathematics",
+    "Science",
+    "Social Science",
+    "English",
+    "Hindi",
+    "Physics",
+    "Chemistry",
+    "Biology",
+    "History",
+    "Geography",
+    "Information Technology",
+    "Computer Applications",
+    "Computer Science",
+    "Artificial Intelligence",
+    "Sanskrit",
+    "Economics",
+  ],
+  "Class 11": [
+    "Physics",
+    "Chemistry",
+    "Mathematics",
+    "Biology",
+    "English",
+    "Hindi",
+    "Accountancy",
+    "Business Studies",
+    "Economics",
+    "History",
+    "Political Science",
+    "Geography",
+    "Computer Science",
+    "Informatics Practices",
+    "Physical Education",
+    "Sociology",
+    "Psychology",
+    "Sanskrit",
+    "Legal Studies",
+    "Entrepreneurship",
+  ],
+  "Class 12": [
+    "Physics",
+    "Chemistry",
+    "Mathematics",
+    "Biology",
+    "English",
+    "Hindi",
+    "Accountancy",
+    "Business Studies",
+    "Economics",
+    "History",
+    "Political Science",
+    "Geography",
+    "Computer Science",
+    "Informatics Practices",
+    "Physical Education",
+    "Sociology",
+    "Psychology",
+    "Sanskrit",
+    "Legal Studies",
+    "Entrepreneurship",
+  ],
+};
+
+const STANDARD_EXAM_SUBJECTS = {
+  NEET: ["Physics", "Chemistry", "Biology", "Botany", "Zoology"],
+  "JEE Main": ["Physics", "Chemistry", "Mathematics"],
+  "JEE Advanced": ["Physics", "Chemistry", "Mathematics"],
+  NDA: ["Mathematics", "General Ability", "English", "General Knowledge"],
+  CUET: ["Domain Subjects", "General Test", "English", "Hindi"],
+};
+
+const isExcludedSubject = (val) => {
+  if (!val || typeof val !== "string") return true;
+  const clean = val.trim();
+  if (!clean) return true;
+  const lower = clean.toLowerCase();
+  if (
+    lower === "all" ||
+    lower === "general" ||
+    lower === "classes" ||
+    lower === "courses"
+  )
+    return true;
+  if (CLASSES.some((c) => c.toLowerCase() === lower)) return true;
+  if (
+    lower.includes("complete bundle") ||
+    lower.includes("bundle") ||
+    lower.startsWith("class ")
+  )
+    return true;
+  if (["cbse", "icse", "mp board", "mpbse", "isc"].includes(lower)) return true;
+  return false;
+};
+
 const ALL_LANGUAGES = "Multilanguage";
 const LANGUAGE_OPTIONS = ["English", "Hindi"];
 
@@ -95,6 +209,17 @@ const Courses = () => {
     setSelectedClass(ALL);
     setSelectedExam(ALL_EXAMS);
     setSelectedBoard(ALL_BOARDS);
+    setSelectedSubject(ALL_SUBJECTS);
+  };
+
+  const handleClassChange = (cls) => {
+    setSelectedClass(cls);
+    setSelectedSubject(ALL_SUBJECTS);
+  };
+
+  const handleExamChange = (exam) => {
+    setSelectedExam(exam);
+    setSelectedSubject(ALL_SUBJECTS);
   };
 
   // ── Derived filter options — recomputed only when courses change ──────────
@@ -124,22 +249,73 @@ const Courses = () => {
   );
 
   const dynamicSubjects = useMemo(() => {
+    const scopedCourses = allCourses.filter((course) => {
+      const typeMatch =
+        selectedCourseType === TYPE_ALL
+          ? true
+          : selectedCourseType === TYPE_CLASSES
+            ? isClassCategory(course.category)
+            : isCompetitiveCourse(course);
+
+      const classMatch =
+        selectedCourseType === TYPE_COMPETITIVE
+          ? selectedExam === ALL_EXAMS || course.category === selectedExam
+          : selectedClass === ALL || course.category === selectedClass;
+
+      return typeMatch && classMatch;
+    });
+
     const subjects = new Set();
-    allCourses.forEach((course) => {
-      if (course.tags?.length) {
-        course.tags.forEach((tag) => {
-          if (tag) subjects.add(tag.trim());
+
+    scopedCourses.forEach((course) => {
+      if (Array.isArray(course.subjects)) {
+        course.subjects.forEach((s) => {
+          if (!isExcludedSubject(s)) subjects.add(s.trim());
         });
       }
-      if (course.category) {
-        subjects.add(course.category.trim());
+      if (Array.isArray(course.tags)) {
+        course.tags.forEach((tag) => {
+          if (!isExcludedSubject(tag)) subjects.add(tag.trim());
+        });
       }
-      if (course.title) {
-        subjects.add(course.title.trim());
+      if (Array.isArray(course.lessons)) {
+        course.lessons.forEach((l) => {
+          if (!isExcludedSubject(l?.subject)) subjects.add(l.subject.trim());
+        });
+      }
+      if (course.title && !isExcludedSubject(course.title)) {
+        const titleTrimmed = course.title.trim();
+        const allStandard = [
+          ...Object.values(STANDARD_CLASS_SUBJECTS).flat(),
+          ...Object.values(STANDARD_EXAM_SUBJECTS).flat(),
+        ];
+        const match = allStandard.find(
+          (s) => s.toLowerCase() === titleTrimmed.toLowerCase(),
+        );
+        if (match) {
+          subjects.add(match);
+        }
       }
     });
-    return Array.from(subjects).sort();
-  }, [allCourses]);
+
+    if (selectedClass !== ALL && STANDARD_CLASS_SUBJECTS[selectedClass]) {
+      STANDARD_CLASS_SUBJECTS[selectedClass].forEach((s) => subjects.add(s));
+    } else if (
+      selectedExam !== ALL_EXAMS &&
+      STANDARD_EXAM_SUBJECTS[selectedExam]
+    ) {
+      STANDARD_EXAM_SUBJECTS[selectedExam].forEach((s) => subjects.add(s));
+    } else if (
+      selectedCourseType === TYPE_CLASSES ||
+      selectedCourseType === TYPE_ALL
+    ) {
+      Object.values(STANDARD_CLASS_SUBJECTS)
+        .flat()
+        .forEach((s) => subjects.add(s));
+    }
+
+    return Array.from(subjects).sort((a, b) => a.localeCompare(b));
+  }, [allCourses, selectedCourseType, selectedClass, selectedExam]);
 
   const dynamicBoards = useMemo(
     () => [...new Set(allCourses.map((c) => c.board).filter(Boolean))],
@@ -163,18 +339,27 @@ const Courses = () => {
             : selectedClass === ALL || course.category === selectedClass;
 
         const courseSubjects = [
+          ...(course.subjects ?? []),
           ...(course.tags ?? []).filter(Boolean),
-          course.category,
+          ...(course.lessons
+            ? course.lessons.map((l) => l.subject).filter(Boolean)
+            : []),
           course.title,
         ]
           .filter(Boolean)
           .map((value) => value.trim().toLowerCase());
 
+        const isBundle =
+          course.title?.toLowerCase().includes("bundle") ||
+          course.summary?.toLowerCase().includes("bundle");
+
         const subjectMatch =
           selectedSubject === "All Subjects" ||
           courseSubjects.includes(selectedSubject.trim().toLowerCase()) ||
           course.title?.toLowerCase().includes(selectedSubject.toLowerCase()) ||
-          course.summary?.toLowerCase().includes(selectedSubject.toLowerCase());
+          course.summary?.toLowerCase().includes(selectedSubject.toLowerCase()) ||
+          (isBundle &&
+            (selectedClass === ALL || course.category === selectedClass));
 
         // Board doesn't apply to competitive-exam courses.
         const boardMatch =
@@ -352,7 +537,7 @@ const Courses = () => {
               <div className="relative min-w-0">
                 <select
                   value={selectedExam}
-                  onChange={(e) => setSelectedExam(e.target.value)}
+                  onChange={(e) => handleExamChange(e.target.value)}
                   className="w-full bg-[#090e1a] border border-slate-700/70 hover:border-indigo-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-2 text-xs appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
                 >
                   <option key={ALL_EXAMS} value={ALL_EXAMS}>
@@ -382,7 +567,7 @@ const Courses = () => {
               <div className="relative min-w-0">
                 <select
                   value={selectedClass}
-                  onChange={(e) => setSelectedClass(e.target.value)}
+                  onChange={(e) => handleClassChange(e.target.value)}
                   className="w-full bg-[#090e1a] border border-slate-700/70 hover:border-indigo-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-2 text-xs appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
                 >
                   <option key={ALL} value={ALL}>
@@ -523,7 +708,7 @@ const Courses = () => {
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
                 Class: {selectedClass}
                 <button
-                  onClick={() => setSelectedClass(ALL)}
+                  onClick={() => handleClassChange(ALL)}
                   className="hover:text-white font-bold"
                 >
                   ✕
@@ -534,7 +719,7 @@ const Courses = () => {
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
                 Exam: {selectedExam}
                 <button
-                  onClick={() => setSelectedExam(ALL_EXAMS)}
+                  onClick={() => handleExamChange(ALL_EXAMS)}
                   className="hover:text-white font-bold"
                 >
                   ✕
@@ -603,7 +788,7 @@ const Courses = () => {
               <div
                 key={course._id}
                 onClick={() => handleCourseClick(course)}
-                className="cursor-pointer animate-[fadeUp_0.4s_ease_both]"
+                className="cursor-pointer animate-[fadeUp_0.4s_ease_both] h-full flex flex-col"
                 style={{ animationDelay: `${i * 60}ms` }}
               >
                 <CourseCard

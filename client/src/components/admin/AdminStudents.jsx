@@ -1246,13 +1246,16 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
     subscription.plan &&
     student.selectedClass;
 
-  // Premium & Elite plans include instructor assistance by default for all plan courses.
+  // Standard & Premium plans include instructor assistance by default for all plan courses.
   // Basic plan does NOT include assistance.
-  const isPremiumPlan = subscription.plan === "premium" || subscription.plan === "elite";
+  const isPremiumOrStandardPlan =
+    subscription.plan === "standard" ||
+    subscription.plan === "premium" ||
+    subscription.plan === "elite";
 
   // ── Build assistance set ─────────────────────────────────────────────────
   // Start with the student's existing instructorAssistanceCourses, then seed
-  // plan courses with assistance if they're on the premium plan.
+  // plan courses with assistance if they're on standard/premium plan.
   const [assistanceCourses, setAssistanceCourses] = useState(() => {
     const set = new Set(
       (student.instructorAssistanceCourses || []).map((c) =>
@@ -1260,8 +1263,8 @@ const StudentCourseManagerModal = ({ student, courses = [], onClose, onUpdated }
       ),
     );
 
-    // Auto-seed assistance for plan courses when premium plan is active
-    if (hasActivePlan && isPremiumPlan && student.selectedClass) {
+    // Auto-seed assistance for plan courses when standard or premium plan is active
+    if (hasActivePlan && isPremiumOrStandardPlan && student.selectedClass) {
       const classLower = student.selectedClass.toLowerCase();
       courses.forEach((c) => {
         if (

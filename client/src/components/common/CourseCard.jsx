@@ -64,7 +64,7 @@ const CourseCard = ({ course }) => {
       onClick={handleCardClick}
       className="group bg-[#0f172a] hover:bg-[#131d36] border border-slate-700/60 hover:border-indigo-500/70 rounded-2xl overflow-hidden shadow-md hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col h-full cursor-pointer select-none"
     >
-      {/* ── 1. Thumbnail with Floating Badges (Udemy Aspect Ratio) ── */}
+      {/* ── 1. Thumbnail with Floating Badges (Fixed 16:10 Aspect Ratio) ── */}
       <div className="relative w-full aspect-[16/10] shrink-0 bg-slate-800/80 overflow-hidden">
         {!imgError && getOptimizedImageUrl(course.image) ? (
           <>
@@ -75,7 +75,7 @@ const CourseCard = ({ course }) => {
               decoding="async"
               onLoad={() => setImgLoaded(true)}
               onError={() => setImgError(true)}
-              className={`w-full h-full object-cover transition-opacity duration-300 group-hover:scale-105 ${
+              className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
                 imgLoaded ? "opacity-100" : "opacity-0"
               }`}
             />
@@ -116,21 +116,23 @@ const CourseCard = ({ course }) => {
         )}
       </div>
 
-      {/* ── 2. Card Content (Udemy Layout) ── */}
+      {/* ── 2. Card Content (Standardized layout with consistent heights) ── */}
       <div className="p-3 sm:p-3.5 flex-1 flex flex-col justify-between">
-        <div>
-          {/* Title */}
-          <h3
-            className="text-[13.5px] sm:text-sm font-bold text-white leading-snug line-clamp-2 group-hover:text-indigo-300 transition-colors"
-            title={course.title}
-          >
-            {course.title}
-          </h3>
+        <div className="flex flex-col">
+          {/* Title - Fixed height so 1-line and 2-line titles occupy the exact same space */}
+          <div className="h-10 sm:h-[42px] flex items-start overflow-hidden">
+            <h3
+              className="text-[13px] sm:text-[13.5px] font-bold text-white leading-snug line-clamp-2 group-hover:text-indigo-300 transition-colors"
+              title={course.title}
+            >
+              {course.title}
+            </h3>
+          </div>
 
-          {/* Instructor & View Instructor */}
-          <div className="mt-1 flex items-center justify-between text-xs">
+          {/* Instructor & View Instructor - Fixed height row */}
+          <div className="mt-1.5 flex items-center justify-between text-xs h-5">
             <span
-              className="text-slate-300 truncate max-w-[140px] sm:max-w-[160px] font-medium"
+              className="text-slate-300 truncate max-w-[130px] sm:max-w-[150px] font-medium text-[11.5px]"
               title={course.instructor}
             >
               {course.instructor || "Lead Instructor"}
@@ -146,8 +148,8 @@ const CourseCard = ({ course }) => {
             ) : null}
           </div>
 
-          {/* Ratings & Badge Row (Udemy style) */}
-          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+          {/* Ratings & Badge Row - Fixed single-line row */}
+          <div className="flex items-center gap-1.5 mt-2 h-6 overflow-hidden">
             {/* Rating pill */}
             <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-bold shrink-0">
               <Star size={11} className="fill-amber-400 text-amber-400" />
@@ -159,16 +161,16 @@ const CourseCard = ({ course }) => {
               ({reviewsCount.toLocaleString()})
             </span>
 
-            {/* Category / Bestseller Badge */}
-            <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shrink-0 uppercase tracking-wider">
+            {/* Category / Board Badge */}
+            <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shrink-0 uppercase tracking-wider truncate max-w-[110px]">
               {course.board || course.category || "Top Rated"}
             </span>
           </div>
         </div>
 
-        {/* ── 3. Price & Action Footer ── */}
+        {/* ── 3. Price & Action Footer - Fixed alignment ── */}
         <div className="mt-3 pt-2.5 border-t border-slate-800/80">
-          <div className="flex items-baseline justify-between mb-2">
+          <div className="flex items-center justify-between mb-2.5 h-6">
             {/* Price & Strikethrough */}
             <div className="flex items-baseline gap-1.5">
               <span className="text-base sm:text-lg font-black text-white tracking-tight">
@@ -181,10 +183,12 @@ const CourseCard = ({ course }) => {
               )}
             </div>
 
-            {course.language && (
-              <span className="text-[10px] font-semibold text-slate-400 bg-slate-800/60 px-1.5 py-0.5 rounded border border-slate-700/50">
+            {course.language ? (
+              <span className="text-[10px] font-semibold text-slate-400 bg-slate-800/60 px-1.5 py-0.5 rounded border border-slate-700/50 shrink-0">
                 {course.language}
               </span>
+            ) : (
+              <span className="h-4" />
             )}
           </div>
 
@@ -195,7 +199,7 @@ const CourseCard = ({ course }) => {
                 e.stopPropagation();
                 navigate(`/courses/${courseId}`);
               }}
-              className="w-full py-1.5 px-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/20 active:scale-98 transition-all flex items-center justify-center gap-1 cursor-pointer border-none"
+              className="w-full h-8 sm:h-8.5 px-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/20 active:scale-98 transition-all flex items-center justify-center gap-1 cursor-pointer border-none"
             >
               <span>{t("courseCard.continueLearning", "Continue Learning →")}</span>
             </button>
@@ -207,7 +211,7 @@ const CourseCard = ({ course }) => {
                     e.stopPropagation();
                     navigate(`/courses/${courseId}/demo`);
                   }}
-                  className="flex-1 min-w-0 py-2 px-2 rounded-xl border border-slate-700 hover:border-slate-500 bg-slate-800/70 hover:bg-slate-700/70 text-slate-200 hover:text-white text-xs font-semibold transition cursor-pointer text-center truncate"
+                  className="flex-1 min-w-0 h-8 sm:h-8.5 px-2 rounded-xl border border-slate-700 hover:border-slate-500 bg-slate-800/70 hover:bg-slate-700/70 text-slate-200 hover:text-white text-xs font-semibold transition cursor-pointer text-center truncate flex items-center justify-center"
                 >
                   {t("courseCard.viewDetails", "Details")}
                 </button>
@@ -216,7 +220,7 @@ const CourseCard = ({ course }) => {
               <button
                 onClick={handleBuy}
                 disabled={!canEnroll && user}
-                className={`flex-1 min-w-0 py-2 px-2 rounded-xl text-xs font-bold text-center transition shadow-md shadow-indigo-600/20 active:scale-98 cursor-pointer border-none truncate ${
+                className={`flex-1 min-w-0 h-8 sm:h-8.5 px-2 rounded-xl text-xs font-bold text-center transition shadow-md shadow-indigo-600/20 active:scale-98 cursor-pointer border-none truncate flex items-center justify-center ${
                   !canEnroll && user
                     ? "bg-slate-700 text-slate-400 border border-slate-600 cursor-not-allowed"
                     : "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white"

@@ -41,13 +41,13 @@ export const getPYQAccessResult = ({
     return { access: true, reason: "free_year", price: PYQ_PRICE };
   }
 
-  // ── Plan-based Question Bank Access (3 Years for Basic, 10 Years for Premium/Elite) ──
+  // ── Plan-based Question Bank Access (3 Years for Basic, 10 Years for Standard/Premium) ──
   if (subscription?.status === "active" && subscription?.plan) {
     const plan = subscription.plan.toLowerCase();
     const currentYear = new Date().getFullYear();
     const isBasic = plan === "basic" || plan === "base";
-    const isPremiumOrElite = plan === "premium" || plan === "elite";
-    const maxYears = isPremiumOrElite ? 10 : isBasic ? 3 : 0;
+    const isMultiYear = plan === "standard" || plan === "premium" || plan === "elite";
+    const maxYears = isMultiYear ? 10 : isBasic ? 3 : 0;
 
     const classMatches = !selectedClass || !className || selectedClass.toLowerCase() === className.toLowerCase();
 

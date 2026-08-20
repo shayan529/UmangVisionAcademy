@@ -289,8 +289,8 @@ export default function AdminCounselling() {
           >
             <option value="All">All Tiers</option>
             <option value="Basic">Basic (2/yr)</option>
-            <option value="Premium">Premium (5/yr)</option>
-            <option value="Elite">Elite (5/yr + Global)</option>
+            <option value="Standard">Standard (5/yr)</option>
+            <option value="Premium">Premium (5/yr + Global)</option>
           </select>
         </div>
       </div>
@@ -355,14 +355,14 @@ export default function AdminCounselling() {
                       <td className="p-4">
                         <span
                           className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                            planTier === "Elite"
+                            planTier === "Premium" || planTier === "Elite"
                               ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                              : planTier === "Premium"
+                              : planTier === "Standard"
                                 ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
                                 : "bg-lime-500/20 text-lime-300 border border-lime-500/30"
                           }`}
                         >
-                          {planTier}
+                          {planTier === "Elite" ? "Premium 👑" : planTier === "Standard" ? "Standard ⭐" : planTier}
                         </span>
                       </td>
                       <td className="p-4">

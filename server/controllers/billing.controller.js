@@ -44,16 +44,22 @@ const PLANS = {
     amount: 10000, // backward-compatibility alias
     durationDays: 365,
   },
-  premium: {
-    id: "premium",
-    label: "Premium Plan",
+  standard: {
+    id: "standard",
+    label: "Standard Plan",
     amount: 50000, // ₹500 in paise
     durationDays: 365,
   },
+  premium: {
+    id: "premium",
+    label: "Premium Plan",
+    amount: 100000, // ₹1,000 in paise (formerly Elite)
+    durationDays: 365,
+  },
   elite: {
-    id: "elite",
-    label: "Elite Plan",
-    amount: 100000, // ₹1,000 in paise
+    id: "premium",
+    label: "Premium Plan",
+    amount: 100000, // backward-compatibility alias
     durationDays: 365,
   },
 };

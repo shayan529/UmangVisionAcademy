@@ -24,7 +24,7 @@ const Home = () => {
       {/* <Instructors /> */}
       {/* <Community /> */}
       <AISection />
-      <Plans />
+      <Plans showTable={false} showFaq={false} isHomePage={true} />
     </div>
   );
 };

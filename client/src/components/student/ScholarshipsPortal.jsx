@@ -33,7 +33,7 @@ export default function ScholarshipsPortal() {
     user?.subscription?.plan ||
     "free"
   ).toLowerCase();
-  const isElite = planId === "elite";
+  const isPremium = planId === "premium" || planId === "elite";
 
   const [activeTab, setActiveTab] = useState("eligibility"); // 'eligibility' | 'nomination' | 'directory' | 'checklist'
   const [directory, setDirectory] = useState(DEFAULT_DIRECTORY);
@@ -53,11 +53,11 @@ export default function ScholarshipsPortal() {
       .then(async (res) => {
         if (!res.ok) throw new Error("Failed to load scholarships");
         const payload = await res.json();
-        setDirectory(
-          Array.isArray(payload?.data?.directory)
-            ? payload.data.directory
-            : DEFAULT_DIRECTORY,
-        );
+        const data = payload?.data || {};
+        const nextDirectory = Array.isArray(data.directory)
+          ? data.directory
+          : DEFAULT_DIRECTORY;
+        setDirectory(nextDirectory);
       })
       .catch(() => {
         setDirectory(DEFAULT_DIRECTORY);
@@ -65,14 +65,7 @@ export default function ScholarshipsPortal() {
       .finally(() => setLoadingHub(false));
   }, []);
 
-  // Eligibility Calculator State
-  const [calcClass, setCalcClass] = useState("Class 12");
-  const [calcScore, setCalcScore] = useState("90%+");
-  const [calcStream, setCalcStream] = useState("Engineering & Tech (JEE)");
-  const [calcIncome, setCalcIncome] = useState("< ₹6 Lakhs/year");
-  const [evalResult, setEvalResult] = useState(null);
-
-  // Nomination Form State
+  // Nomination Form
   const [nomName, setNomName] = useState(user?.name || "");
   const [nomEmail, setNomEmail] = useState(user?.email || "");
   const [nomCollegeTarget, setNomCollegeTarget] = useState("");
@@ -81,38 +74,45 @@ export default function ScholarshipsPortal() {
   const [nomLoading, setNomLoading] = useState(false);
   const [submittedNominations, setSubmittedNominations] = useState([]);
 
-  const handleEvaluate = (e) => {
+  // Calculator
+  const [calcClass, setCalcClass] = useState("Class 12");
+  const [calcStream, setCalcStream] = useState("PCM / Engineering");
+  const [calcScore, setCalcScore] = useState(88);
+  const [calcCategory, setCalcCategory] = useState("General");
+  const [calculatedEligible, setCalculatedEligible] = useState(null);
+
+  const handleCalculate = (e) => {
     e.preventDefault();
-    let percentage = 50;
-    if (calcScore === "95%+") percentage += 35;
-    else if (calcScore === "90%+") percentage += 25;
-    else if (calcScore === "85%+") percentage += 15;
+    const scoreNum = Number(calcScore);
+    const eligibleAmount =
+      scoreNum >= 95
+        ? "100% Tuition Grant (Up to ₹2,50,000/yr)"
+        : scoreNum >= 88
+          ? "75% Merit Grant (Up to ₹1,50,000/yr)"
+          : scoreNum >= 80
+            ? "50% Academic Grant (Up to ₹1,00,000/yr)"
+            : "25% Foundation Grant (Up to ₹50,000/yr)";
 
-    if (calcIncome === "< ₹3 Lakhs/year" || calcIncome === "< ₹6 Lakhs/year") {
-      percentage += 15;
-    }
-    const finalPct = Math.min(100, percentage);
+    const matches = directory.filter((s) => {
+      if (scoreNum >= 85) return true;
+      return !s.isInternal;
+    });
 
-    setEvalResult({
-      grantPercentage: finalPct,
-      tierStatus:
-        finalPct === 100
-          ? "Full 100% Scholarship Match"
-          : `${finalPct}% Tuition Grant Eligibility`,
-      annualAwardEst: `₹${((finalPct / 100) * 250000).toLocaleString("en-IN")}/year`,
-      recommendedSchemes: [
-        "Umang Vision National Higher-Study Merit Grant",
-        "Reliance Foundation Undergraduate Scheme",
-        "State Merit-cum-Means Higher Education Grant",
-      ],
+    setCalculatedEligible({
+      estimatedGrant: eligibleAmount,
+      matchedScholarshipsCount: matches.length,
+      recommendation:
+        scoreNum >= 85
+          ? "You meet the gold criteria for direct Foundation nomination with full application sponsorship."
+          : "You qualify for multiple state, institutional, and corporate merit programs listed below.",
     });
   };
 
   const handleSubmitNomination = async (e) => {
     e.preventDefault();
-    if (!isElite) {
+    if (!isPremium) {
       toast.error(
-        "Direct scholarship nomination is exclusive to Elite plan members.",
+        "Direct scholarship nomination is exclusive to Premium plan members.",
       );
       return;
     }
@@ -128,8 +128,9 @@ export default function ScholarshipsPortal() {
       name: nomName,
       targetCollege: nomCollegeTarget,
       marks: nomMarks,
-      status: "Nomination Received - Under Faculty Review",
-      date: new Date().toLocaleDateString(),
+      sop: nomSop,
+      submittedAt: new Date().toLocaleDateString(),
+      status: "Under Academic Review by Foundation Board",
     };
     const token = localStorage.getItem("authToken");
     try {
@@ -149,41 +150,39 @@ export default function ScholarshipsPortal() {
       });
       if (!res.ok) throw new Error("Failed to save nomination");
       setSubmittedNominations((prev) => [nextNomination, ...prev]);
+      toast.success(
+        "Official nomination submitted to Umang Vision Foundation!",
+      );
       setNomCollegeTarget("");
       setNomMarks("");
       setNomSop("");
-      toast.success("Scholarship nomination submitted successfully!");
-      setActiveTab("nomination");
     } catch {
-      toast.error(
-        "Nomination could not be saved to the backend. Please try again.",
-      );
+      toast.error("Could not save nomination. Please try again.");
     } finally {
       setNomLoading(false);
     }
   };
 
-  const filteredDirectory = directory.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.provider.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.eligibility.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      categoryFilter === "All" || item.category.includes(categoryFilter);
-    return matchesSearch && matchesCategory;
+  const filteredDirectory = directory.filter((sch) => {
+    const matchSearch =
+      sch.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sch.provider.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchCategory =
+      categoryFilter === "All" || sch.category === categoryFilter;
+    return matchSearch && matchCategory;
   });
 
   return (
     <div className="min-h-screen bg-[#0B1120] text-slate-100 p-4 md:p-8">
-      {/* ── Header ── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-950/70 via-slate-900 to-emerald-950/60 border border-amber-500/30 p-6 md:p-10 mb-8 shadow-2xl">
+      {/* ── Top Header Banner ── */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-950 via-slate-900 to-indigo-950 border border-amber-500/30 p-6 md:p-10 mb-8 shadow-2xl">
         <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-black uppercase tracking-wider mb-3">
               <Crown size={14} className="text-amber-400" />
-              Elite Exclusive Portal
+              Premium Exclusive Portal
             </div>
             <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight flex items-center gap-3">
               {t(
@@ -194,23 +193,23 @@ export default function ScholarshipsPortal() {
             <p className="text-slate-400 text-sm md:text-base mt-2 max-w-2xl">
               {t(
                 "scholarshipsPortal.subtitle",
-                "Elite student scholarship nominations for up to 100% college tuition grants and searchable global scholarship directory.",
+                "Premium student scholarship nominations for up to 100% college tuition grants and searchable global scholarship directory.",
               )}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            {isElite ? (
+            {isPremium ? (
               <div className="px-5 py-3 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-2">
                 <Crown size={18} className="text-amber-400" />
-                Elite Member Eligible
+                Premium Member Eligible
               </div>
             ) : (
               <Link
                 to="/plans"
                 className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/25 transition-all flex items-center gap-2"
               >
-                <Crown size={16} /> Upgrade to Elite (₹1,000)
+                <Crown size={16} /> Upgrade to Premium (₹1,000)
               </Link>
             )}
           </div>
@@ -434,7 +433,7 @@ export default function ScholarshipsPortal() {
               Umang Vision Higher-Study Scholarship Nomination
             </h2>
             <p className="text-slate-400 text-xs mb-6">
-              Elite plan members are directly nominated for up to 100% college
+              Premium plan members are directly nominated for up to 100% college
               tuition assistance. Fill in your academic milestones and target
               college credentials below.
             </p>
@@ -511,13 +510,13 @@ export default function ScholarshipsPortal() {
 
               <button
                 type="submit"
-                disabled={nomLoading || !isElite}
+                disabled={nomLoading || !isPremium}
                 className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Award size={18} />
                 {nomLoading
                   ? "Submitting Nomination..."
-                  : "Submit Official Scholarship Nomination (Elite)"}
+                  : "Submit Official Scholarship Nomination (Premium)"}
               </button>
             </form>
           </div>
@@ -640,7 +639,7 @@ export default function ScholarshipsPortal() {
                     onClick={() => setActiveTab("nomination")}
                     className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition-all flex items-center justify-center gap-2"
                   >
-                    <Award size={14} /> Apply via Elite Nomination →
+                    <Award size={14} /> Apply via Premium Nomination →
                   </button>
                 ) : (
                   <a

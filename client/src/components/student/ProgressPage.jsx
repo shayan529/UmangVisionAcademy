@@ -32,9 +32,9 @@ const ProgressPage = () => {
   const [activeReportPage, setActiveReportPage] = useState(1);
 
   const planId = (subscription?.plan || user?.subscription?.plan || "free").toLowerCase();
-  const isElite = planId === "elite";
-  const isPremium = planId === "premium";
-  const reportCardPages = isElite ? 12 : isPremium ? 8 : 3;
+  const isPremium = planId === "premium" || planId === "elite";
+  const isStandard = planId === "standard";
+  const reportCardPages = isPremium ? 12 : isStandard ? 8 : 3;
 
   useEffect(() => {
     dispatch(fetchEnrolledCourses());
@@ -499,7 +499,7 @@ const ProgressPage = () => {
             <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400">
-                  {isElite ? "ELITE 12-PAGE DIAGNOSTIC" : isPremium ? "PREMIUM 8-PAGE DOSSIER" : "BASIC 3-PAGE REPORT CARD"}
+                  {isPremium ? "PREMIUM 12-PAGE DIAGNOSTIC" : isStandard ? "STANDARD 8-PAGE DOSSIER" : "BASIC 3-PAGE REPORT CARD"}
                 </span>
                 <h3 className="text-xl font-black text-white flex items-center gap-2">
                   Academic Progress Report Card

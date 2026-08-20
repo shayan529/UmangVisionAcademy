@@ -103,6 +103,7 @@ const shapePublishedCourse = (c) => ({
   reviewCount: c.reviewCount,
   durationHours: c.durationHours,
   tags: c.tags ?? [],
+  subjects: Array.isArray(c.subjects) ? c.subjects.filter(Boolean) : (c.tags ?? []),
   createdAt: c.createdAt,
   instructor: c.instructor,
   studentsCount: c.studentsCount ?? 0,
@@ -295,6 +296,27 @@ export const getPublishedCourses = async (req, res) => {
             reviewCount: 1,
             durationHours: 1,
             tags: 1,
+            subjects: {
+              $filter: {
+                input: {
+                  $setUnion: [
+                    { $ifNull: ["$lessons.subject", []] },
+                    { $ifNull: ["$subjectDetails.subject", []] },
+                    { $ifNull: ["$subjectQuizzes.subject", []] },
+                    { $ifNull: ["$notes.subject", []] },
+                    { $ifNull: ["$tags", []] },
+                  ],
+                },
+                as: "s",
+                cond: {
+                  $and: [
+                    { $ne: ["$$s", null] },
+                    { $ne: ["$$s", ""] },
+                    { $ne: ["$$s", "General"] },
+                  ],
+                },
+              },
+            },
             createdAt: 1,
             studentsCount: { $size: { $ifNull: ["$students", []] } },
             instructor: {

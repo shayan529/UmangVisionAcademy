@@ -39,7 +39,8 @@ const statusColors = {
 const planColors = {
   base: "#84cc16",
   basic: "#84cc16",
-  premium: "#ef4444",
+  standard: "#f43f5e",
+  premium: "#f59e0b",
   elite: "#f59e0b",
 };
 
@@ -450,23 +451,23 @@ export default function BillingPage() {
                     if (!activeSub) return true;
                     const cur = (subscription?.plan || "").toLowerCase();
                     if (cur === "base" || cur === "basic") {
-                      return p.id === "premium" || p.id === "elite";
+                      return p.id === "standard" || p.id === "premium";
                     }
-                    if (cur === "premium") {
-                      return p.id === "elite";
+                    if (cur === "standard") {
+                      return p.id === "premium";
                     }
                     return false;
                   })
                   .map((plan) => {
                     const isSelected = selectedPlan?.id === plan.id;
+                    const isStandardCard = plan.id === "standard";
                     const isPremiumCard = plan.id === "premium";
-                    const isEliteCard = plan.id === "elite";
                     return (
                       <div
                         key={plan.id}
-                        className={`plan-card${isPremiumCard ? " plan-card-premium" : ""}`}
+                        className={`plan-card${isStandardCard ? " plan-card-premium" : ""}`}
                         style={
-                          isEliteCard
+                          isPremiumCard
                             ? {
                                 background: isSelected
                                   ? "linear-gradient(135deg,#5e320a,#2c1c0e)"
@@ -478,7 +479,7 @@ export default function BillingPage() {
                                 position: "relative",
                                 boxShadow: "0 10px 30px rgba(245,158,11,0.15)",
                               }
-                            : isPremiumCard
+                            : isStandardCard
                             ? {
                                 background: isSelected
                                   ? "linear-gradient(135deg,#5a1424,#2d161d)"
@@ -502,7 +503,7 @@ export default function BillingPage() {
                               }
                         }
                       >
-                        {isPremiumCard && (
+                        {isStandardCard && (
                           <span
                             style={{
                               position: "absolute",
@@ -519,7 +520,7 @@ export default function BillingPage() {
                             ⭐ MOST POPULAR
                           </span>
                         )}
-                        {isEliteCard && (
+                        {isPremiumCard && (
                           <span
                             style={{
                               position: "absolute",
@@ -533,7 +534,7 @@ export default function BillingPage() {
                               color: "#0f172a",
                             }}
                           >
-                            👑 VIP ELITE
+                            👑 VIP PREMIUM
                           </span>
                         )}
                         <h3
@@ -550,7 +551,7 @@ export default function BillingPage() {
                             style={{
                               fontSize: 32,
                               fontWeight: 900,
-                              color: isEliteCard ? "#fbbf24" : isPremiumCard ? "#f43f5e" : "#84cc16",
+                              color: isPremiumCard ? "#fbbf24" : isStandardCard ? "#f43f5e" : "#84cc16",
                             }}
                           >
                             {plan.price}
@@ -631,12 +632,12 @@ export default function BillingPage() {
                             padding: "12px",
                             borderRadius: 12,
                             border: "none",
-                            background: isEliteCard
+                            background: isPremiumCard
                               ? "linear-gradient(135deg,#f59e0b,#d97706)"
-                              : isPremiumCard
+                              : isStandardCard
                               ? "linear-gradient(135deg,#f43f5e,#e11d48)"
                               : "linear-gradient(135deg,#65a30d,#4d7c0f)",
-                            color: isEliteCard ? "#0f172a" : "#fff",
+                            color: isPremiumCard ? "#0f172a" : "#fff",
                             fontSize: 14,
                             fontWeight: 800,
                             cursor: "pointer",

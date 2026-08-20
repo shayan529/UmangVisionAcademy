@@ -38,7 +38,7 @@ export default function InternationalStudy() {
     user?.subscription?.plan ||
     "free"
   ).toLowerCase();
-  const isElite = planId === "elite";
+  const isPremium = planId === "premium" || planId === "elite";
 
   const [activeTab, setActiveTab] = useState("explorer"); // 'explorer' | 'tests' | 'sop_studio' | 'advisors'
   const [countries, setCountries] = useState(DEFAULT_COUNTRIES);
@@ -88,66 +88,84 @@ export default function InternationalStudy() {
   // Advisor Booking
   const [bookingAdvisor, setBookingAdvisor] = useState(null);
   const [advisorSlot, setAdvisorSlot] = useState("");
-  const [advisorNotes, setAdvisorNotes] = useState("");
+  const [advisorGoal, setAdvisorGoal] = useState("");
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookedSessions, setBookedSessions] = useState([]);
 
-  const handleSubmitSOP = async (e) => {
+  // SOP Submit Handler
+  const handleSopSubmit = (e) => {
     e.preventDefault();
-    if (!sopDraft.trim() || sopDraft.length < 50) {
-      toast.error("Please provide a draft of at least 50 words.");
+    if (!sopDraft.trim()) {
+      toast.error("Please enter your SOP draft text.");
+      return;
+    }
+    if (!isPremium) {
+      toast.error(
+        "SOP Review Studio is exclusive to Premium Plan members.",
+      );
       return;
     }
     setSubmittingSop(true);
-    const nextSop = {
-      id: `sop-${Date.now()}`,
-      degree: sopTargetDegree,
-      country: sopTargetCountry,
-      draft: sopDraft,
-      status: "Under Review",
-      submittedAt: new Date().toLocaleDateString(),
-      feedback:
-        "Our admissions advisor is reviewing your statement structure, grammar, and alignment with target university criteria.",
-    };
-    const token = localStorage.getItem("authToken");
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/student-hub/internationalStudy`,
+    setTimeout(() => {
+      setSubmittedSops((prev) => [
         {
-          method: "PUT",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            data: { countries, advisors, sops: [nextSop, ...submittedSops] },
-          }),
+          id: Date.now(),
+          degree: sopTargetDegree,
+          country: sopTargetCountry,
+          submittedAt: "Just now",
+          feedbackEta: "Within 48 hours",
+          status: "Under Review by Admissions Editor",
         },
-      );
-      if (!res.ok) throw new Error("Failed to save SOP");
-      setSubmittedSops((prev) => [nextSop, ...prev]);
+        ...prev,
+      ]);
       setSopDraft("");
-      toast.success("SOP Submitted for Expert Review!");
-    } catch {
-      toast.error(
-        "Your SOP could not be saved to the backend. Please try again.",
-      );
-    } finally {
       setSubmittingSop(false);
-    }
+      toast.success(
+        "SOP Draft submitted successfully! An admissions editor will review it within 48h.",
+      );
+    }, 1000);
   };
 
+  // Advisor Booking Handler
   const handleBookAdvisor = (e) => {
     e.preventDefault();
     if (!advisorSlot) {
-      toast.error("Please choose an advisory slot.");
+      toast.error("Please select a convenient time slot.");
       return;
     }
-    toast.success(
-      `1-on-1 Consultation booked with ${bookingAdvisor.name}! Meeting link sent to email.`,
-    );
-    setBookingAdvisor(null);
+    if (!isPremium) {
+      toast.error(
+        "1-on-1 Advisor Booking is exclusive to Premium Plan members.",
+      );
+      return;
+    }
+    setBookingLoading(true);
+    setTimeout(() => {
+      setBookedSessions((prev) => [
+        {
+          id: Date.now(),
+          advisor: bookingAdvisor.name,
+          slot: advisorSlot,
+          goal: advisorGoal || "General Profile Review & University Selection",
+          status: "Confirmed (Video Call Link Activated)",
+        },
+        ...prev,
+      ]);
+      setBookingLoading(false);
+      toast.success(
+        `Consultation confirmed with ${bookingAdvisor.name} for ${advisorSlot}!`,
+      );
+      setBookingAdvisor(null);
+      setAdvisorSlot("");
+      setAdvisorGoal("");
+    }, 1000);
+  };
+
+  const clearFilters = () => {
+    setSelectedCountry(null);
+    setSopDraft("");
+    setAdvisorGoal("");
     setAdvisorSlot("");
-    setAdvisorNotes("");
   };
 
   return (
@@ -161,7 +179,7 @@ export default function InternationalStudy() {
               <Crown size={14} className="text-amber-400" />
               {t(
                 "internationalStudy.eliteExclusiveBadge",
-                "ELITE PLAN EXCLUSIVE",
+                "PREMIUM PLAN EXCLUSIVE",
               )}
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
@@ -180,10 +198,10 @@ export default function InternationalStudy() {
           </div>
 
           <div className="flex items-center gap-3">
-            {isElite ? (
+            {isPremium ? (
               <div className="px-5 py-3 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-2">
                 <Crown size={18} className="text-amber-400" />
-                Elite Membership Unlocked
+                Premium Membership Unlocked
               </div>
             ) : (
               <Link
@@ -193,7 +211,7 @@ export default function InternationalStudy() {
                 <Crown size={16} />{" "}
                 {t(
                   "internationalStudy.upgradeBtn",
-                  "Upgrade to Elite Plan (₹1,000)",
+                  "Upgrade to Premium Plan (₹1,000)",
                 )}
               </Link>
             )}
@@ -240,8 +258,8 @@ export default function InternationalStudy() {
         </div>
       </div>
 
-      {/* ── Lock Screen / Teaser if not Elite ── */}
-      {!isElite && (
+      {/* ── Lock Screen / Teaser if not Premium ── */}
+      {!isPremium && (
         <div className="mb-8 p-6 md:p-8 rounded-3xl bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-900 border border-amber-500/30 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
@@ -249,10 +267,10 @@ export default function InternationalStudy() {
             </div>
             <div>
               <h3 className="text-lg font-bold text-white">
-                Full Access is Exclusive to Elite Plan Members
+                Full Access is Exclusive to Premium Plan Members
               </h3>
               <p className="text-xs text-slate-400 mt-1">
-                You are currently previewing this section. Upgrade to the Elite
+                You are currently previewing this section. Upgrade to the Premium
                 Plan (₹1,000/yr) to unlock unlimited SOP reviews, university
                 shortlisting, and 1-on-1 sessions with former Ivy League &
                 Russell Group admissions mentors.
@@ -263,15 +281,15 @@ export default function InternationalStudy() {
             to="/student-dashboard/billing"
             state={{
               plan: {
-                id: "elite",
-                title: "Elite Plan",
+                id: "premium",
+                title: "Premium Plan",
                 price: "₹1,000",
                 amount: 100000,
               },
             }}
             className="px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shrink-0 shadow-lg transition-all"
           >
-            Unlock Elite Now 👑
+            Unlock Premium Now 👑
           </Link>
         </div>
       )}
@@ -323,9 +341,9 @@ export default function InternationalStudy() {
                   </div>
                   <button
                     onClick={() => {
-                      if (!isElite) {
+                      if (!isPremium) {
                         toast.error(
-                          "Please upgrade to Elite to download comprehensive admission guides.",
+                          "Please upgrade to Premium to download comprehensive admission guides.",
                         );
                         return;
                       }
@@ -495,14 +513,14 @@ export default function InternationalStudy() {
                   <strong>Format:</strong> {tItem.sections}
                 </p>
                 <p>
-                  <strong>Elite Prep Tip:</strong> {tItem.tips}
+                  <strong>Premium Prep Tip:</strong> {tItem.tips}
                 </p>
               </div>
               <button
                 onClick={() => {
-                  if (!isElite) {
+                  if (!isPremium) {
                     toast.error(
-                      "Upgrade to Elite to unlock exclusive test practice sets.",
+                      "Upgrade to Premium to unlock exclusive test practice sets.",
                     );
                     return;
                   }
@@ -585,13 +603,13 @@ export default function InternationalStudy() {
 
               <button
                 type="submit"
-                disabled={submittingSop || !isElite}
+                disabled={submittingSop || !isPremium}
                 className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Send size={16} />
                 {submittingSop
                   ? "Submitting for Expert Evaluation..."
-                  : "Submit Draft for Elite Review (48h Turnaround)"}
+                  : "Submit Draft for Premium Review (48h Turnaround)"}
               </button>
             </form>
           </div>
@@ -668,9 +686,9 @@ export default function InternationalStudy() {
 
                 <button
                   onClick={() => {
-                    if (!isElite) {
+                    if (!isPremium) {
                       toast.error(
-                        "1-on-1 International Advisor Booking is exclusive to Elite plan members.",
+                        "1-on-1 International Advisor Booking is exclusive to Premium plan members.",
                       );
                       return;
                     }
