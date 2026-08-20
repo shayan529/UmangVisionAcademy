@@ -653,12 +653,16 @@ const findMissingLessonTitle = (lessons = []) => {
 };
 
 // A course was created via bulk upload if any lesson/note carries a
-// per-subject tag, or it has subject-level quizzes — single-course
-// creation never sets these.
+// per-subject tag, or it has subject-level quizzes, subjectDetails, or bundle summary/title.
 const isBulkCourse = (course) =>
-  (course.lessons ?? []).some((l) => l.subject) ||
-  (course.notes ?? []).some((n) => n.subject) ||
-  (course.subjectQuizzes ?? []).length > 0;
+  Boolean(
+    (course.lessons ?? []).some((l) => l.subject) ||
+    (course.notes ?? []).some((n) => n.subject) ||
+    (course.subjectQuizzes ?? []).length > 0 ||
+    (course.subjectDetails ?? []).length > 0 ||
+    (course.title && /bundle/i.test(course.title)) ||
+    (course.summary && /bundle/i.test(course.summary))
+  );
 
 // Reconstructs BulkCourseForm's `items` shape from a saved bulk course.
 const norm = (s) => (s ?? "").trim().toLowerCase();
@@ -671,6 +675,11 @@ const groupBulkCourseIntoItems = (course) => {
     ...(course.subjectQuizzes ?? []).map((q) => q.subject).filter(Boolean),
     ...(course.subjectDetails ?? []).map((d) => d.subject).filter(Boolean),
   ]);
+
+  if (subjectSet.size === 0 && course.summary && /bundle/i.test(course.summary)) {
+    const cleanSummary = course.summary.replace(/complete bundle/i, "").trim();
+    cleanSummary.split(",").map((s) => s.trim()).filter(Boolean).forEach((s) => subjectSet.add(s));
+  }
 
   const detailsMap = new Map(
     (course.subjectDetails ?? []).map((d) => [norm(d.subject), d]),
