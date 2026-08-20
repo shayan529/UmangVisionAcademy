@@ -152,6 +152,8 @@ const ALL_BOARDS = "All Boards";
 // otherwise it's treated as a Competitive Exam course (category holds the
 // exam name, e.g. "NEET", "JEE Main").
 const CLASSES = ["Class 9", "Class 10", "Class 11", "Class 12"];
+const BOARDS = ["MP Board", "CBSE", "ICSE"];
+const ALL_SUBJECTS = "All Subjects";
 const TYPE_ALL = "All";
 const TYPE_CLASSES = "Classes";
 const TYPE_COMPETITIVE = "Competitive Exam";
@@ -197,6 +199,7 @@ const Courses = () => {
   const [selectedCourseType, setSelectedCourseType] = useState(TYPE_ALL);
   const [selectedClass, setSelectedClass] = useState(ALL);
   const [selectedExam, setSelectedExam] = useState(ALL_EXAMS);
+  const [selectedSubject, setSelectedSubject] = useState(ALL_SUBJECTS);
   const [selectedBoard, setSelectedBoard] = useState(ALL_BOARDS);
   const [selectedLanguage, setSelectedLanguage] = useState(ALL_LANGUAGES);
   const [ratingCourse, setRatingCourse] = useState(null); // course being rated
@@ -214,6 +217,7 @@ const Courses = () => {
     setSelectedCourseType(type);
     setSelectedClass(ALL);
     setSelectedExam(ALL_EXAMS);
+    setSelectedSubject(ALL_SUBJECTS);
     setSelectedBoard(ALL_BOARDS);
   };
 
@@ -251,10 +255,17 @@ const Courses = () => {
     [allCourses],
   );
 
-  const dynamicBoards = useMemo(
-    () => [...new Set(allCourses.map((c) => c.board).filter(Boolean))],
-    [allCourses],
-  );
+  const dynamicSubjects = useMemo(() => {
+    const subjects = new Set();
+    allCourses.forEach((course) => {
+      if (course.subject) subjects.add(course.subject.trim());
+      (course.lessons ?? []).forEach((l) => l.subject && subjects.add(l.subject.trim()));
+      (course.notes ?? []).forEach((n) => n.subject && subjects.add(n.subject.trim()));
+      (course.subjectQuizzes ?? []).forEach((q) => q.subject && subjects.add(q.subject.trim()));
+      (course.subjectDetails ?? []).forEach((d) => d.subject && subjects.add(d.subject.trim()));
+    });
+    return Array.from(subjects).filter(Boolean).sort();
+  }, [allCourses]);
 
   // ── Filtered list ─────────────────────────────────────────────────────────
   const filteredCourses = useMemo(
@@ -272,6 +283,34 @@ const Courses = () => {
             ? selectedExam === ALL_EXAMS || course.category === selectedExam
             : selectedClass === ALL || course.category === selectedClass;
 
+        // Subject matching
+        const isBulk =
+          (course.lessons ?? []).some((l) => l.subject) ||
+          (course.notes ?? []).some((n) => n.subject) ||
+          (course.subjectQuizzes ?? []).length > 0 ||
+          (course.subjectDetails ?? []).length > 0;
+
+        let courseSubjects = [];
+        if (course.subject) courseSubjects.push(course.subject.trim().toLowerCase());
+        if (isBulk) {
+          [
+            ...(course.lessons ?? []).map((l) => l.subject),
+            ...(course.notes ?? []).map((n) => n.subject),
+            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
+            ...(course.subjectDetails ?? []).map((d) => d.subject),
+          ]
+            .filter(Boolean)
+            .forEach((s) => courseSubjects.push(s.trim().toLowerCase()));
+        } else if (course.title) {
+          courseSubjects.push(course.title.trim().toLowerCase());
+        }
+
+        const subjectMatch =
+          selectedSubject === ALL_SUBJECTS ||
+          courseSubjects.includes(selectedSubject.trim().toLowerCase()) ||
+          course.title?.toLowerCase().includes(selectedSubject.toLowerCase()) ||
+          course.description?.toLowerCase().includes(selectedSubject.toLowerCase());
+
         // Board doesn't apply to competitive-exam courses.
         const boardMatch =
           selectedCourseType === TYPE_COMPETITIVE
@@ -285,13 +324,14 @@ const Courses = () => {
           !course.language ||
           course.language.toLowerCase() === selectedLanguage.toLowerCase();
 
-        return typeMatch && classMatch && boardMatch && languageMatch;
+        return typeMatch && classMatch && subjectMatch && boardMatch && languageMatch;
       }),
     [
       allCourses,
       selectedCourseType,
       selectedClass,
       selectedExam,
+      selectedSubject,
       selectedBoard,
       selectedLanguage,
     ],
@@ -486,7 +526,7 @@ const Courses = () => {
         </div>
 
         {/* Filters Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4 mb-6 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm shadow-inner">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm shadow-inner">
           {selectedCourseType === TYPE_COMPETITIVE ? (
             <div className="min-w-0">
               <label className="block text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-indigo-300/90 mb-1 sm:mb-1.5 truncate">
@@ -529,11 +569,43 @@ const Courses = () => {
                   className="w-full min-h-[36px] sm:min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-indigo-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
                 >
                   <option key={ALL} value={ALL}>
-                    {t("courses.all")}
+                    {t("courses.all", "All")}
                   </option>
-                  {sortedClasses.map((cls) => (
+                  {CLASSES.map((cls) => (
                     <option key={cls} value={cls}>
                       {cls}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                  <svg
+                    className="w-3.5 h-3.5 fill-current opacity-70"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {selectedCourseType !== TYPE_COMPETITIVE && (
+            <div className="min-w-0">
+              <label className="block text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-pink-300/90 mb-1 sm:mb-1.5 truncate">
+                {t("courses.select_subject", "Select Subject")}
+              </label>
+              <div className="relative min-w-0">
+                <select
+                  value={selectedSubject}
+                  onChange={(e) => setSelectedSubject(e.target.value)}
+                  className="w-full min-h-[36px] sm:min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-pink-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                >
+                  <option key={ALL_SUBJECTS} value={ALL_SUBJECTS}>
+                    {t("courses.allSubjects", "All Subjects")}
+                  </option>
+                  {dynamicSubjects.map((sub) => (
+                    <option key={sub} value={sub}>
+                      {sub}
                     </option>
                   ))}
                 </select>
@@ -561,9 +633,9 @@ const Courses = () => {
                   className="w-full min-h-[36px] sm:min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-purple-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
                 >
                   <option key={ALL_BOARDS} value={ALL_BOARDS}>
-                    {t("courses.allBoards")}
+                    {t("courses.allBoards", "All Boards")}
                   </option>
-                  {dynamicBoards.map((board) => (
+                  {BOARDS.map((board) => (
                     <option key={board} value={board}>
                       {board}
                     </option>

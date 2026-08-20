@@ -43,7 +43,7 @@ const Plans = ({ showTable = true, showFaq = true, isHomePage = false }) => {
   }, [user, dispatch]);
 
   if (
-    location.pathname === "/plans" &&
+    (location.pathname === "/plans" || location.pathname.includes("plans")) &&
     (subscription?.status === "active" || subscription?.status === "cancelled")
   ) {
     return (

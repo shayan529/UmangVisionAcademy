@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
@@ -12,6 +12,24 @@ import {
   resetPaymentSuccess,
 } from "../redux/slices/billingSlice";
 import { loadCurrentUser } from "../redux/slices/authSlice";
+import { SMART_PLANS } from "../data/plansData";
+import {
+  Check,
+  Crown,
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  Zap,
+  ChevronDown,
+  ChevronUp,
+  Calendar,
+  Clock,
+  CreditCard,
+  AlertCircle,
+  X,
+  Star,
+  GraduationCap,
+} from "lucide-react";
 
 const fmt = (dateStr) => {
   if (!dateStr) return "—";
@@ -28,12 +46,19 @@ const daysLeft = (endDate) => {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 };
 
-import { SMART_PLANS, SMART_PLAN_FEATURES } from "../data/plansData";
+const PLAN_TIERS = {
+  base: 1,
+  basic: 1,
+  standard: 2,
+  premium: 3,
+  vip: 3,
+  elite: 3,
+};
 
 const statusColors = {
-  active: { bg: "#052e16", text: "#4ade80", label: "Active" },
-  expired: { bg: "#2d0a0a", text: "#f87171", label: "Expired" },
-  cancelled: { bg: "#1e293b", text: "#94a3b8", label: "Cancelled" },
+  active: { bg: "#064e3b", text: "#34d399", border: "#059669", label: "Active" },
+  expired: { bg: "#450a0a", text: "#f87171", border: "#dc2626", label: "Expired" },
+  cancelled: { bg: "#1e293b", text: "#94a3b8", border: "#475569", label: "Cancelled" },
 };
 
 const planColors = {
@@ -44,32 +69,17 @@ const planColors = {
   elite: "#f59e0b",
 };
 
-const Sk = ({ w = "100%", h = 16, r = 8, style = {} }) => (
-  <div
-    style={{
-      width: w,
-      height: h,
-      borderRadius: r,
-      background: "linear-gradient(90deg,#1e293b 25%,#263348 50%,#1e293b 75%)",
-      backgroundSize: "200% 100%",
-      animation: "shimmer 1.4s infinite",
-      ...style,
-    }}
-  />
-);
-
 export default function BillingPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
 
-  const selectedPlan = location.state?.plan ?? null;
+  const selectedPlanFromNav = location.state?.plan ?? null;
 
   const { user } = useSelector((s) => s.auth);
   const {
     subscription,
-    order,
     loading,
     orderLoading,
     paymentLoading,
@@ -78,14 +88,26 @@ export default function BillingPage() {
   } = useSelector((s) => s.billing);
 
   const [showCancel, setShowCancel] = useState(false);
-  const [selectedClass, setSelectedClass] = useState("");
+  const [selectedClass, setSelectedClass] = useState(
+    user?.selectedClass || "Class 9"
+  );
+  const [expandedCards, setExpandedCards] = useState({});
+  const [processingPlanId, setProcessingPlanId] = useState(null);
+
+  const toggleExpandCard = (planId) => {
+    setExpandedCards((prev) => ({
+      ...prev,
+      [planId]: !prev[planId],
+    }));
+  };
 
   useEffect(() => {
-    if (!user)
+    if (!user) {
       navigate("/login", {
         state: { from: "/student-dashboard/billing" },
         replace: true,
       });
+    }
   }, [user, navigate]);
 
   useEffect(() => {
@@ -93,28 +115,42 @@ export default function BillingPage() {
   }, [dispatch]);
 
   useEffect(() => {
+    if (user?.selectedClass && !selectedClass) {
+      setSelectedClass(user.selectedClass);
+    }
+  }, [user?.selectedClass]);
+
+  useEffect(() => {
     if (paymentSuccess) {
       const timer = setTimeout(() => {
         dispatch(resetPaymentSuccess());
-        navigate("/student-dashboard");
+        dispatch(fetchSubscription());
+        dispatch(loadCurrentUser());
+        setProcessingPlanId(null);
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [paymentSuccess, dispatch, navigate]);
+  }, [paymentSuccess, dispatch]);
 
   const handlePay = async (plan) => {
     if (!selectedClass) {
-      alert("Please select a class before purchasing the plan.");
+      alert("Please select your class before proceeding.");
       return;
     }
+
+    setProcessingPlanId(plan.id);
 
     const result = await dispatch(
       createOrder({
         planId: plan.id,
         selectedClass,
-      }),
+      })
     );
-    if (createOrder.rejected.match(result)) return;
+
+    if (createOrder.rejected.match(result)) {
+      setProcessingPlanId(null);
+      return;
+    }
 
     const { orderId } = result.payload;
 
@@ -125,8 +161,9 @@ export default function BillingPage() {
         razorpay_signature: "mock_signature",
         planId: plan.id,
         selectedClass,
-      }),
+      })
     );
+
     dispatch(fetchSubscription());
     dispatch(loadCurrentUser());
   };
@@ -143,647 +180,489 @@ export default function BillingPage() {
     subscription?.status === "active" || subscription?.status === "cancelled"
       ? subscription
       : null;
-  const subColor = statusColors[subscription?.status] ?? statusColors.active;
-  const accentColor =
-    planColors[subscription?.plan ?? selectedPlan?.id] ?? "#7c3aed";
+
+  const subscribedClasses = Array.isArray(user?.subscribedClasses)
+    ? user.subscribedClasses
+    : Array.isArray(user?.subscriptions)
+    ? [...new Set(user.subscriptions.map((s) => s.selectedClass).filter(Boolean))]
+    : [];
+
+  const hasMultipleSubscriptions = subscribedClasses.length > 1;
+
+  const currentPlanKey = (subscription?.plan || "").toLowerCase();
+  const currentTier = PLAN_TIERS[currentPlanKey] || (activeSub ? 1 : 0);
+  const subStatus = subscription?.status || "active";
+  const subColor = statusColors[subStatus] ?? statusColors.active;
+  const accentColor = planColors[currentPlanKey] ?? "#7c3aed";
   const days = daysLeft(subscription?.endDate);
+  const totalDays = 365;
+  const progressPercent = Math.min(100, Math.max(5, (days / totalDays) * 100));
 
   return (
     <>
       <SEO
-        title="Billing"
-        description="Manage your billing and subscriptions at Umang Vision Academy."
+        title="Billing & Subscription Plans"
+        description="Manage your active Smart Learning Plan and upgrade tiers at Umang Vision Academy."
       />
-      <style>{`
-        @keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
-        @keyframes fadeUp  { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes pulse   { 0%,100%{opacity:1;} 50%{opacity:.5;} }
-        .billing-fade { animation: fadeUp 0.4s ease both; }
-        .billing-fade:nth-child(2) { animation-delay:0.07s; }
-        .billing-fade:nth-child(3) { animation-delay:0.13s; }
-        .plan-card:hover { border-color:#334155 !important; transform:translateY(-2px); }
-        .plan-card.plan-card-premium:hover { transform:translateY(-4px); }
-      `}</style>
 
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "#0b1120",
-          color: "#f1f5f9",
-          fontFamily: "'Inter','Segoe UI',sans-serif",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 900,
-            margin: "0 auto",
-            padding: "clamp(20px, 4vw, 40px) clamp(12px, 3vw, 24px)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 28,
-          }}
-        >
+      <div className="min-h-screen bg-[#0B1120] text-slate-100 font-sans py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto space-y-8 sm:space-y-10">
+          {/* ── Payment Success Notification ── */}
           {paymentSuccess && (
-            <div
-              style={{
-                background: "#052e16",
-                border: "1px solid #16a34a",
-                borderRadius: 16,
-                padding: "18px 22px",
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-              }}
-            >
-              <span style={{ fontSize: 24 }}>🎉</span>
+            <div className="bg-emerald-950/80 border border-emerald-500/60 rounded-2xl p-5 flex items-center gap-4 shadow-xl animate-fadeIn">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 text-xl font-bold">
+                ✓
+              </div>
               <div>
-                <p style={{ fontWeight: 700, color: "#4ade80", fontSize: 15 }}>
-                  Payment successful! Plan activated.
+                <p className="font-extrabold text-emerald-300 text-base sm:text-lg">
+                  Subscription successfully activated!
                 </p>
-                <p style={{ fontSize: 13, color: "#86efac", marginTop: 3 }}>
-                  Redirecting to your dashboard…
+                <p className="text-xs sm:text-sm text-emerald-400/80 mt-0.5">
+                  Your academic plan has been updated and all benefits are unlocked.
                 </p>
               </div>
             </div>
           )}
 
+          {/* ── Error Notification ── */}
           {error && (
-            <div
-              style={{
-                background: "#2d0a0a",
-                border: "1px solid #7f1d1d",
-                borderRadius: 16,
-                padding: "14px 18px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 12,
-              }}
-            >
-              <span style={{ color: "#f87171", fontSize: 13 }}>⚠️ {error}</span>
+            <div className="bg-rose-950/80 border border-rose-500/60 rounded-2xl p-4 flex items-center justify-between gap-3 shadow-xl">
+              <div className="flex items-center gap-2 text-rose-300 text-sm">
+                <AlertCircle size={18} className="text-rose-400 shrink-0" />
+                <span>{error}</span>
+              </div>
               <button
                 onClick={() => dispatch(clearBillingError())}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#f87171",
-                  cursor: "pointer",
-                  fontSize: 16,
-                }}
+                className="text-rose-400 hover:text-white transition p-1"
+                aria-label="Dismiss error"
               >
-                ✕
+                <X size={16} />
               </button>
             </div>
           )}
 
-          <div className="billing-fade">
-            <h1
-              style={{
-                fontSize: "clamp(26px,4vw,38px)",
-                fontWeight: 800,
-                color: "#f1f5f9",
-              }}
-            >
-              Billing & Subscription
-            </h1>
-            <p style={{ color: "#64748b", marginTop: 6, fontSize: 14 }}>
-              Manage your plan, payment history and subscription.
-            </p>
-          </div>
-
-          <div
-            className="billing-fade"
-            style={{
-              background: "#111827",
-              border: "1px solid #1e293b",
-              borderRadius: 22,
-              padding: "26px 28px",
-            }}
-          >
-            <p
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#64748b",
-                textTransform: "uppercase",
-                letterSpacing: "0.1em",
-                marginBottom: 14,
-              }}
-            >
-              Current Plan
-            </p>
-
-            {loading ? (
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 12 }}
-              >
-                <Sk w="40%" h={28} />
-                <Sk w="25%" h={20} />
-                <Sk w="60%" h={6} r={4} style={{ marginTop: 8 }} />
+          {/* ── Page Header ── */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800 pb-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-950/80 border border-purple-500/30 text-purple-300 text-xs font-bold uppercase tracking-wider mb-2">
+                <CreditCard size={13} className="text-purple-400" />
+                <span>Billing & Subscription Center</span>
               </div>
-            ) : subscription ? (
-              <>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "space-between",
-                    flexWrap: "wrap",
-                    gap: 12,
-                  }}
-                >
-                  <div>
-                    <h2
-                      style={{
-                        fontSize: 26,
-                        fontWeight: 800,
-                        color: "#f1f5f9",
-                      }}
-                    >
-                      {subscription.label ?? subscription.plan}
-                    </h2>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 10,
-                        marginTop: 8,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          padding: "3px 10px",
-                          borderRadius: 20,
-                          background: subColor.bg,
-                          color: subColor.text,
-                        }}
-                      >
-                        {subColor.label}
-                      </span>
-                      <span style={{ fontSize: 12, color: "#64748b" }}>
-                        {subscription.status === "active" ||
-                        subscription.status === "cancelled"
-                          ? `${days} day${days !== 1 ? "s" : ""} remaining`
-                          : ""}
-                      </span>
-                    </div>
-                  </div>
-                  {activeSub && subscription.status === "active" && (
-                    <button
-                      onClick={() => setShowCancel(true)}
-                      style={{
-                        padding: "8px 16px",
-                        borderRadius: 10,
-                        border: "1px solid #334155",
-                        background: "transparent",
-                        color: "#94a3b8",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Cancel Plan
-                    </button>
-                  )}
-                </div>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
+                {activeSub ? "My Subscription & Upgrades" : "Smart Learning Plans"}
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
+                {activeSub
+                  ? "View your active plan details, track validity, and upgrade your tier for higher academic mastery."
+                  : "Choose an all-inclusive annual subscription to unlock curriculum mastery, mock test series, and mentorship."}
+              </p>
+            </div>
 
-                {activeSub &&
-                  subscription.startDate &&
-                  subscription.endDate && (
-                    <div style={{ marginTop: 16 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          marginBottom: 6,
-                        }}
-                      >
-                        <span style={{ fontSize: 11, color: "#64748b" }}>
-                          Started {fmt(subscription.startDate)}
-                        </span>
-                        <span style={{ fontSize: 11, color: "#64748b" }}>
-                          Renews {fmt(subscription.endDate)}
-                        </span>
-                      </div>
-                      <div
-                        style={{
-                          height: 6,
-                          background: "#1e293b",
-                          borderRadius: 4,
-                          overflow: "hidden",
-                        }}
-                      >
-                        <div
-                          style={{
-                            height: "100%",
-                            width: `${Math.max(5, (days / 30) * 100)}%`,
-                            background: `linear-gradient(90deg,${accentColor},${accentColor}88)`,
-                            borderRadius: 4,
-                            transition: "width 0.8s ease",
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
-              </>
-            ) : (
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <span style={{ fontSize: 32 }}>📦</span>
-                <div>
-                  <p style={{ color: "#94a3b8", fontWeight: 600 }}>
-                    No active plan
-                  </p>
-                  <p style={{ color: "#64748b", fontSize: 13, marginTop: 3 }}>
-                    Choose a plan below to get started.
-                  </p>
-                </div>
+            {/* Target Class Selector - Only shown if user has taken multiple subscriptions for different classes */}
+            {hasMultipleSubscriptions && (
+              <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 rounded-xl px-3 py-2 shrink-0">
+                <GraduationCap size={16} className="text-indigo-400" />
+                <span className="text-xs text-slate-400 font-medium">Class:</span>
+                <select
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  className="bg-transparent text-xs font-bold text-slate-100 outline-none cursor-pointer"
+                >
+                  {subscribedClasses.map((cls) => (
+                    <option key={cls} value={cls} className="bg-slate-900">
+                      {cls}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
           </div>
 
-          {(!activeSub || (activeSub && (subscription?.plan === "base" || subscription?.plan === "basic" || subscription?.plan === "premium"))) && (
-            <div className="billing-fade">
-              <div style={{ display: "flex", alignItems: "center", justifyBetween: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
-                <p
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: "#64748b",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                    margin: 0,
-                  }}
-                >
-                  {activeSub ? "Upgrade Plan Tier" : "Choose a Smart Learning Plan"}
-                </p>
-              </div>
-
+          {/* ── 1. ACTIVE SUBSCRIPTION OVERVIEW BANNER (If Subscribed) ── */}
+          {activeSub ? (
+            <div className="relative rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-slate-900 via-indigo-950/30 to-slate-900 border border-indigo-500/30 shadow-2xl overflow-hidden">
+              {/* Background Glow */}
               <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit,minmax(min(260px, 100%),1fr))",
-                  gap: 16,
-                }}
-              >
-                {SMART_PLANS
-                  .filter((p) => {
-                    if (!activeSub) return true;
-                    const cur = (subscription?.plan || "").toLowerCase();
-                    if (cur === "base" || cur === "basic") {
-                      return p.id === "standard" || p.id === "premium";
-                    }
-                    if (cur === "standard") {
-                      return p.id === "premium";
-                    }
-                    return false;
-                  })
-                  .map((plan) => {
-                    const isSelected = selectedPlan?.id === plan.id;
-                    const isStandardCard = plan.id === "standard";
-                    const isPremiumCard = plan.id === "premium";
-                    return (
-                      <div
-                        key={plan.id}
-                        className={`plan-card${isStandardCard ? " plan-card-premium" : ""}`}
-                        style={
-                          isPremiumCard
-                            ? {
-                                background: isSelected
-                                  ? "linear-gradient(135deg,#5e320a,#2c1c0e)"
-                                  : "linear-gradient(135deg,#3d2305,#1e160a)",
-                                border: `1px solid ${isSelected ? "#f59e0b" : "#f59e0b50"}`,
-                                borderRadius: 20,
-                                padding: "24px",
-                                transition: "all 0.2s",
-                                position: "relative",
-                                boxShadow: "0 10px 30px rgba(245,158,11,0.15)",
-                              }
-                            : isStandardCard
-                            ? {
-                                background: isSelected
-                                  ? "linear-gradient(135deg,#5a1424,#2d161d)"
-                                  : "linear-gradient(135deg,#3b111e,#1e1124)",
-                                border: `1px solid ${isSelected ? "#f43f5e" : "#f43f5e50"}`,
-                                borderRadius: 20,
-                                padding: "24px",
-                                transition: "all 0.2s",
-                                position: "relative",
-                                boxShadow: "0 10px 30px rgba(244,63,94,0.15)",
-                              }
-                            : {
-                                background: isSelected
-                                  ? "linear-gradient(135deg,#233719,#1e291e)"
-                                  : "linear-gradient(135deg,#1c2e14,#0f172a)",
-                                border: `1px solid ${isSelected ? "#84cc16" : "#84cc1640"}`,
-                                borderRadius: 20,
-                                padding: "24px",
-                                transition: "all 0.2s",
-                                position: "relative",
-                              }
-                        }
-                      >
-                        {isStandardCard && (
-                          <span
-                            style={{
-                              position: "absolute",
-                              top: 14,
-                              right: 14,
-                              fontSize: 10,
-                              fontWeight: 800,
-                              padding: "2px 8px",
-                              borderRadius: 20,
-                              background: "#fff",
-                              color: "#e11d48",
-                            }}
-                          >
-                            ⭐ MOST POPULAR
-                          </span>
-                        )}
-                        {isPremiumCard && (
-                          <span
-                            style={{
-                              position: "absolute",
-                              top: 14,
-                              right: 14,
-                              fontSize: 10,
-                              fontWeight: 800,
-                              padding: "2px 8px",
-                              borderRadius: 20,
-                              background: "#f59e0b",
-                              color: "#0f172a",
-                            }}
-                          >
-                            👑 VIP PREMIUM
-                          </span>
-                        )}
-                        <h3
+                className="absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl opacity-20 pointer-events-none"
+                style={{ background: accentColor }}
+              />
+
+              <div className="relative z-10 space-y-6">
+                {/* Top status bar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-widest text-slate-400">
+                      CURRENT ACTIVE PLAN
+                    </span>
+                    <span
+                      className="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm"
+                      style={{
+                        background: subColor.bg,
+                        color: subColor.text,
+                        border: `1px solid ${subColor.border}`,
+                      }}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                      {subColor.label}
+                    </span>
+                  </div>
+
+                  {subscription.status === "active" && (
+                    <button
+                      onClick={() => setShowCancel(true)}
+                      className="text-xs font-semibold text-slate-400 hover:text-rose-400 transition cursor-pointer"
+                    >
+                      Cancel Subscription
+                    </button>
+                  )}
+                </div>
+
+                {/* Main Plan Info */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                  <div className="md:col-span-2 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">
+                        {currentPlanKey === "premium" ? "👑" : currentPlanKey === "standard" ? "⭐" : "📋"}
+                      </span>
+                      <h2 className="text-2xl sm:text-3xl font-black text-white capitalize">
+                        {subscription.label || `${subscription.plan} Plan`}
+                      </h2>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-300">
+                      Enrolled Grade: <strong className="text-indigo-300">{user.selectedClass || subscription.selectedClass || selectedClass}</strong> • Full 365-day academic access unlocked.
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-center space-y-1">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      Days Remaining
+                    </span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black text-white">{days}</span>
+                      <span className="text-xs text-slate-400">days left</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Validity Progress Bar & Dates */}
+                <div className="space-y-2 pt-2">
+                  <div className="flex justify-between text-xs text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <Calendar size={13} className="text-indigo-400" />
+                      Started: {fmt(subscription.startDate)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock size={13} className="text-amber-400" />
+                      Renews / Expires: {fmt(subscription.endDate)}
+                    </span>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5">
+                    <div
+                      className="h-full rounded-full transition-all duration-700 shadow-sm"
+                      style={{
+                        width: `${progressPercent}%`,
+                        background: `linear-gradient(90deg, ${accentColor}, #818cf8)`,
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {/* ── 2. PLAN SELECTION & UPGRADE MATRIX ── */}
+          <div className="space-y-6">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-amber-400" />
+                <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                  {activeSub ? "Upgrade Your Learning Plan" : "Choose Your Smart Learning Plan"}
+                </h2>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-400">
+                {activeSub
+                  ? "Upgrade to a higher tier anytime. The new benefits, question bank archives, and 1-on-1 faculty support will activate instantly."
+                  : "All plans include 365-day access to class subjects, question banks, and smart AI tools."}
+              </p>
+            </div>
+
+            {/* 3 Plan Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+              {SMART_PLANS.map((plan) => {
+                const planTier = PLAN_TIERS[plan.id.toLowerCase()] || 1;
+                const isCurrent = activeSub && planTier === currentTier;
+                const isLower = activeSub && planTier < currentTier;
+                const isUpgrade = activeSub && planTier > currentTier;
+                const isSelected = selectedPlanFromNav?.id === plan.id;
+                const isPopular = plan.id === "standard";
+                const isPremium = plan.id === "premium";
+
+                const isExpanded = Boolean(expandedCards[plan.id]);
+                const features = plan.allFeatures || [];
+                const visibleFeatures = isExpanded ? features : features.slice(0, 5);
+                const remainingCount = features.length - 5;
+                const isProcessing = processingPlanId === plan.id && (orderLoading || paymentLoading);
+
+                return (
+                  <div
+                    key={plan.id}
+                    className={`relative rounded-3xl p-5 sm:p-7 flex flex-col justify-between border transition-all duration-300 shadow-2xl ${
+                      isCurrent
+                        ? "bg-slate-900/90 border-2 border-emerald-400/80 shadow-emerald-950/40 ring-2 ring-emerald-400/30"
+                        : isUpgrade
+                        ? isPremium
+                          ? "bg-gradient-to-b from-amber-950/60 via-slate-900 to-slate-900 border-2 border-amber-500/60 shadow-amber-950/40 hover:border-amber-400"
+                          : "bg-gradient-to-b from-purple-950/70 via-slate-900 to-slate-900 border-2 border-purple-500/60 shadow-purple-950/40 hover:border-purple-400"
+                        : isPopular
+                        ? "bg-gradient-to-b from-purple-950/40 via-slate-900 to-slate-900 border border-purple-500/40"
+                        : isPremium
+                        ? "bg-gradient-to-b from-amber-950/30 via-slate-900 to-slate-900 border border-amber-500/40"
+                        : "bg-slate-900/60 border border-slate-800"
+                    }`}
+                    style={{
+                      borderTop: `4px solid ${plan.color}`,
+                    }}
+                  >
+                    {/* Top Badges */}
+                    {isCurrent && (
+                      <div className="absolute -top-3.5 right-6 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
+                        <span>✓ ACTIVE PLAN</span>
+                      </div>
+                    )}
+                    {!isCurrent && isPopular && (
+                      <div className="absolute -top-3.5 right-6 bg-gradient-to-r from-rose-500 to-pink-500 text-white px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg">
+                        ⭐ {t("plans.mostPopular", "MOST POPULAR")}
+                      </div>
+                    )}
+                    {!isCurrent && isPremium && (
+                      <div className="absolute -top-3.5 right-6 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg">
+                        👑 {t("plans.vipExclusive", "VIP EXCLUSIVE")}
+                      </div>
+                    )}
+
+                    <div>
+                      {/* Header row */}
+                      <div className="flex items-center justify-between mb-3">
+                        <span
+                          className="text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider"
                           style={{
-                            fontSize: 20,
-                            fontWeight: 800,
-                            color: "#f1f5f9",
+                            background: `${plan.color}20`,
+                            color: plan.color,
+                            border: `1px solid ${plan.color}40`,
                           }}
                         >
-                          {plan.title} Plan
-                        </h3>
-                        <div style={{ marginTop: 8, marginBottom: 16 }}>
+                          {plan.badge}
+                        </span>
+                        <span className="text-2xl">{plan.icon}</span>
+                      </div>
+
+                      {/* Title & Tagline */}
+                      <h3 className="text-2xl font-black text-white">
+                        {t(plan.labelKey, plan.label)}
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-1.5 min-h-[32px] leading-relaxed">
+                        {t(plan.taglineKey, plan.tagline)}
+                      </p>
+
+                      {/* Pricing */}
+                      <div className="mt-4 mb-5 pb-5 border-b border-white/10">
+                        <div className="flex items-baseline gap-1.5">
                           <span
-                            style={{
-                              fontSize: 32,
-                              fontWeight: 900,
-                              color: isPremiumCard ? "#fbbf24" : isStandardCard ? "#f43f5e" : "#84cc16",
-                            }}
+                            className="text-3xl sm:text-4xl font-black tracking-tight"
+                            style={{ color: plan.color }}
                           >
                             {plan.price}
                           </span>
-                          <span
-                            style={{
-                              fontSize: 13,
-                              color: "#94a3b8",
-                            }}
-                          >
-                            /{plan.period}
+                          <span className="text-xs font-bold text-slate-400">
+                            /{t(plan.periodKey, plan.period)}
                           </span>
                         </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 8,
-                            marginBottom: 20,
-                          }}
-                        >
-                          {(plan.allFeatures || plan.keyFeatures || []).map((f, i) => (
+                        <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">
+                          {t("plans.billedAnnually", "Billed annually • Full 365-day access")}
+                        </span>
+                      </div>
+
+                      {/* Feature Points */}
+                      <div className="space-y-2.5 mb-5">
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                          Included features ({features.length}):
+                        </p>
+                        {visibleFeatures.map((feat, idx) => {
+                          const featureKey = plan.featureKeys?.[idx];
+                          const featureText = featureKey ? t(featureKey, feat) : feat;
+                          return (
                             <div
-                              key={i}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 8,
-                                fontSize: 12,
-                                color: "#cbd5e1",
-                              }}
+                              key={idx}
+                              className="flex items-start gap-2.5 text-xs text-slate-300 leading-snug"
                             >
-                              <span
+                              <div
+                                className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]"
                                 style={{
+                                  background: `${plan.color}25`,
                                   color: plan.color,
-                                  flexShrink: 0,
-                                  fontWeight: 800,
                                 }}
                               >
                                 ✓
-                              </span>
-                              {f}
+                              </div>
+                              <span>{featureText}</span>
                             </div>
-                          ))}
-                        </div>
+                          );
+                        })}
+                      </div>
 
-                        <div style={{ marginBottom: 16 }}>
-                          <select
-                            value={selectedClass}
-                            onChange={(e) => setSelectedClass(e.target.value)}
-                            style={{
-                              width: "100%",
-                              padding: "10px",
-                              borderRadius: 10,
-                              background: "#0f172a",
-                              border: "1px solid #334155",
-                              color: "#f1f5f9",
-                              fontSize: 13,
-                              outline: "none",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <option value="" disabled>
-                              Select your Class
-                            </option>
-                            <option value="Class 9">Class 9</option>
-                            <option value="Class 10">Class 10</option>
-                            <option value="Class 11">Class 11</option>
-                            <option value="Class 12">Class 12</option>
-                          </select>
-                        </div>
+                      {/* View More / View Less Toggle */}
+                      {features.length > 5 && (
+                        <button
+                          type="button"
+                          onClick={() => toggleExpandCard(plan.id)}
+                          className="mb-4 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition hover:underline"
+                          style={{ color: plan.color }}
+                        >
+                          {isExpanded ? (
+                            <>
+                              <span>{t("plans.viewLessFeatures", "View less features")}</span>
+                              <ChevronUp size={14} />
+                            </>
+                          ) : (
+                            <>
+                              <span>{t("plans.viewMoreFeatures", "View {{count}} more features", { count: remainingCount })}</span>
+                              <ChevronDown size={14} />
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
 
+                    {/* Action CTA Button */}
+                    <div className="pt-2">
+                      {isCurrent ? (
+                        <button
+                          disabled
+                          className="w-full py-3.5 rounded-xl font-black text-xs sm:text-sm bg-emerald-950/60 border border-emerald-500/50 text-emerald-300 flex items-center justify-center gap-2 cursor-default"
+                        >
+                          <Check size={16} />
+                          <span>Current Active Plan</span>
+                        </button>
+                      ) : isLower ? (
+                        <button
+                          disabled
+                          className="w-full py-3.5 rounded-xl font-bold text-xs sm:text-sm bg-slate-800/40 border border-slate-700/50 text-slate-500 flex items-center justify-center gap-2 cursor-default"
+                        >
+                          <span>Included in Your Plan</span>
+                        </button>
+                      ) : isUpgrade ? (
                         <button
                           onClick={() => handlePay(plan)}
-                          disabled={orderLoading || paymentLoading}
+                          disabled={isProcessing}
+                          className="w-full py-3.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-xl hover:scale-[1.02] active:scale-[0.98]"
                           style={{
-                            width: "100%",
-                            padding: "12px",
-                            borderRadius: 12,
-                            border: "none",
-                            background: isPremiumCard
-                              ? "linear-gradient(135deg,#f59e0b,#d97706)"
-                              : isStandardCard
-                              ? "linear-gradient(135deg,#f43f5e,#e11d48)"
-                              : "linear-gradient(135deg,#65a30d,#4d7c0f)",
-                            color: isPremiumCard ? "#0f172a" : "#fff",
-                            fontSize: 14,
-                            fontWeight: 800,
-                            cursor: "pointer",
-                            opacity: orderLoading || paymentLoading ? 0.6 : 1,
-                            transition: "opacity 0.2s",
-                            boxShadow: `0 6px 20px ${plan.color}30`,
+                            background: isPremium
+                              ? "linear-gradient(135deg, #f59e0b, #d97706)"
+                              : "linear-gradient(135deg, #a855f7, #7c3aed)",
+                            color: isPremium ? "#0f172a" : "#ffffff",
                           }}
                         >
-                          {orderLoading || paymentLoading
-                            ? "Processing…"
-                            : `Pay ${plan.price}`}
+                          {isProcessing ? (
+                            <span>Upgrading…</span>
+                          ) : (
+                            <>
+                              <Zap size={15} className={isPremium ? "fill-slate-900" : "fill-white"} />
+                              <span>Upgrade to {plan.title} ({plan.price})</span>
+                              <ArrowRight size={15} />
+                            </>
+                          )}
                         </button>
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          )}
-
-          {subscription?.razorpayPaymentId && (
-            <div
-              className="billing-fade"
-              style={{
-                background: "#111827",
-                border: "1px solid #1e293b",
-                borderRadius: 18,
-                padding: "22px 24px",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#64748b",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  marginBottom: 14,
-                }}
-              >
-                Payment Details
-              </p>
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 10 }}
-              >
-                {[
-                  ["Payment ID", subscription.razorpayPaymentId],
-                  ["Order ID", subscription.razorpayOrderId],
-                  ["Plan", subscription.label ?? subscription.plan],
-                  ["Activated", fmt(subscription.startDate)],
-                  ["Expires", fmt(subscription.endDate)],
-                ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: 12,
-                    }}
-                  >
-                    <span style={{ fontSize: 13, color: "#64748b" }}>
-                      {label}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 13,
-                        color: "#e2e8f0",
-                        fontWeight: 600,
-                        fontFamily: "monospace",
-                        textAlign: "right",
-                        wordBreak: "break-all",
-                        maxWidth: "60%",
-                      }}
-                    >
-                      {value}
-                    </span>
+                      ) : (
+                        <button
+                          onClick={() => handlePay(plan)}
+                          disabled={isProcessing}
+                          className="w-full py-3.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+                          style={{
+                            background: isPopular
+                              ? "linear-gradient(135deg, #f43f5e, #e11d48)"
+                              : isPremium
+                              ? "linear-gradient(135deg, #f59e0b, #d97706)"
+                              : "linear-gradient(135deg, #65a30d, #4d7c0f)",
+                            color: isPremium ? "#0f172a" : "#ffffff",
+                          }}
+                        >
+                          {isProcessing ? (
+                            <span>Processing…</span>
+                          ) : (
+                            <>
+                              <span>Choose {plan.title} ({plan.price})</span>
+                              <ArrowRight size={15} />
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                ))}
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── 3. TRANSACTION / RECEIPT DETAILS ── */}
+          {subscription?.razorpayPaymentId && (
+            <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-6 space-y-4 shadow-xl">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+                <ShieldCheck size={16} className="text-emerald-400" />
+                <span>Verified Payment Transaction</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                  <span className="text-slate-500 block">Payment ID</span>
+                  <span className="font-mono text-slate-200 font-semibold break-all">
+                    {subscription.razorpayPaymentId}
+                  </span>
+                </div>
+                <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                  <span className="text-slate-500 block">Order ID</span>
+                  <span className="font-mono text-slate-200 font-semibold break-all">
+                    {subscription.razorpayOrderId || "—"}
+                  </span>
+                </div>
+                <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                  <span className="text-slate-500 block">Plan Tier</span>
+                  <span className="text-slate-200 font-bold capitalize">
+                    {subscription.label || subscription.plan}
+                  </span>
+                </div>
+                <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                  <span className="text-slate-500 block">Status</span>
+                  <span className="text-emerald-400 font-bold uppercase">
+                    Active & Verified
+                  </span>
+                </div>
               </div>
             </div>
           )}
         </div>
       </div>
 
+      {/* ── Cancel Subscription Modal ── */}
       {showCancel && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.7)",
-            backdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 50,
-            padding: 16,
-          }}
-        >
-          <div
-            style={{
-              background: "#111827",
-              border: "1px solid #334155",
-              borderRadius: 22,
-              padding: "28px 28px 24px",
-              maxWidth: 400,
-              width: "100%",
-              animation: "fadeUp 0.25s ease",
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 20,
-                fontWeight: 800,
-                color: "#f1f5f9",
-                marginBottom: 10,
-              }}
-            >
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4 animate-fadeIn">
+            <h3 className="text-xl font-black text-white">
               Cancel Subscription?
             </h3>
-            <p
-              style={{
-                color: "#94a3b8",
-                fontSize: 14,
-                lineHeight: 1.7,
-                marginBottom: 22,
-              }}
-            >
-              Your plan will remain active until{" "}
-              <strong style={{ color: "#f1f5f9" }}>
-                {fmt(subscription?.endDate)}
-              </strong>
-              . After that, you'll lose access to premium features.
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Your benefits will remain active until{" "}
+              <strong className="text-white">{fmt(subscription?.endDate)}</strong>. After that, faculty doubt support and scholarship eligibility will end.
             </p>
-            <div style={{ display: "flex", gap: 12 }}>
+            <div className="flex gap-3 pt-2">
               <button
                 onClick={() => setShowCancel(false)}
-                style={{
-                  flex: 1,
-                  padding: "11px",
-                  borderRadius: 12,
-                  border: "1px solid #334155",
-                  background: "transparent",
-                  color: "#94a3b8",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  fontSize: 14,
-                }}
+                className="flex-1 py-3 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition"
               >
-                Keep Plan
+                Keep Subscription
               </button>
               <button
                 onClick={handleCancel}
                 disabled={loading}
-                style={{
-                  flex: 1,
-                  padding: "11px",
-                  borderRadius: 12,
-                  border: "none",
-                  background: "#7f1d1d",
-                  color: "#fca5a5",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  fontSize: 14,
-                  opacity: loading ? 0.6 : 1,
-                }}
+                className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition"
               >
                 {loading ? "Cancelling…" : "Yes, Cancel"}
               </button>
