@@ -7,7 +7,7 @@ import { getJson, setJson, deleteKey } from '../utils/redisClient.js';
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // Default model — fast & capable Groq-hosted model
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 
 // Resilient helper to execute Groq chat completions with automatic model fallback
 export async function createGroqChatCompletion(options) {
