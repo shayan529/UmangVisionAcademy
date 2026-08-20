@@ -139,6 +139,7 @@ export const API_ENDPOINTS = {
   },
   AI: {
     GENERATE_QUIZ: "/ai/generate-quiz",
+    GENERATE_COURSE_TEXT: "/ai/generate-course-text",
   },
 
   // Cart endpoints

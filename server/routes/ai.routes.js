@@ -2,6 +2,7 @@ import express from "express";
 import {
   chatWithAI,
   generateQuizAI,
+  generateCourseTextAI,
   getChatHistory,
   deleteChatHistory,
   getConversations,
@@ -23,6 +24,7 @@ router.post("/chat", protect, chatWithAI);
 router.get("/history/:conversationId", protect, getChatHistory);
 router.delete("/history/:conversationId", protect, deleteChatHistory);
 router.post("/generate-quiz", protect, generateQuizAI);
+router.post("/generate-course-text", protect, generateCourseTextAI);
 // Mock-test question generation is instructor/admin only (content creation tool)
 router.post("/generate-mock-test", protect, authorizeRoles("instructor", "admin"), generateMockTestQuestionsAI);
 router.get("/news", getNewsAI);
