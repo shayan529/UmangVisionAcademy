@@ -6,6 +6,7 @@ import {
   createCourse,
   updateCourse,
   deleteCourse,
+  bulkDeleteCourses,
   fetchAllCoursesAdmin,
 } from "../../redux/slices/courseSlice";
 import { updateSession } from "../../redux/slices/sessionSlice";
@@ -3483,6 +3484,65 @@ export default function InstructorCourses({
     ).length,
   };
 
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+
+  const allFilteredIds = filtered.map((c) => c._id);
+  const isAllSelected =
+    allFilteredIds.length > 0 &&
+    allFilteredIds.every((id) => selectedIds.includes(id));
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds((prev) =>
+        prev.filter((id) => !allFilteredIds.includes(id)),
+      );
+    } else {
+      setSelectedIds((prev) =>
+        Array.from(new Set([...prev, ...allFilteredIds])),
+      );
+    }
+  };
+
+  const handleToggleSelect = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    );
+  };
+
+  const handleClearSelection = () => {
+    setSelectedIds([]);
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    if (selectedIds.length === 0) return;
+    setBulkDeleting(true);
+    try {
+      const result = await dispatch(bulkDeleteCourses(selectedIds));
+      if (bulkDeleteCourses.fulfilled.match(result)) {
+        if (isAdmin) {
+          dispatch(fetchAllCoursesAdmin());
+        } else {
+          dispatch(fetchCourses());
+        }
+        if (selectedIds.includes(expandedId)) {
+          closeEdit();
+        }
+        showToast?.(`Successfully deleted ${selectedIds.length} course(s).`);
+        setSelectedIds([]);
+        setShowBulkDeleteModal(false);
+      } else {
+        showToast?.(result.payload || "Failed to delete selected courses.");
+      }
+    } catch (err) {
+      showToast?.(err.message || "Failed to delete selected courses.");
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
   const openEdit = (course) => {
     setExpandedId(course._id);
 
@@ -4226,8 +4286,126 @@ export default function InstructorCourses({
               </div>
             ) : (
               <div
-                style={{ display: "flex", flexDirection: "column", gap: 10 }}
+                style={{ display: "flex", flexDirection: "column", gap: 12 }}
               >
+                {/* ── Bulk Actions Toolbar ── */}
+                {canDelete && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "10px 16px",
+                      background:
+                        selectedIds.length > 0
+                          ? "rgba(124, 58, 237, 0.1)"
+                          : "#0b1120",
+                      border: `1px solid ${selectedIds.length > 0 ? "rgba(124, 58, 237, 0.35)" : "#1e293b"}`,
+                      borderRadius: 12,
+                      flexWrap: "wrap",
+                      gap: 10,
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                      }}
+                    >
+                      <label
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          cursor: "pointer",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: isAllSelected ? "#a78bfa" : "#94a3b8",
+                          userSelect: "none",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isAllSelected}
+                          onChange={handleToggleSelectAll}
+                          style={{
+                            width: 17,
+                            height: 17,
+                            accentColor: "#7c3aed",
+                            cursor: "pointer",
+                          }}
+                        />
+                        Select All ({filtered.length})
+                      </label>
+
+                      {selectedIds.length > 0 && (
+                        <span
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "#c4b5fd",
+                            background: "rgba(124, 58, 237, 0.2)",
+                            padding: "2px 10px",
+                            borderRadius: 20,
+                            border: "1px solid rgba(124, 58, 237, 0.3)",
+                          }}
+                        >
+                          {selectedIds.length} selected
+                        </span>
+                      )}
+                    </div>
+
+                    {selectedIds.length > 0 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={handleClearSelection}
+                          style={{
+                            padding: "6px 12px",
+                            borderRadius: 8,
+                            border: "1px solid #334155",
+                            background: "transparent",
+                            color: "#94a3b8",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Clear
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowBulkDeleteModal(true)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            padding: "6px 14px",
+                            borderRadius: 8,
+                            border: "1px solid #7f1d1d",
+                            background: "#2d0a0a",
+                            color: "#f87171",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            boxShadow: "0 2px 10px rgba(239, 68, 68, 0.2)",
+                            transition: "all 0.15s",
+                          }}
+                        >
+                          <Trash2 size={13} /> Delete Selected ({selectedIds.length})
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {[...filtered]
                   .sort((a, b) => {
                     if (expandedId) {
@@ -4247,17 +4425,44 @@ export default function InstructorCourses({
                       <div
                         className="ic-row"
                         style={{
-                          background: "#111827",
-                          border: `1px solid ${isOpen ? "#7c3aed40" : "#1e293b"}`,
+                          background: selectedIds.includes(course._id)
+                            ? "rgba(124, 58, 237, 0.07)"
+                            : "#111827",
+                          border: `1px solid ${selectedIds.includes(course._id) ? "rgba(124, 58, 237, 0.55)" : isOpen ? "#7c3aed40" : "#1e293b"}`,
                           borderRadius: isOpen ? "18px 18px 0 0" : 18,
                           padding: "16px 20px",
                           display: "flex",
                           alignItems: "center",
                           gap: 14,
                           flexWrap: "wrap",
-                          transition: "border-color 0.15s",
+                          transition: "border-color 0.15s, background 0.15s",
                         }}
                       >
+                        {canDelete && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(course._id)}
+                              onChange={(e) =>
+                                handleToggleSelect(course._id, e)
+                              }
+                              style={{
+                                width: 18,
+                                height: 18,
+                                accentColor: "#7c3aed",
+                                cursor: "pointer",
+                              }}
+                              title="Select course for bulk action"
+                            />
+                          </div>
+                        )}
                         <div
                           style={{
                             width: 56,
@@ -4739,6 +4944,175 @@ export default function InstructorCourses({
                 }}
               >
                 Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── Bulk Delete Modal ── */}
+      {showBulkDeleteModal && selectedIds.length > 0 && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.75)",
+            backdropFilter: "blur(5px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: 16,
+          }}
+          onClick={(e) =>
+            e.target === e.currentTarget &&
+            !bulkDeleting &&
+            setShowBulkDeleteModal(false)
+          }
+        >
+          <div
+            style={{
+              background: "#111827",
+              border: "1px solid #7f1d1d",
+              borderRadius: 20,
+              padding: 28,
+              maxWidth: 440,
+              width: "100%",
+              boxShadow: "0 25px 50px rgba(0,0,0,0.6)",
+              animation: "slideDown 0.25s ease",
+            }}
+          >
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 14,
+                background: "#2d0a0a",
+                border: "1px solid #7f1d1d",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 16,
+              }}
+            >
+              <Trash2 size={24} color="#f87171" />
+            </div>
+            <h3
+              style={{
+                fontSize: 19,
+                fontWeight: 800,
+                color: "#f1f5f9",
+                marginBottom: 10,
+              }}
+            >
+              Delete {selectedIds.length} Selected Course{selectedIds.length !== 1 ? "s" : ""}?
+            </h3>
+            <p
+              style={{
+                fontSize: 14,
+                color: "#94a3b8",
+                lineHeight: 1.7,
+                marginBottom: 16,
+              }}
+            >
+              This will permanently delete the selected{" "}
+              <strong style={{ color: "#f87171" }}>
+                {selectedIds.length}
+              </strong>{" "}
+              course{selectedIds.length !== 1 ? "s" : ""}, including all
+              curriculum lessons, notes, and unenroll all enrolled students.{" "}
+              <strong style={{ color: "#f1f5f9" }}>
+                This action cannot be undone.
+              </strong>
+            </p>
+
+            <div
+              style={{
+                maxHeight: 140,
+                overflowY: "auto",
+                background: "#080e1a",
+                border: "1px solid #1e293b",
+                borderRadius: 10,
+                padding: "8px 12px",
+                marginBottom: 22,
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              {courses
+                .filter((c) => selectedIds.includes(c._id))
+                .map((c) => (
+                  <div
+                    key={c._id}
+                    style={{
+                      fontSize: 12,
+                      color: "#cbd5e1",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <span style={{ color: "#f87171" }}>•</span> {c.title}
+                  </div>
+                ))}
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                type="button"
+                disabled={bulkDeleting}
+                onClick={() => setShowBulkDeleteModal(false)}
+                style={{
+                  flex: 1,
+                  padding: 12,
+                  borderRadius: 10,
+                  border: "1px solid #334155",
+                  background: "transparent",
+                  color: "#94a3b8",
+                  fontWeight: 600,
+                  cursor: bulkDeleting ? "not-allowed" : "pointer",
+                  fontSize: 13,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={bulkDeleting}
+                onClick={handleBulkDeleteConfirm}
+                style={{
+                  flex: 1.2,
+                  padding: 12,
+                  borderRadius: 10,
+                  border: "none",
+                  background: bulkDeleting
+                    ? "#450a0a"
+                    : "linear-gradient(135deg, #dc2626, #991b1b)",
+                  color: "#ffffff",
+                  fontWeight: 700,
+                  cursor: bulkDeleting ? "not-allowed" : "pointer",
+                  fontSize: 13,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  boxShadow: "0 2px 10px rgba(220, 38, 38, 0.4)",
+                }}
+              >
+                {bulkDeleting ? (
+                  <>
+                    <Loader2
+                      size={15}
+                      style={{ animation: "spin 1s linear infinite" }}
+                    />
+                    Deleting…
+                  </>
+                ) : (
+                  `Yes, Delete (${selectedIds.length})`
+                )}
               </button>
             </div>
           </div>

@@ -140,6 +140,18 @@ export const deleteCourse = createAsyncThunk(
   },
 );
 
+export const bulkDeleteCourses = createAsyncThunk(
+  "courses/bulkDelete",
+  async (ids, { rejectWithValue }) => {
+    try {
+      const { data } = await api.post("/courses/bulk-delete", { ids });
+      return data.deletedIds || ids;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  },
+);
+
 const PUBLISHED_COURSES_KEY = "published_courses_v1";
 
 const loadPublishedCoursesCache = () => {
@@ -341,6 +353,26 @@ const courseSlice = createSlice({
         state.success = "Course deleted successfully";
       })
       .addCase(deleteCourse.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // ── bulkDeleteCourses ──────────────────────────────────────────────────
+      .addCase(bulkDeleteCourses.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = null;
+      })
+      .addCase(bulkDeleteCourses.fulfilled, (state, action) => {
+        state.loading = false;
+        const deletedSet = new Set(action.payload);
+        state.courses = state.courses.filter((c) => !deletedSet.has(c._id));
+        state.enrolled = state.enrolled.filter((c) => !deletedSet.has(c._id));
+        if (state.selectedCourse && deletedSet.has(state.selectedCourse._id)) {
+          state.selectedCourse = null;
+        }
+        state.success = `Successfully deleted ${action.payload.length} course(s)`;
+      })
+      .addCase(bulkDeleteCourses.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

@@ -1157,6 +1157,41 @@ export const deleteCourse = async (req, res) => {
   }
 };
 
+// ── bulkDeleteCourses ─────────────────────────────────────────────────────────
+export const bulkDeleteCourses = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "No course IDs provided" });
+    }
+
+    const isAdmin = hasBaseRole(req.user, "admin");
+    const query = isAdmin
+      ? { _id: { $in: ids } }
+      : { _id: { $in: ids }, instructor: req.user._id };
+
+    const coursesToDelete = await Course.find(query).select("_id");
+    const deletedIds = coursesToDelete.map((c) => c._id.toString());
+
+    if (deletedIds.length === 0) {
+      return res.status(404).json({ message: "No matching courses found to delete" });
+    }
+
+    await Course.deleteMany({ _id: { $in: deletedIds } });
+
+    // Invalidate cache for deleted courses
+    await Promise.allSettled(deletedIds.map((id) => invalidateCourseCache(id)));
+
+    res.json({
+      success: true,
+      message: `Successfully deleted ${deletedIds.length} course(s)`,
+      deletedIds,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Failed to delete courses" });
+  }
+};
+
 // ── submitQuiz ────────────────────────────────────────────────────────────────
 export const submitQuiz = async (req, res) => {
   try {

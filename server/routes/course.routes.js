@@ -6,6 +6,7 @@ import {
   getCourseByIdPublic,
   updateCourse,
   deleteCourse,
+  bulkDeleteCourses,
   enrolledCourses,
   saveCourseProgress,
   getCourseProgress,
@@ -46,6 +47,12 @@ router.put(
   protect,
   requirePermission("courses", "edit"),
   assignCoursesToInstructor,
+);
+router.post(
+  "/bulk-delete",
+  protect,
+  requirePermission("courses", "delete"),
+  bulkDeleteCourses,
 );
 router.get("/enrolled", protect, enrolledCourses);
 router.post("/:id/progress", protect, saveCourseProgress);
