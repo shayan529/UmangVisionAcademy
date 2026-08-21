@@ -47,7 +47,7 @@ const ALL_BOARDS = "All Boards";
 
 const CLASSES = ["Class 9", "Class 10", "Class 11", "Class 12"];
 const BOARDS = ["MP Board", "CBSE", "ICSE"];
-const ALL_SUBJECTS = "All Subjects";
+const ALL_SUBJECTS = "All Courses";
 const TYPE_ALL = "All";
 const TYPE_CLASSES = "Classes";
 const TYPE_COMPETITIVE = "Competitive Exam";
@@ -56,8 +56,10 @@ const isClassCategory = (category) => CLASSES.includes(category);
 const isCompetitiveCourse = (course) =>
   Boolean(course.category) && !isClassCategory(course.category);
 
-const ALL_LANGUAGES = "Multilanguage";
+const ALL_LANGUAGES = "Language";
 const LANGUAGE_OPTIONS = ["English", "Hindi"];
+
+
 
 const Courses = () => {
   const { t } = useTranslation();
@@ -86,6 +88,18 @@ const Courses = () => {
   const [selectedBoard, setSelectedBoard] = useState(ALL_BOARDS);
   const [selectedLanguage, setSelectedLanguage] = useState(ALL_LANGUAGES);
 
+  const [showCourseTypeTabs, setShowCourseTypeTabs] = useState(() => {
+    return localStorage.getItem("admin_show_course_type_tabs") === "true";
+  });
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setShowCourseTypeTabs(localStorage.getItem("admin_show_course_type_tabs") === "true");
+    };
+    window.addEventListener("admin_settings_updated", handleUpdate);
+    return () => window.removeEventListener("admin_settings_updated", handleUpdate);
+  }, []);
+
   useEffect(() => {
     // Defer heavy fetch work to idle time so initial paint is fast on low-end devices
     const load = () => {
@@ -112,10 +126,19 @@ const Courses = () => {
 
   const handleClassChange = (cls) => {
     setSelectedClass(cls);
+    if (cls === ALL) {
+      setSelectedSubject(ALL_SUBJECTS);
+      setSelectedBoard(ALL_BOARDS);
+      setSelectedLanguage(ALL_LANGUAGES);
+    }
   };
 
   const handleExamChange = (exam) => {
     setSelectedExam(exam);
+    if (exam === ALL_EXAMS) {
+      setSelectedSubject(ALL_SUBJECTS);
+      setSelectedLanguage(ALL_LANGUAGES);
+    }
   };
 
   // ── Derived filter options — recomputed only when courses change ──────────
@@ -145,6 +168,12 @@ const Courses = () => {
   );
 
   const dynamicSubjects = useMemo(() => {
+    if (selectedClass === "Class 9" || selectedClass === "Class 10") {
+      return ["Foundation"];
+    }
+    if (selectedClass === "Class 11" || selectedClass === "Class 12") {
+      return ["Maths + Science", "Biology", "Commerce", "Agriculture", "Arts"];
+    }
     const subjects = new Set();
     allCourses.forEach((course) => {
       if (course.subject) subjects.add(course.subject.trim());
@@ -154,7 +183,26 @@ const Courses = () => {
       (course.subjectDetails ?? []).forEach((d) => d.subject && subjects.add(d.subject.trim()));
     });
     return Array.from(subjects).filter(Boolean).sort();
-  }, [allCourses]);
+  }, [allCourses, selectedClass]);
+
+  const handleBoardChange = (board) => {
+    setSelectedBoard(board);
+    if ((board === "ICSE" || board === "CBSE") && selectedLanguage === "Hindi") {
+      setSelectedLanguage(ALL_LANGUAGES);
+    }
+  };
+
+  const availableLanguages = useMemo(() => {
+    if (selectedBoard === "ICSE" || selectedBoard === "CBSE") {
+      return ["English"];
+    }
+    return ["English", "Hindi"];
+  }, [selectedBoard]);
+
+  const isNextOptionDisabled =
+    selectedCourseType === TYPE_COMPETITIVE
+      ? selectedExam === ALL_EXAMS
+      : selectedClass === ALL;
 
   // Lightweight featured list: scan courses and stop after collecting 4 matches.
   // Avoid building large intermediate arrays (filteredCourses) which can be
@@ -175,8 +223,8 @@ const Courses = () => {
       // Class/Exam match
       const classMatch =
         selectedCourseType === TYPE_COMPETITIVE
-          ? selectedExam === ALL_EXAMS || course.category === selectedExam
-          : selectedClass === ALL || course.category === selectedClass;
+          ? selectedExam === ALL_EXAMS || (course.category || "").toLowerCase().trim() === selectedExam.toLowerCase().trim()
+          : selectedClass === ALL || (course.category || "").toLowerCase().trim() === selectedClass.toLowerCase().trim();
 
       // Subject match
       const isBulk =
@@ -202,6 +250,7 @@ const Courses = () => {
 
       const subjectMatch =
         selectedSubject === ALL_SUBJECTS ||
+        ((selectedClass === "Class 9" || selectedClass === "Class 10") && selectedSubject === "Foundation") ||
         courseSubjects.includes(selectedSubject.trim().toLowerCase()) ||
         course.title?.toLowerCase().includes(selectedSubject.toLowerCase()) ||
         course.description?.toLowerCase().includes(selectedSubject.toLowerCase());
@@ -210,14 +259,17 @@ const Courses = () => {
       const boardMatch =
         selectedCourseType === TYPE_COMPETITIVE
           ? true
-          : selectedBoard === ALL_BOARDS || course.board === selectedBoard;
+          : selectedBoard === ALL_BOARDS ||
+          (course.board || "").toLowerCase().trim() === (selectedBoard || "").toLowerCase().trim();
 
       // Language match
       const languageMatch =
         selectedLanguage === ALL_LANGUAGES ||
+        selectedLanguage === "Multilanguage" ||
+        selectedLanguage === "Language" ||
         !course.language ||
         (course.language || "").toLowerCase() ===
-          (selectedLanguage || "").toLowerCase();
+        (selectedLanguage || "").toLowerCase();
 
       return typeMatch && classMatch && subjectMatch && boardMatch && languageMatch;
     };
@@ -267,7 +319,7 @@ const Courses = () => {
       user.selectedClass &&
       course.category &&
       user.selectedClass.toLowerCase().trim() ===
-        course.category.toLowerCase().trim();
+      course.category.toLowerCase().trim();
 
     return !!(hasActiveSubscription && matchesClass);
   };
@@ -304,22 +356,10 @@ const Courses = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header + Course Type Toggle */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 pb-4 border-b border-slate-800/80">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">
-              {t("courses.headerTag")}
-            </p>
-            <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight">
-                {t("courses.title")}
-              </h2>
-              {!loading && allCourses.length > 0 && (
-                <span className="text-[11px] sm:text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800/80 px-2.5 py-0.5 rounded-full">
-                  {t("courses.availableCourses", {
-                    count: featuredList.length,
-                  })}
-                </span>
-              )}
-            </div>
+          <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+              {t("courses.title")}
+            </h2>
           </div>
         </div>
 
@@ -336,38 +376,142 @@ const Courses = () => {
           </div>
         )}
 
-        {/* Top-level course type filters */}
-        <div className="mb-4">
-          <div className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-800 bg-[#0f172a]/80 max-w-full overflow-x-auto no-scrollbar">
+
+
+        {/* Mobile View: Board Chips + Dropdowns */}
+        <div className="block md:hidden mb-6 space-y-3">
+          {/* Board Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
             {[
-              { key: TYPE_ALL, label: t("courses.courseTypeAll", "All") },
-              {
-                key: TYPE_CLASSES,
-                label: t("courses.courseTypeClasses", "Classes"),
-              },
-              {
-                key: TYPE_COMPETITIVE,
-                label: t("courses.courseTypeCompetitive", "Competitive Exam"),
-              },
-            ].map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => handleCourseTypeChange(opt.key)}
-                className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap shrink-0 cursor-pointer ${
-                  selectedCourseType === opt.key
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
+              { label: "MP Board", board: "MP Board", type: TYPE_CLASSES },
+              { label: "CBSE", board: "CBSE", type: TYPE_CLASSES },
+              { label: "ICSE", board: "ICSE", type: TYPE_CLASSES },
+              ...(showCourseTypeTabs
+                ? [{ label: "Competitive Exams", board: ALL_BOARDS, type: TYPE_COMPETITIVE }]
+                : []),
+            ].map((chip) => {
+              const isActive =
+                chip.type === TYPE_COMPETITIVE
+                  ? selectedCourseType === TYPE_COMPETITIVE
+                  : selectedCourseType === TYPE_CLASSES && selectedBoard === chip.board;
+
+              return (
+                <button
+                  key={chip.label}
+                  onClick={() => {
+                    if (chip.type === TYPE_COMPETITIVE) {
+                      handleCourseTypeChange(TYPE_COMPETITIVE);
+                    } else {
+                      setSelectedCourseType(TYPE_CLASSES);
+                      setSelectedBoard(chip.board);
+                    }
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all duration-200 cursor-pointer ${
+                    isActive
+                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-600/30 border border-indigo-400/40"
+                      : "bg-slate-900/90 text-slate-400 border border-slate-800 hover:text-white"
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Dropdown Filters: Class, Medium & Subject */}
+          <div className="grid grid-cols-3 gap-2 py-1">
+            {/* Class Dropdown */}
+            <div className="relative min-w-0">
+              <label className="block text-[9.5px] font-extrabold uppercase tracking-wider text-indigo-400 mb-1 truncate">
+                Class
+              </label>
+              <select
+                value={selectedClass}
+                onChange={(e) => handleClassChange(e.target.value)}
+                className="w-full bg-[#090e1a] border border-slate-700/80 text-white font-bold rounded-xl px-2 py-2 text-xs appearance-none outline-none focus:border-indigo-500 transition-all cursor-pointer truncate"
               >
-                {opt.label}
-              </button>
-            ))}
+                <option value={ALL}>All Classes</option>
+                {CLASSES.map((cls) => (
+                  <option key={cls} value={cls}>
+                    {cls}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Medium Dropdown */}
+            <div className="relative min-w-0">
+              <label className="block text-[9.5px] font-extrabold uppercase tracking-wider text-emerald-400 mb-1 truncate">
+                Medium
+              </label>
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="w-full bg-[#090e1a] border border-slate-700/80 text-white font-bold rounded-xl px-2 py-2 text-xs appearance-none outline-none focus:border-emerald-500 transition-all cursor-pointer truncate"
+              >
+                <option value={ALL_LANGUAGES}>All Mediums</option>
+                {LANGUAGE_OPTIONS.map((lang) => (
+                  <option key={lang} value={lang}>
+                    {lang}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Subject Dropdown */}
+            <div className="relative min-w-0">
+              <label className="block text-[9.5px] font-extrabold uppercase tracking-wider text-amber-400 mb-1 truncate">
+                Subject
+              </label>
+              <select
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+                className="w-full bg-[#090e1a] border border-slate-700/80 text-white font-bold rounded-xl px-2 py-2 text-xs appearance-none outline-none focus:border-amber-500 transition-all cursor-pointer truncate"
+              >
+                <option value={ALL_SUBJECTS}>All Subjects</option>
+                {dynamicSubjects.map((sub) => (
+                  <option key={sub} value={sub}>
+                    {sub}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* Filters Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm shadow-inner">
+        {/* Top-level course type filters (Desktop / Tablet View) */}
+        {showCourseTypeTabs && (
+          <div className="hidden md:block mb-4">
+            <div className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-800 bg-[#0f172a]/80 max-w-full overflow-x-auto no-scrollbar">
+              {[
+                { key: TYPE_ALL, label: t("courses.courseTypeAll", "All") },
+                {
+                  key: TYPE_CLASSES,
+                  label: t("courses.courseTypeClasses", "Classes"),
+                },
+                {
+                  key: TYPE_COMPETITIVE,
+                  label: t("courses.courseTypeCompetitive", "Competitive Exam"),
+                },
+              ].map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => handleCourseTypeChange(opt.key)}
+                  className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap shrink-0 cursor-pointer ${selectedCourseType === opt.key
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                      : "text-slate-400 hover:text-slate-200"
+                    }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Filters Grid (Desktop / Tablet View) */}
+        <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm shadow-inner">
           {selectedCourseType === TYPE_COMPETITIVE ? (
             <div className="min-w-0">
               <label className="block text-[10px] font-bold uppercase tracking-wider text-indigo-300/90 mb-1 truncate">
@@ -432,46 +576,18 @@ const Courses = () => {
 
           {selectedCourseType !== TYPE_COMPETITIVE && (
             <div className="min-w-0">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-pink-300/90 mb-1 truncate">
-                {t("courses.select_subject", "Select Subject")}
-              </label>
-              <div className="relative min-w-0">
-                <select
-                  value={selectedSubject}
-                  onChange={(e) => setSelectedSubject(e.target.value)}
-                  className="w-full bg-[#090e1a] border border-slate-700/70 hover:border-pink-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-2 text-xs appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
-                >
-                  <option key={ALL_SUBJECTS} value={ALL_SUBJECTS}>
-                    {t("courses.allSubjects", "All Subjects")}
-                  </option>
-                  {dynamicSubjects.map((sub) => (
-                    <option key={sub} value={sub}>
-                      {sub}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                  <svg
-                    className="w-3.5 h-3.5 fill-current opacity-70"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {selectedCourseType !== TYPE_COMPETITIVE && (
-            <div className="min-w-0">
               <label className="block text-[10px] font-bold uppercase tracking-wider text-purple-300/90 mb-1 truncate">
                 {t("courses.select_board")}
               </label>
               <div className="relative min-w-0">
                 <select
+                  disabled={isNextOptionDisabled}
                   value={selectedBoard}
-                  onChange={(e) => setSelectedBoard(e.target.value)}
-                  className="w-full bg-[#090e1a] border border-slate-700/70 hover:border-purple-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-2 text-xs appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                  onChange={(e) => handleBoardChange(e.target.value)}
+                  className={`w-full bg-[#090e1a] border border-slate-700/70 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-2 text-xs appearance-none outline-none transition-all truncate ${isNextOptionDisabled
+                      ? "opacity-40 cursor-not-allowed border-slate-800"
+                      : "hover:border-purple-500/50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 cursor-pointer"
+                    }`}
                 >
                   <option key={ALL_BOARDS} value={ALL_BOARDS}>
                     {t("courses.allBoards", "All Boards")}
@@ -494,20 +610,60 @@ const Courses = () => {
             </div>
           )}
 
+          {selectedCourseType !== TYPE_COMPETITIVE && (
+            <div className="min-w-0">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-pink-300/90 mb-1 truncate">
+                {t("courses.select_subject", "Select Courses")}
+              </label>
+              <div className="relative min-w-0">
+                <select
+                  disabled={isNextOptionDisabled}
+                  value={selectedSubject}
+                  onChange={(e) => setSelectedSubject(e.target.value)}
+                  className={`w-full bg-[#090e1a] border border-slate-700/70 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-2 text-xs appearance-none outline-none transition-all truncate ${isNextOptionDisabled
+                      ? "opacity-40 cursor-not-allowed border-slate-800"
+                      : "hover:border-pink-500/50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 cursor-pointer"
+                    }`}
+                >
+                  <option key={ALL_SUBJECTS} value={ALL_SUBJECTS}>
+                    {t("courses.allSubjects", "All Courses")}
+                  </option>
+                  {dynamicSubjects.map((sub) => (
+                    <option key={sub} value={sub}>
+                      {sub}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                  <svg
+                    className="w-3.5 h-3.5 fill-current opacity-70"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="min-w-0">
             <label className="block text-[10px] font-bold uppercase tracking-wider text-emerald-300/90 mb-1 truncate">
               {t("courses.select_language", "Select Language")}
             </label>
             <div className="relative min-w-0">
               <select
+                disabled={isNextOptionDisabled}
                 value={selectedLanguage}
                 onChange={(e) => setSelectedLanguage(e.target.value)}
-                className="w-full bg-[#090e1a] border border-slate-700/70 hover:border-emerald-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-2 text-xs appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                className={`w-full bg-[#090e1a] border border-slate-700/70 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-2 text-xs appearance-none outline-none transition-all truncate ${isNextOptionDisabled
+                    ? "opacity-40 cursor-not-allowed border-slate-800"
+                    : "hover:border-emerald-500/50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 cursor-pointer"
+                  }`}
               >
                 <option key={ALL_LANGUAGES} value={ALL_LANGUAGES}>
-                  {t("courses.multilanguage", "Multilanguage")}
+                  {t("courses.multilanguage", "Language")}
                 </option>
-                {LANGUAGE_OPTIONS.map((lang) => (
+                {availableLanguages.map((lang) => (
                   <option key={lang} value={lang}>
                     {t(`courses.language${lang}`, lang)}
                   </option>
@@ -525,93 +681,93 @@ const Courses = () => {
           </div>
         </div>
 
-        {/* Active Filters Bar */}
+        {/* Active Filters Bar (Desktop View) */}
         {(selectedCourseType !== TYPE_ALL ||
           selectedClass !== ALL ||
           selectedExam !== ALL_EXAMS ||
           selectedBoard !== ALL_BOARDS ||
           selectedLanguage !== ALL_LANGUAGES) && (
-          <div className="flex flex-wrap items-center gap-2 mb-8 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-slate-900/80 border border-slate-800 text-xs">
-            <span className="text-slate-400 font-semibold mr-1">Active:</span>
-            {selectedCourseType !== TYPE_ALL && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-medium">
-                {selectedCourseType}
-                <button
-                  onClick={() => handleCourseTypeChange(TYPE_ALL)}
-                  className="hover:text-white font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            {selectedClass !== ALL && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
-                Class: {selectedClass}
-                <button
-                  onClick={() => handleClassChange(ALL)}
-                  className="hover:text-white font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            {selectedExam !== ALL_EXAMS && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
-                Exam: {selectedExam}
-                <button
-                  onClick={() => handleExamChange(ALL_EXAMS)}
-                  className="hover:text-white font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            {selectedBoard !== ALL_BOARDS && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-medium">
-                Board: {selectedBoard}
-                <button
-                  onClick={() => setSelectedBoard(ALL_BOARDS)}
-                  className="hover:text-white font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            {selectedLanguage !== ALL_LANGUAGES && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 font-medium">
-                Lang: {selectedLanguage}
-                <button
-                  onClick={() => setSelectedLanguage(ALL_LANGUAGES)}
-                  className="hover:text-white font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            <button
-              onClick={() => {
-                handleCourseTypeChange(TYPE_ALL);
-                setSelectedClass(ALL);
-                setSelectedExam(ALL_EXAMS);
-                setSelectedBoard(ALL_BOARDS);
-                setSelectedLanguage(ALL_LANGUAGES);
-              }}
-              className="text-cyan-400 hover:text-cyan-300 font-bold underline ml-auto text-xs cursor-pointer"
-            >
-              Reset All
-            </button>
-          </div>
-        )}
+            <div className="hidden md:flex flex-wrap items-center gap-2 mb-8 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-slate-900/80 border border-slate-800 text-xs">
+              <span className="text-slate-400 font-semibold mr-1">Active:</span>
+              {selectedCourseType !== TYPE_ALL && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-medium">
+                  {selectedCourseType}
+                  <button
+                    onClick={() => handleCourseTypeChange(TYPE_ALL)}
+                    className="hover:text-white font-bold"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              {selectedClass !== ALL && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
+                  Class: {selectedClass}
+                  <button
+                    onClick={() => handleClassChange(ALL)}
+                    className="hover:text-white font-bold"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              {selectedExam !== ALL_EXAMS && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
+                  Exam: {selectedExam}
+                  <button
+                    onClick={() => handleExamChange(ALL_EXAMS)}
+                    className="hover:text-white font-bold"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              {selectedBoard !== ALL_BOARDS && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-medium">
+                  Board: {selectedBoard}
+                  <button
+                    onClick={() => setSelectedBoard(ALL_BOARDS)}
+                    className="hover:text-white font-bold"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              {selectedLanguage !== ALL_LANGUAGES && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 font-medium">
+                  Lang: {selectedLanguage}
+                  <button
+                    onClick={() => setSelectedLanguage(ALL_LANGUAGES)}
+                    className="hover:text-white font-bold"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              <button
+                onClick={() => {
+                  handleCourseTypeChange(TYPE_ALL);
+                  setSelectedClass(ALL);
+                  setSelectedExam(ALL_EXAMS);
+                  setSelectedBoard(ALL_BOARDS);
+                  setSelectedLanguage(ALL_LANGUAGES);
+                }}
+                className="text-cyan-400 hover:text-cyan-300 font-bold underline ml-auto text-xs cursor-pointer"
+              >
+                Reset All
+              </button>
+            </div>
+          )}
 
         {/* Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {[...Array(4)].map((_, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 md:gap-8">
+            {[...Array(3)].map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
         ) : featuredList.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 md:gap-8">
             {featuredList.map((course, i) => (
               <div
                 key={course._id}
@@ -660,19 +816,19 @@ const Courses = () => {
               selectedExam !== ALL_EXAMS ||
               selectedBoard !== ALL_BOARDS ||
               selectedLanguage !== ALL_LANGUAGES) && (
-              <button
-                onClick={() => {
-                  setSelectedCourseType(TYPE_ALL);
-                  setSelectedClass(ALL);
-                  setSelectedExam(ALL_EXAMS);
-                  setSelectedBoard(ALL_BOARDS);
-                  setSelectedLanguage(ALL_LANGUAGES);
-                }}
-                className="mt-6 px-6 py-2 rounded-xl border border-indigo-500/30 text-indigo-400 text-sm font-semibold hover:bg-indigo-500/10 transition cursor-pointer"
-              >
-                {t("courses.clearFilters")}
-              </button>
-            )}
+                <button
+                  onClick={() => {
+                    setSelectedCourseType(TYPE_ALL);
+                    setSelectedClass(ALL);
+                    setSelectedExam(ALL_EXAMS);
+                    setSelectedBoard(ALL_BOARDS);
+                    setSelectedLanguage(ALL_LANGUAGES);
+                  }}
+                  className="mt-6 px-6 py-2 rounded-xl border border-indigo-500/30 text-indigo-400 text-sm font-semibold hover:bg-indigo-500/10 transition cursor-pointer"
+                >
+                  {t("courses.clearFilters")}
+                </button>
+              )}
           </div>
         )}
 

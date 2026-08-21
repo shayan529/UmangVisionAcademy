@@ -104,19 +104,18 @@ export default function PlanSelectionModal({
                   onClose();
                   onSelectPlan(plan);
                 }}
-                className={`relative p-5 sm:p-6 rounded-2xl flex flex-col justify-between transition-all duration-200 cursor-pointer ${
-                  isSelected
+                className={`relative p-5 sm:p-6 rounded-2xl flex flex-col justify-between transition-all duration-200 cursor-pointer ${isSelected
                     ? isPopular
                       ? "bg-gradient-to-b from-purple-950/95 via-slate-900 to-slate-900 border-2 border-purple-400 shadow-2xl shadow-purple-950/80 ring-2 ring-purple-400/60"
                       : isPremium
-                      ? "bg-gradient-to-b from-amber-950/80 via-slate-900 to-slate-900 border-2 border-amber-400 shadow-2xl shadow-amber-950/70 ring-2 ring-amber-400/50"
-                      : "bg-slate-900 border-2 border-indigo-400 shadow-xl ring-2 ring-indigo-400/40"
+                        ? "bg-gradient-to-b from-amber-950/80 via-slate-900 to-slate-900 border-2 border-amber-400 shadow-2xl shadow-amber-950/70 ring-2 ring-amber-400/50"
+                        : "bg-slate-900 border-2 border-indigo-400 shadow-xl ring-2 ring-indigo-400/40"
                     : isPopular
-                    ? "bg-gradient-to-b from-purple-950/60 via-slate-900 to-slate-900 border border-purple-500/50 hover:border-purple-400 shadow-xl"
-                    : isPremium
-                    ? "bg-gradient-to-b from-amber-950/40 via-slate-900 to-slate-900 border border-amber-500/50 hover:border-amber-400 shadow-xl"
-                    : "bg-slate-900/90 border border-slate-700/90 hover:border-slate-600 shadow-lg"
-                }`}
+                      ? "bg-gradient-to-b from-purple-950/60 via-slate-900 to-slate-900 border border-purple-500/50 hover:border-purple-400 shadow-xl"
+                      : isPremium
+                        ? "bg-gradient-to-b from-amber-950/40 via-slate-900 to-slate-900 border border-amber-500/50 hover:border-amber-400 shadow-xl"
+                        : "bg-slate-900/90 border border-slate-700/90 hover:border-slate-600 shadow-lg"
+                  }`}
                 style={{
                   borderTop: `4px solid ${plan.color}`,
                 }}
@@ -217,19 +216,18 @@ export default function PlanSelectionModal({
                     onClose();
                     onSelectPlan(plan);
                   }}
-                  className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-98 ${
-                    isSelected
+                  className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-98 ${isSelected
                       ? isPopular
                         ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg ring-2 ring-purple-300 font-black"
                         : isPremium
-                        ? "bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-lg ring-2 ring-amber-300"
-                        : "bg-indigo-600 text-white shadow-md ring-2 ring-indigo-300 font-black"
+                          ? "bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-lg ring-2 ring-amber-300"
+                          : "bg-indigo-600 text-white shadow-md ring-2 ring-indigo-300 font-black"
                       : isPopular
-                      ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-900/40"
-                      : isPremium
-                      ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black shadow-amber-950/30"
-                      : "bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700"
-                  }`}
+                        ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-900/40"
+                        : isPremium
+                          ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black shadow-amber-950/30"
+                          : "bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700"
+                    }`}
                 >
                   <span>{isSelected ? `✓ Selected: ${plan.title}` : t(plan.buttonKey, `Choose ${plan.title}`)}</span>
                   <ArrowRight size={14} />

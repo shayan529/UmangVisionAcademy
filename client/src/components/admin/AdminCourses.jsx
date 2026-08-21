@@ -3546,6 +3546,31 @@ export default function AdminCourses({
               <p style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>
                 Approve or reject instructor submissions before they go live.
               </p>
+              <button
+                type="button"
+                onClick={() => {
+                  const newVal = !(localStorage.getItem("admin_show_course_type_tabs") === "true");
+                  localStorage.setItem("admin_show_course_type_tabs", String(newVal));
+                  window.dispatchEvent(new Event("admin_settings_updated"));
+                  setShowToast?.("Catalog tab display updated!");
+                }}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 8,
+                  background: localStorage.getItem("admin_show_course_type_tabs") === "true" ? "rgba(99,102,241,0.2)" : "#1e293b",
+                  border: `1px solid ${localStorage.getItem("admin_show_course_type_tabs") === "true" ? "#6366f1" : "#334155"}`,
+                  color: localStorage.getItem("admin_show_course_type_tabs") === "true" ? "#818cf8" : "#94a3b8",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginTop: 8,
+                }}
+              >
+                ⚙️ Course Type Tabs (All / Classes / Competitive): {localStorage.getItem("admin_show_course_type_tabs") === "true" ? "VISIBLE (ON)" : "HIDDEN (OFF)"}
+              </button>
             </div>
             {counts.pending > 0 && (
               <div

@@ -98,11 +98,10 @@ const RatingModal = ({ course, onClose, onSubmit }) => {
                 className="transition-transform hover:scale-110"
               >
                 <FaStar
-                  className={`text-3xl transition-colors ${
-                    star <= (hovered || selected)
-                      ? "text-amber-400"
-                      : "text-slate-600"
-                  }`}
+                  className={`text-3xl transition-colors ${star <= (hovered || selected)
+                    ? "text-amber-400"
+                    : "text-slate-600"
+                    }`}
                 />
               </button>
             ))}
@@ -153,7 +152,7 @@ const ALL_BOARDS = "All Boards";
 // exam name, e.g. "NEET", "JEE Main").
 const CLASSES = ["Class 9", "Class 10", "Class 11", "Class 12"];
 const BOARDS = ["MP Board", "CBSE", "ICSE"];
-const ALL_SUBJECTS = "All Subjects";
+const ALL_SUBJECTS = "All Courses";
 const TYPE_ALL = "All";
 const TYPE_CLASSES = "Classes";
 const TYPE_COMPETITIVE = "Competitive Exam";
@@ -163,10 +162,10 @@ const isCompetitiveCourse = (course) =>
   Boolean(course.category) && !isClassCategory(course.category);
 
 // ── Language filter ───────────────────────────────────────────────────────────
-// Defaults to "Multilanguage" (no filtering applied). A course with no
+// Defaults to "Language" (no filtering applied). A course with no
 // `language` field set is treated as available in every language, since it
 // hasn't been tagged to one specific language.
-const ALL_LANGUAGES = "Multilanguage";
+const ALL_LANGUAGES = "Language";
 const LANGUAGE_OPTIONS = ["English", "Hindi"];
 
 const Courses = () => {
@@ -206,6 +205,18 @@ const Courses = () => {
   const [submittedRatings, setSubmittedRatings] = useState({}); // { courseId: rating }
   const [visibleCourseCount, setVisibleCourseCount] = useState(20);
 
+  const [showCourseTypeTabs, setShowCourseTypeTabs] = useState(() => {
+    return localStorage.getItem("admin_show_course_type_tabs") === "true";
+  });
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setShowCourseTypeTabs(localStorage.getItem("admin_show_course_type_tabs") === "true");
+    };
+    window.addEventListener("admin_settings_updated", handleUpdate);
+    return () => window.removeEventListener("admin_settings_updated", handleUpdate);
+  }, []);
+
   useEffect(() => {
     dispatch(fetchPublishedCourses());
     if (user?._id) dispatch(fetchEnrolledCourses());
@@ -223,10 +234,19 @@ const Courses = () => {
 
   const handleClassChange = (cls) => {
     setSelectedClass(cls);
+    if (cls === ALL) {
+      setSelectedSubject(ALL_SUBJECTS);
+      setSelectedBoard(ALL_BOARDS);
+      setSelectedLanguage(ALL_LANGUAGES);
+    }
   };
 
   const handleExamChange = (exam) => {
     setSelectedExam(exam);
+    if (exam === ALL_EXAMS) {
+      setSelectedSubject(ALL_SUBJECTS);
+      setSelectedLanguage(ALL_LANGUAGES);
+    }
   };
 
   // ── Derived filter options ─────────────────────────────────────────────────
@@ -256,6 +276,12 @@ const Courses = () => {
   );
 
   const dynamicSubjects = useMemo(() => {
+    if (selectedClass === "Class 9" || selectedClass === "Class 10") {
+      return ["Foundation"];
+    }
+    if (selectedClass === "Class 11" || selectedClass === "Class 12") {
+      return ["Maths + Science", "Biology", "Commerce", "Agriculture", "Arts"];
+    }
     const subjects = new Set();
     allCourses.forEach((course) => {
       if (course.subject) subjects.add(course.subject.trim());
@@ -265,7 +291,26 @@ const Courses = () => {
       (course.subjectDetails ?? []).forEach((d) => d.subject && subjects.add(d.subject.trim()));
     });
     return Array.from(subjects).filter(Boolean).sort();
-  }, [allCourses]);
+  }, [allCourses, selectedClass]);
+
+  const handleBoardChange = (board) => {
+    setSelectedBoard(board);
+    if ((board === "ICSE" || board === "CBSE") && selectedLanguage === "Hindi") {
+      setSelectedLanguage(ALL_LANGUAGES);
+    }
+  };
+
+  const availableLanguages = useMemo(() => {
+    if (selectedBoard === "ICSE" || selectedBoard === "CBSE") {
+      return ["English"];
+    }
+    return ["English", "Hindi"];
+  }, [selectedBoard]);
+
+  const isNextOptionDisabled =
+    selectedCourseType === TYPE_COMPETITIVE
+      ? selectedExam === ALL_EXAMS
+      : selectedClass === ALL;
 
   // ── Filtered list ─────────────────────────────────────────────────────────
   const filteredCourses = useMemo(
@@ -280,8 +325,8 @@ const Courses = () => {
 
         const classMatch =
           selectedCourseType === TYPE_COMPETITIVE
-            ? selectedExam === ALL_EXAMS || course.category === selectedExam
-            : selectedClass === ALL || course.category === selectedClass;
+            ? selectedExam === ALL_EXAMS || (course.category || "").toLowerCase().trim() === selectedExam.toLowerCase().trim()
+            : selectedClass === ALL || (course.category || "").toLowerCase().trim() === selectedClass.toLowerCase().trim();
 
         // Subject matching
         const isBulk =
@@ -307,6 +352,7 @@ const Courses = () => {
 
         const subjectMatch =
           selectedSubject === ALL_SUBJECTS ||
+          ((selectedClass === "Class 9" || selectedClass === "Class 10") && selectedSubject === "Foundation") ||
           courseSubjects.includes(selectedSubject.trim().toLowerCase()) ||
           course.title?.toLowerCase().includes(selectedSubject.toLowerCase()) ||
           course.description?.toLowerCase().includes(selectedSubject.toLowerCase());
@@ -315,12 +361,15 @@ const Courses = () => {
         const boardMatch =
           selectedCourseType === TYPE_COMPETITIVE
             ? true
-            : selectedBoard === "All Boards" || course.board === selectedBoard;
+            : selectedBoard === ALL_BOARDS ||
+            (course.board || "").toLowerCase().trim() === (selectedBoard || "").toLowerCase().trim();
 
         // A course with no language tag is treated as available in every
         // language, so it still shows up under English or Hindi filters.
         const languageMatch =
           selectedLanguage === ALL_LANGUAGES ||
+          selectedLanguage === "Multilanguage" ||
+          selectedLanguage === "Language" ||
           !course.language ||
           course.language.toLowerCase() === selectedLanguage.toLowerCase();
 
@@ -368,7 +417,7 @@ const Courses = () => {
       user.selectedClass &&
       course.category &&
       user.selectedClass.toLowerCase().trim() ===
-        course.category.toLowerCase().trim();
+      course.category.toLowerCase().trim();
 
     return !!(hasActiveSubscription && matchesClass);
   };
@@ -495,35 +544,36 @@ const Courses = () => {
           </div>
         )}
 
-        {/* Top-level course type filters */}
-        <div className="mb-4">
-          <div className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-800 bg-[#0f172a]/90 backdrop-blur-md max-w-full overflow-x-auto no-scrollbar shadow-lg">
-            {[
-              { key: TYPE_ALL, label: t("courses.courseTypeAll", "All") },
-              {
-                key: TYPE_CLASSES,
-                label: t("courses.courseTypeClasses", "Classes"),
-              },
-              {
-                key: TYPE_COMPETITIVE,
-                label: t("courses.courseTypeCompetitive", "Competitive Exam"),
-              },
-            ].map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => handleCourseTypeChange(opt.key)}
-                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap shrink-0 cursor-pointer ${
-                  selectedCourseType === opt.key
+        {/* Top-level course type filters (Admin Controlled) */}
+        {showCourseTypeTabs && (
+          <div className="mb-4">
+            <div className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-800 bg-[#0f172a]/90 backdrop-blur-md max-w-full overflow-x-auto no-scrollbar shadow-lg">
+              {[
+                { key: TYPE_ALL, label: t("courses.courseTypeAll", "All") },
+                {
+                  key: TYPE_CLASSES,
+                  label: t("courses.courseTypeClasses", "Classes"),
+                },
+                {
+                  key: TYPE_COMPETITIVE,
+                  label: t("courses.courseTypeCompetitive", "Competitive Exam"),
+                },
+              ].map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => handleCourseTypeChange(opt.key)}
+                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap shrink-0 cursor-pointer ${selectedCourseType === opt.key
                     ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/30"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
+                    }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Filters Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm shadow-inner">
@@ -591,46 +641,18 @@ const Courses = () => {
 
           {selectedCourseType !== TYPE_COMPETITIVE && (
             <div className="min-w-0">
-              <label className="block text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-pink-300/90 mb-1 sm:mb-1.5 truncate">
-                {t("courses.select_subject", "Select Subject")}
-              </label>
-              <div className="relative min-w-0">
-                <select
-                  value={selectedSubject}
-                  onChange={(e) => setSelectedSubject(e.target.value)}
-                  className="w-full min-h-[36px] sm:min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-pink-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
-                >
-                  <option key={ALL_SUBJECTS} value={ALL_SUBJECTS}>
-                    {t("courses.allSubjects", "All Subjects")}
-                  </option>
-                  {dynamicSubjects.map((sub) => (
-                    <option key={sub} value={sub}>
-                      {sub}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                  <svg
-                    className="w-3.5 h-3.5 fill-current opacity-70"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {selectedCourseType !== TYPE_COMPETITIVE && (
-            <div className="min-w-0">
               <label className="block text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-purple-300/90 mb-1 sm:mb-1.5 truncate">
                 {t("courses.select_board")}
               </label>
               <div className="relative min-w-0">
                 <select
+                  disabled={isNextOptionDisabled}
                   value={selectedBoard}
-                  onChange={(e) => setSelectedBoard(e.target.value)}
-                  className="w-full min-h-[36px] sm:min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-purple-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                  onChange={(e) => handleBoardChange(e.target.value)}
+                  className={`w-full min-h-[36px] sm:min-h-[38px] bg-[#090e1a] border border-slate-700/70 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none transition-all truncate ${isNextOptionDisabled
+                    ? "opacity-40 cursor-not-allowed border-slate-800"
+                    : "hover:border-purple-500/50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 cursor-pointer"
+                    }`}
                 >
                   <option key={ALL_BOARDS} value={ALL_BOARDS}>
                     {t("courses.allBoards", "All Boards")}
@@ -653,20 +675,60 @@ const Courses = () => {
             </div>
           )}
 
+          {selectedCourseType !== TYPE_COMPETITIVE && (
+            <div className="min-w-0">
+              <label className="block text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-pink-300/90 mb-1 sm:mb-1.5 truncate">
+                {t("courses.select_subject", "Select Courses")}
+              </label>
+              <div className="relative min-w-0">
+                <select
+                  disabled={isNextOptionDisabled}
+                  value={selectedSubject}
+                  onChange={(e) => setSelectedSubject(e.target.value)}
+                  className={`w-full min-h-[36px] sm:min-h-[38px] bg-[#090e1a] border border-slate-700/70 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none transition-all truncate ${isNextOptionDisabled
+                    ? "opacity-40 cursor-not-allowed border-slate-800"
+                    : "hover:border-pink-500/50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 cursor-pointer"
+                    }`}
+                >
+                  <option key={ALL_SUBJECTS} value={ALL_SUBJECTS}>
+                    {t("courses.allSubjects", "All Courses")}
+                  </option>
+                  {dynamicSubjects.map((sub) => (
+                    <option key={sub} value={sub}>
+                      {sub}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                  <svg
+                    className="w-3.5 h-3.5 fill-current opacity-70"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="min-w-0">
             <label className="block text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-emerald-300/90 mb-1 sm:mb-1.5 truncate">
               {t("courses.select_language", "Select Language")}
             </label>
             <div className="relative min-w-0">
               <select
+                disabled={isNextOptionDisabled}
                 value={selectedLanguage}
                 onChange={(e) => setSelectedLanguage(e.target.value)}
-                className="w-full min-h-[36px] sm:min-h-[38px] bg-[#090e1a] border border-slate-700/70 hover:border-emerald-500/50 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+                className={`w-full min-h-[36px] sm:min-h-[38px] bg-[#090e1a] border border-slate-700/70 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-[13px] leading-normal appearance-none outline-none transition-all truncate ${isNextOptionDisabled
+                  ? "opacity-40 cursor-not-allowed border-slate-800"
+                  : "hover:border-emerald-500/50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 cursor-pointer"
+                  }`}
               >
                 <option key={ALL_LANGUAGES} value={ALL_LANGUAGES}>
-                  {t("courses.multilanguage", "Multilanguage")}
+                  {t("courses.multilanguage", "Language")}
                 </option>
-                {LANGUAGE_OPTIONS.map((lang) => (
+                {availableLanguages.map((lang) => (
                   <option key={lang} value={lang}>
                     {t(`courses.language${lang}`, lang)}
                   </option>
@@ -690,82 +752,82 @@ const Courses = () => {
           selectedExam !== ALL_EXAMS ||
           selectedBoard !== ALL_BOARDS ||
           selectedLanguage !== ALL_LANGUAGES) && (
-          <div className="flex flex-wrap items-center gap-2 mb-8 p-3 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs">
-            <span className="text-slate-400 font-semibold mr-1">Active:</span>
-            {selectedCourseType !== TYPE_ALL && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-medium">
-                {selectedCourseType}
-                <button
-                  onClick={() => handleCourseTypeChange(TYPE_ALL)}
-                  className="hover:text-white font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            {selectedClass !== ALL && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
-                Class: {selectedClass}
-                <button
-                  onClick={() => handleClassChange(ALL)}
-                  className="hover:text-white font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            {selectedExam !== ALL_EXAMS && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
-                Exam: {selectedExam}
-                <button
-                  onClick={() => handleExamChange(ALL_EXAMS)}
-                  className="hover:text-white font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            {selectedBoard !== ALL_BOARDS && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-medium">
-                Board: {selectedBoard}
-                <button
-                  onClick={() => setSelectedBoard(ALL_BOARDS)}
-                  className="hover:text-white font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            {selectedLanguage !== ALL_LANGUAGES && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 font-medium">
-                Lang: {selectedLanguage}
-                <button
-                  onClick={() => setSelectedLanguage(ALL_LANGUAGES)}
-                  className="hover:text-white font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            <button
-              onClick={clearFilters}
-              className="text-cyan-400 hover:text-cyan-300 font-bold underline ml-auto text-xs cursor-pointer"
-            >
-              Reset All
-            </button>
-          </div>
-        )}
+            <div className="flex flex-wrap items-center gap-2 mb-8 p-3 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs">
+              <span className="text-slate-400 font-semibold mr-1">Active:</span>
+              {selectedCourseType !== TYPE_ALL && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-medium">
+                  {selectedCourseType}
+                  <button
+                    onClick={() => handleCourseTypeChange(TYPE_ALL)}
+                    className="hover:text-white font-bold"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              {selectedClass !== ALL && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
+                  Class: {selectedClass}
+                  <button
+                    onClick={() => handleClassChange(ALL)}
+                    className="hover:text-white font-bold"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              {selectedExam !== ALL_EXAMS && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-medium">
+                  Exam: {selectedExam}
+                  <button
+                    onClick={() => handleExamChange(ALL_EXAMS)}
+                    className="hover:text-white font-bold"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              {selectedBoard !== ALL_BOARDS && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-medium">
+                  Board: {selectedBoard}
+                  <button
+                    onClick={() => setSelectedBoard(ALL_BOARDS)}
+                    className="hover:text-white font-bold"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              {selectedLanguage !== ALL_LANGUAGES && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 font-medium">
+                  Lang: {selectedLanguage}
+                  <button
+                    onClick={() => setSelectedLanguage(ALL_LANGUAGES)}
+                    className="hover:text-white font-bold"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              <button
+                onClick={clearFilters}
+                className="text-cyan-400 hover:text-cyan-300 font-bold underline ml-auto text-xs cursor-pointer"
+              >
+                Reset All
+              </button>
+            </div>
+          )}
 
         {/* Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[...Array(8)].map((_, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {[...Array(6)].map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
         ) : filteredCourses.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {filteredCourses.slice(0, visibleCourseCount).map((course, i) => {
                 const completed = isCompleted(course);
                 const enrolled = isEnrolled(course);

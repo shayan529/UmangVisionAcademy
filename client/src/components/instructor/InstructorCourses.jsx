@@ -2981,7 +2981,7 @@ const CourseForm = ({
                 value={form.language || ""}
                 onChange={set("language")}
                 options={[
-                  { value: "", label: "Multilanguage (Default)" },
+                  { value: "", label: "Language (Default)" },
                   ...LANGUAGES.map((l) => ({ value: l, label: l })),
                 ]}
               />
@@ -3311,7 +3311,7 @@ const BulkCourseForm = ({
             value={form.language || ""}
             onChange={setMeta("language")}
             options={[
-              { value: "", label: "Multilanguage (Default)" },
+              { value: "", label: "Language (Default)" },
               ...LANGUAGES.map((l) => ({ value: l, label: l })),
             ]}
           />

@@ -67,6 +67,7 @@ const courseSchema = new Schema(
     ratingAverage: { type: Number, default: 0, min: 0, max: 5 },
     board: { type: String, trim: true, default: "" },
     language: { type: String, trim: true, default: "" },
+    subject: { type: String, trim: true, default: "" },
     quiz: {
       title: { type: String, default: "Final Course Quiz" },
       questions: [

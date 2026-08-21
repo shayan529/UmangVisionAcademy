@@ -189,8 +189,8 @@ export default function MyCourses() {
         matchesLanguage = courseLang === "english";
       } else if (selectedLanguage === "hindi") {
         matchesLanguage = courseLang === "hindi";
-      } else if (selectedLanguage === "multilanguage") {
-        matchesLanguage = courseLang === "" || courseLang === "multilanguage";
+      } else if (selectedLanguage === "multilanguage" || selectedLanguage === "language") {
+        matchesLanguage = courseLang === "" || courseLang === "multilanguage" || courseLang === "language";
       }
     }
     return matchesTab && matchesSearch && matchesLanguage;
@@ -531,7 +531,7 @@ export default function MyCourses() {
             <option value="all">{t("courses.allLanguages", "All Languages")}</option>
             <option value="english">English</option>
             <option value="hindi">Hindi</option>
-            <option value="multilanguage">Multilanguage</option>
+            <option value="multilanguage">{t("courses.multilanguage", "Language")}</option>
           </select>
         </div>
       </div>

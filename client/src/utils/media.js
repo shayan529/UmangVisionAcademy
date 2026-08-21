@@ -56,6 +56,7 @@ export const isImageFile = (rawUrl) => {
   if (!rawUrl) return false;
   const clean = String(rawUrl).toLowerCase().split("?")[0];
   return (
+    clean.startsWith("data:image") ||
     clean.endsWith(".jpg") ||
     clean.endsWith(".jpeg") ||
     clean.endsWith(".png") ||

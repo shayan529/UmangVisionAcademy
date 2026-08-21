@@ -90,6 +90,8 @@ const fmt = (mins) => {
 };
 
 // ── Video player component ────────────────────────────────────────────────────
+const SAMPLE_DEMO_VIDEO = "https://www.youtube.com/watch?v=g3jQyD-7-2g";
+
 const VideoPlayer = ({ url, poster }) => {
   const ref = useRef(null);
   const [playing, setPlaying] = useState(false);
@@ -97,12 +99,14 @@ const VideoPlayer = ({ url, poster }) => {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
 
-  const normalizedUrl = normalizeVideoUrl(url);
+  const activeUrl = !url || isImageFile(url) ? SAMPLE_DEMO_VIDEO : url;
+  const normalizedUrl = normalizeVideoUrl(activeUrl);
   const [videoSrc, setVideoSrc] = useState(normalizedUrl);
 
   useEffect(() => {
     setVideoSrc(normalizedUrl);
     setError("");
+    setPlaying(false);
   }, [normalizedUrl]);
 
   const toggle = () => {
@@ -121,7 +125,7 @@ const VideoPlayer = ({ url, poster }) => {
             ref.current
               .play()
               .then(() => setPlaying(true))
-              .catch(() => {});
+              .catch(() => { });
           }
         });
     }
@@ -170,16 +174,26 @@ const VideoPlayer = ({ url, poster }) => {
         ref={ref}
         src={videoSrc}
         poster={poster}
+        controls
+        controlsList="nodownload"
         playsInline
         preload="metadata"
         muted={muted}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
         onTimeUpdate={onTimeUpdate}
         onEnded={() => setPlaying(false)}
         onError={() => setError("Video preview could not be loaded.")}
-        className="w-full h-full object-cover block"
+        className="w-full h-full object-contain bg-black block"
       />
       {!playing && !error && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/45 backdrop-blur-[2px] transition-all group-hover:bg-black/35">
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            toggle();
+          }}
+          className="absolute inset-0 flex flex-col items-center justify-center bg-black/45 backdrop-blur-[2px] transition-all group-hover:bg-black/35 pointer-events-auto cursor-pointer"
+        >
           <div className="w-16 h-16 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
             <Play size={28} className="fill-slate-900 ml-1" />
           </div>
@@ -246,10 +260,10 @@ const UdemyPurchaseCard = ({
     selectedPlanId === "premium"
       ? 1000
       : isAssistantChecked
-      ? 500
-      : typeof course?.price === "number"
-      ? course.price
-      : parseFloat(String(course?.price || "100").replace(/[^\d.]/g, "")) || 100;
+        ? 500
+        : typeof course?.price === "number"
+          ? course.price
+          : parseFloat(String(course?.price || "100").replace(/[^\d.]/g, "")) || 100;
 
   const originalPrice = Math.round(rawPrice * 2.5);
   const discountPct = 60;
@@ -271,7 +285,7 @@ const UdemyPurchaseCard = ({
           title: course?.title || "Umang Vision Academy Course",
           url: window.location.href,
         })
-        .catch(() => {});
+        .catch(() => { });
     } else {
       navigator.clipboard.writeText(window.location.href);
       toast.success(t("courseDetails.linkCopied", "Course link copied to clipboard!"));
@@ -280,21 +294,14 @@ const UdemyPurchaseCard = ({
 
   return (
     <div className="bg-[#111827] border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-      {/* Top Preview Video / Image */}
-      {course?.demoVideoUrl ? (
-        <VideoPlayer url={course.demoVideoUrl} poster={course.thumbnailUrl} />
-      ) : course?.thumbnailUrl ? (
+      {/* Top Preview Image */}
+      {course?.thumbnailUrl ? (
         <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
           <img
             src={course.thumbnailUrl}
             alt={course.title}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-            <span className="text-xs font-bold bg-black/60 px-3 py-1.5 rounded-lg text-white backdrop-blur-sm">
-              {t("courseDetails.courseOverview", "Course Overview")}
-            </span>
-          </div>
         </div>
       ) : (
         <div className="aspect-video w-full bg-gradient-to-br from-indigo-950 to-slate-900 flex items-center justify-center text-4xl">
@@ -348,19 +355,17 @@ const UdemyPurchaseCard = ({
             {/* 1-on-1 Faculty Assistance Option */}
             <div
               onClick={handleToggleAssistant}
-              className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all ${
-                isAssistantChecked
+              className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all ${isAssistantChecked
                   ? "bg-purple-950/40 border-purple-500/60 shadow-md ring-1 ring-purple-500/40"
                   : "bg-slate-900 border-slate-800 hover:border-slate-700"
-              }`}
+                }`}
             >
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <div
-                  className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                    isAssistantChecked
+                  className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold shrink-0 ${isAssistantChecked
                       ? "bg-purple-600 text-white"
                       : "border border-slate-600"
-                  }`}
+                    }`}
                 >
                   {isAssistantChecked && "✓"}
                 </div>
@@ -388,8 +393,8 @@ const UdemyPurchaseCard = ({
                 {selectedPlanId === "premium"
                   ? "👑 Premium VIP Suite includes Higher-Study Scholarships & 1-on-1 Faculty Support"
                   : isAssistantChecked
-                  ? "⭐ Standard Plan includes 1-on-1 Faculty Chat Support & all class subjects"
-                  : `Includes all subjects of ${course?.category || "this class"} with Smart Learning Plans`}
+                    ? "⭐ Standard Plan includes 1-on-1 Faculty Chat Support & all class subjects"
+                    : `Includes all subjects of ${course?.category || "this class"} with Smart Learning Plans`}
               </p>
             </div>
 
@@ -405,20 +410,20 @@ const UdemyPurchaseCard = ({
                 }
               }}
               disabled={enrollingFree}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer active:scale-98"
+              className="w-full py-3.5 sm:py-4 px-6 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-500 hover:via-indigo-500 hover:to-purple-500 text-white font-black text-base sm:text-lg shadow-xl shadow-purple-600/40 hover:scale-[1.02] active:scale-98 transition-all duration-200 cursor-pointer border-none flex items-center justify-center text-center tracking-tight"
             >
               {enrollingFree
                 ? t("courseDetails.enrolling", "Enrolling...")
                 : isFreeWithPlan
                   ? t(
-                      "courseDetails.enrollFreePlan",
-                      "Enroll for Free (Academy Plan)",
-                    )
+                    "courseDetails.enrollFreePlan",
+                    "Enroll for Free (Academy Plan)",
+                  )
                   : selectedPlanId === "premium"
-                  ? "Buy Premium Plan (₹1,000/yr)"
-                  : isAssistantChecked
-                  ? "Buy Standard Plan (₹500/yr)"
-                  : t("courseDetails.buyNow", "Buy Course / Choose Plan")}
+                    ? "Buy Premium Plan (₹1,000/yr)"
+                    : isAssistantChecked
+                      ? "Buy Standard Plan (₹500/yr)"
+                      : t("courseDetails.buyNow", "Buy Course / Choose Plan")}
             </button>
 
             {(isInCart || addedToCart) && (
@@ -527,7 +532,7 @@ export default function CourseDemo() {
   const [addedToCart, setAddedToCart] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
   const [activeModalNote, setActiveModalNote] = useState(null);
-  
+
   const initialPlanId = location.state?.selectedPlanId || "basic";
   const [selectedPlanId, setSelectedPlanId] = useState(initialPlanId);
   const [withInstructorAssistance, setWithInstructorAssistance] = useState(
@@ -751,165 +756,63 @@ export default function CourseDemo() {
   const totalDuration = course?.durationHours ? `${course.durationHours} hours` : "Self-paced";
 
   return (
-    <div className="min-h-screen bg-[#0b1120] text-slate-100 font-sans pb-24">
-      {/* ── 1. Top Udemy Dark Hero Header ── */}
-      <div className="bg-[#0f172a] border-b border-slate-800/80 pt-6 pb-8 lg:pb-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Breadcrumbs */}
-          <div className="flex items-center gap-2 text-xs font-semibold text-indigo-400 mb-4 flex-wrap">
-            <Link to="/courses" className="hover:underline">
-              {t("courseDetails.courses", "Courses")}
-            </Link>
-            <span className="text-slate-600">›</span>
-            <span>{tText(course?.category || "Class")}</span>
-            {course?.board && (
-              <>
-                <span className="text-slate-600">›</span>
-                <span className="text-slate-400">{tText(course.board)}</span>
-              </>
-            )}
-            {course?.subject && (
-              <>
-                <span className="text-slate-600">›</span>
-                <span className="text-slate-400">{tText(course.subject)}</span>
-              </>
-            )}
+    <div className="min-h-screen bg-[#0b1120] text-slate-100 font-sans pb-16">
+      {/* ── 1. Compact Top Navigation & Hero Banner ── */}
+      <div className="bg-[#0f172a] border-b border-slate-800/80 py-2.5 sm:py-3 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-2">
+          {/* Left Title & Breadcrumbs */}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-indigo-400 mb-0.5 flex-wrap">
+              <Link to="/courses" className="hover:underline">
+                {t("courseDetails.courses", "Courses")}
+              </Link>
+              <span className="text-slate-600">›</span>
+              <span>{tText(course?.category || "Class")}</span>
+              {course?.board && (
+                <>
+                  <span className="text-slate-600">›</span>
+                  <span className="text-slate-400">{tText(course.board)}</span>
+                </>
+              )}
+              {course?.subject && (
+                <>
+                  <span className="text-slate-600">›</span>
+                  <span className="text-slate-400">{tText(course.subject)}</span>
+                </>
+              )}
+            </div>
+            <h1 className="text-base sm:text-lg md:text-xl font-black text-white leading-tight tracking-tight truncate">
+              {tText(course?.title || "Comprehensive Course Masterclass")}
+            </h1>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left Header Info (65% width on desktop) */}
-            <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-3.5">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight tracking-tight">
-                {tText(course?.title || "Comprehensive Course Masterclass")}
-              </h1>
 
-              <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-                {tText(
-                  course?.summary ||
-                    `Master all key topics and score top grades with comprehensive video lessons, study notes, and direct educator guidance.`,
-                )}
-              </p>
-
-              {/* Udemy Badges Row */}
-              <div className="flex items-center gap-2.5 flex-wrap text-xs pt-1">
-                {(course?.isBestseller || (studentsCount >= 5 && rawRating >= 4.0)) && (
-                  <span className="px-2.5 py-1 rounded-md bg-amber-400 text-slate-950 font-black text-[11px] uppercase tracking-wider shadow-sm">
-                    {t("courseDetails.bestseller", "Bestseller")}
-                  </span>
-                )}
-
-                {reviewsCount > 0 ? (
-                  <div className="flex items-center gap-1 text-amber-400 font-bold">
-                    <span>{ratingVal}</span>
-                    <div className="flex items-center text-amber-400">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          size={13}
-                          className={
-                            i < Math.round(Number(ratingVal))
-                              ? "fill-amber-400 text-amber-400"
-                              : "text-slate-600"
-                          }
-                        />
-                      ))}
-                    </div>
-                    <span className="text-indigo-400 hover:underline cursor-pointer ml-1">
-                      ({reviewsCount.toLocaleString()}{" "}
-                      {reviewsCount === 1
-                        ? t("courseDetails.rating", "rating")
-                        : t("courseDetails.ratings", "ratings")})
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-slate-400 font-medium">
-                    ({t("courseDetails.noRatingsYet", "No ratings yet")})
-                  </span>
-                )}
-
-                {studentsCount > 0 && (
-                  <span className="text-slate-400 font-medium">
-                    {studentsCount.toLocaleString()}{" "}
-                    {studentsCount === 1
-                      ? t("courseDetails.student", "student")
-                      : t("courseDetails.students", "students")}
-                  </span>
-                )}
-              </div>
-
-              {/* Created by Instructor */}
-              <div className="text-xs text-slate-300 flex items-center gap-1.5">
-                <span>{t("courseDetails.createdBy", "Created by")}</span>
-                {course?.instructor?._id || course?.instructorId ? (
-                  <Link
-                    to={`/instructors/${course?.instructor?._id || course?.instructorId}`}
-                    className="text-indigo-400 hover:text-indigo-300 font-bold underline"
-                  >
-                    {aiDetails.instructorName}
-                  </Link>
-                ) : (
-                  <span className="text-indigo-400 font-bold">
-                    {aiDetails.instructorName}
-                  </span>
-                )}
-              </div>
-
-              {/* Metadata tags */}
-              <div className="flex items-center gap-4 flex-wrap text-xs text-slate-400 pt-1">
-                <div className="flex items-center gap-1.5">
-                  <Calendar size={14} className="text-slate-500" />
-                  <span>{t("courseDetails.lastUpdated", "Last updated")} 2026</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Globe size={14} className="text-slate-500" />
-                  <span>{course?.language || "English / Hindi"}</span>
-                </div>
-                {course?.notes?.length > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <FileText size={14} className="text-emerald-400" />
-                    <span className="text-emerald-300 font-semibold">
-                      {course.notes.length}{" "}
-                      {t(
-                        "courseDetails.studyNotesIncluded",
-                        "Study Notes included",
-                      )}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Mobile-only purchase card */}
-            <div className="lg:hidden mt-4">
-              <UdemyPurchaseCard {...purchaseCardProps} />
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* ── 2. Main Page Layout (Body + Sticky Sidebar) ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Content Column (65% width on desktop) */}
-          <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-8">
-            {/* ── Smart Learning Plans Section (Above What You'll Learn) ── */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-900/95 via-purple-950/40 to-slate-900/95 border border-purple-500/30 shadow-xl backdrop-blur-md">
+      {/* ── 2. Top Hero Section: Smart Learning Plans (Left) & Buy Now Card (Right) ── */}
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-3 sm:pt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+          {/* Left Column: Smart Learning Plans (Expanded to 8 Cols) */}
+          <div className="lg:col-span-8 xl:col-span-8 h-full flex flex-col">
+            {/* Mobile-only Purchase Card */}
+            <div className="lg:hidden mb-4">
+              <UdemyPurchaseCard {...purchaseCardProps} />
+            </div>
+
+            {/* ── Smart Learning Plans Section (Stretched to match Buy Now Card) ── */}
+            <div className="h-full flex flex-col justify-between p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-900/95 via-purple-950/40 to-slate-900/95 border border-purple-500/30 shadow-xl backdrop-blur-md">
               {/* Header Row */}
-              <div className="flex items-center justify-between gap-2 mb-3.5 pb-2.5 border-b border-purple-500/20 flex-wrap">
+              <div className="flex items-center justify-between gap-2 mb-3 pb-2.5 border-b border-purple-500/20 flex-wrap">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-purple-900/40 shrink-0">
                     <Sparkles size={13} />
                   </div>
-                  <div className="flex items-baseline gap-1.5 flex-wrap">
-                    <h2 className="text-sm sm:text-base font-black text-white tracking-tight">
-                      {t("plans.heading", "Smart Learning Plans")}
-                    </h2>
-                    <span className="text-xs text-purple-300 font-medium hidden sm:inline">
-                      • {t("plans.heroTag", "Transparent & Empowering Pricing")}
-                    </span>
-                  </div>
+                  <h2 className="text-xs sm:text-sm font-black text-white tracking-tight">
+                    {t("plans.heading", "Smart Learning Plans")}
+                  </h2>
                 </div>
-                <div className="text-xs text-slate-300 font-bold bg-purple-900/40 border border-purple-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-sm">
+                <div className="text-[11px] text-slate-300 font-bold bg-purple-900/40 border border-purple-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
                   <span>Selected:</span>
                   <span className="text-purple-200 capitalize font-extrabold">
                     {selectedPlanId} ({selectedPlanId === "premium" ? "₹1,000/yr" : selectedPlanId === "standard" ? "₹500/yr" : "₹100/yr"})
@@ -917,34 +820,30 @@ export default function CourseDemo() {
                 </div>
               </div>
 
-              {/* 3 Plan Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
+              {/* 3 Plan Cards - Stretched to fill height */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1 items-stretch my-auto">
                 {SMART_PLANS.map((plan) => {
                   const isPopular = plan.id === "standard";
                   const isPremium = plan.id === "premium";
                   const isSelected = selectedPlanId === plan.id;
-                  const isExpanded = Boolean(expandedPlanCards[plan.id]);
                   const features = plan.allFeatures || [];
-                  const visibleFeatures = isExpanded ? features : features.slice(0, 4);
-                  const remainingCount = features.length - 4;
 
                   return (
                     <div
                       key={plan.id}
                       onClick={() => handleSelectPlan(plan)}
-                      className={`relative p-4 rounded-xl flex flex-col justify-between transition-all duration-200 cursor-pointer ${
-                        isSelected
+                      className={`relative p-3.5 sm:p-4 rounded-xl h-full flex flex-col justify-between transition-all duration-200 cursor-pointer ${isSelected
                           ? isPopular
                             ? "bg-gradient-to-b from-purple-950/90 to-slate-900/95 border-2 border-purple-400 shadow-xl shadow-purple-950/60 ring-2 ring-purple-400/50"
                             : isPremium
-                            ? "bg-gradient-to-b from-amber-950/60 to-slate-900/95 border-2 border-amber-400 shadow-xl shadow-amber-950/50 ring-2 ring-amber-400/40"
-                            : "bg-slate-900 border-2 border-indigo-400 shadow-lg ring-2 ring-indigo-400/30"
+                              ? "bg-gradient-to-b from-amber-950/60 to-slate-900/95 border-2 border-amber-400 shadow-xl shadow-amber-950/50 ring-2 ring-amber-400/40"
+                              : "bg-slate-900 border-2 border-indigo-400 shadow-lg ring-2 ring-indigo-400/30"
                           : isPopular
-                          ? "bg-gradient-to-b from-purple-950/80 to-slate-900/95 border border-purple-500/40 hover:border-purple-400 shadow-lg"
-                          : isPremium
-                          ? "bg-gradient-to-b from-amber-950/40 to-slate-900/95 border border-amber-500/40 hover:border-amber-400 shadow-md"
-                          : "bg-slate-900/90 hover:bg-slate-900 border border-slate-700/80 shadow-sm"
-                      }`}
+                            ? "bg-gradient-to-b from-purple-950/80 to-slate-900/95 border border-purple-500/40 hover:border-purple-400 shadow-lg"
+                            : isPremium
+                              ? "bg-gradient-to-b from-amber-950/40 to-slate-900/95 border border-amber-500/40 hover:border-amber-400 shadow-md"
+                              : "bg-slate-900/90 hover:bg-slate-900 border border-slate-700/80 shadow-sm"
+                        }`}
                       style={{
                         borderTop: `3px solid ${plan.color}`,
                       }}
@@ -979,9 +878,9 @@ export default function CourseDemo() {
                           </div>
                         </div>
 
-                        {/* Bullet Highlights from allFeatures matching Plans.jsx */}
+                        {/* Bullet Highlights */}
                         <div className="space-y-1.5 my-2.5 text-xs text-slate-200 leading-snug">
-                          {visibleFeatures.map((feat, idx) => {
+                          {features.map((feat, idx) => {
                             const featureKey = plan.featureKeys?.[idx];
                             const featureText = featureKey ? t(featureKey, feat) : feat;
                             return (
@@ -1003,28 +902,6 @@ export default function CourseDemo() {
                             );
                           })}
                         </div>
-
-                        {/* View More / View Less Toggle directly on card like /plans */}
-                        {features.length > 4 && (
-                          <button
-                            type="button"
-                            onClick={(e) => toggleExpandPlanCard(plan.id, e)}
-                            className="mt-1 mb-2 text-[11px] font-bold flex items-center gap-1 cursor-pointer transition hover:underline"
-                            style={{ color: plan.color }}
-                          >
-                            {isExpanded ? (
-                              <>
-                                <span>{t("plans.viewLessFeatures", "View less features")}</span>
-                                <ChevronUp size={13} />
-                              </>
-                            ) : (
-                              <>
-                                <span>{t("plans.viewMoreFeatures", "View {{count}} more features", { count: remainingCount })}</span>
-                                <ChevronDown size={13} />
-                              </>
-                            )}
-                          </button>
-                        )}
                       </div>
 
                       <button
@@ -1033,19 +910,18 @@ export default function CourseDemo() {
                           e.stopPropagation();
                           handleSelectPlan(plan);
                         }}
-                        className={`w-full mt-2 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
-                          isSelected
+                        className={`w-full mt-2 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${isSelected
                             ? isPopular
                               ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg ring-2 ring-purple-300"
                               : isPremium
-                              ? "bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-lg ring-2 ring-amber-300"
-                              : "bg-indigo-600 text-white shadow-md ring-2 ring-indigo-300"
+                                ? "bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-lg ring-2 ring-amber-300"
+                                : "bg-indigo-600 text-white shadow-md ring-2 ring-indigo-300"
                             : isPopular
-                            ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-md shadow-purple-900/40"
-                            : isPremium
-                            ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black shadow-md shadow-amber-950/30"
-                            : "bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 shadow-sm"
-                        }`}
+                              ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-md shadow-purple-900/40"
+                              : isPremium
+                                ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black shadow-md shadow-amber-950/30"
+                                : "bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 shadow-sm"
+                          }`}
                       >
                         <span>{isSelected ? `✓ Selected: ${plan.title}` : t(plan.buttonKey, `Choose ${plan.title}`)}</span>
                       </button>
@@ -1054,8 +930,20 @@ export default function CourseDemo() {
                 })}
               </div>
             </div>
+          </div>
 
-            {/* ── 2.1 "What you'll learn" Box (Udemy Exact Style) ── */}
+          {/* Right Column: Buy Now Card (UdemyPurchaseCard) */}
+          <div className="hidden lg:block lg:col-span-4 xl:col-span-4 h-full">
+            <UdemyPurchaseCard {...purchaseCardProps} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3. Main Content Details Below Top Cards Row ── */}
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="lg:col-span-8 xl:col-span-8 flex flex-col gap-8">
+            {/* ── 3.1 "What you'll learn" Box (Udemy Exact Style) ── */}
             <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
               <h2 className="text-lg sm:text-xl font-bold text-white mb-4">
                 {t("courseDetails.whatYouWillLearn", "What you'll learn")}
@@ -1070,7 +958,7 @@ export default function CourseDemo() {
               </div>
             </div>
 
-            {/* ── 2.2 Course Content / Curriculum Accordion ── */}
+            {/* ── 3.2 Course Content / Curriculum Accordion ── */}
             <div>
               <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                 <div>
@@ -1167,7 +1055,7 @@ export default function CourseDemo() {
               </div>
             </div>
 
-            {/* ── 2.3 Study Notes & Materials ── */}
+            {/* ── 3.3 Study Notes & Materials ── */}
             {course?.notes?.length > 0 && (
               <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
                 <div className="flex items-center justify-between mb-3">
@@ -1218,7 +1106,7 @@ export default function CourseDemo() {
               </div>
             )}
 
-            {/* ── 2.4 Requirements (Udemy Exact Style) ── */}
+            {/* ── 3.4 Requirements (Udemy Exact Style) ── */}
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-white mb-3">
                 {t("courseDetails.requirements", "Requirements")}
@@ -1230,15 +1118,14 @@ export default function CourseDemo() {
               </ul>
             </div>
 
-            {/* ── 2.5 Description (With Show More Toggle) ── */}
+            {/* ── 3.5 Description (With Show More Toggle) ── */}
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-white mb-3">
                 {t("courseDetails.description", "Description")}
               </h2>
               <div
-                className={`text-xs sm:text-sm text-slate-300 leading-relaxed whitespace-pre-line relative ${
-                  !showFullDesc ? "max-h-48 overflow-hidden" : ""
-                }`}
+                className={`text-xs sm:text-sm text-slate-300 leading-relaxed whitespace-pre-line relative ${!showFullDesc ? "max-h-48 overflow-hidden" : ""
+                  }`}
               >
                 {aiDetails.description}
                 {!showFullDesc && (
@@ -1258,7 +1145,7 @@ export default function CourseDemo() {
               </button>
             </div>
 
-            {/* ── 2.6 Instructor Section (Udemy Exact Style) ── */}
+            {/* ── 3.6 Instructor Section (Udemy Exact Style) ── */}
             <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
               <h2 className="text-lg sm:text-xl font-bold text-white mb-4">
                 {t("courseDetails.instructor", "Instructor")}
@@ -1316,7 +1203,7 @@ export default function CourseDemo() {
                       </div>
                     ) : null}
                     {course?.instructor?.coursesCount ||
-                    course?.instructor?.courses?.length ? (
+                      course?.instructor?.courses?.length ? (
                       <div className="flex items-center gap-1.5 text-slate-300">
                         <GraduationCap size={13} className="text-slate-400" />
                         <span>
@@ -1330,9 +1217,8 @@ export default function CourseDemo() {
                 </div>
 
                 <div
-                  className={`text-xs sm:text-sm text-slate-300 leading-relaxed mt-2 whitespace-pre-line relative ${
-                    !showFullBio ? "max-h-24 overflow-hidden" : ""
-                  }`}
+                  className={`text-xs sm:text-sm text-slate-300 leading-relaxed mt-2 whitespace-pre-line relative ${!showFullBio ? "max-h-24 overflow-hidden" : ""
+                    }`}
                 >
                   {aiDetails.instructorBio}
                   {!showFullBio && (
@@ -1354,7 +1240,7 @@ export default function CourseDemo() {
               </div>
             </div>
 
-            {/* ── 2.7 Student Feedback & Reviews (Only shown if real reviews exist) ── */}
+            {/* ── 3.7 Student Feedback & Reviews (Only shown if real reviews exist) ── */}
             {(() => {
               const realReviews = (course?.ratings || []).filter(
                 (r) => r && (r.review || r.comment || r.rating > 0),
@@ -1436,11 +1322,6 @@ export default function CourseDemo() {
                 </div>
               );
             })()}
-          </div>
-
-          {/* ── Right Desktop Sticky Purchase Sidebar ── */}
-          <div className="hidden lg:block lg:col-span-5 xl:col-span-4 sticky top-24">
-            <UdemyPurchaseCard {...purchaseCardProps} />
           </div>
         </div>
       </div>

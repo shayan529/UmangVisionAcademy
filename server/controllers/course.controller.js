@@ -118,12 +118,17 @@ const shapePublishedCourse = (c) => ({
 // approve/reject/update/delete, and stayed stale for the full 7200s TTL.
 //
 // There's only ever one exact key for the published list, so we delete it
-// directly instead of pattern-matching for it.
+// directly as well as any filter pattern matches.
 export const invalidateCourseCache = async (courseId) => {
-  await Promise.all([
-    deleteKeys(["courses:published"]),
-    deleteKeys([`course:public:${courseId}`]),
-  ]);
+  try {
+    await Promise.all([
+      invalidateCache("courses:published*"),
+      deleteKeys(["courses:published"]),
+      courseId ? deleteKeys([`course:public:${courseId}`]) : Promise.resolve(),
+    ]);
+  } catch (err) {
+    console.error("[invalidateCourseCache] Error clearing cache:", err);
+  }
 };
 
 // ── createCourse ──────────────────────────────────────────────────────────────
