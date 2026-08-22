@@ -86,7 +86,7 @@ async function seed() {
         board: "MP BOARD",
         subject: "Foundation",
         language: "English",
-        title: cls === "Class 9" ? "Class 9 Foundation" : `${cls} Foundation Complete Batch (MP Board - English Medium)`,
+        title: `${cls} Foundation Complete Batch (MP Board - English Medium)`,
       });
 
       // CBSE (English)

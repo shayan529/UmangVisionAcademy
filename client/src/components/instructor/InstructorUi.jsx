@@ -2,21 +2,16 @@ import React from "react";
 
 // ─── StatCard ─────────────────────────────────────────────────────────────────
 export const StatCard = ({ label, value, color, delta }) => (
-  <div
-    style={{
-      background: "#0b1120",
-      border: "1px solid #1e293b",
-      borderRadius: 14,
-      padding: "18px 20px",
-    }}
-  >
-    <div style={{ fontSize: 12, color: "#64748b", marginBottom: 6 }}>
+  <div className="bg-[#0b1120] border border-slate-800 rounded-2xl p-3 sm:p-5 flex flex-col justify-between">
+    <div className="text-[11px] sm:text-xs text-slate-400 font-medium truncate mb-1">
       {label}
     </div>
-    <div style={{ fontSize: 26, fontWeight: 800, color }}>{value}</div>
+    <div className="text-xl sm:text-2xl font-extrabold tracking-tight" style={{ color }}>
+      {value}
+    </div>
     {/* Only render delta line if the prop is provided */}
     {delta && (
-      <div style={{ fontSize: 11, color: "#34d399", marginTop: 4 }}>
+      <div className="text-[10px] sm:text-xs text-emerald-400 font-semibold mt-1 truncate">
         {delta}
       </div>
     )}
@@ -55,10 +50,6 @@ export const Btn = ({ children, onClick, variant = "ghost", style = {}, disabled
     fontWeight: 600,
     cursor: disabled ? "not-allowed" : "pointer",
     opacity: disabled ? 0.6 : 1,
-    border: "none",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
     transition: "all 0.15s",
     ...style,
   };
@@ -97,13 +88,8 @@ export const Btn = ({ children, onClick, variant = "ghost", style = {}, disabled
 // ─── Card ─────────────────────────────────────────────────────────────────────
 export const Card = ({ children, style = {} }) => (
   <div
-    style={{
-      background: "#0f172a",
-      border: "1px solid #1e293b",
-      borderRadius: 20,
-      padding: 20,
-      ...style,
-    }}
+    className="bg-[#0f172a] border border-slate-800 rounded-2xl p-4 sm:p-6"
+    style={style}
   >
     {children}
   </div>
@@ -111,16 +97,9 @@ export const Card = ({ children, style = {} }) => (
 
 // ─── SectionHeader ────────────────────────────────────────────────────────────
 export const SectionHeader = ({ title, action }) => (
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 16,
-    }}
-  >
-    <h3 style={{ fontSize: 16, fontWeight: 700, color: "#f1f5f9" }}>{title}</h3>
-    {action}
+  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 mb-4">
+    <h3 className="text-sm sm:text-base font-bold text-slate-100">{title}</h3>
+    {action && <div className="flex items-center gap-2 flex-wrap">{action}</div>}
   </div>
 );
 

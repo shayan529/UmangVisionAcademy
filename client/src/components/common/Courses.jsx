@@ -234,8 +234,8 @@ const Courses = () => {
 
   const handleClassChange = (cls) => {
     setSelectedClass(cls);
+    setSelectedSubject(ALL_SUBJECTS);
     if (cls === ALL) {
-      setSelectedSubject(ALL_SUBJECTS);
       setSelectedBoard(ALL_BOARDS);
       setSelectedLanguage(ALL_LANGUAGES);
     }
@@ -280,7 +280,7 @@ const Courses = () => {
       return ["Foundation"];
     }
     if (selectedClass === "Class 11" || selectedClass === "Class 12") {
-      return ["Maths + Science", "Biology", "Commerce", "Agriculture", "Arts"];
+      return ["Maths Science", "Biology", "Commerce", "Agriculture", "Arts"];
     }
     const subjects = new Set();
     allCourses.forEach((course) => {
@@ -312,69 +312,89 @@ const Courses = () => {
       ? selectedExam === ALL_EXAMS
       : selectedClass === ALL;
 
-  // ── Filtered list ─────────────────────────────────────────────────────────
+  // ── Filtered & Numerically Sorted list ─────────────────────────────────────
   const filteredCourses = useMemo(
     () =>
-      allCourses.filter((course) => {
-        const typeMatch =
-          selectedCourseType === TYPE_ALL
-            ? true
-            : selectedCourseType === TYPE_CLASSES
-              ? isClassCategory(course.category)
-              : isCompetitiveCourse(course);
+      allCourses
+        .filter((course) => {
+          const typeMatch =
+            selectedCourseType === TYPE_ALL
+              ? true
+              : selectedCourseType === TYPE_CLASSES
+                ? isClassCategory(course.category)
+                : isCompetitiveCourse(course);
 
-        const classMatch =
-          selectedCourseType === TYPE_COMPETITIVE
-            ? selectedExam === ALL_EXAMS || (course.category || "").toLowerCase().trim() === selectedExam.toLowerCase().trim()
-            : selectedClass === ALL || (course.category || "").toLowerCase().trim() === selectedClass.toLowerCase().trim();
+          const classMatch =
+            selectedCourseType === TYPE_COMPETITIVE
+              ? selectedExam === ALL_EXAMS || (course.category || "").toLowerCase().trim() === selectedExam.toLowerCase().trim()
+              : selectedClass === ALL || (course.category || "").toLowerCase().trim() === selectedClass.toLowerCase().trim();
 
-        // Subject matching
-        const isBulk =
-          (course.lessons ?? []).some((l) => l.subject) ||
-          (course.notes ?? []).some((n) => n.subject) ||
-          (course.subjectQuizzes ?? []).length > 0 ||
-          (course.subjectDetails ?? []).length > 0;
+          // Subject matching with normalized + / space handling
+          const isBulk =
+            (course.lessons ?? []).some((l) => l.subject) ||
+            (course.notes ?? []).some((n) => n.subject) ||
+            (course.subjectQuizzes ?? []).length > 0 ||
+            (course.subjectDetails ?? []).length > 0;
 
-        let courseSubjects = [];
-        if (course.subject) courseSubjects.push(course.subject.trim().toLowerCase());
-        if (isBulk) {
-          [
-            ...(course.lessons ?? []).map((l) => l.subject),
-            ...(course.notes ?? []).map((n) => n.subject),
-            ...(course.subjectQuizzes ?? []).map((q) => q.subject),
-            ...(course.subjectDetails ?? []).map((d) => d.subject),
-          ]
-            .filter(Boolean)
-            .forEach((s) => courseSubjects.push(s.trim().toLowerCase()));
-        } else if (course.title) {
-          courseSubjects.push(course.title.trim().toLowerCase());
-        }
+          let courseSubjects = [];
+          if (course.subject) courseSubjects.push(course.subject.trim().toLowerCase());
+          if (isBulk) {
+            [
+              ...(course.lessons ?? []).map((l) => l.subject),
+              ...(course.notes ?? []).map((n) => n.subject),
+              ...(course.subjectQuizzes ?? []).map((q) => q.subject),
+              ...(course.subjectDetails ?? []).map((d) => d.subject),
+            ]
+              .filter(Boolean)
+              .forEach((s) => courseSubjects.push(s.trim().toLowerCase()));
+          } else if (course.title) {
+            courseSubjects.push(course.title.trim().toLowerCase());
+          }
 
-        const subjectMatch =
-          selectedSubject === ALL_SUBJECTS ||
-          ((selectedClass === "Class 9" || selectedClass === "Class 10") && selectedSubject === "Foundation") ||
-          courseSubjects.includes(selectedSubject.trim().toLowerCase()) ||
-          course.title?.toLowerCase().includes(selectedSubject.toLowerCase()) ||
-          course.description?.toLowerCase().includes(selectedSubject.toLowerCase());
+          const normalizeSub = (str) =>
+            (str || "").replace(/\+/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
 
-        // Board doesn't apply to competitive-exam courses.
-        const boardMatch =
-          selectedCourseType === TYPE_COMPETITIVE
-            ? true
-            : selectedBoard === ALL_BOARDS ||
-            (course.board || "").toLowerCase().trim() === (selectedBoard || "").toLowerCase().trim();
+          const normSelected = normalizeSub(selectedSubject);
 
-        // A course with no language tag is treated as available in every
-        // language, so it still shows up under English or Hindi filters.
-        const languageMatch =
-          selectedLanguage === ALL_LANGUAGES ||
-          selectedLanguage === "Multilanguage" ||
-          selectedLanguage === "Language" ||
-          !course.language ||
-          course.language.toLowerCase() === selectedLanguage.toLowerCase();
+          const subjectMatch =
+            selectedSubject === ALL_SUBJECTS ||
+            ((selectedClass === "Class 9" || selectedClass === "Class 10") && selectedSubject === "Foundation") ||
+            courseSubjects.some((s) => normalizeSub(s) === normSelected) ||
+            normalizeSub(course.title).includes(normSelected) ||
+            normalizeSub(course.description).includes(normSelected);
 
-        return typeMatch && classMatch && subjectMatch && boardMatch && languageMatch;
-      }),
+          // Board doesn't apply to competitive-exam courses.
+          const boardMatch =
+            selectedCourseType === TYPE_COMPETITIVE
+              ? true
+              : selectedBoard === ALL_BOARDS ||
+              (course.board || "").toLowerCase().trim() === (selectedBoard || "").toLowerCase().trim();
+
+          // A course with no language tag is treated as available in every
+          // language, so it still shows up under English or Hindi filters.
+          const languageMatch =
+            selectedLanguage === ALL_LANGUAGES ||
+            selectedLanguage === "Multilanguage" ||
+            selectedLanguage === "Language" ||
+            !course.language ||
+            course.language.toLowerCase() === selectedLanguage.toLowerCase();
+
+          return typeMatch && classMatch && subjectMatch && boardMatch && languageMatch;
+        })
+        .sort((a, b) => {
+          const getNum = (c) => {
+            const str = `${c.category || ""} ${c.title || ""}`;
+            const match = str.match(/\d+/);
+            return match ? parseInt(match[0], 10) : 9999;
+          };
+          const numA = getNum(a);
+          const numB = getNum(b);
+          if (numA !== numB) return numA - numB;
+          return (a.title || "").localeCompare(b.title || "", undefined, {
+            numeric: true,
+            sensitivity: "base",
+          });
+        }),
     [
       allCourses,
       selectedCourseType,

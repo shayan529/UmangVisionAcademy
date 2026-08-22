@@ -296,15 +296,14 @@ export default function MobileNotes() {
               />
             </div>
 
-            <div className="flex items-center gap-2 bg-[#10151c] border border-white/[0.08] rounded-2xl p-1.5 shrink-0 overflow-x-auto scrollbar-none">
-              <ArrowUpDown size={14} className="text-teal-400 shrink-0 ml-1.5" />
+            <div className="grid grid-cols-4 sm:flex gap-1 bg-[#10151c] border border-white/[0.08] rounded-xl sm:rounded-2xl p-1 shrink-0 w-full sm:w-auto">
               {SORT_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
                   onClick={() => setSortBy(opt.value)}
-                  className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap transition focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50 ${sortBy === opt.value
-                      ? "bg-teal-500/15 text-teal-300"
+                  className={`px-1.5 sm:px-3 py-1.5 sm:py-1.5 rounded-lg text-[10.5px] sm:text-[11px] font-bold text-center leading-tight whitespace-nowrap transition focus:outline-none ${sortBy === opt.value
+                      ? "bg-teal-500/20 text-teal-300 border border-teal-500/40"
                       : "text-slate-400 hover:text-slate-200"
                     }`}
                 >
@@ -316,7 +315,7 @@ export default function MobileNotes() {
         )}
 
         {!requireLogin && classNotes.length > 0 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-1.5 flex-wrap w-full">
             {subjectTabs.map((tab) => {
               const style = getSubjectStyle(tab.name === "All" ? "" : tab.name);
               const isActive = selectedSubject === tab.name;
@@ -324,7 +323,7 @@ export default function MobileNotes() {
                 <button
                   key={tab.name}
                   onClick={() => setSelectedSubject(tab.name)}
-                  className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap border-t-2 rounded-b-lg rounded-t-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap border-t-2 rounded-b-lg rounded-t-sm focus:outline-none"
                   style={{
                     borderTopColor: tab.name === "All" ? "#2dd4bf" : style.accent,
                     backgroundColor: isActive

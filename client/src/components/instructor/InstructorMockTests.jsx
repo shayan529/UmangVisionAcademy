@@ -487,30 +487,34 @@ export default function InstructorMockTests() {
                     {t("instructorMockTests.selectCorrectAnswer")}
                   </p>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label={t("instructorMockTests.marks")}>
-                      <input
-                        type="number"
-                        min={1}
-                        value={q.marks}
-                        onChange={(e) =>
-                          updateQuestion(qIdx, "marks", +e.target.value)
-                        }
-                        className="input-dark"
-                      />
-                    </Field>
-                    <Field label={t("instructorMockTests.explanationOptional")}>
-                      <input
-                        value={q.explanation}
-                        onChange={(e) =>
-                          updateQuestion(qIdx, "explanation", e.target.value)
-                        }
-                        placeholder={t(
-                          "instructorMockTests.explanationPlaceholder",
-                        )}
-                        className="input-dark"
-                      />
-                    </Field>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-1">
+                      <Field label={t("instructorMockTests.marks")}>
+                        <input
+                          type="number"
+                          min={1}
+                          value={q.marks}
+                          onChange={(e) =>
+                            updateQuestion(qIdx, "marks", +e.target.value)
+                          }
+                          className="input-dark w-full"
+                        />
+                      </Field>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Field label={t("instructorMockTests.explanationOptional")}>
+                        <input
+                          value={q.explanation}
+                          onChange={(e) =>
+                            updateQuestion(qIdx, "explanation", e.target.value)
+                          }
+                          placeholder={t(
+                            "instructorMockTests.explanationPlaceholder",
+                          )}
+                          className="input-dark w-full"
+                        />
+                      </Field>
+                    </div>
                   </div>
                 </div>
               ))}

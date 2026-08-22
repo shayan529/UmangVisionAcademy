@@ -4578,71 +4578,54 @@ export default function InstructorCourses({
               ))}
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                flexWrap: "wrap",
-                alignItems: "center",
-              }}
-            >
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search courses…"
-                style={{
-                  flex: 1,
-                  minWidth: 180,
-                  padding: "9px 14px",
-                  background: "#111827",
-                  border: "1px solid #1e293b",
-                  borderRadius: 10,
-                  color: "#f1f5f9",
-                  fontSize: 13,
-                  outline: "none",
-                }}
-              />
-              {isAdmin && instructors.length > 0 && (
-                <div style={{ minWidth: 180 }}>
-                  <Sel
-                    value={selectedInstructorFilter}
-                    onChange={(e) => setSelectedInstructorFilter(e.target.value)}
-                    options={[
-                      { value: "", label: "All Instructors" },
-                      ...instructors.map((inst) => ({
-                        value: inst._id,
-                        label: inst.name || inst.email,
-                      })),
-                    ]}
-                  />
-                </div>
-              )}
-              {[
-                { key: "all", label: "All" },
-                { key: "draft", label: "Draft" },
-                { key: "pending", label: "In Review" },
-                { key: "published", label: "Live" },
-                { key: "rejected", label: "Rejected" },
-              ].map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => setFilterStatus(key)}
-                  style={{
-                    padding: "8px 16px",
-                    borderRadius: 20,
-                    border: `1px solid ${filterStatus === key ? "#7c3aed" : "#1e293b"}`,
-                    background:
-                      filterStatus === key ? "#7c3aed" : "transparent",
-                    color: filterStatus === key ? "#fff" : "#64748b",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    textTransform: "capitalize",
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
+            <div className="flex flex-col gap-3 mb-5 w-full">
+              {/* Search + Admin instructor dropdown */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full">
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search courses…"
+                  className="w-full sm:flex-1 px-3.5 py-2.5 rounded-xl bg-[#111827] border border-slate-800 text-slate-100 text-xs sm:text-sm outline-none focus:border-indigo-500 transition"
+                />
+                {isAdmin && instructors.length > 0 && (
+                  <div className="w-full sm:w-auto min-w-[180px]">
+                    <Sel
+                      value={selectedInstructorFilter}
+                      onChange={(e) => setSelectedInstructorFilter(e.target.value)}
+                      options={[
+                        { value: "", label: "All Instructors" },
+                        ...instructors.map((inst) => ({
+                          value: inst._id,
+                          label: inst.name || inst.email,
+                        })),
+                      ]}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Status filter pills (5-column grid on mobile) */}
+              <div className="grid grid-cols-5 gap-1 sm:flex sm:flex-wrap items-center sm:gap-2 w-full">
+                {[
+                  { key: "all", label: "All" },
+                  { key: "draft", label: "Draft" },
+                  { key: "pending", label: "In Review" },
+                  { key: "published", label: "Live" },
+                  { key: "rejected", label: "Rejected" },
+                ].map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setFilterStatus(key)}
+                    className={`px-1 sm:px-4 py-2 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold transition text-center truncate cursor-pointer ${
+                      filterStatus === key
+                        ? "bg-indigo-600 text-white border border-indigo-500 shadow-sm"
+                        : "bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-white hover:bg-slate-800"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {error && (

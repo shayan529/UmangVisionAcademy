@@ -63,7 +63,7 @@ const HeroPhotoSlider = () => {
 
   return (
     <div
-      className="relative w-full h-[calc(100vh-64px)] min-h-[480px] max-h-[640px] overflow-hidden rounded-none bg-slate-950 shadow-2xl group"
+      className="relative w-full h-[50vh] min-h-[320px] max-h-[420px] overflow-hidden rounded-none bg-slate-950 shadow-2xl group"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >

@@ -126,8 +126,8 @@ const Courses = () => {
 
   const handleClassChange = (cls) => {
     setSelectedClass(cls);
+    setSelectedSubject(ALL_SUBJECTS);
     if (cls === ALL) {
-      setSelectedSubject(ALL_SUBJECTS);
       setSelectedBoard(ALL_BOARDS);
       setSelectedLanguage(ALL_LANGUAGES);
     }
@@ -172,7 +172,7 @@ const Courses = () => {
       return ["Foundation"];
     }
     if (selectedClass === "Class 11" || selectedClass === "Class 12") {
-      return ["Maths + Science", "Biology", "Commerce", "Agriculture", "Arts"];
+      return ["Maths Science", "Biology", "Commerce", "Agriculture", "Arts"];
     }
     const subjects = new Set();
     allCourses.forEach((course) => {
@@ -248,12 +248,17 @@ const Courses = () => {
         courseSubjects.push(course.title.trim().toLowerCase());
       }
 
+      const normalizeSub = (str) =>
+        (str || "").replace(/\+/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
+
+      const normSelected = normalizeSub(selectedSubject);
+
       const subjectMatch =
         selectedSubject === ALL_SUBJECTS ||
         ((selectedClass === "Class 9" || selectedClass === "Class 10") && selectedSubject === "Foundation") ||
-        courseSubjects.includes(selectedSubject.trim().toLowerCase()) ||
-        course.title?.toLowerCase().includes(selectedSubject.toLowerCase()) ||
-        course.description?.toLowerCase().includes(selectedSubject.toLowerCase());
+        courseSubjects.some((s) => normalizeSub(s) === normSelected) ||
+        normalizeSub(course.title).includes(normSelected) ||
+        normalizeSub(course.description).includes(normSelected);
 
       // Board match
       const boardMatch =
@@ -354,14 +359,7 @@ const Courses = () => {
   return (
     <section className="px-3.5 sm:px-6 md:px-10 py-8 md:py-12 bg-[#0B1120]">
       <div className="max-w-7xl mx-auto">
-        {/* Header + Course Type Toggle */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 pb-4 border-b border-slate-800/80">
-          <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight">
-              {t("courses.title")}
-            </h2>
-          </div>
-        </div>
+
 
         {/* Error banner */}
         {error && !loading && (
@@ -406,11 +404,10 @@ const Courses = () => {
                       setSelectedBoard(chip.board);
                     }
                   }}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all duration-200 cursor-pointer ${
-                    isActive
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all duration-200 cursor-pointer ${isActive
                       ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-600/30 border border-indigo-400/40"
                       : "bg-slate-900/90 text-slate-400 border border-slate-800 hover:text-white"
-                  }`}
+                    }`}
                 >
                   {chip.label}
                 </button>
@@ -499,8 +496,8 @@ const Courses = () => {
                   type="button"
                   onClick={() => handleCourseTypeChange(opt.key)}
                   className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap shrink-0 cursor-pointer ${selectedCourseType === opt.key
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                      : "text-slate-400 hover:text-slate-200"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200"
                     }`}
                 >
                   {opt.label}
@@ -585,8 +582,8 @@ const Courses = () => {
                   value={selectedBoard}
                   onChange={(e) => handleBoardChange(e.target.value)}
                   className={`w-full bg-[#090e1a] border border-slate-700/70 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-2 text-xs appearance-none outline-none transition-all truncate ${isNextOptionDisabled
-                      ? "opacity-40 cursor-not-allowed border-slate-800"
-                      : "hover:border-purple-500/50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 cursor-pointer"
+                    ? "opacity-40 cursor-not-allowed border-slate-800"
+                    : "hover:border-purple-500/50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 cursor-pointer"
                     }`}
                 >
                   <option key={ALL_BOARDS} value={ALL_BOARDS}>
@@ -621,8 +618,8 @@ const Courses = () => {
                   value={selectedSubject}
                   onChange={(e) => setSelectedSubject(e.target.value)}
                   className={`w-full bg-[#090e1a] border border-slate-700/70 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-2 text-xs appearance-none outline-none transition-all truncate ${isNextOptionDisabled
-                      ? "opacity-40 cursor-not-allowed border-slate-800"
-                      : "hover:border-pink-500/50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 cursor-pointer"
+                    ? "opacity-40 cursor-not-allowed border-slate-800"
+                    : "hover:border-pink-500/50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 cursor-pointer"
                     }`}
                 >
                   <option key={ALL_SUBJECTS} value={ALL_SUBJECTS}>
@@ -656,8 +653,8 @@ const Courses = () => {
                 value={selectedLanguage}
                 onChange={(e) => setSelectedLanguage(e.target.value)}
                 className={`w-full bg-[#090e1a] border border-slate-700/70 text-white rounded-xl pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-2 text-xs appearance-none outline-none transition-all truncate ${isNextOptionDisabled
-                    ? "opacity-40 cursor-not-allowed border-slate-800"
-                    : "hover:border-emerald-500/50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 cursor-pointer"
+                  ? "opacity-40 cursor-not-allowed border-slate-800"
+                  : "hover:border-emerald-500/50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 cursor-pointer"
                   }`}
               >
                 <option key={ALL_LANGUAGES} value={ALL_LANGUAGES}>
@@ -761,13 +758,13 @@ const Courses = () => {
 
         {/* Grid */}
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {[...Array(3)].map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
         ) : featuredList.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {featuredList.map((course, i) => (
               <div
                 key={course._id}

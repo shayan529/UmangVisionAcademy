@@ -338,15 +338,7 @@ function OtpModal({ title, subtitle, onVerify, onResend, onClose }) {
 }
 
 const SectionCard = ({ title, children }) => (
-  <div
-    style={{
-      background: "#111827",
-      border: "1px solid #1e293b",
-      borderRadius: 18,
-      padding: "22px 24px",
-      marginBottom: 16,
-    }}
-  >
+  <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4 sm:p-6 mb-4">
     <h3
       style={{
         fontSize: 15,
@@ -944,14 +936,7 @@ export default function Settings() {
           </div>
 
           {/* Name + Phone (read-only hint) */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 14,
-              marginBottom: 14,
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-3.5">
             <div>
               <label style={labelStyle}>{t("studentSettings.fullName")}</label>
               <input
@@ -1013,14 +998,7 @@ export default function Settings() {
           </div>
 
           {/* State + City */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 14,
-              marginBottom: 18,
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-4">
             <div>
               <label style={labelStyle}>{t("studentSettings.state")}</label>
               <select
@@ -1066,14 +1044,7 @@ export default function Settings() {
           </div>
 
           {/* Student Details */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 14,
-              marginBottom: 14,
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-3.5">
             <div>
               <label style={labelStyle}>
                 {t("studentSettings.fatherName")}
@@ -1253,15 +1224,7 @@ export default function Settings() {
               {profile.phoneNumber || "—"}
             </span>
           </p>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr auto",
-              gap: 10,
-              alignItems: "flex-end",
-              marginBottom: 10,
-            }}
-          >
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 mb-2.5">
             <div>
               <label style={labelStyle}>
                 {t("studentSettings.newPhoneNumber")}
@@ -1443,14 +1406,7 @@ export default function Settings() {
 
         {/* ── Change Password ── */}
         <SectionCard title={t("studentSettings.changePassword")}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
-              gap: 14,
-              marginBottom: 14,
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-3.5">
             <div>
               <label style={labelStyle}>
                 {t("studentSettings.currentPassword")}
@@ -1569,33 +1525,18 @@ export default function Settings() {
 
         {/* ── Danger Zone ── */}
         <SectionCard title={t("studentSettings.dangerZone")}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#f87171" }}>
+              <div className="text-xs sm:text-sm font-bold text-rose-400">
                 {t("studentSettings.deleteAccount")}
               </div>
-              <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+              <div className="text-[11px] sm:text-xs text-slate-400 mt-1 leading-relaxed">
                 {t("studentSettings.deleteAccountDesc")}
               </div>
             </div>
             <button
               onClick={deleteAccount}
-              style={{
-                padding: "8px 16px",
-                background: "#450a0a",
-                border: "1px solid #7f1d1d",
-                borderRadius: 10,
-                color: "#f87171",
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
+              className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-800/80 text-rose-400 text-xs font-bold transition shadow-sm shrink-0 cursor-pointer"
             >
               {t("studentSettings.deleteAccountCta")}
             </button>

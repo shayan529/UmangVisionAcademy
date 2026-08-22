@@ -101,18 +101,18 @@ const CourseCard = ({ course }) => {
 
         {/* Floating Top-Left Badge (Only show Enrolled if enrolled) */}
         {isEnrolled && (
-          <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 pointer-events-none">
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-indigo-600/90 text-white text-[10px] sm:text-[11px] font-bold shadow-md backdrop-blur-md border border-indigo-400/30">
-              <CheckCircle2 size={11} className="text-emerald-300" />
-              <span>{t("exploreCourses.enrolled", "Enrolled")}</span>
+          <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 pointer-events-none max-w-[45%]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-indigo-600/90 text-white text-[10px] sm:text-[11px] font-bold shadow-md backdrop-blur-md border border-indigo-400/30 truncate">
+              <CheckCircle2 size={11} className="text-emerald-300 shrink-0" />
+              <span className="truncate">{t("exploreCourses.enrolled", "Enrolled")}</span>
             </span>
           </div>
         )}
 
         {/* Floating Top-Right Class / Board Badge */}
         {(course.category || course.board) && (
-          <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
-            <span className="px-2 py-0.5 rounded-md bg-slate-950/80 text-slate-200 text-[10px] font-bold backdrop-blur-md border border-white/10 shadow-sm">
+          <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none max-w-[45%]">
+            <span className="px-2.5 py-0.5 rounded-lg bg-slate-950/85 text-slate-200 text-[10px] sm:text-[11px] font-bold backdrop-blur-md border border-white/10 shadow-sm block truncate">
               {course.category || course.board}
             </span>
           </div>
@@ -123,19 +123,19 @@ const CourseCard = ({ course }) => {
       <div className="p-3 sm:p-3.5 flex-1 flex flex-col justify-between">
         <div className="flex flex-col">
           {/* Title - Ample height to prevent clipping */}
-          <div className="min-h-[38px] sm:min-h-[42px] mb-2 flex items-start">
+          <div className="min-h-[36px] sm:min-h-[40px] mb-2 flex items-start">
             <h3
-              className="text-[12.5px] sm:text-[13px] font-bold text-white leading-snug line-clamp-2 group-hover:text-indigo-300 transition-colors"
+              className="text-sm sm:text-[13px] font-bold text-white leading-snug line-clamp-2 group-hover:text-indigo-300 transition-colors"
               title={course.title}
             >
               {course.title}
             </h3>
           </div>
 
-          {/* Instructor & View Instructor (Desktop Only) */}
-          <div className="hidden md:flex items-center justify-between text-xs h-4.5 mt-1">
+          {/* Instructor & View Instructor */}
+          <div className="flex items-center justify-between text-xs h-4.5 mb-1.5">
             <span
-              className="text-slate-300 truncate max-w-[130px] sm:max-w-[150px] font-medium text-[11px]"
+              className="text-slate-300 truncate max-w-[140px] sm:max-w-[150px] font-medium text-[11px]"
               title={course.instructor}
             >
               {course.instructor || "Lead Instructor"}
@@ -151,10 +151,10 @@ const CourseCard = ({ course }) => {
             ) : null}
           </div>
 
-          {/* Board, Language & Desktop Rating Row */}
-          <div className="flex items-center gap-1.5 mt-1 mb-2.5 h-5.5 overflow-hidden">
-            {/* Rating pill (Desktop Only) */}
-            <div className="hidden md:flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10.5px] font-bold shrink-0">
+          {/* Board, Language & Rating Row */}
+          <div className="flex items-center gap-1.5 mb-2 h-5.5 overflow-hidden flex-wrap">
+            {/* Rating pill */}
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10.5px] font-bold shrink-0">
               <Star size={10} className="fill-amber-400 text-amber-400" />
               <span>{ratingVal}</span>
             </div>
@@ -172,99 +172,40 @@ const CourseCard = ({ course }) => {
           </div>
         </div>
 
-        {/* ── 3. Footer (Mobile: 3D Circles | Desktop: Starting Price) + Action Footer ── */}
-        <div className="mt-2.5 pt-2.5 border-t border-slate-800/80 flex flex-col gap-2.5">
+        {/* ── 3. Footer (Mobile: Segmented Price Pills | Desktop: 3-Tier Plans) + Action Buttons ── */}
+        <div className="mt-2 pt-2.5 border-t border-slate-800/80 flex flex-col gap-2.5">
           {!isEnrolled && (
-            <>
-              {/* Mobile View: 3 Round Circle Plan Badges */}
-              <div className="block md:hidden">
-                <div className="flex items-center justify-around gap-1.5 py-2 px-2 bg-[#090e1a] rounded-2xl border border-slate-800/90 shadow-inner">
-                  {SMART_PLANS.map((plan) => {
-                    const isPopular = plan.id === "standard";
-                    const isPremium = plan.id === "premium";
-                    return (
-                      <div
-                        key={plan.id}
-                        onClick={handleBuy}
-                        title={`${plan.label}: ${plan.price}/yr`}
-                        className={`relative flex flex-col items-center justify-center w-12 h-12 sm:w-13 sm:h-13 rounded-full transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer text-center shrink-0 border-2 shadow-lg ${
-                          isPopular
-                            ? "bg-gradient-to-b from-purple-900/90 to-indigo-950 border-purple-400/80 text-purple-100 shadow-purple-500/30 ring-2 ring-purple-500/20"
-                            : isPremium
-                              ? "bg-gradient-to-b from-amber-900/90 to-slate-950 border-amber-400/80 text-amber-100 shadow-amber-500/30 ring-2 ring-amber-500/20"
-                              : "bg-gradient-to-b from-slate-800 to-slate-950 border-indigo-500/40 text-slate-100 shadow-indigo-500/10"
-                        }`}
-                      >
-                        <span className="text-[11px] sm:text-xs font-black tracking-tight leading-none drop-shadow-sm">
-                          {plan.price}
-                        </span>
-                        <span
-                          className={`text-[8px] font-extrabold uppercase leading-none mt-1 ${
-                            isPopular
-                              ? "text-purple-300"
-                              : isPremium
-                                ? "text-amber-300"
-                                : "text-indigo-300"
-                          }`}
-                        >
-                          {plan.id === "basic" ? "Basic" : plan.id === "standard" ? "Standard" : "Premium"}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+            <div className="w-full">
+              <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-[#090e1a] rounded-xl border border-slate-800/90 shadow-inner">
+                {SMART_PLANS.map((plan) => {
+                  const isPopular = plan.id === "standard";
+                  const isPremium = plan.id === "premium";
+                  return (
+                    <div
+                      key={plan.id}
+                      onClick={handleBuy}
+                      title={`${plan.label}: ${plan.price}/yr`}
+                      className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-center cursor-pointer transition-all duration-200 border hover:scale-[1.02] ${
+                        isPopular
+                          ? "bg-purple-950/70 border-purple-500/60 text-purple-100 shadow-sm hover:border-purple-400"
+                          : isPremium
+                            ? "bg-amber-950/60 border-amber-500/50 text-amber-100 shadow-sm hover:border-amber-400"
+                            : "bg-slate-900/80 border-slate-800 text-slate-200 hover:bg-slate-800 hover:border-slate-700"
+                      }`}
+                    >
+                      <span className={`text-[9.5px] font-black uppercase tracking-wider leading-none ${
+                        isPopular ? "text-purple-300" : isPremium ? "text-amber-300" : "text-slate-400"
+                      }`}>
+                        {plan.id.toUpperCase()}
+                      </span>
+                      <span className="text-[11px] font-black tracking-tight leading-tight mt-1 text-white">
+                        {plan.price}<span className="text-[9px] font-normal text-slate-400">/yr</span>
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
-
-              {/* Desktop View: Three Plans in 3 Lines */}
-              <div className="hidden md:block">
-                <div className="flex items-center justify-between mb-1 px-0.5">
-                  <span className="text-[10px] font-extrabold text-slate-300 uppercase tracking-wider">
-                    Smart Learning Plans
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleBuy}
-                    className="text-[9.5px] font-bold text-indigo-400 hover:text-indigo-300 hover:underline cursor-pointer flex items-center gap-0.5"
-                  >
-                    <span>View Details</span>
-                    <Sparkles size={10} className="text-purple-400" />
-                  </button>
-                </div>
-
-                <div className="flex flex-col gap-0.5 bg-slate-950/60 p-1 rounded-lg border border-slate-800/70">
-                  {SMART_PLANS.map((plan) => {
-                    const isPopular = plan.id === "standard";
-                    const isPremium = plan.id === "premium";
-                    return (
-                      <div
-                        key={plan.id}
-                        onClick={handleBuy}
-                        className={`flex items-center justify-between text-[10px] px-1.5 py-0.5 rounded transition cursor-pointer ${
-                          isPopular
-                            ? "bg-purple-950/40 hover:bg-purple-900/50 text-slate-200 border border-purple-500/30"
-                            : isPremium
-                              ? "bg-amber-950/30 hover:bg-amber-900/40 text-slate-200 border border-amber-500/30"
-                              : "bg-slate-900/80 hover:bg-slate-800/90 text-slate-200 border border-slate-800/60"
-                        }`}
-                      >
-                        <span className="font-semibold flex items-center gap-1">
-                          <span>{plan.icon} {t(plan.labelKey, plan.label)}</span>
-                          {isPopular && (
-                            <span className="text-[7.5px] font-black px-1 py-0 rounded bg-purple-600 text-white uppercase">POPULAR</span>
-                          )}
-                          {isPremium && (
-                            <span className="text-[7.5px] font-black px-1 py-0 rounded bg-amber-500 text-slate-950 uppercase">VIP</span>
-                          )}
-                        </span>
-                        <span className={`font-black ${isPopular ? "text-purple-200" : isPremium ? "text-amber-300" : "text-white"}`}>
-                          {plan.price}<span className="text-[8.5px] text-slate-400 font-normal">/{t(plan.periodKey, "yr")}</span>
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
+            </div>
           )}
 
           {/* Action Buttons */}
@@ -274,32 +215,31 @@ const CourseCard = ({ course }) => {
                 e.stopPropagation();
                 navigate(`/courses/${courseId}`);
               }}
-              className="w-full h-8 px-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md active:scale-98 transition-all flex items-center justify-center gap-1 cursor-pointer border-none"
+              className="w-full h-9 sm:h-8 px-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md active:scale-98 transition-all flex items-center justify-center gap-1 cursor-pointer border-none"
             >
               <span>{t("courseCard.continueLearning", "Continue Learning →")}</span>
             </button>
           ) : (
-            <div className="flex gap-1.5">
+            <div className="flex gap-2">
               {(canEnroll || !user) && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/courses/${courseId}/demo`);
                   }}
-                  className="flex-1 min-w-0 h-8 px-2 rounded-xl border border-slate-700/80 hover:border-slate-500 bg-slate-800/70 hover:bg-slate-700/70 text-slate-200 hover:text-white text-xs font-bold transition cursor-pointer text-center truncate flex items-center justify-center"
+                  className="flex-1 min-w-0 h-9 sm:h-8 px-2 rounded-xl border border-slate-700/80 hover:border-slate-500 bg-slate-800/70 hover:bg-slate-700/70 text-slate-200 hover:text-white text-xs font-bold transition cursor-pointer text-center truncate flex items-center justify-center"
                 >
-                  {t("courseCard.viewDetails", "Details")}
+                  {t("courseCard.viewDetails", "View Details")}
                 </button>
               )}
 
               <button
                 onClick={handleBuy}
                 disabled={!canEnroll && user}
-                className={`flex-1 min-w-0 h-8 px-2 rounded-xl text-xs font-extrabold text-center transition shadow-md active:scale-98 cursor-pointer border-none truncate flex items-center justify-center ${
-                  !canEnroll && user
+                className={`flex-1 min-w-0 h-9 sm:h-8 px-2 rounded-xl text-xs font-extrabold text-center transition shadow-md active:scale-98 cursor-pointer border-none truncate flex items-center justify-center ${!canEnroll && user
                     ? "bg-slate-700 text-slate-400 border border-slate-600 cursor-not-allowed"
                     : "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-indigo-600/20"
-                }`}
+                  }`}
               >
                 {!canEnroll && user
                   ? "Locked"

@@ -311,6 +311,18 @@ button.btn-red:hover,
 
           {/* ── Desktop nav links ── */}
           <div className="hidden xl:flex items-center justify-center gap-2 xl:gap-3 2xl:gap-5 text-xs xl:text-[13px] 2xl:text-[14px] font-medium text-gray-300 shrink-0">
+            <Link
+              to="/"
+              className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
+            >
+              {t("nav.home", "Home")}
+            </Link>
+            <Link
+              to="/about-us"
+              className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
+            >
+              {t("nav.aboutUs", "About Us")}
+            </Link>
             {!isStaffOrAdmin && !user && (
               <Link
                 to="/courses"
@@ -319,30 +331,13 @@ button.btn-red:hover,
                 {t("nav.courses")}
               </Link>
             )}
-            {!isStaffOrAdmin && !user && (
-              <Link
-                to="/plans"
-                className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
-                onClick={() => console.debug("Navbar: plans click -> /plans")}
-              >
-                {t("nav.plans")}
-              </Link>
-            )}
             {!user && (
-              <>
-                <Link
-                  to="/question-bank"
-                  className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
-                >
-                  {t("nav.questionBank")}
-                </Link>
-                <Link
-                  to="/blogs"
-                  className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
-                >
-                  {t("nav.blogs")}
-                </Link>
-              </>
+              <Link
+                to="/blogs"
+                className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
+              >
+                {t("nav.blogs")}
+              </Link>
             )}
 
             {!hasInstructorRole && !isStaffOrAdmin && !user && (
@@ -597,20 +592,16 @@ button.btn-red:hover,
       >
         <div className="px-4 pt-3 pb-6 space-y-1">
           {[
+            { to: "/", label: t("nav.home", "Home") },
+            { to: "/about-us", label: t("nav.aboutUs", "About Us") },
             ...(!isStaffOrAdmin && !user
               ? [{ to: "/courses", label: t("nav.courses") }]
-              : []),
-            ...(!isStaffOrAdmin && !user
-              ? [{ to: "/plans", label: t("nav.plans") }]
               : []),
             ...(!hasInstructorRole && !isStaffOrAdmin && !user
               ? [{ to: "/become-instructor", label: t("nav.becomeInstructor") }]
               : []),
             ...(!user
-              ? [
-                  { to: "/question-bank", label: t("nav.questionBank") },
-                  { to: "/blogs", label: t("nav.blogs") },
-                ]
+              ? [{ to: "/blogs", label: t("nav.blogs") }]
               : []),
           ].map(({ to, label }) => (
             <Link

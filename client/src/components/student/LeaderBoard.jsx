@@ -10,56 +10,42 @@ const LeaderRow = memo(({ student, rank, isCurrentUser, coinsToRupees, t }) => {
   const studentCoins = student.coins ?? 0;
   return (
     <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "16px",
-        borderRadius: 14,
-        marginBottom: 10,
-        background: isCurrentUser ? "rgba(124,58,237,0.12)" : "#0f172a",
-        border: isCurrentUser ? "1px solid #7c3aed" : "1px solid #1e293b",
-      }}
+      className={`flex items-center justify-between p-3 sm:p-4 rounded-xl mb-2.5 transition-all ${
+        isCurrentUser
+          ? "bg-violet-950/30 border border-violet-600"
+          : "bg-slate-900 border border-slate-800"
+      }`}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1 mr-2">
         <div
-          style={{
-            width: 42,
-            height: 42,
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: 800,
-            fontSize: rank <= 3 ? 20 : 15,
-            color: "#fff",
-            background:
-              rank === 1
-                ? "#eab308"
-                : rank === 2
-                  ? "#94a3b8"
-                  : rank === 3
-                    ? "#d97706"
-                    : "#334155",
-          }}
+          className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-extrabold text-xs sm:text-sm text-white shrink-0 ${
+            rank === 1
+              ? "bg-amber-500 text-slate-950"
+              : rank === 2
+              ? "bg-slate-400 text-slate-950"
+              : rank === 3
+              ? "bg-amber-700 text-white"
+              : "bg-slate-800 text-slate-300"
+          }`}
         >
           {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : rank}
         </div>
-        <div>
-          <p style={{ margin: 0, color: "#f8fafc", fontWeight: 700 }}>
+        <div className="min-w-0 flex-1">
+          <p className="m-0 text-white font-bold text-xs sm:text-sm truncate">
             {student.name}
           </p>
-          <p style={{ margin: 0, color: "#64748b", fontSize: 12 }}>
+          <p className="m-0 text-slate-400 text-[11px] sm:text-xs truncate">
             {[student.city, student.state].filter(Boolean).join(", ") ||
               t("studentLeaderboard.student")}
           </p>
         </div>
       </div>
-      <div style={{ textAlign: "right" }}>
-        <div style={{ color: "#fde68a", fontWeight: 700, fontSize: 15 }}>
+
+      <div className="text-right shrink-0">
+        <div className="text-amber-300 font-extrabold text-xs sm:text-sm whitespace-nowrap">
           ⭐ {studentCoins} stars
         </div>
-        <div style={{ color: "#94a3b8", fontSize: 11, marginTop: 2 }}>
+        <div className="text-slate-400 text-[10px] sm:text-xs mt-0.5 whitespace-nowrap">
           ≈ ₹{coinsToRupees(studentCoins)}
         </div>
       </div>
@@ -196,25 +182,9 @@ const LeaderBoard = () => {
   }, []);
 
   return (
-    <div
-      style={{
-        background: "#111827",
-        border: "1px solid #1e293b",
-        borderRadius: 18,
-        padding: "24px",
-      }}
-    >
+    <div className="bg-[#111827] border border-slate-800 rounded-2xl p-3.5 sm:p-6 space-y-4">
       {/* Header row */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-          flexWrap: "wrap",
-          gap: 10,
-        }}
-      >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
           <h2
             style={{ fontSize: 24, fontWeight: 800, color: "#f8fafc", margin: 0 }}
@@ -443,24 +413,16 @@ const LeaderBoard = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+      {/* Filters (Full Width Grid on Mobile) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5 w-full">
         <select
           value={selectedState}
           onChange={handleStateChange}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 10,
-            background: "#0f172a",
-            border: "1px solid #334155",
-            color: "#fff",
-            minWidth: 140,
-            flex: "1 1 140px",
-          }}
+          className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f172a] border border-slate-700 text-white text-xs sm:text-sm font-medium focus:outline-none focus:border-violet-500 transition shadow-sm truncate cursor-pointer"
         >
           <option value="">{t("studentLeaderboard.allStates")}</option>
           {INDIA_STATES.map((state) => (
-            <option key={state} value={state}>
+            <option key={state} value={state} className="bg-slate-900 text-white">
               {state}
             </option>
           ))}
@@ -470,17 +432,7 @@ const LeaderBoard = () => {
           value={selectedCity}
           onChange={handleCityChange}
           disabled={!selectedState}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 10,
-            background: "#0f172a",
-            border: "1px solid #334155",
-            color: "#fff",
-            minWidth: 140,
-            flex: "1 1 140px",
-            opacity: selectedState ? 1 : 0.55,
-            cursor: selectedState ? "pointer" : "not-allowed",
-          }}
+          className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f172a] border border-slate-700 text-white text-xs sm:text-sm font-medium focus:outline-none focus:border-violet-500 transition shadow-sm truncate disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           <option value="">
             {selectedState
@@ -488,7 +440,7 @@ const LeaderBoard = () => {
               : t("studentLeaderboard.selectStateFirst")}
           </option>
           {cities.map((city) => (
-            <option key={city} value={city}>
+            <option key={city} value={city} className="bg-slate-900 text-white">
               {city}
             </option>
           ))}

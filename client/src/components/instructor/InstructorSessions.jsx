@@ -318,7 +318,8 @@ const InstructorSessions = ({ showToast }) => {
       <style>{`
         @media (max-width: 640px) {
           .is-row { flex-wrap: wrap; }
-          .is-row-actions { width: 100%; justify-content: flex-start; }
+          .is-row-actions { width: 100%; justify-content: flex-start; gap: 4px; }
+          .is-row-actions button { padding: 6px 9px !important; font-size: 11px !important; }
         }
         .is-scroll::-webkit-scrollbar { width: 6px; }
         .is-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -499,91 +500,90 @@ const InstructorSessions = ({ showToast }) => {
               return (
                 <div
                   key={s._id}
-                  className="is-row is-session-card"
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 14,
-                    padding: "14px 12px",
-                    marginBottom: 10,
-                    borderRadius: 14,
-                    background: "#0d1424",
-                    border: "1px solid rgba(30,41,59,0.8)",
-                  }}
+                  className="bg-[#0d1424] border border-slate-800/80 hover:border-slate-700 rounded-2xl p-3.5 sm:p-4 mb-3 transition-all flex flex-col sm:flex-row sm:items-start justify-between gap-3"
                 >
-                  {/* Status dot */}
-                  <div style={{
-                    width: 10, height: 10, borderRadius: "50%", background: meta.color,
-                    flexShrink: 0, marginTop: 6,
-                    boxShadow: s.status === "live" ? `0 0 0 4px ${meta.bg}` : "none",
-                  }} />
+                  <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                    {/* Status dot */}
+                    <div
+                      className="w-2.5 h-2.5 rounded-full shrink-0 mt-1.5"
+                      style={{
+                        background: meta.color,
+                        boxShadow: s.status === "live" ? `0 0 0 4px ${meta.bg}` : "none",
+                      }}
+                    />
 
-                  {/* ── Edit mode ── */}
-                  {editingId === s._id ? (
-                    renderEditFields()
-                  ) : (
-                    /* ── View mode ── */
-                    <div style={{ flex: 1, minWidth: 180 }}>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: "#f1f5f9", marginBottom: 6 }}>
-                        {s.title}
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "#cbd5e1", background: "rgba(30,41,59,0.8)", padding: "3px 8px", borderRadius: 6 }}>
-                          📅 {formatDateReadable(s.date)}
-                        </span>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "#cbd5e1", background: "rgba(30,41,59,0.8)", padding: "3px 8px", borderRadius: 6 }}>
-                          🕒 {formatTime12h(s.time)}
-                        </span>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: meta.color, background: meta.bg, padding: "3px 9px", borderRadius: 999, textTransform: "uppercase", letterSpacing: 0.3 }}>
-                          {meta.label}
-                        </span>
-                      </div>
-
-                      {/* Course + subject */}
-                      {(courseName || s.courseSubject) && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 5 }}>
-                          {courseName && (
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "#a78bfa", background: "rgba(167,139,250,0.1)", padding: "3px 8px", borderRadius: 6, fontWeight: 600 }}>
-                              🎓 {courseName}
-                            </span>
-                          )}
-                          {s.courseSubject && (
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "#34d399", background: "rgba(52,211,153,0.1)", padding: "3px 8px", borderRadius: 6, fontWeight: 600 }}>
-                              📂 {s.courseSubject}
-                            </span>
-                          )}
+                    {/* ── Edit mode ── */}
+                    {editingId === s._id ? (
+                      renderEditFields()
+                    ) : (
+                      /* ── View mode ── */
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm sm:text-base font-bold text-slate-100 mb-1.5">
+                          {s.title}
                         </div>
-                      )}
 
-                      {/* Recording badge */}
-                      {s.status === "ended" && (s.recordedUrl || s.url) && (
-                        <div style={{ marginTop: 5 }}>
-                          {s.recordedLessonAdded ? (
-                            <span style={{ fontSize: 11, color: "#4ade80", background: "rgba(74,222,128,0.1)", padding: "2px 8px", borderRadius: 6, fontWeight: 600 }}>
-                              ✓ Recording added to course
-                            </span>
-                          ) : s.course?._id || s.course ? (
-                            <span style={{ fontSize: 11, color: "#fbbf24", background: "rgba(251,191,36,0.1)", padding: "2px 8px", borderRadius: 6, fontWeight: 600 }}>
-                              ⏳ Recording will be added on save
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: 11, color: "#475569", padding: "2px 0" }}>
-                              No course assigned — recording not auto-saved
-                            </span>
-                          )}
+                        {/* Date + time + status badge */}
+                        <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                          <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs text-slate-300 bg-slate-900/80 px-2 py-0.5 rounded-md border border-slate-800">
+                            📅 {formatDateReadable(s.date)}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs text-slate-300 bg-slate-900/80 px-2 py-0.5 rounded-md border border-slate-800">
+                            🕒 {formatTime12h(s.time)}
+                          </span>
+                          <span
+                            className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+                            style={{ color: meta.color, background: meta.bg }}
+                          >
+                            {meta.label}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  )}
+
+                        {/* Course + subject badges */}
+                        {(courseName || s.courseSubject) && (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {courseName && (
+                              <span className="inline-flex items-center gap-1 text-[11px] text-violet-300 bg-violet-950/40 border border-violet-900/50 px-2 py-0.5 rounded-md font-semibold">
+                                🎓 {courseName}
+                              </span>
+                            )}
+                            {s.courseSubject && (
+                              <span className="inline-flex items-center gap-1 text-[11px] text-emerald-300 bg-emerald-950/40 border border-emerald-900/50 px-2 py-0.5 rounded-md font-semibold">
+                                📂 {s.courseSubject}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Recording badge */}
+                        {s.status === "ended" && (s.recordedUrl || s.url) && (
+                          <div className="mt-1.5">
+                            {s.recordedLessonAdded ? (
+                              <span className="text-[11px] text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-md font-semibold border border-emerald-900/40">
+                                ✓ Recording added to course
+                              </span>
+                            ) : s.course?._id || s.course ? (
+                              <span className="text-[11px] text-amber-400 bg-amber-950/40 px-2 py-0.5 rounded-md font-semibold border border-amber-900/40">
+                                ⏳ Recording will be added on save
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-slate-500">
+                                No course assigned — recording not auto-saved
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   {/* ── Action buttons ── */}
-                  <div className="is-row-actions" style={{ display: "flex", gap: 6, flexWrap: "wrap", flexShrink: 0 }}>
+                  <div className="flex items-center gap-1.5 flex-wrap w-full sm:w-auto shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/60 justify-end">
                     {editingId === s._id ? (
                       <>
-                        <Btn variant="success" style={{ fontSize: 12 }} onClick={() => saveEdit(s._id)}>
+                        <Btn variant="success" style={{ fontSize: 11, padding: "6px 14px" }} onClick={() => saveEdit(s._id)}>
                           {t("instructorSessions.save")}
                         </Btn>
-                        <Btn variant="ghost" style={{ fontSize: 12 }} onClick={cancelEditing}>
+                        <Btn variant="ghost" style={{ fontSize: 11, padding: "6px 14px" }} onClick={cancelEditing}>
                           {t("instructorSessions.cancel")}
                         </Btn>
                       </>
@@ -592,7 +592,7 @@ const InstructorSessions = ({ showToast }) => {
                         {s.status === "upcoming" && (
                           <Btn
                             variant="primary"
-                            style={{ fontSize: 12 }}
+                            style={{ fontSize: 11, padding: "6px 12px" }}
                             disabled={startingSessionId === s._id}
                             onClick={() => startSession(s)}
                           >
@@ -604,7 +604,7 @@ const InstructorSessions = ({ showToast }) => {
 
                         <Btn
                           variant="success"
-                          style={{ fontSize: 12 }}
+                          style={{ fontSize: 11, padding: "6px 12px" }}
                           onClick={() => {
                             if (!s.url) { showToast(t("instructorSessions.noSessionUrl")); return; }
                             window.open(s.url, "_blank");
@@ -613,26 +613,26 @@ const InstructorSessions = ({ showToast }) => {
                           {t("instructorSessions.preview")}
                         </Btn>
 
-                        <Btn variant="ghost" style={{ fontSize: 12 }} onClick={() => startEditing(s)}>
+                        <Btn variant="ghost" style={{ fontSize: 11, padding: "6px 12px" }} onClick={() => startEditing(s)}>
                           {t("instructorSessions.edit")}
                         </Btn>
 
                         {s.status !== "ended" && (
-                          <Btn variant="ghost" style={{ fontSize: 12 }} onClick={() => endSession(s._id)}>
+                          <Btn variant="ghost" style={{ fontSize: 11, padding: "6px 12px" }} onClick={() => endSession(s._id)}>
                             {t("instructorSessions.end")}
                           </Btn>
                         )}
 
-                        <Btn variant="ghost" style={{ fontSize: 12 }} onClick={() => copySessionLink(s.url)}>
+                        <Btn variant="ghost" style={{ fontSize: 11, padding: "6px 12px" }} onClick={() => copySessionLink(s.url)}>
                           {t("instructorSessions.copy")}
                         </Btn>
 
                         <Btn
                           variant="danger"
-                          style={{ fontSize: 12, padding: "8px 10px" }}
+                          style={{ fontSize: 11, padding: "6px 10px" }}
                           onClick={() => remove(s._id)}
                         >
-                          🗑
+                          🗑️
                         </Btn>
                       </>
                     )}

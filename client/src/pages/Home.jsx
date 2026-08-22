@@ -18,13 +18,10 @@ const Home = () => {
     <div>
       <SEO title="Home" description="Explore Umang Vision Academy - the best place to elevate your skills with top-notch coaching." />
       <Hero />
-
       <FeaturedCourses />
-      <Testimonials />
-      {/* <Instructors /> */}
-      {/* <Community /> */}
+      <Plans showTable={true} showFaq={false} isHomePage={true} />
       <AISection />
-      <Plans showTable={false} showFaq={false} isHomePage={true} />
+      <Testimonials />
     </div>
   );
 };

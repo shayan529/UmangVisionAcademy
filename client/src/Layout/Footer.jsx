@@ -5,7 +5,7 @@ const Footer = () => {
   const { t } = useTranslation();
 
   return (
-    <footer className="w-full bg-slate-950 border-t border-slate-800/80 text-slate-300 py-8 sm:py-12 px-4 sm:px-8 lg:px-12">
+    <footer className="hidden sm:block w-full bg-slate-950 border-t border-slate-800/80 text-slate-300 py-8 sm:py-12 px-4 sm:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-10 lg:gap-14 items-start">
         
         {/* Column 1: Logo Section */}
@@ -30,6 +30,18 @@ const Footer = () => {
               className="hover:text-indigo-400 transition-colors duration-200"
             >
               {t("footer.courses", "Courses")}
+            </Link>
+            <Link
+              to="/plans"
+              className="hover:text-indigo-400 transition-colors duration-200"
+            >
+              {t("nav.plans", "Plans")}
+            </Link>
+            <Link
+              to="/question-bank"
+              className="hover:text-indigo-400 transition-colors duration-200"
+            >
+              {t("nav.questionBank", "Question Bank")}
             </Link>
             <Link
               to="/about-us"

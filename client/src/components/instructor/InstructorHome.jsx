@@ -193,8 +193,8 @@ const InstructorHome = ({ showToast, onNavigate }) => {
         .ih-stats {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 12px;
-          margin-bottom: 22px;
+          gap: 10px;
+          margin-bottom: 20px;
         }
 
         .ih-main-grid {
@@ -273,9 +273,9 @@ const InstructorHome = ({ showToast, onNavigate }) => {
           }
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 640px) {
           .ih-stats {
-            gap: 8px;
+            gap: 6px;
           }
         }
       `}</style>
@@ -296,7 +296,7 @@ const InstructorHome = ({ showToast, onNavigate }) => {
             letterSpacing: "0.02em",
           }}
         >
-          {t("instructorHome.welcomeBack", {
+          {t("instructorHome.welcomeBack", "Welcome back, {{name}} 👋", {
             name: user?.name?.split(" ")[0] || "Instructor",
           })}
         </p>

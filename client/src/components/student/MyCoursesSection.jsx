@@ -338,10 +338,10 @@ export default function MyCourses() {
         </div>
 
         {/* Summary chips & Actions */}
-        <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center flex-wrap w-full sm:w-auto">
           <Link
             to="/courses"
-            className="action-btn"
+            className="action-btn justify-center"
             style={{
               padding: "8px 16px",
               backgroundColor: "rgba(99, 102, 241, 0.1)",
@@ -358,119 +358,95 @@ export default function MyCourses() {
           >
             {t("studentDashboard.exploreCourses")} <span style={{ fontSize: "14px", marginLeft: "2px" }}>→</span>
           </Link>
-          <div style={{ display: "flex", gap: 12 }}>
-          {[
-            { label: "Enrolled", value: counts.total, color: "#a78bfa" },
-            { label: "Completed", value: counts.completed, color: "#4ade80" },
-            {
-              label: "In Progress",
-              value: counts.inProgress,
-              color: "#fbbf24",
-            },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className="stat-card"
-              style={{
-                background:
-                  "linear-gradient(160deg,#141b2e 0%,#0f1524 100%)",
-                borderRadius: 14,
-                padding: "10px 18px",
-                textAlign: "center",
-                border: "1px solid #1e293b",
-                minWidth: 76,
-              }}
-            >
-              {enrolledLoading ? (
-                <Skeleton w={28} h={20} style={{ margin: "0 auto 4px" }} />
-              ) : (
-                <div
-                  style={{
-                    fontSize: 20,
-                    fontWeight: 800,
-                    color: s.color,
-                    textShadow: `0 0 20px ${s.color}40`,
-                  }}
-                >
-                  {s.value}
-                </div>
-              )}
+          <div className="grid grid-cols-3 sm:flex gap-2.5 sm:gap-3 w-full sm:w-auto">
+            {[
+              { label: "Enrolled", value: counts.total, color: "#a78bfa" },
+              { label: "Completed", value: counts.completed, color: "#4ade80" },
+              {
+                label: "In Progress",
+                value: counts.inProgress,
+                color: "#fbbf24",
+              },
+            ].map((s) => (
               <div
+                key={s.label}
+                className="stat-card"
                 style={{
-                  fontSize: 10,
-                  color: "#64748b",
-                  marginTop: 2,
-                  fontWeight: 600,
-                  letterSpacing: "0.03em",
+                  background:
+                    "linear-gradient(160deg,#141b2e 0%,#0f1524 100%)",
+                  borderRadius: 14,
+                  padding: "10px 12px",
+                  textAlign: "center",
+                  border: "1px solid #1e293b",
+                  minWidth: 0,
                 }}
               >
-                {s.label}
+                {enrolledLoading ? (
+                  <Skeleton w={28} h={20} style={{ margin: "0 auto 4px" }} />
+                ) : (
+                  <div
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 800,
+                      color: s.color,
+                      textShadow: `0 0 20px ${s.color}40`,
+                    }}
+                  >
+                    {s.value}
+                  </div>
+                )}
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "#64748b",
+                    marginTop: 2,
+                    fontWeight: 600,
+                    letterSpacing: "0.03em",
+                  }}
+                >
+                  {s.label}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
           </div>
         </div>
       </div>
 
-      {/* ── Tabs ── */}
-      <div
-        style={{
-          display: "flex",
-          gap: 4,
-          background: "#0f1524",
-          padding: 5,
-          borderRadius: 12,
-          marginBottom: 22,
-          width: "fit-content",
-          border: "1px solid #1e293b",
-        }}
-      >
-        {[
-          { key: "all", label: "All" },
-          { key: "in-progress", label: "In Progress" },
-          { key: "completed", label: "Completed" },
-          { key: "not-started", label: "Not Started" },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            className="tab-btn"
-            onClick={() => setActiveTab(tab.key)}
-            style={{
-              padding: "7px 18px",
-              borderRadius: 9,
-              border: "none",
-              fontSize: 12.5,
-              fontWeight: 600,
-              cursor: "pointer",
-              background:
-                activeTab === tab.key
-                  ? "linear-gradient(135deg,#7c3aed,#6d28d9)"
-                  : "transparent",
-              color: activeTab === tab.key ? "#fff" : "#64748b",
-              boxShadow:
-                activeTab === tab.key
-                  ? "0 4px 14px -2px rgba(124,58,237,0.5)"
-                  : "none",
-              transition: "all 0.2s ease",
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* ── Tabs (One Single Line, No Scrollbar) ── */}
+      <div className="w-full mb-5">
+        <div className="grid grid-cols-4 gap-1 p-1 bg-[#0f1524] rounded-xl border border-slate-800 w-full">
+          {[
+            { key: "all", label: "All" },
+            { key: "in-progress", label: "In Progress" },
+            { key: "completed", label: "Completed" },
+            { key: "not-started", label: "Not Started" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              className="tab-btn px-1 sm:px-3 py-2 sm:py-2 rounded-lg border-0 text-[10.5px] sm:text-xs font-bold cursor-pointer transition-all duration-200 text-center leading-tight truncate"
+              onClick={() => setActiveTab(tab.key)}
+              style={{
+                background:
+                  activeTab === tab.key
+                    ? "linear-gradient(135deg,#7c3aed,#6d28d9)"
+                    : "transparent",
+                color: activeTab === tab.key ? "#fff" : "#64748b",
+                boxShadow:
+                  activeTab === tab.key
+                    ? "0 4px 14px -2px rgba(124,58,237,0.5)"
+                    : "none",
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── Search & Filter Bar ── */}
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          marginBottom: 20,
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-      >
+      <div className="flex flex-col sm:flex-row gap-3 mb-5 items-stretch sm:items-center w-full">
         {/* Search Field */}
-        <div style={{ position: "relative", flex: 1, minWidth: 240 }}>
+        <div className="relative flex-1 w-full">
           <input
             type="text"
             placeholder={t("courses.searchPlaceholder", "Search your courses...")}
@@ -505,7 +481,7 @@ export default function MyCourses() {
         </div>
 
         {/* Language Dropdown */}
-        <div style={{ minWidth: 160 }}>
+        <div className="w-full sm:w-[180px] shrink-0">
           <select
             value={selectedLanguage}
             onChange={(e) => setSelectedLanguage(e.target.value)}
@@ -875,83 +851,65 @@ function CourseCard({ course, animDelay = 0, onRate }) {
 
   return (
     <div
-      className="course-card"
+      className="course-card relative rounded-2xl p-4 sm:p-5 border border-slate-800 transition-all duration-200"
       style={{
         background: "linear-gradient(160deg,#131b2e 0%,#0e1424 100%)",
-        border: "1px solid #1e293b",
-        borderRadius: 20,
-        padding: "20px 22px",
         animationDelay: `${animDelay}s`,
-        transition: "border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease",
       }}
     >
-      <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-        {/* Thumbnail */}
+      <div className="flex flex-col sm:flex-row gap-3.5 sm:gap-4 items-start">
+        {/* Thumbnail Header on Mobile, Side-by-Side Icon on Desktop */}
         <div
+          className="w-full sm:w-[60px] h-36 sm:h-[60px] rounded-xl sm:rounded-2xl shrink-0 border flex items-center justify-center overflow-hidden relative shadow-md"
           style={{
-            width: 60,
-            height: 60,
-            borderRadius: 16,
-            flexShrink: 0,
             background: `linear-gradient(160deg,${accent}2a,${accent}10)`,
-            border: `1px solid ${accent}30`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
+            borderColor: `${accent}30`,
           }}
         >
           {course.thumbnailUrl ? (
             <img
               src={course.thumbnailUrl}
               alt={course.title}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                borderRadius: 15,
-              }}
+              className="w-full h-full object-cover rounded-xl sm:rounded-2xl"
             />
           ) : (
-            <span style={{ fontSize: 28 }}>{emoji}</span>
+            <span className="text-3xl sm:text-2xl">{emoji}</span>
           )}
+
+          {/* Status Badge Over Image Header (Mobile Only) */}
+          <span
+            className="sm:hidden absolute top-3 right-3 text-[10.5px] font-extrabold px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg flex items-center gap-1.5"
+            style={{
+              background: st.bg,
+              color: st.text,
+              border: `1px solid ${st.text}40`,
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: st.dot,
+              }}
+            />
+            {st.label}
+          </span>
         </div>
 
         {/* Body */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Title row */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              flexWrap: "wrap",
-              gap: 8,
-            }}
-          >
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <h3
-                style={{
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: "#f1f5f9",
-                  lineHeight: "1.3",
-                }}
-              >
+        <div className="w-full sm:flex-1 min-w-0">
+          {/* Title Row */}
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-base sm:text-[16px] font-bold text-slate-100 leading-snug line-clamp-2 sm:line-clamp-none">
                 {course.title}
               </h3>
-              <p style={{ fontSize: 12, color: "#64748b", marginTop: 3 }}>
+              <p className="text-xs text-slate-400 mt-1">
                 {instructorId ? (
                   <Link
                     to={`/instructors/${instructorId}`}
-                    style={{
-                      color: "#94a3b8",
-                      textDecoration: "none",
-                      fontWeight: 600,
-                      transition: "color 0.2s",
-                    }}
-                    onMouseEnter={(e) => (e.target.style.color = "#818cf8")}
-                    onMouseLeave={(e) => (e.target.style.color = "#94a3b8")}
+                    className="text-slate-300 hover:text-indigo-400 font-semibold transition-colors"
                   >
                     {instructorName}
                   </Link>
@@ -959,27 +917,20 @@ function CourseCard({ course, animDelay = 0, onRate }) {
                   instructorName
                 )}
                 {course.level && (
-                  <span
-                    style={{ marginLeft: 8, color: accent, fontWeight: 600 }}
-                  >
+                  <span className="ml-2 font-semibold" style={{ color: accent }}>
                     · {course.level}
                   </span>
                 )}
               </p>
             </div>
+
+            {/* Status Badge (Desktop Only) */}
             <span
+              className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-extrabold px-3 py-1 rounded-full shrink-0"
               style={{
-                fontSize: 11,
-                fontWeight: 700,
-                padding: "4px 12px",
-                borderRadius: 20,
                 background: st.bg,
                 color: st.text,
                 border: `1px solid ${st.text}30`,
-                flexShrink: 0,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
               }}
             >
               <span
@@ -995,107 +946,61 @@ function CourseCard({ course, animDelay = 0, onRate }) {
           </div>
 
           {/* Progress bar */}
-          <div style={{ marginTop: 14 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: 6,
-              }}
-            >
-              <span style={{ fontSize: 12, color: "#94a3b8" }}>
+          <div className="mt-3 sm:mt-3.5">
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-xs text-slate-400">
                 {course.completedLessons}/{course.totalLessons} lesson
                 {course.totalLessons !== 1 ? "s" : ""}
               </span>
               <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: isComplete ? "#4ade80" : accent,
-                }}
+                className="text-xs font-bold"
+                style={{ color: isComplete ? "#4ade80" : accent }}
               >
                 {course.progress}%
               </span>
             </div>
-            <div
-              style={{
-                height: 7,
-                background: "#0a0f1c",
-                borderRadius: 4,
-                overflow: "hidden",
-                border: "1px solid #1e293b",
-              }}
-            >
+            <div className="h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
               <div
+                className="h-full rounded-full transition-all duration-500"
                 style={{
-                  height: "100%",
                   width: `${course.progress}%`,
                   background: isComplete
                     ? "linear-gradient(90deg,#10b981,#4ade80)"
                     : `linear-gradient(90deg,${accent},${accent}cc)`,
-                  borderRadius: 4,
                   boxShadow: `0 0 10px ${isComplete ? "#4ade80" : accent}60`,
-                  transition: "width 0.6s cubic-bezier(.4,0,.2,1)",
                 }}
               />
             </div>
           </div>
 
-          {/* Last / Next lesson */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginTop: 16,
-              flexWrap: "wrap",
-              gap: 10,
-            }}
-          >
+          {/* Footer Action Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-3.5 pt-1">
             <div>
               {course.lastWatched && (
-                <p style={{ fontSize: 11, color: "#64748b" }}>
-                  Last:{" "}
-                  <span style={{ color: "#94a3b8" }}>{course.lastWatched}</span>
+                <p className="text-[11px] text-slate-500">
+                  Last: <span className="text-slate-400">{course.lastWatched}</span>
                 </p>
               )}
               {course.nextLesson && (
-                <p style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
-                  Next:{" "}
-                  <span style={{ color: accent }}>{course.nextLesson}</span>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Next: <span style={{ color: accent }}>{course.nextLesson}</span>
                 </p>
               )}
-              {/* Show category & language tags */}
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+              <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
                 {course.category && (
                   <span
+                    className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider"
                     style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      padding: "3px 9px",
-                      borderRadius: 20,
                       background: `${accent}18`,
                       color: accent,
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
+                      border: `1px solid ${accent}30`,
                     }}
                   >
                     {course.category}
                   </span>
                 )}
                 {course.language && (
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      padding: "3px 9px",
-                      borderRadius: 20,
-                      background: "rgba(16,185,129,0.12)",
-                      color: "#34d399",
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
-                    }}
-                  >
+                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                     {course.language}
                   </span>
                 )}
@@ -1103,21 +1008,13 @@ function CourseCard({ course, animDelay = 0, onRate }) {
             </div>
 
             {/* Action buttons */}
-            <div style={{ display: "flex", gap: 8 }}>
+            <div className="w-full sm:w-auto flex items-center gap-2">
               {!isComplete && (
-                <Link to={`/courses/${course._id}`}>
+                <Link to={`/courses/${course._id}`} className="w-full sm:w-auto">
                   <button
-                    className="continue-btn action-btn"
+                    className="continue-btn action-btn w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl border-0 text-white font-bold text-xs cursor-pointer shadow-md"
                     style={{
-                      padding: "8px 18px",
-                      borderRadius: 11,
-                      border: "none",
                       background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                      color: "#fff",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      boxShadow: "0 6px 18px -4px rgba(124,58,237,0.45)",
                     }}
                   >
                     Continue →
@@ -1127,24 +1024,10 @@ function CourseCard({ course, animDelay = 0, onRate }) {
               {isComplete && (
                 <>
                   {course.userRating ? (
-                    // Already rated — show stars and allow update
                     <button
                       onClick={onRate}
                       title="Update your rating"
-                      className="action-btn"
-                      style={{
-                        padding: "8px 14px",
-                        borderRadius: 11,
-                        border: "1px solid #854d0e",
-                        background: "rgba(251,191,36,0.08)",
-                        color: "#fbbf24",
-                        fontSize: 12,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 5,
-                      }}
+                      className="action-btn w-full sm:w-auto px-3.5 py-2 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       {"★".repeat(course.userRating.rating)}
                       {"☆".repeat(5 - course.userRating.rating)} Rated
@@ -1152,17 +1035,7 @@ function CourseCard({ course, animDelay = 0, onRate }) {
                   ) : (
                     <button
                       onClick={onRate}
-                      className="action-btn"
-                      style={{
-                        padding: "8px 18px",
-                        borderRadius: 11,
-                        border: "1px solid rgba(74,222,128,0.25)",
-                        background: "rgba(74,222,128,0.08)",
-                        color: "#4ade80",
-                        fontSize: 12,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
+                      className="action-btn w-full sm:w-auto px-4 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold cursor-pointer"
                     >
                       Rate This Course 🌟
                     </button>

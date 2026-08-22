@@ -469,7 +469,7 @@ async function fetchNewsFromAI(lang) {
 const CategoryPill = ({ label, active, onClick }) => (
   <button
     onClick={onClick}
-    className={`px-4 py-2 rounded-full border transition-all duration-200 text-sm font-semibold whitespace-nowrap cursor-pointer hover:scale-[1.02] ${
+    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full border transition-all duration-200 text-xs sm:text-sm font-semibold whitespace-nowrap shrink-0 cursor-pointer hover:scale-[1.02] ${
       active
         ? "bg-violet-600 border-violet-600 text-white shadow-lg shadow-violet-500/20"
         : "bg-[#111827]/40 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
@@ -481,7 +481,7 @@ const CategoryPill = ({ label, active, onClick }) => (
 
 const NewsBadge = ({ label, color }) => (
   <span
-    className="text-[10px] font-bold px-2.5 py-0.5 rounded-full tracking-wider uppercase border"
+    className="text-[9.5px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider uppercase border whitespace-nowrap shrink-0"
     style={{
       background: `${color}10`,
       color,
@@ -644,7 +644,7 @@ export default function Blogs() {
           </div>
 
           {/* Tabs Control */}
-          <div className="flex bg-slate-950/80 rounded-xl p-1 border border-slate-800/80">
+          <div className="grid grid-cols-2 w-full sm:w-auto bg-slate-950/80 rounded-xl p-1 border border-slate-800/80">
             {[
               { key: "news", label: t("blogs.newsTab") },
               { key: "rojgar", label: t("blogs.rojgarTab") },
@@ -655,7 +655,7 @@ export default function Blogs() {
                   setActiveTab(tab.key);
                   setActiveArticle(null);
                 }}
-                className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 cursor-pointer ${
+                className={`px-4 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-bold text-center transition-all duration-200 cursor-pointer ${
                   activeTab === tab.key
                     ? "bg-violet-600 text-white shadow-md shadow-violet-500/10"
                     : "text-slate-400 hover:text-slate-200"
@@ -806,7 +806,7 @@ export default function Blogs() {
               </div>
 
               {/* Category Pills list */}
-              <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-thin scrollbar-thumb-slate-800">
+              <div className="flex items-center gap-1.5 flex-wrap w-full md:w-auto">
                 {categories.map((cat) => (
                   <CategoryPill
                     key={cat}
@@ -904,13 +904,13 @@ export default function Blogs() {
                       >
                         {/* Illustration Container */}
                         <div
-                          className="lg:w-2/5 p-8 flex items-center justify-center min-h-[240px] relative transition-transform duration-300 group-hover:scale-[1.01]"
+                          className="w-full lg:w-2/5 p-6 sm:p-8 flex items-center justify-center h-36 sm:h-48 lg:h-auto min-h-[140px] sm:min-h-[200px] relative transition-transform duration-300 group-hover:scale-[1.01]"
                           style={{
                             background: `linear-gradient(135deg, ${featured.color}25, ${featured.color}05), radial-gradient(circle at center, ${featured.color}40, transparent)`,
                           }}
                         >
                           <div
-                            className="w-16 h-16 rounded-3xl flex items-center justify-center text-3xl font-extrabold shadow-lg shadow-black/20"
+                            className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl flex items-center justify-center text-2xl sm:text-3xl font-extrabold shadow-lg shadow-black/20"
                             style={{
                               backgroundColor: featured.color,
                               color: "#0b1329",
@@ -921,9 +921,9 @@ export default function Blogs() {
                         </div>
 
                         {/* Text Content */}
-                        <div className="lg:w-3/5 p-8 flex flex-col justify-center gap-4">
-                          <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full tracking-wider uppercase border border-amber-500/25 bg-amber-500/10 text-amber-400">
+                        <div className="w-full lg:w-3/5 p-5 sm:p-8 flex flex-col justify-center gap-3 sm:gap-4">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[9.5px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider uppercase border border-amber-500/25 bg-amber-500/10 text-amber-400 whitespace-nowrap shrink-0">
                               {t("blogs.featuredLabel")}
                             </span>
                             <NewsBadge
@@ -936,7 +936,7 @@ export default function Blogs() {
                             />
                           </div>
 
-                          <h2 className="text-2xl sm:text-3xl font-extrabold text-white leading-snug group-hover:text-violet-300 transition duration-200">
+                          <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white leading-snug group-hover:text-violet-300 transition duration-200">
                             {featured.title}
                           </h2>
 
@@ -1040,7 +1040,7 @@ export default function Blogs() {
               </div>
 
               {/* Tag Pills */}
-              <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-thin scrollbar-thumb-slate-800">
+              <div className="flex items-center gap-1.5 flex-wrap w-full md:w-auto">
                 {schemeTags.map((tag) => (
                   <CategoryPill
                     key={tag}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { logoutUser, clearAuth } from "../../redux/slices/authSlice";
 import toast from "react-hot-toast";
-import { ChevronDown, LogOut } from "lucide-react";
+import { ChevronDown, LogOut, Menu } from "lucide-react";
 
 // UI primitives & modal
 import { Toast, Btn } from "./InstructorUi";
@@ -397,7 +397,7 @@ export default function InstructorDashboard() {
           </div>
         </div>
 
-        <nav className="flex-1 flex flex-col gap-1.5 px-3 pb-4 overflow-y-auto">
+        <nav className="flex-1 flex flex-col gap-1.5 px-3 pb-4 overflow-y-auto scrollbar-none no-scrollbar">
           {allNavItems.map(({ id, icon }) => {
             const isActive = activeSection === id;
             return (
@@ -425,7 +425,7 @@ export default function InstructorDashboard() {
             );
           })}
           {/* Profile & Logout Section (Mobile View Only) */}
-          <div className="md:hidden p-3 border-t border-slate-800 shrink-0">
+          <div className="md:hidden p-3 border-t border-slate-800 shrink-0 pb-8">
             {isMultiRole && (
               <Link
                 to={switchTarget}
@@ -497,38 +497,30 @@ export default function InstructorDashboard() {
         {sidebarOpen && (
           <div
             onClick={() => setSidebarOpen(false)}
-            className="fixed top-[64px] inset-x-0 bottom-0 z-30 bg-slate-950/75 backdrop-blur-xs md:hidden"
+            className="fixed inset-0 z-[400] bg-slate-950/80 backdrop-blur-xs md:hidden"
           />
         )}
 
         {/* Mobile drawer */}
         <aside
-          className={`bg-slate-950 border-r border-slate-800 flex-col transition-all duration-300 z-40 md:hidden
-            ${sidebarOpen
-              ? "fixed top-[64px] bottom-0 h-[calc(100vh-64px)] left-0 w-[220px] shadow-[4px_0_24px_rgba(0,0,0,0.6)] flex"
-              : "hidden"
-            }
-          `}
+          className={`bg-slate-950 border-r border-slate-800 flex-col transition-transform duration-300 z-[450] md:hidden fixed inset-y-0 left-0 w-[270px] max-w-[85vw] shadow-2xl ${
+            sidebarOpen ? "translate-x-0 flex" : "-translate-x-full hidden"
+          }`}
         >
-          <button
-            onClick={() => setSidebarOpen(false)}
-            style={{
-              alignSelf: "flex-end",
-              background: "transparent",
-              border: "none",
-              color: "#64748b",
-              fontSize: 22,
-              cursor: "pointer",
-              marginRight: 16,
-              marginTop: 12,
-              marginBottom: 4,
-              lineHeight: 1,
-              padding: 0,
-            }}
-          >
-            ✕
-          </button>
-          <SidebarContent />
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 shrink-0">
+            <span className="text-xs font-extrabold uppercase tracking-wider text-indigo-400">
+              Instructor Menu
+            </span>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="text-slate-400 hover:text-white p-1 rounded-lg text-lg leading-none cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto scrollbar-none no-scrollbar">
+            <SidebarContent />
+          </div>
         </aside>
 
         {/* Main content */}
@@ -543,93 +535,29 @@ export default function InstructorDashboard() {
         >
           {/* Mobile top bar */}
           <div
-            className="instr-mob-bar"
-            style={{
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "12px 16px",
-              background: "#0b1120",
-              borderBottom: "1px solid #1e293b",
-              position: "sticky",
-              top: 0,
-              zIndex: 10,
-            }}
+            className="instr-mob-bar border-b border-slate-800 bg-[#0b1120] sticky top-0 z-10 px-3.5 py-3 items-center justify-between shadow-sm"
           >
             <button
               onClick={() => {
                 window.dispatchEvent(new CustomEvent("dashboard-sidebar-open"));
                 setSidebarOpen(true);
               }}
-              style={{
-                padding: "8px 18px",
-                borderRadius: 10,
-                border: "1px solid #334155",
-                background: "#1e293b",
-                color: "#f1f5f9",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-              }}
+              className="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-100 text-xs font-bold whitespace-nowrap cursor-pointer hover:bg-slate-700 transition flex items-center gap-1.5"
             >
-              {t("instructorDashboard.menu")}
+              <Menu size={16} className="text-indigo-400 shrink-0" />
+              <span>Menu</span>
             </button>
-            {/* <div style={{ fontSize: 16, fontWeight: 800, color: "#f1f5f9" }}>
+            <div className="text-xs font-extrabold text-slate-100 truncate max-w-[180px]">
               {activeSection === "mock-tests"
-                ? "Mock Tests"
-                : sectionTitles[activeSection]}
-            </div> */}
-            <span style={{ width: 48 }} />
+                ? t("instructorSidebar.mockTests", "Mock Tests")
+                : t(`instructorSidebar.${activeSection}`, sectionTitles[activeSection] || activeSection)}
+            </div>
+            <span className="w-12" />
           </div>
-
-          {/* Desktop top bar */}
-          {/* <div
-            className="instr-desk-bar"
-            style={{
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "16px 28px",
-              background: "#0b1120",
-              borderBottom: "1px solid #1e293b",
-              position: "sticky",
-              top: 0,
-              zIndex: 10,
-            }}
-          >
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#f1f5f9" }}>
-              {activeSection === "mock-tests"
-                ? "Mock Tests"
-                : sectionTitles[activeSection]}
-            </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <Btn
-                variant="ghost"
-                style={{ fontSize: 12 }}
-                onClick={handleExport}
-              >
-                📥 Export
-              </Btn>
-
-              {activeSection === "sessions" && (
-                <Btn
-                  variant="primary"
-                  style={{ fontSize: 12 }}
-                  onClick={() => setActiveSection("sessions")}
-                >
-                  📅 Schedule
-                </Btn>
-              )}
-            </div>
-          </div> */}
 
           {/* Page content */}
           <div
-            style={{
-              flex: 1,
-              overflowY: "auto",
-              padding: "clamp(14px, 3vw, 28px)",
-              paddingBottom: 90,
-            }}
+            className="flex-1 overflow-y-auto scrollbar-none no-scrollbar px-3 sm:px-6 md:p-8 py-4 pb-24 sm:pb-16"
           >
             {renderSection()}
           </div>

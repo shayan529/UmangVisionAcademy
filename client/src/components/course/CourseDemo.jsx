@@ -356,15 +356,15 @@ const UdemyPurchaseCard = ({
             <div
               onClick={handleToggleAssistant}
               className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all ${isAssistantChecked
-                  ? "bg-purple-950/40 border-purple-500/60 shadow-md ring-1 ring-purple-500/40"
-                  : "bg-slate-900 border-slate-800 hover:border-slate-700"
+                ? "bg-purple-950/40 border-purple-500/60 shadow-md ring-1 ring-purple-500/40"
+                : "bg-slate-900 border-slate-800 hover:border-slate-700"
                 }`}
             >
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <div
                   className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold shrink-0 ${isAssistantChecked
-                      ? "bg-purple-600 text-white"
-                      : "border border-slate-600"
+                    ? "bg-purple-600 text-white"
+                    : "border border-slate-600"
                     }`}
                 >
                   {isAssistantChecked && "✓"}
@@ -410,20 +410,33 @@ const UdemyPurchaseCard = ({
                 }
               }}
               disabled={enrollingFree}
-              className="w-full py-3.5 sm:py-4 px-6 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-500 hover:via-indigo-500 hover:to-purple-500 text-white font-black text-base sm:text-lg shadow-xl shadow-purple-600/40 hover:scale-[1.02] active:scale-98 transition-all duration-200 cursor-pointer border-none flex items-center justify-center text-center tracking-tight"
+              className="w-full py-3.5 sm:py-4 px-6 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:via-amber-400 hover:to-orange-400 text-slate-950 font-black text-base sm:text-lg shadow-xl shadow-amber-500/35 ring-2 ring-amber-300/60 hover:scale-[1.02] active:scale-98 transition-all duration-200 cursor-pointer border-none flex items-center justify-center gap-2 text-center tracking-tight"
             >
-              {enrollingFree
-                ? t("courseDetails.enrolling", "Enrolling...")
-                : isFreeWithPlan
-                  ? t(
-                    "courseDetails.enrollFreePlan",
-                    "Enroll for Free (Academy Plan)",
-                  )
-                  : selectedPlanId === "premium"
-                    ? "Buy Premium Plan (₹1,000/yr)"
-                    : isAssistantChecked
-                      ? "Buy Standard Plan (₹500/yr)"
-                      : t("courseDetails.buyNow", "Buy Course / Choose Plan")}
+              {enrollingFree ? (
+                t("courseDetails.enrolling", "Enrolling...")
+              ) : isFreeWithPlan ? (
+                t(
+                  "courseDetails.enrollFreePlan",
+                  "Enroll for Free (Academy Plan)",
+                )
+              ) : (
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <span className="uppercase tracking-wide">
+                    {selectedPlanId === "premium"
+                      ? "Buy Premium Plan"
+                      : isAssistantChecked
+                        ? "Buy Standard Plan"
+                        : "Buy This Course Now"}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-slate-950/20 border border-slate-950/25 text-slate-950 text-xs sm:text-sm font-extrabold shadow-inner">
+                    {selectedPlanId === "premium"
+                      ? "₹1,000/yr"
+                      : isAssistantChecked
+                        ? "₹500/yr"
+                        : "₹100/yr"}
+                  </span>
+                </div>
+              )}
             </button>
 
             {(isInCart || addedToCart) && (
@@ -833,16 +846,16 @@ export default function CourseDemo() {
                       key={plan.id}
                       onClick={() => handleSelectPlan(plan)}
                       className={`relative p-3.5 sm:p-4 rounded-xl h-full flex flex-col justify-between transition-all duration-200 cursor-pointer ${isSelected
-                          ? isPopular
-                            ? "bg-gradient-to-b from-purple-950/90 to-slate-900/95 border-2 border-purple-400 shadow-xl shadow-purple-950/60 ring-2 ring-purple-400/50"
-                            : isPremium
-                              ? "bg-gradient-to-b from-amber-950/60 to-slate-900/95 border-2 border-amber-400 shadow-xl shadow-amber-950/50 ring-2 ring-amber-400/40"
-                              : "bg-slate-900 border-2 border-indigo-400 shadow-lg ring-2 ring-indigo-400/30"
-                          : isPopular
-                            ? "bg-gradient-to-b from-purple-950/80 to-slate-900/95 border border-purple-500/40 hover:border-purple-400 shadow-lg"
-                            : isPremium
-                              ? "bg-gradient-to-b from-amber-950/40 to-slate-900/95 border border-amber-500/40 hover:border-amber-400 shadow-md"
-                              : "bg-slate-900/90 hover:bg-slate-900 border border-slate-700/80 shadow-sm"
+                        ? isPopular
+                          ? "bg-gradient-to-b from-purple-950/90 to-slate-900/95 border-2 border-purple-400 shadow-xl shadow-purple-950/60 ring-2 ring-purple-400/50"
+                          : isPremium
+                            ? "bg-gradient-to-b from-amber-950/60 to-slate-900/95 border-2 border-amber-400 shadow-xl shadow-amber-950/50 ring-2 ring-amber-400/40"
+                            : "bg-slate-900 border-2 border-indigo-400 shadow-lg ring-2 ring-indigo-400/30"
+                        : isPopular
+                          ? "bg-gradient-to-b from-purple-950/80 to-slate-900/95 border border-purple-500/40 hover:border-purple-400 shadow-lg"
+                          : isPremium
+                            ? "bg-gradient-to-b from-amber-950/40 to-slate-900/95 border border-amber-500/40 hover:border-amber-400 shadow-md"
+                            : "bg-slate-900/90 hover:bg-slate-900 border border-slate-700/80 shadow-sm"
                         }`}
                       style={{
                         borderTop: `3px solid ${plan.color}`,
@@ -911,16 +924,16 @@ export default function CourseDemo() {
                           handleSelectPlan(plan);
                         }}
                         className={`w-full mt-2 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${isSelected
-                            ? isPopular
-                              ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg ring-2 ring-purple-300"
-                              : isPremium
-                                ? "bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-lg ring-2 ring-amber-300"
-                                : "bg-indigo-600 text-white shadow-md ring-2 ring-indigo-300"
-                            : isPopular
-                              ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-md shadow-purple-900/40"
-                              : isPremium
-                                ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black shadow-md shadow-amber-950/30"
-                                : "bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 shadow-sm"
+                          ? isPopular
+                            ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg ring-2 ring-purple-300"
+                            : isPremium
+                              ? "bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-lg ring-2 ring-amber-300"
+                              : "bg-indigo-600 text-white shadow-md ring-2 ring-indigo-300"
+                          : isPopular
+                            ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-md shadow-purple-900/40"
+                            : isPremium
+                              ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black shadow-md shadow-amber-950/30"
+                              : "bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 shadow-sm"
                           }`}
                       >
                         <span>{isSelected ? `✓ Selected: ${plan.title}` : t(plan.buttonKey, `Choose ${plan.title}`)}</span>
