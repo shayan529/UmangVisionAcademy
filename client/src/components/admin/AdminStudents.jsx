@@ -2060,10 +2060,10 @@ const RowAction = ({ icon: Icon, label, onClick, tone = "slate" }) => {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border transition duration-150 ${tones[tone]}`}
+      className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition duration-150 flex-1 sm:flex-initial min-w-0 ${tones[tone]}`}
     >
-      <Icon size={12} />
-      {label}
+      <Icon size={12} className="shrink-0" />
+      <span className="truncate">{label}</span>
     </button>
   );
 };
@@ -2135,24 +2135,24 @@ const AdminStudents = ({
               <Users size={12} />
               Accounts Management
             </p>
-            <h2 className="text-2xl font-extrabold text-white">Platform Students</h2>
-            <p className="text-xs text-slate-500 mt-1">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-white">Platform Students</h2>
+            <p className="text-xs sm:text-sm text-slate-400 mt-1">
               View profiles, assign courses, edit records, or add new students.
             </p>
           </div>
 
           {/* Quick stats */}
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col items-start px-4 py-2.5 rounded-xl bg-slate-900/50 border border-slate-800/80 min-w-[92px]">
+          <div className="grid grid-cols-2 sm:flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+            <div className="flex flex-col items-start px-4 py-2.5 rounded-xl bg-slate-900/50 border border-slate-800/80 flex-1 sm:flex-initial min-w-[92px]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total</span>
               <span className="text-lg font-extrabold text-white leading-tight">{students.length}</span>
             </div>
-            <div className="flex flex-col items-start px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 min-w-[92px]">
+            <div className="flex flex-col items-start px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex-1 sm:flex-initial min-w-[92px]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400/80">Enrolled</span>
               <span className="text-lg font-extrabold text-emerald-300 leading-tight">{enrolledCount}</span>
             </div>
             {q && (
-              <div className="flex flex-col items-start px-4 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 min-w-[92px]">
+              <div className="flex flex-col items-start px-4 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex-1 sm:flex-initial min-w-[92px] col-span-2 sm:col-span-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400/80">Matching</span>
                 <span className="text-lg font-extrabold text-indigo-300 leading-tight">{filtS.length}</span>
               </div>
@@ -2169,41 +2169,43 @@ const AdminStudents = ({
             />
             <input
               type="text"
-              className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 pl-9 pr-4 text-sm text-white placeholder-slate-500 transition duration-150"
-              placeholder="Search by name, email, or phone number…"
+              className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 pl-9 pr-4 text-xs sm:text-sm text-white placeholder-slate-500 transition duration-150"
+              placeholder="Search by name, email, or phone…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
           </div>
 
-          {canCreate && (
-            <button
-              type="button"
-              onClick={() => setAddingStudent(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition shrink-0"
-            >
-              <UserPlus size={14} />
-              Add Student
-            </button>
-          )}
+          <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 shrink-0">
+            {canCreate && (
+              <button
+                type="button"
+                onClick={() => setAddingStudent(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition w-full sm:w-auto shrink-0"
+              >
+                <UserPlus size={14} />
+                Add Student
+              </button>
+            )}
 
-          {canCreate && (
-            <button
-              type="button"
-              onClick={() => {
-                setBulkImportFile(null);
-                setBulkImportCourses([]);
-                setBulkCourseSearch("");
-                setImportError("");
-                setShowBulkImportModal(true);
-              }}
-              disabled={importing}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-2.5 text-xs font-bold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60 shrink-0"
-            >
-              <Upload size={14} />
-              {importing ? "Importing..." : "Bulk Import"}
-            </button>
-          )}
+            {canCreate && (
+              <button
+                type="button"
+                onClick={() => {
+                  setBulkImportFile(null);
+                  setBulkImportCourses([]);
+                  setBulkCourseSearch("");
+                  setImportError("");
+                  setShowBulkImportModal(true);
+                }}
+                disabled={importing}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2.5 text-xs font-bold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60 w-full sm:w-auto shrink-0"
+              >
+                <Upload size={14} />
+                {importing ? "Importing..." : "Bulk Import"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -2347,7 +2349,7 @@ const AdminStudents = ({
               </div>
 
               {/* Actions — every capability visible and labeled, no overflow menus */}
-              <div className="flex flex-wrap items-center gap-1.5 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-800/60 lg:pl-3 lg:border-l">
+              <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-1.5 w-full lg:w-auto pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-800/60 lg:pl-3 lg:border-l">
                 <RowAction icon={Eye} label="Details" tone="indigo" onClick={() => setSelectedStudent(s)} />
                 {canEdit && (
                   <RowAction icon={BookPlus} label="Courses" tone="emerald" onClick={() => setAssigningStudent(s)} />

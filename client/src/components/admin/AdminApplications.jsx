@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, UserCheck } from "lucide-react";
 import {
   fetchApplications,
   approveApplication,
@@ -19,47 +19,57 @@ const hue = (name = "?") => {
     "#8b5cf6",
     "#14b8a6",
   ];
-  return palette[name.charCodeAt(0) % palette.length];
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return palette[Math.abs(h) % palette.length];
 };
 
 /* ─── Avatar ──────────────────────────────────────────── */
-const Av = ({ name = "?", size = 44 }) => (
-  <div
-    style={{
-      width: size,
-      height: size,
-      borderRadius: "50%",
-      background: hue(name),
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: size * 0.38,
-      fontWeight: 800,
-      color: "#fff",
-      flexShrink: 0,
-      letterSpacing: "-0.02em",
-    }}
-  >
-    {name.slice(0, 2).toUpperCase()}
-  </div>
-);
+const Av = ({ name, size = 42 }) => {
+  const bg = hue(name);
+  const initials = (name || "?")
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
-const AdminApplications = ({ canModerate = true }) => {
+  return (
+    <div
+      className="rounded-full flex items-center justify-center font-bold text-white shrink-0 shadow-md"
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: bg,
+        fontSize: size * 0.38,
+      }}
+    >
+      {initials}
+    </div>
+  );
+};
+
+export default function AdminApplications() {
   const dispatch = useDispatch();
-  const { applications, loading, error } = useSelector(
-    (state) => state.applications,
+  const { applications = [], loading = false, error = null } = useSelector(
+    (state) => state.applications || {},
+  );
+  const { user } = useSelector((state) => state.auth || {});
+
+  const pending = (applications || []).filter(
+    (app) => app?.status === "pending" || app?.status === "under_review" || !app?.status,
   );
 
-  // Only show pending applications in the admin queue
-  const pending = applications.filter(
-    (app) => app.status === "pending" || app.status === "under_review",
-  );
+  // Admins + staff with 'instructors:approve' / 'instructors:reject' can moderate
+  const isFullAdmin = user && (user.role === "admin" || user.isSuperAdmin);
+  const canModerate =
+    isFullAdmin ||
+    (user?.permissions &&
+      (user.permissions.includes("instructors:approve") ||
+        user.permissions.includes("instructors:reject")));
 
   useEffect(() => {
     dispatch(fetchApplications());
-    return () => {
-      dispatch(clearError());
-    };
   }, [dispatch]);
 
   const handleApprove = (app) => {
@@ -74,18 +84,32 @@ const AdminApplications = ({ canModerate = true }) => {
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-3xl animate-fadeIn">
-      {/* Header */}
-      <div>
-        <p className="text-xs text-indigo-400 font-bold tracking-wider uppercase mb-1">
-          Instructor Onboarding Queue
-        </p>
-        <h2 className="text-2xl font-extrabold text-white flex items-center gap-2">
-          Pending Applications
-          <span className="text-sm font-semibold text-slate-500 bg-slate-900/60 border border-slate-800 rounded-md px-2 py-0.5 mt-0.5">
-            {pending.length} Pending
-          </span>
-        </h2>
+    <div className="flex flex-col gap-6 max-w-4xl animate-fadeIn space-y-6">
+      {/* Page Header Banner */}
+      <div className="rounded-3xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-slate-950 border border-indigo-900/40 p-5 md:p-8 shadow-2xl relative overflow-hidden">
+        <div className="absolute -top-12 -right-12 w-40 h-40 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 w-fit text-xs font-extrabold uppercase tracking-wider mb-2">
+              <UserCheck size={14} />
+              <span>Instructor Onboarding</span>
+            </div>
+
+            <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight leading-tight mt-0.5">
+              Pending Applications
+            </h1>
+
+            <p className="text-xs md:text-sm text-slate-400 leading-relaxed mt-1 max-w-2xl">
+              Review, evaluate qualifications, and approve or reject new faculty onboarding applications.
+            </p>
+          </div>
+
+          <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 w-fit text-xs font-extrabold whitespace-nowrap shrink-0 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span>{pending.length} Pending Applications</span>
+          </div>
+        </div>
       </div>
 
       {/* Error */}
@@ -246,6 +270,4 @@ const AdminApplications = ({ canModerate = true }) => {
       )}
     </div>
   );
-};
-
-export default AdminApplications;
+}

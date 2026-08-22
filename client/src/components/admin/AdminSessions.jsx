@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Clock,
   Video,
+  CalendarClock,
 } from "lucide-react";
 import {
   fetchSessions,
@@ -206,7 +207,7 @@ const AdminSessions = ({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-extrabold text-white">Live Sessions</h2>
           <p className="text-slate-400 text-sm mt-1">
@@ -216,7 +217,7 @@ const AdminSessions = ({
         {canCreate && (
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-gradient-to-br from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 transition-all duration-200 text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/25 text-sm"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-br from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 transition-all duration-200 text-white font-extrabold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/25 text-xs sm:text-sm whitespace-nowrap cursor-pointer"
           >
             <Plus size={16} />
             Schedule Session
@@ -224,158 +225,282 @@ const AdminSessions = ({
         )}
       </div>
 
-      {/* ── Sessions table ── */}
+      {/* ── Sessions Container ── */}
       <div className="bg-[#0d1424] border border-slate-800/60 rounded-3xl overflow-hidden shadow-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-slate-800 bg-slate-900/40 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                <th className="py-4 px-6">Session</th>
-                <th className="py-4 px-6">Instructor</th>
-                <th className="py-4 px-6">Course / Subject</th>
-                <th className="py-4 px-6">Date &amp; Time</th>
-                <th className="py-4 px-6">Status</th>
-                <th className="py-4 px-6 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/50 text-slate-300 text-sm">
-              {loading && sessions.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="py-10 text-center text-slate-500">
-                    <div className="flex justify-center items-center gap-2">
-                      <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                      Loading sessions...
-                    </div>
-                  </td>
-                </tr>
-              ) : sessions.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="py-12 text-center text-slate-500">
-                    <AlertCircle className="mx-auto text-slate-700 mb-3" size={32} />
-                    <p className="font-semibold text-slate-400">No scheduled sessions</p>
-                    <p className="text-xs text-slate-600 mt-1">Schedule a session to get started.</p>
-                  </td>
-                </tr>
-              ) : (
-                sessions.map((session) => {
-                  const courseName =
-                    session.course?.title ||
-                    allCourses.find(
-                      (c) => c._id === (session.course?._id || session.course)
-                    )?.title;
-                  return (
-                    <tr
-                      key={session._id}
-                      className="hover:bg-slate-900/30 transition duration-150"
-                    >
-                      <td className="py-4 px-6 font-semibold text-white max-w-[200px]">
-                        <div className="truncate">{session.title}</div>
+        {loading && sessions.length === 0 ? (
+          <div className="py-12 text-center text-slate-500">
+            <div className="flex justify-center items-center gap-2">
+              <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              Loading sessions...
+            </div>
+          </div>
+        ) : sessions.length === 0 ? (
+          <div className="py-12 text-center text-slate-500">
+            <AlertCircle className="mx-auto text-slate-700 mb-3" size={32} />
+            <p className="font-semibold text-slate-400">No scheduled sessions</p>
+            <p className="text-xs text-slate-600 mt-1">Schedule a session to get started.</p>
+          </div>
+        ) : (
+          <>
+            {/* Mobile Card List View (sm:hidden) */}
+            <div className="block sm:hidden divide-y divide-slate-800/60 p-3 space-y-3">
+              {sessions.map((session) => {
+                const courseName =
+                  session.course?.title ||
+                  allCourses.find(
+                    (c) => c._id === (session.course?._id || session.course)
+                  )?.title;
+                return (
+                  <div
+                    key={session._id}
+                    className="p-3.5 bg-slate-900/60 border border-slate-800/80 rounded-2xl flex flex-col gap-2.5"
+                  >
+                    {/* Top Row: Title & Status Badge */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-sm font-extrabold text-white leading-snug truncate">
+                          {session.title}
+                        </h4>
                         {session.status === "ended" && session.course && (
                           <div className="mt-1">
                             {session.recordedLessonAdded ? (
-                              <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                              <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                                 ✓ Recording saved
                               </span>
                             ) : (
-                              <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                              <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
                                 ⏳ Recording pending
                               </span>
                             )}
                           </div>
                         )}
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
-                            <User size={13} />
-                          </div>
-                          <span className="text-slate-300 text-sm">
-                            {session.instructor?.name || "N/A"}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 space-y-1 max-w-[200px]">
-                        {courseName ? (
-                          <div className="inline-flex items-center gap-1.5 text-violet-400 text-xs font-semibold bg-violet-500/10 px-2 py-0.5 rounded-md truncate max-w-full">
-                            <BookOpen size={10} />
-                            {courseName}
-                          </div>
-                        ) : (
-                          <span className="text-slate-600 text-xs">—</span>
-                        )}
-                        {session.courseSubject && (
-                          <div className="text-emerald-400 text-xs font-semibold truncate">
-                            📂 {session.courseSubject}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-4 px-6 text-xs">
-                        <div className="font-semibold text-white">{session.date}</div>
-                        <div className="mt-0.5 text-slate-400">{session.time}</div>
-                      </td>
-                      <td className="py-4 px-6">
+                      </div>
+
+                      {/* Status Badge */}
+                      <div className="shrink-0">
                         {session.status === "live" ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                             Live
                           </span>
                         ) : session.status === "ended" ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-400 border border-slate-700/50">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-500/10 text-slate-400 border border-slate-700/50">
                             Ended
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                             Scheduled
                           </span>
                         )}
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {canEdit && session.status === "upcoming" && (
-                            <button
-                              onClick={() => handleStartSession(session._id)}
-                              className="p-2 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white rounded-lg transition duration-200"
-                              title="Go Live"
-                            >
-                              <Play size={13} />
-                            </button>
-                          )}
-                          {canEdit && session.status === "live" && (
-                            <button
-                              onClick={() => handleEndSession(session._id)}
-                              className="p-2 bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white rounded-lg transition duration-200"
-                              title="End Session"
-                            >
-                              <Square size={13} />
-                            </button>
-                          )}
-                          <a
-                            href={session.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white rounded-lg transition duration-200"
-                            title="Join / Open URL"
-                          >
-                            <LinkIcon size={13} />
-                          </a>
-                          {canDelete && (
-                            <button
-                              onClick={() => handleDelete(session._id)}
-                              className="p-2 bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white rounded-lg transition duration-200"
-                              title="Delete Session"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          )}
+                      </div>
+                    </div>
+
+                    {/* Instructor & Course Info */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-300 pt-1 border-t border-slate-800/40">
+                      <div className="flex items-center gap-1.5">
+                        <User size={12} className="text-indigo-400 shrink-0" />
+                        <span className="font-semibold text-slate-200">
+                          {session.instructor?.name || "N/A"}
+                        </span>
+                      </div>
+
+                      {courseName && (
+                        <div className="inline-flex items-center gap-1 text-violet-300 text-[11px] font-semibold bg-violet-500/10 px-2 py-0.5 rounded-md truncate max-w-[200px]">
+                          <BookOpen size={10} />
+                          {courseName}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                      )}
+
+                      {session.courseSubject && (
+                        <div className="text-emerald-400 text-[11px] font-semibold">
+                          📂 {session.courseSubject}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Date & Time */}
+                    <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-950/60 p-2 rounded-xl border border-slate-800/80">
+                      <CalendarClock size={13} className="text-indigo-400 shrink-0" />
+                      <span className="font-extrabold text-white">{session.date}</span>
+                      <span className="text-slate-500">•</span>
+                      <span className="text-slate-300">{session.time}</span>
+                    </div>
+
+                    {/* Mobile Action Buttons Bar */}
+                    <div className="flex items-center gap-2 pt-1 w-full">
+                      {canEdit && session.status === "upcoming" && (
+                        <button
+                          onClick={() => handleStartSession(session._id)}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-extrabold rounded-xl transition cursor-pointer whitespace-nowrap"
+                        >
+                          <Play size={13} /> Go Live
+                        </button>
+                      )}
+                      {canEdit && session.status === "live" && (
+                        <button
+                          onClick={() => handleEndSession(session._id)}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 text-xs font-extrabold rounded-xl transition cursor-pointer whitespace-nowrap"
+                        >
+                          <Square size={13} /> End
+                        </button>
+                      )}
+                      <a
+                        href={session.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-200 border border-indigo-500/30 text-xs font-extrabold rounded-xl transition cursor-pointer whitespace-nowrap"
+                      >
+                        <LinkIcon size={13} /> Join Link
+                      </a>
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDelete(session._id)}
+                          className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition cursor-pointer shrink-0"
+                          title="Delete Session"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View (hidden sm:block) */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-800 bg-slate-900/40 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                    <th className="py-4 px-6">Session</th>
+                    <th className="py-4 px-6">Instructor</th>
+                    <th className="py-4 px-6">Course / Subject</th>
+                    <th className="py-4 px-6">Date &amp; Time</th>
+                    <th className="py-4 px-6">Status</th>
+                    <th className="py-4 px-6 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/50 text-slate-300 text-sm">
+                  {sessions.map((session) => {
+                    const courseName =
+                      session.course?.title ||
+                      allCourses.find(
+                        (c) => c._id === (session.course?._id || session.course)
+                      )?.title;
+                    return (
+                      <tr
+                        key={session._id}
+                        className="hover:bg-slate-900/30 transition duration-150"
+                      >
+                        <td className="py-4 px-6 font-semibold text-white max-w-[200px]">
+                          <div className="truncate">{session.title}</div>
+                          {session.status === "ended" && session.course && (
+                            <div className="mt-1">
+                              {session.recordedLessonAdded ? (
+                                <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                                  ✓ Recording saved
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                                  ⏳ Recording pending
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                              <User size={13} />
+                            </div>
+                            <span className="text-slate-300 text-sm">
+                              {session.instructor?.name || "N/A"}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 space-y-1 max-w-[200px]">
+                          {courseName ? (
+                            <div className="inline-flex items-center gap-1.5 text-violet-400 text-xs font-semibold bg-violet-500/10 px-2 py-0.5 rounded-md truncate max-w-full">
+                              <BookOpen size={10} />
+                              {courseName}
+                            </div>
+                          ) : (
+                            <span className="text-slate-600 text-xs">—</span>
+                          )}
+                          {session.courseSubject && (
+                            <div className="text-emerald-400 text-xs font-semibold truncate">
+                              📂 {session.courseSubject}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-4 px-6 text-xs">
+                          <div className="font-semibold text-white">{session.date}</div>
+                          <div className="mt-0.5 text-slate-400">{session.time}</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          {session.status === "live" ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              Live
+                            </span>
+                          ) : session.status === "ended" ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-400 border border-slate-700/50">
+                              Ended
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                              Scheduled
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {canEdit && session.status === "upcoming" && (
+                              <button
+                                onClick={() => handleStartSession(session._id)}
+                                className="p-2 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white rounded-lg transition duration-200"
+                                title="Go Live"
+                              >
+                                <Play size={13} />
+                              </button>
+                            )}
+                            {canEdit && session.status === "live" && (
+                              <button
+                                onClick={() => handleEndSession(session._id)}
+                                className="p-2 bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white rounded-lg transition duration-200"
+                                title="End Session"
+                              >
+                                <Square size={13} />
+                              </button>
+                            )}
+                            <a
+                              href={session.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white rounded-lg transition duration-200"
+                              title="Join / Open URL"
+                            >
+                              <LinkIcon size={13} />
+                            </a>
+                            {canDelete && (
+                              <button
+                                onClick={() => handleDelete(session._id)}
+                                className="p-2 bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white rounded-lg transition duration-200"
+                                title="Delete Session"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── Schedule Modal ── */}

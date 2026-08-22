@@ -2676,64 +2676,38 @@ const FormStepper = ({ steps, activeKey, onSelect }) => {
   const activeIdx = steps.findIndex((s) => s.key === activeKey);
   const doneCount = steps.filter((s) => s.complete).length;
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        padding: "14px 16px",
-        background: "#0b1120",
-        border: "1px solid #1e293b",
-        borderRadius: 14,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+    <div className="flex flex-col gap-2.5 p-3.5 sm:p-4 bg-[#0b1120] border border-slate-800 rounded-2xl w-full">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
           Step {activeIdx + 1} of {steps.length}
         </span>
-        <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>
+        <span className="text-[11px] font-bold text-indigo-400">
           {doneCount}/{steps.length} sections ready
         </span>
       </div>
-      <div className="overflow-x-auto scrollbar-none no-scrollbar py-1">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${steps.length}, 1fr)`,
-            gap: 6,
-            minWidth: 420,
-          }}
-        >
+
+      <div
+        className="grid gap-2 w-full"
+        style={{
+          gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))`,
+        }}
+      >
         {steps.map((s, i) => (
           <button
             key={s.key}
             type="button"
             onClick={() => onSelect(s.key)}
             title={s.label}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 6,
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "4px 2px 0",
-            }}
+            className="flex flex-col items-center gap-1.5 bg-transparent border-0 cursor-pointer p-0 min-w-0"
           >
             <div
-              style={{
-                width: "100%",
-                height: 5,
-                borderRadius: 3,
-                background:
-                  i <= activeIdx
-                    ? "linear-gradient(90deg,#7c3aed,#06b6d4)"
-                    : "#1e293b",
-                transition: "background 0.2s",
-              }}
+              className={`w-full h-1.5 rounded-full transition-all duration-200 ${
+                i <= activeIdx
+                  ? "bg-gradient-to-r from-indigo-500 to-cyan-400"
+                  : "bg-slate-800"
+              }`}
             />
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div className="flex items-center gap-1 min-w-0 max-w-full">
               {s.complete ? (
                 <CheckCircle2 size={12} color="#4ade80" style={{ flexShrink: 0 }} />
               ) : (
@@ -2748,25 +2722,18 @@ const FormStepper = ({ steps, activeKey, onSelect }) => {
                 />
               )}
               <span
-                style={{
-                  fontSize: 10.5,
-                  fontWeight: s.key === activeKey ? 700 : 600,
-                  color: s.key === activeKey ? "#e2e8f0" : "#64748b",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  maxWidth: "100%",
-                }}
+                className={`text-[10px] sm:text-xs font-extrabold truncate ${
+                  s.key === activeKey ? "text-slate-100" : "text-slate-400"
+                }`}
               >
-                {s.label}
+                {s.label.split(" ")[0]}
               </span>
             </div>
           </button>
         ))}
       </div>
     </div>
-  </div>
-);
+  );
 };
 
 // A sticky action bar so Save/Submit controls stay reachable without
@@ -4461,41 +4428,20 @@ export default function InstructorCourses({
               animation: "slideDown 0.3s ease",
             }}
           >
-            <div
-              style={{
-                display: "inline-flex",
-                padding: 4,
-                background: "#0b1120",
-                border: "1px solid #1e293b",
-                borderRadius: 12,
-                marginBottom: 24,
-              }}
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-6 p-1.5 bg-[#0b1120] rounded-2xl border border-slate-800 w-full">
               {[
-                { key: "single", label: "Single Course", icon: <FileText size={13} /> },
-                { key: "bulk", label: "Bulk Upload (Whole Class)", icon: <Package size={13} /> },
+                { key: "single", label: "Single Course", icon: <FileText size={14} /> },
+                { key: "bulk", label: "Bulk Upload (Whole Class)", icon: <Package size={14} /> },
               ].map((opt) => (
                 <button
                   key={opt.key}
                   type="button"
                   onClick={() => setCreateMode(opt.key)}
-                  className="ic-mode-toggle"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "8px 18px",
-                    borderRadius: 9,
-                    border: "none",
-                    background:
-                      createMode === opt.key
-                        ? "linear-gradient(135deg,#7c3aed,#06b6d4)"
-                        : "transparent",
-                    color: createMode === opt.key ? "#fff" : "#94a3b8",
-                    fontWeight: 700,
-                    fontSize: 12,
-                    cursor: "pointer",
-                  }}
+                  className={`w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-extrabold transition-all duration-200 cursor-pointer ${
+                    createMode === opt.key
+                      ? "bg-linear-to-r from-indigo-600 to-cyan-600 text-white shadow-md"
+                      : "text-slate-400 hover:text-white hover:bg-slate-900/60"
+                  }`}
                 >
                   {opt.icon} {opt.label}
                 </button>
@@ -4607,8 +4553,8 @@ export default function InstructorCourses({
                 )}
               </div>
 
-              {/* Status filter pills (5-column grid on mobile) */}
-              <div className="grid grid-cols-5 gap-1 sm:flex sm:flex-wrap items-center sm:gap-2 w-full">
+              {/* Status filter pills */}
+              <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-2 mb-4 w-full">
                 {[
                   { key: "all", label: "All" },
                   { key: "draft", label: "Draft" },
@@ -4619,7 +4565,7 @@ export default function InstructorCourses({
                   <button
                     key={key}
                     onClick={() => setFilterStatus(key)}
-                    className={`px-1 sm:px-4 py-2 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold transition text-center truncate cursor-pointer ${
+                    className={`px-2.5 sm:px-3.5 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center truncate cursor-pointer ${
                       filterStatus === key
                         ? "bg-indigo-600 text-white border border-indigo-500 shadow-sm"
                         : "bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-white hover:bg-slate-800"
@@ -4845,259 +4791,149 @@ export default function InstructorCourses({
                         style={{ animation: "fadeIn 0.25s ease" }}
                       >
                         <div
-                          className="ic-row"
+                          className="ic-row rounded-2xl overflow-hidden transition-all duration-200 border bg-slate-950/90 shadow-xl"
                           style={{
-                            background: selectedIds.includes(course._id)
-                              ? "rgba(124, 58, 237, 0.07)"
-                              : "#111827",
-                            border: `1px solid ${selectedIds.includes(course._id) ? "rgba(124, 58, 237, 0.55)" : isOpen ? "#7c3aed40" : "#1e293b"}`,
+                            borderColor: selectedIds.includes(course._id)
+                              ? "#7c3aed"
+                              : isOpen
+                                ? "#7c3aed80"
+                                : "#1e293b",
                             borderRadius: isOpen ? "18px 18px 0 0" : 18,
-                            padding: "16px 20px",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 14,
-                            flexWrap: "wrap",
                           }}
                         >
-                          {canDelete && (
-                            <div
-                              onClick={(e) => e.stopPropagation()}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                flexShrink: 0,
-                              }}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedIds.includes(course._id)}
-                                onChange={(e) =>
-                                  handleToggleSelect(course._id, e)
-                                }
-                                style={{
-                                  width: 18,
-                                  height: 18,
-                                  accentColor: "#7c3aed",
-                                  cursor: "pointer",
-                                }}
-                                title="Select course for bulk action"
-                              />
-                            </div>
-                          )}
-                          <div
-                            style={{
-                              width: 56,
-                              height: 56,
-                              borderRadius: 12,
-                              background: "#1e293b",
-                              flexShrink: 0,
-                              overflow: "hidden",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
+                          {/* Top Banner Image & Badges Overlay */}
+                          <div className="relative w-full h-32 sm:h-36 bg-slate-900 overflow-hidden flex items-center justify-center border-b border-slate-800/80">
                             {course.thumbnailUrl ? (
                               <img
                                 src={course.thumbnailUrl}
                                 alt=""
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                }}
+                                className="w-full h-full object-cover"
                                 onError={(e) => {
                                   e.target.style.display = "none";
                                 }}
                               />
                             ) : (
-                              <BookOpen size={22} color="#64748b" />
+                              <div className="flex flex-col items-center gap-1 text-slate-600">
+                                <BookOpen size={28} />
+                                <span className="text-[10px] font-bold uppercase tracking-wider">No Cover</span>
+                              </div>
                             )}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 180 }}>
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 8,
-                                flexWrap: "wrap",
-                              }}
-                            >
-                              <p
-                                style={{
-                                  fontSize: 14,
-                                  fontWeight: 700,
-                                  color: "#f1f5f9",
-                                  whiteSpace: "nowrap",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  maxWidth: "30ch",
-                                }}
-                              >
-                                {course.title || "Untitled"}
-                              </p>
-                              <span
-                                style={{
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  padding: "2px 8px",
-                                  borderRadius: 20,
-                                  background: st.bg,
-                                  color: st.text,
-                                  border: `1px solid ${st.border}`,
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {st.label}
-                              </span>
-                              {isBulkCourse(course) && (
+
+                            {/* Gradient Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-slate-950/60 pointer-events-none" />
+
+                            {/* Top Bar Badges */}
+                            <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between gap-2 z-10">
+                              {/* Left: Checkbox + Status Pill */}
+                              <div className="flex items-center gap-2">
+                                {canDelete && (
+                                  <div
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="flex items-center justify-center w-7 h-7 rounded-lg bg-slate-950/80 backdrop-blur-md border border-slate-700/80 shadow-md cursor-pointer"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedIds.includes(course._id)}
+                                      onChange={(e) =>
+                                        handleToggleSelect(course._id, e)
+                                      }
+                                      className="w-4 h-4 accent-indigo-600 cursor-pointer"
+                                      title="Select course for bulk action"
+                                    />
+                                  </div>
+                                )}
                                 <span
+                                  className="text-[10px] font-black px-2.5 py-1 rounded-lg backdrop-blur-md border uppercase tracking-wider shadow-md"
                                   style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: 4,
-                                    fontSize: 10,
-                                    fontWeight: 700,
-                                    padding: "2px 8px",
-                                    borderRadius: 20,
-                                    background: "#052e2b",
-                                    color: "#2dd4bf",
-                                    flexShrink: 0,
+                                    background: st.bg,
+                                    color: st.text,
+                                    borderColor: st.border,
                                   }}
                                 >
+                                  {st.label}
+                                </span>
+                              </div>
+
+                              {/* Right: Price Badge */}
+                              <span className="text-xs font-black px-3 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 backdrop-blur-md shadow-md">
+                                {course.price > 0 ? `₹${course.price}` : "Free"}
+                              </span>
+                            </div>
+
+                            {/* Bottom Image Overlay Badges (Bundle, Quiz) */}
+                            <div className="absolute bottom-2 left-2.5 flex items-center gap-1.5 z-10">
+                              {isBulkCourse(course) && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-teal-950/90 text-teal-300 border border-teal-700/80 backdrop-blur-md">
                                   <Package size={11} /> Bundle
                                 </span>
                               )}
                               {course.quiz?.questions?.length > 0 && (
-                                <span
-                                  style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: 4,
-                                    fontSize: 10,
-                                    fontWeight: 700,
-                                    padding: "2px 8px",
-                                    borderRadius: 20,
-                                    background: "#1e1b4b",
-                                    color: "#818cf8",
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  <FileQuestion size={11} /> {course.quiz.questions.length}Q Quiz
-                                </span>
-                              )}
-                            </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: 12,
-                                marginTop: 4,
-                                flexWrap: "wrap",
-                              }}
-                            >
-                              {course.category && (
-                                <span style={{ fontSize: 11, color: "#64748b" }}>
-                                  {course.category}
-                                </span>
-                              )}
-                              {course.board && (
-                                <span style={{ fontSize: 11, color: "#64748b", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                                  <ClipboardList size={11} /> {course.board}
-                                </span>
-                              )}
-                              <span style={{ fontSize: 11, color: "#64748b", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                                <Users size={11} /> {course.enrolledCount ?? 0}
-                              </span>
-                              {isAdmin && course.instructor && (
-                                <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                                  <User size={11} /> {course.instructor.name || course.instructor.email}
-                                </span>
-                              )}
-                              {course.price > 0 && (
-                                <span style={{ fontSize: 11, color: "#64748b" }}>
-                                  ₹{course.price}
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-950/90 text-indigo-300 border border-indigo-700/80 backdrop-blur-md">
+                                  <FileQuestion size={11} /> {course.quiz.questions.length}Q
                                 </span>
                               )}
                             </div>
                           </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: 8,
-                              flexShrink: 0,
-                              flexWrap: "wrap",
-                              justifyContent: "flex-end",
-                            }}
-                          >
-                            {course.approvalStatus === "pending" && (
-                              <span
-                                style={{
-                                  fontSize: 11,
-                                  color: "#fbbf24",
-                                  padding: "6px 12px",
-                                  background: "#1c1a00",
-                                  borderRadius: 8,
-                                  border: "1px solid #854d0e",
-                                  fontWeight: 600,
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 6,
-                                }}
-                              >
-                                <Clock size={12} /> In review
+
+                          {/* Card Body */}
+                          <div className="p-3.5 sm:p-4 flex flex-col gap-2.5">
+                            {/* Title */}
+                            <h4 className="text-sm sm:text-base font-extrabold text-white leading-snug line-clamp-2">
+                              {course.title || "Untitled Course"}
+                            </h4>
+
+                            {/* Meta Badges Row */}
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                              {course.category && (
+                                <span className="px-2 py-0.5 rounded-md bg-slate-900 text-slate-300 border border-slate-800 text-[11px] font-medium">
+                                  {course.category}
+                                </span>
+                              )}
+                              {course.board && (
+                                <span className="px-2 py-0.5 rounded-md bg-slate-900 text-slate-300 border border-slate-800 text-[11px] font-medium inline-flex items-center gap-1">
+                                  <ClipboardList size={11} className="text-slate-500" /> {course.board}
+                                </span>
+                              )}
+                              <span className="inline-flex items-center gap-1 text-slate-300 text-[11px] font-medium ml-auto">
+                                <Users size={11} className="text-indigo-400" /> {course.enrolledCount ?? 0} Students
                               </span>
+                            </div>
+
+                            {isAdmin && course.instructor && (
+                              <div className="text-[11px] font-semibold text-indigo-300 flex items-center gap-1 pt-0.5">
+                                <User size={11} className="text-indigo-400" /> Instructor: {course.instructor.name || course.instructor.email}
+                              </div>
                             )}
-                            {canEdit && (isAdmin || course.approvalStatus !== "pending") && (
-                              <button
-                                className="ic-btn"
-                                onClick={() =>
-                                  isOpen ? closeEdit() : openEdit(course)
-                                }
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 6,
-                                  padding: "8px 14px",
-                                  borderRadius: 8,
-                                  border: `1px solid ${isOpen ? "#7c3aed" : "#334155"}`,
-                                  background: isOpen ? "#2e1065" : "transparent",
-                                  color: isOpen ? "#a78bfa" : "#e2e8f0",
-                                  fontSize: 12,
-                                  fontWeight: 700,
-                                  cursor: "pointer",
-                                  transition: "all 0.15s",
-                                  minHeight: 36,
-                                }}
-                              >
-                                {isOpen ? (
-                                  <><X size={13} /> Close</>
-                                ) : (
-                                  <><Pencil size={13} /> Edit / Manage</>
-                                )}
-                              </button>
-                            )}
-                            {canDelete && (
-                              <button
-                                className="ic-btn"
-                                onClick={() => setDeleteId(course._id)}
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  padding: "8px 12px",
-                                  borderRadius: 8,
-                                  border: "1px solid #7f1d1d30",
-                                  background: "#2d0a0a",
-                                  color: "#f87171",
-                                  fontSize: 11,
-                                  cursor: "pointer",
-                                  transition: "opacity 0.15s",
-                                  minHeight: 36,
-                                }}
-                                title="Delete Course"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            )}
+
+                            {/* Action Buttons Bar */}
+                            <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80 mt-1">
+                              {course.approvalStatus === "pending" && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl bg-amber-950/60 text-amber-400 border border-amber-800/60 text-xs font-bold shrink-0">
+                                  <Clock size={12} /> In review
+                                </span>
+                              )}
+                              {canEdit && (isAdmin || course.approvalStatus !== "pending") && (
+                                <button
+                                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-indigo-500/40 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-200 text-xs font-extrabold transition cursor-pointer shadow-md"
+                                  onClick={() => (isOpen ? closeEdit() : openEdit(course))}
+                                >
+                                  {isOpen ? (
+                                    <><X size={13} /> Close</>
+                                  ) : (
+                                    <><Pencil size={13} /> Edit / Manage</>
+                                  )}
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  className="inline-flex items-center justify-center px-3.5 py-2.5 rounded-xl border border-rose-500/40 bg-rose-950/40 hover:bg-rose-950/70 text-rose-400 transition cursor-pointer shrink-0 shadow-md"
+                                  onClick={() => setDeleteId(course._id)}
+                                  title="Delete Course"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
 

@@ -311,18 +311,22 @@ button.btn-red:hover,
 
           {/* ── Desktop nav links ── */}
           <div className="hidden xl:flex items-center justify-center gap-2 xl:gap-3 2xl:gap-5 text-xs xl:text-[13px] 2xl:text-[14px] font-medium text-gray-300 shrink-0">
-            <Link
-              to="/"
-              className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
-            >
-              {t("nav.home", "Home")}
-            </Link>
-            <Link
-              to="/about-us"
-              className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
-            >
-              {t("nav.aboutUs", "About Us")}
-            </Link>
+            {!user && (
+              <>
+                <Link
+                  to="/"
+                  className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
+                >
+                  {t("nav.home", "Home")}
+                </Link>
+                <Link
+                  to="/about-us"
+                  className="hover:text-indigo-300 transition duration-300 whitespace-nowrap shrink-0"
+                >
+                  {t("nav.aboutUs", "About Us")}
+                </Link>
+              </>
+            )}
             {!isStaffOrAdmin && !user && (
               <Link
                 to="/courses"
@@ -384,11 +388,10 @@ button.btn-red:hover,
                       key={lng.code}
                       type="button"
                       onClick={() => changeLanguage(lng.code)}
-                      className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
-                        currentLangObj.code === lng.code
+                      className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${currentLangObj.code === lng.code
                           ? "bg-indigo-600/30 text-indigo-300 font-bold"
                           : "text-slate-200 hover:bg-slate-800"
-                      }`}
+                        }`}
                     >
                       {lng.name}
                     </button>
@@ -480,7 +483,7 @@ button.btn-red:hover,
                       t("nav.logoutSuccess", "Logged out successfully"),
                     );
                     navigate("/", { replace: true });
-                    dispatch(logoutUser()).catch(() => {});
+                    dispatch(logoutUser()).catch(() => { });
                   }}
                   className="btn-red"
                 >
@@ -512,11 +515,10 @@ button.btn-red:hover,
                       key={lng.code}
                       type="button"
                       onClick={() => changeLanguage(lng.code)}
-                      className={`w-full px-4 py-2 text-left text-xs transition-colors ${
-                        currentLangObj.code === lng.code
+                      className={`w-full px-4 py-2 text-left text-xs transition-colors ${currentLangObj.code === lng.code
                           ? "bg-indigo-600/30 text-indigo-300 font-bold"
                           : "text-slate-200 hover:bg-slate-800"
-                      }`}
+                        }`}
                     >
                       {lng.name}
                     </button>
@@ -571,9 +573,8 @@ button.btn-red:hover,
          position:fixed descendants, which was collapsing this overlay down
          to the height of the top bar instead of the full viewport. ── */}
       <div
-        className={`xl:hidden fixed inset-x-0 bottom-0 z-[100] bg-black/60 transition-opacity duration-300 ${
-          mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`xl:hidden fixed inset-x-0 bottom-0 z-[100] bg-black/60 transition-opacity duration-300 ${mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
         style={{ top: topBarHeight }}
         onClick={closeMobile}
         aria-hidden="true"
@@ -592,8 +593,12 @@ button.btn-red:hover,
       >
         <div className="px-4 pt-3 pb-6 space-y-1">
           {[
-            { to: "/", label: t("nav.home", "Home") },
-            { to: "/about-us", label: t("nav.aboutUs", "About Us") },
+            ...(!user
+              ? [
+                  { to: "/", label: t("nav.home", "Home") },
+                  { to: "/about-us", label: t("nav.aboutUs", "About Us") },
+                ]
+              : []),
             ...(!isStaffOrAdmin && !user
               ? [{ to: "/courses", label: t("nav.courses") }]
               : []),
@@ -699,7 +704,7 @@ button.btn-red:hover,
                       t("nav.logoutSuccess", "Logged out successfully"),
                     );
                     navigate("/", { replace: true });
-                    dispatch(logoutUser()).catch(() => {});
+                    dispatch(logoutUser()).catch(() => { });
                   }}
                   className="btn-red flex-1 text-xs text-center"
                   style={{

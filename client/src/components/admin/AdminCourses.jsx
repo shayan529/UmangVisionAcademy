@@ -31,6 +31,8 @@ import {
   FileQuestion,
   HelpCircle,
   FolderOpen,
+  ClipboardList,
+  User,
 } from "lucide-react";
 import api from "../../config/api.js";
 import { fetchAllCoursesAdmin } from "../../redux/slices/courseSlice";
@@ -2157,232 +2159,120 @@ function ApprovedCoursesView({ courses, onEditCourse, onRejectCourse }) {
             return (
               <div
                 key={course._id}
-                style={{
-                  background: "#111827",
-                  border: "1px solid #1e293b",
-                  borderRadius: 16,
-                  padding: "16px 20px",
-                  display: "flex",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 16,
-                  transition: "all 0.15s",
-                }}
+                className="rounded-2xl overflow-hidden transition-all duration-200 border bg-slate-950/90 border-slate-800 shadow-xl"
               >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 14,
-                    minWidth: 260,
-                    flex: 1,
-                    cursor: "pointer",
-                  }}
-                  onClick={() => {
-                    setSelectedCourse(course);
-                    setActiveTab("overview");
-                    setStudentSearch("");
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 12,
-                      background: "#1e293b",
-                      flexShrink: 0,
-                      overflow: "hidden",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 24,
-                      border: "1px solid #334155",
-                    }}
-                  >
-                    {course.thumbnailUrl ? (
-                      <img
-                        src={course.thumbnailUrl}
-                        alt=""
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    ) : (
-                      "📚"
-                    )}
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        flexWrap: "wrap",
+                {/* Top Banner Image & Overlay Badges */}
+                <div className="relative w-full h-32 sm:h-36 bg-slate-900 overflow-hidden flex items-center justify-center border-b border-slate-800/80">
+                  {course.thumbnailUrl ? (
+                    <img
+                      src={course.thumbnailUrl}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = "none";
                       }}
-                    >
-                      <p
-                        style={{
-                          fontSize: 15,
-                          fontWeight: 700,
-                          color: "#f1f5f9",
-                          margin: 0,
-                        }}
-                      >
-                        {course.title}
-                      </p>
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 800,
-                          padding: "2px 8px",
-                          borderRadius: 20,
-                          background: "#052e16",
-                          color: "#4ade80",
-                          border: "1px solid #166534",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        ✓ Approved
-                      </span>
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-1 text-slate-600">
+                      <BookOpen size={28} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">No Cover</span>
                     </div>
+                  )}
 
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 12,
-                        marginTop: 6,
-                        flexWrap: "wrap",
-                        alignItems: "center",
-                        fontSize: 12,
-                        color: "#94a3b8",
-                      }}
-                    >
-                      <span>
-                        Instructor:{" "}
-                        <strong style={{ color: "#e2e8f0" }}>
-                          {course.instructor?.name || "Umang Academy"}
-                        </strong>
-                      </span>
-                      {course.category && (
-                        <span
-                          style={{
-                            background: "#1e293b",
-                            padding: "1px 8px",
-                            borderRadius: 6,
-                            fontSize: 11,
-                          }}
-                        >
-                          {course.category}
-                        </span>
-                      )}
-                      {course.board && (
-                        <span
-                          style={{
-                            background: "#1e293b",
-                            padding: "1px 8px",
-                            borderRadius: 6,
-                            fontSize: 11,
-                          }}
-                        >
-                          {course.board}
-                        </span>
-                      )}
-                      <span>
-                        {lessonCount} lesson{lessonCount !== 1 ? "s" : ""}
-                      </span>
-                      {noteCount > 0 && (
-                        <span>
-                          {noteCount} note{noteCount !== 1 ? "s" : ""}
-                        </span>
-                      )}
-                      <span style={{ color: "#10b981", fontWeight: 700 }}>
-                        {studentCount} student{studentCount !== 1 ? "s" : ""}
-                      </span>
-                      <span style={{ color: "#fbbf24", fontWeight: 700 }}>
-                        {course.price > 0 ? `₹${course.price}` : "Free"}
-                      </span>
-                    </div>
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-slate-950/60 pointer-events-none" />
+
+                  {/* Top Bar Badges */}
+                  <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between gap-2 z-10">
+                    <span className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-emerald-950/90 text-emerald-300 border border-emerald-700/80 backdrop-blur-md uppercase tracking-wider shadow-md">
+                      ✓ Approved
+                    </span>
+
+                    <span className="text-xs font-black px-3 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 backdrop-blur-md shadow-md">
+                      {course.price > 0 ? `₹${course.price}` : "Free"}
+                    </span>
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    flexShrink: 0,
-                  }}
-                >
-                  <button
+                {/* Card Body */}
+                <div className="p-3.5 sm:p-4 flex flex-col gap-2.5">
+                  {/* Title */}
+                  <h4
                     onClick={() => {
                       setSelectedCourse(course);
                       setActiveTab("overview");
                       setStudentSearch("");
                     }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "8px 14px",
-                      borderRadius: 10,
-                      border: "1px solid #6366f1",
-                      background: "rgba(99,102,241,0.15)",
-                      color: "#a5b4fc",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
+                    className="text-sm sm:text-base font-extrabold text-white leading-snug line-clamp-2 cursor-pointer hover:text-indigo-300 transition"
                   >
-                    <Eye size={14} />
-                    View Full Details
-                  </button>
+                    {course.title}
+                  </h4>
 
-                  <button
-                    onClick={() => {
-                      setSelectedCourse(course);
-                      setActiveTab("students");
-                      setStudentSearch("");
-                    }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "8px 14px",
-                      borderRadius: 10,
-                      border: "1px solid #059669",
-                      background: "rgba(5,150,105,0.15)",
-                      color: "#6ee7b7",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <Users size={14} />
-                    Students ({studentCount})
-                  </button>
+                  {/* Meta Badges Row */}
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                    {course.category && (
+                      <span className="px-2 py-0.5 rounded-md bg-slate-900 text-slate-300 border border-slate-800 text-[11px] font-medium">
+                        {course.category}
+                      </span>
+                    )}
+                    {course.board && (
+                      <span className="px-2 py-0.5 rounded-md bg-slate-900 text-slate-300 border border-slate-800 text-[11px] font-medium inline-flex items-center gap-1">
+                        <ClipboardList size={11} className="text-slate-500" /> {course.board}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 text-slate-300 text-[11px] font-medium">
+                      <BookOpen size={11} className="text-slate-500" /> {lessonCount} Lessons
+                    </span>
+                    {noteCount > 0 && (
+                      <span className="inline-flex items-center gap-1 text-slate-300 text-[11px] font-medium">
+                        <FileText size={11} className="text-slate-500" /> {noteCount} Notes
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 text-emerald-400 text-[11px] font-bold ml-auto">
+                      <Users size={11} /> {studentCount} Students
+                    </span>
+                  </div>
 
-                  {onEditCourse && (
-                    <button
-                      onClick={() => onEditCourse(course)}
-                      title="Edit Course"
-                      style={{
-                        padding: "8px 12px",
-                        borderRadius: 10,
-                        border: "1px solid #334155",
-                        background: "#1e293b",
-                        color: "#94a3b8",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <Pencil size={14} />
-                    </button>
+                  {course.instructor?.name && (
+                    <div className="text-[11px] font-semibold text-indigo-300 flex items-center gap-1 pt-0.5">
+                      <User size={11} className="text-indigo-400" /> Instructor: {course.instructor.name}
+                    </div>
                   )}
+
+                  {/* Bottom Actions Row */}
+                  <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full pt-2 border-t border-slate-800/80 mt-1">
+                    <button
+                      onClick={() => {
+                        setSelectedCourse(course);
+                        setActiveTab("overview");
+                        setStudentSearch("");
+                      }}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-indigo-500/40 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-200 text-xs font-extrabold whitespace-nowrap transition cursor-pointer shadow-md"
+                    >
+                      <Eye size={13} /> View Details
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedCourse(course);
+                        setActiveTab("students");
+                        setStudentSearch("");
+                      }}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-emerald-500/40 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-200 text-xs font-extrabold whitespace-nowrap transition cursor-pointer shadow-md"
+                    >
+                      <Users size={13} /> Students ({studentCount})
+                    </button>
+
+                    {onEditCourse && (
+                      <button
+                        onClick={() => onEditCourse(course)}
+                        title="Edit Course"
+                        className="col-span-2 sm:col-span-1 inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-extrabold whitespace-nowrap transition cursor-pointer shrink-0 shadow-md"
+                      >
+                        <Pencil size={13} /> <span className="sm:hidden">Edit Course</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -3371,39 +3261,17 @@ export default function AdminCourses({
       `}</style>
 
       {/* Mode Switcher */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 12,
-          marginBottom: 24,
-          padding: 4,
-          background: "#0b1120",
-          borderRadius: 12,
-          border: "1px solid #1e293b",
-          width: "100%",
-          maxWidth: "100%",
-        }}
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-6 p-1.5 bg-[#0b1120] rounded-2xl border border-slate-800/80 w-full">
         <button
           onClick={() => {
             setMode("approved");
             setEditingCourse(null);
           }}
-          style={{
-            padding: "8px 18px",
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: "pointer",
-            border: "none",
-            background:
-              mode === "approved"
-                ? "linear-gradient(135deg,#0891b2,#0e7490)"
-                : "transparent",
-            color: mode === "approved" ? "#fff" : "#94a3b8",
-            transition: "all 0.2s",
-          }}
+          className={`w-full py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all duration-200 cursor-pointer ${
+            mode === "approved"
+              ? "bg-linear-to-r from-cyan-600 to-cyan-700 text-white shadow-md"
+              : "text-slate-400 hover:text-white hover:bg-slate-900/60"
+          }`}
         >
           Approved Courses
         </button>
@@ -3412,40 +3280,22 @@ export default function AdminCourses({
             setMode("review");
             setEditingCourse(null);
           }}
-          style={{
-            padding: "8px 18px",
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: "pointer",
-            border: "none",
-            background:
-              mode === "review"
-                ? "linear-gradient(135deg,#7c3aed,#db2777)"
-                : "transparent",
-            color: mode === "review" ? "#fff" : "#94a3b8",
-            transition: "all 0.2s",
-          }}
+          className={`w-full py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all duration-200 cursor-pointer ${
+            mode === "review"
+              ? "bg-linear-to-r from-indigo-600 to-pink-600 text-white shadow-md"
+              : "text-slate-400 hover:text-white hover:bg-slate-900/60"
+          }`}
         >
           Review Submissions
         </button>
         {canManage && (
           <button
             onClick={() => setMode("manage")}
-            style={{
-              padding: "8px 18px",
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              border: "none",
-              background:
-                mode === "manage"
-                  ? "linear-gradient(135deg,#7c3aed,#db2777)"
-                  : "transparent",
-              color: mode === "manage" ? "#fff" : "#94a3b8",
-              transition: "all 0.2s",
-            }}
+            className={`w-full py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all duration-200 cursor-pointer ${
+              mode === "manage"
+                ? "bg-linear-to-r from-indigo-600 to-pink-600 text-white shadow-md"
+                : "text-slate-400 hover:text-white hover:bg-slate-900/60"
+            }`}
           >
             Manage &amp; Edit Courses
           </button>
@@ -3594,17 +3444,7 @@ export default function AdminCourses({
           </div>
 
           {/* Status filter tabs */}
-          <div
-            className="no-scrollbar"
-            style={{
-              display: "flex",
-              gap: 8,
-              overflowX: "auto",
-              paddingBottom: 4,
-              marginBottom: 16,
-              maxWidth: "100%",
-            }}
-          >
+          <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-2 mb-4 w-full">
             {[
               { key: "pending", label: `Pending (${counts.pending})` },
               { key: "approved", label: `Approved (${counts.approved})` },
@@ -3618,20 +3458,13 @@ export default function AdminCourses({
                 <button
                   key={key}
                   onClick={() => setFilterStatus(key)}
+                  className={`px-2.5 sm:px-3.5 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all duration-150 border cursor-pointer text-center truncate ${
+                    active ? "shadow-sm" : "hover:text-white bg-slate-900/40"
+                  }`}
                   style={{
-                    padding: "7px 16px",
-                    borderRadius: 20,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    border: active
-                      ? `1px solid ${st.border}`
-                      : "1px solid #1e293b",
-                    background: active ? st.bg : "transparent",
+                    borderColor: active ? st.border : "#1e293b",
+                    backgroundColor: active ? st.bg : "transparent",
                     color: active ? st.text : "#64748b",
-                    transition: "all 0.15s",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
                   }}
                 >
                   {label}

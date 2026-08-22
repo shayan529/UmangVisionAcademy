@@ -388,16 +388,16 @@ export default function AdminPayments() {
             adminTransactions.map((tx) => (
               <div
                 key={tx._id}
-                className="p-4 bg-white/[0.04] border border-white/10 rounded-2xl space-y-3 shadow-lg"
+                className="p-4 bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-slate-950/90 border border-slate-800 rounded-2xl space-y-3 shadow-xl relative overflow-hidden"
               >
                 {/* Header: User Info & Amount */}
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-300 font-bold text-xs shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-300 font-extrabold text-xs shrink-0">
                       {tx.user?.name?.slice(0, 2).toUpperCase() || <User size={14} />}
                     </div>
                     <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-white truncate">
+                      <h4 className="text-xs font-extrabold text-white truncate">
                         {tx.user?.name || t("adminPayments.deletedUser", "Deleted User")}
                       </h4>
                       <p className="text-[10px] text-slate-400 truncate">
@@ -414,9 +414,9 @@ export default function AdminPayments() {
                 </div>
 
                 {/* Description & Type row */}
-                <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5 space-y-1.5 text-xs">
+                <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 space-y-1.5 text-xs">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-indigo-300 capitalize">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-indigo-300 capitalize">
                       <TypeIcon type={tx.type} />
                       {tx.type === "deposit"
                         ? t("adminPayments.deposits", "Deposit")
@@ -438,12 +438,26 @@ export default function AdminPayments() {
                   )}
                 </div>
 
-                {/* Footer: Date & Method ID */}
-                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-white/5">
-                  <span>{fmtDate(tx.createdAt)}</span>
-                  <span className="font-mono uppercase text-slate-400 truncate max-w-[150px]">
-                    {tx.paymentMethod} {tx.razorpayPaymentId ? `· ${tx.razorpayPaymentId}` : ""}
-                  </span>
+                {/* Footer: Date & Method ID Stacked Rows */}
+                <div className="pt-2 border-t border-slate-800/80 space-y-1.5 text-[10px]">
+                  <div className="flex items-center justify-between text-slate-400">
+                    <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+                      <Clock size={11} className="text-slate-500 shrink-0" />
+                      {fmtDate(tx.createdAt)}
+                    </span>
+                    <span className="font-mono text-[9px] uppercase tracking-wider text-indigo-300 font-extrabold px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20">
+                      {tx.paymentMethod}
+                    </span>
+                  </div>
+
+                  {tx.razorpayPaymentId && (
+                    <div className="flex items-center justify-between bg-slate-950/70 px-2.5 py-1 rounded-lg border border-slate-800/60 font-mono text-[9px]">
+                      <span className="text-slate-500 uppercase font-bold">Transaction ID</span>
+                      <span className="text-indigo-300 font-bold truncate max-w-[190px] sm:max-w-[280px]">
+                        {tx.razorpayPaymentId}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             ))

@@ -196,101 +196,107 @@ export default function AdminReferences({ showToast }) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
-            <Bookmark size={14} />
-            <span>Master Data</span>
-          </div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">
-            References Management
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Manage referral & marketing lead sources selected by students and users during registration.
-          </p>
-        </div>
+      {/* Header Banner */}
+      <div className="rounded-3xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-slate-950 border border-indigo-900/40 p-5 md:p-8 shadow-2xl relative overflow-hidden">
+        <div className="absolute -top-12 -right-12 w-40 h-40 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
 
-        <button
-          onClick={handleOpenAdd}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition-all active:scale-95"
-        >
-          <Plus size={16} />
-          Add Reference
-        </button>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 w-fit text-xs font-extrabold uppercase tracking-wider mb-2">
+              <Bookmark size={14} />
+              <span>Master Data</span>
+            </div>
+
+            <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight leading-tight mt-0.5">
+              References Management
+            </h1>
+
+            <p className="text-xs md:text-sm text-slate-400 leading-relaxed mt-1 max-w-2xl">
+              Manage referral & marketing lead sources selected by students and users during registration.
+            </p>
+          </div>
+
+          <button
+            onClick={handleOpenAdd}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-5 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-lg shadow-indigo-600/25 whitespace-nowrap cursor-pointer transition-all active:scale-95 shrink-0"
+          >
+            <Plus size={16} />
+            Add Reference
+          </button>
+        </div>
       </div>
 
       {/* Stat summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-slate-800 bg-[#111827] p-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="rounded-2xl border border-slate-800 bg-[#111827] p-3.5 sm:p-4 flex items-center gap-3">
+          <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">
             <Bookmark size={18} />
           </div>
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="min-w-0">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">
               Total Items
             </span>
-            <span className="text-lg font-black text-white">{stats.total}</span>
+            <span className="text-base sm:text-lg font-black text-white">{stats.total}</span>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-[#111827] p-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+        <div className="rounded-2xl border border-slate-800 bg-[#111827] p-3.5 sm:p-4 flex items-center gap-3">
+          <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
             <CheckCircle2 size={18} />
           </div>
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="min-w-0">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">
               Active Items
             </span>
-            <span className="text-lg font-black text-white">{stats.active}</span>
+            <span className="text-base sm:text-lg font-black text-white">{stats.active}</span>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-[#111827] p-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center shrink-0">
+        <div className="rounded-2xl border border-slate-800 bg-[#111827] p-3.5 sm:p-4 flex items-center gap-3">
+          <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center shrink-0">
             <Users size={18} />
           </div>
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="min-w-0">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">
               Linked Users
             </span>
-            <span className="text-lg font-black text-white">{stats.totalUsers}</span>
+            <span className="text-base sm:text-lg font-black text-white">{stats.totalUsers}</span>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-[#111827] p-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
+        <div className="rounded-2xl border border-slate-800 bg-[#111827] p-3.5 sm:p-4 flex items-center gap-3">
+          <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
             <Tag size={18} />
           </div>
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="min-w-0">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">
               Categories
             </span>
-            <span className="text-lg font-black text-white">{stats.categoriesCount}</span>
+            <span className="text-base sm:text-lg font-black text-white">{stats.categoriesCount}</span>
           </div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#111827] border border-slate-800 p-3 rounded-2xl">
-        <div className="relative flex-1 min-w-[220px]">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#111827] border border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-md">
+        <div className="relative w-full sm:w-80">
           <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search reference name, category or description..."
-            className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2 pl-9 pr-3 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500 transition-colors"
+            placeholder="Search reference name or category…"
+            className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500 transition-colors"
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5">
-            <Filter size={12} className="text-slate-400" />
+        <div className="grid grid-cols-2 sm:flex items-center gap-2.5 w-full sm:w-auto">
+          <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 w-full sm:w-auto">
+            <Filter size={12} className="text-slate-400 shrink-0" />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-transparent text-xs text-white outline-none cursor-pointer"
+              className="bg-transparent text-xs font-semibold text-white outline-none cursor-pointer w-full truncate"
             >
               <option value="all" className="bg-slate-900 text-white">All Categories</option>
               {CATEGORY_OPTIONS.map((cat) => (
@@ -301,11 +307,11 @@ export default function AdminReferences({ showToast }) {
             </select>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5">
+          <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 w-full sm:w-auto">
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="bg-transparent text-xs text-white outline-none cursor-pointer"
+              className="bg-transparent text-xs font-semibold text-white outline-none cursor-pointer w-full truncate"
             >
               <option value="all" className="bg-slate-900 text-white">All Statuses</option>
               <option value="active" className="bg-slate-900 text-white">Active Only</option>
@@ -373,46 +379,46 @@ export default function AdminReferences({ showToast }) {
           {filteredReferences.map((item) => (
             <div
               key={item._id}
-              className="rounded-2xl border border-slate-800 bg-[#111827] p-5 flex flex-col justify-between transition-all hover:border-slate-700"
+              className="rounded-2xl border border-slate-800/80 bg-[#111827] p-4 sm:p-5 flex flex-col justify-between transition-all hover:border-slate-700/80 shadow-xl relative overflow-hidden group"
             >
               <div>
-                <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <h3 className="text-sm font-bold text-white truncate">
+                    <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                      <h3 className="text-sm sm:text-base font-extrabold text-white truncate">
                         {item.name}
                       </h3>
                       <button
                         onClick={() => handleToggleStatus(item)}
                         title="Click to toggle active state"
-                        className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border cursor-pointer transition ${
+                        className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border cursor-pointer transition-all ${
                           item.isActive !== false
-                            ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/30 hover:bg-emerald-900/60"
-                            : "bg-slate-900 text-slate-500 border-slate-800 hover:bg-slate-800"
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
+                            : "bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700"
                         }`}
                       >
                         {item.isActive !== false ? "Active" : "Inactive"}
                       </button>
                     </div>
 
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-300 bg-indigo-950/40 border border-indigo-900/40 px-2 py-0.5 rounded-md">
-                      <Tag size={10} />
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-lg">
+                      <Tag size={11} className="text-indigo-400" />
                       {item.category || "General"}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       onClick={() => handleOpenEdit(item)}
                       title="Edit reference"
-                      className="h-8 w-8 rounded-lg border border-slate-800 text-slate-400 hover:border-indigo-500 hover:text-indigo-300 flex items-center justify-center transition"
+                      className="h-8 w-8 rounded-xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:border-indigo-500/50 hover:text-indigo-300 hover:bg-indigo-500/10 flex items-center justify-center transition-all cursor-pointer"
                     >
                       <Pencil size={13} />
                     </button>
                     <button
                       onClick={() => setDeleteTarget(item)}
                       title="Delete reference"
-                      className="h-8 w-8 rounded-lg border border-slate-800 text-red-400 hover:border-red-900/60 hover:bg-red-950/30 flex items-center justify-center transition"
+                      className="h-8 w-8 rounded-xl border border-slate-800 bg-slate-900/60 text-red-400 hover:border-red-500/50 hover:bg-red-500/10 flex items-center justify-center transition-all cursor-pointer"
                     >
                       <Trash2 size={13} />
                     </button>
@@ -420,20 +426,20 @@ export default function AdminReferences({ showToast }) {
                 </div>
 
                 {item.description && (
-                  <p className="text-xs text-slate-400 line-clamp-2 my-2 leading-relaxed">
+                  <p className="text-xs text-slate-400 line-clamp-2 my-2.5 leading-relaxed">
                     {item.description}
                   </p>
                 )}
               </div>
 
-              <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-                <span className="flex items-center gap-1">
-                  <Users size={12} className="text-slate-400" />
-                  <strong className="text-white">{item.userCount || 0}</strong> students
+              <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                <span className="inline-flex items-center gap-1.5 font-medium">
+                  <Users size={13} className="text-indigo-400" />
+                  <strong className="text-white font-extrabold">{item.userCount || 0}</strong> students
                 </span>
 
                 {item.createdBy?.name && (
-                  <span className="truncate max-w-[140px] text-slate-400">
+                  <span className="truncate max-w-[140px] text-[11px] font-medium text-slate-400">
                     By {item.createdBy.name}
                   </span>
                 )}

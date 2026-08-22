@@ -350,31 +350,30 @@ export default function AdminDashboard() {
           }}
         >
           {/* Mobile top bar */}
-          <div className="flex items-center justify-between gap-4 pb-4 md:hidden">
+          <div className="sticky top-0 z-30 mb-4 p-3 rounded-2xl border border-slate-800/90 bg-slate-950/90 backdrop-blur-xl flex items-center justify-between gap-3 shadow-lg md:hidden">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 window.dispatchEvent(new CustomEvent("dashboard-sidebar-open"));
                 setSideOpen(true);
               }}
-              className="inline-flex items-center gap-2 rounded-xl border border-indigo-500/30 bg-slate-900 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-slate-800 shadow-md"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-indigo-500/30 bg-indigo-600/15 hover:bg-indigo-600/25 text-white text-xs font-extrabold transition shadow-md shrink-0"
             >
               <Menu size={16} className="text-indigo-400 shrink-0" />
               <span>Menu</span>
             </button>
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-1">
-              Admin: {tab}
-            </h2>
 
-            {/* Live refetch indicator */}
-            {(coursesLoading || usersLoading) && !isInitialLoad && (
-              <span className="text-[10px] text-indigo-400 font-semibold animate-pulse">
-                Syncing…
-              </span>
-            )}
+            <div className="flex items-center gap-2 min-w-0">
+              {(coursesLoading || usersLoading) && !isInitialLoad && (
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping shrink-0" title="Syncing..." />
+              )}
+              <h2 className="text-xs font-extrabold text-white tracking-wide uppercase bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl truncate">
+                Admin: <span className="text-indigo-400">{tab}</span>
+              </h2>
+            </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-800 bg-white/5 p-3 sm:p-5 md:p-7 min-h-full">
+          <div className="rounded-3xl border border-slate-800 bg-white/5 p-4 sm:p-6 md:p-8 min-h-full">
             {renderTabContent()}
           </div>
         </main>

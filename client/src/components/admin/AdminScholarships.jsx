@@ -12,6 +12,7 @@ import {
   FileText,
   DollarSign,
   Building,
+  BookOpen,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { API_BASE_URL } from "../../config/api";
@@ -160,45 +161,45 @@ export default function AdminScholarships() {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-amber-950/60 via-slate-900 to-slate-900 border border-amber-500/30 p-6 md:p-8 shadow-xl">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400">
-              <Award size={24} />
+      <div className="rounded-3xl bg-gradient-to-r from-amber-950/80 via-slate-900 to-slate-950 border border-amber-500/30 p-5 md:p-8 shadow-2xl relative overflow-hidden">
+        <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
+          <div className="flex flex-col gap-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 w-fit text-xs font-extrabold uppercase tracking-wider">
+              <Award size={14} />
+              <span>Global Scholarships</span>
             </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-black text-white flex items-center gap-2">
-                Higher-Study Scholarship Management Hub
-              </h1>
-              <p className="text-xs md:text-sm text-slate-400">
-                Review Elite student scholarship nominations, evaluate financial
-                justifications, grant awards, and manage the Global Scholarship
-                Directory.
-              </p>
-            </div>
+
+            <h1 className="text-xl md:text-3xl font-black text-white tracking-tight leading-tight mt-0.5">
+              Scholarship Management Hub
+            </h1>
+
+            <p className="text-xs md:text-sm text-slate-400 leading-relaxed max-w-2xl">
+              Review Elite student scholarship nominations, evaluate financial justifications, grant awards, and manage the Global Directory.
+            </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full md:w-auto shrink-0">
             <button
               onClick={() => setActiveTab("nominations")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all duration-200 cursor-pointer whitespace-nowrap shadow-md ${
                 activeTab === "nominations"
-                  ? "bg-amber-500 text-slate-950 font-black shadow-lg"
-                  : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-amber-500/20"
+                  : "bg-slate-900/90 text-slate-300 border border-slate-800 hover:bg-slate-800"
               }`}
             >
-              Elite Nominations (
-              {nominations.filter((n) => n.status === "Pending Review").length})
+              <Crown size={14} /> Elite Nominations ({nominations.filter((n) => n.status === "Pending Review").length})
             </button>
             <button
               onClick={() => setActiveTab("directory")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all duration-200 cursor-pointer whitespace-nowrap shadow-md ${
                 activeTab === "directory"
-                  ? "bg-amber-500 text-slate-950 font-black shadow-lg"
-                  : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-amber-500/20"
+                  : "bg-slate-900/90 text-slate-300 border border-slate-800 hover:bg-slate-800"
               }`}
             >
-              Directory Listings ({directory.length})
+              <BookOpen size={14} /> Directory Listings ({directory.length})
             </button>
           </div>
         </div>

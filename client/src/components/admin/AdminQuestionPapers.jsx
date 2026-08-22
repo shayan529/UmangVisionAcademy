@@ -519,17 +519,17 @@ export default function AdminQuestionPapers() {
         </button>
       </div>
 
-      {/* Papers Table */}
-      <div className="bg-[#0f1a2e] border border-slate-800 rounded-2xl p-6 shadow-md">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+      {/* Papers Table Container */}
+      <div className="bg-[#0f1a2e] border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <div>
-            <h2 className="text-base font-bold text-white">Uploaded Papers</h2>
+            <h2 className="text-base font-extrabold text-white">Uploaded Papers</h2>
             <p className="text-xs text-slate-500 mt-0.5">
               {papers.length} total · {filtered.length} shown
             </p>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <div className="relative">
+          <div className="grid grid-cols-2 sm:flex items-center gap-2.5 w-full sm:w-auto">
+            <div className="relative w-full">
               <Search
                 size={14}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
@@ -539,17 +539,19 @@ export default function AdminQuestionPapers() {
                 placeholder="Search..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="bg-slate-900 border border-slate-700 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 w-44 transition"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 transition"
               />
             </div>
             <select
               value={filterBoard}
               onChange={(e) => setFilterBoard(e.target.value)}
-              className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 truncate cursor-pointer"
             >
               <option value="All">All Boards</option>
               {BOARDS.map((b) => (
-                <option key={b}>{b}</option>
+                <option key={b} value={b}>
+                  {b}
+                </option>
               ))}
             </select>
           </div>
@@ -569,77 +571,137 @@ export default function AdminQuestionPapers() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-slate-800">
-            <table className="w-full text-xs text-left">
-              <thead>
-                <tr className="bg-slate-900/60 text-slate-400 border-b border-slate-800">
-                  {[
-                    "Board",
-                    "Class",
-                    "Subject",
-                    "Year",
-                    "File",
-                    "Uploaded",
-                    "Action",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className="px-4 py-3 font-semibold whitespace-nowrap"
+          <>
+            {/* Mobile Cards List View (block sm:hidden) */}
+            <div className="block sm:hidden divide-y divide-slate-800/60 space-y-3">
+              {filtered.map((p) => (
+                <div
+                  key={p._id}
+                  className="p-3.5 bg-slate-900/90 border border-slate-800/80 rounded-2xl flex flex-col gap-2.5"
+                >
+                  {/* Top Row: Board Badge & Year */}
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${BOARD_COLOR[p.board]}`}
                     >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((p) => (
-                  <tr
-                    key={p._id}
-                    className="border-b border-slate-800/50 hover:bg-slate-800/30 transition"
-                  >
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${BOARD_COLOR[p.board]}`}
+                      {p.board}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                      {p.year}
+                    </span>
+                  </div>
+
+                  {/* Class & Subject */}
+                  <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+                    <h4 className="text-sm font-extrabold text-white">
+                      {p.class} • {p.subject}
+                    </h4>
+                    <span className="text-[11px] text-slate-500 block mt-0.5">
+                      Uploaded on {new Date(p.createdAt).toLocaleDateString("en-IN")}
+                    </span>
+                  </div>
+
+                  {/* Bottom Actions */}
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/60 mt-0.5">
+                    <a
+                      href={p.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600/30 font-extrabold text-xs transition whitespace-nowrap"
+                    >
+                      <ExternalLink size={12} /> View PDF
+                    </a>
+
+                    <button
+                      onClick={() => handleDelete(p._id)}
+                      disabled={deleting === p._id}
+                      className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 transition disabled:opacity-40 shrink-0 cursor-pointer"
+                      title="Delete Paper"
+                    >
+                      {deleting === p._id ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={14} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View (hidden sm:block) */}
+            <div className="hidden sm:block overflow-x-auto rounded-xl border border-slate-800">
+              <table className="w-full text-xs text-left">
+                <thead>
+                  <tr className="bg-slate-900/60 text-slate-400 border-b border-slate-800">
+                    {[
+                      "Board",
+                      "Class",
+                      "Subject",
+                      "Year",
+                      "File",
+                      "Uploaded",
+                      "Action",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="px-4 py-3 font-semibold whitespace-nowrap"
                       >
-                        {p.board}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-slate-300 font-medium">
-                      {p.class}
-                    </td>
-                    <td className="px-4 py-3 text-slate-300">{p.subject}</td>
-                    <td className="px-4 py-3 text-slate-300">{p.year}</td>
-                    <td className="px-4 py-3">
-                      <a
-                        href={p.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 font-semibold transition"
-                      >
-                        <ExternalLink size={12} /> View PDF
-                      </a>
-                    </td>
-                    <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
-                      {new Date(p.createdAt).toLocaleDateString("en-IN")}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleDelete(p._id)}
-                        disabled={deleting === p._id}
-                        className="text-slate-500 hover:text-red-400 transition disabled:opacity-40"
-                      >
-                        {deleting === p._id ? (
-                          <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                          <Trash2 size={14} />
-                        )}
-                      </button>
-                    </td>
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filtered.map((p) => (
+                    <tr
+                      key={p._id}
+                      className="border-b border-slate-800/50 hover:bg-slate-800/30 transition"
+                    >
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${BOARD_COLOR[p.board]}`}
+                        >
+                          {p.board}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-slate-300 font-medium">
+                        {p.class}
+                      </td>
+                      <td className="px-4 py-3 text-slate-300">{p.subject}</td>
+                      <td className="px-4 py-3 text-slate-300">{p.year}</td>
+                      <td className="px-4 py-3">
+                        <a
+                          href={p.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 font-semibold transition"
+                        >
+                          <ExternalLink size={12} /> View PDF
+                        </a>
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
+                        {new Date(p.createdAt).toLocaleDateString("en-IN")}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handleDelete(p._id)}
+                          disabled={deleting === p._id}
+                          className="text-slate-500 hover:text-red-400 transition disabled:opacity-40"
+                        >
+                          {deleting === p._id ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Trash2 size={14} />
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

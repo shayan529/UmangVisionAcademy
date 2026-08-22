@@ -18,6 +18,8 @@ import {
   Tag,
   ArrowRight,
   Headphones,
+  Phone,
+  PhoneCall,
 } from "lucide-react";
 import api from "../config/api";
 import SEO from "../components/common/SEO";
@@ -119,22 +121,58 @@ const Contact = () => {
 
         {/* ── Main Layout: Contact Details Left + Form Right ── */}
         <div className="grid lg:grid-cols-12 gap-10 items-start">
-          {/* ── LEFT COLUMN: Support Cards & Channels (5 cols) ── */}
-          <div className="lg:col-span-5 space-y-6">
-            {/* Card 1: Email Support */}
-            <div className="group rounded-3xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl hover:bg-white/[0.06] hover:border-indigo-500/30 transition-all duration-300 shadow-xl">
+          {/* ── LEFT COLUMN: Support Cards & Contact Lines (5 cols) ── */}
+          <div className="lg:col-span-5 space-y-5">
+            
+            {/* Card 1: Student & General Contact Line */}
+            <div className="group rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 backdrop-blur-xl hover:bg-white/[0.06] hover:border-emerald-500/30 transition-all duration-300 shadow-xl">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 group-hover:scale-110 transition-transform">
+                  <div className="p-3 sm:p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 group-hover:scale-110 transition-transform">
+                    <PhoneCall size={22} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-base">
+                      Student Support Helpline
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+                      <Clock size={12} className="text-emerald-400" />
+                      <span>Mon - Sat: 9:00 AM - 7:00 PM IST</span>
+                    </p>
+                  </div>
+                </div>
+
+                <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+                  Call / WhatsApp
+                </span>
+              </div>
+
+              <div className="mt-4 pt-3.5 border-t border-white/[0.06] flex items-center justify-between">
+                <a
+                  href="tel:+919153000000"
+                  className="text-base font-extrabold text-emerald-300 hover:text-emerald-200 tracking-wide transition-colors flex items-center gap-2"
+                >
+                  <Phone size={16} className="text-emerald-400" />
+                  <span>+91 91530 00000</span>
+                </a>
+                <span className="text-[11px] text-slate-400 font-medium">Toll Free / Support</span>
+              </div>
+            </div>
+
+            {/* Card 2: Common Official Email Support */}
+            <div className="group rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 backdrop-blur-xl hover:bg-white/[0.06] hover:border-indigo-500/30 transition-all duration-300 shadow-xl">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 sm:p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 group-hover:scale-110 transition-transform">
                     <Mail size={22} />
                   </div>
                   <div>
                     <h3 className="font-bold text-white text-base">
-                      {t("contact.supportCards.email.title", "Email Support")}
+                      Common Email Support
                     </h3>
                     <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                      <Clock size={12} className="text-emerald-400" />
-                      <span>Response within 24 hours</span>
+                      <Clock size={12} className="text-indigo-400" />
+                      <span>Replies within 24 hours</span>
                     </p>
                   </div>
                 </div>
@@ -148,23 +186,57 @@ const Contact = () => {
                 </button>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-white/[0.06] flex items-center justify-between">
+              <div className="mt-4 pt-3.5 border-t border-white/[0.06] flex items-center justify-between">
                 <a
                   href="mailto:umangvisionacademy@gmail.com"
                   className="text-sm font-semibold text-indigo-300 hover:text-indigo-200 truncate underline underline-offset-4"
                 >
                   umangvisionacademy@gmail.com
                 </a>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Active
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  Active 24/7
                 </span>
               </div>
             </div>
 
-            {/* Card 2: Business & Institutional Partnerships */}
-            <div className="group rounded-3xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl hover:bg-white/[0.06] hover:border-purple-500/30 transition-all duration-300 shadow-xl">
+            {/* Card 3: Admin & Escalation Contact Number */}
+            <div className="group rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 backdrop-blur-xl hover:bg-white/[0.06] hover:border-amber-500/30 transition-all duration-300 shadow-xl">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 sm:p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 transition-transform">
+                    <ShieldCheck size={22} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-base">
+                      Admin & Escalation Line
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Direct management & official desk
+                    </p>
+                  </div>
+                </div>
+
+                <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                  Admin Direct
+                </span>
+              </div>
+
+              <div className="mt-4 pt-3.5 border-t border-white/[0.06] flex items-center justify-between">
+                <a
+                  href="tel:+919153011111"
+                  className="text-base font-extrabold text-amber-300 hover:text-amber-200 tracking-wide transition-colors flex items-center gap-2"
+                >
+                  <Phone size={16} className="text-amber-400" />
+                  <span>+91 91530 11111</span>
+                </a>
+                <span className="text-[11px] text-slate-400 font-medium">Escalation Desk</span>
+              </div>
+            </div>
+
+            {/* Card 4: Business & Institutional Partnerships */}
+            <div className="group rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 backdrop-blur-xl hover:bg-white/[0.06] hover:border-purple-500/30 transition-all duration-300 shadow-xl">
               <div className="flex items-center gap-3">
-                <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 group-hover:scale-110 transition-transform">
+                <div className="p-3 sm:p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 group-hover:scale-110 transition-transform">
                   <Building2 size={22} />
                 </div>
                 <div>
@@ -177,39 +249,17 @@ const Contact = () => {
                 </div>
               </div>
 
-              <p className="mt-3 text-xs text-slate-300 leading-relaxed">
-                Looking to onboard your school, coaching center, or corporate team onto Umang Vision Academy? Contact our enterprise team.
-              </p>
-
-              <div className="mt-4 pt-4 border-t border-white/[0.06]">
+              <div className="mt-3.5 pt-3 border-t border-white/[0.06]">
                 <a
                   href="mailto:umangvisionacademy@gmail.com?subject=Enterprise%20Inquiry"
                   className="inline-flex items-center gap-2 text-xs font-bold text-purple-300 hover:text-purple-200 transition-colors"
                 >
-                  <span>Enterprise Inquiry</span>
+                  <span>Enterprise & Institutional Inquiry</span>
                   <ArrowRight size={14} />
                 </a>
               </div>
             </div>
 
-            {/* Help & FAQ Quick Prompt */}
-            <div className="rounded-3xl border border-indigo-500/20 bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-slate-900/60 p-5 backdrop-blur-xl flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-indigo-500/20 text-indigo-300 shrink-0">
-                  <HelpCircle size={20} />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-white">Looking for instant answers?</h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Browse FAQs or chat with AI Tutor</p>
-                </div>
-              </div>
-              <Link
-                to="/faq"
-                className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shrink-0 transition-all shadow-md shadow-indigo-600/20"
-              >
-                View FAQ
-              </Link>
-            </div>
           </div>
 
           {/* ── RIGHT COLUMN: Glassmorphic Interactive Form (7 cols) ── */}

@@ -270,37 +270,33 @@ const AdminOverview = ({
       {/* Detail Rows (Top Instructors + Recent Courses) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Instructors Card */}
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 shadow-sm">
+        <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-sm">
           <h3 className="text-sm font-extrabold text-white mb-4 flex items-center gap-2">
             <Trophy size={16} className="text-amber-500" />
             {t("adminOverview.topInstructors")}
           </h3>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5 sm:gap-3">
             {sortedInstructors.slice(0, 5).map((inst, i) => (
               <div
                 key={inst._id}
-                className="flex items-center gap-3 p-2 bg-slate-950/40 border border-slate-900 rounded-xl transition duration-150 hover:border-slate-800"
+                className="flex items-center gap-3 p-2.5 sm:p-3 bg-slate-950/40 border border-slate-900 rounded-xl sm:rounded-2xl transition duration-150 hover:border-slate-800"
               >
                 <div className="w-6 shrink-0 flex items-center justify-center">
                   <Rank r={i + 1} />
                 </div>
-                <Av name={inst.name} size={28} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className="text-xs font-bold text-slate-200 truncate">
+                <Av name={inst.name} size={32} />
+                <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-bold text-slate-200 truncate">
                       {inst.name}
                     </p>
-                    <span className="text-xs font-extrabold text-indigo-400 shrink-0">
-                      {fmt(inst.rev)}
-                    </span>
+                    <p className="text-[10.5px] sm:text-xs text-slate-500 font-medium truncate">
+                      Instructor
+                    </p>
                   </div>
-                  {/* Visual Progress Bar */}
-                  <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className="bg-indigo-500 h-full rounded-full transition-all duration-500"
-                      style={{ width: `${pct(inst.rev, maxRev)}%` }}
-                    />
-                  </div>
+                  <span className="text-xs font-extrabold text-indigo-400 shrink-0 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-lg">
+                    {fmt(inst.rev)}
+                  </span>
                 </div>
               </div>
             ))}
@@ -313,49 +309,34 @@ const AdminOverview = ({
         </div>
 
         {/* Recent Courses Card */}
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 shadow-sm">
+        <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-sm">
           <h3 className="text-sm font-extrabold text-white mb-4 flex items-center gap-2">
             <BookOpen size={16} className="text-indigo-400" />
             {t("adminOverview.recentCourses")}
           </h3>
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-2.5 sm:gap-3">
             {courses.slice(0, 5).map((c) => (
               <div
                 key={c._id}
-                className="flex items-between justify-between gap-4 p-2 bg-slate-950/40 border border-slate-900 rounded-xl transition duration-150 hover:border-slate-800"
+                className="flex items-center justify-between gap-3 p-2.5 sm:p-3 bg-slate-950/40 border border-slate-900 rounded-xl sm:rounded-2xl transition duration-150 hover:border-slate-800"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 border border-indigo-500/20">
-                    <BookOpen size={14} className="text-indigo-400" />
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0 border border-indigo-500/20">
+                    <BookOpen size={16} className="text-indigo-400" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-200 truncate">
+                    <p className="text-xs sm:text-sm font-bold text-slate-200 truncate">
                       {c.title || 'Untitled Course'}
                     </p>
-                    <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                      By {c.instructor?.name || 'Anonymous'} ·{' '}
-                      {c.studentsCount ?? c.students?.length ?? 0} students
+                    <p className="text-[10.5px] sm:text-xs text-slate-400 mt-0.5 truncate">
+                      By {c.instructor?.name || 'Admin'} • {c.studentsCount ?? c.students?.length ?? 0} students
                     </p>
                   </div>
                 </div>
                 <div className="shrink-0 flex flex-col items-end">
-                  <span className="text-xs font-extrabold text-emerald-400">
-                    {fmt(
-                      (c.price || 0) *
-                        (c.studentsCount ?? c.students?.length ?? 0),
-                    )}
+                  <span className="text-xs font-extrabold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+                    {fmt((c.price || 0) * (c.studentsCount ?? c.students?.length ?? 0))}
                   </span>
-                  {c.rating && (
-                    <div className="flex items-center gap-0.5 mt-0.5">
-                      <Star
-                        size={8}
-                        className="text-amber-500 fill-amber-500"
-                      />
-                      <span className="text-[9px] font-bold text-slate-500">
-                        {c.rating}
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
             ))}

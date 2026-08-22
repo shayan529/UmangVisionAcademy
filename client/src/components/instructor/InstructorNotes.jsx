@@ -822,15 +822,16 @@ export default function InstructorNotes({ showToast }) {
           <p className="mt-1 text-sm text-slate-300">Study notes, lecture slides, and PDF documents uploaded for your courses.</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          {/* Search */}
+          <div className="relative w-full sm:w-[220px]">
             <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search notes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full min-w-[190px] rounded-xl border border-slate-700 bg-slate-900 py-2.5 pl-9 pr-8 text-sm text-white placeholder:text-slate-400 outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20 sm:w-[220px]"
+              className="w-full rounded-xl border border-slate-700 bg-slate-900 py-2.5 pl-9 pr-8 text-sm text-white placeholder:text-slate-400 outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20"
             />
             {searchQuery && (
               <button
@@ -843,7 +844,8 @@ export default function InstructorNotes({ showToast }) {
             )}
           </div>
 
-          <div className="flex rounded-xl border border-slate-700 bg-slate-900 p-1">
+          {/* Status Tabs */}
+          <div className="grid grid-cols-4 sm:flex items-center rounded-xl border border-slate-700 bg-slate-900 p-1 w-full sm:w-auto">
             {[
               { id: "all", label: "All" },
               { id: "pending", label: "Pending" },
@@ -853,7 +855,7 @@ export default function InstructorNotes({ showToast }) {
               <button
                 key={tab.id}
                 onClick={() => setStatusFilter(tab.id)}
-                className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                className={`rounded-lg px-2 sm:px-3.5 py-2 text-[11px] sm:text-xs font-bold transition-all cursor-pointer text-center truncate ${
                   statusFilter === tab.id
                     ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-600/25"
                     : "text-slate-300 hover:text-white hover:bg-slate-800/60"
@@ -865,12 +867,12 @@ export default function InstructorNotes({ showToast }) {
           </div>
 
           {/* Sort Dropdown */}
-          <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2 text-xs font-bold text-slate-200">
+          <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-xs font-bold text-slate-200 w-full sm:w-auto">
             <ArrowUpDown size={14} className="text-emerald-400 shrink-0" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-transparent text-xs font-bold text-white outline-none cursor-pointer"
+              className="bg-transparent text-xs font-bold text-white outline-none cursor-pointer w-full"
             >
               <option value="title" className="bg-slate-900 text-white">
                 Title (A - Z)
@@ -887,46 +889,52 @@ export default function InstructorNotes({ showToast }) {
             </select>
           </div>
 
-          <button
-            onClick={() => setShowBulkModal(true)}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2.5 text-xs font-bold text-white transition-all hover:from-emerald-400 hover:to-teal-500 active:scale-95 cursor-pointer shadow-lg shadow-emerald-500/20"
-          >
-            <FolderPlus size={16} /> Bulk Upload
-          </button>
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2.5 text-xs font-bold text-white transition-all hover:from-violet-500 hover:to-indigo-500 active:scale-95 cursor-pointer shadow-lg shadow-violet-600/20"
-          >
-            <Plus size={16} /> Upload Note
-          </button>
+          {/* Action Buttons */}
+          <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => setShowBulkModal(true)}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2.5 text-xs font-bold text-white transition-all hover:from-emerald-400 hover:to-teal-500 active:scale-95 cursor-pointer shadow-lg shadow-emerald-500/20 whitespace-nowrap"
+            >
+              <FolderPlus size={16} /> Bulk Upload
+            </button>
+            <button
+              onClick={() => setShowModal(true)}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2.5 text-xs font-bold text-white transition-all hover:from-violet-500 hover:to-indigo-500 active:scale-95 cursor-pointer shadow-lg shadow-violet-600/20 whitespace-nowrap"
+            >
+              <Plus size={16} /> Upload Note
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Subject Filter Pills */}
       {notes.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {subjectTabs.map((tab) => (
-            <button
-              key={tab.name}
-              onClick={() => setSelectedSubject(tab.name)}
-              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap border ${
-                selectedSubject === tab.name
-                  ? "bg-violet-600 text-white border-violet-500 shadow-md shadow-violet-600/25"
-                  : "bg-slate-900/90 text-slate-200 border-slate-700/80 hover:text-white hover:border-slate-500 hover:bg-slate-800"
-              }`}
-            >
-              <span>{tab.name}</span>
-              <span
-                className={`px-1.5 py-0.5 rounded-md text-[10px] font-extrabold ${
-                  selectedSubject === tab.name
-                    ? "bg-white/20 text-white"
-                    : "bg-slate-800 text-slate-300 border border-slate-700"
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full pt-1 pb-1">
+          {subjectTabs.map((tab) => {
+            const isActive = selectedSubject === tab.name;
+            return (
+              <button
+                key={tab.name}
+                onClick={() => setSelectedSubject(tab.name)}
+                className={`flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 cursor-pointer border shadow-sm ${
+                  isActive
+                    ? "bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white border-cyan-400/60 shadow-md shadow-cyan-500/30 scale-[1.01]"
+                    : "bg-slate-900/80 text-slate-300 border-slate-800 hover:text-white hover:border-slate-700 hover:bg-slate-800/80"
                 }`}
               >
-                {tab.count}
-              </span>
-            </button>
-          ))}
+                <span className="truncate">{tab.name}</span>
+                <span
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-black shrink-0 ml-1.5 ${
+                    isActive
+                      ? "bg-white/20 text-white backdrop-blur-md"
+                      : "bg-slate-950 text-slate-400 border border-slate-800"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
 

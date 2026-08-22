@@ -9,6 +9,7 @@ import {
   Lock,
   RefreshCw,
   Mail,
+  Phone,
   Sparkles,
   ArrowRight,
 } from "lucide-react";
@@ -156,22 +157,45 @@ const RefundPolicy = () => {
           })}
         </div>
 
-        {/* ── Contact Footer Box ── */}
+        {/* ── Contact Details Box ── */}
         <div className="bg-[#0b1324] border border-slate-800/90 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg space-y-3 sm:space-y-4">
           <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-            <Mail size={18} className="text-indigo-400 shrink-0" /> Have Questions Regarding Refund Queries?
+            <Mail size={18} className="text-indigo-400 shrink-0" /> Contact for Refund Queries
           </h2>
           <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-            For any refund-related queries or official requests, students or parents may reach out to us through our official support channels.
+            For any refund-related queries or official requests, students or parents may reach out directly to <strong>Umang Vision Academy</strong> via email or phone:
           </p>
-          <div className="pt-1">
-            <Link
-              to="/contact"
-              className="inline-flex items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-bold transition shadow-md"
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <a
+              href="mailto:umangvisionacademy@gmail.com"
+              className="flex items-center gap-3 p-3 sm:p-3.5 rounded-xl bg-[#0d172c] border border-indigo-500/20 hover:border-indigo-500/50 transition group"
             >
-              <span>Contact Support</span>
-              <ArrowRight size={15} />
-            </Link>
+              <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 text-indigo-400 group-hover:scale-105 transition-transform">
+                <Mail size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-slate-400">Official Email</p>
+                <p className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-indigo-300 transition-colors">
+                  umangvisionacademy@gmail.com
+                </p>
+              </div>
+            </a>
+
+            <a
+              href="tel:+919153000000"
+              className="flex items-center gap-3 p-3 sm:p-3.5 rounded-xl bg-[#0d172c] border border-emerald-500/20 hover:border-emerald-500/50 transition group"
+            >
+              <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 text-emerald-400 group-hover:scale-105 transition-transform">
+                <Phone size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-slate-400">Contact Support Line</p>
+                <p className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-emerald-300 transition-colors">
+                  +91 91530 00000
+                </p>
+              </div>
+            </a>
           </div>
         </div>
 

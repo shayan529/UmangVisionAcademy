@@ -17,6 +17,8 @@ import {
   Mail,
   Phone,
   LayoutGrid,
+  ShieldCheck,
+  ChevronDown,
 } from "lucide-react";
 import apiClient from "../../config/api";
 import {
@@ -1241,12 +1243,20 @@ const RoleManager = ({ showToast, currentUser, onUserRolesUpdated }) => {
   const [assignTarget, setAssignTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [addUserOpen, setAddUserOpen] = useState(false);
+  const [expandedRoles, setExpandedRoles] = useState({});
   const [newRoleForm, setNewRoleForm] = useState({
     name: "",
     description: "",
     permissions: [],
     dashboardModules: [],
   });
+
+  const toggleExpandedRole = (roleId) => {
+    setExpandedRoles((prev) => ({
+      ...prev,
+      [roleId]: !prev[roleId],
+    }));
+  };
 
   const allDashboardModuleKeys = useMemo(() => {
     const keys = new Set();
@@ -1411,53 +1421,68 @@ const RoleManager = ({ showToast, currentUser, onUserRolesUpdated }) => {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <p className="text-[11px] font-bold tracking-[0.14em] text-indigo-400 uppercase mb-1">
-            Access Control
-          </p>
-          <h2 className="text-2xl font-extrabold text-white">
-            Roles & Permissions
-          </h2>
-        </div>
-        <div className="flex items-center gap-3">
-          {tab !== "create" && (
-            <button
-              onClick={() => setTab("create")}
-              className="flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition-all cursor-pointer"
-            >
-              <Plus size={16} />
-              Create Role
-            </button>
-          )}
-          {tab === "users" && (
-            <button
-              onClick={() => setAddUserOpen(true)}
-              className="flex items-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2.5 text-sm font-bold text-white border border-slate-700 transition-all cursor-pointer"
-            >
-              <UserPlus size={16} />
-              Add User
-            </button>
-          )}
+      {/* Header Banner */}
+      <div className="rounded-3xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-slate-950 border border-indigo-900/40 p-5 md:p-8 shadow-2xl relative overflow-hidden">
+        <div className="absolute -top-12 -right-12 w-40 h-40 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 w-fit text-xs font-extrabold uppercase tracking-wider mb-2">
+              <Shield size={14} />
+              <span>Access Control Desk</span>
+            </div>
+
+            <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight leading-tight mt-0.5">
+              Roles & Permissions
+            </h1>
+
+            <p className="text-xs md:text-sm text-slate-400 leading-relaxed mt-1 max-w-2xl">
+              Manage custom staff roles, module access, granular action permissions, and user assignments.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            {tab !== "create" && (
+              <button
+                onClick={() => setTab("create")}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-5 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-lg shadow-indigo-600/25 whitespace-nowrap cursor-pointer transition-all active:scale-95 shrink-0"
+              >
+                <Plus size={16} />
+                <span>Create Role</span>
+              </button>
+            )}
+            {tab === "users" && (
+              <button
+                onClick={() => setAddUserOpen(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2.5 text-xs sm:text-sm font-bold text-white border border-slate-700 shadow-sm whitespace-nowrap transition-all cursor-pointer"
+              >
+                <UserPlus size={16} />
+                <span>Add User</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="inline-flex w-fit rounded-xl border border-slate-800 bg-[#0b1120] p-1">
+      {/* Sub-tabs 3-Column Mobile Grid */}
+      <div className="grid grid-cols-3 sm:inline-flex rounded-2xl border border-slate-800 bg-[#0b1120] p-1.5 gap-1.5 w-full sm:w-auto">
         {TABS.map((t) => {
           const Icon = t.icon;
           return (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-colors ${tab === t.key
-                ? "bg-indigo-600 text-white shadow-xs"
-                : "text-slate-400 hover:text-white"
-                }`}
+              className={`w-full inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+                tab === t.key
+                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md"
+                  : "text-slate-400 hover:text-white"
+              }`}
             >
               <Icon size={14} />
-              {t.label}
+              <span className="hidden sm:inline">{t.label}</span>
+              <span className="sm:hidden">
+                {t.key === "roles" ? "Roles" : t.key === "create" ? "Create" : "Users"}
+              </span>
             </button>
           );
         })}
@@ -1597,134 +1622,181 @@ const RoleManager = ({ showToast, currentUser, onUserRolesUpdated }) => {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {roles.map((role) => (
-                <div
-                  key={role._id}
-                  className="rounded-2xl border border-slate-800 bg-[#111827] p-5 flex flex-col gap-3"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-white">
-                          {role.name}
-                        </h3>
-                        {role.isSystem && (
-                          <span className="text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
-                            System
-                          </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+              {roles.map((role) => {
+                const isExpanded = !!expandedRoles[role._id];
+                const permCount = permissionCount(role);
+                const allKeys = getModuleKeysForRole(role.name);
+                const enabledKeys = Array.isArray(role.dashboardModules)
+                  ? role.dashboardModules
+                  : allKeys;
+
+                return (
+                  <div
+                    key={role._id}
+                    className="rounded-3xl border border-slate-800 bg-[#111827] p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xl relative overflow-hidden transition-all hover:border-slate-700/80"
+                  >
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-base sm:text-lg font-black text-white capitalize">
+                            {role.name}
+                          </h3>
+                          {role.isSystem ? (
+                            <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-indigo-400 border border-indigo-500/20">
+                              System
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                              Custom
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                          {role.description || "No description provided."}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={() => setRoleModal(role)}
+                          title="Edit Role"
+                          className="h-8 w-8 rounded-xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:border-indigo-500/50 hover:text-indigo-300 hover:bg-indigo-500/10 flex items-center justify-center transition-all cursor-pointer"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                        {!role.isSystem && (
+                          <button
+                            onClick={() => setDeleteTarget(role)}
+                            title="Delete Role"
+                            className="h-8 w-8 rounded-xl border border-slate-800 bg-slate-900/60 text-red-400 hover:border-red-500/50 hover:bg-red-500/10 flex items-center justify-center transition-all cursor-pointer"
+                          >
+                            <Trash2 size={13} />
+                          </button>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {role.description || "No description"}
-                      </p>
                     </div>
-                    <div className="flex gap-1.5">
-                      <button
-                        onClick={() => setRoleModal(role)}
-                        title="Edit Role"
-                        className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-700 text-slate-300 hover:border-indigo-500 hover:text-indigo-300"
-                      >
-                        <Pencil size={13} />
-                      </button>
-                      {!role.isSystem && (
-                        <button
-                          onClick={() => setDeleteTarget(role)}
-                          title="Delete Role"
-                          className="h-8 w-8 flex items-center justify-center rounded-lg border border-red-900/40 text-red-400 hover:bg-red-950/30 transition"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+
+                    {/* Executive Stats Summary Badges */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="rounded-xl border border-slate-800/80 bg-[#0b1120] p-2.5 flex items-center gap-2">
+                        <ShieldCheck size={16} className="text-indigo-400 shrink-0" />
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold text-slate-400 block truncate uppercase">
+                            Actions
+                          </span>
+                          <span className="text-xs font-black text-white">
+                            {permCount} Granular
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-800/80 bg-[#0b1120] p-2.5 flex items-center gap-2">
+                        <LayoutGrid size={16} className="text-purple-400 shrink-0" />
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold text-slate-400 block truncate uppercase">
+                            Modules
+                          </span>
+                          <span className="text-xs font-black text-white">
+                            {enabledKeys.length}/{allKeys.length} Visible
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Accordion Toggle (Mobile Only) */}
+                    <button
+                      onClick={() => toggleExpandedRole(role._id)}
+                      className="md:hidden w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-xs font-extrabold text-slate-300 hover:text-white hover:border-slate-700 transition cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Shield size={13} className="text-indigo-400" />
+                        <span>{isExpanded ? "Hide Details" : "View Permissions & Modules"}</span>
+                      </span>
+                      <ChevronDown
+                        size={14}
+                        className={`text-slate-400 transition-transform duration-200 ${
+                          isExpanded ? "rotate-180 text-indigo-400" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {/* Detailed Tag Pills (Always visible on Desktop, collapsible on Mobile) */}
+                    <div className={`${isExpanded ? "block" : "hidden md:block"} space-y-3 pt-2 border-t border-slate-800/80 animate-fadeIn`}>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-2 flex items-center gap-1.5">
+                          <Shield size={11} />
+                          Action Permissions ({role.permissions?.length || 0})
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {role.permissions?.length === 0 ? (
+                            <span className="text-xs text-slate-500 italic">No permissions</span>
+                          ) : (
+                            role.permissions?.map((p) => (
+                              <span
+                                key={p.module}
+                                className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20"
+                              >
+                                {MODULE_LABELS[p.module] || p.module} · {p.actions.length}
+                              </span>
+                            ))
+                          )}
+                        </div>
+                      </div>
+
+                      {allKeys && allKeys.length > 0 && (
+                        <div className="pt-2 border-t border-slate-800/60">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-purple-400 mb-2 flex items-center gap-1.5">
+                            <LayoutGrid size={11} />
+                            Sidebar Modules ({enabledKeys.length}/{allKeys.length})
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {allKeys.map((key) => {
+                              const on = enabledKeys.includes(key);
+                              return (
+                                <span
+                                  key={key}
+                                  className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all ${
+                                    on
+                                      ? "bg-purple-500/10 text-purple-300 border-purple-500/20"
+                                      : "bg-slate-900/50 text-slate-600 border-slate-800/80 line-through opacity-60"
+                                  }`}
+                                >
+                                  {DASHBOARD_MODULE_LABELS[key] || key}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Assigned Users Section */}
+                    <div className="pt-3 border-t border-slate-800/80">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+                        <UsersIcon size={12} className="text-teal-400" />
+                        <span>Assigned Users ({usersForRole(role).length})</span>
+                      </p>
+                      {usersForRole(role).length === 0 ? (
+                        <p className="text-xs text-slate-500 italic">No users assigned to this role</p>
+                      ) : (
+                        <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto">
+                          {usersForRole(role).map((u) => (
+                            <div
+                              key={u._id}
+                              className="flex items-center justify-between gap-2 rounded-xl bg-[#0b1120] border border-slate-800/80 px-3 py-1.5 text-xs"
+                            >
+                              <span className="font-semibold text-white truncate">{u.name}</span>
+                              <span className="text-[11px] text-slate-400 shrink-0">{u.phoneNumber}</span>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap gap-1.5">
-                    {role.permissions?.length === 0 && (
-                      <span className="text-[11px] text-slate-600">
-                        No permissions granted
-                      </span>
-                    )}
-                    {role.permissions?.map((p) => (
-                      <span
-                        key={p.module}
-                        className="text-[10px] font-semibold px-2 py-1 rounded-md bg-indigo-950/40 text-indigo-300 border border-indigo-900/40"
-                      >
-                        {MODULE_LABELS[p.module] || p.module} ·{" "}
-                        {p.actions.length}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="text-[11px] text-slate-600 pt-2 border-t border-slate-800">
-                    {permissionCount(role)} permission
-                    {permissionCount(role) !== 1 ? "s" : ""} granted
-                  </div>
-
-                  {/* Dashboard modules summary */}
-                  {(() => {
-                    const allKeys = getModuleKeysForRole(role.name);
-                    if (!allKeys || allKeys.length === 0) return null;
-                    const enabledKeys = Array.isArray(role.dashboardModules)
-                      ? role.dashboardModules
-                      : allKeys;
-                    return (
-                      <div className="pt-2 border-t border-slate-800">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-purple-400 flex items-center gap-1">
-                            <LayoutGrid size={11} />
-                            Dashboard Modules · {enabledKeys.length}/
-                            {allKeys.length} visible
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {allKeys.map((key) => {
-                            const on = enabledKeys.includes(key);
-                            return (
-                              <span
-                                key={key}
-                                className={`text-[10px] font-semibold px-2 py-1 rounded-md border ${on
-                                  ? "bg-purple-950/40 text-purple-300 border-purple-900/40"
-                                  : "bg-slate-900/60 text-slate-600 border-slate-800 line-through"
-                                  }`}
-                              >
-                                {DASHBOARD_MODULE_LABELS[key] || key}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  <div className="pt-2 border-t border-slate-800">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-2">
-                      Assigned Users · {usersForRole(role).length}
-                    </p>
-                    {usersForRole(role).length === 0 ? (
-                      <p className="text-[11px] text-slate-600">
-                        No one holds this role yet.
-                      </p>
-                    ) : (
-                      <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto">
-                        {usersForRole(role).map((u) => (
-                          <div
-                            key={u._id}
-                            className="flex items-center justify-between gap-2 rounded-lg bg-[#0b1120] border border-slate-800 px-3 py-1.5"
-                          >
-                            <span className="text-xs font-semibold text-white truncate">
-                              {u.name}
-                            </span>
-                            <span className="text-[11px] text-slate-500 shrink-0">
-                              {u.phoneNumber}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

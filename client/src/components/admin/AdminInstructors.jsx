@@ -1480,23 +1480,25 @@ const AdminInstructors = ({
         </div>
 
         {/* Quick-glance stat pills — click to filter */}
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full">
           {/* Total Instructors — resets filter */}
           <button
             type="button"
             onClick={() => setActiveStatFilter(null)}
             title="Show all instructors"
-            className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 transition-all duration-150 ${
+            className={`flex items-center justify-between sm:justify-start gap-2 rounded-xl border px-3 py-2 transition-all duration-150 flex-1 min-w-0 ${
               activeStatFilter === null
                 ? "border-indigo-500/60 bg-indigo-600/20 ring-1 ring-indigo-500/40 shadow-md shadow-indigo-950/30"
                 : "border-indigo-500/20 bg-indigo-500/10 hover:bg-indigo-500/20 hover:border-indigo-500/40"
             }`}
           >
-            <GraduationCap size={14} className="text-indigo-400" />
-            <span className="text-xs font-bold text-indigo-300">{enrichedInstructors.length}</span>
-            <span className="text-[11px] text-indigo-300/70 font-medium">Total Instructors</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <GraduationCap size={14} className="text-indigo-400 shrink-0" />
+              <span className="text-xs font-bold text-indigo-300">{enrichedInstructors.length}</span>
+              <span className="text-[10.5px] text-indigo-300/80 font-medium truncate">Total</span>
+            </div>
             {activeStatFilter === null && (
-              <span className="ml-0.5 text-[9px] font-extrabold uppercase tracking-wider text-indigo-400 bg-indigo-500/20 border border-indigo-500/30 px-1.5 py-0.5 rounded-md">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-indigo-400 bg-indigo-500/20 border border-indigo-500/30 px-1.5 py-0.5 rounded-md shrink-0">
                 Active
               </span>
             )}
@@ -1507,17 +1509,17 @@ const AdminInstructors = ({
             type="button"
             onClick={() => setActiveStatFilter(activeStatFilter === "with_courses" ? null : "with_courses")}
             title="Show only instructors who have courses assigned"
-            className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 transition-all duration-150 ${
+            className={`flex items-center gap-2 rounded-xl border px-3 py-2 transition-all duration-150 flex-1 min-w-0 ${
               activeStatFilter === "with_courses"
                 ? "border-emerald-500/60 bg-emerald-600/20 ring-1 ring-emerald-500/40 shadow-md shadow-emerald-950/30"
                 : "border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/20 hover:border-emerald-500/40 cursor-pointer"
             }`}
           >
-            <BookOpen size={14} className="text-emerald-400" />
+            <BookOpen size={14} className="text-emerald-400 shrink-0" />
             <span className="text-xs font-bold text-emerald-300">{totalCoursesTaught}</span>
-            <span className="text-[11px] text-emerald-300/70 font-medium">Courses Taught</span>
+            <span className="text-[10.5px] text-emerald-300/80 font-medium truncate">Courses</span>
             {activeStatFilter === "with_courses" && (
-              <span className="ml-0.5 text-[9px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-1.5 py-0.5 rounded-md">
+              <span className="ml-auto text-[9px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-1.5 py-0.5 rounded-md shrink-0">
                 Filtered
               </span>
             )}
@@ -1528,17 +1530,17 @@ const AdminInstructors = ({
             type="button"
             onClick={() => setActiveStatFilter(activeStatFilter === "with_students" ? null : "with_students")}
             title="Show only instructors who have taught students"
-            className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 transition-all duration-150 ${
+            className={`flex items-center gap-2 rounded-xl border px-3 py-2 transition-all duration-150 flex-1 min-w-0 ${
               activeStatFilter === "with_students"
                 ? "border-sky-500/60 bg-sky-600/20 ring-1 ring-sky-500/40 shadow-md shadow-sky-950/30"
                 : "border-sky-500/20 bg-sky-500/10 hover:bg-sky-500/20 hover:border-sky-500/40 cursor-pointer"
             }`}
           >
-            <Users size={14} className="text-sky-400" />
+            <Users size={14} className="text-sky-400 shrink-0" />
             <span className="text-xs font-bold text-sky-300">{totalStudentsTaught}</span>
-            <span className="text-[11px] text-sky-300/70 font-medium">Students Taught</span>
+            <span className="text-[10.5px] text-sky-300/80 font-medium truncate">Students</span>
             {activeStatFilter === "with_students" && (
-              <span className="ml-0.5 text-[9px] font-extrabold uppercase tracking-wider text-sky-400 bg-sky-500/20 border border-sky-500/30 px-1.5 py-0.5 rounded-md">
+              <span className="ml-auto text-[9px] font-extrabold uppercase tracking-wider text-sky-400 bg-sky-500/20 border border-sky-500/30 px-1.5 py-0.5 rounded-md shrink-0">
                 Filtered
               </span>
             )}
@@ -1546,10 +1548,10 @@ const AdminInstructors = ({
 
           {/* Matching — visible when search is active */}
           {q.trim() && (
-            <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3.5 py-2">
-              <Search size={14} className="text-amber-400" />
+            <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 flex-1 min-w-0">
+              <Search size={14} className="text-amber-400 shrink-0" />
               <span className="text-xs font-bold text-amber-300">{filtI.length}</span>
-              <span className="text-[11px] text-amber-300/70 font-medium">Matching</span>
+              <span className="text-[10.5px] text-amber-300/80 font-medium truncate">Matching</span>
             </div>
           )}
 
@@ -1559,7 +1561,7 @@ const AdminInstructors = ({
               type="button"
               onClick={() => setActiveStatFilter(null)}
               title="Clear filter"
-              className="flex items-center gap-1.5 rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-[11px] font-bold text-rose-300 hover:bg-rose-500/20 hover:border-rose-500/40 transition"
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-[11px] font-bold text-rose-300 hover:bg-rose-500/20 hover:border-rose-500/40 transition shrink-0"
             >
               <X size={12} />
               Clear Filter
@@ -1568,7 +1570,7 @@ const AdminInstructors = ({
         </div>
 
         {/* Search + primary actions, full-width and clearly labeled */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full">
           <div className="relative flex-1 min-w-0">
             <Search
               size={14}
@@ -1576,19 +1578,19 @@ const AdminInstructors = ({
             />
             <input
               type="text"
-              className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 pl-9 pr-4 text-xs text-white placeholder-slate-500 transition duration-150"
-              placeholder="Search instructors by name or email..."
+              className="w-full bg-slate-900/40 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 outline-none rounded-xl py-2.5 pl-9 pr-4 text-xs sm:text-sm text-white placeholder-slate-500 transition duration-150"
+              placeholder="Search instructors by name or email…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 shrink-0">
             {canCreate && (
               <button
                 type="button"
                 onClick={() => setAddingInstructor(true)}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 transition"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition w-full sm:w-auto shrink-0"
               >
                 <UserPlus size={14} />
                 Add Instructor
@@ -1600,7 +1602,7 @@ const AdminInstructors = ({
                 type="button"
                 onClick={handleImportClick}
                 disabled={importing}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2.5 text-xs font-bold text-indigo-300 hover:bg-indigo-500/20 transition disabled:opacity-60 w-full sm:w-auto shrink-0"
               >
                 {importing ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -1650,7 +1652,7 @@ const AdminInstructors = ({
         {filtI.map((inst) => (
           <div
             key={inst._id}
-            className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4.5 bg-slate-900/30 border border-slate-800/80 rounded-2xl transition duration-150 hover:border-slate-700/60 hover:bg-slate-900/50"
+            className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-slate-900/30 border border-slate-800/80 rounded-2xl transition duration-150 hover:border-slate-700/60 hover:bg-slate-900/50"
           >
             <div className="flex items-start sm:items-center gap-4 min-w-0 flex-1">
               <Av name={inst.name} src={inst.avatarUrl} size={48} />
@@ -1758,24 +1760,24 @@ const AdminInstructors = ({
             </div>
 
             {/* Actions Grid */}
-            <div className="grid grid-cols-2 sm:flex sm:items-center md:items-end justify-between md:justify-start gap-2 shrink-0 w-full md:w-auto border-t md:border-t-0 md:border-l border-slate-800/60 pt-3 md:pt-0 md:pl-5">
+            <div className="grid grid-cols-3 sm:flex sm:items-center md:items-end justify-between md:justify-start gap-1.5 shrink-0 w-full md:w-auto border-t md:border-t-0 md:border-l border-slate-800/60 pt-3 md:pt-0 md:pl-5">
               {/* Details button */}
               <button
                 onClick={() => setSelectedInstructor(inst)}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 hover:border-indigo-500/30 transition duration-150"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 hover:border-indigo-500/30 transition duration-150"
               >
-                <Eye size={12} />
-                Details
+                <Eye size={12} className="shrink-0" />
+                <span>Details</span>
               </button>
 
               {/* Assign / Unassign Courses button */}
               {canEdit && (
                 <button
                   onClick={() => setAssigningCoursesInstructor(inst)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/30 transition duration-150"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/30 transition duration-150"
                 >
-                  <BookPlus size={12} />
-                  Courses
+                  <BookPlus size={12} className="shrink-0" />
+                  <span>Courses</span>
                 </button>
               )}
 
@@ -1783,10 +1785,10 @@ const AdminInstructors = ({
               {canEdit && (
                 <button
                   onClick={() => setPasswordInstructor(inst)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition duration-150"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition duration-150"
                 >
-                  <Key size={12} />
-                  Password
+                  <Key size={12} className="shrink-0" />
+                  <span>Password</span>
                 </button>
               )}
 
@@ -1794,10 +1796,10 @@ const AdminInstructors = ({
               {canEdit && (
                 <button
                   onClick={() => setEditingInstructor(inst)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/20 hover:bg-sky-500/20 hover:border-sky-500/30 transition duration-150"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/20 hover:bg-sky-500/20 hover:border-sky-500/30 transition duration-150"
                 >
-                  <Pencil size={12} />
-                  Edit
+                  <Pencil size={12} className="shrink-0" />
+                  <span>Edit</span>
                 </button>
               )}
 
@@ -1813,10 +1815,10 @@ const AdminInstructors = ({
                       deleteUser(inst._id, "instructor");
                     }
                   }}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/30 transition duration-150"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/30 transition duration-150"
                 >
-                  <Trash2 size={12} />
-                  Remove
+                  <Trash2 size={12} className="shrink-0" />
+                  <span>Remove</span>
                 </button>
               )}
             </div>

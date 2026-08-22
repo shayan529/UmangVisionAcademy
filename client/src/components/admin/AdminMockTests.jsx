@@ -567,35 +567,42 @@ export default function AdminMockTests({ showToast }) {
   const totalDraft = tests.length - totalPublished;
 
   return (
-    <div className="min-h-screen bg-[#060d1a] p-4 md:p-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <ClipboardList size={20} className="text-violet-400" />
-            Mock Tests
-          </h1>
-          <p className="text-slate-400 text-sm mt-0.5">
-            {tests.length} total · {totalPublished} published · {totalDraft} draft
-          </p>
+    <div className="min-h-screen bg-[#060d1a] p-4 md:p-8 space-y-6">
+      {/* Header Banner */}
+      <div className="rounded-3xl bg-gradient-to-r from-violet-950/80 via-slate-900 to-slate-950 border border-violet-900/40 p-5 md:p-8 shadow-2xl relative overflow-hidden">
+        <div className="absolute -top-12 -right-12 w-40 h-40 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 w-fit text-xs font-extrabold uppercase tracking-wider mb-2">
+              <ClipboardList size={14} />
+              <span>Test Management</span>
+            </div>
+            <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight leading-tight">
+              Mock Tests
+            </h1>
+            <p className="text-slate-400 text-xs sm:text-sm mt-1">
+              {tests.length} total · {totalPublished} published · {totalDraft} draft
+            </p>
+          </div>
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-extrabold px-5 py-2.5 rounded-xl shadow-lg shadow-violet-600/25 whitespace-nowrap cursor-pointer transition-all active:scale-95 shrink-0"
+          >
+            <Plus size={16} />
+            New Test
+          </button>
         </div>
-        <button
-          onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shrink-0"
-        >
-          <Plus size={15} />
-          New Test
-        </button>
       </div>
 
       {/* Search */}
-      <div className="relative mb-5 max-w-sm">
+      <div className="relative max-w-sm">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search by title, subject, instructor…"
-          className="w-full bg-[#0b1120] border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-200 outline-none focus:border-violet-500 placeholder:text-slate-600"
+          className="w-full bg-[#0b1120] border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs sm:text-sm text-slate-200 outline-none focus:border-violet-500 placeholder:text-slate-600"
         />
         {q && (
           <button
@@ -632,13 +639,13 @@ export default function AdminMockTests({ showToast }) {
             return (
               <div
                 key={test._id}
-                className="bg-[#0b1628] border border-[#1a2e48] rounded-2xl overflow-hidden"
+                className="bg-[#0b1628] border border-[#1a2e48] rounded-2xl overflow-hidden shadow-md"
               >
                 {/* Row */}
-                <div className="flex flex-col sm:flex-row sm:items-start gap-4 px-5 py-4">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-4 px-4 sm:px-5 py-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <h3 className="text-sm font-semibold text-white">{test.title}</h3>
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      <h3 className="text-sm font-extrabold text-white leading-snug">{test.title}</h3>
                       <DifficultyBadge level={test.difficulty} />
                       {test.isPublished ? (
                         <span className="text-[10px] font-bold border rounded-full px-2 py-0.5 bg-emerald-500/15 text-emerald-400 border-emerald-500/30">
@@ -650,60 +657,64 @@ export default function AdminMockTests({ showToast }) {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-400 leading-relaxed">
                       {test.subject} · {test.class} · {test.board} · {test.questions?.length ?? 0} questions · {test.duration} min · {test.attempts ?? 0} attempts
                     </p>
-                    <p className="text-xs text-slate-600 mt-0.5">
+                    <p className="text-xs text-slate-500 mt-1">
                       Instructor:{" "}
-                      <span className="text-slate-400 font-medium">{instrName}</span>
+                      <span className="text-slate-300 font-semibold">{instrName}</span>
                     </p>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
+                  <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-800/80 mt-2 sm:mt-0">
                     <button
                       title={test.isPublished ? "Set to Draft" : "Publish"}
                       onClick={() => handleTogglePublish(test)}
-                      className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold border transition-colors ${
+                      className={`w-full inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-extrabold border transition-all cursor-pointer whitespace-nowrap shadow-sm ${
                         test.isPublished
-                          ? "text-emerald-400 border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20"
-                          : "text-slate-400 border-slate-700 bg-slate-800/50 hover:border-slate-500 hover:text-white"
+                          ? "text-emerald-300 border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20"
+                          : "text-amber-300 border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20"
                       }`}
                     >
                       {test.isPublished ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
                       {test.isPublished ? "Published" : "Draft"}
                     </button>
+
                     <button
                       title="Assign / Reassign Instructor"
                       onClick={() => setAssignTarget(test)}
-                      className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold border border-slate-700 bg-slate-800/50 text-slate-400 hover:text-violet-400 hover:border-violet-500/40 hover:bg-violet-500/10 transition-colors"
+                      className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-extrabold border border-slate-700 bg-slate-900 text-slate-300 hover:text-violet-400 hover:border-violet-500/40 hover:bg-violet-500/10 transition-all cursor-pointer whitespace-nowrap shadow-sm"
                     >
                       <UserCheck size={14} />
                       Assign
                     </button>
+
                     <button
                       title="Edit"
                       onClick={() => setEditTarget(test)}
-                      className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold border border-slate-700 bg-slate-800/50 text-slate-400 hover:text-indigo-400 hover:border-indigo-500/40 hover:bg-indigo-500/10 transition-colors"
+                      className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-extrabold border border-slate-700 bg-slate-900 text-slate-300 hover:text-indigo-400 hover:border-indigo-500/40 hover:bg-indigo-500/10 transition-all cursor-pointer whitespace-nowrap shadow-sm"
                     >
                       <Pencil size={14} />
                       Edit
                     </button>
+
                     <button
                       title="Delete"
                       onClick={() => handleDelete(test)}
-                      className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold border border-slate-700 bg-slate-800/50 text-slate-400 hover:text-rose-400 hover:border-rose-500/40 hover:bg-rose-500/10 transition-colors"
+                      className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-extrabold border border-slate-700 bg-slate-900 text-slate-300 hover:text-rose-400 hover:border-rose-500/40 hover:bg-rose-500/10 transition-all cursor-pointer whitespace-nowrap shadow-sm"
                     >
                       <Trash2 size={14} />
                       Delete
                     </button>
+
                     <button
                       title={expanded ? "Collapse" : "Preview questions"}
                       onClick={() => setExpandedId(expanded ? null : test._id)}
-                      className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold border border-slate-700 bg-slate-800/50 text-slate-400 hover:text-slate-200 hover:border-slate-500 transition-colors"
+                      className="col-span-2 sm:col-span-1 w-full inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-extrabold border border-slate-700 bg-slate-900 text-slate-300 hover:text-slate-200 hover:border-slate-500 transition-all cursor-pointer whitespace-nowrap shadow-sm"
                     >
                       {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                      {expanded ? "Hide" : "Preview"}
+                      {expanded ? "Hide Questions" : "Preview Questions"}
                     </button>
                   </div>
                 </div>

@@ -13,6 +13,7 @@ import {
   Globe,
   RefreshCw,
   Mail,
+  Phone,
   Scale,
   Sparkles,
   ChevronRight,
@@ -362,9 +363,36 @@ const PrivacyPolicy = () => {
             <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
               For privacy-related questions, requests, or concerns, please contact:
             </p>
-            <div className="bg-[#0d172c] p-3 sm:p-4 rounded-lg sm:rounded-xl border border-indigo-500/20 space-y-1 text-xs sm:text-sm">
-              <p className="font-bold text-indigo-300 text-sm sm:text-base">Umang Vision Academy</p>
-              <p className="text-slate-400 text-[11px] sm:text-xs">Empowering Students for Bright Futures</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <a
+                href="mailto:umangvisionacademy@gmail.com"
+                className="flex items-center gap-3 p-3 sm:p-3.5 rounded-xl bg-[#0d172c] border border-indigo-500/20 hover:border-indigo-500/50 transition group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 text-indigo-400 group-hover:scale-105 transition-transform">
+                  <Mail size={18} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-slate-400">Official Email</p>
+                  <p className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-indigo-300 transition-colors">
+                    umangvisionacademy@gmail.com
+                  </p>
+                </div>
+              </a>
+
+              <a
+                href="tel:+919153000000"
+                className="flex items-center gap-3 p-3 sm:p-3.5 rounded-xl bg-[#0d172c] border border-emerald-500/20 hover:border-emerald-500/50 transition group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 text-emerald-400 group-hover:scale-105 transition-transform">
+                  <Phone size={18} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-slate-400">Contact Support Line</p>
+                  <p className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-emerald-300 transition-colors">
+                    +91 91530 00000
+                  </p>
+                </div>
+              </a>
             </div>
             <p className="text-slate-400 text-[11px] sm:text-xs leading-relaxed pt-2 border-t border-slate-800/60">
               We will make reasonable efforts to review and respond to privacy-related requests in accordance with applicable laws and within a reasonable period.

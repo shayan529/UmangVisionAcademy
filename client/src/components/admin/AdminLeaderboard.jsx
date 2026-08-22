@@ -91,81 +91,77 @@ const AdminLeaderboard = ({
     return (
       <button
         onClick={() => handleSort(field)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all duration-150 border ${
+        className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[10.5px] sm:text-xs font-bold tracking-wider uppercase transition-all duration-150 border w-full sm:w-auto ${
           active
-            ? "bg-indigo-500 text-white border-indigo-500 shadow-md shadow-indigo-500/10"
-            : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
+            ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-500/20"
+            : "bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
         }`}
       >
         {label}
         {active &&
           (sortDir === "desc" ? (
-            <ChevronDown size={11} />
+            <ChevronDown size={12} />
           ) : (
-            <ChevronUp size={11} />
+            <ChevronUp size={12} />
           ))}
       </button>
     );
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl animate-fadeIn">
+    <div className="flex flex-col gap-5 sm:gap-6 max-w-5xl animate-fadeIn py-1 sm:py-2">
       {/* Tab Header */}
-      <div>
-        <p className="text-xs text-indigo-400 font-bold tracking-wider uppercase mb-1">
+      <div className="pt-2 sm:pt-4 px-1 sm:px-2 space-y-1">
+        <p className="text-xs text-indigo-400 font-bold tracking-wider uppercase">
           Rankings Catalog
         </p>
-        <h2 className="text-2xl font-extrabold text-white">
+        <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
           Instructor Leaderboard
         </h2>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
           View and rank all active teaching staff by platform metrics.
         </p>
       </div>
 
       {/* Sorting filters */}
-      <div className="flex flex-wrap items-center gap-2 bg-slate-900/20 border border-slate-900 p-2.5 rounded-xl">
-        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">
+      <div className="space-y-2.5 bg-slate-900/40 border border-slate-800/80 p-3.5 sm:p-4 rounded-2xl">
+        <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-widest block px-0.5">
           Rank By:
         </span>
-        <SortButton field="revenue" label="Revenue" />
-        <SortButton field="students" label="Students" />
-        <SortButton field="courses" label="Courses" />
-        <SortButton field="rating" label="Rating" />
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+          <SortButton field="revenue" label="Revenue" />
+          <SortButton field="students" label="Students" />
+          <SortButton field="courses" label="Courses" />
+          <SortButton field="rating" label="Rating" />
+        </div>
       </div>
 
       {/* Responsive Leaderboard Table */}
-      <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <div className="min-w-[480px]">
+      <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl overflow-hidden shadow-sm p-0.5">
+        <div className="overflow-x-auto scrollbar-none no-scrollbar">
+          <div className="min-w-[580px] md:min-w-full">
             {/* Table Head */}
-            <div className="grid grid-cols-[36px_minmax(160px,1fr)_80px_110px] md:grid-cols-[50px_minmax(200px,1fr)_80px_90px_80px_100px_110px] gap-2 md:gap-4 px-4 md:px-5 py-4 border-b border-slate-800 bg-slate-950/20">
-              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
+            <div className="grid grid-cols-[40px_minmax(160px,1fr)_75px_85px_80px_90px_90px] gap-2 md:gap-3 px-3.5 md:px-5 py-3.5 border-b border-slate-800 bg-slate-950/40 items-center">
+              <span className="text-[10px] sm:text-[10.5px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
                 #
               </span>
-              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+              <span className="text-[10px] sm:text-[10.5px] font-extrabold text-slate-400 uppercase tracking-wider">
                 Instructor Name
               </span>
-              <span className="hidden md:inline-block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
+              <span className="text-[10px] sm:text-[10.5px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
                 Courses
               </span>
-              <span className="hidden md:inline-block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
+              <span className="text-[10px] sm:text-[10.5px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
                 Students
               </span>
-              <span className="hidden md:inline-block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
-                Avg Rating
+              <span className="text-[10px] sm:text-[10.5px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
+                Rating
               </span>
-              <span className="hidden md:inline-block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-right">
+              <span className="text-[10px] sm:text-[10.5px] font-extrabold text-slate-400 uppercase tracking-wider text-right">
                 Revenue
               </span>
-              <span className="inline-block md:hidden text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-right">
-                {sortBy === "revenue" && "Revenue"}
-                {sortBy === "students" && "Students"}
-                {sortBy === "courses" && "Courses"}
-                {sortBy === "rating" && "Rating"}
-              </span>
-              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
-                Full Details
+              <span className="text-[10px] sm:text-[10.5px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
+                Details
               </span>
             </div>
 
@@ -193,7 +189,7 @@ const AdminLeaderboard = ({
                 return (
                   <div
                     key={inst._id}
-                    className={`grid grid-cols-[36px_minmax(160px,1fr)_80px_110px] md:grid-cols-[50px_minmax(200px,1fr)_80px_90px_80px_100px_110px] gap-2 md:gap-4 items-center px-4 md:px-5 py-3.5 transition duration-150 ${bgClass} ${borderClass} hover:bg-slate-900/50 cursor-pointer group`}
+                    className={`grid grid-cols-[40px_minmax(160px,1fr)_75px_85px_80px_90px_90px] gap-2 md:gap-3 items-center px-3.5 md:px-5 py-3 transition duration-150 ${bgClass} ${borderClass} hover:bg-slate-900/50 cursor-pointer group`}
                   >
                     {/* Ranking Badge */}
                     <div className="flex justify-center">
@@ -204,27 +200,27 @@ const AdminLeaderboard = ({
                     <div className="flex items-center gap-3 min-w-0">
                       <Av name={inst.name} size={30} />
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-200 break-words">
+                        <p className="text-xs font-bold text-slate-200 truncate">
                           {inst.name}
                         </p>
-                        <p className="text-[10px] text-slate-500 break-all mt-0.5">
+                        <p className="text-[10px] text-slate-500 truncate mt-0.5">
                           {inst.email}
                         </p>
                       </div>
                     </div>
 
                     {/* Courses count */}
-                    <p className="hidden md:block text-xs font-bold text-slate-300 text-center">
+                    <p className="text-xs font-bold text-slate-300 text-center">
                       {inst.mc?.length || 0}
                     </p>
 
                     {/* Students count */}
-                    <p className="hidden md:block text-xs font-bold text-slate-300 text-center">
+                    <p className="text-xs font-bold text-slate-300 text-center">
                       {inst.stu || 0}
                     </p>
 
                     {/* Rating */}
-                    <div className="hidden md:flex items-center justify-center gap-1">
+                    <div className="flex items-center justify-center gap-1">
                       <Star
                         size={11}
                         className="text-amber-500 fill-amber-500 shrink-0"
@@ -235,39 +231,9 @@ const AdminLeaderboard = ({
                     </div>
 
                     {/* Revenue */}
-                    <p className="hidden md:block text-xs font-extrabold text-emerald-400 text-right">
+                    <p className="text-xs font-extrabold text-emerald-400 text-right">
                       {fmt(inst.rev)}
                     </p>
-
-                    {/* Mobile active sort metric value */}
-                    <div className="block md:hidden text-right">
-                      {sortBy === "revenue" && (
-                        <p className="text-xs font-extrabold text-emerald-400">
-                          {fmt(inst.rev)}
-                        </p>
-                      )}
-                      {sortBy === "students" && (
-                        <p className="text-xs font-bold text-slate-300">
-                          {inst.stu || 0}
-                        </p>
-                      )}
-                      {sortBy === "courses" && (
-                        <p className="text-xs font-bold text-slate-300">
-                          {inst.mc?.length || 0}
-                        </p>
-                      )}
-                      {sortBy === "rating" && (
-                        <div className="flex items-center justify-end gap-1">
-                          <Star
-                            size={11}
-                            className="text-amber-500 fill-amber-500 shrink-0"
-                          />
-                          <span className="text-xs font-extrabold text-amber-500">
-                            {inst.avg || "—"}
-                          </span>
-                        </div>
-                      )}
-                    </div>
 
                     {/* View Details Column */}
                     <div className="flex items-center justify-center">
@@ -279,7 +245,7 @@ const AdminLeaderboard = ({
                         className="px-2.5 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 border border-indigo-500/20 transition-all shadow-sm whitespace-nowrap"
                         title="View Full Details"
                       >
-                        View Details
+                        Details
                       </button>
                     </div>
                   </div>

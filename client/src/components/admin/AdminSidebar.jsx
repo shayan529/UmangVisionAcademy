@@ -24,7 +24,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser, clearAuth } from "../../redux/slices/authSlice";
-import { Lock, CreditCard, LogOut, FileText } from "lucide-react";
+import { Lock, CreditCard, LogOut, FileText, X } from "lucide-react";
 import { getCustomRole, hasCustomRole as checkHasCustomRole, hasBaseRole } from "../../utils/permissions";
 
 const AdminSidebar = ({
@@ -163,15 +163,16 @@ const AdminSidebar = ({
   `}
       >
         {/* User Card */}
-        <div className="px-3 mt-3 mb-4">
+        <div className="px-3.5 pt-4 sm:pt-5 mb-3 shrink-0">
           {/* Mobile close button — only shown when sidebar is open on mobile */}
-          <div className="flex items-center justify-between mb-3 md:hidden">
-            <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Menu</span>
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800/80 mb-3.5 md:hidden">
+            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Navigation Menu</span>
             <button
               onClick={() => setMobileOpen(false)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition"
+              aria-label="Close menu"
             >
-              ✕
+              <X size={16} />
             </button>
           </div>
           <div
@@ -257,8 +258,8 @@ const AdminSidebar = ({
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 flex flex-col gap-1.5 px-3 pb-4 overflow-y-auto">
+        {/* Navigation List */}
+        <nav className="flex-1 flex flex-col gap-1.5 px-3 pb-4 overflow-y-auto scrollbar-none no-scrollbar">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = tab === item.id;
@@ -293,23 +294,25 @@ const AdminSidebar = ({
               </button>
             );
           })}
-          <div className="md:hidden p-3 border-t border-slate-800 shrink-0">
-            <button
-              onClick={() => {
-                if (mobileOpen) setMobileOpen(false);
-                dispatch(clearAuth());
-                toast.success("Logged out successfully");
-                navigate("/", { replace: true });
-                dispatch(logoutUser()).catch(() => {});
-              }}
-              className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
-              title={t("nav.logout")}
-            >
-              <LogOut size={16} className="text-rose-400 shrink-0" />
-              <span className="text-sm font-semibold">{t("nav.logout")}</span>
-            </button>
-          </div>
         </nav>
+
+        {/* Pinned Logout Footer */}
+        <div className="p-3.5 border-t border-slate-800/90 bg-slate-950 shrink-0">
+          <button
+            onClick={() => {
+              if (mobileOpen) setMobileOpen(false);
+              dispatch(clearAuth());
+              toast.success("Logged out successfully");
+              navigate("/", { replace: true });
+              dispatch(logoutUser()).catch(() => {});
+            }}
+            className="flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200 w-full text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 cursor-pointer"
+            title={t("nav.logout")}
+          >
+            <LogOut size={16} className="text-rose-400 shrink-0" />
+            <span className="text-sm font-semibold">{t("nav.logout")}</span>
+          </button>
+        </div>
       </aside>
     </>
   );

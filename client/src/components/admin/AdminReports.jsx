@@ -334,107 +334,113 @@ export default function AdminReports() {
 
   return (
     <div className="space-y-6 text-slate-100 pb-16">
-      {/* ── Top Header Banner ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/90 p-6 rounded-3xl border border-slate-800 shadow-xl backdrop-blur-md">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
-            <MessageSquare size={24} />
-          </div>
+      {/* Page Header Banner */}
+      <div className="rounded-3xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-slate-950 border border-indigo-900/40 p-5 md:p-8 shadow-2xl relative overflow-hidden">
+        <div className="absolute -top-12 -right-12 w-40 h-40 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div>
-            <h2 className="text-xl font-extrabold text-white tracking-tight">
-              Student-Instructor Chat Monitor & Moderation
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Inspect all real-time conversations, course subjects, message logs, and moderation status.
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 w-fit text-xs font-extrabold uppercase tracking-wider mb-2">
+              <MessageSquare size={14} />
+              <span>Chat Moderation Desk</span>
+            </div>
+
+            <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight leading-tight mt-0.5">
+              Student-Instructor Chat Monitor
+            </h1>
+
+            <p className="text-xs md:text-sm text-slate-400 leading-relaxed mt-1 max-w-2xl">
+              Inspect real-time conversations, course subjects, message logs, and moderation status.
             </p>
           </div>
+
+          <button
+            onClick={fetchConversations}
+            disabled={loading}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 px-5 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-lg shadow-indigo-600/25 whitespace-nowrap cursor-pointer transition-all active:scale-95 shrink-0"
+          >
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            <span>Refresh Chats</span>
+          </button>
         </div>
-        <button
-          onClick={fetchConversations}
-          disabled={loading}
-          className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 text-xs font-bold px-4 py-2.5 rounded-xl transition border border-slate-700 shadow-sm cursor-pointer"
-        >
-          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-          <span>Refresh Chats</span>
-        </button>
       </div>
 
-      {/* ── Top Stats Strip ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-lg flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
-            <GraduationCap size={20} />
+      {/* Top Stats Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4">
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-lg flex items-center gap-3">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+            <GraduationCap size={18} />
           </div>
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="min-w-0">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block truncate">
               Instructors
             </span>
-            <h3 className="text-xl sm:text-2xl font-black text-white">
+            <h3 className="text-lg sm:text-xl font-black text-white">
               {totalInstructorsCount}
             </h3>
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-lg flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0">
-            <Users size={20} />
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-lg flex items-center gap-3">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0">
+            <Users size={18} />
           </div>
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Students Active
+          <div className="min-w-0">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+              Active Students
             </span>
-            <h3 className="text-xl sm:text-2xl font-black text-white">
+            <h3 className="text-lg sm:text-xl font-black text-white">
               {totalStudentsCount}
             </h3>
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-lg flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
-            <MessageCircle size={20} />
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-lg flex items-center gap-3">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+            <MessageCircle size={18} />
           </div>
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="min-w-0">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block truncate">
               Total Threads
             </span>
-            <h3 className="text-xl sm:text-2xl font-black text-white">
+            <h3 className="text-lg sm:text-xl font-black text-white">
               {conversations.length}
             </h3>
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-lg flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
-            <Flag size={20} />
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-lg flex items-center gap-3">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+            <Flag size={18} />
           </div>
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="min-w-0">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block truncate">
               Flagged Reports
             </span>
-            <h3 className="text-xl sm:text-2xl font-black text-white">
+            <h3 className="text-lg sm:text-xl font-black text-white">
               {stats.pendingReports}
             </h3>
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-lg flex items-center gap-3.5 col-span-2 lg:col-span-1">
-          <div className="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-            <Ban size={20} />
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-lg flex items-center gap-3 col-span-2 sm:col-span-1">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+            <Ban size={18} />
           </div>
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="min-w-0">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block truncate">
               Blocked Chats
             </span>
-            <h3 className="text-xl sm:text-2xl font-black text-white">
+            <h3 className="text-lg sm:text-xl font-black text-white">
               {stats.blockedChats}
             </h3>
           </div>
         </div>
       </div>
 
-      {/* ── Breadcrumb & Interactive Navigation Header ── */}
-      <div className="flex items-center justify-between flex-wrap gap-3 bg-slate-900/70 px-5 py-3.5 rounded-2xl border border-slate-800">
-        <nav className="flex items-center gap-2 text-xs font-semibold overflow-x-auto py-1">
+      {/* Breadcrumb Navigation Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3 bg-slate-900/70 px-4 py-3 rounded-2xl border border-slate-800">
+        <nav className="flex items-center gap-2 text-xs font-semibold overflow-x-auto py-0.5">
           <button
             onClick={() => {
               setSelectedInstructor(null);
@@ -505,43 +511,46 @@ export default function AdminReports() {
         )}
       </div>
 
-      {/* ── Controls (Search + Filter Tabs) ── */}
+      {/* Controls (Search + Filter Tabs) */}
       {!selectedConversation && (
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          {/* Filter Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-2xl overflow-x-auto">
+          {/* Filter Tabs 3-Column Mobile Matrix Grid */}
+          <div className="grid grid-cols-3 sm:inline-flex items-center gap-1 p-1.5 bg-slate-900 border border-slate-800 rounded-2xl w-full sm:w-auto">
             <button
               onClick={() => setFilterTab("all")}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+              className={`w-full inline-flex items-center justify-center px-2.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                 filterTab === "all"
-                  ? "bg-indigo-600 text-white shadow-md"
+                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              All {selectedInstructor ? "Chats" : "Instructors"} (
-              {selectedInstructor
-                ? conversations.filter(
-                    (c) =>
-                      c.instructor?._id?.toString() ===
-                      selectedInstructor._id?.toString(),
-                  ).length
-                : totalInstructorsCount}
-              )
+              <span>{selectedInstructor ? "Chats" : "All"}</span>
+              <span className="ml-1 opacity-75 text-[11px]">
+                ({selectedInstructor
+                  ? conversations.filter(
+                      (c) =>
+                        c.instructor?._id?.toString() ===
+                        selectedInstructor._id?.toString(),
+                    ).length
+                  : totalInstructorsCount})
+              </span>
             </button>
+
             <button
               onClick={() => setFilterTab("reported")}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              className={`w-full inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                 filterTab === "reported"
                   ? "bg-rose-600 text-white shadow-md"
                   : "text-rose-400 hover:bg-rose-500/10"
               }`}
             >
               <Flag size={12} />
-              <span>Flagged Reports</span>
+              <span>Flagged</span>
             </button>
+
             <button
               onClick={() => setFilterTab("blocked")}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              className={`w-full inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                 filterTab === "blocked"
                   ? "bg-amber-600 text-white shadow-md"
                   : "text-amber-400 hover:bg-amber-500/10"
@@ -553,21 +562,21 @@ export default function AdminReports() {
           </div>
 
           {/* Search Box */}
-          <div className="relative min-w-[260px] sm:w-80">
+          <div className="relative w-full sm:w-80">
             <Search
-              size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+              size={15}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
             />
             <input
               type="text"
               placeholder={
                 selectedInstructor
-                  ? "Search student, subject, course..."
-                  : "Search instructor, subject, course..."
+                  ? "Search student or subject…"
+                  : "Search instructor, subject, course…"
               }
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-10 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
+              className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-9 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
             />
             {search && (
               <button
@@ -651,30 +660,32 @@ export default function AdminReports() {
                   </div>
 
                   {/* Courses & Subjects Tags */}
-                  <div className="space-y-2 text-xs bg-slate-950/60 p-3 rounded-2xl border border-white/5">
-                    {item.coursesList.length > 0 && (
-                      <div className="flex items-center gap-1.5 text-slate-300">
-                        <BookOpen size={13} className="text-indigo-400 shrink-0" />
-                        <span className="truncate font-medium">
-                          {item.coursesList.slice(0, 2).join(", ")}
-                          {item.coursesList.length > 2 &&
-                            ` +${item.coursesList.length - 2} more`}
-                        </span>
-                      </div>
-                    )}
-                    {item.subjectsList.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {item.subjectsList.slice(0, 3).map((sub, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[10px] font-semibold"
-                          >
-                            {sub}
+                  {(item.coursesList.length > 0 || item.subjectsList.length > 0) && (
+                    <div className="space-y-2 text-xs bg-slate-950/60 p-3 rounded-2xl border border-white/5">
+                      {item.coursesList.length > 0 && (
+                        <div className="flex items-center gap-1.5 text-slate-300">
+                          <BookOpen size={13} className="text-indigo-400 shrink-0" />
+                          <span className="truncate font-medium">
+                            {item.coursesList.slice(0, 2).join(", ")}
+                            {item.coursesList.length > 2 &&
+                              ` +${item.coursesList.length - 2} more`}
                           </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                        </div>
+                      )}
+                      {item.subjectsList.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {item.subjectsList.slice(0, 3).map((sub, idx) => (
+                            <span
+                              key={idx}
+                              className="px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[10px] font-semibold"
+                            >
+                              {sub}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Footer Stats & Action */}
                   <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">

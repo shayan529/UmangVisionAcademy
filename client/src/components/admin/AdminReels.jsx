@@ -277,35 +277,35 @@ const ReelCard = ({ reel, canApprove, canReject, stamping, onApprove, onUnapprov
         {rejecting ? (
           <RejectForm onCancel={() => setRejecting(false)} onConfirm={(reason) => { setRejecting(false); onReject(reel._id, reason); }} />
         ) : (
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-1.5">
             {reel.status === "pending" && canApprove && (
               <button
                 onClick={() => onApprove(reel._id)}
                 disabled={stamping === reel._id}
-                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-extrabold uppercase tracking-wider transition-all disabled:opacity-50 whitespace-nowrap cursor-pointer"
                 style={{ background: "rgba(34,197,94,0.12)", color: "#86EFAC", border: "1px solid rgba(34,197,94,0.3)" }}
               >
-                <Check size={11} /> Approve
+                <Check size={13} /> Approve
               </button>
             )}
             {reel.status === "pending" && canReject && (
               <button
                 onClick={() => setRejecting(true)}
                 disabled={stamping === reel._id}
-                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-extrabold uppercase tracking-wider transition-all disabled:opacity-50 whitespace-nowrap cursor-pointer"
                 style={{ background: "rgba(248,113,113,0.1)", color: "#FCA5A5", border: "1px solid rgba(248,113,113,0.3)" }}
               >
-                <X size={11} /> Reject
+                <X size={13} /> Reject
               </button>
             )}
             {(reel.status === "approved" || reel.status === "rejected") && canReject && (
               <button
                 onClick={() => onUnapprove(reel._id)}
                 disabled={stamping === reel._id}
-                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-colors disabled:opacity-50"
-                style={{ background: "rgba(148,163,184,0.08)", color: "#94A3B8", border: "1px solid rgba(148,163,184,0.2)" }}
+                className="w-full flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-[11px] sm:text-xs font-extrabold uppercase tracking-wider transition-all disabled:opacity-50 whitespace-nowrap cursor-pointer shadow-sm"
+                style={{ background: "rgba(148,163,184,0.12)", color: "#CBD5E1", border: "1px solid rgba(148,163,184,0.3)" }}
               >
-                <RotateCcw size={11} /> Revert to Pending
+                <RotateCcw size={13} /> Revert to Pending
               </button>
             )}
           </div>
@@ -440,29 +440,34 @@ const AdminReels = () => {
 
   return (
     <div className="space-y-6">
-      {/* ── page header ─────────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <p className="text-[11px] font-bold tracking-[0.14em] text-indigo-400 uppercase mb-1">
-            Staff Workspace
-          </p>
-          <h2 className="text-2xl font-extrabold text-white flex items-center gap-2">
-            Reels <Clapperboard size={22} className="text-indigo-300" />
-          </h2>
-          <p className="text-slate-400 text-sm mt-1">
-            Upload your own reels and moderate submissions from instructors — all in one place.
-          </p>
+      {/* Page Header */}
+      <div className="rounded-3xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-slate-950 border border-indigo-900/40 p-5 md:p-8 shadow-2xl relative overflow-hidden">
+        <div className="absolute -top-12 -right-12 w-40 h-40 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 w-fit text-xs font-extrabold uppercase tracking-wider mb-2">
+              <Clapperboard size={14} />
+              <span>Vision Reels Desk</span>
+            </div>
+            <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight leading-tight">
+              Reels Moderation & Uploads
+            </h2>
+            <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
+              Upload your own reels and moderate submissions from instructors — all in one place.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowUpload(true)}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs sm:text-sm font-extrabold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/25 whitespace-nowrap cursor-pointer transition-all active:scale-95 shrink-0"
+          >
+            <Plus size={16} /> Upload Reel
+          </button>
         </div>
-        <button
-          onClick={() => setShowUpload(true)}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 transition text-white font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 text-sm"
-        >
-          <Plus size={16} /> Upload Reel
-        </button>
       </div>
 
-      {/* ── sub-tabs ────────────────────────────────────────────────────── */}
-      <div className="inline-flex rounded-xl border border-slate-800 bg-[#0b1120] p-1">
+      {/* Sub-tabs */}
+      <div className="grid grid-cols-2 sm:inline-flex rounded-2xl border border-slate-800 bg-[#0b1120] p-1.5 gap-1.5 w-full sm:w-auto">
         {[
           { key: "moderation", label: "All Reels", sub: `${counts.pending} pending` },
           { key: "mine",       label: "My Reels",  sub: `${myCounts.total} uploaded` },
@@ -470,19 +475,19 @@ const AdminReels = () => {
           <button
             key={t.key}
             onClick={() => { setTab(t.key); setFilter("all"); setQuery(""); }}
-            className={`flex flex-col items-start px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
-              tab === t.key ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+            className={`flex flex-col items-center sm:items-start justify-center px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              tab === t.key ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md" : "text-slate-400 hover:text-white"
             }`}
           >
-            {t.label}
-            <span className={`text-[10px] font-normal mt-0.5 ${tab === t.key ? "text-indigo-200" : "text-slate-600"}`}>
+            <span>{t.label}</span>
+            <span className={`text-[10px] font-normal mt-0.5 ${tab === t.key ? "text-indigo-200" : "text-slate-500"}`}>
               {t.sub}
             </span>
           </button>
         ))}
       </div>
 
-      {/* ── stat strip (My Reels tab) ────────────────────────────────────── */}
+      {/* Stat Strip (My Reels Tab) */}
       {tab === "mine" && !loadingMy && myReels.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
           {[
@@ -490,7 +495,7 @@ const AdminReels = () => {
             { label: "Live",     value: myCounts.approved },
             { label: "Views",    value: myCounts.views    },
           ].map(({ label, value }) => (
-            <div key={label} className="rounded-xl border border-slate-800 bg-[#111827] px-4 py-3 text-center">
+            <div key={label} className="rounded-2xl border border-slate-800 bg-[#111827] px-4 py-3 text-center">
               <div className="text-xl font-extrabold text-white">{value}</div>
               <div className="text-[10px] uppercase tracking-wide font-semibold text-slate-500 mt-0.5">{label}</div>
             </div>
@@ -498,41 +503,42 @@ const AdminReels = () => {
         </div>
       )}
 
-      {/* ── filter + search bar ─────────────────────────────────────────── */}
+      {/* Filter Matrix & Search Bar */}
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-        <div className="flex gap-2 flex-wrap">
+        <div className="grid grid-cols-2 sm:flex items-center gap-1.5 bg-[#0b1120] border border-slate-800 rounded-2xl p-1.5 w-full sm:w-auto">
           {STATUS_FILTERS.map((f) => {
             const count = tab === "moderation" ? counts[f] : myReels.filter((r) => f === "all" || r.status === f).length;
             return (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide border transition-all ${
+                className={`w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                   filter === f
-                    ? "bg-indigo-600 border-indigo-500 text-white"
-                    : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
+                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800/40"
                 }`}
               >
-                {f} <span className="opacity-60">· {count}</span>
+                <span>{f}</span>
+                <span className="opacity-75 font-mono text-[11px]">({count})</span>
               </button>
             );
           })}
         </div>
 
         <div className="relative w-full sm:w-64">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={tab === "moderation" ? "Search title or instructor…" : "Search title…"}
-            className="w-full pl-9 pr-3 py-2 rounded-lg text-sm bg-[#0b1120] border border-slate-700 text-white outline-none focus:border-indigo-500 transition"
+            className="w-full pl-9 pr-4 py-2.5 rounded-2xl text-xs sm:text-sm bg-[#0b1120] border border-slate-800 text-white outline-none focus:border-indigo-500 transition"
           />
         </div>
       </div>
 
       {/* ── content ─────────────────────────────────────────────────────── */}
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
           {[...Array(8)].map((_, i) => (
             <div
               key={i}
@@ -565,7 +571,7 @@ const AdminReels = () => {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
           {visible.map((reel) => (
             <ReelCard
               key={reel._id}
