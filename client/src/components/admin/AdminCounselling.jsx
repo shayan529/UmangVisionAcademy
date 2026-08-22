@@ -297,7 +297,7 @@ export default function AdminCounselling() {
 
       {/* Bookings Table */}
       <div className="bg-slate-900/80 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scrollbar-none no-scrollbar">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-800/80 border-b border-slate-700 text-slate-400 font-bold uppercase tracking-wider">

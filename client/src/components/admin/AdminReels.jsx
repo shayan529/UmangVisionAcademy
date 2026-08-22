@@ -532,10 +532,7 @@ const AdminReels = () => {
 
       {/* ── content ─────────────────────────────────────────────────────── */}
       {loading ? (
-        <div
-          className="grid gap-5"
-          style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
-        >
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-5">
           {[...Array(8)].map((_, i) => (
             <div
               key={i}
@@ -568,10 +565,7 @@ const AdminReels = () => {
           )}
         </div>
       ) : (
-        <div
-          className="grid gap-5"
-          style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
-        >
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-5">
           {visible.map((reel) => (
             <ReelCard
               key={reel._id}

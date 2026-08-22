@@ -12,6 +12,7 @@ import {
 } from "../../redux/slices/authSlice";
 import { hasBaseRole } from "../../utils/permissions";
 
+import { Menu } from "lucide-react";
 import AdminSidebar from "./AdminSidebar";
 import AdminOverview from "./AdminOverview";
 import AdminLeaderboard from "./AdminLeaderboard";
@@ -356,9 +357,10 @@ export default function AdminDashboard() {
                 window.dispatchEvent(new CustomEvent("dashboard-sidebar-open"));
                 setSideOpen(true);
               }}
-              className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:border-white/20"
+              className="inline-flex items-center gap-2 rounded-xl border border-indigo-500/30 bg-slate-900 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-slate-800 shadow-md"
             >
-              Menu
+              <Menu size={16} className="text-indigo-400 shrink-0" />
+              <span>Menu</span>
             </button>
             <h2 className="text-sm font-bold text-white uppercase tracking-wider bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-1">
               Admin: {tab}

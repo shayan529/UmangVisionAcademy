@@ -945,13 +945,7 @@ function CourseDrawer({
         )}
 
         {/* Stats */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3,1fr)",
-            gap: 10,
-          }}
-        >
+        <div className="grid grid-cols-3 gap-2.5">
           {[
             { label: "Price", value: fmt(course.price ?? 0) },
             { label: "Lessons", value: course.lessons?.length ?? 0 },
