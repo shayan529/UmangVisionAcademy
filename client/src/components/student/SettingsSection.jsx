@@ -1461,6 +1461,7 @@ export default function Settings() {
           )}
           <button
             onClick={sendPasswordOtp}
+            className="w-full sm:w-auto"
             style={{
               padding: "9px 20px",
               background: "#1e293b",

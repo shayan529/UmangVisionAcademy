@@ -848,14 +848,7 @@ const InstructorSettings = ({ showToast }) => {
           </div>
 
           {/* Name (editable) */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 12,
-              marginBottom: 16,
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-4">
             <div>
               <label style={labelStyle}>
                 {t("instructorSettings.displayName")}
@@ -906,14 +899,7 @@ const InstructorSettings = ({ showToast }) => {
           </div>
 
           {/* State + City */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 12,
-              marginBottom: 16,
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-4">
             <div>
               <label style={labelStyle}>{t("instructorSettings.state")}</label>
               <select
@@ -1032,16 +1018,8 @@ const InstructorSettings = ({ showToast }) => {
             </span>
           </p>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr auto",
-              gap: 10,
-              alignItems: "flex-end",
-              marginBottom: 10,
-            }}
-          >
-            <div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-2.5 mb-2.5">
+            <div className="flex-1">
               <label style={labelStyle}>
                 {t("instructorSettings.newEmailAddress")}
               </label>
@@ -1057,6 +1035,7 @@ const InstructorSettings = ({ showToast }) => {
             <button
               onClick={updateEmailDirectly}
               disabled={emailStep === "sending" || !emailForm.newEmail}
+              className="w-full sm:w-auto"
               style={sendOtpBtnStyle(
                 emailStep === "sending" || !emailForm.newEmail,
               )}
@@ -1090,16 +1069,8 @@ const InstructorSettings = ({ showToast }) => {
             </span>
           </p>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr auto",
-              gap: 10,
-              alignItems: "flex-end",
-              marginBottom: 10,
-            }}
-          >
-            <div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-2.5 mb-2.5">
+            <div className="flex-1">
               <label style={labelStyle}>
                 {t("instructorSettings.newPhoneNumber")}
               </label>
@@ -1118,6 +1089,7 @@ const InstructorSettings = ({ showToast }) => {
             <button
               onClick={sendPhoneOtp}
               disabled={phoneStep === "sending" || !phoneForm.newPhone}
+              className="w-full sm:w-auto"
               style={sendOtpBtnStyle(
                 phoneStep === "sending" || !phoneForm.newPhone,
               )}
@@ -1145,14 +1117,7 @@ const InstructorSettings = ({ showToast }) => {
         <Card>
           <SectionHeader title={t("instructorSettings.changePassword")} />
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
-              gap: 14,
-              marginBottom: 6,
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-3.5">
             <div>
               <label style={labelStyle}>
                 {t("instructorSettings.currentPassword")}
@@ -1261,6 +1226,7 @@ const InstructorSettings = ({ showToast }) => {
 
           <button
             onClick={sendPasswordOtp}
+            className="w-full sm:w-auto"
             style={{
               padding: "9px 20px",
               background: "#1e293b",
@@ -1347,13 +1313,7 @@ const InstructorSettings = ({ showToast }) => {
         {/* ── Danger Zone ── */}
         <Card>
           <SectionHeader title={t("instructorSettings.dangerZone")} />
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: "#f87171" }}>
                 {t("instructorSettings.deleteAccount")}
@@ -1364,6 +1324,7 @@ const InstructorSettings = ({ showToast }) => {
             </div>
             <button
               onClick={deleteAccount}
+              className="w-full sm:w-auto py-2.5 whitespace-nowrap"
               style={{
                 padding: "8px 16px",
                 background: "#450a0a",

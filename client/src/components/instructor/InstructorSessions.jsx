@@ -278,7 +278,7 @@ const InstructorSessions = ({ showToast }) => {
       )}
 
       {/* Date + Time */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <input
           type="date"
           value={editForm.date}
@@ -415,7 +415,7 @@ const InstructorSessions = ({ showToast }) => {
           </div>
 
           {/* Date + Time row */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3.5">
             <div>
               <FieldLabel>Date</FieldLabel>
               <input

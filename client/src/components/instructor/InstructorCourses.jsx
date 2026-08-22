@@ -2695,13 +2695,15 @@ const FormStepper = ({ steps, activeKey, onSelect }) => {
           {doneCount}/{steps.length} sections ready
         </span>
       </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${steps.length}, 1fr)`,
-          gap: 6,
-        }}
-      >
+      <div className="overflow-x-auto scrollbar-none no-scrollbar py-1">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${steps.length}, 1fr)`,
+            gap: 6,
+            minWidth: 420,
+          }}
+        >
         {steps.map((s, i) => (
           <button
             key={s.key}
@@ -2763,7 +2765,8 @@ const FormStepper = ({ steps, activeKey, onSelect }) => {
         ))}
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 // A sticky action bar so Save/Submit controls stay reachable without

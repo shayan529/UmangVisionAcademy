@@ -80,13 +80,7 @@ const InstructorStudents = () => {
         />
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))",
-          gap: 16,
-        }}
-      >
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top learners */}
         <Card>
           <SectionHeader title={t("instructorStudents.topLearners")} />

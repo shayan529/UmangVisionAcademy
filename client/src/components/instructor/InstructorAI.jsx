@@ -1458,7 +1458,7 @@ export default function AITutor() {
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
+                        gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
                         gap: isMobile ? 6 : 8,
                         maxWidth: isMobile ? "100%" : 520,
                         margin: "0 auto",
